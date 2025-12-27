@@ -31,11 +31,11 @@ export function ShareButton({ title, url }: ShareButtonProps) {
 
   return (
     <button
-      className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+      className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
       onClick={handleShare}
       title="Share"
     >
-      <Share2 className="h-4 w-4 text-[#00BFFF]" />
+      <Share2 className="h-4 w-4 text-white/70" />
     </button>
   );
 }
