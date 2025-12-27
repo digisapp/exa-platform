@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -30,69 +30,96 @@ export function AdminSearch({ type, placeholder }: AdminSearchProps) {
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const supabase = createClient();
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  const performSearch = useCallback(async (searchQuery: string) => {
+    if (searchQuery.length < 2) {
+      return { results: [], searched: false };
+    }
+
+    const searchResults: SearchResult[] = [];
+
+    if (type === "models" || type === "all") {
+      const { data: models } = await supabase
+        .from("models")
+        .select("id, username, first_name, last_name, email, coin_balance, is_approved, created_at")
+        .or(`username.ilike.%${searchQuery}%,first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`)
+        .limit(10) as { data: any[] | null };
+
+      if (models) {
+        searchResults.push(
+          ...models.map((m) => ({
+            id: m.id,
+            type: "model" as const,
+            name: m.first_name ? `${m.first_name} ${m.last_name || ""}`.trim() : m.username,
+            email: m.email || "",
+            username: m.username,
+            coin_balance: m.coin_balance || 0,
+            is_approved: m.is_approved,
+            created_at: m.created_at,
+          }))
+        );
+      }
+    }
+
+    if (type === "fans" || type === "all") {
+      const { data: fans } = await supabase
+        .from("fans")
+        .select("id, display_name, email, coin_balance, created_at")
+        .or(`display_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`)
+        .limit(10) as { data: any[] | null };
+
+      if (fans) {
+        searchResults.push(
+          ...fans.map((f) => ({
+            id: f.id,
+            type: "fan" as const,
+            name: f.display_name || "Fan",
+            email: f.email || "",
+            coin_balance: f.coin_balance || 0,
+            created_at: f.created_at,
+          }))
+        );
+      }
+    }
+
+    return { results: searchResults, searched: true };
+  }, [type, supabase]);
+
+  const handleQueryChange = useCallback((newQuery: string) => {
+    setQuery(newQuery);
+
+    if (newQuery.length < 2) {
+      setResults([]);
+      setHasSearched(false);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+  }, []);
 
   useEffect(() => {
     if (query.length < 2) {
-      setResults([]);
-      setHasSearched(false);
       return;
     }
 
-    const debounce = setTimeout(async () => {
-      setLoading(true);
-      setHasSearched(true);
-      const searchResults: SearchResult[] = [];
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
 
-      if (type === "models" || type === "all") {
-        const { data: models } = await supabase
-          .from("models")
-          .select("id, username, first_name, last_name, email, coin_balance, is_approved, created_at")
-          .or(`username.ilike.%${query}%,first_name.ilike.%${query}%,last_name.ilike.%${query}%,email.ilike.%${query}%`)
-          .limit(10) as { data: any[] | null };
-
-        if (models) {
-          searchResults.push(
-            ...models.map((m) => ({
-              id: m.id,
-              type: "model" as const,
-              name: m.first_name ? `${m.first_name} ${m.last_name || ""}`.trim() : m.username,
-              email: m.email || "",
-              username: m.username,
-              coin_balance: m.coin_balance || 0,
-              is_approved: m.is_approved,
-              created_at: m.created_at,
-            }))
-          );
-        }
-      }
-
-      if (type === "fans" || type === "all") {
-        const { data: fans } = await supabase
-          .from("fans")
-          .select("id, display_name, email, coin_balance, created_at")
-          .or(`display_name.ilike.%${query}%,email.ilike.%${query}%`)
-          .limit(10) as { data: any[] | null };
-
-        if (fans) {
-          searchResults.push(
-            ...fans.map((f) => ({
-              id: f.id,
-              type: "fan" as const,
-              name: f.display_name || "Fan",
-              email: f.email || "",
-              coin_balance: f.coin_balance || 0,
-              created_at: f.created_at,
-            }))
-          );
-        }
-      }
-
+    debounceRef.current = setTimeout(async () => {
+      const { results: searchResults, searched } = await performSearch(query);
       setResults(searchResults);
+      setHasSearched(searched);
       setLoading(false);
     }, 300);
 
-    return () => clearTimeout(debounce);
-  }, [query, type, supabase]);
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, [query, performSearch]);
 
   return (
     <div className="space-y-4">
@@ -100,7 +127,7 @@ export function AdminSearch({ type, placeholder }: AdminSearchProps) {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => handleQueryChange(e.target.value)}
           placeholder={placeholder || `Search ${type}...`}
           className="pl-10 pr-10"
         />
@@ -109,7 +136,7 @@ export function AdminSearch({ type, placeholder }: AdminSearchProps) {
             variant="ghost"
             size="sm"
             className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
-            onClick={() => setQuery("")}
+            onClick={() => handleQueryChange("")}
           >
             <X className="h-4 w-4" />
           </Button>

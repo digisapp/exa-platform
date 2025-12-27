@@ -1,174 +1,148 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
-import { calculateCallCost } from '@/lib/livekit';
+import { createClient } from "@/lib/supabase/server";
+import { NextRequest, NextResponse } from "next/server";
+import { calculateCallCost } from "@/lib/livekit";
 
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
-
-    // Get current user
     const { data: { user } } = await supabase.auth.getUser();
+
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get request body
     const { sessionId } = await request.json();
+
     if (!sessionId) {
-      return NextResponse.json({ error: 'sessionId is required' }, { status: 400 });
+      return NextResponse.json({ error: "Session ID required" }, { status: 400 });
     }
 
     // Get user's actor
     const { data: actor } = await supabase
-      .from('actors')
-      .select('id, type')
-      .eq('user_id', user.id)
+      .from("actors")
+      .select("id, type")
+      .eq("user_id", user.id)
       .single() as { data: { id: string; type: string } | null };
 
     if (!actor) {
-      return NextResponse.json({ error: 'Actor not found' }, { status: 404 });
+      return NextResponse.json({ error: "Actor not found" }, { status: 404 });
     }
 
-    // Get the call session
-    const { data: callSession } = await (supabase
-      .from('video_call_sessions') as any)
-      .select('*')
-      .eq('id', sessionId)
-      .single() as { data: any };
+    // Get call session
+    const { data: session } = await (supabase
+      .from("video_call_sessions") as any)
+      .select("*")
+      .eq("id", sessionId)
+      .or(`initiated_by.eq.${actor.id},recipient_id.eq.${actor.id}`)
+      .single();
 
-    if (!callSession) {
-      return NextResponse.json({ error: 'Call session not found' }, { status: 404 });
+    if (!session) {
+      return NextResponse.json({ error: "Call session not found" }, { status: 404 });
     }
 
-    // Verify user is part of this call
-    if (callSession.initiated_by !== actor.id && callSession.recipient_id !== actor.id) {
-      return NextResponse.json({ error: 'Not authorized to end this call' }, { status: 403 });
-    }
+    // Calculate duration
+    const now = new Date();
+    const startedAt = session.started_at ? new Date(session.started_at) : now;
+    const durationSeconds = Math.floor((now.getTime() - startedAt.getTime()) / 1000);
 
-    // Check if call is already ended
-    if (callSession.status === 'ended') {
-      return NextResponse.json({
-        success: true,
-        duration: callSession.duration_seconds,
-        coinsCharged: callSession.coins_charged,
-      });
-    }
+    // Get recipient's actor user_id
+    const { data: recipientActorData } = await supabase
+      .from("actors")
+      .select("user_id")
+      .eq("id", session.recipient_id)
+      .single() as { data: { user_id: string } | null };
 
-    const endedAt = new Date();
-    let durationSeconds = 0;
-    let coinsCharged = 0;
+    // Get video call rate from recipient model
+    const { data: recipientModel } = await (supabase.from("models") as any)
+      .select("video_call_rate, user_id, coin_balance")
+      .eq("user_id", recipientActorData?.user_id)
+      .single();
 
-    // Calculate duration if call was active
-    if (callSession.status === 'active' && callSession.started_at) {
-      const startedAt = new Date(callSession.started_at);
-      durationSeconds = Math.floor((endedAt.getTime() - startedAt.getTime()) / 1000);
+    const ratePerMinute = recipientModel?.video_call_rate || 0;
+    const coinsToCharge = calculateCallCost(durationSeconds, ratePerMinute);
 
-      // Get initiator's actor type to determine if coins should be charged
-      const { data: initiatorActor } = await supabase
-        .from('actors')
-        .select('id, type')
-        .eq('id', callSession.initiated_by)
-        .single() as { data: { id: string; type: string } | null };
+    // Charge coins from caller if they initiated and there's a rate
+    if (coinsToCharge > 0 && session.initiated_by !== session.recipient_id) {
+      // Get caller's actor type
+      const { data: callerActor } = await supabase
+        .from("actors")
+        .select("type")
+        .eq("id", session.initiated_by)
+        .single() as { data: { type: string } | null };
 
-      const { data: recipientActor } = await supabase
-        .from('actors')
-        .select('id, type')
-        .eq('id', callSession.recipient_id)
-        .single() as { data: { id: string; type: string } | null };
+      if (callerActor?.type === "fan") {
+        // Deduct from fan
+        const { data: fan } = await (supabase
+          .from("fans") as any)
+          .select("coin_balance")
+          .eq("id", session.initiated_by)
+          .single() as { data: { coin_balance: number } | null };
 
-      // Charge coins if initiator is fan/brand calling a model
-      if (initiatorActor?.type !== 'model' && recipientActor?.type === 'model' && durationSeconds > 0) {
-        coinsCharged = calculateCallCost(durationSeconds);
+        if (fan) {
+          await (supabase
+            .from("fans") as any)
+            .update({ coin_balance: Math.max(0, fan.coin_balance - coinsToCharge) })
+            .eq("id", session.initiated_by);
 
-        // Deduct coins from the caller
-        const { error: deductError } = await (supabase.rpc as any)('deduct_coins', {
-          p_actor_id: callSession.initiated_by,
-          p_amount: coinsCharged,
-          p_action: 'video_call',
-          p_metadata: {
-            session_id: sessionId,
-            duration_seconds: durationSeconds,
-            recipient_id: callSession.recipient_id,
-          },
+          // Record transaction
+          await (supabase.from("coin_transactions") as any).insert({
+            actor_id: session.initiated_by,
+            amount: -coinsToCharge,
+            action: "video_call",
+            metadata: { session_id: sessionId, duration_seconds: durationSeconds },
+          });
+        }
+      }
+
+      // Credit model
+      if (recipientModel) {
+        await (supabase.from("models") as any)
+          .update({ coin_balance: (recipientModel.coin_balance || 0) + coinsToCharge })
+          .eq("user_id", recipientModel.user_id);
+
+        // Record model earnings
+        await (supabase.from("coin_transactions") as any).insert({
+          actor_id: session.recipient_id,
+          amount: coinsToCharge,
+          action: "video_call_received",
+          metadata: { session_id: sessionId, duration_seconds: durationSeconds },
         });
-
-        if (deductError) {
-          console.error('Error deducting coins:', deductError);
-          // Continue anyway - don't fail the call end because of coin deduction
-        }
-
-        // Credit coins to the model (70% of call cost)
-        const modelEarnings = Math.floor(coinsCharged * 0.7);
-        if (modelEarnings > 0) {
-          // Get model's ID from actors table via user_id
-          const { data: modelActor } = await supabase
-            .from('actors')
-            .select('user_id')
-            .eq('id', callSession.recipient_id)
-            .single();
-
-          if (modelActor) {
-            // Update model's coin balance
-            const { error: creditError } = await (supabase.rpc as any)('add_coins', {
-              p_actor_id: callSession.recipient_id,
-              p_amount: modelEarnings,
-              p_action: 'video_call_earnings',
-              p_metadata: {
-                session_id: sessionId,
-                duration_seconds: durationSeconds,
-                caller_id: callSession.initiated_by,
-                gross_amount: coinsCharged,
-              },
-            });
-
-            if (creditError) {
-              console.error('Error crediting model:', creditError);
-            }
-          }
-        }
       }
     }
 
-    // Update call session
-    const { error: updateError } = await (supabase
-      .from('video_call_sessions') as any)
+    // Update session
+    await (supabase.from("video_call_sessions") as any)
       .update({
-        status: 'ended',
-        ended_at: endedAt.toISOString(),
+        status: "ended",
+        ended_at: now.toISOString(),
         duration_seconds: durationSeconds,
-        coins_charged: coinsCharged,
+        coins_charged: coinsToCharge,
       })
-      .eq('id', sessionId);
+      .eq("id", sessionId);
 
-    if (updateError) {
-      console.error('Error updating call session:', updateError);
-      return NextResponse.json({ error: 'Failed to end call' }, { status: 500 });
-    }
+    // Add system message to conversation
+    const minutes = Math.floor(durationSeconds / 60);
+    const seconds = durationSeconds % 60;
+    const durationStr = minutes + ":" + seconds.toString().padStart(2, "0");
+    const coinsStr = coinsToCharge > 0 ? " (" + coinsToCharge + " coins)" : "";
 
-    // Insert system message in conversation if call was connected
-    if (durationSeconds > 0) {
-      const minutes = Math.floor(durationSeconds / 60);
-      const seconds = durationSeconds % 60;
-      const durationStr = minutes > 0
-        ? `${minutes}:${seconds.toString().padStart(2, '0')}`
-        : `0:${seconds.toString().padStart(2, '0')}`;
-
-      await (supabase.from('messages') as any).insert({
-        conversation_id: callSession.conversation_id,
-        sender_id: actor.id,
-        content: `Video call - ${durationStr}`,
-        is_system: true,
-      });
-    }
+    await (supabase.from("messages") as any).insert({
+      conversation_id: session.conversation_id,
+      sender_id: actor.id,
+      content: "Video call ended - " + durationStr + coinsStr,
+      is_system: true,
+    });
 
     return NextResponse.json({
       success: true,
       duration: durationSeconds,
-      coinsCharged,
+      coinsCharged: coinsToCharge,
     });
-
   } catch (error) {
-    console.error('Error ending call:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error("End call error:", error);
+    return NextResponse.json(
+      { error: "Failed to end call" },
+      { status: 500 }
+    );
   }
 }

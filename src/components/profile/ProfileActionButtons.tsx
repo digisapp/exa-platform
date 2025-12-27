@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Video, Coins } from "lucide-react";
+import { MessageCircle, Video, Coins, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { VideoRoom } from "@/components/video";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -37,6 +38,14 @@ export function ProfileActionButtons({
   const [showVideoConfirm, setShowVideoConfirm] = useState(false);
   const [tipAmount, setTipAmount] = useState<number>(10);
   const [sending, setSending] = useState(false);
+  const [startingCall, setStartingCall] = useState(false);
+  const [callSession, setCallSession] = useState<{
+    sessionId: string;
+    token: string;
+    roomName: string;
+    recipientName: string;
+    videoCallRate: number;
+  } | null>(null);
 
   const handleChat = () => {
     if (!isLoggedIn) {
@@ -58,7 +67,8 @@ export function ProfileActionButtons({
     if (videoCallRate > 0) {
       setShowVideoConfirm(true);
     } else {
-      window.location.href = `/messages?new=${modelUsername}&call=true`;
+      // Free call - start directly
+      proceedToVideoCall();
     }
   };
 
@@ -75,9 +85,42 @@ export function ProfileActionButtons({
     window.location.href = `/messages?new=${modelUsername}`;
   };
 
-  const proceedToVideoCall = () => {
+  const proceedToVideoCall = async () => {
     setShowVideoConfirm(false);
-    window.location.href = `/messages?new=${modelUsername}&call=true`;
+    setStartingCall(true);
+    try {
+      const response = await fetch("/api/calls/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ recipientUsername: modelUsername }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data.error || "Failed to start call");
+        return;
+      }
+
+      setCallSession({
+        sessionId: data.sessionId,
+        token: data.token,
+        roomName: data.roomName,
+        recipientName: data.recipientName,
+        videoCallRate: data.videoCallRate,
+      });
+
+      toast.success("Calling " + data.recipientName + "...");
+    } catch (error) {
+      console.error("Error starting call:", error);
+      toast.error("Failed to start video call");
+    } finally {
+      setStartingCall(false);
+    }
+  };
+
+  const handleCallEnd = () => {
+    setCallSession(null);
   };
 
   const sendTip = async () => {
@@ -112,6 +155,20 @@ export function ProfileActionButtons({
     return null;
   }
 
+  // Show video call room if call is active
+  if (callSession) {
+    return (
+      <VideoRoom
+        token={callSession.token}
+        roomName={callSession.roomName}
+        sessionId={callSession.sessionId}
+        onCallEnd={handleCallEnd}
+        requiresCoins={callSession.videoCallRate > 0}
+        recipientName={callSession.recipientName}
+      />
+    );
+  }
+
   return (
     <>
       <div className="grid grid-cols-3 gap-2 mb-6">
@@ -125,9 +182,14 @@ export function ProfileActionButtons({
         <Button
           className="exa-gradient-button h-11 text-sm font-semibold rounded-full"
           onClick={handleVideoCall}
+          disabled={startingCall}
         >
-          <Video className="mr-1.5 h-4 w-4" />
-          Video Call
+          {startingCall ? (
+            <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+          ) : (
+            <Video className="mr-1.5 h-4 w-4" />
+          )}
+          {startingCall ? "Calling..." : "Video Call"}
         </Button>
         <Button
           className="h-11 text-sm font-semibold rounded-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white"

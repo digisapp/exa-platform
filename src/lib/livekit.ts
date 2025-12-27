@@ -1,39 +1,35 @@
-// Server-only LiveKit utilities
-// This file should only be imported in API routes/server components
-import { AccessToken } from 'livekit-server-sdk';
+import { AccessToken } from "livekit-server-sdk";
 
-// Re-export constants from shared file
-export { CALL_COST_PER_MINUTE, MIN_CALL_BALANCE, calculateCallCost } from './livekit-constants';
+const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY!;
+const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET!;
 
-const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY;
-const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET;
-
-export interface CreateTokenOptions {
-  roomName: string;
-  participantIdentity: string;
-  participantName: string;
+/**
+ * Generate a unique room name for a video call session
+ */
+export function generateRoomName(): string {
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).substring(2, 8);
+  return `exa-call-${timestamp}-${random}`;
 }
 
 /**
- * Generate a LiveKit access token for a participant to join a room
+ * Generate a LiveKit access token for a participant
  */
-export async function createLiveKitToken(options: CreateTokenOptions): Promise<string> {
-  if (!LIVEKIT_API_KEY || !LIVEKIT_API_SECRET) {
-    throw new Error('LiveKit API credentials not configured');
-  }
-
-  const { roomName, participantIdentity, participantName } = options;
-
+export async function generateToken(
+  roomName: string,
+  participantName: string,
+  participantIdentity: string
+): Promise<string> {
   const at = new AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET, {
     identity: participantIdentity,
     name: participantName,
-    // Token expires in 1 hour (sufficient for typical calls)
-    ttl: 60 * 60,
+    // Token expires in 2 hours
+    ttl: "2h",
   });
 
   at.addGrant({
-    room: roomName,
     roomJoin: true,
+    room: roomName,
     canPublish: true,
     canSubscribe: true,
     canPublishData: true,
@@ -43,10 +39,26 @@ export async function createLiveKitToken(options: CreateTokenOptions): Promise<s
 }
 
 /**
- * Generate a unique room name for a call session
+ * Calculate coins to charge based on call duration
  */
-export function generateRoomName(conversationId: string): string {
-  const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 8);
-  return `exa-call-${conversationId.substring(0, 8)}-${timestamp}-${random}`;
+export function calculateCallCost(
+  durationSeconds: number,
+  ratePerMinute: number
+): number {
+  if (durationSeconds <= 0 || ratePerMinute <= 0) return 0;
+
+  // Charge for full minutes, minimum 1 minute if call started
+  const minutes = Math.max(1, Math.ceil(durationSeconds / 60));
+  return minutes * ratePerMinute;
+}
+
+/**
+ * Create a LiveKit token with named parameters
+ */
+export async function createLiveKitToken(params: {
+  roomName: string;
+  participantIdentity: string;
+  participantName: string;
+}): Promise<string> {
+  return generateToken(params.roomName, params.participantName, params.participantIdentity);
 }
