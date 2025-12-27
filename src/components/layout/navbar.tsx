@@ -44,7 +44,6 @@ const publicLinks: { href: string; label: string; icon: any }[] = [];
 
 const modelLinks = [
   { href: "/dashboard", label: "Home", icon: Home },
-  { href: "/models", label: "Explore", icon: Users },
   { href: "/messages", label: "Chats", icon: MessageCircle },
   { href: "/content", label: "Content", icon: Images },
 ];
