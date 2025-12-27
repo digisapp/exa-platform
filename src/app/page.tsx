@@ -55,6 +55,11 @@ export default function HomePage() {
                 Fans
               </Button>
             </Link>
+            <Link href="/brands/inquiry">
+              <Button variant="outline" className="rounded-full px-8 border-[#FF69B4]/50 hover:border-[#FF69B4] hover:bg-[#FF69B4]/10">
+                Brands
+              </Button>
+            </Link>
           </div>
         </div>
 
