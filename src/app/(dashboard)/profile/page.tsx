@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Loader2, User, Lock, Camera } from "lucide-react";
+import { PhotoUploader } from "@/components/upload/PhotoUploader";
 import { PortfolioGallery } from "@/components/upload/PortfolioGallery";
 import type { Model, MediaAsset } from "@/types/database";
 
