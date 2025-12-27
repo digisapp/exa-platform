@@ -10,6 +10,7 @@ import {
 import type { Metadata } from "next";
 import { PremiumContentGrid } from "@/components/content/PremiumContentGrid";
 import { ShareButton } from "@/components/ui/share-button";
+import { FollowButton } from "@/components/ui/follow-button";
 import { ProfileActionButtons } from "@/components/profile/ProfileActionButtons";
 import { ProfileContentTabs } from "@/components/profile/ProfileContentTabs";
 
@@ -200,7 +201,14 @@ export default async function ModelProfilePage({ params }: Props) {
                 className="h-6 w-auto opacity-80 hover:opacity-100 transition-opacity"
               />
             </Link>
-            <ShareButton title={displayName} />
+            <div className="flex items-center gap-2">
+              <FollowButton
+                modelUsername={model.username}
+                isLoggedIn={!!user}
+                isOwner={isOwner}
+              />
+              <ShareButton title={displayName} />
+            </div>
           </div>
 
           {/* Profile Image */}
