@@ -16,6 +16,7 @@ import {
   Camera,
   Star,
   Clock,
+  PartyPopper,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
@@ -25,6 +26,7 @@ const typeIcons: Record<string, any> = {
   campaign: Camera,
   content: Camera,
   hosting: Users,
+  fun: PartyPopper,
   other: Sparkles,
 };
 
@@ -34,6 +36,7 @@ const typeColors: Record<string, string> = {
   campaign: "bg-blue-500/10 text-blue-500 border-blue-500/20",
   content: "bg-green-500/10 text-green-500 border-green-500/20",
   hosting: "bg-amber-500/10 text-amber-500 border-amber-500/20",
+  fun: "bg-cyan-500/10 text-cyan-500 border-cyan-500/20",
   other: "bg-gray-500/10 text-gray-500 border-gray-500/20",
 };
 
@@ -52,6 +55,7 @@ export default async function OpportunitiesPage() {
   const shows = opportunities?.filter((o) => o.type === "show") || [];
   const travel = opportunities?.filter((o) => o.type === "travel") || [];
   const campaigns = opportunities?.filter((o) => ["campaign", "content"].includes(o.type)) || [];
+  const fun = opportunities?.filter((o) => o.type === "fun") || [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -76,6 +80,7 @@ export default async function OpportunitiesPage() {
             <TabsTrigger value="shows">Shows ({shows.length})</TabsTrigger>
             <TabsTrigger value="travel">Travel ({travel.length})</TabsTrigger>
             <TabsTrigger value="campaigns">Campaigns ({campaigns.length})</TabsTrigger>
+            <TabsTrigger value="fun">Fun ({fun.length})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="all" className="space-y-6">
@@ -92,6 +97,10 @@ export default async function OpportunitiesPage() {
 
           <TabsContent value="campaigns" className="space-y-6">
             <OpportunityGrid opportunities={campaigns} />
+          </TabsContent>
+
+          <TabsContent value="fun" className="space-y-6">
+            <OpportunityGrid opportunities={fun} />
           </TabsContent>
         </Tabs>
       </main>
