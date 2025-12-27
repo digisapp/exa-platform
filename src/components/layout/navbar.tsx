@@ -102,25 +102,25 @@ export function Navbar({ user, actorType, coinBalance = 0 }: NavbarProps) {
         </nav>
 
         {/* Right side */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           {user ? (
             <>
               {/* Coin Balance */}
               <Link
                 href="/wallet"
-                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-pink-500/10 to-violet-500/10 hover:from-pink-500/20 hover:to-violet-500/20 transition-colors"
+                className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 hover:border-yellow-500/50 hover:from-yellow-500/30 hover:to-orange-500/30 transition-all shadow-sm"
               >
-                <Coins className="h-4 w-4 text-pink-500" />
-                <span className="text-sm font-medium">{coinBalance.toLocaleString()}</span>
+                <Coins className="h-4 w-4 text-yellow-500" />
+                <span className="text-sm font-semibold">{coinBalance.toLocaleString()}</span>
               </Link>
 
               {/* User Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-9 w-9 rounded-full">
-                    <Avatar className="h-9 w-9">
+                  <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0 ring-2 ring-pink-500/50 hover:ring-pink-500 transition-all">
+                    <Avatar className="h-10 w-10">
                       <AvatarImage src={user.avatar_url} alt={user.name || ""} />
-                      <AvatarFallback>
+                      <AvatarFallback className="bg-gradient-to-br from-pink-500 to-violet-500 text-white">
                         {user.name?.charAt(0) || user.email?.charAt(0) || "U"}
                       </AvatarFallback>
                     </Avatar>
