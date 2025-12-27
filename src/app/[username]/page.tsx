@@ -202,7 +202,7 @@ export default async function ModelProfilePage({ params }: Props) {
 
       <div className="relative z-10 container max-w-lg mx-auto py-6 px-4">
         {/* Main Profile Card */}
-        <div className="glass-card rounded-3xl p-6 text-center relative">
+        <div className="profile-card rounded-3xl p-6 text-center relative">
           {/* Header Row: Logo and Share */}
           <div className="flex items-center justify-between mb-6">
             <Link href="/">
@@ -220,7 +220,7 @@ export default async function ModelProfilePage({ params }: Props) {
           {/* Profile Image */}
           <div className="flex justify-center mb-4">
             <div className={`relative ${hasMeasurements ? 'group cursor-pointer' : ''}`}>
-              <div className="w-32 h-32 rounded-full overflow-hidden ring-2 ring-white/20 group-hover:ring-white/40 transition-all">
+              <div className="w-32 h-32 rounded-full overflow-hidden ring-2 ring-white/30 group-hover:ring-white/50 transition-all shadow-[0_0_30px_rgba(255,105,180,0.3),0_0_60px_rgba(0,191,255,0.2)]">
                 {model.profile_photo_url ? (
                   <img
                     src={model.profile_photo_url}

@@ -190,6 +190,46 @@
     inset 0 0 80px rgba(255, 105, 180, 0.05);
 }
 
+/* Profile Card - Enhanced pop effect */
+.profile-card {
+  background: linear-gradient(
+    145deg,
+    rgba(40, 15, 70, 0.85) 0%,
+    rgba(25, 10, 45, 0.9) 50%,
+    rgba(30, 12, 55, 0.85) 100%
+  );
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid transparent;
+  background-clip: padding-box;
+  position: relative;
+  box-shadow:
+    0 0 40px rgba(255, 105, 180, 0.15),
+    0 0 80px rgba(0, 191, 255, 0.1),
+    0 25px 50px -12px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 0 100px rgba(255, 105, 180, 0.03);
+}
+
+.profile-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    145deg,
+    rgba(255, 105, 180, 0.5) 0%,
+    rgba(0, 191, 255, 0.3) 50%,
+    rgba(255, 0, 255, 0.4) 100%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
 /* Neon Border */
 .neon-border {
   border: 2px solid transparent;
