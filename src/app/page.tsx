@@ -25,7 +25,7 @@ export default function HomePage() {
       {/* Content */}
       <div className="relative z-10">
         {/* Navigation */}
-        <nav className="container py-6">
+        <nav className="container px-6 md:px-10 py-6">
           <div className="flex items-center justify-between">
             <Link href="/">
               <Image
@@ -62,7 +62,7 @@ export default function HomePage() {
         </nav>
 
         {/* Hero Section */}
-        <section className="container py-16 md:py-24 lg:py-32">
+        <section className="container px-6 md:px-10 py-16 md:py-24 lg:py-32">
           <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card mb-8">
               <Sparkles className="h-4 w-4 text-[#FF69B4]" />
@@ -122,7 +122,7 @@ export default function HomePage() {
 
         {/* How It Works */}
         <section className="py-24">
-          <div className="container">
+          <div className="container px-6 md:px-10">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-bold mb-4 exa-gradient-text">
                 How EXA Works
@@ -182,7 +182,7 @@ export default function HomePage() {
 
         {/* Opportunity Types */}
         <section className="py-24">
-          <div className="container">
+          <div className="container px-6 md:px-10">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-bold mb-4 exa-gradient-text">
                 Opportunities Await
@@ -245,7 +245,7 @@ export default function HomePage() {
 
         {/* Levels / Gamification */}
         <section className="py-24">
-          <div className="container">
+          <div className="container px-6 md:px-10">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-bold mb-4 exa-gradient-text">
                 Level Up Your Career
@@ -280,7 +280,7 @@ export default function HomePage() {
 
         {/* Upcoming Events */}
         <section className="py-24">
-          <div className="container">
+          <div className="container px-6 md:px-10">
             <div className="flex items-center justify-between mb-12">
               <div>
                 <h2 className="text-3xl md:text-4xl font-bold mb-2 exa-gradient-text">
@@ -357,7 +357,7 @@ export default function HomePage() {
 
         {/* CTA */}
         <section className="py-24">
-          <div className="container">
+          <div className="container px-6 md:px-10">
             <div className="glass-card rounded-3xl p-12 md:p-16 text-center max-w-4xl mx-auto">
               <h2 className="text-3xl md:text-4xl font-bold mb-6 exa-glow-text">
                 Ready to Start Your Journey?
@@ -378,7 +378,7 @@ export default function HomePage() {
 
         {/* Footer */}
         <footer className="py-12 border-t border-[#FF69B4]/20">
-          <div className="container">
+          <div className="container px-6 md:px-10">
             <div className="flex flex-col md:flex-row items-center justify-between gap-6">
               <div className="flex items-center gap-3">
                 <Image
