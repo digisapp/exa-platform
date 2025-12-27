@@ -40,7 +40,10 @@ import {
   Eye,
   Image as ImageIcon,
   Video,
+  Unlock,
+  Images,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 
 interface PremiumContent {
@@ -71,6 +74,7 @@ export default function ContentPage() {
   // Form state
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [isPaid, setIsPaid] = useState(false);
   const [coinPrice, setCoinPrice] = useState("10");
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
@@ -202,8 +206,8 @@ export default function ContentPage() {
         description: description || null,
         mediaUrl,
         mediaType,
-        previewUrl: null, // Could generate a blurred preview
-        coinPrice: parseInt(coinPrice),
+        previewUrl: null,
+        coinPrice: isPaid ? parseInt(coinPrice) : 0,
       }),
     });
 
@@ -212,7 +216,7 @@ export default function ContentPage() {
       throw new Error(data.error || "Failed to create content");
     }
 
-    toast.success("Premium content uploaded!");
+    toast.success("Content uploaded!");
     setDialogOpen(false);
     resetForm();
     fetchContent();
@@ -236,6 +240,7 @@ export default function ContentPage() {
   const resetForm = () => {
     setTitle("");
     setDescription("");
+    setIsPaid(false);
     setCoinPrice("10");
     setMediaFile(null);
     setMediaPreview(null);
@@ -254,11 +259,11 @@ export default function ContentPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Lock className="h-8 w-8 text-pink-500" />
-            Premium Content
+            <Images className="h-8 w-8 text-pink-500" />
+            Content
           </h1>
           <p className="text-muted-foreground mt-1">
-            Upload exclusive content for your fans to unlock
+            Upload photos and videos for your fans
           </p>
         </div>
 
@@ -353,25 +358,42 @@ export default function ContentPage() {
                 />
               </div>
 
-              {/* Price */}
-              <div className="space-y-2">
-                <Label>Price in Coins</Label>
-                <Select value={coinPrice} onValueChange={setCoinPrice}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PRICE_OPTIONS.map((price) => (
-                      <SelectItem key={price} value={price.toString()}>
-                        <span className="flex items-center gap-2">
-                          <Coins className="h-4 w-4 text-pink-500" />
-                          {price} coins
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              {/* Free/Paid Toggle */}
+              <div className="flex items-center justify-between p-4 rounded-lg border">
+                <div className="space-y-0.5">
+                  <Label htmlFor="paid-toggle" className="text-base">Paid Content</Label>
+                  <p className="text-sm text-muted-foreground">
+                    {isPaid ? "Fans pay coins to unlock" : "Free for all fans"}
+                  </p>
+                </div>
+                <Switch
+                  id="paid-toggle"
+                  checked={isPaid}
+                  onCheckedChange={setIsPaid}
+                />
               </div>
+
+              {/* Price - only show if paid */}
+              {isPaid && (
+                <div className="space-y-2">
+                  <Label>Price in Coins</Label>
+                  <Select value={coinPrice} onValueChange={setCoinPrice}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PRICE_OPTIONS.map((price) => (
+                        <SelectItem key={price} value={price.toString()}>
+                          <span className="flex items-center gap-2">
+                            <Coins className="h-4 w-4 text-pink-500" />
+                            {price} coins
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               {/* Upload Button */}
               <Button
@@ -397,14 +419,26 @@ export default function ContentPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription className="flex items-center gap-1">
+              <Images className="h-3 w-3" />
+              Total Content
+            </CardDescription>
+            <CardTitle className="text-2xl">{content.length}</CardTitle>
+          </CardHeader>
+        </Card>
+
         <Card>
           <CardHeader className="pb-2">
             <CardDescription className="flex items-center gap-1">
               <Lock className="h-3 w-3" />
-              Total Content
+              Paid Content
             </CardDescription>
-            <CardTitle className="text-2xl">{content.length}</CardTitle>
+            <CardTitle className="text-2xl">
+              {content.filter((c) => c.coin_price > 0).length}
+            </CardTitle>
           </CardHeader>
         </Card>
 
@@ -437,10 +471,10 @@ export default function ContentPage() {
       {content.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <Lock className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No premium content yet</h3>
+            <Images className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No content yet</h3>
             <p className="text-muted-foreground mb-4">
-              Upload exclusive photos and videos for your fans to unlock
+              Upload photos and videos for your fans
             </p>
             <Button
               onClick={() => setDialogOpen(true)}
@@ -471,11 +505,22 @@ export default function ContentPage() {
                 )}
 
                 {/* Type Badge */}
-                <div className="absolute top-2 left-2 bg-black/70 px-2 py-1 rounded flex items-center gap-1">
-                  {item.media_type === "video" ? (
-                    <Video className="h-3 w-3 text-white" />
+                <div className="absolute top-2 left-2 flex gap-1">
+                  <div className="bg-black/70 px-2 py-1 rounded flex items-center gap-1">
+                    {item.media_type === "video" ? (
+                      <Video className="h-3 w-3 text-white" />
+                    ) : (
+                      <ImageIcon className="h-3 w-3 text-white" />
+                    )}
+                  </div>
+                  {item.coin_price > 0 ? (
+                    <div className="bg-pink-500/90 px-2 py-1 rounded flex items-center gap-1">
+                      <Lock className="h-3 w-3 text-white" />
+                    </div>
                   ) : (
-                    <ImageIcon className="h-3 w-3 text-white" />
+                    <div className="bg-green-500/90 px-2 py-1 rounded flex items-center gap-1">
+                      <Unlock className="h-3 w-3 text-white" />
+                    </div>
                   )}
                 </div>
 
@@ -492,14 +537,23 @@ export default function ContentPage() {
 
               <CardContent className="p-3">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1 text-sm">
-                    <Coins className="h-4 w-4 text-pink-500" />
-                    <span className="font-semibold">{item.coin_price}</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <Eye className="h-4 w-4" />
-                    <span>{item.unlock_count}</span>
-                  </div>
+                  {item.coin_price > 0 ? (
+                    <div className="flex items-center gap-1 text-sm">
+                      <Coins className="h-4 w-4 text-pink-500" />
+                      <span className="font-semibold">{item.coin_price}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1 text-sm text-green-500">
+                      <Unlock className="h-4 w-4" />
+                      <span className="font-semibold">Free</span>
+                    </div>
+                  )}
+                  {item.coin_price > 0 && (
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <Eye className="h-4 w-4" />
+                      <span>{item.unlock_count}</span>
+                    </div>
+                  )}
                 </div>
                 {item.title && (
                   <p className="text-sm font-medium mt-1 truncate">{item.title}</p>
