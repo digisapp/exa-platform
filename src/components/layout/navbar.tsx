@@ -22,12 +22,12 @@ import {
   MessageCircle,
   Bell,
   Settings,
-  LogOut,
   User,
   Coins,
   Images,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { LogoutButton } from "@/components/auth/logout-button";
 
 interface NavbarProps {
   user?: {
@@ -168,10 +168,7 @@ export function Navbar({ user, actorType, coinBalance = 0 }: NavbarProps) {
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/auth/logout" className="cursor-pointer text-red-500">
-                      <LogOut className="mr-2 h-4 w-4" />
-                      Sign Out
-                    </Link>
+                    <LogoutButton className="cursor-pointer text-red-500 flex items-center w-full" />
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
