@@ -226,13 +226,7 @@ export default async function ModelProfilePage({ params }: Props) {
       {/* Content */}
       <div className="relative z-10 container max-w-2xl mx-auto py-8 px-4">
         {/* Header with Logo */}
-        <div className="flex items-center justify-between mb-6">
-          <Link
-            href="/models"
-            className="inline-flex items-center gap-2 text-[#00BFFF] hover:text-[#FF69B4] transition-colors"
-          >
-            ← Back to Models
-          </Link>
+        <div className="mb-6">
           <Link href="/">
             <Image
               src="/exa-logo-white.png"
