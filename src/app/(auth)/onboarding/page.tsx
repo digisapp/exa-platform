@@ -15,11 +15,14 @@ import { toast } from "sonner";
 import { Loader2, ArrowRight, ArrowLeft } from "lucide-react";
 
 const US_STATES = [
-  "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
-  "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
-  "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
-  "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
-  "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
+  "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
+  "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa",
+  "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan",
+  "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire",
+  "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio",
+  "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota",
+  "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia",
+  "Wisconsin", "Wyoming"
 ];
 
 export default function OnboardingPage() {
@@ -27,12 +30,13 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     username: "",
-    name: "",
+    first_name: "",
+    last_name: "",
     bio: "",
     city: "",
     state: "",
-    instagram_handle: "",
-    height_inches: "",
+    instagram_name: "",
+    height: "",
   });
   const router = useRouter();
   const supabase = createClient();
@@ -49,49 +53,33 @@ export default function OnboardingPage() {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) throw new Error("Not authenticated");
 
-      // Create actor record
-      const { data: actor, error: actorError } = await supabase
-        .from("actors")
-        .insert({
-          user_id: user.id,
-          type: "model",
-        } as any)
-        .select()
-        .single();
-
-      if (actorError) throw actorError;
-
-      // Create model profile
-      const { error: modelError } = await supabase
+      // Create model profile directly
+      const { error: modelError } = await (supabase
         .from("models")
         .insert({
-          id: (actor as any).id,
+          user_id: user.id,
           username: formData.username.toLowerCase().replace(/[^a-z0-9_]/g, ""),
           email: user.email,
-          name: formData.name,
-          bio: formData.bio,
-          city: formData.city,
-          state: formData.state,
-          instagram_handle: formData.instagram_handle.replace("@", ""),
-          height_inches: formData.height_inches ? parseInt(formData.height_inches) : null,
-          is_approved: true, // Auto-approve for now
-          profile_complete: true,
-        } as any);
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          bio: formData.bio || null,
+          city: formData.city || null,
+          state: formData.state || null,
+          instagram_name: formData.instagram_name.replace("@", "") || null,
+          height: formData.height || null,
+          is_approved: true,
+          status: "approved",
+          show_location: true,
+          show_social_media: true,
+        }) as any);
 
       if (modelError) throw modelError;
-
-      // Award points for completing profile
-      await (supabase.rpc as any)("award_points", {
-        p_model_id: (actor as any).id,
-        p_action: "profile_complete",
-        p_points: 100,
-        p_metadata: {},
-      });
 
       toast.success("Profile created! Welcome to EXA!");
       router.push("/dashboard");
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to create profile";
+      console.error("Profile creation error:", error);
       toast.error(message);
     } finally {
       setLoading(false);
@@ -133,18 +121,29 @@ export default function OnboardingPage() {
                   required
                 />
                 <p className="text-xs text-muted-foreground">
-                  This will be your profile URL: exa.com/models/{formData.username || "yourname"}
+                  This will be your profile URL: examodels.com/{formData.username || "yourname"}
                 </p>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name *</Label>
-                <Input
-                  id="name"
-                  placeholder="Your full name"
-                  value={formData.name}
-                  onChange={(e) => updateField("name", e.target.value)}
-                  required
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="first_name">First Name *</Label>
+                  <Input
+                    id="first_name"
+                    placeholder="First name"
+                    value={formData.first_name}
+                    onChange={(e) => updateField("first_name", e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="last_name">Last Name</Label>
+                  <Input
+                    id="last_name"
+                    placeholder="Last name"
+                    value={formData.last_name}
+                    onChange={(e) => updateField("last_name", e.target.value)}
+                  />
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="bio">Bio</Label>
@@ -186,16 +185,15 @@ export default function OnboardingPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="height">Height (inches)</Label>
+                <Label htmlFor="height">Height</Label>
                 <Input
                   id="height"
-                  type="number"
-                  placeholder="66"
-                  value={formData.height_inches}
-                  onChange={(e) => updateField("height_inches", e.target.value)}
+                  placeholder="5'8&quot;"
+                  value={formData.height}
+                  onChange={(e) => updateField("height", e.target.value)}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Example: 5&apos;6&quot; = 66 inches, 5&apos;10&quot; = 70 inches
+                  Example: 5&apos;6&quot;, 5&apos;10&quot;, etc.
                 </p>
               </div>
             </>
@@ -208,22 +206,19 @@ export default function OnboardingPage() {
                 <Input
                   id="instagram"
                   placeholder="@yourhandle"
-                  value={formData.instagram_handle}
-                  onChange={(e) => updateField("instagram_handle", e.target.value)}
+                  value={formData.instagram_name}
+                  onChange={(e) => updateField("instagram_name", e.target.value)}
                 />
               </div>
               <div className="p-4 rounded-lg bg-muted/50 mt-4">
                 <h4 className="font-medium mb-2">Profile Summary</h4>
                 <div className="text-sm space-y-1 text-muted-foreground">
                   <p><strong>Username:</strong> @{formData.username || "—"}</p>
-                  <p><strong>Name:</strong> {formData.name || "—"}</p>
+                  <p><strong>Name:</strong> {formData.first_name} {formData.last_name || ""}</p>
                   <p><strong>Location:</strong> {formData.city && formData.state ? `${formData.city}, ${formData.state}` : "—"}</p>
-                  <p><strong>Instagram:</strong> {formData.instagram_handle || "—"}</p>
+                  <p><strong>Instagram:</strong> {formData.instagram_name || "—"}</p>
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground">
-                You&apos;ll earn <strong className="text-primary">+100 points</strong> for completing your profile!
-              </p>
             </>
           )}
         </CardContent>
@@ -241,7 +236,7 @@ export default function OnboardingPage() {
           {step < 3 ? (
             <Button
               onClick={() => setStep(step + 1)}
-              disabled={step === 1 && (!formData.username || !formData.name)}
+              disabled={step === 1 && (!formData.username || !formData.first_name)}
             >
               Next
               <ArrowRight className="ml-2 h-4 w-4" />
