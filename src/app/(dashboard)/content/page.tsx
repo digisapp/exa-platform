@@ -290,7 +290,7 @@ export default function ContentPage() {
             <DialogHeader>
               <DialogTitle>Upload Content</DialogTitle>
               <DialogDescription>
-                Upload a photo or video for your fans
+                Upload a photo or video for your profile page
               </DialogDescription>
             </DialogHeader>
 
