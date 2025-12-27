@@ -77,10 +77,7 @@ export default function LoginPage() {
               className="h-10 w-auto"
             />
           </Link>
-          <CardTitle>Welcome Back</CardTitle>
-          <CardDescription>
-            Sign in to your account
-          </CardDescription>
+          <CardTitle>Sign In</CardTitle>
         </CardHeader>
         <form onSubmit={handleLogin}>
           <CardContent className="space-y-4">
