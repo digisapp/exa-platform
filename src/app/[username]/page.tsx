@@ -6,7 +6,6 @@ import { FloatingOrbs } from "@/components/ui/floating-orbs";
 import {
   MapPin,
   Instagram,
-  Ruler,
 } from "lucide-react";
 import type { Metadata } from "next";
 import { PremiumContentGrid } from "@/components/content/PremiumContentGrid";
@@ -220,8 +219,8 @@ export default async function ModelProfilePage({ params }: Props) {
 
           {/* Profile Image */}
           <div className="flex justify-center mb-4">
-            <div className="relative">
-              <div className="w-32 h-32 rounded-full overflow-hidden ring-2 ring-white/20">
+            <div className={`relative ${hasMeasurements ? 'group cursor-pointer' : ''}`}>
+              <div className="w-32 h-32 rounded-full overflow-hidden ring-2 ring-white/20 group-hover:ring-white/40 transition-all">
                 {model.profile_photo_url ? (
                   <img
                     src={model.profile_photo_url}
@@ -238,6 +237,21 @@ export default async function ModelProfilePage({ params }: Props) {
               {model.availability_status === 'available' && (
                 <div className="absolute bottom-1 right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-[#1a0033]" />
               )}
+              {/* Measurements Popup - shows on hover */}
+              {hasMeasurements && (
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-50">
+                  <div className="glass-card rounded-xl p-4 min-w-[180px] shadow-xl">
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      {measurements.map((m) => (
+                        <div key={m.label} className="flex justify-between gap-2">
+                          <span className="text-white/50">{m.label}</span>
+                          <span className="text-white capitalize">{m.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -251,36 +265,13 @@ export default async function ModelProfilePage({ params }: Props) {
             <p className="text-[#00BFFF] text-sm mb-2">@{model.username}</p>
           )}
 
-          {/* Location & Measurements Row */}
-          <div className="flex items-center justify-center gap-3 text-sm text-white/60 mb-4">
-            {model.show_location && (model.city || model.state) && (
-              <div className="flex items-center gap-1">
-                <MapPin className="h-3.5 w-3.5" />
-                <span>{model.city && model.state ? `${model.city}, ${model.state}` : model.city || model.state}</span>
-              </div>
-            )}
-            {hasMeasurements && (
-              <div className="group relative">
-                <button className="flex items-center gap-1 hover:text-white transition-colors">
-                  <Ruler className="h-3.5 w-3.5" />
-                  <span>Stats</span>
-                </button>
-                {/* Measurements Popup */}
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-50">
-                  <div className="glass-card rounded-xl p-4 min-w-[180px] shadow-xl">
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      {measurements.map((m) => (
-                        <div key={m.label} className="flex justify-between gap-2">
-                          <span className="text-white/50">{m.label}</span>
-                          <span className="text-white capitalize">{m.value}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+          {/* Location */}
+          {model.show_location && (model.city || model.state) && (
+            <div className="flex items-center justify-center gap-1 text-sm text-white/60 mb-4">
+              <MapPin className="h-3.5 w-3.5" />
+              <span>{model.city && model.state ? `${model.city}, ${model.state}` : model.city || model.state}</span>
+            </div>
+          )}
 
           {/* Social Media Icons - Consistent Design */}
           {model.show_social_media && socialLinks.length > 0 && (
