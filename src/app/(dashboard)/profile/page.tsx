@@ -104,6 +104,11 @@ export default function ProfilePage() {
           eye_color: model.eye_color,
           instagram_name: model.instagram_name,
           tiktok_username: model.tiktok_username,
+          snapchat_username: model.snapchat_username,
+          x_username: model.x_username,
+          youtube_username: model.youtube_username,
+          twitch_username: model.twitch_username,
+          digis_username: model.digis_username,
           show_measurements: model.show_measurements,
           show_location: model.show_location,
           show_social_media: model.show_social_media,
@@ -159,6 +164,44 @@ export default function ProfilePage() {
         </TabsList>
 
         <TabsContent value="profile" className="space-y-6">
+          {/* Profile Picture */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Profile Picture</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-6">
+                <div className="relative">
+                  {model.profile_photo_url ? (
+                    <img
+                      src={model.profile_photo_url}
+                      alt="Profile"
+                      className="w-24 h-24 rounded-full object-cover border-2 border-pink-500/50"
+                    />
+                  ) : (
+                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center text-white text-3xl font-bold">
+                      {model.first_name?.charAt(0) || model.username?.charAt(0)?.toUpperCase() || "?"}
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Upload a profile picture. JPG, PNG or WebP, max 5MB.
+                  </p>
+                  <PhotoUploader
+                    actorId={model.id}
+                    onUploadComplete={(url) => {
+                      setModel({ ...model, profile_photo_url: url });
+                      toast.success("Profile picture updated!");
+                    }}
+                    uploadType="avatar"
+                    buttonText="Upload Photo"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle>Basic Information</CardTitle>
@@ -344,6 +387,51 @@ export default function ProfilePage() {
                     id="tiktok"
                     value={model.tiktok_username || ""}
                     onChange={(e) => setModel({ ...model, tiktok_username: e.target.value.replace("@", "") })}
+                    placeholder="username"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="snapchat">Snapchat</Label>
+                  <Input
+                    id="snapchat"
+                    value={model.snapchat_username || ""}
+                    onChange={(e) => setModel({ ...model, snapchat_username: e.target.value.replace("@", "") })}
+                    placeholder="username"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="x">X (Twitter)</Label>
+                  <Input
+                    id="x"
+                    value={model.x_username || ""}
+                    onChange={(e) => setModel({ ...model, x_username: e.target.value.replace("@", "") })}
+                    placeholder="username"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="youtube">YouTube</Label>
+                  <Input
+                    id="youtube"
+                    value={model.youtube_username || ""}
+                    onChange={(e) => setModel({ ...model, youtube_username: e.target.value.replace("@", "") })}
+                    placeholder="channel name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="twitch">Twitch</Label>
+                  <Input
+                    id="twitch"
+                    value={model.twitch_username || ""}
+                    onChange={(e) => setModel({ ...model, twitch_username: e.target.value.replace("@", "") })}
+                    placeholder="username"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="digis">Digis.cc</Label>
+                  <Input
+                    id="digis"
+                    value={model.digis_username || ""}
+                    onChange={(e) => setModel({ ...model, digis_username: e.target.value.replace("@", "") })}
                     placeholder="username"
                   />
                 </div>

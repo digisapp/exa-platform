@@ -423,10 +423,10 @@ export default async function ModelProfilePage({ params }: Props) {
           )}
 
           {/* Social Links */}
-          {model.show_social_media && (model.instagram_name || model.tiktok_username) && (
+          {model.show_social_media && (model.instagram_name || model.tiktok_username || model.snapchat_username || model.x_username || model.youtube_username || model.twitch_username || model.digis_username) && (
             <div className="mb-8">
               <h2 className="text-lg font-semibold mb-4 exa-gradient-text">Social Media</h2>
-              <div className="flex flex-wrap justify-center gap-4">
+              <div className="flex flex-wrap justify-center gap-3">
                 {model.instagram_name && (
                   <a
                     href={model.instagram_url || `https://instagram.com/${model.instagram_name}`}
@@ -447,6 +447,61 @@ export default async function ModelProfilePage({ params }: Props) {
                   >
                     <span className="text-lg">♪</span>
                     @{model.tiktok_username}
+                  </a>
+                )}
+                {model.snapchat_username && (
+                  <a
+                    href={`https://snapchat.com/add/${model.snapchat_username}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#FFFC00] text-black hover:scale-105 transition-transform"
+                  >
+                    <span className="text-lg">👻</span>
+                    @{model.snapchat_username}
+                  </a>
+                )}
+                {model.x_username && (
+                  <a
+                    href={`https://x.com/${model.x_username}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-black text-white border border-white/20 hover:scale-105 transition-transform"
+                  >
+                    <span className="font-bold">𝕏</span>
+                    @{model.x_username}
+                  </a>
+                )}
+                {model.youtube_username && (
+                  <a
+                    href={`https://youtube.com/@${model.youtube_username}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#FF0000] text-white hover:scale-105 transition-transform"
+                  >
+                    <span className="text-lg">▶</span>
+                    @{model.youtube_username}
+                  </a>
+                )}
+                {model.twitch_username && (
+                  <a
+                    href={`https://twitch.tv/${model.twitch_username}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#9146FF] text-white hover:scale-105 transition-transform"
+                  >
+                    <span className="text-lg">📺</span>
+                    @{model.twitch_username}
+                  </a>
+                )}
+                {model.digis_username && (
+                  <a
+                    href={`https://digis.cc/${model.digis_username}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 text-white hover:scale-105 transition-transform"
+                  >
+                    <span className="text-lg">✨</span>
+                    @{model.digis_username}
                   </a>
                 )}
               </div>
