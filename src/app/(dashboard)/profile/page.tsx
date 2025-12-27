@@ -12,10 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2, User, Lock, Camera, DollarSign } from "lucide-react";
-import { PhotoUploader } from "@/components/upload/PhotoUploader";
-import { PortfolioGallery } from "@/components/upload/PortfolioGallery";
-import type { Model, MediaAsset } from "@/types/database";
+import { Loader2, User, Lock, DollarSign, Camera } from "lucide-react";
+import type { Model } from "@/types/database";
 
 const US_STATES = [
   "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
@@ -27,7 +25,6 @@ const US_STATES = [
 
 export default function ProfilePage() {
   const [model, setModel] = useState<Model | null>(null);
-  const [photos, setPhotos] = useState<MediaAsset[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -101,18 +98,6 @@ export default function ProfilePage() {
 
       if (modelData) {
         setModel(modelData);
-      }
-
-      // Fetch portfolio photos
-      const { data: photosData } = await supabase
-        .from("media_assets")
-        .select("*")
-        .eq("owner_id", actor.id)
-        .eq("source", "portfolio")
-        .order("created_at", { ascending: false }) as { data: MediaAsset[] | null };
-
-      if (photosData) {
-        setPhotos(photosData);
       }
 
       setLoading(false);
@@ -204,10 +189,6 @@ export default function ProfilePage() {
           <TabsTrigger value="privacy">
             <Lock className="h-4 w-4 mr-2" />
             Privacy
-          </TabsTrigger>
-          <TabsTrigger value="photos">
-            <Camera className="h-4 w-4 mr-2" />
-            Photos
           </TabsTrigger>
         </TabsList>
 
@@ -722,42 +703,6 @@ export default function ProfilePage() {
                   <SelectItem value="not_available">Not Available</SelectItem>
                 </SelectContent>
               </Select>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="photos" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Upload Photos</CardTitle>
-              <CardDescription>
-                Add photos to your portfolio. Each photo earns +10 points!
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <PhotoUploader
-                type="portfolio"
-                onUploadComplete={(url, mediaAsset) => {
-                  setPhotos((prev) => [mediaAsset, ...prev]);
-                }}
-              />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Your Portfolio</CardTitle>
-              <CardDescription>
-                {photos.length} photo{photos.length !== 1 ? "s" : ""} in your portfolio
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <PortfolioGallery
-                photos={photos}
-                onDelete={(photoId) => {
-                  setPhotos((prev) => prev.filter((p) => p.id !== photoId));
-                }}
-              />
             </CardContent>
           </Card>
         </TabsContent>
