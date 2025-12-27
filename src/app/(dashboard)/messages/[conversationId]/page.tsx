@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import { ChatView } from "@/components/chat/ChatView";
-import type { Message, Actor, Model, Conversation } from "@/types/database";
+import type { Message, Actor, Model, Conversation, Fan } from "@/types/database";
 
 interface PageProps {
   params: Promise<{ conversationId: string }>;
@@ -26,12 +26,25 @@ export default async function ChatPage({ params }: PageProps) {
 
   if (!actor) redirect("/onboarding");
 
-  // Get current model data (for coin balance)
-  const { data: currentModel } = (await supabase
-    .from("models")
-    .select("*")
-    .eq("id", actor.id)
-    .single()) as { data: Model | null };
+  // Get current model or fan data (for coin balance)
+  let currentModel: Model | null = null;
+  let currentFan: Fan | null = null;
+
+  if (actor.type === "model" || actor.type === "admin") {
+    const { data } = (await supabase
+      .from("models")
+      .select("*")
+      .eq("id", actor.id)
+      .single()) as { data: Model | null };
+    currentModel = data;
+  } else if (actor.type === "fan") {
+    const { data } = (await supabase
+      .from("fans")
+      .select("*")
+      .eq("id", actor.id)
+      .single()) as { data: Fan | null };
+    currentFan = data;
+  }
 
   // Get conversation
   const { data: conversation } = (await supabase
@@ -111,6 +124,7 @@ export default async function ChatPage({ params }: PageProps) {
       initialMessages={messages || []}
       currentActor={actor}
       currentModel={currentModel}
+      currentFan={currentFan}
       otherParticipant={otherParticipant}
     />
   );

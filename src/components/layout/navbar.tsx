@@ -26,6 +26,7 @@ import {
   User,
   Trophy,
   Coins,
+  TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -48,6 +49,7 @@ const modelLinks = [
   { href: "/models", label: "Browse", icon: Users },
   { href: "/opportunities", label: "Opportunities", icon: Sparkles },
   { href: "/messages", label: "Messages", icon: MessageCircle },
+  { href: "/earnings", label: "Earnings", icon: TrendingUp },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
 ];
 
@@ -160,6 +162,14 @@ export function Navbar({ user, actorType, coinBalance = 0 }: NavbarProps) {
                       </span>
                     </Link>
                   </DropdownMenuItem>
+                  {(actorType === "model" || actorType === "admin") && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/earnings" className="cursor-pointer">
+                        <TrendingUp className="mr-2 h-4 w-4" />
+                        Earnings
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem asChild>
                     <Link href="/settings" className="cursor-pointer">
                       <Settings className="mr-2 h-4 w-4" />

@@ -4,12 +4,13 @@ import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { MessageBubble } from "./MessageBubble";
 import { MessageInput } from "./MessageInput";
+import { TipDialog } from "./TipDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
-import type { Message, Actor, Model, Conversation } from "@/types/database";
+import type { Message, Actor, Model, Conversation, Fan } from "@/types/database";
 
 interface Participant {
   actor_id: string;
@@ -22,6 +23,7 @@ interface ChatViewProps {
   initialMessages: Message[];
   currentActor: Actor;
   currentModel?: Model | null;
+  currentFan?: Fan | null;
   otherParticipant: Participant;
 }
 
@@ -30,10 +32,14 @@ export function ChatView({
   initialMessages,
   currentActor,
   currentModel,
+  currentFan,
   otherParticipant,
 }: ChatViewProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [loading, setLoading] = useState(false);
+  const [localCoinBalance, setLocalCoinBalance] = useState(
+    currentFan?.coin_balance || currentModel?.coin_balance || 0
+  );
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
 
@@ -41,7 +47,9 @@ export function ChatView({
   const isModelToModel =
     currentActor.type === "model" && otherParticipant.actor.type === "model";
   const coinCost = isModelToModel || currentActor.type === "model" ? 0 : 10;
-  const coinBalance = currentModel?.coin_balance || 0;
+
+  // Can tip if the other participant is a model and we're not a model
+  const canTip = otherParticipant.actor.type === "model" && currentActor.type !== "model";
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -179,6 +187,19 @@ export function ChatView({
             </Link>
           )}
         </div>
+
+        {/* Tip button */}
+        {canTip && (
+          <TipDialog
+            recipientId={otherParticipant.actor_id}
+            recipientName={otherName}
+            conversationId={conversation.id}
+            coinBalance={localCoinBalance}
+            onTipSuccess={(amount, newBalance) => {
+              setLocalCoinBalance(newBalance);
+            }}
+          />
+        )}
       </div>
 
       {/* Messages */}
@@ -223,7 +244,7 @@ export function ChatView({
         onSend={handleSendMessage}
         disabled={loading}
         coinCost={coinCost}
-        coinBalance={coinBalance}
+        coinBalance={localCoinBalance}
         placeholder={
           coinCost > 0
             ? `Message (${coinCost} coins)...`
