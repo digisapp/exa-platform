@@ -28,13 +28,15 @@ const INDUSTRIES = [
   "Other"
 ];
 
-const PARTNERSHIP_TYPES = [
-  { value: "fashion_show", label: "Fashion Show Sponsorship" },
-  { value: "brand_campaign", label: "Brand Campaign / Photoshoot" },
-  { value: "influencer", label: "Influencer / Model Partnerships" },
-  { value: "event_hosting", label: "Event Hosting / Sponsorship" },
-  { value: "content_creation", label: "Content Creation" },
+const CAMPAIGN_TYPES = [
+  { value: "fashion_show", label: "Fashion Shows / Runway" },
+  { value: "photoshoot", label: "Photoshoots" },
+  { value: "events", label: "Brand Events / Activations" },
+  { value: "social_media", label: "Social Media / Influencer Marketing" },
+  { value: "tiktok_live", label: "TikTok Shop / Live Shopping" },
+  { value: "tech_app", label: "Tech / App Promotions" },
   { value: "ambassador", label: "Brand Ambassador Program" },
+  { value: "content_creation", label: "Content Creation" },
   { value: "other", label: "Other" },
 ];
 
@@ -116,11 +118,11 @@ export default function BrandInquiryPage() {
             <div className="text-5xl mb-4">🤝</div>
             <CardTitle className="exa-gradient-text">Inquiry Received!</CardTitle>
             <CardDescription>
-              Thank you for your interest in partnering with EXA.
+              Thank you for your interest in working with EXA.
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center text-muted-foreground space-y-4">
-            <p>Our partnerships team will review your inquiry and get back to you within 24-48 hours.</p>
+            <p>Our team will review your inquiry and get back to you within 24-48 hours.</p>
             <p>You&apos;ll receive a response at <strong className="text-foreground">{formData.email}</strong></p>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
@@ -261,17 +263,17 @@ export default function BrandInquiryPage() {
                 </div>
               </div>
 
-              {/* Partnership Details */}
+              {/* Campaign Details */}
               <div className="space-y-4 pt-4 border-t border-border/40">
                 <h3 className="text-lg font-semibold flex items-center gap-2">
                   <span className="text-[#00BFFF]">02</span>
-                  Partnership Details
+                  Campaign Details
                 </h3>
 
                 <div className="space-y-2">
                   <Label htmlFor="partnership_type" className="flex items-center gap-2">
                     <Target className="h-4 w-4 text-[#FF69B4]" />
-                    Type of Partnership
+                    Type of Campaign
                   </Label>
                   <Select
                     value={formData.partnership_type}
@@ -279,10 +281,10 @@ export default function BrandInquiryPage() {
                     disabled={loading}
                   >
                     <SelectTrigger className="bg-background/50">
-                      <SelectValue placeholder="Select partnership type" />
+                      <SelectValue placeholder="Select campaign type" />
                     </SelectTrigger>
                     <SelectContent>
-                      {PARTNERSHIP_TYPES.map((type) => (
+                      {CAMPAIGN_TYPES.map((type) => (
                         <SelectItem key={type.value} value={type.value}>
                           {type.label}
                         </SelectItem>
