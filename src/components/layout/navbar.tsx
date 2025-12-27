@@ -49,13 +49,11 @@ const modelLinks = [
   { href: "/opportunities", label: "Opportunities", icon: Sparkles },
   { href: "/messages", label: "Chats", icon: MessageCircle },
   { href: "/content", label: "Content", icon: Lock },
-  { href: "/wallet", label: "Wallet", icon: Coins },
 ];
 
 const fanLinks = [
   { href: "/models", label: "Browse Models", icon: Users },
   { href: "/messages", label: "Chats", icon: MessageCircle },
-  { href: "/wallet", label: "Wallet", icon: Coins },
 ];
 
 const adminLinks = [
