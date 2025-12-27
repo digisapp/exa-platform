@@ -244,6 +244,13 @@ export default async function ModelProfilePage({ params }: Props) {
             <p className="text-[#00BFFF] text-sm mb-2">@{model.username}</p>
           )}
 
+          {/* Bio - under name */}
+          {model.bio && (
+            <p className="text-white/70 text-sm leading-relaxed text-center mb-3 max-w-sm mx-auto">
+              {model.bio}
+            </p>
+          )}
+
           {/* Location */}
           {model.show_location && (model.city || model.state) && (
             <div className="flex items-center justify-center gap-1 text-sm text-white/60 mb-4">
@@ -283,13 +290,6 @@ export default async function ModelProfilePage({ params }: Props) {
             modelActorId={modelActorId}
           />
 
-          {/* Bio */}
-          {model.bio && (
-            <div className="mb-6 text-left">
-              <p className="text-white/70 text-sm leading-relaxed">{model.bio}</p>
-            </div>
-          )}
-
           {/* Affiliate Links - Linktree Style */}
           {model.affiliate_links && model.affiliate_links.length > 0 && (
             <div className="mb-6 space-y-3">
@@ -300,20 +300,9 @@ export default async function ModelProfilePage({ params }: Props) {
                     href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group flex items-center justify-between w-full px-5 py-4 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 hover:border-white/20 transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-pink-500/10"
+                    className="group flex items-center justify-center w-full px-5 py-4 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 hover:border-white/20 transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-pink-500/10"
                   >
-                    <div className="flex items-center gap-3">
-                      <span className="text-lg">🔗</span>
-                      <span className="font-medium text-white">{link.title}</span>
-                    </div>
-                    <svg
-                      className="w-5 h-5 text-white/50 group-hover:text-white/80 group-hover:translate-x-1 transition-all"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
+                    <span className="font-medium text-white">{link.title}</span>
                   </a>
                 )
               ))}
