@@ -62,6 +62,11 @@ export interface Database {
           tiktok_followers: number
           snapchat_username: string | null
           snapchat_followers: number
+          x_username: string | null
+          youtube_username: string | null
+          twitch_username: string | null
+          digis_username: string | null
+          affiliate_links: Json
           is_approved: boolean
           is_featured: boolean
           is_verified: boolean
@@ -102,6 +107,11 @@ export interface Database {
           tiktok_followers?: number
           snapchat_username?: string | null
           snapchat_followers?: number
+          x_username?: string | null
+          youtube_username?: string | null
+          twitch_username?: string | null
+          digis_username?: string | null
+          affiliate_links?: Json
           is_approved?: boolean
           is_featured?: boolean
           is_verified?: boolean
@@ -142,6 +152,11 @@ export interface Database {
           tiktok_followers?: number
           snapchat_username?: string | null
           snapchat_followers?: number
+          x_username?: string | null
+          youtube_username?: string | null
+          twitch_username?: string | null
+          digis_username?: string | null
+          affiliate_links?: Json
           is_approved?: boolean
           is_featured?: boolean
           is_verified?: boolean

@@ -190,13 +190,11 @@ export default function ProfilePage() {
                     Upload a profile picture. JPG, PNG or WebP, max 5MB.
                   </p>
                   <PhotoUploader
-                    actorId={model.id}
-                    onUploadComplete={(url) => {
+                    type="avatar"
+                    onUploadComplete={(url, _mediaAsset) => {
                       setModel({ ...model, profile_photo_url: url });
                       toast.success("Profile picture updated!");
                     }}
-                    uploadType="avatar"
-                    buttonText="Upload Photo"
                   />
                 </div>
               </div>
@@ -447,14 +445,14 @@ export default function ProfilePage() {
               <CardDescription>Add links to your brand deals, promo codes, merch, or Amazon affiliate products</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {(model.affiliate_links || []).map((link: { title: string; url: string }, index: number) => (
+              {((model.affiliate_links || []) as { title: string; url: string }[]).map((link, index) => (
                 <div key={index} className="flex gap-2">
                   <Input
                     value={link.title}
                     onChange={(e) => {
-                      const links = [...(model.affiliate_links || [])];
+                      const links = [...((model.affiliate_links || []) as { title: string; url: string }[])];
                       links[index] = { ...links[index], title: e.target.value };
-                      setModel({ ...model, affiliate_links: links });
+                      setModel({ ...model, affiliate_links: links as any });
                     }}
                     placeholder="Link title (e.g., My Merch Store)"
                     className="flex-1"
@@ -462,9 +460,9 @@ export default function ProfilePage() {
                   <Input
                     value={link.url}
                     onChange={(e) => {
-                      const links = [...(model.affiliate_links || [])];
+                      const links = [...((model.affiliate_links || []) as { title: string; url: string }[])];
                       links[index] = { ...links[index], url: e.target.value };
-                      setModel({ ...model, affiliate_links: links });
+                      setModel({ ...model, affiliate_links: links as any });
                     }}
                     placeholder="https://..."
                     className="flex-1"
@@ -474,8 +472,8 @@ export default function ProfilePage() {
                     variant="outline"
                     size="icon"
                     onClick={() => {
-                      const links = (model.affiliate_links || []).filter((_: any, i: number) => i !== index);
-                      setModel({ ...model, affiliate_links: links });
+                      const links = ((model.affiliate_links || []) as { title: string; url: string }[]).filter((_, i) => i !== index);
+                      setModel({ ...model, affiliate_links: links as any });
                     }}
                   >
                     ✕
@@ -486,8 +484,8 @@ export default function ProfilePage() {
                 type="button"
                 variant="outline"
                 onClick={() => {
-                  const links = [...(model.affiliate_links || []), { title: "", url: "" }];
-                  setModel({ ...model, affiliate_links: links });
+                  const links = [...((model.affiliate_links || []) as { title: string; url: string }[]), { title: "", url: "" }];
+                  setModel({ ...model, affiliate_links: links as any });
                 }}
                 className="w-full"
               >

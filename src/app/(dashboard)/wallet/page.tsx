@@ -2,11 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Coins,
   Wallet,
@@ -186,13 +192,59 @@ export default function WalletPage() {
                 <span className="text-muted-foreground">coins</span>
               </div>
             </div>
-            <Button
-              onClick={() => document.getElementById('buy-coins')?.scrollIntoView({ behavior: 'smooth' })}
-              className="bg-gradient-to-r from-pink-500 to-violet-500"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Buy Coins
-            </Button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button className="bg-gradient-to-r from-pink-500 to-violet-500">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Buy Coins
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>Buy Coins</DialogTitle>
+                  <DialogDescription>
+                    Choose a package to add coins to your wallet
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                  {COIN_PACKAGES.map((pack, index) => {
+                    const isPopular = index === 2;
+                    return (
+                      <div
+                        key={pack.coins}
+                        className={cn(
+                          "relative p-4 rounded-lg border transition-all hover:shadow-md",
+                          isPopular && "border-pink-500 ring-2 ring-pink-500/20"
+                        )}
+                      >
+                        {isPopular && (
+                          <Badge className="absolute -top-2 right-2 bg-gradient-to-r from-pink-500 to-violet-500">
+                            Popular
+                          </Badge>
+                        )}
+                        <div className="flex items-center gap-2 mb-2">
+                          <Coins className="h-5 w-5 text-pink-500" />
+                          <span className="text-xl font-bold">{pack.coins.toLocaleString()}</span>
+                        </div>
+                        <p className="text-xl font-bold mb-3">{pack.priceDisplay}</p>
+                        <Button
+                          onClick={() => handlePurchase(pack.coins)}
+                          disabled={purchasing !== null}
+                          className={cn("w-full", isPopular && "bg-gradient-to-r from-pink-500 to-violet-500")}
+                          variant={isPopular ? "default" : "outline"}
+                        >
+                          {purchasing === pack.coins ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            "Buy"
+                          )}
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </CardContent>
       </Card>
@@ -252,140 +304,79 @@ export default function WalletPage() {
         </Card>
       </div>
 
-      <Tabs defaultValue="transactions" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="transactions">Transactions</TabsTrigger>
-          <TabsTrigger value="buy">Buy Coins</TabsTrigger>
-          <TabsTrigger value="payout">Payout</TabsTrigger>
-        </TabsList>
-
-        {/* Transactions Tab */}
-        <TabsContent value="transactions">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Transactions</CardTitle>
-              <CardDescription>Your coin activity</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {transactions.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Coins className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No transactions yet</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {transactions.map((tx) => (
-                    <div
-                      key={tx.id}
-                      className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-full bg-background">
-                          {getActionIcon(tx.action)}
-                        </div>
-                        <div>
-                          <p className="font-medium text-sm">{getActionLabel(tx.action)}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(tx.created_at).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                              hour: "numeric",
-                              minute: "2-digit",
-                            })}
-                          </p>
-                        </div>
-                      </div>
-                      <span className={cn(
-                        "font-bold flex items-center gap-1",
-                        tx.amount >= 0 ? "text-green-500" : "text-red-500"
-                      )}>
-                        {tx.amount >= 0 ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
-                        {tx.amount >= 0 ? "+" : ""}{tx.amount}
-                      </span>
+      {/* Transactions */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Transactions</CardTitle>
+          <CardDescription>Your coin activity</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {transactions.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Coins className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>No transactions yet</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {transactions.map((tx) => (
+                <div
+                  key={tx.id}
+                  className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-full bg-background">
+                      {getActionIcon(tx.action)}
                     </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Buy Coins Tab */}
-        <TabsContent value="buy" id="buy-coins">
-          <Card>
-            <CardHeader>
-              <CardTitle>Buy Coins</CardTitle>
-              <CardDescription>Choose a package to add coins to your wallet</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {COIN_PACKAGES.map((pack, index) => {
-                  const isPopular = index === 2;
-                  return (
-                    <div
-                      key={pack.coins}
-                      className={cn(
-                        "relative p-4 rounded-lg border transition-all hover:shadow-md",
-                        isPopular && "border-pink-500 ring-2 ring-pink-500/20"
-                      )}
-                    >
-                      {isPopular && (
-                        <Badge className="absolute -top-2 right-2 bg-gradient-to-r from-pink-500 to-violet-500">
-                          Popular
-                        </Badge>
-                      )}
-                      <div className="flex items-center gap-2 mb-2">
-                        <Coins className="h-5 w-5 text-pink-500" />
-                        <span className="text-2xl font-bold">{pack.coins.toLocaleString()}</span>
-                      </div>
-                      <p className="text-2xl font-bold mb-3">{pack.priceDisplay}</p>
-                      <Button
-                        onClick={() => handlePurchase(pack.coins)}
-                        disabled={purchasing !== null}
-                        className={cn("w-full", isPopular && "bg-gradient-to-r from-pink-500 to-violet-500")}
-                        variant={isPopular ? "default" : "outline"}
-                      >
-                        {purchasing === pack.coins ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          "Buy"
-                        )}
-                      </Button>
+                    <div>
+                      <p className="font-medium text-sm">{getActionLabel(tx.action)}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(tx.created_at).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })}
+                      </p>
                     </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                  </div>
+                  <span className={cn(
+                    "font-bold flex items-center gap-1",
+                    tx.amount >= 0 ? "text-green-500" : "text-red-500"
+                  )}>
+                    {tx.amount >= 0 ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
+                    {tx.amount >= 0 ? "+" : ""}{tx.amount}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-        {/* Payout Tab */}
-        <TabsContent value="payout">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building className="h-5 w-5" />
-                Payout Settings
-              </CardTitle>
-              <CardDescription>Set up your bank account to receive payouts</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <Building className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="font-semibold mb-2">Coming Soon</h3>
-                <p className="text-muted-foreground text-sm max-w-md mx-auto">
-                  We&apos;re working on enabling direct payouts to your bank account.
-                  For now, contact us at{" "}
-                  <a href="mailto:payouts@examodels.com" className="text-pink-500 hover:underline">
-                    payouts@examodels.com
-                  </a>{" "}
-                  to request a payout.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      {/* Payout */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building className="h-5 w-5" />
+            Payout Settings
+          </CardTitle>
+          <CardDescription>Set up your bank account to receive payouts</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <Building className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="font-semibold mb-2">Coming Soon</h3>
+            <p className="text-muted-foreground text-sm max-w-md mx-auto">
+              We&apos;re working on enabling direct payouts to your bank account.
+              For now, contact us at{" "}
+              <a href="mailto:payouts@examodels.com" className="text-pink-500 hover:underline">
+                payouts@examodels.com
+              </a>{" "}
+              to request a payout.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
