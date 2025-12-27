@@ -14,6 +14,8 @@ import {
   ArrowRight,
   TrendingUp,
   Calendar,
+  Lock,
+  Settings,
 } from "lucide-react";
 
 // Add progress component since we didn't add it earlier
@@ -199,26 +201,31 @@ export default async function DashboardPage() {
           <CardDescription>Things you can do to earn more points</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <Link href="/profile" className="p-4 rounded-lg border border-border/40 hover:border-primary/50 transition-all text-center">
+              <Settings className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+              <p className="font-medium">Settings</p>
+              <p className="text-xs text-muted-foreground">Edit profile</p>
+            </Link>
+            <Link href="/profile#photos" className="p-4 rounded-lg border border-border/40 hover:border-primary/50 transition-all text-center">
               <Camera className="h-8 w-8 mx-auto mb-2 text-pink-500" />
-              <p className="font-medium">Add Photos</p>
+              <p className="font-medium">Portfolio</p>
               <p className="text-xs text-muted-foreground">+10 points each</p>
             </Link>
-            <Link href="/opportunities" className="p-4 rounded-lg border border-border/40 hover:border-primary/50 transition-all text-center">
-              <Sparkles className="h-8 w-8 mx-auto mb-2 text-violet-500" />
-              <p className="font-medium">Apply to Show</p>
-              <p className="text-xs text-muted-foreground">+5 points</p>
-            </Link>
-            <Link href="/models" className="p-4 rounded-lg border border-border/40 hover:border-primary/50 transition-all text-center">
-              <Users className="h-8 w-8 mx-auto mb-2 text-blue-500" />
-              <p className="font-medium">Follow Models</p>
-              <p className="text-xs text-muted-foreground">Build network</p>
+            <Link href="/content" className="p-4 rounded-lg border border-border/40 hover:border-primary/50 transition-all text-center">
+              <Lock className="h-8 w-8 mx-auto mb-2 text-violet-500" />
+              <p className="font-medium">PPV Content</p>
+              <p className="text-xs text-muted-foreground">Earn coins</p>
             </Link>
             <Link href="/messages" className="p-4 rounded-lg border border-border/40 hover:border-primary/50 transition-all text-center">
-              <MessageCircle className="h-8 w-8 mx-auto mb-2 text-green-500" />
+              <MessageCircle className="h-8 w-8 mx-auto mb-2 text-blue-500" />
               <p className="font-medium">Messages</p>
-              <p className="text-xs text-muted-foreground">Connect with others</p>
+              <p className="text-xs text-muted-foreground">Chat with fans</p>
+            </Link>
+            <Link href="/earnings" className="p-4 rounded-lg border border-border/40 hover:border-primary/50 transition-all text-center">
+              <TrendingUp className="h-8 w-8 mx-auto mb-2 text-green-500" />
+              <p className="font-medium">Earnings</p>
+              <p className="text-xs text-muted-foreground">Track income</p>
             </Link>
           </div>
         </CardContent>

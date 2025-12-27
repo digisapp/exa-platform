@@ -149,12 +149,14 @@ export function Navbar({ user, actorType, coinBalance = 0 }: NavbarProps) {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/profile" className="cursor-pointer">
-                      <User className="mr-2 h-4 w-4" />
-                      Profile
-                    </Link>
-                  </DropdownMenuItem>
+                  {user.username && (
+                    <DropdownMenuItem asChild>
+                      <Link href={`/${user.username}`} className="cursor-pointer">
+                        <User className="mr-2 h-4 w-4" />
+                        View Profile
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem asChild>
                     <Link href="/coins" className="cursor-pointer">
                       <Coins className="mr-2 h-4 w-4" />
@@ -173,7 +175,7 @@ export function Navbar({ user, actorType, coinBalance = 0 }: NavbarProps) {
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem asChild>
-                    <Link href="/settings" className="cursor-pointer">
+                    <Link href="/profile" className="cursor-pointer">
                       <Settings className="mr-2 h-4 w-4" />
                       Settings
                     </Link>
