@@ -63,6 +63,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Award points to content creator for sale (+5) - only if not already unlocked
+    if (!result.already_unlocked) {
+      const { data: content } = await (supabase
+        .from("premium_content") as any)
+        .select("model_id")
+        .eq("id", contentId)
+        .single();
+
+      if (content?.model_id) {
+        await (supabase.rpc as any)("award_points", {
+          p_model_id: content.model_id,
+          p_action: "content_sale",
+          p_points: 5,
+          p_metadata: { content_id: contentId, buyer_actor_id: actor.id },
+        });
+      }
+    }
+
     return NextResponse.json({
       success: true,
       mediaUrl: result.media_url,

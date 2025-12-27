@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { getActorId } from "@/lib/ids";
+import { getActorId, getModelIdFromActorId } from "@/lib/ids";
 import { NextRequest, NextResponse } from "next/server";
 
 // GET - Check follow status and get counts
@@ -122,6 +122,17 @@ export async function POST(request: NextRequest) {
         { error: "Failed to follow" },
         { status: 500 }
       );
+    }
+
+    // Award points to the person being followed (+1)
+    const targetModelId = await getModelIdFromActorId(supabase, targetActorId);
+    if (targetModelId) {
+      await (supabase.rpc as any)("award_points", {
+        p_model_id: targetModelId,
+        p_action: "new_follower",
+        p_points: 1,
+        p_metadata: { follower_actor_id: actorId },
+      });
     }
 
     // Get updated follower count

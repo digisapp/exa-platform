@@ -83,6 +83,33 @@ export async function getModelId(
 }
 
 /**
+ * Get the model ID from an actor ID
+ * Looks up the actor's user_id, then finds their model record
+ */
+export async function getModelIdFromActorId(
+  supabase: SupabaseClient,
+  actorId: string
+): Promise<string | null> {
+  // First get the user_id from the actor
+  const { data: actor } = await supabase
+    .from("actors")
+    .select("user_id")
+    .eq("id", actorId)
+    .single();
+
+  if (!actor?.user_id) return null;
+
+  // Then get the model_id from the models table
+  const { data: model } = await supabase
+    .from("models")
+    .select("id")
+    .eq("user_id", actor.user_id)
+    .single();
+
+  return model?.id || null;
+}
+
+/**
  * Get both actor and model info in one call (for models/admins)
  * Useful when you need both IDs
  */

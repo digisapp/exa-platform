@@ -20,7 +20,6 @@ import {
   Users,
   Sparkles,
   MessageCircle,
-  Bell,
   Settings,
   User,
   Coins,
@@ -115,11 +114,6 @@ export function Navbar({ user, actorType, coinBalance = 0 }: NavbarProps) {
                 <Coins className="h-4 w-4 text-pink-500" />
                 <span className="text-sm font-medium">{coinBalance.toLocaleString()}</span>
               </Link>
-
-              {/* Notifications */}
-              <Button variant="ghost" size="icon" className="hidden md:flex">
-                <Bell className="h-5 w-5" />
-              </Button>
 
               {/* User Menu */}
               <DropdownMenu>
