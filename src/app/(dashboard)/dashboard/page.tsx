@@ -12,6 +12,9 @@ import {
   Heart,
   Image,
   Activity,
+  Sparkles,
+  Calendar,
+  MapPin,
 } from "lucide-react";
 
 export default async function DashboardPage() {
@@ -28,6 +31,14 @@ export default async function DashboardPage() {
 
   if (!model) redirect("/onboarding");
 
+
+  // Get recent opportunities
+  const { data: opportunities } = await (supabase
+    .from("opportunities") as any)
+    .select("id, slug, title, brand_name, location, event_date, is_active")
+    .eq("is_active", true)
+    .order("event_date", { ascending: true })
+    .limit(3);
 
   // Get recent activity - combine point transactions and coin transactions
   const { data: pointHistory } = await (supabase
@@ -77,13 +88,7 @@ export default async function DashboardPage() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="flex gap-3">
           <Button variant="outline" asChild>
-            <Link href={`/models/${model.username}`}>View Public Profile</Link>
-          </Button>
-          <Button asChild className="bg-gradient-to-r from-pink-500 to-violet-500">
-            <Link href="/opportunities">
-              Browse Opportunities
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
+            <Link href={`/${model.username}`}>View Public Profile</Link>
           </Button>
         </div>
       </div>
@@ -130,6 +135,67 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Opportunities */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-pink-500" />
+            Opportunities
+          </CardTitle>
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/opportunities" className="text-pink-500">
+              View All
+              <ArrowRight className="ml-1 h-4 w-4" />
+            </Link>
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {opportunities && opportunities.length > 0 ? (
+            <div className="space-y-3">
+              {opportunities.map((opp: any) => (
+                <Link
+                  key={opp.id}
+                  href={`/opportunities/${opp.slug}`}
+                  className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-full bg-gradient-to-br from-pink-500/20 to-violet-500/20">
+                      <Sparkles className="h-4 w-4 text-pink-500" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm">{opp.title}</p>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span>{opp.brand_name}</span>
+                        {opp.location && (
+                          <span className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {opp.location}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  {opp.event_date && (
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Calendar className="h-3 w-3" />
+                      {new Date(opp.event_date).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </div>
+                  )}
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <Sparkles className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+              <p className="text-muted-foreground">No opportunities available</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Recent Activity */}
       <Card>

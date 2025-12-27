@@ -25,7 +25,7 @@ import {
   LogOut,
   User,
   Coins,
-  Lock,
+  Images,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -45,14 +45,13 @@ const publicLinks: { href: string; label: string; icon: any }[] = [];
 
 const modelLinks = [
   { href: "/dashboard", label: "Home", icon: Home },
-  { href: "/models", label: "Browse", icon: Users },
-  { href: "/opportunities", label: "Opportunities", icon: Sparkles },
+  { href: "/models", label: "Explore", icon: Users },
   { href: "/messages", label: "Chats", icon: MessageCircle },
-  { href: "/content", label: "Content", icon: Lock },
+  { href: "/content", label: "Content", icon: Images },
 ];
 
 const fanLinks = [
-  { href: "/models", label: "Browse Models", icon: Users },
+  { href: "/models", label: "Explore", icon: Users },
   { href: "/messages", label: "Chats", icon: MessageCircle },
 ];
 
