@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ApproveRejectButtons, ModelApprovalButton } from "@/components/admin/AdminActions";
+import { AdminSearch } from "@/components/admin/AdminSearch";
 import {
   Users,
   Sparkles,
@@ -24,6 +25,9 @@ import {
   CreditCard,
   Heart,
   UserPlus,
+  BarChart3,
+  ArrowUpRight,
+  ArrowDownRight,
 } from "lucide-react";
 
 export default async function AdminPage() {
@@ -163,6 +167,42 @@ export default async function AdminPage() {
   const { count: recentTransactions } = await supabase
     .from("coin_transactions")
     .select("*", { count: "exact", head: true });
+
+  // Get growth stats (last 7 days and 30 days)
+  const now = new Date();
+  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+  const { count: modelsThisWeek } = await supabase
+    .from("models")
+    .select("*", { count: "exact", head: true })
+    .gte("created_at", weekAgo);
+
+  const { count: modelsThisMonth } = await supabase
+    .from("models")
+    .select("*", { count: "exact", head: true })
+    .gte("created_at", monthAgo);
+
+  const { count: fansThisWeek } = await supabase
+    .from("fans")
+    .select("*", { count: "exact", head: true })
+    .gte("created_at", weekAgo);
+
+  const { count: fansThisMonth } = await supabase
+    .from("fans")
+    .select("*", { count: "exact", head: true })
+    .gte("created_at", monthAgo);
+
+  // Get coin transaction stats
+  const { data: weeklyTransactions } = await supabase
+    .from("coin_transactions")
+    .select("amount, action")
+    .gte("created_at", weekAgo) as { data: { amount: number; action: string }[] | null };
+
+  const weeklyRevenue = weeklyTransactions?.filter(t => t.action === "purchase")
+    .reduce((sum, t) => sum + t.amount, 0) || 0;
+  const weeklySpent = weeklyTransactions?.filter(t => t.amount < 0)
+    .reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
 
   return (
     <div className="container py-8 space-y-8">
@@ -323,8 +363,12 @@ export default async function AdminPage() {
       </div>
 
       {/* Main Content */}
-      <Tabs defaultValue="model-apps" className="space-y-6">
+      <Tabs defaultValue="overview" className="space-y-6">
         <TabsList className="flex-wrap h-auto gap-2">
+          <TabsTrigger value="overview">
+            <BarChart3 className="h-4 w-4 mr-2" />
+            Overview
+          </TabsTrigger>
           <TabsTrigger value="model-apps">
             <UserPlus className="h-4 w-4 mr-2" />
             Model Apps ({pendingModelApps || 0})
@@ -354,6 +398,188 @@ export default async function AdminPage() {
             Media ({pendingMedia || 0})
           </TabsTrigger>
         </TabsList>
+
+        {/* Overview Tab */}
+        <TabsContent value="overview" className="space-y-6">
+          {/* Growth Stats */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20">
+              <CardHeader className="pb-2">
+                <CardDescription className="flex items-center justify-between">
+                  <span>Models This Week</span>
+                  <ArrowUpRight className="h-4 w-4 text-green-500" />
+                </CardDescription>
+                <CardTitle className="text-3xl flex items-baseline gap-2">
+                  +{modelsThisWeek || 0}
+                  <span className="text-sm font-normal text-muted-foreground">
+                    / {modelsThisMonth || 0} this month
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm text-muted-foreground">
+                  Total: {totalModels?.toLocaleString()} models
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-pink-500/10 to-pink-600/5 border-pink-500/20">
+              <CardHeader className="pb-2">
+                <CardDescription className="flex items-center justify-between">
+                  <span>Fans This Week</span>
+                  <ArrowUpRight className="h-4 w-4 text-green-500" />
+                </CardDescription>
+                <CardTitle className="text-3xl flex items-baseline gap-2">
+                  +{fansThisWeek || 0}
+                  <span className="text-sm font-normal text-muted-foreground">
+                    / {fansThisMonth || 0} this month
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm text-muted-foreground">
+                  Total: {totalFans?.toLocaleString()} fans (Goal: 1M)
+                </div>
+                <div className="mt-2 h-2 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-pink-500 to-violet-500 rounded-full"
+                    style={{ width: `${Math.min(((totalFans || 0) / 1000000) * 100, 100)}%` }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-yellow-500/10 to-orange-500/5 border-yellow-500/20">
+              <CardHeader className="pb-2">
+                <CardDescription className="flex items-center justify-between">
+                  <span>Coins in Circulation</span>
+                  <Coins className="h-4 w-4 text-yellow-500" />
+                </CardDescription>
+                <CardTitle className="text-3xl">
+                  {totalCoins.toLocaleString()}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm text-muted-foreground">
+                  {weeklySpent > 0 ? `${weeklySpent} spent this week` : "No spending this week"}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-green-500/10 to-emerald-500/5 border-green-500/20">
+              <CardHeader className="pb-2">
+                <CardDescription className="flex items-center justify-between">
+                  <span>Pending Actions</span>
+                  <Clock className="h-4 w-4 text-amber-500" />
+                </CardDescription>
+                <CardTitle className="text-3xl">
+                  {(pendingModelApps || 0) + (pendingApplications || 0) + (pendingBrands || 0)}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm text-muted-foreground space-y-1">
+                  <div>{pendingModelApps || 0} model applications</div>
+                  <div>{pendingApplications || 0} gig applications</div>
+                  <div>{pendingBrands || 0} brand inquiries</div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Goals Progress */}
+          <Card>
+            <CardHeader>
+              <CardTitle>2025 Goals Progress</CardTitle>
+              <CardDescription>Track your platform growth targets</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-blue-500" />
+                    Models
+                  </span>
+                  <span>{totalModels?.toLocaleString()} / 5,000</span>
+                </div>
+                <div className="h-3 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full transition-all"
+                    style={{ width: `${Math.min(((totalModels || 0) / 5000) * 100, 100)}%` }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {((((totalModels || 0) / 5000) * 100).toFixed(1))}% of goal
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="flex items-center gap-2">
+                    <Heart className="h-4 w-4 text-pink-500" />
+                    Fans
+                  </span>
+                  <span>{totalFans?.toLocaleString()} / 1,000,000</span>
+                </div>
+                <div className="h-3 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-pink-500 to-violet-500 rounded-full transition-all"
+                    style={{ width: `${Math.min(((totalFans || 0) / 1000000) * 100, 100)}%` }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {((((totalFans || 0) / 1000000) * 100).toFixed(3))}% of goal
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Quick Stats Grid */}
+          <div className="grid md:grid-cols-3 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Model Approval Rate</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-4xl font-bold text-green-500">
+                  {totalModels && totalModels > 0
+                    ? Math.round(((approvedModels || 0) / totalModels) * 100)
+                    : 0}%
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {approvedModels} approved / {totalModels} total
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Active Gigs</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-4xl font-bold text-pink-500">
+                  {totalOpportunities}
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {pendingApplications} pending applications
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Total Transactions</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-4xl font-bold text-yellow-500">
+                  {recentTransactions || 0}
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  All-time coin transactions
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
 
         <TabsContent value="model-apps">
           <Card>
@@ -467,10 +693,13 @@ export default async function AdminPage() {
         <TabsContent value="models">
           <Card>
             <CardHeader>
-              <CardTitle>Recent Models</CardTitle>
-              <CardDescription>Newly joined models</CardDescription>
+              <CardTitle>Models</CardTitle>
+              <CardDescription>Search and manage models</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-6">
+              <AdminSearch type="models" placeholder="Search by name, username, or email..." />
+              <div className="border-t pt-4">
+                <h4 className="text-sm font-medium mb-4 text-muted-foreground">Recent Models</h4>
               {recentModels && recentModels.length > 0 ? (
                 <div className="space-y-4">
                   {recentModels.map((model: any) => (
@@ -511,6 +740,7 @@ export default async function AdminPage() {
                   No models yet
                 </div>
               )}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -528,7 +758,10 @@ export default async function AdminPage() {
                 {totalFans?.toLocaleString() || 0} total fans on the platform
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-6">
+              <AdminSearch type="fans" placeholder="Search by name or email..." />
+              <div className="border-t pt-4">
+                <h4 className="text-sm font-medium mb-4 text-muted-foreground">Recent Fans</h4>
               {recentFans && recentFans.length > 0 ? (
                 <div className="space-y-3">
                   {recentFans.map((fan: any) => (
@@ -567,6 +800,7 @@ export default async function AdminPage() {
                   No fans yet
                 </div>
               )}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
