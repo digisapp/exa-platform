@@ -1,36 +1,18 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import {
   Trophy,
-  Sparkles,
-  Users,
-  MessageCircle,
-  Camera,
   ArrowRight,
   TrendingUp,
-  Calendar,
   Lock,
-  Settings,
+  Coins,
+  Heart,
+  Image,
+  Activity,
 } from "lucide-react";
-
-// Add progress component since we didn't add it earlier
-import { cn } from "@/lib/utils";
-
-function ProgressBar({ value, className }: { value: number; className?: string }) {
-  return (
-    <div className={cn("h-2 w-full bg-muted rounded-full overflow-hidden", className)}>
-      <div
-        className="h-full bg-gradient-to-r from-pink-500 to-violet-500 transition-all"
-        style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
-      />
-    </div>
-  );
-}
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -47,22 +29,40 @@ export default async function DashboardPage() {
   if (!model) redirect("/onboarding");
 
 
-  // Get point transactions
+  // Get recent activity - combine point transactions and coin transactions
   const { data: pointHistory } = await (supabase
     .from("point_transactions") as any)
-    .select("*")
+    .select("id, action, points, created_at")
     .eq("model_id", model.id)
     .order("created_at", { ascending: false })
     .limit(5);
 
-  // Calculate level progress
-  const levelThresholds = { rising: 0, verified: 500, pro: 2000, elite: 5000 };
-  const currentLevel = model.level_cached;
-  const currentPoints = model.points_cached;
-  const nextLevel = currentLevel === "rising" ? "verified" : currentLevel === "verified" ? "pro" : currentLevel === "pro" ? "elite" : null;
-  const nextThreshold = nextLevel ? levelThresholds[nextLevel as keyof typeof levelThresholds] : 5000;
-  const prevThreshold = levelThresholds[currentLevel as keyof typeof levelThresholds];
-  const progress = nextLevel ? ((currentPoints - prevThreshold) / (nextThreshold - prevThreshold)) * 100 : 100;
+  const { data: coinHistory } = await (supabase
+    .from("coin_transactions") as any)
+    .select("id, action, amount, created_at")
+    .eq("actor_id", model.id)
+    .order("created_at", { ascending: false })
+    .limit(5);
+
+  // Combine and sort all activity
+  const recentActivity = [
+    ...(pointHistory || []).map((tx: any) => ({
+      id: tx.id,
+      type: "points" as const,
+      action: tx.action,
+      value: tx.points,
+      created_at: tx.created_at,
+    })),
+    ...(coinHistory || []).map((tx: any) => ({
+      id: tx.id,
+      type: "coins" as const,
+      action: tx.action,
+      value: tx.amount,
+      created_at: tx.created_at,
+    })),
+  ]
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, 8);
 
   const levelIcons: Record<string, string> = {
     rising: "⭐",
@@ -135,99 +135,74 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      {/* Level Progress */}
+      {/* Recent Activity */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Trophy className="h-5 w-5" />
-            Level Progress
-          </CardTitle>
-          <CardDescription>
-            {nextLevel
-              ? `${nextThreshold - currentPoints} more points to reach ${nextLevel}`
-              : "You've reached the highest level!"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="capitalize">{currentLevel} {levelIcons[currentLevel]}</span>
-              {nextLevel && <span className="capitalize">{nextLevel} {levelIcons[nextLevel]}</span>}
-            </div>
-            <ProgressBar value={progress} />
-            <p className="text-xs text-muted-foreground text-center">
-              {currentPoints} / {nextThreshold} points
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Point History */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Trophy className="h-5 w-5" />
-            Recent Points
+            <Activity className="h-5 w-5" />
+            Recent Activity
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {pointHistory && pointHistory.length > 0 ? (
-            <div className="space-y-4">
-              {pointHistory.map((tx: any) => (
-                <div key={tx.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                  <div>
-                    <p className="font-medium capitalize">{tx.action.replace(/_/g, " ")}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(tx.created_at).toLocaleDateString()}
-                    </p>
+          {recentActivity.length > 0 ? (
+            <div className="space-y-3">
+              {recentActivity.map((item) => (
+                <div key={`${item.type}-${item.id}`} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-full ${
+                      item.type === "coins"
+                        ? "bg-yellow-500/20"
+                        : "bg-pink-500/20"
+                    }`}>
+                      {item.type === "coins" ? (
+                        item.action === "tip_received" ? (
+                          <Heart className="h-4 w-4 text-pink-500" />
+                        ) : item.action === "content_sale" ? (
+                          <Lock className="h-4 w-4 text-violet-500" />
+                        ) : (
+                          <Coins className="h-4 w-4 text-yellow-500" />
+                        )
+                      ) : (
+                        item.action === "photo_upload" ? (
+                          <Image className="h-4 w-4 text-pink-500" />
+                        ) : (
+                          <Trophy className="h-4 w-4 text-pink-500" />
+                        )
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium capitalize text-sm">{item.action.replace(/_/g, " ")}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(item.created_at).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    </div>
                   </div>
-                  <span className="text-green-500 font-bold">+{tx.points}</span>
+                  <span className={`font-bold ${
+                    item.value >= 0 ? "text-green-500" : "text-red-500"
+                  }`}>
+                    {item.type === "coins" ? (
+                      <span className="flex items-center gap-1">
+                        {item.value >= 0 ? "+" : ""}{item.value}
+                        <Coins className="h-3 w-3" />
+                      </span>
+                    ) : (
+                      `+${item.value} pts`
+                    )}
+                  </span>
                 </div>
               ))}
             </div>
           ) : (
             <div className="text-center py-8">
-              <Trophy className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-              <p className="text-muted-foreground">Start earning points!</p>
+              <Activity className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+              <p className="text-muted-foreground">No recent activity</p>
             </div>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>Things you can do to earn more points</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <Link href="/profile" className="p-4 rounded-lg border border-border/40 hover:border-primary/50 transition-all text-center">
-              <Settings className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-              <p className="font-medium">Settings</p>
-              <p className="text-xs text-muted-foreground">Edit profile</p>
-            </Link>
-            <Link href="/profile#photos" className="p-4 rounded-lg border border-border/40 hover:border-primary/50 transition-all text-center">
-              <Camera className="h-8 w-8 mx-auto mb-2 text-pink-500" />
-              <p className="font-medium">Portfolio</p>
-              <p className="text-xs text-muted-foreground">+10 points each</p>
-            </Link>
-            <Link href="/content" className="p-4 rounded-lg border border-border/40 hover:border-primary/50 transition-all text-center">
-              <Lock className="h-8 w-8 mx-auto mb-2 text-violet-500" />
-              <p className="font-medium">PPV Content</p>
-              <p className="text-xs text-muted-foreground">Earn coins</p>
-            </Link>
-            <Link href="/messages" className="p-4 rounded-lg border border-border/40 hover:border-primary/50 transition-all text-center">
-              <MessageCircle className="h-8 w-8 mx-auto mb-2 text-blue-500" />
-              <p className="font-medium">Messages</p>
-              <p className="text-xs text-muted-foreground">Chat with fans</p>
-            </Link>
-            <Link href="/earnings" className="p-4 rounded-lg border border-border/40 hover:border-primary/50 transition-all text-center">
-              <TrendingUp className="h-8 w-8 mx-auto mb-2 text-green-500" />
-              <p className="font-medium">Earnings</p>
-              <p className="text-xs text-muted-foreground">Track income</p>
-            </Link>
-          </div>
         </CardContent>
       </Card>
     </div>
