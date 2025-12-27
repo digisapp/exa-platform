@@ -52,7 +52,6 @@ const modelLinks = [
   { href: "/messages", label: "Messages", icon: MessageCircle },
   { href: "/content", label: "Content", icon: Lock },
   { href: "/earnings", label: "Earnings", icon: TrendingUp },
-  { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
 ];
 
 const fanLinks = [
