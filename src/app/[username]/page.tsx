@@ -218,14 +218,6 @@ export default async function ModelProfilePage({ params }: Props) {
   // Display name
   const displayName = model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username;
 
-  // Determine level based on verification status
-  const getLevel = () => {
-    if (model.is_verified) return { icon: "✓", label: "Verified", class: "level-verified" };
-    if (model.is_featured) return { icon: "⭐", label: "Featured", class: "level-pro" };
-    return { icon: "⭐", label: "Rising", class: "level-rising" };
-  };
-  const level = getLevel();
-
   return (
     <div className="min-h-screen relative">
       {/* Floating Orbs Background */}
@@ -253,7 +245,16 @@ export default async function ModelProfilePage({ params }: Props) {
         </div>
 
         {/* Main Profile Card */}
-        <div className="glass-card rounded-3xl p-8 text-center">
+        <div className="glass-card rounded-3xl p-8 text-center relative">
+          {/* Share Button - Top Right Corner */}
+          <button
+            className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+            onClick={() => navigator.share ? navigator.share({ title: displayName, url: window.location.href }) : navigator.clipboard.writeText(window.location.href)}
+            title="Share"
+          >
+            <Share2 className="h-4 w-4 text-[#00BFFF]" />
+          </button>
+
           {/* Profile Image */}
           <div className="flex justify-center mb-6">
             <div className="profile-image-container">
@@ -287,22 +288,94 @@ export default async function ModelProfilePage({ params }: Props) {
           {/* Username */}
           <p className="text-[#00BFFF] mb-4">@{model.username}</p>
 
-          {/* Level Badge */}
-          <div className="flex justify-center mb-6">
-            <span className={cn(
-              "px-4 py-2 rounded-full font-semibold text-sm inline-flex items-center gap-2",
-              level.class
-            )}>
-              <span>{level.icon}</span>
-              {level.label}
-            </span>
-          </div>
-
           {/* Location */}
           {model.show_location && (model.city || model.state) && (
-            <div className="flex items-center justify-center gap-2 text-muted-foreground mb-6">
+            <div className="flex items-center justify-center gap-2 text-muted-foreground mb-4">
               <MapPin className="h-4 w-4 text-[#FF69B4]" />
               <span>{model.city && model.state ? `${model.city}, ${model.state}` : model.city || model.state}</span>
+            </div>
+          )}
+
+          {/* Social Media Icons */}
+          {model.show_social_media && (model.instagram_name || model.tiktok_username || model.snapchat_username || model.x_username || model.youtube_username || model.twitch_username || model.digis_username) && (
+            <div className="flex items-center justify-center gap-3 mb-6">
+              {model.instagram_name && (
+                <a
+                  href={model.instagram_url || `https://instagram.com/${model.instagram_name}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-9 h-9 rounded-full bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#F77737] flex items-center justify-center hover:scale-110 transition-transform"
+                  title={`@${model.instagram_name}`}
+                >
+                  <Instagram className="h-4 w-4 text-white" />
+                </a>
+              )}
+              {model.tiktok_username && (
+                <a
+                  href={`https://tiktok.com/@${model.tiktok_username}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-9 h-9 rounded-full bg-black border border-white/20 flex items-center justify-center hover:scale-110 transition-transform"
+                  title={`@${model.tiktok_username}`}
+                >
+                  <span className="text-white text-sm">♪</span>
+                </a>
+              )}
+              {model.snapchat_username && (
+                <a
+                  href={`https://snapchat.com/add/${model.snapchat_username}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-9 h-9 rounded-full bg-[#FFFC00] flex items-center justify-center hover:scale-110 transition-transform"
+                  title={`@${model.snapchat_username}`}
+                >
+                  <span className="text-black text-sm">👻</span>
+                </a>
+              )}
+              {model.x_username && (
+                <a
+                  href={`https://x.com/${model.x_username}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-9 h-9 rounded-full bg-black border border-white/20 flex items-center justify-center hover:scale-110 transition-transform"
+                  title={`@${model.x_username}`}
+                >
+                  <span className="text-white font-bold text-sm">𝕏</span>
+                </a>
+              )}
+              {model.youtube_username && (
+                <a
+                  href={`https://youtube.com/@${model.youtube_username}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-9 h-9 rounded-full bg-[#FF0000] flex items-center justify-center hover:scale-110 transition-transform"
+                  title={`@${model.youtube_username}`}
+                >
+                  <span className="text-white text-sm">▶</span>
+                </a>
+              )}
+              {model.twitch_username && (
+                <a
+                  href={`https://twitch.tv/${model.twitch_username}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-9 h-9 rounded-full bg-[#9146FF] flex items-center justify-center hover:scale-110 transition-transform"
+                  title={`@${model.twitch_username}`}
+                >
+                  <span className="text-white text-sm">📺</span>
+                </a>
+              )}
+              {model.digis_username && (
+                <a
+                  href={`https://digis.cc/${model.digis_username}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-9 h-9 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 flex items-center justify-center hover:scale-110 transition-transform"
+                  title={`@${model.digis_username}`}
+                >
+                  <span className="text-white text-sm">✨</span>
+                </a>
+              )}
             </div>
           )}
 
@@ -329,10 +402,6 @@ export default async function ModelProfilePage({ params }: Props) {
                 {isOwner ? "Your Profile" : "Follow"}
               </Button>
             )}
-            <Button variant="outline" className="h-12 rounded-full border-[#00BFFF]/50 hover:border-[#00BFFF] hover:bg-[#00BFFF]/10">
-              <Share2 className="mr-2 h-5 w-5 text-[#00BFFF]" />
-              Share
-            </Button>
           </div>
 
           {/* Bio */}
@@ -343,167 +412,71 @@ export default async function ModelProfilePage({ params }: Props) {
             </div>
           )}
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-3 gap-4 mb-8">
-            <div className="stat-card">
-              <Eye className="h-6 w-6 mx-auto mb-2 text-[#FFED4E]" />
-              <p className="text-2xl font-bold">{model.profile_views || 0}</p>
-              <p className="text-xs text-muted-foreground">Views</p>
-            </div>
-            <div className="stat-card">
-              <Users className="h-6 w-6 mx-auto mb-2 text-[#FF69B4]" />
-              <p className="text-2xl font-bold">{followerCount.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground">Followers</p>
-            </div>
-            <div className="stat-card">
-              <Sparkles className="h-6 w-6 mx-auto mb-2 text-[#00BFFF]" />
-              <p className="text-2xl font-bold">{completedShows?.length || 0}</p>
-              <p className="text-xs text-muted-foreground">Shows</p>
-            </div>
-          </div>
-
-          {/* Measurements */}
+          {/* Measurements - Icon with hover popup */}
           {model.show_measurements && (model.height || model.bust || model.waist || model.hips || model.dress_size || model.shoe_size || model.hair_color || model.eye_color) && (
-            <div className="mb-8">
-              <h2 className="text-lg font-semibold mb-4 exa-gradient-text flex items-center justify-center gap-2">
-                <Ruler className="h-5 w-5" />
-                Measurements
-              </h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {model.height && (
-                  <div className="stat-card">
-                    <p className="text-xs text-muted-foreground mb-1">Height</p>
-                    <p className="font-semibold">{model.height}</p>
+            <div className="flex justify-center mb-8">
+              <div className="relative group">
+                <button className="w-10 h-10 rounded-full glass-card flex items-center justify-center hover:scale-110 transition-transform cursor-pointer">
+                  <Ruler className="h-5 w-5 text-[#FF69B4]" />
+                </button>
+                {/* Hover Popup */}
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-50">
+                  <div className="glass-card rounded-xl p-4 min-w-[200px] shadow-xl">
+                    <p className="text-sm font-semibold text-center mb-3 exa-gradient-text">Measurements</p>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      {model.height && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Height</span>
+                          <span className="font-medium">{model.height}</span>
+                        </div>
+                      )}
+                      {model.bust && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Bust</span>
+                          <span className="font-medium">{model.bust}</span>
+                        </div>
+                      )}
+                      {model.waist && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Waist</span>
+                          <span className="font-medium">{model.waist}</span>
+                        </div>
+                      )}
+                      {model.hips && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Hips</span>
+                          <span className="font-medium">{model.hips}</span>
+                        </div>
+                      )}
+                      {model.dress_size && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Dress</span>
+                          <span className="font-medium">{model.dress_size}</span>
+                        </div>
+                      )}
+                      {model.shoe_size && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Shoe</span>
+                          <span className="font-medium">{model.shoe_size}</span>
+                        </div>
+                      )}
+                      {model.hair_color && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Hair</span>
+                          <span className="font-medium capitalize">{model.hair_color}</span>
+                        </div>
+                      )}
+                      {model.eye_color && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Eyes</span>
+                          <span className="font-medium capitalize">{model.eye_color}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                )}
-                {model.bust && (
-                  <div className="stat-card">
-                    <p className="text-xs text-muted-foreground mb-1">Bust</p>
-                    <p className="font-semibold">{model.bust}</p>
-                  </div>
-                )}
-                {model.waist && (
-                  <div className="stat-card">
-                    <p className="text-xs text-muted-foreground mb-1">Waist</p>
-                    <p className="font-semibold">{model.waist}</p>
-                  </div>
-                )}
-                {model.hips && (
-                  <div className="stat-card">
-                    <p className="text-xs text-muted-foreground mb-1">Hips</p>
-                    <p className="font-semibold">{model.hips}</p>
-                  </div>
-                )}
-                {model.dress_size && (
-                  <div className="stat-card">
-                    <p className="text-xs text-muted-foreground mb-1">Dress</p>
-                    <p className="font-semibold">{model.dress_size}</p>
-                  </div>
-                )}
-                {model.shoe_size && (
-                  <div className="stat-card">
-                    <p className="text-xs text-muted-foreground mb-1">Shoe</p>
-                    <p className="font-semibold">{model.shoe_size}</p>
-                  </div>
-                )}
-                {model.hair_color && (
-                  <div className="stat-card">
-                    <p className="text-xs text-muted-foreground mb-1">Hair</p>
-                    <p className="font-semibold capitalize">{model.hair_color}</p>
-                  </div>
-                )}
-                {model.eye_color && (
-                  <div className="stat-card">
-                    <p className="text-xs text-muted-foreground mb-1">Eyes</p>
-                    <p className="font-semibold capitalize">{model.eye_color}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Social Links */}
-          {model.show_social_media && (model.instagram_name || model.tiktok_username || model.snapchat_username || model.x_username || model.youtube_username || model.twitch_username || model.digis_username) && (
-            <div className="mb-8">
-              <h2 className="text-lg font-semibold mb-4 exa-gradient-text">Social Media</h2>
-              <div className="flex flex-wrap justify-center gap-3">
-                {model.instagram_name && (
-                  <a
-                    href={model.instagram_url || `https://instagram.com/${model.instagram_name}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#F77737] text-white hover:scale-105 transition-transform"
-                  >
-                    <Instagram className="h-5 w-5" />
-                    @{model.instagram_name}
-                  </a>
-                )}
-                {model.tiktok_username && (
-                  <a
-                    href={`https://tiktok.com/@${model.tiktok_username}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-black text-white border border-white/20 hover:scale-105 transition-transform"
-                  >
-                    <span className="text-lg">♪</span>
-                    @{model.tiktok_username}
-                  </a>
-                )}
-                {model.snapchat_username && (
-                  <a
-                    href={`https://snapchat.com/add/${model.snapchat_username}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#FFFC00] text-black hover:scale-105 transition-transform"
-                  >
-                    <span className="text-lg">👻</span>
-                    @{model.snapchat_username}
-                  </a>
-                )}
-                {model.x_username && (
-                  <a
-                    href={`https://x.com/${model.x_username}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-black text-white border border-white/20 hover:scale-105 transition-transform"
-                  >
-                    <span className="font-bold">𝕏</span>
-                    @{model.x_username}
-                  </a>
-                )}
-                {model.youtube_username && (
-                  <a
-                    href={`https://youtube.com/@${model.youtube_username}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#FF0000] text-white hover:scale-105 transition-transform"
-                  >
-                    <span className="text-lg">▶</span>
-                    @{model.youtube_username}
-                  </a>
-                )}
-                {model.twitch_username && (
-                  <a
-                    href={`https://twitch.tv/${model.twitch_username}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#9146FF] text-white hover:scale-105 transition-transform"
-                  >
-                    <span className="text-lg">📺</span>
-                    @{model.twitch_username}
-                  </a>
-                )}
-                {model.digis_username && (
-                  <a
-                    href={`https://digis.cc/${model.digis_username}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 text-white hover:scale-105 transition-transform"
-                  >
-                    <span className="text-lg">✨</span>
-                    @{model.digis_username}
-                  </a>
-                )}
+                  {/* Arrow */}
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-white/10"></div>
+                </div>
               </div>
             </div>
           )}
