@@ -230,27 +230,60 @@
   pointer-events: none;
 }
 
-/* Breathing animation for profile picture */
-@keyframes breathing {
+/* Breathing animation for profile picture with gradient border */
+@keyframes breathing-glow {
   0%, 100% {
     box-shadow:
-      0 0 20px rgba(34, 197, 94, 0.4),
-      0 0 40px rgba(34, 197, 94, 0.2),
-      0 0 60px rgba(34, 197, 94, 0.1);
-    border-color: rgba(34, 197, 94, 0.6);
+      0 0 20px rgba(255, 105, 180, 0.5),
+      0 0 40px rgba(255, 105, 180, 0.3),
+      0 0 60px rgba(255, 105, 180, 0.1);
   }
-  50% {
+  33% {
     box-shadow:
-      0 0 30px rgba(34, 197, 94, 0.6),
-      0 0 60px rgba(34, 197, 94, 0.4),
-      0 0 90px rgba(34, 197, 94, 0.2);
-    border-color: rgba(34, 197, 94, 0.9);
+      0 0 25px rgba(0, 191, 255, 0.5),
+      0 0 50px rgba(0, 191, 255, 0.3),
+      0 0 75px rgba(0, 191, 255, 0.1);
+  }
+  66% {
+    box-shadow:
+      0 0 25px rgba(255, 0, 255, 0.5),
+      0 0 50px rgba(255, 0, 255, 0.3),
+      0 0 75px rgba(255, 0, 255, 0.1);
+  }
+}
+
+@keyframes border-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
   }
 }
 
 .profile-pic-breathing {
-  animation: breathing 3s ease-in-out infinite;
-  border: 2px solid rgba(34, 197, 94, 0.6);
+  position: relative;
+  animation: breathing-glow 4s ease-in-out infinite;
+}
+
+.profile-pic-breathing::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  padding: 3px;
+  background: conic-gradient(
+    from 0deg,
+    #FF69B4,
+    #00BFFF,
+    #FF00FF,
+    #FF69B4
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: border-spin 4s linear infinite;
 }
 
 /* Neon Border */
