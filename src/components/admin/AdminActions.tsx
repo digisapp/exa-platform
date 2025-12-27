@@ -8,7 +8,7 @@ import { Loader2, CheckCircle, XCircle } from "lucide-react";
 
 interface AdminActionProps {
   id: string;
-  type: "application" | "model" | "brand" | "designer" | "media";
+  type: "application" | "model" | "brand" | "designer" | "media" | "model_application";
   onSuccess?: () => void;
 }
 
@@ -27,6 +27,10 @@ export function ApproveRejectButtons({ id, type, onSuccess }: AdminActionProps) 
         case "application":
           endpoint = `/api/admin/applications/${id}`;
           body = { status: action === "approve" ? "accepted" : "rejected" };
+          break;
+        case "model_application":
+          endpoint = `/api/admin/model-applications/${id}`;
+          body = { status: action === "approve" ? "approved" : "rejected" };
           break;
         case "model":
           endpoint = `/api/admin/models/${id}`;

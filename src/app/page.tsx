@@ -34,35 +34,25 @@ export default function HomePage() {
                 className="h-10 w-auto"
               />
             </Link>
-            <div className="flex items-center gap-4">
-              <Link href="/signin">
-                <Button variant="outline" className="border-[#FF69B4]/50 hover:border-[#FF69B4] hover:bg-[#FF69B4]/10">
-                  Sign In
-                </Button>
-              </Link>
-              <Link href="/signup">
-                <Button className="exa-gradient-button">Join Now</Button>
-              </Link>
-            </div>
+            <Link href="/signin">
+              <Button variant="outline" className="border-[#FF69B4]/50 hover:border-[#FF69B4] hover:bg-[#FF69B4]/10">
+                Sign In
+              </Button>
+            </Link>
           </div>
         </nav>
 
         {/* Quick Actions */}
         <div className="container px-8 md:px-16 py-4">
           <div className="flex justify-center gap-4">
-            <Link href="/signup">
-              <Button className="exa-gradient-button rounded-full px-6">
+            <Link href="/apply">
+              <Button className="exa-gradient-button rounded-full px-8">
                 Models
               </Button>
             </Link>
-            <Link href="/brands/inquiry">
-              <Button variant="outline" className="rounded-full px-6 border-[#FF69B4]/50 hover:border-[#FF69B4] hover:bg-[#FF69B4]/10">
-                Brands
-              </Button>
-            </Link>
-            <Link href="/media/signup">
-              <Button variant="outline" className="rounded-full px-6 border-[#00BFFF]/50 hover:border-[#00BFFF] hover:bg-[#00BFFF]/10">
-                Media
+            <Link href="/signup">
+              <Button variant="outline" className="rounded-full px-8 border-[#00BFFF]/50 hover:border-[#00BFFF] hover:bg-[#00BFFF]/10">
+                Fans
               </Button>
             </Link>
           </div>
@@ -86,21 +76,32 @@ export default function HomePage() {
               and brand campaigns. Earn points, level up, and get booked.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 mb-16">
-              <Link href="/signup">
+            <div className="flex flex-col sm:flex-row gap-4 mb-8">
+              <Link href="/apply">
                 <Button size="lg" className="exa-gradient-button text-lg px-10 h-14 rounded-full">
-                  Join as a Model
+                  I&apos;m a Model
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <Link href="/models">
+              <Link href="/signup">
                 <Button
                   size="lg"
                   variant="outline"
                   className="text-lg px-10 h-14 rounded-full border-[#00BFFF]/50 hover:border-[#00BFFF] hover:bg-[#00BFFF]/10"
                 >
-                  Browse Models
+                  I&apos;m a Fan
+                  <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
+              </Link>
+            </div>
+
+            <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground">
+              <Link href="/models" className="hover:text-[#FF69B4] transition-colors">
+                Browse Models
+              </Link>
+              <span className="text-muted-foreground/50">•</span>
+              <Link href="/brands/inquiry" className="hover:text-[#FF69B4] transition-colors">
+                Brand Partnerships
               </Link>
             </div>
           </div>

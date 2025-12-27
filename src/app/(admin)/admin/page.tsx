@@ -23,6 +23,7 @@ import {
   Coins,
   CreditCard,
   Heart,
+  UserPlus,
 } from "lucide-react";
 
 export default async function AdminPage() {
@@ -121,6 +122,19 @@ export default async function AdminPage() {
     .from("media") as any)
     .select("*", { count: "exact", head: true })
     .eq("status", "pending");
+
+  // Get model applications
+  const { count: pendingModelApps } = await (supabase
+    .from("model_applications") as any)
+    .select("*", { count: "exact", head: true })
+    .eq("status", "pending");
+
+  const { data: modelApplications } = await (supabase
+    .from("model_applications") as any)
+    .select("*")
+    .eq("status", "pending")
+    .order("created_at", { ascending: false })
+    .limit(50);
 
   // Get coin stats
   const { count: totalFans } = await supabase
@@ -302,11 +316,15 @@ export default async function AdminPage() {
       </div>
 
       {/* Main Content */}
-      <Tabs defaultValue="applications" className="space-y-6">
+      <Tabs defaultValue="model-apps" className="space-y-6">
         <TabsList className="flex-wrap h-auto gap-2">
+          <TabsTrigger value="model-apps">
+            <UserPlus className="h-4 w-4 mr-2" />
+            Model Apps ({pendingModelApps || 0})
+          </TabsTrigger>
           <TabsTrigger value="applications">
             <Clock className="h-4 w-4 mr-2" />
-            Applications ({pendingApplications})
+            Gig Apps ({pendingApplications})
           </TabsTrigger>
           <TabsTrigger value="models">
             <Users className="h-4 w-4 mr-2" />
@@ -326,11 +344,80 @@ export default async function AdminPage() {
           </TabsTrigger>
         </TabsList>
 
+        <TabsContent value="model-apps">
+          <Card>
+            <CardHeader>
+              <CardTitle>Model Applications</CardTitle>
+              <CardDescription>Review fans who want to become verified models</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {modelApplications && modelApplications.length > 0 ? (
+                <div className="space-y-4">
+                  {modelApplications.map((app: any) => (
+                    <div
+                      key={app.id}
+                      className="p-4 rounded-lg bg-muted/50 space-y-3"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center text-white font-bold text-lg">
+                            {app.display_name?.charAt(0).toUpperCase() || "?"}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-lg">{app.display_name}</p>
+                            <p className="text-sm text-muted-foreground">{app.email}</p>
+                          </div>
+                        </div>
+                        <Badge variant="secondary">Pending</Badge>
+                      </div>
+                      <div className="flex flex-wrap gap-3">
+                        {app.instagram_username && (
+                          <a
+                            href={`https://instagram.com/${app.instagram_username}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-pink-500/20 to-purple-500/20 border border-pink-500/30 text-pink-400 hover:text-pink-300 transition-colors"
+                          >
+                            <Instagram className="h-4 w-4" />
+                            @{app.instagram_username}
+                          </a>
+                        )}
+                        {app.tiktok_username && (
+                          <a
+                            href={`https://tiktok.com/@${app.tiktok_username}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-black/30 border border-white/20 text-white hover:text-white/80 transition-colors"
+                          >
+                            <span className="font-bold">T</span>
+                            @{app.tiktok_username}
+                          </a>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between pt-2">
+                        <span className="text-xs text-muted-foreground">
+                          Applied {new Date(app.created_at).toLocaleDateString()}
+                        </span>
+                        <ApproveRejectButtons id={app.id} type="model_application" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <UserPlus className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  No pending model applications
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="applications">
           <Card>
             <CardHeader>
               <CardTitle>Pending Applications</CardTitle>
-              <CardDescription>Review and approve model applications</CardDescription>
+              <CardDescription>Review and approve gig applications</CardDescription>
             </CardHeader>
             <CardContent>
               {recentApplications && recentApplications.length > 0 ? (
