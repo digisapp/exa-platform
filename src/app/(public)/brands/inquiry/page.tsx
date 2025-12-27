@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Loader2, ArrowLeft, Building2, Globe, Target } from "lucide-react";
+import { Loader2, ArrowLeft, Building2, Globe, Target, Instagram } from "lucide-react";
 import { FloatingOrbs } from "@/components/ui/floating-orbs";
 
 const INDUSTRIES = [
@@ -60,6 +60,7 @@ export default function BrandInquiryPage() {
     email: "",
     phone: "",
     website: "",
+    instagram: "",
     industry: "",
     partnership_type: "",
     budget_range: "",
@@ -213,18 +214,19 @@ export default function BrandInquiryPage() {
                   </div>
                 </div>
 
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => handleChange("phone", e.target.value)}
+                    disabled={loading}
+                    className="bg-background/50"
+                  />
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) => handleChange("phone", e.target.value)}
-                      disabled={loading}
-                      className="bg-background/50"
-                    />
-                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="website" className="flex items-center gap-2">
                       <Globe className="h-4 w-4 text-[#00BFFF]" />
@@ -236,6 +238,20 @@ export default function BrandInquiryPage() {
                       placeholder="https://yourcompany.com"
                       value={formData.website}
                       onChange={(e) => handleChange("website", e.target.value)}
+                      disabled={loading}
+                      className="bg-background/50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="instagram" className="flex items-center gap-2">
+                      <Instagram className="h-4 w-4 text-[#FF69B4]" />
+                      Instagram
+                    </Label>
+                    <Input
+                      id="instagram"
+                      placeholder="@yourbrand"
+                      value={formData.instagram}
+                      onChange={(e) => handleChange("instagram", e.target.value)}
                       disabled={loading}
                       className="bg-background/50"
                     />
