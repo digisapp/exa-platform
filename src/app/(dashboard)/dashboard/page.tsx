@@ -135,19 +135,21 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-full bg-gradient-to-br from-yellow-500/20 to-orange-500/20">
-                <Coins className="h-6 w-6 text-yellow-500" />
+        <Link href="/wallet">
+          <Card className="cursor-pointer hover:border-yellow-500/50 transition-colors">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-full bg-gradient-to-br from-yellow-500/20 to-orange-500/20">
+                  <Coins className="h-6 w-6 text-yellow-500" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{(model.coin_balance || 0).toLocaleString()}</p>
+                  <p className="text-sm text-muted-foreground">Coins</p>
+                </div>
               </div>
-              <div>
-                <p className="text-2xl font-bold">{(model.coin_balance || 0).toLocaleString()}</p>
-                <p className="text-sm text-muted-foreground">Coins</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </Link>
 
         <Card>
           <CardContent className="pt-6">

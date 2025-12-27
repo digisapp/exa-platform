@@ -508,6 +508,29 @@ export default async function ModelProfilePage({ params }: Props) {
             </div>
           )}
 
+          {/* Affiliate Links */}
+          {model.affiliate_links && model.affiliate_links.length > 0 && (
+            <div className="mb-8">
+              <h2 className="text-lg font-semibold mb-4 exa-gradient-text">Shop & Deals</h2>
+              <div className="flex flex-wrap justify-center gap-3">
+                {model.affiliate_links.map((link: { title: string; url: string }, index: number) => (
+                  link.title && link.url && (
+                    <a
+                      key={index}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-4 py-2 rounded-full glass-card hover:scale-105 transition-transform"
+                    >
+                      <span className="text-lg">🔗</span>
+                      {link.title}
+                    </a>
+                  )
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Badges */}
           {badges && badges.length > 0 && (
             <div className="mb-8">

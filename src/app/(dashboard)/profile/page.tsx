@@ -109,6 +109,7 @@ export default function ProfilePage() {
           youtube_username: model.youtube_username,
           twitch_username: model.twitch_username,
           digis_username: model.digis_username,
+          affiliate_links: model.affiliate_links || [],
           show_measurements: model.show_measurements,
           show_location: model.show_location,
           show_social_media: model.show_social_media,
@@ -436,6 +437,62 @@ export default function ProfilePage() {
                   />
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Affiliate Links */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Affiliate Links</CardTitle>
+              <CardDescription>Add links to your brand deals, promo codes, merch, or Amazon affiliate products</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {(model.affiliate_links || []).map((link: { title: string; url: string }, index: number) => (
+                <div key={index} className="flex gap-2">
+                  <Input
+                    value={link.title}
+                    onChange={(e) => {
+                      const links = [...(model.affiliate_links || [])];
+                      links[index] = { ...links[index], title: e.target.value };
+                      setModel({ ...model, affiliate_links: links });
+                    }}
+                    placeholder="Link title (e.g., My Merch Store)"
+                    className="flex-1"
+                  />
+                  <Input
+                    value={link.url}
+                    onChange={(e) => {
+                      const links = [...(model.affiliate_links || [])];
+                      links[index] = { ...links[index], url: e.target.value };
+                      setModel({ ...model, affiliate_links: links });
+                    }}
+                    placeholder="https://..."
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => {
+                      const links = (model.affiliate_links || []).filter((_: any, i: number) => i !== index);
+                      setModel({ ...model, affiliate_links: links });
+                    }}
+                  >
+                    ✕
+                  </Button>
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  const links = [...(model.affiliate_links || []), { title: "", url: "" }];
+                  setModel({ ...model, affiliate_links: links });
+                }}
+                className="w-full"
+              >
+                + Add Affiliate Link
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>
