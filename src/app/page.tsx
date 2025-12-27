@@ -73,13 +73,13 @@ export default function HomePage() {
             </div>
 
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
-              Build Your Career.
+              Join Experiences.
               <br />
               <span className="exa-gradient-text exa-glow-text">
-                Join Experiences.
+                Get Discovered.
               </span>
               <br />
-              Get Discovered.
+              Become Top Model.
             </h1>
 
             <p className="text-xl text-muted-foreground max-w-2xl mb-10 leading-relaxed">
