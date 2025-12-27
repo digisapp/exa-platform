@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,6 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Loader2, User, Lock, Camera } from "lucide-react";
-import { PhotoUploader } from "@/components/upload/PhotoUploader";
 import { PortfolioGallery } from "@/components/upload/PortfolioGallery";
 import type { Model, MediaAsset } from "@/types/database";
 
@@ -30,8 +29,48 @@ export default function ProfilePage() {
   const [photos, setPhotos] = useState<MediaAsset[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const supabase = createClient();
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Please select a valid image (JPEG, PNG, or WebP)");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be less than 5MB");
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("type", "avatar");
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Upload failed");
+
+      setModel((prev) => prev ? { ...prev, profile_photo_url: data.url } : prev);
+      toast.success("Profile picture updated!");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Upload failed");
+    } finally {
+      setUploadingAvatar(false);
+      if (avatarInputRef.current) avatarInputRef.current.value = "";
+    }
+  };
 
   useEffect(() => {
     async function loadProfile() {
@@ -165,41 +204,45 @@ export default function ProfilePage() {
         </TabsList>
 
         <TabsContent value="profile" className="space-y-6">
-          {/* Profile Picture */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Profile Picture</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-6">
-                <div className="relative">
-                  {model.profile_photo_url ? (
-                    <img
-                      src={model.profile_photo_url}
-                      alt="Profile"
-                      className="w-24 h-24 rounded-full object-cover border-2 border-pink-500/50"
-                    />
-                  ) : (
-                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center text-white text-3xl font-bold">
-                      {model.first_name?.charAt(0) || model.username?.charAt(0)?.toUpperCase() || "?"}
-                    </div>
-                  )}
+          {/* Profile Picture - Clickable Avatar */}
+          <div className="flex items-center gap-4">
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleAvatarUpload}
+              className="hidden"
+            />
+            <button
+              onClick={() => avatarInputRef.current?.click()}
+              disabled={uploadingAvatar}
+              className="relative group"
+            >
+              {model.profile_photo_url ? (
+                <img
+                  src={model.profile_photo_url}
+                  alt="Profile"
+                  className="w-20 h-20 rounded-full object-cover border-2 border-pink-500/50 group-hover:border-pink-500 transition-colors"
+                />
+              ) : (
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center text-white text-2xl font-bold">
+                  {model.first_name?.charAt(0) || model.username?.charAt(0)?.toUpperCase() || "?"}
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Upload a profile picture. JPG, PNG or WebP, max 5MB.
-                  </p>
-                  <PhotoUploader
-                    type="avatar"
-                    onUploadComplete={(url, _mediaAsset) => {
-                      setModel({ ...model, profile_photo_url: url });
-                      toast.success("Profile picture updated!");
-                    }}
-                  />
-                </div>
+              )}
+              {/* Hover overlay with camera icon */}
+              <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                {uploadingAvatar ? (
+                  <Loader2 className="h-6 w-6 text-white animate-spin" />
+                ) : (
+                  <Camera className="h-6 w-6 text-white" />
+                )}
               </div>
-            </CardContent>
-          </Card>
+            </button>
+            <div>
+              <p className="font-medium">Profile Picture</p>
+              <p className="text-sm text-muted-foreground">Click to upload</p>
+            </div>
+          </div>
 
           <Card>
             <CardHeader>
