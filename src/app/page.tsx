@@ -113,9 +113,6 @@ export default function HomePage() {
               <h2 className="text-3xl md:text-4xl font-bold mb-4 exa-gradient-text">
                 How EXA Works
               </h2>
-              <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                Build your profile, apply to opportunities, earn points, and grow your career.
-              </p>
             </div>
 
             <div className="grid md:grid-cols-4 gap-6">
@@ -173,9 +170,6 @@ export default function HomePage() {
               <h2 className="text-3xl md:text-4xl font-bold mb-4 exa-gradient-text">
                 Opportunities Await
               </h2>
-              <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                From runway shows to travel adventures, find your next opportunity.
-              </p>
             </div>
 
             <div className="grid md:grid-cols-3 gap-8">
@@ -218,14 +212,6 @@ export default function HomePage() {
               ))}
             </div>
 
-            <div className="text-center mt-12">
-              <Link href="/opportunities">
-                <Button variant="outline" size="lg" className="rounded-full border-[#FF69B4]/50 hover:border-[#FF69B4] hover:bg-[#FF69B4]/10">
-                  View All Opportunities
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
           </div>
         </section>
 
