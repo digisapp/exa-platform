@@ -141,6 +141,13 @@ export default async function AdminPage() {
     .from("fans")
     .select("*", { count: "exact", head: true });
 
+  // Get recent fans for the Fans tab
+  const { data: recentFans } = await supabase
+    .from("fans")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(50) as { data: { id: string; user_id: string; display_name: string | null; email: string | null; coin_balance: number; created_at: string }[] | null };
+
   const { data: modelBalances } = await supabase
     .from("models")
     .select("coin_balance") as { data: { coin_balance: number }[] | null };
@@ -330,6 +337,10 @@ export default async function AdminPage() {
             <Users className="h-4 w-4 mr-2" />
             Models
           </TabsTrigger>
+          <TabsTrigger value="fans">
+            <Heart className="h-4 w-4 mr-2" />
+            Fans ({totalFans || 0})
+          </TabsTrigger>
           <TabsTrigger value="brands">
             <Building2 className="h-4 w-4 mr-2" />
             Brands ({pendingBrands || 0})
@@ -498,6 +509,62 @@ export default async function AdminPage() {
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   No models yet
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="fans">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>Fans</span>
+                <span className="text-sm font-normal text-muted-foreground">
+                  Goal: 1,000,000 fans
+                </span>
+              </CardTitle>
+              <CardDescription>
+                {totalFans?.toLocaleString() || 0} total fans on the platform
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {recentFans && recentFans.length > 0 ? (
+                <div className="space-y-3">
+                  {recentFans.map((fan: any) => (
+                    <div
+                      key={fan.id}
+                      className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500/50 to-violet-500/50 flex items-center justify-center text-white font-bold">
+                          {(fan.display_name || fan.email || "F")?.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="font-medium">
+                            {fan.display_name || "Fan"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {fan.email}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1 text-yellow-500">
+                          <Coins className="h-4 w-4" />
+                          <span className="font-semibold">{fan.coin_balance || 0}</span>
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(fan.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Heart className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  No fans yet
                 </div>
               )}
             </CardContent>
