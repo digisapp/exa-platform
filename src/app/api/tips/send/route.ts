@@ -106,13 +106,13 @@ export async function POST(request: NextRequest) {
 
     // Deduct from sender
     if (sender.type === "fan") {
-      await supabase
-        .from("fans")
+      await (supabase
+        .from("fans") as any)
         .update({ coin_balance: senderBalance - amount })
         .eq("id", sender.id);
     } else if (sender.type === "model") {
-      await supabase
-        .from("models")
+      await (supabase
+        .from("models") as any)
         .update({ coin_balance: senderBalance - amount })
         .eq("user_id", user.id);
     }
@@ -124,8 +124,8 @@ export async function POST(request: NextRequest) {
       .eq("id", recipientModel.id)
       .single() as { data: { coin_balance: number } | null };
 
-    await supabase
-      .from("models")
+    await (supabase
+      .from("models") as any)
       .update({ coin_balance: (currentRecipient?.coin_balance || 0) + amount })
       .eq("id", recipientModel.id);
 
