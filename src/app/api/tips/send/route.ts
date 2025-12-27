@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
       .eq("id", recipientModel.id);
 
     // Log transaction for sender (debit)
-    await supabase.from("coin_transactions").insert({
+    await (supabase.from("coin_transactions") as any).insert({
       actor_id: sender.id,
       amount: -amount,
       action: "tip_sent",
@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Log transaction for recipient (credit)
-    await supabase.from("coin_transactions").insert({
+    await (supabase.from("coin_transactions") as any).insert({
       actor_id: recipientActor.id,
       amount: amount,
       action: "tip_received",
