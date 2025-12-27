@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Coins, Sparkles, Loader2, Check, Zap, Crown, Star } from "lucide-react";
-import { COIN_PACKAGES } from "@/lib/stripe";
+import { COIN_PACKAGES } from "@/lib/stripe-config";
 import { cn } from "@/lib/utils";
 
 export default function BuyCoinsPage() {

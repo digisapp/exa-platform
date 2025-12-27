@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
-import { stripe, COIN_PACKAGES } from "@/lib/stripe";
+import { stripe } from "@/lib/stripe";
+import { COIN_PACKAGES } from "@/lib/stripe-config";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {

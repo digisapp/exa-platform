@@ -21,7 +21,7 @@ import {
   Plus,
   Building,
 } from "lucide-react";
-import { COIN_PACKAGES } from "@/lib/stripe";
+import { COIN_PACKAGES } from "@/lib/stripe-config";
 import { cn } from "@/lib/utils";
 
 interface Transaction {
