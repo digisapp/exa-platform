@@ -20,25 +20,45 @@ interface ProfileActionButtonsProps {
   isOwner: boolean;
   modelUsername: string;
   modelActorId: string | null;
+  messageRate?: number;
+  videoCallRate?: number;
 }
 
 export function ProfileActionButtons({
   isLoggedIn,
   isOwner,
   modelUsername,
+  messageRate = 0,
+  videoCallRate = 0,
 }: ProfileActionButtonsProps) {
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [showTipDialog, setShowTipDialog] = useState(false);
+  const [showChatConfirm, setShowChatConfirm] = useState(false);
+  const [showVideoConfirm, setShowVideoConfirm] = useState(false);
   const [tipAmount, setTipAmount] = useState<number>(10);
   const [sending, setSending] = useState(false);
 
-  const handleAction = (href?: string) => {
+  const handleChat = () => {
     if (!isLoggedIn) {
       setShowAuthDialog(true);
       return;
     }
-    if (href) {
-      window.location.href = href;
+    if (messageRate > 0) {
+      setShowChatConfirm(true);
+    } else {
+      window.location.href = `/messages?new=${modelUsername}`;
+    }
+  };
+
+  const handleVideoCall = () => {
+    if (!isLoggedIn) {
+      setShowAuthDialog(true);
+      return;
+    }
+    if (videoCallRate > 0) {
+      setShowVideoConfirm(true);
+    } else {
+      window.location.href = `/messages?new=${modelUsername}&call=true`;
     }
   };
 
@@ -48,6 +68,16 @@ export function ProfileActionButtons({
       return;
     }
     setShowTipDialog(true);
+  };
+
+  const proceedToChat = () => {
+    setShowChatConfirm(false);
+    window.location.href = `/messages?new=${modelUsername}`;
+  };
+
+  const proceedToVideoCall = () => {
+    setShowVideoConfirm(false);
+    window.location.href = `/messages?new=${modelUsername}&call=true`;
   };
 
   const sendTip = async () => {
@@ -87,17 +117,17 @@ export function ProfileActionButtons({
       <div className="grid grid-cols-3 gap-2 mb-6">
         <Button
           className="exa-gradient-button h-11 text-sm font-semibold rounded-full"
-          onClick={() => handleAction(`/messages?new=${modelUsername}`)}
+          onClick={handleChat}
         >
           <MessageCircle className="mr-1.5 h-4 w-4" />
           Chat
         </Button>
         <Button
           className="exa-gradient-button h-11 text-sm font-semibold rounded-full"
-          onClick={() => handleAction(`/messages?new=${modelUsername}&call=true`)}
+          onClick={handleVideoCall}
         >
           <Video className="mr-1.5 h-4 w-4" />
-          Video
+          Video Call
         </Button>
         <Button
           className="h-11 text-sm font-semibold rounded-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white"
@@ -107,6 +137,86 @@ export function ProfileActionButtons({
           Tip
         </Button>
       </div>
+
+      {/* Chat Confirmation Dialog */}
+      <Dialog open={showChatConfirm} onOpenChange={setShowChatConfirm}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageCircle className="h-5 w-5 text-pink-500" />
+              Start Chat
+            </DialogTitle>
+            <DialogDescription>
+              Chat with {modelUsername}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <div className="flex items-center justify-center gap-2 p-4 rounded-lg bg-muted/50">
+              <Coins className="h-6 w-6 text-yellow-500" />
+              <span className="text-2xl font-bold">{messageRate}</span>
+              <span className="text-muted-foreground">coins per message</span>
+            </div>
+            <p className="text-sm text-muted-foreground text-center">
+              You will be charged {messageRate} coins for each message you send
+            </p>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setShowChatConfirm(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1 exa-gradient-button"
+                onClick={proceedToChat}
+              >
+                Start Chat
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Video Call Confirmation Dialog */}
+      <Dialog open={showVideoConfirm} onOpenChange={setShowVideoConfirm}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Video className="h-5 w-5 text-pink-500" />
+              Video Call
+            </DialogTitle>
+            <DialogDescription>
+              Start a video call with {modelUsername}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <div className="flex items-center justify-center gap-2 p-4 rounded-lg bg-muted/50">
+              <Coins className="h-6 w-6 text-yellow-500" />
+              <span className="text-2xl font-bold">{videoCallRate}</span>
+              <span className="text-muted-foreground">coins per minute</span>
+            </div>
+            <p className="text-sm text-muted-foreground text-center">
+              You will be charged {videoCallRate} coins for each minute of the call
+            </p>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setShowVideoConfirm(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1 exa-gradient-button"
+                onClick={proceedToVideoCall}
+              >
+                Start Call
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Tip Dialog */}
       <Dialog open={showTipDialog} onOpenChange={setShowTipDialog}>

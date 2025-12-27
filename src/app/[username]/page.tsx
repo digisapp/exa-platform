@@ -288,6 +288,8 @@ export default async function ModelProfilePage({ params }: Props) {
             isOwner={isOwner}
             modelUsername={model.username}
             modelActorId={modelActorId}
+            messageRate={model.message_rate || 0}
+            videoCallRate={model.video_call_rate || 0}
           />
 
           {/* Affiliate Links - Linktree Style */}

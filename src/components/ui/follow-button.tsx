@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Heart } from "lucide-react";
+import { UserPlus, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -74,7 +74,11 @@ export function FollowButton({
         disabled={loading}
         title={isFollowing ? "Unfollow" : "Follow"}
       >
-        <Heart className={`h-4 w-4 ${isFollowing ? "fill-current" : ""}`} />
+        {isFollowing ? (
+          <UserCheck className="h-4 w-4" />
+        ) : (
+          <UserPlus className="h-4 w-4" />
+        )}
       </button>
 
       {/* Auth Dialog */}
