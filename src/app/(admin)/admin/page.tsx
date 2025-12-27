@@ -148,12 +148,12 @@ export default async function AdminPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Manage models, opportunities, and applications</p>
+          <p className="text-muted-foreground">Manage models, gigs, and applications</p>
         </div>
         <Button asChild>
           <Link href="/admin/opportunities/new">
             <Sparkles className="h-4 w-4 mr-2" />
-            Create Opportunity
+            Create Gig
           </Link>
         </Button>
       </div>
@@ -196,7 +196,7 @@ export default async function AdminPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{totalOpportunities}</p>
-                <p className="text-sm text-muted-foreground">Opportunities</p>
+                <p className="text-sm text-muted-foreground">Gigs</p>
               </div>
             </div>
           </CardContent>
@@ -693,7 +693,7 @@ export default async function AdminPage() {
               className="p-4 rounded-lg border hover:border-primary/50 transition-all text-center"
             >
               <Sparkles className="h-8 w-8 mx-auto mb-2 text-pink-500" />
-              <p className="font-medium">Opportunities</p>
+              <p className="font-medium">Gigs</p>
             </Link>
             <Link
               href="/admin/models"

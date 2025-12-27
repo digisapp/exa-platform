@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   return {
-    title: `${data.title} | EXA Opportunities`,
+    title: `${data.title} | EXA Gigs`,
     description: data.description || `Apply for ${data.title} on EXA Models`,
   };
 }
@@ -108,7 +108,7 @@ export default async function OpportunityDetailPage({ params }: Props) {
           className="inline-flex items-center text-muted-foreground hover:text-primary mb-6"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Opportunities
+          Back to Gigs
         </Link>
 
         <div className="grid lg:grid-cols-3 gap-8">

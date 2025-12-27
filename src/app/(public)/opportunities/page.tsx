@@ -62,7 +62,7 @@ export default async function OpportunitiesPage() {
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
             <Sparkles className="h-8 w-8 text-pink-500" />
-            <h1 className="text-3xl font-bold">Opportunities</h1>
+            <h1 className="text-3xl font-bold">Gigs</h1>
           </div>
           <p className="text-muted-foreground">
             Apply to fashion shows, travel experiences, and brand campaigns
@@ -106,8 +106,8 @@ function OpportunityGrid({ opportunities }: { opportunities: any[] }) {
     return (
       <div className="text-center py-16">
         <Sparkles className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
-        <h3 className="text-xl font-semibold mb-2">No opportunities available</h3>
-        <p className="text-muted-foreground">Check back soon for new opportunities!</p>
+        <h3 className="text-xl font-semibold mb-2">No gigs available</h3>
+        <p className="text-muted-foreground">Check back soon for new gigs!</p>
       </div>
     );
   }

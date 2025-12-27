@@ -254,7 +254,7 @@ export default async function DashboardPage() {
             ) : (
               <div className="text-center py-8">
                 <Sparkles className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-                <p className="text-muted-foreground">No opportunities available</p>
+                <p className="text-muted-foreground">No gigs available</p>
               </div>
             )}
           </CardContent>

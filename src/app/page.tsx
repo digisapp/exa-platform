@@ -168,7 +168,7 @@ export default function HomePage() {
           <div className="container px-8 md:px-16">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-bold mb-4 exa-gradient-text">
-                Opportunities Await
+                Gigs Await
               </h2>
             </div>
 
@@ -232,7 +232,7 @@ export default function HomePage() {
                 { level: "Rising", points: "0-499", icon: "⭐", perks: "Basic profile", class: "level-rising" },
                 { level: "Verified", points: "500-1,999", icon: "✓", perks: "Blue badge, priority search", class: "level-verified" },
                 { level: "Pro", points: "2,000-4,999", icon: "💎", perks: "Featured placement", class: "level-pro" },
-                { level: "Elite", points: "5,000+", icon: "👑", perks: "VIP opportunities", class: "level-elite" },
+                { level: "Elite", points: "5,000+", icon: "👑", perks: "VIP gigs", class: "level-elite" },
               ].map((tier, index) => (
                 <div
                   key={index}
