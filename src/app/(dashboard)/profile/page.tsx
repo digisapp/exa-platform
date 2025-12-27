@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2, User, Lock, Camera } from "lucide-react";
+import { Loader2, User, Lock, Camera, DollarSign } from "lucide-react";
 import { PhotoUploader } from "@/components/upload/PhotoUploader";
 import { PortfolioGallery } from "@/components/upload/PortfolioGallery";
 import type { Model, MediaAsset } from "@/types/database";
@@ -154,6 +154,9 @@ export default function ProfilePage() {
           show_location: model.show_location,
           show_social_media: model.show_social_media,
           availability_status: model.availability_status,
+          video_call_rate: model.video_call_rate || 0,
+          voice_call_rate: model.voice_call_rate || 0,
+          message_rate: model.message_rate || 0,
           updated_at: new Date().toISOString(),
         })
         .eq("id", model.id);
@@ -193,6 +196,10 @@ export default function ProfilePage() {
           <TabsTrigger value="profile">
             <User className="h-4 w-4 mr-2" />
             Profile
+          </TabsTrigger>
+          <TabsTrigger value="rates">
+            <DollarSign className="h-4 w-4 mr-2" />
+            Rates
           </TabsTrigger>
           <TabsTrigger value="privacy">
             <Lock className="h-4 w-4 mr-2" />
@@ -526,6 +533,132 @@ export default function ProfilePage() {
                   />
                 </div>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="rates" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Pricing Rates</CardTitle>
+              <CardDescription>
+                Set your rates for video calls, voice calls, and messages. Rates are in coins per minute/message.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid gap-6">
+                {/* Video Call Rate */}
+                <div className="flex items-center justify-between p-4 rounded-lg border bg-gradient-to-r from-pink-500/10 to-violet-500/10">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M23 7l-7 5 7 5V7z" />
+                        <rect x="1" y="5" width="15" height="14" rx="2" />
+                      </svg>
+                    </div>
+                    <div>
+                      <Label className="text-base font-semibold">Video Call Rate</Label>
+                      <p className="text-sm text-muted-foreground">Per minute rate for video calls</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      min="0"
+                      max="1000"
+                      value={model.video_call_rate || 0}
+                      onChange={(e) => setModel({ ...model, video_call_rate: parseInt(e.target.value) || 0 })}
+                      className="w-24 text-right"
+                    />
+                    <span className="text-sm text-muted-foreground">coins/min</span>
+                  </div>
+                </div>
+
+                {/* Voice Call Rate */}
+                <div className="flex items-center justify-between p-4 rounded-lg border bg-gradient-to-r from-blue-500/10 to-cyan-500/10">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <Label className="text-base font-semibold">Voice Call Rate</Label>
+                      <p className="text-sm text-muted-foreground">Per minute rate for voice calls</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      min="0"
+                      max="1000"
+                      value={model.voice_call_rate || 0}
+                      onChange={(e) => setModel({ ...model, voice_call_rate: parseInt(e.target.value) || 0 })}
+                      className="w-24 text-right"
+                    />
+                    <span className="text-sm text-muted-foreground">coins/min</span>
+                  </div>
+                </div>
+
+                {/* Message Rate */}
+                <div className="flex items-center justify-between p-4 rounded-lg border bg-gradient-to-r from-green-500/10 to-emerald-500/10">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <Label className="text-base font-semibold">Message Rate</Label>
+                      <p className="text-sm text-muted-foreground">Cost per message to chat with you</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={model.message_rate || 0}
+                      onChange={(e) => setModel({ ...model, message_rate: parseInt(e.target.value) || 0 })}
+                      className="w-24 text-right"
+                    />
+                    <span className="text-sm text-muted-foreground">coins/msg</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Earnings Preview */}
+              <div className="mt-6 p-4 rounded-lg bg-muted/50">
+                <h4 className="font-semibold mb-2">Earnings Preview</h4>
+                <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">10 min video call</p>
+                    <p className="font-semibold text-pink-500">{(model.video_call_rate || 0) * 10} coins</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">10 min voice call</p>
+                    <p className="font-semibold text-blue-500">{(model.voice_call_rate || 0) * 10} coins</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">10 messages</p>
+                    <p className="font-semibold text-green-500">{(model.message_rate || 0) * 10} coins</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Rate Tips */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Rate Tips</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm text-muted-foreground">
+              <p>• Set rates to <strong>0</strong> to offer free messaging or calls</p>
+              <p>• Popular video call rates range from <strong>5-20 coins/minute</strong></p>
+              <p>• Message rates typically range from <strong>1-5 coins/message</strong></p>
+              <p>• Higher rates can signal exclusivity but may reduce engagement</p>
+              <p>• You can change your rates anytime</p>
             </CardContent>
           </Card>
         </TabsContent>

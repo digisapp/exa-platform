@@ -79,6 +79,9 @@ export interface Database {
           profile_views: number
           points_cached: number
           level_cached: ModelLevel
+          video_call_rate: number
+          voice_call_rate: number
+          message_rate: number
           user_id: string | null
           created_at: string
           updated_at: string
@@ -124,6 +127,9 @@ export interface Database {
           profile_views?: number
           points_cached?: number
           level_cached?: ModelLevel
+          video_call_rate?: number
+          voice_call_rate?: number
+          message_rate?: number
           user_id?: string | null
           created_at?: string
           updated_at?: string
@@ -169,6 +175,9 @@ export interface Database {
           profile_views?: number
           points_cached?: number
           level_cached?: ModelLevel
+          video_call_rate?: number
+          voice_call_rate?: number
+          message_rate?: number
           user_id?: string | null
           created_at?: string
           updated_at?: string
