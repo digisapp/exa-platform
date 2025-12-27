@@ -18,13 +18,10 @@ import {
   Menu,
   Home,
   Users,
-  Sparkles,
   MessageCircle,
   Settings,
-  User,
   Coins,
   Images,
-  BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/auth/logout-button";
@@ -47,7 +44,6 @@ const modelLinks = [
   { href: "/dashboard", label: "Home", icon: Home },
   { href: "/messages", label: "Chats", icon: MessageCircle },
   { href: "/content", label: "Content", icon: Images },
-  { href: "/analytics", label: "Analytics", icon: BarChart3 },
 ];
 
 const fanLinks = [

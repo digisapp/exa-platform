@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2, User, Lock, DollarSign, Camera } from "lucide-react";
+import { Loader2, User, Lock, DollarSign, Camera, BarChart3 } from "lucide-react";
 import type { Model } from "@/types/database";
 
 const US_STATES = [
@@ -245,6 +245,10 @@ export default function ProfilePage() {
           <TabsTrigger value="privacy">
             <Lock className="h-4 w-4 mr-2" />
             Privacy
+          </TabsTrigger>
+          <TabsTrigger value="analytics">
+            <BarChart3 className="h-4 w-4 mr-2" />
+            Analytics
           </TabsTrigger>
         </TabsList>
 
@@ -779,6 +783,57 @@ export default function ProfilePage() {
                   <SelectItem value="not_available">Not Available</SelectItem>
                 </SelectContent>
               </Select>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <p className="text-3xl font-bold">{(model as any).followers_count || 0}</p>
+                  <p className="text-sm text-muted-foreground">Followers</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <p className="text-3xl font-bold">{(model as any).profile_views || 0}</p>
+                  <p className="text-sm text-muted-foreground">Profile Views</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <p className="text-3xl font-bold">{(model as any).total_earnings || 0}</p>
+                  <p className="text-sm text-muted-foreground">Total Earnings</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <p className="text-3xl font-bold">{(model as any).content_count || 0}</p>
+                  <p className="text-sm text-muted-foreground">Content Items</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Performance Overview</CardTitle>
+              <CardDescription>Track your engagement and earnings over time</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8 text-muted-foreground">
+                <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>Detailed analytics coming soon</p>
+                <p className="text-sm">Track your profile views, message stats, and earnings trends</p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
