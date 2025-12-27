@@ -2,7 +2,6 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Trophy,
@@ -79,28 +78,8 @@ export default async function DashboardPage() {
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .slice(0, 8);
 
-  const displayName = model.first_name
-    ? `${model.first_name} ${model.last_name || ""}`.trim()
-    : model.username;
-
   return (
-    <div className="space-y-8">
-      {/* Header with Avatar */}
-      <div className="flex items-center gap-4">
-        <Link href={`/${model.username}`}>
-          <Avatar className="h-16 w-16 border-2 border-pink-500/50 hover:border-pink-500 transition-colors">
-            <AvatarImage src={model.profile_photo_url} alt={displayName} />
-            <AvatarFallback className="bg-gradient-to-br from-pink-500 to-violet-500 text-white text-xl">
-              {model.first_name?.charAt(0) || model.username?.charAt(0)?.toUpperCase() || "?"}
-            </AvatarFallback>
-          </Avatar>
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold">{displayName}</h1>
-          <p className="text-muted-foreground">@{model.username}</p>
-        </div>
-      </div>
-
+    <div className="space-y-6">
       {/* Recent Activity & Gigs - Side by Side */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Recent Activity */}
