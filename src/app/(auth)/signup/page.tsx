@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Loader2, ArrowLeft, Check } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
@@ -68,8 +69,14 @@ export default function SignupPage() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <Link href="/" className="text-3xl font-bold bg-gradient-to-r from-pink-500 to-violet-500 bg-clip-text text-transparent mb-4 inline-block">
-            EXA
+          <Link href="/" className="flex justify-center mb-4">
+            <Image
+              src="/exa-logo-white.png"
+              alt="EXA"
+              width={100}
+              height={40}
+              className="h-10 w-auto"
+            />
           </Link>
           <CardTitle>Join EXA</CardTitle>
           <CardDescription>
@@ -89,22 +96,6 @@ export default function SignupPage() {
                 required
                 disabled={loading}
               />
-            </div>
-
-            {/* Benefits */}
-            <div className="space-y-3 pt-4 border-t">
-              <p className="text-sm font-medium">What you&apos;ll get:</p>
-              {[
-                "Personal model profile & portfolio",
-                "Access to shows & experiences",
-                "Points & leveling system",
-                "Direct brand connections",
-              ].map((benefit, i) => (
-                <div key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Check className="h-4 w-4 text-green-500" />
-                  {benefit}
-                </div>
-              ))}
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-6 pt-6">
