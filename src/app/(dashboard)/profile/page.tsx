@@ -95,6 +95,11 @@ export default function ProfilePage() {
           city: model.city,
           state: model.state,
           height: model.height,
+          bust: model.bust,
+          waist: model.waist,
+          hips: model.hips,
+          dress_size: model.dress_size,
+          shoe_size: model.shoe_size,
           hair_color: model.hair_color,
           eye_color: model.eye_color,
           instagram_name: model.instagram_name,
@@ -236,14 +241,64 @@ export default function ProfilePage() {
               <CardTitle>Physical Attributes</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid md:grid-cols-3 gap-4">
+              {/* Row 1: Height and Measurements */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="height">Height</Label>
                   <Input
                     id="height"
                     value={model.height || ""}
                     onChange={(e) => setModel({ ...model, height: e.target.value })}
-                    placeholder="e.g., 5'8&quot;"
+                    placeholder="5'8&quot;"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="bust">Bust</Label>
+                  <Input
+                    id="bust"
+                    value={model.bust || ""}
+                    onChange={(e) => setModel({ ...model, bust: e.target.value })}
+                    placeholder="34&quot;"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="waist">Waist</Label>
+                  <Input
+                    id="waist"
+                    value={model.waist || ""}
+                    onChange={(e) => setModel({ ...model, waist: e.target.value })}
+                    placeholder="26&quot;"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="hips">Hips</Label>
+                  <Input
+                    id="hips"
+                    value={model.hips || ""}
+                    onChange={(e) => setModel({ ...model, hips: e.target.value })}
+                    placeholder="36&quot;"
+                  />
+                </div>
+              </div>
+
+              {/* Row 2: Sizes and Colors */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="dress">Dress Size</Label>
+                  <Input
+                    id="dress"
+                    value={model.dress_size || ""}
+                    onChange={(e) => setModel({ ...model, dress_size: e.target.value })}
+                    placeholder="4"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="shoe">Shoe Size</Label>
+                  <Input
+                    id="shoe"
+                    value={model.shoe_size || ""}
+                    onChange={(e) => setModel({ ...model, shoe_size: e.target.value })}
+                    placeholder="8"
                   />
                 </div>
                 <div className="space-y-2">
@@ -252,6 +307,7 @@ export default function ProfilePage() {
                     id="hair"
                     value={model.hair_color || ""}
                     onChange={(e) => setModel({ ...model, hair_color: e.target.value })}
+                    placeholder="Brown"
                   />
                 </div>
                 <div className="space-y-2">
@@ -260,6 +316,7 @@ export default function ProfilePage() {
                     id="eyes"
                     value={model.eye_color || ""}
                     onChange={(e) => setModel({ ...model, eye_color: e.target.value })}
+                    placeholder="Blue"
                   />
                 </div>
               </div>

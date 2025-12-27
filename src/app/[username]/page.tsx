@@ -363,7 +363,7 @@ export default async function ModelProfilePage({ params }: Props) {
           </div>
 
           {/* Measurements */}
-          {model.show_measurements && (model.height || model.bust || model.waist || model.hips || model.hair_color || model.eye_color) && (
+          {model.show_measurements && (model.height || model.bust || model.waist || model.hips || model.dress_size || model.shoe_size || model.hair_color || model.eye_color) && (
             <div className="mb-8">
               <h2 className="text-lg font-semibold mb-4 exa-gradient-text flex items-center justify-center gap-2">
                 <Ruler className="h-5 w-5" />
@@ -392,6 +392,18 @@ export default async function ModelProfilePage({ params }: Props) {
                   <div className="stat-card">
                     <p className="text-xs text-muted-foreground mb-1">Hips</p>
                     <p className="font-semibold">{model.hips}</p>
+                  </div>
+                )}
+                {model.dress_size && (
+                  <div className="stat-card">
+                    <p className="text-xs text-muted-foreground mb-1">Dress</p>
+                    <p className="font-semibold">{model.dress_size}</p>
+                  </div>
+                )}
+                {model.shoe_size && (
+                  <div className="stat-card">
+                    <p className="text-xs text-muted-foreground mb-1">Shoe</p>
+                    <p className="font-semibold">{model.shoe_size}</p>
                   </div>
                 )}
                 {model.hair_color && (
