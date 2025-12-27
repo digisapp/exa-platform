@@ -290,25 +290,33 @@ export default async function ModelProfilePage({ params }: Props) {
             </div>
           )}
 
-          {/* Affiliate Links */}
+          {/* Affiliate Links - Linktree Style */}
           {model.affiliate_links && model.affiliate_links.length > 0 && (
-            <div className="mb-6">
-              <div className="flex flex-wrap justify-center gap-2">
-                {model.affiliate_links.map((link: { title: string; url: string }, index: number) => (
-                  link.title && link.url && (
-                    <a
-                      key={index}
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-sm transition-colors"
+            <div className="mb-6 space-y-3">
+              {model.affiliate_links.map((link: { title: string; url: string }, index: number) => (
+                link.title && link.url && (
+                  <a
+                    key={index}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group flex items-center justify-between w-full px-5 py-4 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 hover:border-white/20 transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-pink-500/10"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-lg">🔗</span>
+                      <span className="font-medium text-white">{link.title}</span>
+                    </div>
+                    <svg
+                      className="w-5 h-5 text-white/50 group-hover:text-white/80 group-hover:translate-x-1 transition-all"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
                     >
-                      <span>🔗</span>
-                      {link.title}
-                    </a>
-                  )
-                ))}
-              </div>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </a>
+                )
+              ))}
             </div>
           )}
 
