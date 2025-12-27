@@ -1,14 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Trophy,
   ArrowRight,
-  TrendingUp,
   Lock,
   Coins,
   Heart,
@@ -16,7 +14,6 @@ import {
   Activity,
   Sparkles,
   Calendar,
-  MapPin,
 } from "lucide-react";
 
 export default async function DashboardPage() {
@@ -33,21 +30,11 @@ export default async function DashboardPage() {
 
   if (!model) redirect("/onboarding");
 
-  // Get actor ID for follower count
+  // Get actor ID for activity queries
   const { data: actor } = await (supabase.from("actors") as any)
     .select("id")
     .eq("user_id", user.id)
     .single();
-
-  // Get follower count
-  let followerCount = 0;
-  if (actor) {
-    const { count } = await (supabase
-      .from("follows") as any)
-      .select("*", { count: "exact", head: true })
-      .eq("following_id", actor.id);
-    followerCount = count || 0;
-  }
 
   // Get recent opportunities
   const { data: opportunities } = await (supabase
@@ -117,53 +104,6 @@ export default async function DashboardPage() {
         <Button variant="outline" asChild>
           <Link href={`/${model.username}`}>View Public Profile</Link>
         </Button>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-full bg-gradient-to-br from-pink-500/20 to-violet-500/20">
-                <Trophy className="h-6 w-6 text-pink-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{model.points_cached}</p>
-                <p className="text-sm text-muted-foreground">Points</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Link href="/wallet">
-          <Card className="cursor-pointer hover:border-yellow-500/50 transition-colors">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-full bg-gradient-to-br from-yellow-500/20 to-orange-500/20">
-                  <Coins className="h-6 w-6 text-yellow-500" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{(model.coin_balance || 0).toLocaleString()}</p>
-                  <p className="text-sm text-muted-foreground">Coins</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-full bg-gradient-to-br from-green-500/20 to-emerald-500/20">
-                <TrendingUp className="h-6 w-6 text-green-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{followerCount}</p>
-                <p className="text-sm text-muted-foreground">Followers</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Recent Activity & Gigs - Side by Side */}
