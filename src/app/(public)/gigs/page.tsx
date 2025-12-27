@@ -17,6 +17,10 @@ import {
   Star,
   Clock,
   PartyPopper,
+  ClipboardList,
+  CheckCircle,
+  XCircle,
+  Loader2,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
@@ -42,6 +46,49 @@ const typeColors: Record<string, string> = {
 
 export default async function OpportunitiesPage() {
   const supabase = await createClient();
+
+  // Check if user is logged in and is a model
+  const { data: { user } } = await supabase.auth.getUser();
+  let model: any = null;
+  let myApplications: any[] = [];
+
+  if (user) {
+    const { data: modelData } = await (supabase
+      .from("models") as any)
+      .select("id")
+      .eq("user_id", user.id)
+      .single();
+    model = modelData;
+
+    if (model) {
+      // Get model's applications with opportunity details
+      const { data: applications } = await (supabase
+        .from("opportunity_applications") as any)
+        .select(`
+          id,
+          status,
+          created_at,
+          opportunity:opportunities (
+            id,
+            slug,
+            title,
+            type,
+            description,
+            location_city,
+            location_state,
+            start_at,
+            compensation_type,
+            compensation_amount,
+            spots,
+            spots_filled,
+            cover_image_url
+          )
+        `)
+        .eq("model_id", model.id)
+        .order("created_at", { ascending: false });
+      myApplications = applications || [];
+    }
+  }
 
   // Get open opportunities
   const { data: opportunities } = await supabase
@@ -75,12 +122,18 @@ export default async function OpportunitiesPage() {
 
         {/* Tabs */}
         <Tabs defaultValue="all" className="space-y-6">
-          <TabsList>
+          <TabsList className="flex-wrap">
             <TabsTrigger value="all">All ({opportunities?.length || 0})</TabsTrigger>
             <TabsTrigger value="shows">Shows ({shows.length})</TabsTrigger>
             <TabsTrigger value="travel">Travel ({travel.length})</TabsTrigger>
             <TabsTrigger value="campaigns">Campaigns ({campaigns.length})</TabsTrigger>
             <TabsTrigger value="fun">Fun ({fun.length})</TabsTrigger>
+            {model && (
+              <TabsTrigger value="my-applications" className="gap-1">
+                <ClipboardList className="h-4 w-4" />
+                My Applications ({myApplications.length})
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="all" className="space-y-6">
@@ -102,6 +155,12 @@ export default async function OpportunitiesPage() {
           <TabsContent value="fun" className="space-y-6">
             <OpportunityGrid opportunities={fun} />
           </TabsContent>
+
+          {model && (
+            <TabsContent value="my-applications" className="space-y-6">
+              <MyApplicationsGrid applications={myApplications} />
+            </TabsContent>
+          )}
         </Tabs>
       </main>
 
@@ -229,6 +288,146 @@ function OpportunityCard({ opportunity }: { opportunity: any }) {
           </div>
           <Button asChild>
             <Link href={`/opportunities/${opportunity.slug}`}>View Details</Link>
+          </Button>
+        </div>
+      </CardFooter>
+    </Card>
+  );
+}
+
+const statusConfig: Record<string, { icon: any; label: string; className: string }> = {
+  pending: {
+    icon: Loader2,
+    label: "Pending Review",
+    className: "bg-amber-500/10 text-amber-500 border-amber-500/20",
+  },
+  accepted: {
+    icon: CheckCircle,
+    label: "Accepted",
+    className: "bg-green-500/10 text-green-500 border-green-500/20",
+  },
+  rejected: {
+    icon: XCircle,
+    label: "Not Selected",
+    className: "bg-gray-500/10 text-gray-500 border-gray-500/20",
+  },
+};
+
+function MyApplicationsGrid({ applications }: { applications: any[] }) {
+  if (applications.length === 0) {
+    return (
+      <div className="text-center py-16">
+        <ClipboardList className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
+        <h3 className="text-xl font-semibold mb-2">No applications yet</h3>
+        <p className="text-muted-foreground mb-4">Browse gigs and apply to get started!</p>
+        <Button asChild>
+          <Link href="/gigs">Browse Gigs</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {applications.map((application) => (
+        <ApplicationCard key={application.id} application={application} />
+      ))}
+    </div>
+  );
+}
+
+function ApplicationCard({ application }: { application: any }) {
+  const opportunity = application.opportunity;
+  if (!opportunity) return null;
+
+  const Icon = typeIcons[opportunity.type] || Sparkles;
+  const status = statusConfig[application.status] || statusConfig.pending;
+  const StatusIcon = status.icon;
+
+  return (
+    <Card className="group overflow-hidden hover:border-primary/50 transition-all flex flex-col">
+      {/* Cover Image */}
+      <div className="h-48 relative bg-gradient-to-br from-pink-500/20 to-violet-500/20 overflow-hidden">
+        {opportunity.cover_image_url ? (
+          <img
+            src={opportunity.cover_image_url}
+            alt={opportunity.title}
+            className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Icon className="h-16 w-16 text-muted-foreground/30" />
+          </div>
+        )}
+        {/* Type Badge */}
+        <Badge className={`absolute top-3 left-3 capitalize ${typeColors[opportunity.type]}`}>
+          <Icon className="h-3 w-3 mr-1" />
+          {opportunity.type}
+        </Badge>
+        {/* Status Badge */}
+        <Badge className={`absolute top-3 right-3 ${status.className}`}>
+          <StatusIcon className={`h-3 w-3 mr-1 ${application.status === "pending" ? "animate-spin" : ""}`} />
+          {status.label}
+        </Badge>
+      </div>
+
+      <CardHeader className="pb-2">
+        <h3 className="font-semibold text-lg line-clamp-1">{opportunity.title}</h3>
+        {opportunity.description && (
+          <p className="text-sm text-muted-foreground line-clamp-2">
+            {opportunity.description}
+          </p>
+        )}
+      </CardHeader>
+
+      <CardContent className="pb-2 flex-1">
+        <div className="space-y-2 text-sm">
+          {(opportunity.location_city || opportunity.location_state) && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <MapPin className="h-4 w-4" />
+              {opportunity.location_city && opportunity.location_state
+                ? `${opportunity.location_city}, ${opportunity.location_state}`
+                : opportunity.location_city || opportunity.location_state}
+            </div>
+          )}
+          {opportunity.start_at && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Calendar className="h-4 w-4" />
+              {new Date(opportunity.start_at).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </div>
+          )}
+          {opportunity.compensation_amount && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <DollarSign className="h-4 w-4" />
+              <span className="font-medium text-green-500">
+                ${(opportunity.compensation_amount / 100).toFixed(0)}
+              </span>
+            </div>
+          )}
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Clock className="h-4 w-4" />
+            Applied {formatDistanceToNow(new Date(application.created_at), { addSuffix: true })}
+          </div>
+        </div>
+      </CardContent>
+
+      <CardFooter className="pt-4">
+        <div className="flex items-center justify-between w-full">
+          {application.status === "accepted" && (
+            <span className="text-sm text-green-500 font-medium">You're in!</span>
+          )}
+          {application.status === "pending" && (
+            <span className="text-sm text-muted-foreground">Awaiting response</span>
+          )}
+          {application.status === "rejected" && (
+            <span className="text-sm text-muted-foreground">Keep applying!</span>
+          )}
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/gigs/${opportunity.slug}`}>View Details</Link>
           </Button>
         </div>
       </CardFooter>

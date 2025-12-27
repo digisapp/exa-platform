@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { GigsFeed } from "@/components/gigs/GigsFeed";
 import {
   Trophy,
   ArrowRight,
@@ -46,13 +47,20 @@ export default async function DashboardPage() {
 
   if (!model) redirect("/onboarding");
 
-  // Get recent opportunities
+  // Get open opportunities
   const { data: opportunities } = await (supabase
     .from("opportunities") as any)
-    .select("id, slug, title, brand_name, location, event_date, is_active")
-    .eq("is_active", true)
-    .order("event_date", { ascending: true })
-    .limit(3);
+    .select("id, slug, title, type, description, location_city, location_state, start_at, compensation_type, compensation_amount, spots, spots_filled")
+    .eq("status", "open")
+    .eq("visibility", "public")
+    .order("start_at", { ascending: true })
+    .limit(5);
+
+  // Get model's applications
+  const { data: modelApplications } = await (supabase
+    .from("opportunity_applications") as any)
+    .select("opportunity_id, status")
+    .eq("model_id", model.id);
 
   // Get recent activity - combine point transactions and coin transactions
   const { data: pointHistory } = await (supabase
@@ -163,57 +171,11 @@ export default async function DashboardPage() {
         </Card>
 
         {/* Gigs */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-pink-500" />
-              Gigs
-            </CardTitle>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/gigs" className="text-pink-500">
-                View All
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {opportunities && opportunities.length > 0 ? (
-              <div className="space-y-3">
-                {opportunities.map((opp: any) => (
-                  <Link
-                    key={opp.id}
-                    href={`/opportunities/${opp.slug}`}
-                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-full bg-gradient-to-br from-pink-500/20 to-violet-500/20">
-                        <Sparkles className="h-4 w-4 text-pink-500" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm">{opp.title}</p>
-                        <p className="text-xs text-muted-foreground">{opp.brand_name}</p>
-                      </div>
-                    </div>
-                    {opp.event_date && (
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Calendar className="h-3 w-3" />
-                        {new Date(opp.event_date).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </div>
-                    )}
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <Sparkles className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-                <p className="text-muted-foreground">No gigs available</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <GigsFeed
+          opportunities={opportunities || []}
+          modelApplications={modelApplications || []}
+          isApproved={model.is_approved}
+        />
       </div>
     </div>
   );
