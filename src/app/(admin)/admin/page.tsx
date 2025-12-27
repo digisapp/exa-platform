@@ -15,6 +15,12 @@ import {
   Clock,
   TrendingUp,
   Settings,
+  Building2,
+  Palette,
+  Camera,
+  Mail,
+  Globe,
+  Instagram,
 } from "lucide-react";
 
 export default async function AdminPage() {
@@ -77,6 +83,43 @@ export default async function AdminPage() {
     .order("created_at", { ascending: false })
     .limit(10);
 
+  // Get brand inquiries
+  const { data: brandInquiries } = await (supabase
+    .from("brands") as any)
+    .select("*")
+    .eq("subscription_tier", "inquiry")
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  const { count: pendingBrands } = await (supabase
+    .from("brands") as any)
+    .select("*", { count: "exact", head: true })
+    .eq("subscription_tier", "inquiry");
+
+  // Get designer signups
+  const { data: designerSignups } = await (supabase
+    .from("designers") as any)
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  const { count: pendingDesigners } = await (supabase
+    .from("designers") as any)
+    .select("*", { count: "exact", head: true })
+    .eq("status", "pending");
+
+  // Get media signups
+  const { data: mediaSignups } = await (supabase
+    .from("media") as any)
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  const { count: pendingMedia } = await (supabase
+    .from("media") as any)
+    .select("*", { count: "exact", head: true })
+    .eq("status", "pending");
+
   return (
     <div className="container py-8 space-y-8">
       <div className="flex items-center justify-between">
@@ -93,7 +136,7 @@ export default async function AdminPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
@@ -116,7 +159,7 @@ export default async function AdminPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{pendingModels}</p>
-                <p className="text-sm text-muted-foreground">Pending Approval</p>
+                <p className="text-sm text-muted-foreground">Pending Models</p>
               </div>
             </div>
           </CardContent>
@@ -149,18 +192,72 @@ export default async function AdminPage() {
             </div>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-full bg-cyan-500/10">
+                <Building2 className="h-6 w-6 text-cyan-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{pendingBrands || 0}</p>
+                <p className="text-sm text-muted-foreground">Brand Inquiries</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-full bg-purple-500/10">
+                <Palette className="h-6 w-6 text-purple-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{pendingDesigners || 0}</p>
+                <p className="text-sm text-muted-foreground">Designer Apps</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-full bg-yellow-500/10">
+                <Camera className="h-6 w-6 text-yellow-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{pendingMedia || 0}</p>
+                <p className="text-sm text-muted-foreground">Media Apps</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Main Content */}
       <Tabs defaultValue="applications" className="space-y-6">
-        <TabsList>
+        <TabsList className="flex-wrap h-auto gap-2">
           <TabsTrigger value="applications">
             <Clock className="h-4 w-4 mr-2" />
-            Pending Applications ({pendingApplications})
+            Applications ({pendingApplications})
           </TabsTrigger>
           <TabsTrigger value="models">
             <Users className="h-4 w-4 mr-2" />
-            Recent Models
+            Models
+          </TabsTrigger>
+          <TabsTrigger value="brands">
+            <Building2 className="h-4 w-4 mr-2" />
+            Brands ({pendingBrands || 0})
+          </TabsTrigger>
+          <TabsTrigger value="designers">
+            <Palette className="h-4 w-4 mr-2" />
+            Designers ({pendingDesigners || 0})
+          </TabsTrigger>
+          <TabsTrigger value="media">
+            <Camera className="h-4 w-4 mr-2" />
+            Media ({pendingMedia || 0})
           </TabsTrigger>
         </TabsList>
 
@@ -246,7 +343,7 @@ export default async function AdminPage() {
                           {model.points_cached} pts
                         </span>
                         <Button size="sm" variant="outline" asChild>
-                          <Link href={`/models/${model.username}`}>View</Link>
+                          <Link href={`/${model.username}`}>View</Link>
                         </Button>
                       </div>
                     </div>
@@ -255,6 +352,296 @@ export default async function AdminPage() {
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   No models yet
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="brands">
+          <Card>
+            <CardHeader>
+              <CardTitle>Brand Inquiries</CardTitle>
+              <CardDescription>Partnership requests from brands</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {brandInquiries && brandInquiries.length > 0 ? (
+                <div className="space-y-4">
+                  {brandInquiries.map((brand: any) => (
+                    <div
+                      key={brand.id}
+                      className="p-4 rounded-lg bg-muted/50 space-y-3"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg">
+                            {brand.company_name?.charAt(0).toUpperCase() || "B"}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-lg">{brand.company_name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {brand.contact_name}
+                            </p>
+                          </div>
+                        </div>
+                        <Badge variant="outline" className="bg-cyan-500/10 text-cyan-500 border-cyan-500/50">
+                          Inquiry
+                        </Badge>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div className="flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-muted-foreground truncate">{brand.email}</span>
+                        </div>
+                        {brand.website && (
+                          <div className="flex items-center gap-2">
+                            <Globe className="h-4 w-4 text-muted-foreground" />
+                            <a href={brand.website} target="_blank" rel="noopener noreferrer" className="text-cyan-500 hover:underline truncate">
+                              Website
+                            </a>
+                          </div>
+                        )}
+                        {brand.form_data?.industry && (
+                          <div className="flex items-center gap-2">
+                            <Building2 className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">{brand.form_data.industry}</span>
+                          </div>
+                        )}
+                        {brand.form_data?.budget_range && (
+                          <div className="text-muted-foreground">
+                            Budget: {brand.form_data.budget_range.replace(/_/g, " ")}
+                          </div>
+                        )}
+                      </div>
+                      {brand.bio && (
+                        <p className="text-sm text-muted-foreground bg-background/50 p-3 rounded">
+                          {brand.bio}
+                        </p>
+                      )}
+                      <div className="flex items-center justify-between pt-2">
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(brand.created_at).toLocaleDateString()}
+                        </span>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline">
+                            <Mail className="h-4 w-4 mr-1" />
+                            Contact
+                          </Button>
+                          <Button size="sm" className="bg-green-500 hover:bg-green-600">
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            Approve
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Building2 className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  No brand inquiries yet
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="designers">
+          <Card>
+            <CardHeader>
+              <CardTitle>Designer Applications</CardTitle>
+              <CardDescription>Fashion designers wanting to partner</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {designerSignups && designerSignups.length > 0 ? (
+                <div className="space-y-4">
+                  {designerSignups.map((designer: any) => (
+                    <div
+                      key={designer.id}
+                      className="p-4 rounded-lg bg-muted/50 space-y-3"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-lg">
+                            {designer.first_name?.charAt(0).toUpperCase() || "D"}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-lg">
+                              {designer.first_name} {designer.last_name}
+                            </p>
+                            <p className="text-sm text-purple-400">{designer.brand_name}</p>
+                          </div>
+                        </div>
+                        <Badge variant={designer.status === "pending" ? "secondary" : "default"}>
+                          {designer.status || "Pending"}
+                        </Badge>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div className="flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-muted-foreground truncate">{designer.email}</span>
+                        </div>
+                        {designer.city && designer.state && (
+                          <div className="text-muted-foreground">
+                            {designer.city}, {designer.state}
+                          </div>
+                        )}
+                        {designer.specialization && (
+                          <div className="flex items-center gap-2">
+                            <Palette className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">{designer.specialization}</span>
+                          </div>
+                        )}
+                        {designer.years_experience && (
+                          <div className="text-muted-foreground">
+                            Experience: {designer.years_experience} years
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {designer.website_url && (
+                          <a href={designer.website_url} target="_blank" rel="noopener noreferrer" className="text-xs px-2 py-1 rounded bg-background/50 text-cyan-500 hover:underline flex items-center gap-1">
+                            <Globe className="h-3 w-3" /> Website
+                          </a>
+                        )}
+                        {designer.instagram_url && (
+                          <a href={designer.instagram_url} target="_blank" rel="noopener noreferrer" className="text-xs px-2 py-1 rounded bg-background/50 text-pink-500 hover:underline flex items-center gap-1">
+                            <Instagram className="h-3 w-3" /> Instagram
+                          </a>
+                        )}
+                        {designer.portfolio_url && (
+                          <a href={designer.portfolio_url} target="_blank" rel="noopener noreferrer" className="text-xs px-2 py-1 rounded bg-background/50 text-purple-500 hover:underline flex items-center gap-1">
+                            <Palette className="h-3 w-3" /> Portfolio
+                          </a>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between pt-2">
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(designer.created_at).toLocaleDateString()}
+                        </span>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline">
+                            <XCircle className="h-4 w-4 mr-1" />
+                            Reject
+                          </Button>
+                          <Button size="sm" className="bg-green-500 hover:bg-green-600">
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            Approve
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Palette className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  No designer applications yet
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="media">
+          <Card>
+            <CardHeader>
+              <CardTitle>Media Professional Applications</CardTitle>
+              <CardDescription>Photographers and videographers</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {mediaSignups && mediaSignups.length > 0 ? (
+                <div className="space-y-4">
+                  {mediaSignups.map((media: any) => (
+                    <div
+                      key={media.id}
+                      className="p-4 rounded-lg bg-muted/50 space-y-3"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center text-white font-bold text-lg">
+                            {media.first_name?.charAt(0).toUpperCase() || "M"}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-lg">
+                              {media.first_name} {media.last_name}
+                            </p>
+                            <p className="text-sm text-yellow-500 capitalize">
+                              {media.media_type?.replace(/_/g, " ")}
+                            </p>
+                          </div>
+                        </div>
+                        <Badge variant={media.status === "pending" ? "secondary" : "default"}>
+                          {media.status || "Pending"}
+                        </Badge>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div className="flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-muted-foreground truncate">{media.email}</span>
+                        </div>
+                        {media.city && media.state && (
+                          <div className="text-muted-foreground">
+                            {media.city}, {media.state}
+                          </div>
+                        )}
+                        {media.specializations && (
+                          <div className="flex items-center gap-2">
+                            <Camera className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">{media.specializations}</span>
+                          </div>
+                        )}
+                        {media.years_experience && (
+                          <div className="text-muted-foreground">
+                            Experience: {media.years_experience} years
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {media.website_url && (
+                          <a href={media.website_url} target="_blank" rel="noopener noreferrer" className="text-xs px-2 py-1 rounded bg-background/50 text-cyan-500 hover:underline flex items-center gap-1">
+                            <Globe className="h-3 w-3" /> Website
+                          </a>
+                        )}
+                        {media.instagram_url && (
+                          <a href={media.instagram_url} target="_blank" rel="noopener noreferrer" className="text-xs px-2 py-1 rounded bg-background/50 text-pink-500 hover:underline flex items-center gap-1">
+                            <Instagram className="h-3 w-3" /> Instagram
+                          </a>
+                        )}
+                        {media.portfolio_url && (
+                          <a href={media.portfolio_url} target="_blank" rel="noopener noreferrer" className="text-xs px-2 py-1 rounded bg-background/50 text-yellow-500 hover:underline flex items-center gap-1">
+                            <Camera className="h-3 w-3" /> Portfolio
+                          </a>
+                        )}
+                      </div>
+                      {media.available_for_shows && (
+                        <div className="flex items-center gap-2 text-xs text-green-500">
+                          <CheckCircle className="h-3 w-3" />
+                          Available for EXA shows
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between pt-2">
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(media.created_at).toLocaleDateString()}
+                        </span>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline">
+                            <XCircle className="h-4 w-4 mr-1" />
+                            Reject
+                          </Button>
+                          <Button size="sm" className="bg-green-500 hover:bg-green-600">
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            Approve
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Camera className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  No media applications yet
                 </div>
               )}
             </CardContent>

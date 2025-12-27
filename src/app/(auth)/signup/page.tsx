@@ -107,10 +107,10 @@ export default function SignupPage() {
               ))}
             </div>
           </CardContent>
-          <CardFooter className="flex flex-col gap-4">
+          <CardFooter className="flex flex-col gap-6 pt-6">
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
+              className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 h-12 text-base"
               disabled={loading}
             >
               {loading ? (
@@ -124,11 +124,11 @@ export default function SignupPage() {
             </Button>
             <div className="text-center text-sm text-muted-foreground">
               Already have an account?{" "}
-              <Link href="/login" className="text-primary hover:underline">
+              <Link href="/login" className="text-primary hover:underline font-medium">
                 Sign in
               </Link>
             </div>
-            <Link href="/" className="flex items-center justify-center text-sm text-muted-foreground hover:text-primary">
+            <Link href="/" className="flex items-center justify-center text-sm text-muted-foreground hover:text-primary transition-colors">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to home
             </Link>

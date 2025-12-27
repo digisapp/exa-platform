@@ -14,6 +14,9 @@ import {
   Plane,
   Camera,
   Instagram,
+  Building2,
+  Palette,
+  Video,
 } from "lucide-react";
 
 export default function HomePage() {
@@ -350,6 +353,65 @@ export default function HomePage() {
                     </div>
                   </div>
                 </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Partner With Us */}
+        <section className="py-24">
+          <div className="container px-8 md:px-16">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4 exa-gradient-text">
+                Partner With EXA
+              </h2>
+              <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+                Join our network as a brand, designer, or media partner.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-8">
+              {[
+                {
+                  icon: Building2,
+                  title: "Brands",
+                  description: "Connect with top models for campaigns, events, and brand ambassadors.",
+                  cta: "Partner With Us",
+                  href: "/brands/inquiry",
+                  gradient: "from-[#FF69B4] to-[#FF00FF]",
+                },
+                {
+                  icon: Palette,
+                  title: "Designers",
+                  description: "Showcase your collections with our community of professional models.",
+                  cta: "Join as Designer",
+                  href: "/designers/signup",
+                  gradient: "from-[#9400D3] to-[#4B0082]",
+                },
+                {
+                  icon: Video,
+                  title: "Media & Press",
+                  description: "Get exclusive access to shows, behind-the-scenes content, and interviews.",
+                  cta: "Apply for Access",
+                  href: "/media/signup",
+                  gradient: "from-[#00BFFF] to-[#0099cc]",
+                },
+              ].map((partner, index) => (
+                <Link
+                  key={index}
+                  href={partner.href}
+                  className="glass-card rounded-2xl p-8 hover:scale-105 transition-all group block"
+                >
+                  <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${partner.gradient} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
+                    <partner.icon className="h-8 w-8 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-semibold mb-3">{partner.title}</h3>
+                  <p className="text-muted-foreground mb-6">{partner.description}</p>
+                  <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold bg-gradient-to-r ${partner.gradient} text-white`}>
+                    {partner.cta}
+                    <ArrowRight className="h-4 w-4" />
+                  </span>
+                </Link>
               ))}
             </div>
           </div>
