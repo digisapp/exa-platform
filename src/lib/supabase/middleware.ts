@@ -30,8 +30,19 @@ export async function updateSession(request: NextRequest) {
   // Refresh session if expired
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Protected routes
-  const protectedPaths = ['/dashboard', '/profile', '/messages', '/settings', '/admin']
+  // Protected routes - all pages that require authentication
+  const protectedPaths = [
+    '/dashboard',
+    '/profile',
+    '/messages',
+    '/settings',
+    '/admin',
+    '/content',
+    '/earnings',
+    '/coins',
+    '/opportunities',
+    '/leaderboard',
+  ]
   const isProtectedPath = protectedPaths.some(path => request.nextUrl.pathname.startsWith(path))
 
   if (isProtectedPath && !user) {
