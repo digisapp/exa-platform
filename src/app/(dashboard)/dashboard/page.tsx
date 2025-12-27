@@ -215,7 +215,7 @@ export default async function DashboardPage() {
               Gigs
             </CardTitle>
             <Button variant="ghost" size="sm" asChild>
-              <Link href="/opportunities" className="text-pink-500">
+              <Link href="/gigs" className="text-pink-500">
                 View All
                 <ArrowRight className="ml-1 h-4 w-4" />
               </Link>

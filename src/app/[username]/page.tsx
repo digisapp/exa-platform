@@ -27,7 +27,7 @@ const RESERVED_PATHS = [
   'signin',
   'signup',
   'models',
-  'opportunities',
+  'gigs',
   'dashboard',
   'profile',
   'messages',
@@ -41,6 +41,8 @@ const RESERVED_PATHS = [
   'auth',
   '_next',
   'favicon.ico',
+  'wallet',
+  'content',
 ];
 
 interface Props {

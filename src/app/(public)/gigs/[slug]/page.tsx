@@ -104,7 +104,7 @@ export default async function OpportunityDetailPage({ params }: Props) {
       <main className="container px-8 md:px-16 py-8">
         {/* Back Button */}
         <Link
-          href="/opportunities"
+          href="/gigs"
           className="inline-flex items-center text-muted-foreground hover:text-primary mb-6"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />

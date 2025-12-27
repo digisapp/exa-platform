@@ -12,7 +12,7 @@ const PROTECTED_PATHS = [
   '/earnings',
   '/coins',
   '/wallet',
-  '/opportunities',
+  '/gigs',
 ]
 
 export async function updateSession(request: NextRequest) {
