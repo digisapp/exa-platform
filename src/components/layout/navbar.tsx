@@ -184,7 +184,7 @@ export function Navbar({ user, actorType, coinBalance = 0 }: NavbarProps) {
                   <DropdownMenuItem asChild>
                     <Link href="/auth/logout" className="cursor-pointer text-red-500">
                       <LogOut className="mr-2 h-4 w-4" />
-                      Log out
+                      Sign Out
                     </Link>
                   </DropdownMenuItem>
                 </DropdownMenuContent>

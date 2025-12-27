@@ -145,7 +145,7 @@ export default function LoginPage() {
             <div className="text-center text-sm text-muted-foreground">
               Don&apos;t have an account?{" "}
               <Link href="/signup" className="text-primary hover:underline font-medium">
-                Sign up
+                Sign Up
               </Link>
             </div>
             <Link href="/" className="flex items-center justify-center text-sm text-muted-foreground hover:text-primary transition-colors">
