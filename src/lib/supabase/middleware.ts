@@ -16,8 +16,11 @@ const PROTECTED_PATHS = [
 ]
 
 export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
+  // Create an unmodified response
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
   })
 
   const supabase = createServerClient(
@@ -29,20 +32,26 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-          supabaseResponse = NextResponse.next({
-            request,
+          // Update cookies on the request for downstream use
+          cookiesToSet.forEach(({ name, value }) => {
+            request.cookies.set(name, value)
           })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          )
+          // Create new response with updated request
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          })
+          // Set cookies on the response for the browser
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options)
+          })
         },
       },
     }
   )
 
-  // IMPORTANT: Always call getUser() to refresh the session
-  // This validates the JWT and refreshes tokens if needed
+  // IMPORTANT: Do not remove this - it refreshes the auth token
   const { data: { user } } = await supabase.auth.getUser()
 
   // Check if this is a protected route
@@ -50,12 +59,12 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith(path)
   )
 
-  // Redirect to login if accessing protected route without auth
+  // Redirect to signin if accessing protected route without auth
   if (isProtectedPath && !user) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/signin'
-    url.searchParams.set('redirect', request.nextUrl.pathname)
-    return NextResponse.redirect(url)
+    const redirectUrl = request.nextUrl.clone()
+    redirectUrl.pathname = '/signin'
+    redirectUrl.searchParams.set('redirect', request.nextUrl.pathname)
+    return NextResponse.redirect(redirectUrl)
   }
 
   // Check admin routes require admin actor type
@@ -71,8 +80,5 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  // Add cache control headers to prevent stale auth state
-  supabaseResponse.headers.set('Cache-Control', 'no-store, max-age=0')
-
-  return supabaseResponse
+  return response
 }
