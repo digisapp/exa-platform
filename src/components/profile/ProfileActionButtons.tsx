@@ -6,6 +6,7 @@ import { MessageCircle, Video, Coins } from "lucide-react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -28,13 +29,11 @@ export function ProfileActionButtons({
 }: ProfileActionButtonsProps) {
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [showTipDialog, setShowTipDialog] = useState(false);
-  const [authAction, setAuthAction] = useState<string>("");
   const [tipAmount, setTipAmount] = useState<number>(10);
   const [sending, setSending] = useState(false);
 
-  const handleAction = (action: string, href?: string) => {
+  const handleAction = (href?: string) => {
     if (!isLoggedIn) {
-      setAuthAction(action);
       setShowAuthDialog(true);
       return;
     }
@@ -45,7 +44,6 @@ export function ProfileActionButtons({
 
   const handleTip = () => {
     if (!isLoggedIn) {
-      setAuthAction("tip");
       setShowAuthDialog(true);
       return;
     }
@@ -89,14 +87,14 @@ export function ProfileActionButtons({
       <div className="grid grid-cols-3 gap-2 mb-6">
         <Button
           className="exa-gradient-button h-11 text-sm font-semibold rounded-full"
-          onClick={() => handleAction("chat", `/messages?new=${modelUsername}`)}
+          onClick={() => handleAction(`/messages?new=${modelUsername}`)}
         >
           <MessageCircle className="mr-1.5 h-4 w-4" />
           Chat
         </Button>
         <Button
           className="exa-gradient-button h-11 text-sm font-semibold rounded-full"
-          onClick={() => handleAction("video call", `/messages?new=${modelUsername}&call=true`)}
+          onClick={() => handleAction(`/messages?new=${modelUsername}&call=true`)}
         >
           <Video className="mr-1.5 h-4 w-4" />
           Video
