@@ -182,20 +182,6 @@ export default async function ModelProfilePage({ params }: Props) {
     { platform: "twitch", username: model.twitch_username, url: `https://twitch.tv/${model.twitch_username}` },
   ].filter(link => link.username);
 
-  // Measurements data
-  const measurements = [
-    { label: "Height", value: model.height },
-    { label: "Bust", value: model.bust },
-    { label: "Waist", value: model.waist },
-    { label: "Hips", value: model.hips },
-    { label: "Dress", value: model.dress_size },
-    { label: "Shoe", value: model.shoe_size },
-    { label: "Hair", value: model.hair_color },
-    { label: "Eyes", value: model.eye_color },
-  ].filter(m => m.value);
-
-  const hasMeasurements = model.show_measurements && measurements.length > 0;
-
   return (
     <div className="min-h-screen relative">
       <FloatingOrbs />
@@ -219,8 +205,8 @@ export default async function ModelProfilePage({ params }: Props) {
 
           {/* Profile Image */}
           <div className="flex justify-center mb-4">
-            <div className={`relative ${hasMeasurements ? 'group cursor-pointer' : ''}`}>
-              <div className="w-32 h-32 rounded-full overflow-hidden ring-2 ring-white/30 group-hover:ring-white/50 transition-all shadow-[0_0_30px_rgba(255,105,180,0.3),0_0_60px_rgba(0,191,255,0.2)]">
+            <div className="relative">
+              <div className="w-32 h-32 rounded-full overflow-hidden ring-2 ring-white/30 shadow-[0_0_30px_rgba(255,105,180,0.3),0_0_60px_rgba(0,191,255,0.2)]">
                 {model.profile_photo_url ? (
                   <img
                     src={model.profile_photo_url}
@@ -236,21 +222,6 @@ export default async function ModelProfilePage({ params }: Props) {
               {/* Online Indicator */}
               {model.availability_status === 'available' && (
                 <div className="absolute bottom-1 right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-[#1a0033]" />
-              )}
-              {/* Measurements Popup - shows on hover */}
-              {hasMeasurements && (
-                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-50">
-                  <div className="glass-card rounded-xl p-4 min-w-[180px] shadow-xl">
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      {measurements.map((m) => (
-                        <div key={m.label} className="flex justify-between gap-2">
-                          <span className="text-white/50">{m.label}</span>
-                          <span className="text-white capitalize">{m.value}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
               )}
             </div>
           </div>
