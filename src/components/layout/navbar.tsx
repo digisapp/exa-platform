@@ -27,6 +27,7 @@ import {
   Trophy,
   Coins,
   TrendingUp,
+  Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -49,6 +50,7 @@ const modelLinks = [
   { href: "/models", label: "Browse", icon: Users },
   { href: "/opportunities", label: "Opportunities", icon: Sparkles },
   { href: "/messages", label: "Messages", icon: MessageCircle },
+  { href: "/content", label: "Content", icon: Lock },
   { href: "/earnings", label: "Earnings", icon: TrendingUp },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
 ];

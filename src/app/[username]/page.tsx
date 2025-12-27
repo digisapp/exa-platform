@@ -16,9 +16,11 @@ import {
   Users,
   Video,
   Eye,
+  Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
+import { PremiumContentGrid } from "@/components/content/PremiumContentGrid";
 
 // Reserved paths that should NOT be treated as usernames
 const RESERVED_PATHS = [
@@ -130,6 +132,49 @@ export default async function ModelProfilePage({ params }: Props) {
     .from("model_badges")
     .select("*, badge:badges(*)")
     .eq("model_id", model.id) as { data: any[] | null };
+
+  // Get premium content count
+  const { count: premiumContentCount } = await supabase
+    .from("premium_content")
+    .select("*", { count: "exact", head: true })
+    .eq("model_id", model.id)
+    .eq("is_active", true);
+
+  // Get current user info for premium content
+  const { data: { user } } = await supabase.auth.getUser();
+  let currentActorId: string | null = null;
+  let coinBalance = 0;
+
+  if (user) {
+    const { data: actor } = await supabase
+      .from("actors")
+      .select("id, type")
+      .eq("user_id", user.id)
+      .single() as { data: { id: string; type: string } | null };
+
+    if (actor) {
+      currentActorId = actor.id;
+
+      // Get coin balance
+      if (actor.type === "fan") {
+        const { data: fan } = await supabase
+          .from("fans")
+          .select("coin_balance")
+          .eq("id", actor.id)
+          .single() as { data: { coin_balance: number } | null };
+        coinBalance = fan?.coin_balance || 0;
+      } else {
+        const { data: modelData } = await supabase
+          .from("models")
+          .select("coin_balance")
+          .eq("id", actor.id)
+          .single() as { data: { coin_balance: number } | null };
+        coinBalance = modelData?.coin_balance || 0;
+      }
+    }
+  }
+
+  const isOwner = currentActorId === model.id;
 
   // Display name
   const displayName = model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username;
@@ -395,6 +440,21 @@ export default async function ModelProfilePage({ params }: Props) {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Premium Content */}
+          {(premiumContentCount || 0) > 0 && (
+            <div className="mb-8">
+              <h2 className="text-lg font-semibold mb-4 exa-gradient-text flex items-center justify-center gap-2">
+                <Lock className="h-5 w-5" />
+                Premium Content
+              </h2>
+              <PremiumContentGrid
+                modelId={model.id}
+                initialCoinBalance={coinBalance}
+                isOwner={isOwner}
+              />
             </div>
           )}
 
