@@ -37,7 +37,7 @@ interface NavbarProps {
     name?: string;
     username?: string;
   } | null;
-  actorType?: "model" | "brand" | "admin" | null;
+  actorType?: "model" | "brand" | "admin" | "fan" | null;
   coinBalance?: number;
 }
 
@@ -51,6 +51,12 @@ const modelLinks = [
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
 ];
 
+const fanLinks = [
+  { href: "/models", label: "Browse Models", icon: Users },
+  { href: "/messages", label: "Messages", icon: MessageCircle },
+  { href: "/coins", label: "Buy Coins", icon: Coins },
+];
+
 const adminLinks = [
   { href: "/admin", label: "Admin", icon: Settings },
   ...modelLinks,
@@ -58,7 +64,13 @@ const adminLinks = [
 
 export function Navbar({ user, actorType, coinBalance = 0 }: NavbarProps) {
   const pathname = usePathname();
-  const links = actorType === "admin" ? adminLinks : actorType === "model" ? modelLinks : publicLinks;
+  const links = actorType === "admin"
+    ? adminLinks
+    : actorType === "model"
+      ? modelLinks
+      : actorType === "fan"
+        ? fanLinks
+        : publicLinks;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">

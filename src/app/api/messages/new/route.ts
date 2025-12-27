@@ -142,13 +142,24 @@ export async function POST(request: NextRequest) {
 
       // Check balance if coins required
       if (coinsRequired > 0) {
-        const { data: senderModel } = await supabase
-          .from("models")
-          .select("coin_balance")
-          .eq("id", sender.id)
-          .single() as { data: { coin_balance: number } | null };
+        // Get balance based on actor type
+        let balance = 0;
 
-        const balance = senderModel?.coin_balance || 0;
+        if (sender.type === "fan") {
+          const { data: senderFan } = await supabase
+            .from("fans")
+            .select("coin_balance")
+            .eq("id", sender.id)
+            .single() as { data: { coin_balance: number } | null };
+          balance = senderFan?.coin_balance || 0;
+        } else {
+          const { data: senderModel } = await supabase
+            .from("models")
+            .select("coin_balance")
+            .eq("id", sender.id)
+            .single() as { data: { coin_balance: number } | null };
+          balance = senderModel?.coin_balance || 0;
+        }
 
         if (balance < coinsRequired) {
           // Delete the conversation since we can't send the message
@@ -167,7 +178,7 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        // Deduct coins
+        // Deduct coins (handles both fans and models)
         await (supabase.rpc as any)("deduct_coins", {
           p_actor_id: sender.id,
           p_amount: coinsRequired,

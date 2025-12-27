@@ -6,7 +6,7 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export type ActorType = 'model' | 'brand' | 'admin'
+export type ActorType = 'model' | 'brand' | 'admin' | 'fan'
 export type ModelLevel = 'rising' | 'verified' | 'pro' | 'elite'
 export type Availability = 'available' | 'busy' | 'not_available'
 export type OpportunityType = 'show' | 'travel' | 'campaign' | 'content' | 'hosting' | 'other'
@@ -624,6 +624,19 @@ export type ApplicationWithDetails = Application & {
 export type CoinTransaction = Database['public']['Tables']['coin_transactions']['Row']
 export type ConversationParticipant = Database['public']['Tables']['conversation_participants']['Row']
 export type Conversation = Database['public']['Tables']['conversations']['Row']
+
+// Fan type
+export interface Fan {
+  id: string
+  user_id: string
+  display_name: string | null
+  email: string | null
+  avatar_url: string | null
+  coin_balance: number
+  total_coins_purchased: number
+  created_at: string
+  updated_at: string
+}
 
 // Extended conversation type with participants
 export type ConversationWithParticipants = Conversation & {

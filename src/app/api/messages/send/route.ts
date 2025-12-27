@@ -88,15 +88,24 @@ export async function POST(request: NextRequest) {
 
     // If coins required, deduct them
     if (coinsRequired > 0) {
-      // Get sender's coin balance (for non-models, we'd need a different table)
-      // For now, we assume sender is a model or brand with coins
-      const { data: senderModel } = await supabase
-        .from("models")
-        .select("coin_balance")
-        .eq("id", sender.id)
-        .single() as { data: { coin_balance: number } | null };
+      // Get sender's coin balance based on actor type
+      let balance = 0;
 
-      const balance = senderModel?.coin_balance || 0;
+      if (sender.type === "fan") {
+        const { data: senderFan } = await supabase
+          .from("fans")
+          .select("coin_balance")
+          .eq("id", sender.id)
+          .single() as { data: { coin_balance: number } | null };
+        balance = senderFan?.coin_balance || 0;
+      } else {
+        const { data: senderModel } = await supabase
+          .from("models")
+          .select("coin_balance")
+          .eq("id", sender.id)
+          .single() as { data: { coin_balance: number } | null };
+        balance = senderModel?.coin_balance || 0;
+      }
 
       if (balance < coinsRequired) {
         return NextResponse.json(
@@ -109,7 +118,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Deduct coins using RPC
+      // Deduct coins using RPC (handles both fans and models)
       const { data: deducted, error: deductError } = await (supabase.rpc as any)(
         "deduct_coins",
         {

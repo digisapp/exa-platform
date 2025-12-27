@@ -20,22 +20,35 @@ export default async function DashboardLayout({
     .from("actors")
     .select("id, type")
     .eq("user_id", user.id)
-    .single() as { data: { id: string; type: "admin" | "model" | "brand" } | null };
+    .single() as { data: { id: string; type: "admin" | "model" | "brand" | "fan" } | null };
 
-  // Get model info if model
-  let modelData: any = null;
-  if (actor?.type === "model") {
+  // Get profile info based on actor type
+  let profileData: any = null;
+  let coinBalance = 0;
+
+  if (actor?.type === "model" || actor?.type === "admin") {
     const { data } = await supabase
       .from("models")
       .select("username, first_name, last_name, profile_photo_url, coin_balance")
       .eq("id", actor.id)
       .single() as { data: any };
-    modelData = data;
+    profileData = data;
+    coinBalance = data?.coin_balance ?? 0;
+  } else if (actor?.type === "fan") {
+    const { data } = await supabase
+      .from("fans")
+      .select("display_name, avatar_url, coin_balance")
+      .eq("id", actor.id)
+      .single() as { data: any };
+    profileData = data;
+    coinBalance = data?.coin_balance ?? 0;
   }
 
-  const displayName = modelData?.first_name
-    ? `${modelData.first_name} ${modelData.last_name || ""}`.trim()
-    : modelData?.username || undefined;
+  const displayName = actor?.type === "fan"
+    ? profileData?.display_name
+    : profileData?.first_name
+      ? `${profileData.first_name} ${profileData.last_name || ""}`.trim()
+      : profileData?.username || undefined;
 
   return (
     <div className="min-h-screen bg-background">
@@ -43,12 +56,12 @@ export default async function DashboardLayout({
         user={{
           id: user.id,
           email: user.email || "",
-          avatar_url: modelData?.profile_photo_url || undefined,
+          avatar_url: profileData?.profile_photo_url || profileData?.avatar_url || undefined,
           name: displayName,
-          username: modelData?.username || undefined,
+          username: profileData?.username || undefined,
         }}
         actorType={actor?.type || null}
-        coinBalance={modelData?.coin_balance ?? 0}
+        coinBalance={coinBalance}
       />
       <main className="container px-4 md:px-8 py-8">{children}</main>
     </div>
