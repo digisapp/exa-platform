@@ -25,6 +25,7 @@ import {
   LogOut,
   User,
   Trophy,
+  Coins,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -37,6 +38,7 @@ interface NavbarProps {
     username?: string;
   } | null;
   actorType?: "model" | "brand" | "admin" | null;
+  coinBalance?: number;
 }
 
 const publicLinks: { href: string; label: string; icon: any }[] = [];
@@ -54,7 +56,7 @@ const adminLinks = [
   ...modelLinks,
 ];
 
-export function Navbar({ user, actorType }: NavbarProps) {
+export function Navbar({ user, actorType, coinBalance = 0 }: NavbarProps) {
   const pathname = usePathname();
   const links = actorType === "admin" ? adminLinks : actorType === "model" ? modelLinks : publicLinks;
 
@@ -95,6 +97,15 @@ export function Navbar({ user, actorType }: NavbarProps) {
         <div className="flex items-center gap-4">
           {user ? (
             <>
+              {/* Coin Balance */}
+              <Link
+                href="/coins"
+                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-pink-500/10 to-violet-500/10 hover:from-pink-500/20 hover:to-violet-500/20 transition-colors"
+              >
+                <Coins className="h-4 w-4 text-pink-500" />
+                <span className="text-sm font-medium">{coinBalance.toLocaleString()}</span>
+              </Link>
+
               {/* Notifications */}
               <Button variant="ghost" size="icon" className="hidden md:flex">
                 <Bell className="h-5 w-5" />
@@ -126,6 +137,15 @@ export function Navbar({ user, actorType }: NavbarProps) {
                     <Link href="/profile" className="cursor-pointer">
                       <User className="mr-2 h-4 w-4" />
                       Profile
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/coins" className="cursor-pointer">
+                      <Coins className="mr-2 h-4 w-4" />
+                      Buy Coins
+                      <span className="ml-auto text-xs text-muted-foreground">
+                        {coinBalance.toLocaleString()}
+                      </span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
@@ -163,6 +183,16 @@ export function Navbar({ user, actorType }: NavbarProps) {
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-[300px]">
+              {/* Mobile Coin Balance */}
+              {user && (
+                <Link
+                  href="/coins"
+                  className="flex items-center gap-2 px-4 py-3 mt-4 rounded-lg bg-gradient-to-r from-pink-500/10 to-violet-500/10"
+                >
+                  <Coins className="h-5 w-5 text-pink-500" />
+                  <span className="font-medium">{coinBalance.toLocaleString()} Coins</span>
+                </Link>
+              )}
               <nav className="flex flex-col gap-4 mt-8">
                 {links.map((link) => (
                   <Link

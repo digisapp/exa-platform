@@ -27,7 +27,7 @@ export default async function DashboardLayout({
   if (actor?.type === "model") {
     const { data } = await supabase
       .from("models")
-      .select("username, first_name, last_name, profile_photo_url")
+      .select("username, first_name, last_name, profile_photo_url, coin_balance")
       .eq("id", actor.id)
       .single() as { data: any };
     modelData = data;
@@ -48,6 +48,7 @@ export default async function DashboardLayout({
           username: modelData?.username || undefined,
         }}
         actorType={actor?.type || null}
+        coinBalance={modelData?.coin_balance ?? 0}
       />
       <main className="container px-4 md:px-8 py-8">{children}</main>
     </div>
