@@ -1,7 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Trophy,
@@ -10,7 +12,7 @@ import {
   Lock,
   Coins,
   Heart,
-  Image,
+  Image as ImageIcon,
   Activity,
   Sparkles,
   Calendar,
@@ -82,15 +84,31 @@ export default async function DashboardPage() {
     elite: "👑",
   };
 
+  const displayName = model.first_name
+    ? `${model.first_name} ${model.last_name || ""}`.trim()
+    : model.username;
+
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div className="flex gap-3">
-          <Button variant="outline" asChild>
-            <Link href={`/${model.username}`}>View Public Profile</Link>
-          </Button>
+      {/* Header with Avatar */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Link href={`/${model.username}`}>
+            <Avatar className="h-16 w-16 border-2 border-pink-500/50 hover:border-pink-500 transition-colors">
+              <AvatarImage src={model.profile_photo_url} alt={displayName} />
+              <AvatarFallback className="bg-gradient-to-br from-pink-500 to-violet-500 text-white text-xl">
+                {model.first_name?.charAt(0) || model.username?.charAt(0)?.toUpperCase() || "?"}
+              </AvatarFallback>
+            </Avatar>
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold">{displayName}</h1>
+            <p className="text-muted-foreground">@{model.username}</p>
+          </div>
         </div>
+        <Button variant="outline" asChild>
+          <Link href={`/${model.username}`}>View Public Profile</Link>
+        </Button>
       </div>
 
       {/* Stats Cards */}
@@ -167,7 +185,7 @@ export default async function DashboardPage() {
                           )
                         ) : (
                           item.action === "photo_upload" ? (
-                            <Image className="h-4 w-4 text-pink-500" />
+                            <ImageIcon className="h-4 w-4 text-pink-500" />
                           ) : (
                             <Trophy className="h-4 w-4 text-pink-500" />
                           )
