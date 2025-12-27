@@ -38,16 +38,9 @@ export function ProfileActionButtons({
     }
   };
 
+  // Don't show action buttons on your own profile
   if (isOwner) {
-    return (
-      <div className="flex justify-center mb-6">
-        <Link href="/profile">
-          <Button variant="outline" className="h-10 rounded-full border-white/20">
-            Edit Profile
-          </Button>
-        </Link>
-      </div>
-    );
+    return null;
   }
 
   return (
