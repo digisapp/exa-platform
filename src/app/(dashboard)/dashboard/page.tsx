@@ -90,7 +90,7 @@ export default async function DashboardPage() {
     .slice(0, 8);
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
       {/* Recent Activity & Gigs - Side by Side */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Recent Activity */}
@@ -285,7 +285,7 @@ async function FanBrandDashboard({
   const isBrand = actorType === "brand";
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
       {/* Following Section */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">

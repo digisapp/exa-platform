@@ -25,12 +25,24 @@ const US_STATES = [
 
 export default function ProfilePage() {
   const [model, setModel] = useState<Model | null>(null);
+  const [originalUsername, setOriginalUsername] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const supabase = createClient();
+
+  // Check if username can be changed (14 day cooldown like Instagram)
+  const canChangeUsername = () => {
+    if (!model) return false;
+    if (!model.username_changed_at) return true; // Never changed, can change
+
+    const lastChange = new Date(model.username_changed_at);
+    const now = new Date();
+    const daysSinceChange = (now.getTime() - lastChange.getTime()) / (1000 * 60 * 60 * 24);
+    return daysSinceChange >= 14;
+  };
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -98,6 +110,7 @@ export default function ProfilePage() {
 
       if (modelData) {
         setModel(modelData);
+        setOriginalUsername(modelData.username || "");
       }
 
       setLoading(false);
@@ -111,42 +124,85 @@ export default function ProfilePage() {
     setSaving(true);
 
     try {
+      const usernameChanged = model.username !== originalUsername;
+
+      // If username changed, validate it
+      if (usernameChanged) {
+        if (!canChangeUsername()) {
+          throw new Error("You can only change your username once every 14 days");
+        }
+
+        if (!model.username || model.username.length < 3) {
+          throw new Error("Username must be at least 3 characters");
+        }
+
+        if (model.username.length > 30) {
+          throw new Error("Username must be less than 30 characters");
+        }
+
+        // Check if username is already taken
+        const { data: existing } = await (supabase
+          .from("models") as any)
+          .select("id")
+          .eq("username", model.username)
+          .neq("id", model.id)
+          .single();
+
+        if (existing) {
+          throw new Error("This username is already taken");
+        }
+      }
+
+      const updateData: any = {
+        first_name: model.first_name,
+        last_name: model.last_name,
+        bio: model.bio,
+        city: model.city,
+        state: model.state,
+        height: model.height,
+        bust: model.bust,
+        waist: model.waist,
+        hips: model.hips,
+        dress_size: model.dress_size,
+        shoe_size: model.shoe_size,
+        hair_color: model.hair_color,
+        eye_color: model.eye_color,
+        instagram_name: model.instagram_name,
+        tiktok_username: model.tiktok_username,
+        snapchat_username: model.snapchat_username,
+        x_username: model.x_username,
+        youtube_username: model.youtube_username,
+        twitch_username: model.twitch_username,
+        digis_username: model.digis_username,
+        affiliate_links: model.affiliate_links || [],
+        show_measurements: model.show_measurements,
+        show_location: model.show_location,
+        show_social_media: model.show_social_media,
+        availability_status: model.availability_status,
+        video_call_rate: model.video_call_rate || 0,
+        voice_call_rate: model.voice_call_rate || 0,
+        message_rate: model.message_rate || 0,
+        updated_at: new Date().toISOString(),
+      };
+
+      // Add username fields if changed
+      if (usernameChanged) {
+        updateData.username = model.username;
+        updateData.username_changed_at = new Date().toISOString();
+      }
+
       const { error } = await (supabase
         .from("models") as any)
-        .update({
-          first_name: model.first_name,
-          last_name: model.last_name,
-          bio: model.bio,
-          city: model.city,
-          state: model.state,
-          height: model.height,
-          bust: model.bust,
-          waist: model.waist,
-          hips: model.hips,
-          dress_size: model.dress_size,
-          shoe_size: model.shoe_size,
-          hair_color: model.hair_color,
-          eye_color: model.eye_color,
-          instagram_name: model.instagram_name,
-          tiktok_username: model.tiktok_username,
-          snapchat_username: model.snapchat_username,
-          x_username: model.x_username,
-          youtube_username: model.youtube_username,
-          twitch_username: model.twitch_username,
-          digis_username: model.digis_username,
-          affiliate_links: model.affiliate_links || [],
-          show_measurements: model.show_measurements,
-          show_location: model.show_location,
-          show_social_media: model.show_social_media,
-          availability_status: model.availability_status,
-          video_call_rate: model.video_call_rate || 0,
-          voice_call_rate: model.voice_call_rate || 0,
-          message_rate: model.message_rate || 0,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updateData)
         .eq("id", model.id);
 
       if (error) throw error;
+
+      // Update original username if changed
+      if (usernameChanged) {
+        setOriginalUsername(model.username || "");
+        setModel({ ...model, username_changed_at: new Date().toISOString() });
+      }
 
       toast.success("Profile updated!");
     } catch (error: unknown) {
@@ -238,12 +294,32 @@ export default function ProfilePage() {
               <CardTitle>Basic Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Username - Full Width */}
+              <div className="space-y-2">
+                <Label htmlFor="username">Username</Label>
+                <Input
+                  id="username"
+                  value={model.username || ""}
+                  onChange={(e) => {
+                    const value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "");
+                    setModel({ ...model, username: value });
+                  }}
+                  disabled={!canChangeUsername()}
+                  placeholder="username"
+                />
+                {!canChangeUsername() && model.username_changed_at ? (
+                  <p className="text-xs text-muted-foreground">
+                    Username can be changed again on {new Date(new Date(model.username_changed_at).getTime() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString()}
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Username can only be changed once every 14 days. Your profile URL will be examodels.com/{model.username}
+                  </p>
+                )}
+              </div>
+
+              {/* First Name and Last Name - Same Row */}
               <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Username</Label>
-                  <Input value={model.username} disabled />
-                  <p className="text-xs text-muted-foreground">Username cannot be changed</p>
-                </div>
                 <div className="space-y-2">
                   <Label htmlFor="first_name">First Name</Label>
                   <Input
