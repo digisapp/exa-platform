@@ -61,7 +61,7 @@ export default async function ModelsPage({
   }
 
   // Limit
-  query = query.limit(50);
+  query = query.limit(500);
 
   const { data: models, error } = await query as { data: any[] | null; error: any };
 
