@@ -159,6 +159,12 @@ export default function SignupPage() {
                 Sign in
               </Link>
             </div>
+            <div className="text-center text-sm text-muted-foreground">
+              Just want to connect with models?{" "}
+              <Link href="/fan/signup" className="text-pink-500 hover:underline font-medium">
+                Join as a fan
+              </Link>
+            </div>
             <Link href="/" className="flex items-center justify-center text-sm text-muted-foreground hover:text-primary transition-colors">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to home
