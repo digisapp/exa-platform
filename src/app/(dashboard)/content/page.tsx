@@ -277,9 +277,6 @@ export default function ContentPage() {
             <Images className="h-8 w-8 text-pink-500" />
             Content
           </h1>
-          <p className="text-muted-foreground mt-1">
-            Upload photos and videos for your fans
-          </p>
         </div>
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -488,9 +485,6 @@ export default function ContentPage() {
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <Images className="h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">No content yet</h3>
-            <p className="text-muted-foreground mb-4">
-              Upload photos and videos for your fans
-            </p>
             <Button
               onClick={() => setDialogOpen(true)}
               className="bg-gradient-to-r from-pink-500 to-violet-500"

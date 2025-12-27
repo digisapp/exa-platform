@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { MessageBubble } from "./MessageBubble";
 import { MessageInput } from "./MessageInput";
 import { TipDialog } from "./TipDialog";
+import { VideoCallButton, IncomingCallDialog } from "@/components/video";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -40,8 +41,26 @@ export function ChatView({
   const [localCoinBalance, setLocalCoinBalance] = useState(
     currentFan?.coin_balance || currentModel?.coin_balance || 0
   );
+  const [incomingCall, setIncomingCall] = useState<{
+    sessionId: string;
+    callerName: string;
+    callerAvatar?: string;
+  } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
+
+  // Get other participant's display info
+  const otherName =
+    otherParticipant.model?.first_name
+      ? `${otherParticipant.model.first_name} ${otherParticipant.model.last_name || ""}`.trim()
+      : otherParticipant.model?.username || "User";
+  const otherAvatar = otherParticipant.model?.profile_photo_url;
+  const otherInitials = otherName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
 
   // Determine if messages cost coins
   const isModelToModel =
@@ -98,6 +117,41 @@ export function ChatView({
     markAsRead();
   }, [conversation.id, currentActor.id, supabase]);
 
+  // Subscribe to incoming video calls
+  useEffect(() => {
+    const callChannel = supabase
+      .channel(`calls:${currentActor.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "video_call_sessions",
+          filter: `recipient_id=eq.${currentActor.id}`,
+        },
+        (payload) => {
+          const callSession = payload.new as any;
+          // Only show if it's for this conversation and pending
+          if (
+            callSession.conversation_id === conversation.id &&
+            callSession.status === "pending"
+          ) {
+            setIncomingCall({
+              sessionId: callSession.id,
+              callerName: otherName,
+              callerAvatar: otherAvatar || undefined,
+            });
+            toast.info(`${otherName} is calling you...`);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      callChannel.unsubscribe();
+    };
+  }, [currentActor.id, conversation.id, otherName, otherAvatar, supabase]);
+
   const handleSendMessage = async (
     content: string,
     mediaUrl?: string,
@@ -148,19 +202,6 @@ export function ChatView({
     }
   };
 
-  // Get other participant's display info
-  const otherName =
-    otherParticipant.model?.first_name
-      ? `${otherParticipant.model.first_name} ${otherParticipant.model.last_name || ""}`.trim()
-      : otherParticipant.model?.username || "User";
-  const otherAvatar = otherParticipant.model?.profile_photo_url;
-  const otherInitials = otherName
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-
   return (
     <div className="flex flex-col h-[calc(100vh-120px)]">
       {/* Header */}
@@ -188,6 +229,17 @@ export function ChatView({
           )}
         </div>
 
+        {/* Video Call button */}
+        <VideoCallButton
+          conversationId={conversation.id}
+          coinBalance={localCoinBalance}
+          isModel={currentActor.type === "model"}
+          recipientIsModel={otherParticipant.actor.type === "model"}
+          recipientActorId={otherParticipant.actor_id}
+          recipientName={otherName}
+          onBalanceChange={(newBalance) => setLocalCoinBalance(newBalance)}
+        />
+
         {/* Tip button */}
         {canTip && (
           <TipDialog
@@ -201,6 +253,16 @@ export function ChatView({
           />
         )}
       </div>
+
+      {/* Incoming Call Dialog */}
+      {incomingCall && (
+        <IncomingCallDialog
+          sessionId={incomingCall.sessionId}
+          callerName={incomingCall.callerName}
+          callerAvatar={incomingCall.callerAvatar}
+          onClose={() => setIncomingCall(null)}
+        />
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">

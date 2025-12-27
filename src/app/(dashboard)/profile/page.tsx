@@ -324,6 +324,126 @@ export default function ProfilePage() {
 
           <Card>
             <CardHeader>
+              <CardTitle>Social Media</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="instagram">Instagram</Label>
+                  <Input
+                    id="instagram"
+                    value={model.instagram_name || ""}
+                    onChange={(e) => setModel({ ...model, instagram_name: e.target.value.replace("@", "") })}
+                    placeholder="username"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="tiktok">TikTok</Label>
+                  <Input
+                    id="tiktok"
+                    value={model.tiktok_username || ""}
+                    onChange={(e) => setModel({ ...model, tiktok_username: e.target.value.replace("@", "") })}
+                    placeholder="username"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="snapchat">Snapchat</Label>
+                  <Input
+                    id="snapchat"
+                    value={model.snapchat_username || ""}
+                    onChange={(e) => setModel({ ...model, snapchat_username: e.target.value.replace("@", "") })}
+                    placeholder="username"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="x">X (Twitter)</Label>
+                  <Input
+                    id="x"
+                    value={model.x_username || ""}
+                    onChange={(e) => setModel({ ...model, x_username: e.target.value.replace("@", "") })}
+                    placeholder="username"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="youtube">YouTube</Label>
+                  <Input
+                    id="youtube"
+                    value={model.youtube_username || ""}
+                    onChange={(e) => setModel({ ...model, youtube_username: e.target.value.replace("@", "") })}
+                    placeholder="channel name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="twitch">Twitch</Label>
+                  <Input
+                    id="twitch"
+                    value={model.twitch_username || ""}
+                    onChange={(e) => setModel({ ...model, twitch_username: e.target.value.replace("@", "") })}
+                    placeholder="username"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Affiliate Links */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Affiliate Links</CardTitle>
+              <CardDescription>Add links to your brand deals, promo codes, merch, or Amazon affiliate products</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {((model.affiliate_links || []) as { title: string; url: string }[]).map((link, index) => (
+                <div key={index} className="flex gap-2">
+                  <Input
+                    value={link.title}
+                    onChange={(e) => {
+                      const links = [...((model.affiliate_links || []) as { title: string; url: string }[])];
+                      links[index] = { ...links[index], title: e.target.value };
+                      setModel({ ...model, affiliate_links: links as any });
+                    }}
+                    placeholder="Link title (e.g., My Merch Store)"
+                    className="flex-1"
+                  />
+                  <Input
+                    value={link.url}
+                    onChange={(e) => {
+                      const links = [...((model.affiliate_links || []) as { title: string; url: string }[])];
+                      links[index] = { ...links[index], url: e.target.value };
+                      setModel({ ...model, affiliate_links: links as any });
+                    }}
+                    placeholder="https://..."
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => {
+                      const links = ((model.affiliate_links || []) as { title: string; url: string }[]).filter((_, i) => i !== index);
+                      setModel({ ...model, affiliate_links: links as any });
+                    }}
+                  >
+                    ✕
+                  </Button>
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  const links = [...((model.affiliate_links || []) as { title: string; url: string }[]), { title: "", url: "" }];
+                  setModel({ ...model, affiliate_links: links as any });
+                }}
+                className="w-full"
+              >
+                + Add Affiliate Link
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
               <CardTitle>Physical Attributes</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -406,135 +526,6 @@ export default function ProfilePage() {
                   />
                 </div>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Social Media</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="instagram">Instagram</Label>
-                  <Input
-                    id="instagram"
-                    value={model.instagram_name || ""}
-                    onChange={(e) => setModel({ ...model, instagram_name: e.target.value.replace("@", "") })}
-                    placeholder="username"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="tiktok">TikTok</Label>
-                  <Input
-                    id="tiktok"
-                    value={model.tiktok_username || ""}
-                    onChange={(e) => setModel({ ...model, tiktok_username: e.target.value.replace("@", "") })}
-                    placeholder="username"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="snapchat">Snapchat</Label>
-                  <Input
-                    id="snapchat"
-                    value={model.snapchat_username || ""}
-                    onChange={(e) => setModel({ ...model, snapchat_username: e.target.value.replace("@", "") })}
-                    placeholder="username"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="x">X (Twitter)</Label>
-                  <Input
-                    id="x"
-                    value={model.x_username || ""}
-                    onChange={(e) => setModel({ ...model, x_username: e.target.value.replace("@", "") })}
-                    placeholder="username"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="youtube">YouTube</Label>
-                  <Input
-                    id="youtube"
-                    value={model.youtube_username || ""}
-                    onChange={(e) => setModel({ ...model, youtube_username: e.target.value.replace("@", "") })}
-                    placeholder="channel name"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="twitch">Twitch</Label>
-                  <Input
-                    id="twitch"
-                    value={model.twitch_username || ""}
-                    onChange={(e) => setModel({ ...model, twitch_username: e.target.value.replace("@", "") })}
-                    placeholder="username"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="digis">Digis.cc</Label>
-                  <Input
-                    id="digis"
-                    value={model.digis_username || ""}
-                    onChange={(e) => setModel({ ...model, digis_username: e.target.value.replace("@", "") })}
-                    placeholder="username"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Affiliate Links */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Affiliate Links</CardTitle>
-              <CardDescription>Add links to your brand deals, promo codes, merch, or Amazon affiliate products</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {((model.affiliate_links || []) as { title: string; url: string }[]).map((link, index) => (
-                <div key={index} className="flex gap-2">
-                  <Input
-                    value={link.title}
-                    onChange={(e) => {
-                      const links = [...((model.affiliate_links || []) as { title: string; url: string }[])];
-                      links[index] = { ...links[index], title: e.target.value };
-                      setModel({ ...model, affiliate_links: links as any });
-                    }}
-                    placeholder="Link title (e.g., My Merch Store)"
-                    className="flex-1"
-                  />
-                  <Input
-                    value={link.url}
-                    onChange={(e) => {
-                      const links = [...((model.affiliate_links || []) as { title: string; url: string }[])];
-                      links[index] = { ...links[index], url: e.target.value };
-                      setModel({ ...model, affiliate_links: links as any });
-                    }}
-                    placeholder="https://..."
-                    className="flex-1"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={() => {
-                      const links = ((model.affiliate_links || []) as { title: string; url: string }[]).filter((_, i) => i !== index);
-                      setModel({ ...model, affiliate_links: links as any });
-                    }}
-                  >
-                    ✕
-                  </Button>
-                </div>
-              ))}
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  const links = [...((model.affiliate_links || []) as { title: string; url: string }[]), { title: "", url: "" }];
-                  setModel({ ...model, affiliate_links: links as any });
-                }}
-                className="w-full"
-              >
-                + Add Affiliate Link
-              </Button>
             </CardContent>
           </Card>
         </TabsContent>

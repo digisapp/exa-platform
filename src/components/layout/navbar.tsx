@@ -49,6 +49,13 @@ const modelLinks = [
 ];
 
 const fanLinks = [
+  { href: "/dashboard", label: "Home", icon: Home },
+  { href: "/models", label: "Explore", icon: Users },
+  { href: "/messages", label: "Chats", icon: MessageCircle },
+];
+
+const brandLinks = [
+  { href: "/dashboard", label: "Home", icon: Home },
   { href: "/models", label: "Explore", icon: Users },
   { href: "/messages", label: "Chats", icon: MessageCircle },
 ];
@@ -66,7 +73,9 @@ export function Navbar({ user, actorType, coinBalance = 0 }: NavbarProps) {
       ? modelLinks
       : actorType === "fan"
         ? fanLinks
-        : publicLinks;
+        : actorType === "brand"
+          ? brandLinks
+          : publicLinks;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
