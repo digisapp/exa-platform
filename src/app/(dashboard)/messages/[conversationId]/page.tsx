@@ -31,13 +31,15 @@ export default async function ChatPage({ params }: PageProps) {
   let currentFan: Fan | null = null;
 
   if (actor.type === "model" || actor.type === "admin") {
+    // Models are linked via user_id, not actor.id
     const { data } = (await supabase
       .from("models")
       .select("*")
-      .eq("id", actor.id)
+      .eq("user_id", user.id)
       .single()) as { data: Model | null };
     currentModel = data;
   } else if (actor.type === "fan") {
+    // Fans use actor.id as their id
     const { data } = (await supabase
       .from("fans")
       .select("*")

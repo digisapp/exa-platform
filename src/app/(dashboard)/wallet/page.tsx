@@ -56,13 +56,15 @@ export default function WalletPage() {
 
       // Get coin balance based on actor type
       if (actor.type === "model" || actor.type === "admin") {
+        // Models are linked via user_id, not actor.id
         const { data: model } = await supabase
           .from("models")
           .select("coin_balance")
-          .eq("id", actor.id)
+          .eq("user_id", user.id)
           .single() as { data: { coin_balance: number } | null };
         setCoinBalance(model?.coin_balance || 0);
       } else if (actor.type === "fan") {
+        // Fans use actor.id as their id
         const { data: fan } = await supabase
           .from("fans")
           .select("coin_balance")

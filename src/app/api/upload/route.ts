@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getModelId } from "@/lib/ids";
 import { NextRequest, NextResponse } from "next/server";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -112,24 +113,32 @@ export async function POST(request: NextRequest) {
     // If portfolio photo and user is a model, award points
     let pointsAwarded = 0;
     if (uploadType === "portfolio" && actor.type === "model") {
-      const { error: pointsError } = await (supabase.rpc as any)("award_points", {
-        p_model_id: actor.id,
-        p_action: "portfolio_photo",
-        p_points: 10,
-        p_metadata: { photo_id: mediaAsset.id },
-      });
+      // Get model ID (models.id != actors.id)
+      const modelId = await getModelId(supabase, user.id);
+      if (modelId) {
+        const { error: pointsError } = await (supabase.rpc as any)("award_points", {
+          p_model_id: modelId,
+          p_action: "portfolio_photo",
+          p_points: 10,
+          p_metadata: { photo_id: mediaAsset.id },
+        });
 
-      if (!pointsError) {
-        pointsAwarded = 10;
+        if (!pointsError) {
+          pointsAwarded = 10;
+        }
       }
     }
 
-    // If avatar upload, update the model's avatar_url
+    // If avatar upload, update the model's profile_photo_url
     if (uploadType === "avatar" && actor.type === "model") {
-      await (supabase
-        .from("models") as any)
-        .update({ avatar_url: publicUrl })
-        .eq("id", actor.id);
+      // Get model ID (models.id != actors.id)
+      const modelId = await getModelId(supabase, user.id);
+      if (modelId) {
+        await (supabase
+          .from("models") as any)
+          .update({ profile_photo_url: publicUrl })
+          .eq("id", modelId);
+      }
     }
 
     return NextResponse.json({

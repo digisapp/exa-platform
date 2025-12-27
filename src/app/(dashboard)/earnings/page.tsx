@@ -38,11 +38,11 @@ export default async function EarningsPage() {
     redirect("/dashboard");
   }
 
-  // Get model data
+  // Get model data (models are linked via user_id, not actor.id)
   const { data: model } = (await supabase
     .from("models")
     .select("*")
-    .eq("id", actor.id)
+    .eq("user_id", user.id)
     .single()) as { data: Model | null };
 
   if (!model) redirect("/onboarding");

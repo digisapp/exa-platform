@@ -159,6 +159,7 @@ export default async function ModelProfilePage({ params }: Props) {
 
       // Get coin balance
       if (actor.type === "fan") {
+        // Fans use actor.id as their id
         const { data: fan } = await supabase
           .from("fans")
           .select("coin_balance")
@@ -166,17 +167,19 @@ export default async function ModelProfilePage({ params }: Props) {
           .single() as { data: { coin_balance: number } | null };
         coinBalance = fan?.coin_balance || 0;
       } else {
+        // Models are linked via user_id, not actor.id
         const { data: modelData } = await supabase
           .from("models")
           .select("coin_balance")
-          .eq("id", actor.id)
+          .eq("user_id", user.id)
           .single() as { data: { coin_balance: number } | null };
         coinBalance = modelData?.coin_balance || 0;
       }
     }
   }
 
-  const isOwner = currentActorId === model.id;
+  // Check if current user owns this profile (compare user_id)
+  const isOwner = Boolean(user && model.user_id === user.id);
 
   // Display name
   const displayName = model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username;

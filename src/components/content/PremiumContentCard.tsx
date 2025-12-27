@@ -43,7 +43,8 @@ export function PremiumContentCard({
   const [showPreview, setShowPreview] = useState(false);
   const [showFull, setShowFull] = useState(false);
 
-  const canAfford = coinBalance >= content.coin_price;
+  const isFree = content.coin_price === 0;
+  const canAfford = isFree || coinBalance >= content.coin_price;
   const isVideo = content.media_type === "video";
 
   const handleUnlock = async () => {
@@ -122,8 +123,8 @@ export function PremiumContentCard({
           </div>
         )}
 
-        {/* Lock Overlay */}
-        {!isUnlocked && !isOwner && (
+        {/* Lock Overlay - only for paid content */}
+        {!isUnlocked && !isOwner && !isFree && (
           <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2">
             <Lock className="h-8 w-8 text-white" />
             <div className="flex items-center gap-1 bg-gradient-to-r from-pink-500 to-violet-500 px-3 py-1 rounded-full">

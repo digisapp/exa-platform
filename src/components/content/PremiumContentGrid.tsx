@@ -70,7 +70,7 @@ export function PremiumContentGrid({
     return (
       <div className="text-center py-12 text-muted-foreground">
         <Lock className="h-12 w-12 mx-auto mb-4 opacity-50" />
-        <p>No premium content yet</p>
+        <p>No content yet</p>
       </div>
     );
   }

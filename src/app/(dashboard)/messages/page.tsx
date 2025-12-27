@@ -27,10 +27,11 @@ export default async function MessagesPage() {
   // Get model data for coin balance (if actor is a model)
   let coinBalance = 0;
   if (actor.type === "model") {
+    // Models are linked via user_id, not actor.id
     const { data: model } = await supabase
       .from("models")
       .select("coin_balance")
-      .eq("id", actor.id)
+      .eq("user_id", user.id)
       .single() as { data: { coin_balance: number } | null };
     coinBalance = model?.coin_balance || 0;
   }
@@ -88,8 +89,8 @@ export default async function MessagesPage() {
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Messages</h1>
-          <p className="text-muted-foreground">Connect with other models and brands</p>
+          <h1 className="text-3xl font-bold">Chats</h1>
+          <p className="text-muted-foreground">Connect with models and fans</p>
         </div>
         <NewMessageDialog
           currentActorType={actor.type}
@@ -100,7 +101,7 @@ export default async function MessagesPage() {
       {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Search messages..." className="pl-10" />
+        <Input placeholder="Search chats..." className="pl-10" />
       </div>
 
       {/* Conversations List */}
@@ -151,12 +152,12 @@ export default async function MessagesPage() {
           ) : (
             <div className="text-center py-16">
               <MessageCircle className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
-              <h3 className="text-xl font-semibold mb-2">No messages yet</h3>
+              <h3 className="text-xl font-semibold mb-2">No chats yet</h3>
               <p className="text-muted-foreground mb-4">
-                Start a conversation with other models
+                Start chatting with models
               </p>
               <Button variant="outline" asChild>
-                <Link href="/models">Browse Models</Link>
+                <Link href="/models">Explore Models</Link>
               </Button>
             </div>
           )}

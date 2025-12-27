@@ -130,15 +130,15 @@ export function NewMessageDialog({
       <DialogTrigger asChild>
         <Button className="bg-gradient-to-r from-pink-500 to-violet-500">
           <PenSquare className="h-4 w-4 mr-2" />
-          New Message
+          New Chat
         </Button>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>New Message</DialogTitle>
+          <DialogTitle>New Chat</DialogTitle>
           <DialogDescription>
-            Search for a model to start a conversation
+            Search for a model to start chatting
           </DialogDescription>
         </DialogHeader>
 

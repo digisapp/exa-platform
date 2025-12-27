@@ -76,17 +76,19 @@ export async function POST(request: NextRequest) {
 
         console.log(`Successfully credited ${coins} coins to actor ${actorId}`);
 
-        // Get updated balance for logging
-        const { data: model } = await supabaseAdmin
-          .from("models")
-          .select("coin_balance, first_name, email")
-          .eq("id", actorId)
-          .single();
+        // Get updated balance for logging (use user_id to find model)
+        if (userId) {
+          const { data: model } = await supabaseAdmin
+            .from("models")
+            .select("coin_balance, first_name, email")
+            .eq("user_id", userId)
+            .single();
 
-        if (model) {
-          console.log(
-            `New balance for ${model.first_name || model.email}: ${model.coin_balance} coins`
-          );
+          if (model) {
+            console.log(
+              `New balance for ${model.first_name || model.email}: ${model.coin_balance} coins`
+            );
+          }
         }
 
         break;

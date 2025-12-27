@@ -19,10 +19,10 @@ import { Loader2, Sparkles } from "lucide-react";
 
 interface ApplyButtonProps {
   opportunityId: string;
-  actorId: string | null;
+  modelId: string | null;
 }
 
-export function ApplyButton({ opportunityId, actorId }: ApplyButtonProps) {
+export function ApplyButton({ opportunityId, modelId }: ApplyButtonProps) {
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
@@ -30,7 +30,7 @@ export function ApplyButton({ opportunityId, actorId }: ApplyButtonProps) {
   const supabase = createClient();
 
   const handleApply = async () => {
-    if (!actorId) {
+    if (!modelId) {
       toast.error("Please sign in to apply");
       return;
     }
@@ -38,12 +38,12 @@ export function ApplyButton({ opportunityId, actorId }: ApplyButtonProps) {
     setLoading(true);
 
     try {
-      // Create application
+      // Create application (uses model.id, not actor.id)
       const { error: appError } = await (supabase
         .from("opportunity_applications") as any)
         .insert({
           opportunity_id: opportunityId,
-          model_id: actorId,
+          model_id: modelId,
           note: note || null,
         });
 
@@ -51,7 +51,7 @@ export function ApplyButton({ opportunityId, actorId }: ApplyButtonProps) {
 
       // Award points for applying
       await (supabase.rpc as any)("award_points", {
-        p_model_id: actorId,
+        p_model_id: modelId,
         p_action: "opportunity_apply",
         p_points: 5,
         p_metadata: { opportunity_id: opportunityId },

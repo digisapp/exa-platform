@@ -30,14 +30,16 @@ export default async function DashboardLayout({
   let coinBalance = 0;
 
   if (actor?.type === "model" || actor?.type === "admin") {
+    // Models are linked via user_id, not actor.id
     const { data } = await supabase
       .from("models")
       .select("username, first_name, last_name, profile_photo_url, coin_balance")
-      .eq("id", actor.id)
+      .eq("user_id", user.id)
       .single() as { data: any };
     profileData = data;
     coinBalance = data?.coin_balance ?? 0;
   } else if (actor?.type === "fan") {
+    // Fans use actor.id as their id
     const { data } = await supabase
       .from("fans")
       .select("display_name, avatar_url, coin_balance")

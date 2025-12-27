@@ -68,6 +68,7 @@ export default function ContentPage() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [modelId, setModelId] = useState<string | null>(null);
   const [actorId, setActorId] = useState<string | null>(null);
   const [totalEarnings, setTotalEarnings] = useState(0);
 
@@ -100,11 +101,25 @@ export default function ContentPage() {
 
     setActorId(actor.id);
 
-    // Get premium content
+    // Get model ID (models are linked via user_id, not actor.id)
+    const { data: model } = await supabase
+      .from("models")
+      .select("id")
+      .eq("user_id", user.id)
+      .single() as { data: { id: string } | null };
+
+    if (!model) {
+      setLoading(false);
+      return;
+    }
+
+    setModelId(model.id);
+
+    // Get premium content using model.id
     const { data: contentData } = await supabase
       .from("premium_content")
       .select("*")
-      .eq("model_id", actor.id)
+      .eq("model_id", model.id)
       .eq("is_active", true)
       .order("created_at", { ascending: false });
 
@@ -152,14 +167,14 @@ export default function ContentPage() {
   };
 
   const handleUpload = async () => {
-    if (!mediaFile || !actorId) return;
+    if (!mediaFile || !modelId) return;
 
     setUploading(true);
 
     try {
       // Upload to Supabase storage
       const fileExt = mediaFile.name.split(".").pop();
-      const fileName = `${actorId}/${Date.now()}.${fileExt}`;
+      const fileName = `${modelId}/${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from("premium-content")
@@ -276,9 +291,9 @@ export default function ContentPage() {
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Upload Premium Content</DialogTitle>
+              <DialogTitle>Upload Content</DialogTitle>
               <DialogDescription>
-                Upload a photo or video that fans can unlock with coins
+                Upload a photo or video for your fans
               </DialogDescription>
             </DialogHeader>
 

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getActorId, getActorInfo, getModelId } from "@/lib/ids";
 import { NextRequest, NextResponse } from "next/server";
 
 // Get premium content for a model
@@ -20,15 +21,8 @@ export async function GET(request: NextRequest) {
       data: { user },
     } = await supabase.auth.getUser();
 
-    let actorId: string | null = null;
-    if (user) {
-      const { data: actor } = await supabase
-        .from("actors")
-        .select("id")
-        .eq("user_id", user.id)
-        .single() as { data: { id: string } | null };
-      actorId = actor?.id || null;
-    }
+    // Use helper to get actor ID
+    const actorId = user ? await getActorId(supabase, user.id) : null;
 
     // Get premium content
     const { data: content, error } = await supabase
@@ -60,7 +54,7 @@ export async function GET(request: NextRequest) {
     // Check if the viewer is the model themselves
     const isOwner = actorId === modelId;
 
-    // Add unlocked status and full media_url if unlocked or owner
+    // Add unlocked status and full media_url if unlocked, free, or owner
     const contentWithStatus = await Promise.all(
       (content || []).map(async (item: {
         id: string;
@@ -72,7 +66,9 @@ export async function GET(request: NextRequest) {
         unlock_count: number;
         created_at: string;
       }) => {
-        const isUnlocked = unlockedIds.includes(item.id) || isOwner;
+        // Free content (coin_price = 0) is always unlocked
+        const isFree = item.coin_price === 0;
+        const isUnlocked = isFree || unlockedIds.includes(item.id) || isOwner;
 
         // If unlocked, get the full media_url
         let mediaUrl = null;
@@ -116,17 +112,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get actor and verify they're a model
-    const { data: actor } = await supabase
-      .from("actors")
-      .select("id, type")
-      .eq("user_id", user.id)
-      .single() as { data: { id: string; type: string } | null };
+    // Use helpers to get actor info and model ID
+    const actorInfo = await getActorInfo(supabase, user.id);
 
-    if (!actor || (actor.type !== "model" && actor.type !== "admin")) {
+    if (!actorInfo || (actorInfo.type !== "model" && actorInfo.type !== "admin")) {
       return NextResponse.json(
-        { error: "Only models can create premium content" },
+        { error: "Only models can create content" },
         { status: 403 }
+      );
+    }
+
+    const modelId = await getModelId(supabase, user.id);
+
+    if (!modelId) {
+      return NextResponse.json(
+        { error: "Model profile not found" },
+        { status: 404 }
       );
     }
 
@@ -140,9 +141,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!coinPrice || coinPrice < 1) {
+    // Allow free content (coinPrice = 0) or paid content (coinPrice >= 1)
+    if (coinPrice < 0) {
       return NextResponse.json(
-        { error: "Price must be at least 1 coin" },
+        { error: "Price cannot be negative" },
         { status: 400 }
       );
     }
@@ -150,7 +152,7 @@ export async function POST(request: NextRequest) {
     const { data: content, error } = await (supabase
       .from("premium_content") as any)
       .insert({
-        model_id: actor.id,
+        model_id: modelId,
         title: title || null,
         description: description || null,
         media_url: mediaUrl,
@@ -202,15 +204,11 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Get actor
-    const { data: actor } = await supabase
-      .from("actors")
-      .select("id")
-      .eq("user_id", user.id)
-      .single() as { data: { id: string } | null };
+    // Use helper to get model ID
+    const modelId = await getModelId(supabase, user.id);
 
-    if (!actor) {
-      return NextResponse.json({ error: "Actor not found" }, { status: 400 });
+    if (!modelId) {
+      return NextResponse.json({ error: "Model not found" }, { status: 400 });
     }
 
     // Verify ownership and delete
@@ -218,7 +216,7 @@ export async function DELETE(request: NextRequest) {
       .from("premium_content")
       .delete()
       .eq("id", contentId)
-      .eq("model_id", actor.id);
+      .eq("model_id", modelId);
 
     if (error) {
       console.error("Error deleting content:", error);

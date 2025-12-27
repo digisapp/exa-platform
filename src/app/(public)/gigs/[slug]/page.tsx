@@ -65,22 +65,23 @@ export default async function OpportunityDetailPage({ params }: Props) {
   // Check if user has already applied
   const { data: { user } } = await supabase.auth.getUser();
   let existingApplication: any = null;
-  let actorId: string | null = null;
+  let modelId: string | null = null;
 
   if (user) {
-    const { data: actor } = await supabase
-      .from("actors")
+    // Get model ID (models.id != actors.id)
+    const { data: model } = await supabase
+      .from("models")
       .select("id")
       .eq("user_id", user.id)
       .single() as { data: { id: string } | null };
 
-    if (actor) {
-      actorId = actor.id;
+    if (model) {
+      modelId = model.id;
       const { data: app } = await supabase
         .from("opportunity_applications")
         .select("*")
         .eq("opportunity_id", opportunity.id)
-        .eq("model_id", actor.id)
+        .eq("model_id", model.id)
         .single() as { data: any };
       existingApplication = app;
     }
@@ -226,7 +227,7 @@ export default async function OpportunityDetailPage({ params }: Props) {
                       </Badge>
                     </div>
                   ) : canApply ? (
-                    <ApplyButton opportunityId={opportunity.id} actorId={actorId} />
+                    <ApplyButton opportunityId={opportunity.id} modelId={modelId} />
                   ) : (
                     <div className="p-4 rounded-lg bg-muted text-center">
                       {!user ? (

@@ -43,19 +43,20 @@ export default function ProfilePage() {
 
       const { data: actor } = await supabase
         .from("actors")
-        .select("id")
+        .select("id, type")
         .eq("user_id", user.id)
-        .single() as { data: { id: string } | null };
+        .single() as { data: { id: string; type: string } | null };
 
       if (!actor) {
         // Layout already handles this case
         return;
       }
 
+      // Models are linked via user_id, not actor.id
       const { data: modelData } = await supabase
         .from("models")
         .select("*")
-        .eq("id", actor.id)
+        .eq("user_id", user.id)
         .single() as { data: Model | null };
 
       if (modelData) {
