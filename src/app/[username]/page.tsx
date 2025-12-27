@@ -21,6 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
 import { PremiumContentGrid } from "@/components/content/PremiumContentGrid";
+import { FollowButton } from "@/components/social/follow-button";
 
 // Reserved paths that should NOT be treated as usernames
 const RESERVED_PATHS = [
@@ -181,6 +182,39 @@ export default async function ModelProfilePage({ params }: Props) {
   // Check if current user owns this profile (compare user_id)
   const isOwner = Boolean(user && model.user_id === user.id);
 
+  // Get model's actor ID for follows (actors table links to auth.users via user_id)
+  const { data: modelActor } = await supabase
+    .from("actors")
+    .select("id")
+    .eq("user_id", model.user_id)
+    .single() as { data: { id: string } | null };
+
+  const modelActorId = modelActor?.id || null;
+
+  // Get follower count and check if current user is following
+  let followerCount = 0;
+  let isFollowing = false;
+
+  if (modelActorId) {
+    // Get follower count
+    const { count } = await (supabase
+      .from("follows") as any)
+      .select("*", { count: "exact", head: true })
+      .eq("following_id", modelActorId);
+    followerCount = count || 0;
+
+    // Check if current user follows this model
+    if (currentActorId && currentActorId !== modelActorId) {
+      const { data: followRecord } = await (supabase
+        .from("follows") as any)
+        .select("follower_id")
+        .eq("follower_id", currentActorId)
+        .eq("following_id", modelActorId)
+        .single();
+      isFollowing = !!followRecord;
+    }
+  }
+
   // Display name
   const displayName = model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username;
 
@@ -282,10 +316,19 @@ export default async function ModelProfilePage({ params }: Props) {
               <Video className="mr-2 h-5 w-5" />
               Video Call
             </Button>
-            <Button variant="outline" className="h-12 rounded-full border-[#FF69B4]/50 hover:border-[#FF69B4] hover:bg-[#FF69B4]/10">
-              <Heart className="mr-2 h-5 w-5 text-[#FF69B4]" />
-              Follow
-            </Button>
+            {modelActorId && !isOwner ? (
+              <FollowButton
+                targetActorId={modelActorId}
+                initialIsFollowing={isFollowing}
+                initialFollowerCount={followerCount}
+                isLoggedIn={!!user}
+              />
+            ) : (
+              <Button variant="outline" className="h-12 rounded-full border-[#FF69B4]/50" disabled>
+                <Heart className="mr-2 h-5 w-5 text-[#FF69B4]" />
+                {isOwner ? "Your Profile" : "Follow"}
+              </Button>
+            )}
             <Button variant="outline" className="h-12 rounded-full border-[#00BFFF]/50 hover:border-[#00BFFF] hover:bg-[#00BFFF]/10">
               <Share2 className="mr-2 h-5 w-5 text-[#00BFFF]" />
               Share
@@ -309,7 +352,7 @@ export default async function ModelProfilePage({ params }: Props) {
             </div>
             <div className="stat-card">
               <Users className="h-6 w-6 mx-auto mb-2 text-[#FF69B4]" />
-              <p className="text-2xl font-bold">{model.instagram_followers ? (model.instagram_followers / 1000).toFixed(1) + 'k' : '0'}</p>
+              <p className="text-2xl font-bold">{followerCount.toLocaleString()}</p>
               <p className="text-xs text-muted-foreground">Followers</p>
             </div>
             <div className="stat-card">

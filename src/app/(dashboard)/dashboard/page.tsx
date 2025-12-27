@@ -33,6 +33,21 @@ export default async function DashboardPage() {
 
   if (!model) redirect("/onboarding");
 
+  // Get actor ID for follower count
+  const { data: actor } = await (supabase.from("actors") as any)
+    .select("id")
+    .eq("user_id", user.id)
+    .single();
+
+  // Get follower count
+  let followerCount = 0;
+  if (actor) {
+    const { count } = await (supabase
+      .from("follows") as any)
+      .select("*", { count: "exact", head: true })
+      .eq("following_id", actor.id);
+    followerCount = count || 0;
+  }
 
   // Get recent opportunities
   const { data: opportunities } = await (supabase
@@ -146,7 +161,7 @@ export default async function DashboardPage() {
                 <TrendingUp className="h-6 w-6 text-green-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{model.instagram_followers || 0}</p>
+                <p className="text-2xl font-bold">{followerCount}</p>
                 <p className="text-sm text-muted-foreground">Followers</p>
               </div>
             </div>
