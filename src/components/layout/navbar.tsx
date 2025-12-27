@@ -128,23 +128,28 @@ export function Navbar({ user, actorType, coinBalance = 0 }: NavbarProps) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{user.name || "User"}</p>
-                      <p className="text-xs leading-none text-muted-foreground">
-                        {user.username ? `examodels.com/${user.username}` : user.email}
-                      </p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {user.username && (
-                    <DropdownMenuItem asChild>
-                      <Link href={`/${user.username}`} className="cursor-pointer">
-                        <User className="mr-2 h-4 w-4" />
-                        View Profile
-                      </Link>
-                    </DropdownMenuItem>
+                  {user.username ? (
+                    <Link href={`/${user.username}`} className="block">
+                      <DropdownMenuLabel className="font-normal cursor-pointer hover:bg-accent rounded-sm">
+                        <div className="flex flex-col space-y-1">
+                          <p className="text-sm font-medium leading-none">{user.name || "User"}</p>
+                          <p className="text-xs leading-none text-pink-500 hover:text-pink-600">
+                            examodels.com/{user.username}
+                          </p>
+                        </div>
+                      </DropdownMenuLabel>
+                    </Link>
+                  ) : (
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">{user.name || "User"}</p>
+                        <p className="text-xs leading-none text-muted-foreground">
+                          {user.email}
+                        </p>
+                      </div>
+                    </DropdownMenuLabel>
                   )}
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <Link href="/wallet" className="cursor-pointer">
                       <Coins className="mr-2 h-4 w-4" />

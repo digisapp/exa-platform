@@ -86,24 +86,19 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-8">
       {/* Header with Avatar */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href={`/${model.username}`}>
-            <Avatar className="h-16 w-16 border-2 border-pink-500/50 hover:border-pink-500 transition-colors">
-              <AvatarImage src={model.profile_photo_url} alt={displayName} />
-              <AvatarFallback className="bg-gradient-to-br from-pink-500 to-violet-500 text-white text-xl">
-                {model.first_name?.charAt(0) || model.username?.charAt(0)?.toUpperCase() || "?"}
-              </AvatarFallback>
-            </Avatar>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold">{displayName}</h1>
-            <p className="text-muted-foreground">@{model.username}</p>
-          </div>
+      <div className="flex items-center gap-4">
+        <Link href={`/${model.username}`}>
+          <Avatar className="h-16 w-16 border-2 border-pink-500/50 hover:border-pink-500 transition-colors">
+            <AvatarImage src={model.profile_photo_url} alt={displayName} />
+            <AvatarFallback className="bg-gradient-to-br from-pink-500 to-violet-500 text-white text-xl">
+              {model.first_name?.charAt(0) || model.username?.charAt(0)?.toUpperCase() || "?"}
+            </AvatarFallback>
+          </Avatar>
+        </Link>
+        <div>
+          <h1 className="text-2xl font-bold">{displayName}</h1>
+          <p className="text-muted-foreground">@{model.username}</p>
         </div>
-        <Button variant="outline" asChild>
-          <Link href={`/${model.username}`}>View Public Profile</Link>
-        </Button>
       </div>
 
       {/* Recent Activity & Gigs - Side by Side */}
