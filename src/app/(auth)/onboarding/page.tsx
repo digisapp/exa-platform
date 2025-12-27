@@ -54,24 +54,22 @@ export default function OnboardingPage() {
       if (userError || !user) throw new Error("Not authenticated");
 
       // Create model profile directly
-      const { error: modelError } = await (supabase
-        .from("models")
-        .insert({
-          user_id: user.id,
-          username: formData.username.toLowerCase().replace(/[^a-z0-9_]/g, ""),
-          email: user.email,
-          first_name: formData.first_name,
-          last_name: formData.last_name,
-          bio: formData.bio || null,
-          city: formData.city || null,
-          state: formData.state || null,
-          instagram_name: formData.instagram_name.replace("@", "") || null,
-          height: formData.height || null,
-          is_approved: true,
-          status: "approved",
-          show_location: true,
-          show_social_media: true,
-        }) as any);
+      const { error: modelError } = await (supabase.from("models") as any).insert({
+        user_id: user.id,
+        username: formData.username.toLowerCase().replace(/[^a-z0-9_]/g, ""),
+        email: user.email,
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        bio: formData.bio || null,
+        city: formData.city || null,
+        state: formData.state || null,
+        instagram_name: formData.instagram_name.replace("@", "") || null,
+        height: formData.height || null,
+        is_approved: true,
+        status: "approved",
+        show_location: true,
+        show_social_media: true,
+      });
 
       if (modelError) throw modelError;
 
