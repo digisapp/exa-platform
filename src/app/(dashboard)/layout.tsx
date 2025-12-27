@@ -2,6 +2,9 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Navbar } from "@/components/layout/navbar";
 
+// Prevent caching to ensure fresh auth state on every request
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardLayout({
   children,
 }: {
