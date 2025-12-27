@@ -418,7 +418,7 @@ function ApplicationCard({ application }: { application: any }) {
       <CardFooter className="pt-4">
         <div className="flex items-center justify-between w-full">
           {application.status === "accepted" && (
-            <span className="text-sm text-green-500 font-medium">You're in!</span>
+            <span className="text-sm text-green-500 font-medium">You&apos;re in!</span>
           )}
           {application.status === "pending" && (
             <span className="text-sm text-muted-foreground">Awaiting response</span>
