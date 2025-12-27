@@ -182,7 +182,7 @@ export function Navbar({ user, actorType, coinBalance = 0 }: NavbarProps) {
           ) : (
             <div className="flex items-center gap-2">
               <Button variant="ghost" asChild>
-                <Link href="/login">Log in</Link>
+                <Link href="/login">Sign In</Link>
               </Button>
               <Button asChild className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600">
                 <Link href="/signup">Join EXA</Link>

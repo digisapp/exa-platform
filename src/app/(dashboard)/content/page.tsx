@@ -83,7 +83,7 @@ export default function ContentPage() {
   const fetchContent = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      router.push("/login");
+      // Layout already handles auth redirect
       return;
     }
 
@@ -94,7 +94,7 @@ export default function ContentPage() {
       .single() as { data: { id: string; type: string } | null };
 
     if (!actor || (actor.type !== "model" && actor.type !== "admin")) {
-      router.push("/dashboard");
+      // Not a model, show empty state or redirect handled elsewhere
       return;
     }
 

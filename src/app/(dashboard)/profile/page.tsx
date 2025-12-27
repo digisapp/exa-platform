@@ -37,7 +37,7 @@ export default function ProfilePage() {
     async function loadProfile() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        router.push("/login");
+        // Layout already handles auth redirect, just wait
         return;
       }
 
@@ -48,7 +48,7 @@ export default function ProfilePage() {
         .single() as { data: { id: string } | null };
 
       if (!actor) {
-        router.push("/onboarding");
+        // Layout already handles this case
         return;
       }
 
