@@ -136,137 +136,130 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      {/* Opportunities */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-pink-500" />
-            Opportunities
-          </CardTitle>
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/opportunities" className="text-pink-500">
-              View All
-              <ArrowRight className="ml-1 h-4 w-4" />
-            </Link>
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {opportunities && opportunities.length > 0 ? (
-            <div className="space-y-3">
-              {opportunities.map((opp: any) => (
-                <Link
-                  key={opp.id}
-                  href={`/opportunities/${opp.slug}`}
-                  className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-full bg-gradient-to-br from-pink-500/20 to-violet-500/20">
-                      <Sparkles className="h-4 w-4 text-pink-500" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-sm">{opp.title}</p>
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        <span>{opp.brand_name}</span>
-                        {opp.location && (
-                          <span className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            {opp.location}
-                          </span>
+      {/* Recent Activity & Gigs - Side by Side */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Recent Activity */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              Recent Activity
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {recentActivity.length > 0 ? (
+              <div className="space-y-3">
+                {recentActivity.map((item) => (
+                  <div key={`${item.type}-${item.id}`} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-full ${
+                        item.type === "coins"
+                          ? "bg-yellow-500/20"
+                          : "bg-pink-500/20"
+                      }`}>
+                        {item.type === "coins" ? (
+                          item.action === "tip_received" ? (
+                            <Heart className="h-4 w-4 text-pink-500" />
+                          ) : item.action === "content_sale" ? (
+                            <Lock className="h-4 w-4 text-violet-500" />
+                          ) : (
+                            <Coins className="h-4 w-4 text-yellow-500" />
+                          )
+                        ) : (
+                          item.action === "photo_upload" ? (
+                            <Image className="h-4 w-4 text-pink-500" />
+                          ) : (
+                            <Trophy className="h-4 w-4 text-pink-500" />
+                          )
                         )}
                       </div>
+                      <div>
+                        <p className="font-medium capitalize text-sm">{item.action.replace(/_/g, " ")}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(item.created_at).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  {opp.event_date && (
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Calendar className="h-3 w-3" />
-                      {new Date(opp.event_date).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </div>
-                  )}
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <Sparkles className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-              <p className="text-muted-foreground">No opportunities available</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Recent Activity */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5" />
-            Recent Activity
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {recentActivity.length > 0 ? (
-            <div className="space-y-3">
-              {recentActivity.map((item) => (
-                <div key={`${item.type}-${item.id}`} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-full ${
-                      item.type === "coins"
-                        ? "bg-yellow-500/20"
-                        : "bg-pink-500/20"
+                    <span className={`font-bold ${
+                      item.value >= 0 ? "text-green-500" : "text-red-500"
                     }`}>
                       {item.type === "coins" ? (
-                        item.action === "tip_received" ? (
-                          <Heart className="h-4 w-4 text-pink-500" />
-                        ) : item.action === "content_sale" ? (
-                          <Lock className="h-4 w-4 text-violet-500" />
-                        ) : (
-                          <Coins className="h-4 w-4 text-yellow-500" />
-                        )
+                        <span className="flex items-center gap-1">
+                          {item.value >= 0 ? "+" : ""}{item.value}
+                          <Coins className="h-3 w-3" />
+                        </span>
                       ) : (
-                        item.action === "photo_upload" ? (
-                          <Image className="h-4 w-4 text-pink-500" />
-                        ) : (
-                          <Trophy className="h-4 w-4 text-pink-500" />
-                        )
+                        `+${item.value} pts`
                       )}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <Activity className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+                <p className="text-muted-foreground">No recent activity</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Gigs */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-pink-500" />
+              Gigs
+            </CardTitle>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/opportunities" className="text-pink-500">
+                View All
+                <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {opportunities && opportunities.length > 0 ? (
+              <div className="space-y-3">
+                {opportunities.map((opp: any) => (
+                  <Link
+                    key={opp.id}
+                    href={`/opportunities/${opp.slug}`}
+                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-full bg-gradient-to-br from-pink-500/20 to-violet-500/20">
+                        <Sparkles className="h-4 w-4 text-pink-500" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">{opp.title}</p>
+                        <p className="text-xs text-muted-foreground">{opp.brand_name}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium capitalize text-sm">{item.action.replace(/_/g, " ")}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(item.created_at).toLocaleDateString("en-US", {
+                    {opp.event_date && (
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Calendar className="h-3 w-3" />
+                        {new Date(opp.event_date).toLocaleDateString("en-US", {
                           month: "short",
                           day: "numeric",
-                          hour: "numeric",
-                          minute: "2-digit",
                         })}
-                      </p>
-                    </div>
-                  </div>
-                  <span className={`font-bold ${
-                    item.value >= 0 ? "text-green-500" : "text-red-500"
-                  }`}>
-                    {item.type === "coins" ? (
-                      <span className="flex items-center gap-1">
-                        {item.value >= 0 ? "+" : ""}{item.value}
-                        <Coins className="h-3 w-3" />
-                      </span>
-                    ) : (
-                      `+${item.value} pts`
+                      </div>
                     )}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <Activity className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-              <p className="text-muted-foreground">No recent activity</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <Sparkles className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+                <p className="text-muted-foreground">No opportunities available</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
