@@ -88,19 +88,20 @@ export default function ProfilePage() {
       const { error } = await (supabase
         .from("models") as any)
         .update({
-          name: model.name,
+          first_name: model.first_name,
+          last_name: model.last_name,
           bio: model.bio,
           city: model.city,
           state: model.state,
-          height_inches: model.height_inches,
+          height: model.height,
           hair_color: model.hair_color,
           eye_color: model.eye_color,
-          instagram_handle: model.instagram_handle,
-          tiktok_handle: model.tiktok_handle,
+          instagram_name: model.instagram_name,
+          tiktok_username: model.tiktok_username,
           show_measurements: model.show_measurements,
           show_location: model.show_location,
-          show_socials: model.show_socials,
-          availability: model.availability,
+          show_social_media: model.show_social_media,
+          availability_status: model.availability_status,
           updated_at: new Date().toISOString(),
         })
         .eq("id", model.id);
@@ -164,11 +165,19 @@ export default function ProfilePage() {
                   <p className="text-xs text-muted-foreground">Username cannot be changed</p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="name">Full Name</Label>
+                  <Label htmlFor="first_name">First Name</Label>
                   <Input
-                    id="name"
-                    value={model.name || ""}
-                    onChange={(e) => setModel({ ...model, name: e.target.value })}
+                    id="first_name"
+                    value={model.first_name || ""}
+                    onChange={(e) => setModel({ ...model, first_name: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="last_name">Last Name</Label>
+                  <Input
+                    id="last_name"
+                    value={model.last_name || ""}
+                    onChange={(e) => setModel({ ...model, last_name: e.target.value })}
                   />
                 </div>
               </div>
@@ -228,12 +237,12 @@ export default function ProfilePage() {
             <CardContent className="space-y-4">
               <div className="grid md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="height">Height (inches)</Label>
+                  <Label htmlFor="height">Height</Label>
                   <Input
                     id="height"
-                    type="number"
-                    value={model.height_inches || ""}
-                    onChange={(e) => setModel({ ...model, height_inches: parseInt(e.target.value) || null })}
+                    value={model.height || ""}
+                    onChange={(e) => setModel({ ...model, height: e.target.value })}
+                    placeholder="e.g., 5'8&quot;"
                   />
                 </div>
                 <div className="space-y-2">
@@ -266,8 +275,8 @@ export default function ProfilePage() {
                   <Label htmlFor="instagram">Instagram</Label>
                   <Input
                     id="instagram"
-                    value={model.instagram_handle || ""}
-                    onChange={(e) => setModel({ ...model, instagram_handle: e.target.value.replace("@", "") })}
+                    value={model.instagram_name || ""}
+                    onChange={(e) => setModel({ ...model, instagram_name: e.target.value.replace("@", "") })}
                     placeholder="username"
                   />
                 </div>
@@ -275,8 +284,8 @@ export default function ProfilePage() {
                   <Label htmlFor="tiktok">TikTok</Label>
                   <Input
                     id="tiktok"
-                    value={model.tiktok_handle || ""}
-                    onChange={(e) => setModel({ ...model, tiktok_handle: e.target.value.replace("@", "") })}
+                    value={model.tiktok_username || ""}
+                    onChange={(e) => setModel({ ...model, tiktok_username: e.target.value.replace("@", "") })}
                     placeholder="username"
                   />
                 </div>
@@ -318,8 +327,8 @@ export default function ProfilePage() {
                   <p className="text-sm text-muted-foreground">Display Instagram and TikTok handles</p>
                 </div>
                 <Switch
-                  checked={model.show_socials}
-                  onCheckedChange={(v) => setModel({ ...model, show_socials: v })}
+                  checked={model.show_social_media}
+                  onCheckedChange={(v) => setModel({ ...model, show_social_media: v })}
                 />
               </div>
             </CardContent>
@@ -332,8 +341,8 @@ export default function ProfilePage() {
             </CardHeader>
             <CardContent>
               <Select
-                value={model.availability}
-                onValueChange={(v: any) => setModel({ ...model, availability: v })}
+                value={model.availability_status || "available"}
+                onValueChange={(v: string) => setModel({ ...model, availability_status: v })}
               >
                 <SelectTrigger>
                   <SelectValue />

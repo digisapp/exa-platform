@@ -56,7 +56,7 @@ export function NewMessageDialog({
           .from("models")
           .select("*")
           .eq("is_approved", true)
-          .or(`username.ilike.%${search}%,name.ilike.%${search}%`)
+          .or(`username.ilike.%${search}%,first_name.ilike.%${search}%,last_name.ilike.%${search}%`)
           .limit(10);
 
         setModels(data || []);
@@ -147,19 +147,14 @@ export function NewMessageDialog({
           {selectedModel ? (
             <div className="flex items-center gap-3 p-3 rounded-lg bg-muted">
               <Avatar className="h-10 w-10">
-                <AvatarImage src={selectedModel.avatar_url || undefined} />
+                <AvatarImage src={selectedModel.profile_photo_url || undefined} />
                 <AvatarFallback>
-                  {selectedModel.name
-                    ?.split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .toUpperCase()
-                    .slice(0, 2) || "?"}
+                  {selectedModel.first_name?.charAt(0) || selectedModel.username?.charAt(0)?.toUpperCase() || "?"}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="font-medium truncate">
-                  {selectedModel.name || selectedModel.username}
+                  {selectedModel.first_name ? `${selectedModel.first_name} ${selectedModel.last_name || ""}`.trim() : selectedModel.username}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   @{selectedModel.username}
@@ -199,19 +194,14 @@ export function NewMessageDialog({
                         className="w-full flex items-center gap-3 p-3 hover:bg-muted transition-colors"
                       >
                         <Avatar className="h-8 w-8">
-                          <AvatarImage src={model.avatar_url || undefined} />
+                          <AvatarImage src={model.profile_photo_url || undefined} />
                           <AvatarFallback>
-                            {model.name
-                              ?.split(" ")
-                              .map((n) => n[0])
-                              .join("")
-                              .toUpperCase()
-                              .slice(0, 2) || "?"}
+                            {model.first_name?.charAt(0) || model.username?.charAt(0)?.toUpperCase() || "?"}
                           </AvatarFallback>
                         </Avatar>
                         <div className="text-left">
                           <p className="font-medium text-sm">
-                            {model.name || model.username}
+                            {model.first_name ? `${model.first_name} ${model.last_name || ""}`.trim() : model.username}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             @{model.username}

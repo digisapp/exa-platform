@@ -278,7 +278,7 @@ export default async function AdminPage() {
                     >
                       <div>
                         <p className="font-medium">
-                          {app.model?.name || app.model?.username} → {app.opportunity?.title}
+                          {app.model?.first_name ? `${app.model.first_name} ${app.model.last_name || ""}`.trim() : app.model?.username} → {app.opportunity?.title}
                         </p>
                         <p className="text-sm text-muted-foreground">
                           Applied {new Date(app.applied_at).toLocaleDateString()}

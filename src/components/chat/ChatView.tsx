@@ -142,10 +142,10 @@ export function ChatView({
 
   // Get other participant's display info
   const otherName =
-    otherParticipant.model?.name ||
-    otherParticipant.model?.username ||
-    "User";
-  const otherAvatar = otherParticipant.model?.avatar_url;
+    otherParticipant.model?.first_name
+      ? `${otherParticipant.model.first_name} ${otherParticipant.model.last_name || ""}`.trim()
+      : otherParticipant.model?.username || "User";
+  const otherAvatar = otherParticipant.model?.profile_photo_url;
   const otherInitials = otherName
     .split(" ")
     .map((n) => n[0])
@@ -202,11 +202,13 @@ export function ChatView({
                 isOwn={isOwn}
                 senderName={
                   isOwn
-                    ? currentModel?.name || "You"
+                    ? currentModel?.first_name
+                      ? `${currentModel.first_name} ${currentModel.last_name || ""}`.trim()
+                      : "You"
                     : otherName
                 }
                 senderAvatar={
-                  isOwn ? currentModel?.avatar_url : otherAvatar
+                  isOwn ? currentModel?.profile_photo_url : otherAvatar
                 }
                 showAvatar={showAvatar}
               />

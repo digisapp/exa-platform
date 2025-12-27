@@ -42,31 +42,39 @@ export interface Database {
           id: string
           username: string
           email: string | null
-          name: string | null
+          first_name: string | null
+          last_name: string | null
           bio: string | null
           city: string | null
           state: string | null
-          country: string
-          height_inches: number | null
-          measurements: Json
+          height: string | null
+          bust: string | null
+          waist: string | null
+          hips: string | null
           hair_color: string | null
           eye_color: string | null
-          instagram_handle: string | null
+          dress_size: string | null
+          shoe_size: string | null
+          instagram_name: string | null
           instagram_followers: number
-          tiktok_handle: string | null
+          instagram_url: string | null
+          tiktok_username: string | null
           tiktok_followers: number
-          points_cached: number
-          level_cached: ModelLevel
+          snapchat_username: string | null
+          snapchat_followers: number
           is_approved: boolean
           is_featured: boolean
-          profile_complete: boolean
-          availability: Availability
+          is_verified: boolean
+          availability_status: string | null
           show_measurements: boolean
           show_location: boolean
-          show_socials: boolean
-          show_email: boolean
-          avatar_url: string | null
+          show_social_media: boolean
+          profile_photo_url: string | null
           coin_balance: number
+          profile_views: number
+          points_cached: number
+          level_cached: ModelLevel
+          user_id: string | null
           created_at: string
           updated_at: string
         }
@@ -74,31 +82,39 @@ export interface Database {
           id: string
           username: string
           email?: string | null
-          name?: string | null
+          first_name?: string | null
+          last_name?: string | null
           bio?: string | null
           city?: string | null
           state?: string | null
-          country?: string
-          height_inches?: number | null
-          measurements?: Json
+          height?: string | null
+          bust?: string | null
+          waist?: string | null
+          hips?: string | null
           hair_color?: string | null
           eye_color?: string | null
-          instagram_handle?: string | null
+          dress_size?: string | null
+          shoe_size?: string | null
+          instagram_name?: string | null
           instagram_followers?: number
-          tiktok_handle?: string | null
+          instagram_url?: string | null
+          tiktok_username?: string | null
           tiktok_followers?: number
-          points_cached?: number
-          level_cached?: ModelLevel
+          snapchat_username?: string | null
+          snapchat_followers?: number
           is_approved?: boolean
           is_featured?: boolean
-          profile_complete?: boolean
-          availability?: Availability
+          is_verified?: boolean
+          availability_status?: string | null
           show_measurements?: boolean
           show_location?: boolean
-          show_socials?: boolean
-          show_email?: boolean
-          avatar_url?: string | null
+          show_social_media?: boolean
+          profile_photo_url?: string | null
           coin_balance?: number
+          profile_views?: number
+          points_cached?: number
+          level_cached?: ModelLevel
+          user_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -106,31 +122,39 @@ export interface Database {
           id?: string
           username?: string
           email?: string | null
-          name?: string | null
+          first_name?: string | null
+          last_name?: string | null
           bio?: string | null
           city?: string | null
           state?: string | null
-          country?: string
-          height_inches?: number | null
-          measurements?: Json
+          height?: string | null
+          bust?: string | null
+          waist?: string | null
+          hips?: string | null
           hair_color?: string | null
           eye_color?: string | null
-          instagram_handle?: string | null
+          dress_size?: string | null
+          shoe_size?: string | null
+          instagram_name?: string | null
           instagram_followers?: number
-          tiktok_handle?: string | null
+          instagram_url?: string | null
+          tiktok_username?: string | null
           tiktok_followers?: number
-          points_cached?: number
-          level_cached?: ModelLevel
+          snapchat_username?: string | null
+          snapchat_followers?: number
           is_approved?: boolean
           is_featured?: boolean
-          profile_complete?: boolean
-          availability?: Availability
+          is_verified?: boolean
+          availability_status?: string | null
           show_measurements?: boolean
           show_location?: boolean
-          show_socials?: boolean
-          show_email?: boolean
-          avatar_url?: string | null
+          show_social_media?: boolean
+          profile_photo_url?: string | null
           coin_balance?: number
+          profile_views?: number
+          points_cached?: number
+          level_cached?: ModelLevel
+          user_id?: string | null
           created_at?: string
           updated_at?: string
         }

@@ -70,7 +70,7 @@ export default async function MessagesPage() {
           actor:actors(
             id,
             type,
-            model:models(username, name, avatar_url)
+            model:models(username, first_name, last_name, profile_photo_url)
           )
         `)
         .eq("conversation_id", p.conversation_id)
@@ -109,6 +109,9 @@ export default async function MessagesPage() {
           {conversations.length > 0 ? (
             conversations.map((conv: any) => {
               const otherPerson = conv.otherParticipants[0]?.model;
+              const displayName = otherPerson?.first_name
+                ? `${otherPerson.first_name} ${otherPerson.last_name || ""}`.trim()
+                : otherPerson?.username || "Unknown";
               const isUnread = conv.lastMessage &&
                 (!conv.last_read_at || new Date(conv.lastMessage.created_at) > new Date(conv.last_read_at));
 
@@ -119,15 +122,15 @@ export default async function MessagesPage() {
                   className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors"
                 >
                   <Avatar className="h-12 w-12">
-                    <AvatarImage src={otherPerson?.avatar_url} />
+                    <AvatarImage src={otherPerson?.profile_photo_url} />
                     <AvatarFallback>
-                      {otherPerson?.name?.charAt(0) || "?"}
+                      {otherPerson?.first_name?.charAt(0) || otherPerson?.username?.charAt(0)?.toUpperCase() || "?"}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <p className={`font-medium ${isUnread ? "text-foreground" : ""}`}>
-                        {otherPerson?.name || otherPerson?.username || "Unknown"}
+                        {displayName}
                       </p>
                       {conv.lastMessage && (
                         <span className="text-xs text-muted-foreground">

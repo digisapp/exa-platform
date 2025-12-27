@@ -27,11 +27,15 @@ export default async function DashboardLayout({
   if (actor?.type === "model") {
     const { data } = await supabase
       .from("models")
-      .select("username, name, avatar_url")
+      .select("username, first_name, last_name, profile_photo_url")
       .eq("id", actor.id)
       .single() as { data: any };
     modelData = data;
   }
+
+  const displayName = modelData?.first_name
+    ? `${modelData.first_name} ${modelData.last_name || ""}`.trim()
+    : modelData?.username || undefined;
 
   return (
     <div className="min-h-screen bg-background">
@@ -39,8 +43,8 @@ export default async function DashboardLayout({
         user={{
           id: user.id,
           email: user.email || "",
-          avatar_url: modelData?.avatar_url || undefined,
-          name: modelData?.name || undefined,
+          avatar_url: modelData?.profile_photo_url || undefined,
+          name: displayName,
           username: modelData?.username || undefined,
         }}
         actorType={actor?.type || null}
