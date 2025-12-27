@@ -42,9 +42,16 @@ export async function updateSession(request: NextRequest) {
               headers: request.headers,
             },
           })
-          // Set cookies on the response for the browser
+          // Set cookies on the response for the browser with extended expiration
           cookiesToSet.forEach(({ name, value, options }) => {
-            response.cookies.set(name, value, options)
+            response.cookies.set(name, value, {
+              ...options,
+              // Extend cookie lifetime to 1 year (in seconds)
+              maxAge: 60 * 60 * 24 * 365,
+              // Ensure cookies persist across browser sessions
+              sameSite: 'lax',
+              secure: process.env.NODE_ENV === 'production',
+            })
           })
         },
       },
