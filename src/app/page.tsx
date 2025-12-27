@@ -35,7 +35,7 @@ export default function HomePage() {
               />
             </Link>
             <div className="flex items-center gap-4">
-              <Link href="/login">
+              <Link href="/signin">
                 <Button variant="outline" className="border-[#FF69B4]/50 hover:border-[#FF69B4] hover:bg-[#FF69B4]/10">
                   Sign In
                 </Button>

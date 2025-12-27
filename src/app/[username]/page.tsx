@@ -24,7 +24,7 @@ import { PremiumContentGrid } from "@/components/content/PremiumContentGrid";
 
 // Reserved paths that should NOT be treated as usernames
 const RESERVED_PATHS = [
-  'login',
+  'signin',
   'signup',
   'models',
   'opportunities',

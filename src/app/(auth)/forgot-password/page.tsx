@@ -56,8 +56,8 @@ export default function ForgotPasswordPage() {
             <Button variant="ghost" onClick={() => setSent(false)} className="w-full">
               Use a different email
             </Button>
-            <Link href="/login" className="text-sm text-muted-foreground hover:text-foreground">
-              Back to login
+            <Link href="/signin" className="text-sm text-muted-foreground hover:text-foreground">
+              Back to Sign In
             </Link>
           </CardFooter>
         </Card>
@@ -114,11 +114,11 @@ export default function ForgotPasswordPage() {
               )}
             </Button>
             <Link
-              href="/login"
+              href="/signin"
               className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back to login
+              Back to Sign In
             </Link>
           </CardFooter>
         </form>

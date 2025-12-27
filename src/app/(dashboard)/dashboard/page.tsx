@@ -18,7 +18,7 @@ export default async function DashboardPage() {
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user) redirect("/signin");
 
   // Get model data directly by user_id
   const { data: model } = await (supabase.from("models") as any)

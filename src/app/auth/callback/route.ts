@@ -58,6 +58,6 @@ export async function GET(request: Request) {
     }
   }
 
-  // Auth error - redirect to login with error
-  return NextResponse.redirect(`${origin}/login?error=auth`);
+  // Auth error - redirect to signin with error
+  return NextResponse.redirect(`${origin}/signin?error=auth`);
 }

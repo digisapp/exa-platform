@@ -57,9 +57,9 @@ export default function ResetPasswordPage() {
       setSuccess(true);
       toast.success("Password updated successfully!");
 
-      // Redirect to login after 2 seconds
+      // Redirect to signin after 2 seconds
       setTimeout(() => {
-        router.push("/login");
+        router.push("/signin");
       }, 2000);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to reset password";
@@ -98,7 +98,7 @@ export default function ResetPasswordPage() {
             </div>
             <CardTitle>Password Reset!</CardTitle>
             <CardDescription>
-              Your password has been updated. Redirecting to login...
+              Your password has been updated. Redirecting to Sign In...
             </CardDescription>
           </CardHeader>
         </Card>

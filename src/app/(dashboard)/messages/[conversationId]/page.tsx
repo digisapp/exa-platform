@@ -15,7 +15,7 @@ export default async function ChatPage({ params }: PageProps) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user) redirect("/signin");
 
   // Get current actor
   const { data: actor } = (await supabase

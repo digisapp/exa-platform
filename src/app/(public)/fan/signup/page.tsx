@@ -190,7 +190,7 @@ export default function FanSignupPage() {
             </Button>
             <div className="text-center text-sm text-muted-foreground">
               Already have an account?{" "}
-              <Link href="/login" className="text-primary hover:underline font-medium">
+              <Link href="/signin" className="text-primary hover:underline font-medium">
                 Sign In
               </Link>
             </div>

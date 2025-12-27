@@ -233,7 +233,7 @@ export default async function OpportunityDetailPage({ params }: Props) {
                         <>
                           <p className="text-muted-foreground mb-2">Sign in to apply</p>
                           <Button asChild className="w-full">
-                            <Link href={`/login?redirect=/opportunities/${slug}`}>Sign In</Link>
+                            <Link href={`/signin?redirect=/opportunities/${slug}`}>Sign In</Link>
                           </Button>
                         </>
                       ) : isExpired ? (
