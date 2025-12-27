@@ -9,19 +9,17 @@ import {
   Instagram,
   MessageCircle,
   Heart,
-  Share2,
   Trophy,
   Sparkles,
   Ruler,
-  Users,
   Video,
-  Eye,
   Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
 import { PremiumContentGrid } from "@/components/content/PremiumContentGrid";
 import { FollowButton } from "@/components/social/follow-button";
+import { ShareButton } from "@/components/ui/share-button";
 
 // Reserved paths that should NOT be treated as usernames
 const RESERVED_PATHS = [
@@ -241,13 +239,7 @@ export default async function ModelProfilePage({ params }: Props) {
         {/* Main Profile Card */}
         <div className="glass-card rounded-3xl p-8 text-center relative">
           {/* Share Button - Top Right Corner */}
-          <button
-            className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
-            onClick={() => navigator.share ? navigator.share({ title: displayName, url: window.location.href }) : navigator.clipboard.writeText(window.location.href)}
-            title="Share"
-          >
-            <Share2 className="h-4 w-4 text-[#00BFFF]" />
-          </button>
+          <ShareButton title={displayName} />
 
           {/* Profile Image */}
           <div className="flex justify-center mb-6">
