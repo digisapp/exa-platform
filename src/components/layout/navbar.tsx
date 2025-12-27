@@ -39,10 +39,7 @@ interface NavbarProps {
   actorType?: "model" | "brand" | "admin" | null;
 }
 
-const publicLinks = [
-  { href: "/models", label: "Models", icon: Users },
-  { href: "/opportunities", label: "Opportunities", icon: Sparkles },
-];
+const publicLinks: { href: string; label: string; icon: any }[] = [];
 
 const modelLinks = [
   { href: "/dashboard", label: "Dashboard", icon: Home },

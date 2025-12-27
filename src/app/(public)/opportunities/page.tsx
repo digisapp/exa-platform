@@ -57,7 +57,7 @@ export default async function OpportunitiesPage() {
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      <main className="container py-8">
+      <main className="container px-8 md:px-16 py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">

@@ -80,13 +80,10 @@ export default async function ModelsPage({
       <main className="container px-8 md:px-16 py-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
+          <div className="flex items-center gap-3">
             <Users className="h-8 w-8 text-pink-500" />
-            <h1 className="text-3xl font-bold">Model Directory</h1>
+            <h1 className="text-3xl font-bold">Models</h1>
           </div>
-          <p className="text-muted-foreground">
-            Discover talented models from around the world
-          </p>
         </div>
 
         {/* Featured Models */}

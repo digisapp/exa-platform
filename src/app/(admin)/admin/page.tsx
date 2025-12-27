@@ -318,10 +318,12 @@ export default async function AdminPage() {
                     >
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center text-white font-bold">
-                          {model.name?.charAt(0) || model.username.charAt(0).toUpperCase()}
+                          {model.first_name?.charAt(0) || model.username?.charAt(0)?.toUpperCase() || "?"}
                         </div>
                         <div>
-                          <p className="font-medium">{model.name || model.username}</p>
+                          <p className="font-medium">
+                            {model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username}
+                          </p>
                           <p className="text-sm text-muted-foreground">
                             @{model.username} • {model.city}, {model.state}
                           </p>

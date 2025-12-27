@@ -36,39 +36,22 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  // Get actor
-  const { data: actor } = await supabase
-    .from("actors")
-    .select("id, type")
-    .eq("user_id", user.id)
-    .single() as { data: { id: string; type: string } | null };
-
-  if (!actor) redirect("/onboarding");
-
-  // Get model data
-  const { data: model } = await supabase
-    .from("models")
+  // Get model data directly by user_id
+  const { data: model } = await (supabase.from("models") as any)
     .select("*")
-    .eq("id", actor.id)
-    .single() as { data: any };
+    .eq("user_id", user.id)
+    .single();
 
   if (!model) redirect("/onboarding");
 
-  // Get recent applications
-  const { data: applications } = await supabase
-    .from("opportunity_applications")
-    .select("*, opportunity:opportunities(*)")
-    .eq("model_id", actor.id)
-    .order("applied_at", { ascending: false })
-    .limit(5) as { data: any[] | null };
 
   // Get point transactions
-  const { data: pointHistory } = await supabase
-    .from("point_transactions")
+  const { data: pointHistory } = await (supabase
+    .from("point_transactions") as any)
     .select("*")
-    .eq("model_id", actor.id)
+    .eq("model_id", model.id)
     .order("created_at", { ascending: false })
-    .limit(5) as { data: any[] | null };
+    .limit(5);
 
   // Calculate level progress
   const levelThresholds = { rising: 0, verified: 500, pro: 2000, elite: 5000 };
@@ -91,7 +74,7 @@ export default async function DashboardPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Welcome back, {model.name?.split(" ")[0] || "Model"}!</h1>
+          <h1 className="text-3xl font-bold">Welcome back, {model.first_name || "Model"}!</h1>
           <p className="text-muted-foreground">Here&apos;s what&apos;s happening with your profile</p>
         </div>
         <div className="flex gap-3">
@@ -108,7 +91,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
@@ -130,20 +113,6 @@ export default async function DashboardPage() {
               <div>
                 <p className="text-2xl font-bold capitalize">{model.level_cached}</p>
                 <p className="text-sm text-muted-foreground">Level</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-full bg-gradient-to-br from-blue-500/20 to-cyan-500/20">
-                <Sparkles className="h-6 w-6 text-blue-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{applications?.length || 0}</p>
-                <p className="text-sm text-muted-foreground">Applications</p>
               </div>
             </div>
           </CardContent>
@@ -191,84 +160,37 @@ export default async function DashboardPage() {
         </CardContent>
       </Card>
 
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* Recent Applications */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5" />
-              Recent Applications
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {applications && applications.length > 0 ? (
-              <div className="space-y-4">
-                {applications.map((app: any) => (
-                  <div key={app.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                    <div>
-                      <p className="font-medium">{app.opportunity?.title}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Applied {new Date(app.applied_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <Badge
-                      variant={
-                        app.status === "accepted"
-                          ? "default"
-                          : app.status === "rejected"
-                          ? "destructive"
-                          : "secondary"
-                      }
-                    >
-                      {app.status}
-                    </Badge>
+      {/* Point History */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Trophy className="h-5 w-5" />
+            Recent Points
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {pointHistory && pointHistory.length > 0 ? (
+            <div className="space-y-4">
+              {pointHistory.map((tx: any) => (
+                <div key={tx.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                  <div>
+                    <p className="font-medium capitalize">{tx.action.replace(/_/g, " ")}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(tx.created_at).toLocaleDateString()}
+                    </p>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <Sparkles className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-                <p className="text-muted-foreground">No applications yet</p>
-                <Button variant="link" asChild className="mt-2">
-                  <Link href="/opportunities">Browse opportunities →</Link>
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Point History */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Trophy className="h-5 w-5" />
-              Recent Points
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {pointHistory && pointHistory.length > 0 ? (
-              <div className="space-y-4">
-                {pointHistory.map((tx: any) => (
-                  <div key={tx.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                    <div>
-                      <p className="font-medium capitalize">{tx.action.replace(/_/g, " ")}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(tx.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <span className="text-green-500 font-bold">+{tx.points}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <Trophy className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-                <p className="text-muted-foreground">Start earning points!</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                  <span className="text-green-500 font-bold">+{tx.points}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <Trophy className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+              <p className="text-muted-foreground">Start earning points!</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Quick Actions */}
       <Card>

@@ -35,12 +35,6 @@ export default function HomePage() {
               />
             </Link>
             <div className="flex items-center gap-4">
-              <Link
-                href="/models"
-                className="text-muted-foreground hover:text-[#FF69B4] transition-colors hidden sm:block"
-              >
-                Models
-              </Link>
               <Link href="/login">
                 <Button variant="outline" className="border-[#FF69B4]/50 hover:border-[#FF69B4] hover:bg-[#FF69B4]/10">
                   Sign In
@@ -77,11 +71,6 @@ export default function HomePage() {
         {/* Hero Section */}
         <section className="container px-8 md:px-16 py-16 md:py-24 lg:py-32">
           <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card mb-8">
-              <Sparkles className="h-4 w-4 text-[#FF69B4]" />
-              <span className="text-sm">The Premier Model Community</span>
-            </div>
-
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
               Join Experiences.
               <br />
@@ -113,22 +102,6 @@ export default function HomePage() {
                   Browse Models
                 </Button>
               </Link>
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-8 md:gap-16 w-full max-w-xl">
-              <div className="stat-card py-6">
-                <div className="text-3xl font-bold text-[#FF69B4]">5,000+</div>
-                <div className="text-sm text-muted-foreground">Models</div>
-              </div>
-              <div className="stat-card py-6">
-                <div className="text-3xl font-bold text-[#00BFFF]">200+</div>
-                <div className="text-sm text-muted-foreground">Shows</div>
-              </div>
-              <div className="stat-card py-6">
-                <div className="text-3xl font-bold text-[#FF00FF]">50+</div>
-                <div className="text-sm text-muted-foreground">Brands</div>
-              </div>
             </div>
           </div>
         </section>

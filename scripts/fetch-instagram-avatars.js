@@ -119,22 +119,22 @@ function downloadImage(url) {
 
 // Extract Instagram profile picture URL from page HTML
 function extractProfilePicUrl(html) {
-  // Try og:image meta tag first
-  const ogImageMatch = html.match(/<meta property="og:image" content="([^"]+)"/);
-  if (ogImageMatch) {
-    return ogImageMatch[1].replace(/&amp;/g, '&');
+  // Try HD version FIRST (highest quality ~320x320 or higher)
+  const hdMatch = html.match(/"profile_pic_url_hd":"([^"]+)"/);
+  if (hdMatch) {
+    return hdMatch[1].replace(/\\u0026/g, '&').replace(/\\/g, '');
   }
 
-  // Try profile_pic_url from JSON
+  // Try profile_pic_url from JSON (medium quality)
   const picMatch = html.match(/"profile_pic_url":"([^"]+)"/);
   if (picMatch) {
     return picMatch[1].replace(/\\u0026/g, '&').replace(/\\/g, '');
   }
 
-  // Try HD version
-  const hdMatch = html.match(/"profile_pic_url_hd":"([^"]+)"/);
-  if (hdMatch) {
-    return hdMatch[1].replace(/\\u0026/g, '&').replace(/\\/g, '');
+  // Fall back to og:image meta tag (often lower quality)
+  const ogImageMatch = html.match(/<meta property="og:image" content="([^"]+)"/);
+  if (ogImageMatch) {
+    return ogImageMatch[1].replace(/&amp;/g, '&');
   }
 
   return null;

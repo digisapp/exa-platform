@@ -101,7 +101,7 @@ export default async function OpportunityDetailPage({ params }: Props) {
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      <main className="container py-8">
+      <main className="container px-8 md:px-16 py-8">
         {/* Back Button */}
         <Link
           href="/opportunities"

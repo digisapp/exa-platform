@@ -119,7 +119,7 @@ function LeaderboardList({
           return (
             <Link
               key={model.id}
-              href={`/models/${model.username}`}
+              href={`/${model.username}`}
               className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors"
             >
               {/* Rank */}
@@ -137,18 +137,20 @@ function LeaderboardList({
 
               {/* Avatar */}
               <Avatar className="h-12 w-12">
-                <AvatarImage src={model.avatar_url} alt={model.name} />
+                <AvatarImage src={model.profile_photo_url} alt={model.first_name || model.username} />
                 <AvatarFallback className="bg-gradient-to-br from-pink-500 to-violet-500 text-white">
-                  {model.name?.charAt(0) || model.username.charAt(0).toUpperCase()}
+                  {model.first_name?.charAt(0) || model.username?.charAt(0)?.toUpperCase() || "?"}
                 </AvatarFallback>
               </Avatar>
 
               {/* Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className="font-medium truncate">{model.name || model.username}</p>
-                  <Badge className={cn("capitalize text-xs", levelColors[model.level_cached])}>
-                    {levelIcons[model.level_cached]}
+                  <p className="font-medium truncate">
+                    {model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username}
+                  </p>
+                  <Badge className={cn("capitalize text-xs", levelColors[model.level_cached] || levelColors.rising)}>
+                    {levelIcons[model.level_cached] || levelIcons.rising}
                   </Badge>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">

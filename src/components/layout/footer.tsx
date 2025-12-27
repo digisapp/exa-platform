@@ -5,7 +5,7 @@ import { Instagram, Twitter, Youtube } from "lucide-react";
 export function Footer() {
   return (
     <footer className="border-t border-border/40 bg-background">
-      <div className="container py-12 md:py-16">
+      <div className="container px-8 md:px-16 py-12 md:py-16">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
@@ -41,11 +41,6 @@ export function Footer() {
               <li>
                 <Link href="/signup" className="text-muted-foreground hover:text-primary transition-colors">
                   Join EXA
-                </Link>
-              </li>
-              <li>
-                <Link href="/opportunities" className="text-muted-foreground hover:text-primary transition-colors">
-                  Opportunities
                 </Link>
               </li>
               <li>

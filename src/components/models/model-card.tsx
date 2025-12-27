@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -31,10 +32,13 @@ export function ModelCard({ model, variant = "default" }: ModelCardProps) {
           <div className="flex items-center gap-3">
             <div className="profile-image-container !p-[2px]">
               {model.profile_photo_url ? (
-                <img
+                <Image
                   src={model.profile_photo_url}
                   alt={displayName}
+                  width={48}
+                  height={48}
                   className="w-12 h-12 object-cover rounded-full"
+                  unoptimized={model.profile_photo_url.includes('cdninstagram.com')}
                 />
               ) : (
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#1a0033] to-[#2d1b69] flex items-center justify-center">
@@ -58,10 +62,13 @@ export function ModelCard({ model, variant = "default" }: ModelCardProps) {
         {/* Image */}
         <div className="aspect-[3/4] relative bg-gradient-to-br from-[#FF69B4]/20 to-[#9400D3]/20 overflow-hidden">
           {model.profile_photo_url ? (
-            <img
+            <Image
               src={model.profile_photo_url}
               alt={displayName}
-              className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-300"
+              fill
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              className="object-cover group-hover:scale-110 transition-transform duration-300"
+              unoptimized={model.profile_photo_url.includes('cdninstagram.com')}
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center">

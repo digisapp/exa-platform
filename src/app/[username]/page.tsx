@@ -110,10 +110,11 @@ export default async function ModelProfilePage({ params }: Props) {
 
   // Get portfolio photos
   const { data: photos } = await supabase
-    .from("portfolio_photos")
+    .from("media_assets")
     .select("*")
     .eq("model_id", model.id)
-    .order("display_order", { ascending: true })
+    .eq("asset_type", "portfolio")
+    .order("created_at", { ascending: false })
     .limit(12) as { data: any[] | null };
 
   // Get completed opportunities
