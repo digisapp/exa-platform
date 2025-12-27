@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Loader2, ArrowLeft, Building2, Check, Globe, Users, Target } from "lucide-react";
+import { Loader2, ArrowLeft, Building2, Globe, Target } from "lucide-react";
 import { FloatingOrbs } from "@/components/ui/floating-orbs";
 
 const INDUSTRIES = [
@@ -61,7 +61,6 @@ export default function BrandInquiryPage() {
     industry: "",
     partnership_type: "",
     budget_range: "",
-    timeline: "",
     message: "",
   });
 
@@ -159,13 +158,10 @@ export default function BrandInquiryPage() {
                 className="h-10 w-auto"
               />
             </Link>
-            <div className="flex items-center justify-center gap-2 mb-2">
+            <div className="flex items-center justify-center gap-2">
               <Building2 className="h-6 w-6 text-[#00BFFF]" />
-              <CardTitle className="text-2xl exa-gradient-text">Brand Partnership Inquiry</CardTitle>
+              <CardTitle className="text-2xl exa-gradient-text">Brand Inquiry</CardTitle>
             </div>
-            <CardDescription>
-              Partner with EXA to connect your brand with top models and exclusive events
-            </CardDescription>
           </CardHeader>
 
           <form onSubmit={handleSubmit}>
@@ -295,37 +291,24 @@ export default function BrandInquiryPage() {
                   </Select>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="budget_range">Budget Range</Label>
-                    <Select
-                      value={formData.budget_range}
-                      onValueChange={(v) => handleChange("budget_range", v)}
-                      disabled={loading}
-                    >
-                      <SelectTrigger className="bg-background/50">
-                        <SelectValue placeholder="Select budget" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {BUDGET_RANGES.map((range) => (
-                          <SelectItem key={range.value} value={range.value}>
-                            {range.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="timeline">Preferred Timeline</Label>
-                    <Input
-                      id="timeline"
-                      placeholder="e.g., Q1 2025"
-                      value={formData.timeline}
-                      onChange={(e) => handleChange("timeline", e.target.value)}
-                      disabled={loading}
-                      className="bg-background/50"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="budget_range">Budget Range</Label>
+                  <Select
+                    value={formData.budget_range}
+                    onValueChange={(v) => handleChange("budget_range", v)}
+                    disabled={loading}
+                  >
+                    <SelectTrigger className="bg-background/50">
+                      <SelectValue placeholder="Select budget" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {BUDGET_RANGES.map((range) => (
+                        <SelectItem key={range.value} value={range.value}>
+                          {range.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-2">
@@ -341,25 +324,6 @@ export default function BrandInquiryPage() {
                 </div>
               </div>
 
-              {/* Benefits */}
-              <div className="space-y-3 pt-4 border-t border-border/40">
-                <p className="text-sm font-medium flex items-center gap-2">
-                  <Users className="h-4 w-4 text-[#FF69B4]" />
-                  Why Partner with EXA?
-                </p>
-                {[
-                  "Access to 5,000+ verified models",
-                  "Custom curated talent for your brand",
-                  "End-to-end event production support",
-                  "Dedicated partnership manager",
-                  "Real-time campaign analytics",
-                ].map((benefit, i) => (
-                  <div key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Check className="h-4 w-4 text-green-500" />
-                    {benefit}
-                  </div>
-                ))}
-              </div>
             </CardContent>
 
             <CardFooter className="flex flex-col gap-4">

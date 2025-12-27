@@ -7,16 +7,11 @@ import {
   Sparkles,
   Users,
   Trophy,
-  MapPin,
-  Calendar,
   ArrowRight,
   Star,
   Plane,
   Camera,
   Instagram,
-  Building2,
-  Palette,
-  Video,
 } from "lucide-react";
 
 export default function HomePage() {
@@ -46,12 +41,6 @@ export default function HomePage() {
               >
                 Models
               </Link>
-              <Link
-                href="/opportunities"
-                className="text-muted-foreground hover:text-[#FF69B4] transition-colors hidden sm:block"
-              >
-                Opportunities
-              </Link>
               <Link href="/login">
                 <Button variant="outline" className="border-[#FF69B4]/50 hover:border-[#FF69B4] hover:bg-[#FF69B4]/10">
                   Sign In
@@ -63,6 +52,27 @@ export default function HomePage() {
             </div>
           </div>
         </nav>
+
+        {/* Quick Actions */}
+        <div className="container px-8 md:px-16 py-4">
+          <div className="flex justify-center gap-4">
+            <Link href="/signup">
+              <Button className="exa-gradient-button rounded-full px-6">
+                Models
+              </Button>
+            </Link>
+            <Link href="/brands/inquiry">
+              <Button variant="outline" className="rounded-full px-6 border-[#FF69B4]/50 hover:border-[#FF69B4] hover:bg-[#FF69B4]/10">
+                Brands
+              </Button>
+            </Link>
+            <Link href="/media/signup">
+              <Button variant="outline" className="rounded-full px-6 border-[#00BFFF]/50 hover:border-[#00BFFF] hover:bg-[#00BFFF]/10">
+                Media
+              </Button>
+            </Link>
+          </div>
+        </div>
 
         {/* Hero Section */}
         <section className="container px-8 md:px-16 py-16 md:py-24 lg:py-32">
@@ -281,163 +291,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Upcoming Events */}
-        <section className="py-24">
-          <div className="container px-8 md:px-16">
-            <div className="flex items-center justify-between mb-12">
-              <div>
-                <h2 className="text-3xl md:text-4xl font-bold mb-2 exa-gradient-text">
-                  Upcoming Events
-                </h2>
-                <p className="text-muted-foreground">Join our next shows and experiences</p>
-              </div>
-              <Link href="/opportunities">
-                <Button variant="outline" className="rounded-full border-[#00BFFF]/50 hover:border-[#00BFFF]">
-                  View All
-                </Button>
-              </Link>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-6">
-              {[
-                {
-                  title: "Art Basel Miami",
-                  date: "December 2025",
-                  location: "Miami Beach, FL",
-                  type: "Fashion Show",
-                  spots: 20,
-                  emoji: "🎨",
-                },
-                {
-                  title: "Hawaii Retreat",
-                  date: "February 2026",
-                  location: "Honolulu, HI",
-                  type: "Travel Experience",
-                  spots: 10,
-                  emoji: "🌺",
-                },
-                {
-                  title: "Miami Swim Week",
-                  date: "May 2026",
-                  location: "Miami, FL",
-                  type: "Fashion Show",
-                  spots: 50,
-                  emoji: "👙",
-                },
-              ].map((event, index) => (
-                <div
-                  key={index}
-                  className="glass-card rounded-2xl overflow-hidden hover:scale-105 transition-all group"
-                >
-                  <div className="h-40 bg-gradient-to-br from-[#FF69B4]/20 to-[#9400D3]/20 flex items-center justify-center">
-                    <span className="text-6xl">{event.emoji}</span>
-                  </div>
-                  <div className="p-6">
-                    <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold mb-3 bg-[#FF69B4]/20 text-[#FF69B4]">
-                      {event.type}
-                    </span>
-                    <h3 className="text-xl font-semibold mb-3">{event.title}</h3>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                      <Calendar className="h-4 w-4 text-[#00BFFF]" />
-                      {event.date}
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-                      <MapPin className="h-4 w-4 text-[#FF69B4]" />
-                      {event.location}
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">{event.spots} spots</span>
-                      <Button size="sm" className="exa-gradient-button rounded-full">
-                        Apply
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Partner With Us */}
-        <section className="py-24">
-          <div className="container px-8 md:px-16">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4 exa-gradient-text">
-                Partner With EXA
-              </h2>
-              <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                Join our network as a brand, designer, or media partner.
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-8">
-              {[
-                {
-                  icon: Building2,
-                  title: "Brands",
-                  description: "Connect with top models for campaigns, events, and brand ambassadors.",
-                  cta: "Partner With Us",
-                  href: "/brands/inquiry",
-                  gradient: "from-[#FF69B4] to-[#FF00FF]",
-                },
-                {
-                  icon: Palette,
-                  title: "Designers",
-                  description: "Showcase your collections with our community of professional models.",
-                  cta: "Join as Designer",
-                  href: "/designers/signup",
-                  gradient: "from-[#9400D3] to-[#4B0082]",
-                },
-                {
-                  icon: Video,
-                  title: "Media & Press",
-                  description: "Get exclusive access to shows, behind-the-scenes content, and interviews.",
-                  cta: "Apply for Access",
-                  href: "/media/signup",
-                  gradient: "from-[#00BFFF] to-[#0099cc]",
-                },
-              ].map((partner, index) => (
-                <Link
-                  key={index}
-                  href={partner.href}
-                  className="glass-card rounded-2xl p-8 hover:scale-105 transition-all group block"
-                >
-                  <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${partner.gradient} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
-                    <partner.icon className="h-8 w-8 text-white" />
-                  </div>
-                  <h3 className="text-2xl font-semibold mb-3">{partner.title}</h3>
-                  <p className="text-muted-foreground mb-6">{partner.description}</p>
-                  <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold bg-gradient-to-r ${partner.gradient} text-white`}>
-                    {partner.cta}
-                    <ArrowRight className="h-4 w-4" />
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* CTA */}
-        <section className="py-24">
-          <div className="container px-8 md:px-16">
-            <div className="glass-card rounded-3xl p-12 md:p-16 text-center max-w-4xl mx-auto">
-              <h2 className="text-3xl md:text-4xl font-bold mb-6 exa-glow-text">
-                Ready to Start Your Journey?
-              </h2>
-              <p className="text-xl text-muted-foreground mb-10">
-                Join thousands of models building their careers on EXA.
-                It&apos;s free to create your profile.
-              </p>
-              <Link href="/signup">
-                <Button size="lg" className="exa-gradient-button text-lg px-12 h-14 rounded-full">
-                  Get Started Free
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </section>
-
         {/* Footer */}
         <footer className="py-12 border-t border-[#FF69B4]/20">
           <div className="container px-8 md:px-16">
@@ -455,9 +308,6 @@ export default function HomePage() {
               <div className="flex items-center gap-6">
                 <Link href="/models" className="text-muted-foreground hover:text-[#FF69B4] transition-colors">
                   Models
-                </Link>
-                <Link href="/opportunities" className="text-muted-foreground hover:text-[#FF69B4] transition-colors">
-                  Opportunities
                 </Link>
                 <Link href="/leaderboard" className="text-muted-foreground hover:text-[#FF69B4] transition-colors">
                   Leaderboard

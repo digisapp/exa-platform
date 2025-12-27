@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -13,8 +14,8 @@ import { Loader2, ArrowLeft } from "lucide-react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
@@ -23,59 +24,60 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithOtp({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
+        password,
       });
 
       if (error) throw error;
 
-      setSent(true);
-      toast.success("Check your email for the login link!");
+      if (data.user) {
+        // Check if user is admin
+        const { data: actor } = await (supabase.from("actors") as any)
+          .select("type")
+          .eq("user_id", data.user.id)
+          .single();
+
+        if (actor?.type === "admin") {
+          router.push("/admin");
+        } else {
+          // Check if user has model profile
+          const { data: model } = await (supabase.from("models") as any)
+            .select("id")
+            .eq("user_id", data.user.id)
+            .single();
+
+          if (model) {
+            router.push("/dashboard");
+          } else {
+            router.push("/onboarding");
+          }
+        }
+      }
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Failed to send login link";
+      const message = error instanceof Error ? error.message : "Invalid email or password";
       toast.error(message);
     } finally {
       setLoading(false);
     }
   };
 
-  if (sent) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="text-5xl mb-4">📧</div>
-            <CardTitle>Check Your Email</CardTitle>
-            <CardDescription>
-              We sent a login link to <strong>{email}</strong>
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center text-muted-foreground">
-            <p>Click the link in your email to sign in. The link expires in 24 hours.</p>
-          </CardContent>
-          <CardFooter className="flex flex-col gap-4">
-            <Button variant="ghost" onClick={() => setSent(false)} className="w-full">
-              Use a different email
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <Link href="/" className="text-3xl font-bold bg-gradient-to-r from-pink-500 to-violet-500 bg-clip-text text-transparent mb-4 inline-block">
-            EXA
+          <Link href="/" className="flex justify-center mb-4">
+            <Image
+              src="/exa-logo-white.png"
+              alt="EXA"
+              width={100}
+              height={40}
+              className="h-10 w-auto"
+            />
           </Link>
           <CardTitle>Welcome Back</CardTitle>
           <CardDescription>
-            Sign in to your account with a magic link
+            Sign in to your account
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleLogin}>
@@ -92,6 +94,18 @@ export default function LoginPage() {
                 disabled={loading}
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={loading}
+              />
+            </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-6 pt-6">
             <Button
@@ -102,10 +116,10 @@ export default function LoginPage() {
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Sending...
+                  Signing in...
                 </>
               ) : (
-                "Send Login Link"
+                "Sign In"
               )}
             </Button>
             <div className="text-center text-sm text-muted-foreground">

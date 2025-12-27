@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,57 +14,46 @@ import { Loader2, ArrowLeft } from "lucide-react";
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
+  const router = useRouter();
   const supabase = createClient();
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    if (password.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithOtp({
+      const { data, error } = await supabase.auth.signUp({
         email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback?signup=true`,
-        },
+        password,
       });
 
       if (error) throw error;
 
-      setSent(true);
-      toast.success("Check your email to complete signup!");
+      if (data.user) {
+        toast.success("Account created! Let's set up your profile.");
+        router.push("/onboarding");
+      }
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Failed to send signup link";
+      const message = error instanceof Error ? error.message : "Failed to create account";
       toast.error(message);
     } finally {
       setLoading(false);
     }
   };
-
-  if (sent) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="text-5xl mb-4">✨</div>
-            <CardTitle>Check Your Email</CardTitle>
-            <CardDescription>
-              We sent a signup link to <strong>{email}</strong>
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center text-muted-foreground">
-            <p>Click the link in your email to create your account and start building your profile.</p>
-          </CardContent>
-          <CardFooter className="flex flex-col gap-4">
-            <Button variant="ghost" onClick={() => setSent(false)} className="w-full">
-              Use a different email
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -84,7 +74,7 @@ export default function SignupPage() {
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSignup}>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -93,6 +83,33 @@ export default function SignupPage() {
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={loading}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Create a password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={loading}
+              />
+              <p className="text-xs text-muted-foreground">
+                Must be at least 6 characters
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                placeholder="Confirm your password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 required
                 disabled={loading}
               />
@@ -107,7 +124,7 @@ export default function SignupPage() {
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Sending...
+                  Creating account...
                 </>
               ) : (
                 "Create Account"

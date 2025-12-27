@@ -12,27 +12,48 @@ export async function GET(request: Request) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error && data.user) {
-      // Check if user has an actor record
+      // Check if user has an actor record (admin check)
       const { data: actor } = await supabase
         .from("actors")
         .select("id, type")
         .eq("user_id", data.user.id)
         .single() as { data: { id: string; type: string } | null };
 
-      // If new signup and no actor, redirect to onboarding
-      if (!actor && isSignup) {
-        return NextResponse.redirect(`${origin}/onboarding`);
+      // If admin, redirect to admin dashboard
+      if (actor?.type === "admin") {
+        return NextResponse.redirect(`${origin}/admin`);
       }
 
-      // If has actor, redirect to appropriate dashboard
-      if (actor) {
-        if (actor.type === "admin") {
-          return NextResponse.redirect(`${origin}/admin`);
-        }
+      // Check if user already has a model profile
+      const { data: model } = await (supabase.from("models") as any)
+        .select("id, username")
+        .eq("user_id", data.user.id)
+        .single();
+
+      // If model exists, go to dashboard
+      if (model) {
         return NextResponse.redirect(`${origin}${redirect}`);
       }
 
-      // Existing user without actor (edge case) - send to onboarding
+      // Also check by email in case user_id wasn't set
+      if (data.user.email) {
+        const { data: modelByEmail } = await (supabase.from("models") as any)
+          .select("id, username, user_id")
+          .eq("email", data.user.email)
+          .single();
+
+        if (modelByEmail) {
+          // Update the model record with user_id if not set
+          if (!modelByEmail.user_id) {
+            await (supabase.from("models") as any)
+              .update({ user_id: data.user.id })
+              .eq("id", modelByEmail.id);
+          }
+          return NextResponse.redirect(`${origin}${redirect}`);
+        }
+      }
+
+      // New user - redirect to onboarding
       return NextResponse.redirect(`${origin}/onboarding`);
     }
   }

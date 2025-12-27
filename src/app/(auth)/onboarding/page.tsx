@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ const US_STATES = [
 export default function OnboardingPage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [checkingExisting, setCheckingExisting] = useState(true);
   const [formData, setFormData] = useState({
     username: "",
     first_name: "",
@@ -40,6 +41,53 @@ export default function OnboardingPage() {
   });
   const router = useRouter();
   const supabase = createClient();
+
+  // Check if user already has a model profile
+  useEffect(() => {
+    const checkExistingProfile = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          router.push("/login");
+          return;
+        }
+
+        // Check by user_id
+        const { data: model } = await (supabase.from("models") as any)
+          .select("id")
+          .eq("user_id", user.id)
+          .single();
+
+        if (model) {
+          router.push("/dashboard");
+          return;
+        }
+
+        // Check by email
+        if (user.email) {
+          const { data: modelByEmail } = await (supabase.from("models") as any)
+            .select("id")
+            .eq("email", user.email)
+            .single();
+
+          if (modelByEmail) {
+            // Update user_id and redirect
+            await (supabase.from("models") as any)
+              .update({ user_id: user.id })
+              .eq("id", modelByEmail.id);
+            router.push("/dashboard");
+            return;
+          }
+        }
+
+        setCheckingExisting(false);
+      } catch {
+        setCheckingExisting(false);
+      }
+    };
+
+    checkExistingProfile();
+  }, [supabase, router]);
 
   const updateField = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -83,6 +131,15 @@ export default function OnboardingPage() {
       setLoading(false);
     }
   };
+
+  // Show loading while checking for existing profile
+  if (checkingExisting) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
