@@ -24,9 +24,7 @@ import {
   Settings,
   LogOut,
   User,
-  Trophy,
   Coins,
-  TrendingUp,
   Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -51,13 +49,13 @@ const modelLinks = [
   { href: "/opportunities", label: "Opportunities", icon: Sparkles },
   { href: "/messages", label: "Messages", icon: MessageCircle },
   { href: "/content", label: "Content", icon: Lock },
-  { href: "/earnings", label: "Earnings", icon: TrendingUp },
+  { href: "/wallet", label: "Wallet", icon: Coins },
 ];
 
 const fanLinks = [
   { href: "/models", label: "Browse Models", icon: Users },
   { href: "/messages", label: "Messages", icon: MessageCircle },
-  { href: "/coins", label: "Buy Coins", icon: Coins },
+  { href: "/wallet", label: "Wallet", icon: Coins },
 ];
 
 const adminLinks = [
@@ -114,7 +112,7 @@ export function Navbar({ user, actorType, coinBalance = 0 }: NavbarProps) {
             <>
               {/* Coin Balance */}
               <Link
-                href="/coins"
+                href="/wallet"
                 className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-pink-500/10 to-violet-500/10 hover:from-pink-500/20 hover:to-violet-500/20 transition-colors"
               >
                 <Coins className="h-4 w-4 text-pink-500" />
@@ -157,22 +155,14 @@ export function Navbar({ user, actorType, coinBalance = 0 }: NavbarProps) {
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem asChild>
-                    <Link href="/coins" className="cursor-pointer">
+                    <Link href="/wallet" className="cursor-pointer">
                       <Coins className="mr-2 h-4 w-4" />
-                      Buy Coins
+                      Wallet
                       <span className="ml-auto text-xs text-muted-foreground">
                         {coinBalance.toLocaleString()}
                       </span>
                     </Link>
                   </DropdownMenuItem>
-                  {(actorType === "model" || actorType === "admin") && (
-                    <DropdownMenuItem asChild>
-                      <Link href="/earnings" className="cursor-pointer">
-                        <TrendingUp className="mr-2 h-4 w-4" />
-                        Earnings
-                      </Link>
-                    </DropdownMenuItem>
-                  )}
                   <DropdownMenuItem asChild>
                     <Link href="/profile" className="cursor-pointer">
                       <Settings className="mr-2 h-4 w-4" />
@@ -211,7 +201,7 @@ export function Navbar({ user, actorType, coinBalance = 0 }: NavbarProps) {
               {/* Mobile Coin Balance */}
               {user && (
                 <Link
-                  href="/coins"
+                  href="/wallet"
                   className="flex items-center gap-2 px-4 py-3 mt-4 rounded-lg bg-gradient-to-r from-pink-500/10 to-violet-500/10"
                 >
                   <Coins className="h-5 w-5 text-pink-500" />
