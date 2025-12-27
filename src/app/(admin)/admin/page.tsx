@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ApproveRejectButtons, ModelApprovalButton } from "@/components/admin/AdminActions";
 import {
   Users,
   Sparkles,
@@ -288,16 +289,7 @@ export default async function AdminPage() {
                           </p>
                         )}
                       </div>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline">
-                          <XCircle className="h-4 w-4 mr-1" />
-                          Reject
-                        </Button>
-                        <Button size="sm" className="bg-green-500 hover:bg-green-600">
-                          <CheckCircle className="h-4 w-4 mr-1" />
-                          Accept
-                        </Button>
-                      </div>
+                      <ApproveRejectButtons id={app.id} type="application" />
                     </div>
                   ))}
                 </div>
@@ -345,6 +337,7 @@ export default async function AdminPage() {
                         <Button size="sm" variant="outline" asChild>
                           <Link href={`/${model.username}`}>View</Link>
                         </Button>
+                        <ModelApprovalButton id={model.id} isApproved={model.is_approved} />
                       </div>
                     </div>
                   ))}
@@ -422,16 +415,7 @@ export default async function AdminPage() {
                         <span className="text-xs text-muted-foreground">
                           {new Date(brand.created_at).toLocaleDateString()}
                         </span>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline">
-                            <Mail className="h-4 w-4 mr-1" />
-                            Contact
-                          </Button>
-                          <Button size="sm" className="bg-green-500 hover:bg-green-600">
-                            <CheckCircle className="h-4 w-4 mr-1" />
-                            Approve
-                          </Button>
-                        </div>
+                        <ApproveRejectButtons id={brand.id} type="brand" />
                       </div>
                     </div>
                   ))}
@@ -519,16 +503,7 @@ export default async function AdminPage() {
                         <span className="text-xs text-muted-foreground">
                           {new Date(designer.created_at).toLocaleDateString()}
                         </span>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline">
-                            <XCircle className="h-4 w-4 mr-1" />
-                            Reject
-                          </Button>
-                          <Button size="sm" className="bg-green-500 hover:bg-green-600">
-                            <CheckCircle className="h-4 w-4 mr-1" />
-                            Approve
-                          </Button>
-                        </div>
+                        <ApproveRejectButtons id={designer.id} type="designer" />
                       </div>
                     </div>
                   ))}
@@ -624,16 +599,7 @@ export default async function AdminPage() {
                         <span className="text-xs text-muted-foreground">
                           {new Date(media.created_at).toLocaleDateString()}
                         </span>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline">
-                            <XCircle className="h-4 w-4 mr-1" />
-                            Reject
-                          </Button>
-                          <Button size="sm" className="bg-green-500 hover:bg-green-600">
-                            <CheckCircle className="h-4 w-4 mr-1" />
-                            Approve
-                          </Button>
-                        </div>
+                        <ApproveRejectButtons id={media.id} type="media" />
                       </div>
                     </div>
                   ))}
