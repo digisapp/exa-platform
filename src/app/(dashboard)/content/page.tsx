@@ -24,13 +24,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Lock,
   Plus,
   Trash2,
@@ -57,8 +50,6 @@ interface PremiumContent {
   unlock_count: number;
   created_at: string;
 }
-
-const PRICE_OPTIONS = [5, 10, 15, 20, 25, 50, 75, 100];
 
 export default function ContentPage() {
   const router = useRouter();
@@ -389,21 +380,20 @@ export default function ContentPage() {
               {isPaid && (
                 <div className="space-y-2">
                   <Label>Price in Coins</Label>
-                  <Select value={coinPrice} onValueChange={setCoinPrice}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PRICE_OPTIONS.map((price) => (
-                        <SelectItem key={price} value={price.toString()}>
-                          <span className="flex items-center gap-2">
-                            <Coins className="h-4 w-4 text-pink-500" />
-                            {price} coins
-                          </span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="relative">
+                    <Coins className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-pink-500" />
+                    <Input
+                      type="number"
+                      min="0"
+                      value={coinPrice}
+                      onChange={(e) => setCoinPrice(e.target.value)}
+                      placeholder="Enter price"
+                      className="pl-10"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Set to 0 for free content
+                  </p>
                 </div>
               )}
 
