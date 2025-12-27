@@ -10,9 +10,7 @@ import {
   Users,
   Sparkles,
   Trophy,
-  Calendar,
   CheckCircle,
-  XCircle,
   Clock,
   TrendingUp,
   Settings,
@@ -22,6 +20,9 @@ import {
   Mail,
   Globe,
   Instagram,
+  Coins,
+  CreditCard,
+  Heart,
 } from "lucide-react";
 
 export default async function AdminPage() {
@@ -121,6 +122,27 @@ export default async function AdminPage() {
     .select("*", { count: "exact", head: true })
     .eq("status", "pending");
 
+  // Get coin stats
+  const { count: totalFans } = await supabase
+    .from("fans")
+    .select("*", { count: "exact", head: true });
+
+  const { data: modelBalances } = await supabase
+    .from("models")
+    .select("coin_balance") as { data: { coin_balance: number }[] | null };
+
+  const { data: fanBalances } = await supabase
+    .from("fans")
+    .select("coin_balance") as { data: { coin_balance: number }[] | null };
+
+  const totalCoins = (modelBalances?.reduce((sum, m) => sum + (m.coin_balance || 0), 0) || 0) +
+                     (fanBalances?.reduce((sum, f) => sum + (f.coin_balance || 0), 0) || 0);
+
+  // Get recent transactions count
+  const { count: recentTransactions } = await supabase
+    .from("coin_transactions")
+    .select("*", { count: "exact", head: true });
+
   return (
     <div className="container py-8 space-y-8">
       <div className="flex items-center justify-between">
@@ -137,7 +159,7 @@ export default async function AdminPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-10 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
@@ -231,6 +253,48 @@ export default async function AdminPage() {
               <div>
                 <p className="text-2xl font-bold">{pendingMedia || 0}</p>
                 <p className="text-sm text-muted-foreground">Media Apps</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-pink-500/10 to-violet-500/10 border-pink-500/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-full bg-pink-500/20">
+                <Coins className="h-6 w-6 text-pink-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{totalCoins.toLocaleString()}</p>
+                <p className="text-sm text-muted-foreground">Total Coins</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-full bg-red-500/10">
+                <Heart className="h-6 w-6 text-red-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{totalFans || 0}</p>
+                <p className="text-sm text-muted-foreground">Fans</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-full bg-emerald-500/10">
+                <CreditCard className="h-6 w-6 text-emerald-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{recentTransactions || 0}</p>
+                <p className="text-sm text-muted-foreground">Transactions</p>
               </div>
             </div>
           </CardContent>
@@ -623,20 +687,34 @@ export default async function AdminPage() {
           <CardTitle>Quick Actions</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             <Link
               href="/admin/opportunities"
               className="p-4 rounded-lg border hover:border-primary/50 transition-all text-center"
             >
               <Sparkles className="h-8 w-8 mx-auto mb-2 text-pink-500" />
-              <p className="font-medium">Manage Opportunities</p>
+              <p className="font-medium">Opportunities</p>
             </Link>
             <Link
               href="/admin/models"
               className="p-4 rounded-lg border hover:border-primary/50 transition-all text-center"
             >
               <Users className="h-8 w-8 mx-auto mb-2 text-blue-500" />
-              <p className="font-medium">Manage Models</p>
+              <p className="font-medium">Models</p>
+            </Link>
+            <Link
+              href="/admin/fans"
+              className="p-4 rounded-lg border hover:border-pink-500/50 transition-all text-center"
+            >
+              <Heart className="h-8 w-8 mx-auto mb-2 text-red-500" />
+              <p className="font-medium">Fans</p>
+            </Link>
+            <Link
+              href="/admin/transactions"
+              className="p-4 rounded-lg border hover:border-yellow-500/50 transition-all text-center"
+            >
+              <Coins className="h-8 w-8 mx-auto mb-2 text-yellow-500" />
+              <p className="font-medium">Transactions</p>
             </Link>
             <Link
               href="/admin/analytics"
