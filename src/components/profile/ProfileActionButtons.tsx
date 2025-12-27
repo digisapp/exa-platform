@@ -2,11 +2,10 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Video, Coins, LogIn } from "lucide-react";
+import { MessageCircle, Video, Coins } from "lucide-react";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -161,26 +160,29 @@ export function ProfileActionButtons({
       {/* Auth Dialog */}
       <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <LogIn className="h-5 w-5" />
-              Sign in required
-            </DialogTitle>
-            <DialogDescription>
-              Sign in to {authAction} {modelUsername}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col gap-3 pt-4">
-            <Link href="/signin" className="w-full">
-              <Button className="w-full exa-gradient-button">
-                Sign In
-              </Button>
-            </Link>
-            <Link href="/fan/signup" className="w-full">
-              <Button variant="outline" className="w-full">
-                Create Account
-              </Button>
-            </Link>
+          <div className="flex flex-col items-center text-center pt-4">
+            <img
+              src="/exa-logo-white.png"
+              alt="EXA"
+              className="h-10 w-auto mb-6"
+            />
+            <DialogHeader className="text-center">
+              <DialogTitle className="text-xl font-bold">
+                Sign in required
+              </DialogTitle>
+            </DialogHeader>
+            <div className="flex flex-col gap-3 pt-6 w-full">
+              <Link href="/signin" className="w-full">
+                <Button className="w-full exa-gradient-button">
+                  Sign In
+                </Button>
+              </Link>
+              <Link href="/fan/signup" className="w-full">
+                <Button variant="outline" className="w-full">
+                  Create Account
+                </Button>
+              </Link>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
