@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -544,10 +545,13 @@ export default function AdminModelsPage() {
                         >
                           <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-pink-500/20 to-violet-500/20 flex-shrink-0">
                             {model.profile_photo_url ? (
-                              <img
+                              <Image
                                 src={model.profile_photo_url}
                                 alt={model.username}
+                                width={80}
+                                height={80}
                                 className="w-full h-full object-cover"
+                                unoptimized
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-sm font-bold">
