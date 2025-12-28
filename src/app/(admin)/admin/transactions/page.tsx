@@ -135,7 +135,7 @@ export default async function TransactionsPage() {
   };
 
   return (
-    <div className="container py-8 space-y-8">
+    <div className="container px-8 md:px-16 py-8 space-y-8">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
           <Link href="/admin">

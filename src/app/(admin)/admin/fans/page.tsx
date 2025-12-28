@@ -71,7 +71,7 @@ export default async function FansPage() {
   };
 
   return (
-    <div className="container py-8 space-y-8">
+    <div className="container px-8 md:px-16 py-8 space-y-8">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
           <Link href="/admin">
