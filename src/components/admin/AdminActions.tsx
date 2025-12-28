@@ -4,7 +4,18 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Loader2, CheckCircle, XCircle } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, UserMinus } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface AdminActionProps {
   id: string;
@@ -158,5 +169,70 @@ export function ModelApprovalButton({ id, isApproved }: { id: string; isApproved
         </>
       )}
     </Button>
+  );
+}
+
+export function ConvertToFanButton({ id, modelName }: { id: string; modelName: string }) {
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const router = useRouter();
+
+  const handleConvert = async () => {
+    setLoading(true);
+
+    try {
+      const res = await fetch(`/api/admin/models/${id}/convert-to-fan`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to convert");
+      }
+
+      toast.success("Model moved to Fans");
+      setOpen(false);
+      router.refresh();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Action failed";
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogTrigger asChild>
+        <Button size="sm" variant="ghost" className="text-muted-foreground hover:text-red-500">
+          <UserMinus className="h-4 w-4" />
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Move to Fans?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This will convert <strong>{modelName}</strong> from a Model to a Fan account.
+            Their model profile will be deleted and they will no longer appear in the models directory.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleConvert}
+            disabled={loading}
+            className="bg-red-500 hover:bg-red-600"
+          >
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <UserMinus className="h-4 w-4 mr-2" />
+            )}
+            Move to Fans
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

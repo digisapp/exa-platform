@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ApproveRejectButtons, ModelApprovalButton } from "@/components/admin/AdminActions";
+import { ApproveRejectButtons, ModelApprovalButton, ConvertToFanButton } from "@/components/admin/AdminActions";
 import { AdminSearch } from "@/components/admin/AdminSearch";
 import {
   Users,
@@ -731,6 +731,10 @@ export default async function AdminPage() {
                           <Link href={`/${model.username}`}>View</Link>
                         </Button>
                         <ModelApprovalButton id={model.id} isApproved={model.is_approved} />
+                        <ConvertToFanButton
+                          id={model.id}
+                          modelName={model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username}
+                        />
                       </div>
                     </div>
                   ))}
