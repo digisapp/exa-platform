@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Loader2, CheckCircle, XCircle, UserMinus, ChevronDown, Trash2, Play, Pause } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, UserMinus, ChevronDown, Trash2, Eye, EyeOff } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -268,7 +268,7 @@ export function ModelActionsDropdown({ id, modelName, isApproved, onAction }: {
         throw new Error(data.error || "Failed to update");
       }
 
-      toast.success(approved ? "Model is now LIVE" : "Model is now PAUSED");
+      toast.success(approved ? "Model is now VISIBLE" : "Model is now HIDDEN");
       onAction?.();
       router.refresh();
     } catch (error: unknown) {
@@ -336,17 +336,17 @@ export function ModelActionsDropdown({ id, modelName, isApproved, onAction }: {
           <Button
             size="sm"
             variant="outline"
-            className={`gap-1 ${isApproved ? "text-green-500 border-green-500/50" : "text-yellow-500 border-yellow-500/50"}`}
+            className={`gap-1 ${isApproved ? "text-green-500 border-green-500/50" : "text-muted-foreground border-muted-foreground/50"}`}
           >
             {isApproved ? (
               <>
-                <Play className="h-3 w-3" />
-                LIVE
+                <Eye className="h-3 w-3" />
+                VISIBLE
               </>
             ) : (
               <>
-                <Pause className="h-3 w-3" />
-                PAUSE
+                <EyeOff className="h-3 w-3" />
+                HIDDEN
               </>
             )}
             <ChevronDown className="h-3 w-3" />
@@ -355,24 +355,24 @@ export function ModelActionsDropdown({ id, modelName, isApproved, onAction }: {
         <DropdownMenuContent align="end">
           {isApproved ? (
             <DropdownMenuItem disabled className="text-green-500 opacity-100">
-              <Play className="h-4 w-4 mr-2" />
-              LIVE
+              <Eye className="h-4 w-4 mr-2" />
+              VISIBLE
             </DropdownMenuItem>
           ) : (
             <DropdownMenuItem onClick={() => handleSetApproval(true)} disabled={loading}>
-              <Play className="h-4 w-4 mr-2" />
-              LIVE
+              <Eye className="h-4 w-4 mr-2" />
+              VISIBLE
             </DropdownMenuItem>
           )}
           {!isApproved ? (
-            <DropdownMenuItem disabled className="text-yellow-500 opacity-100">
-              <Pause className="h-4 w-4 mr-2" />
-              PAUSE
+            <DropdownMenuItem disabled className="text-muted-foreground opacity-100">
+              <EyeOff className="h-4 w-4 mr-2" />
+              HIDDEN
             </DropdownMenuItem>
           ) : (
             <DropdownMenuItem onClick={() => handleSetApproval(false)} disabled={loading}>
-              <Pause className="h-4 w-4 mr-2" />
-              PAUSE
+              <EyeOff className="h-4 w-4 mr-2" />
+              HIDDEN
             </DropdownMenuItem>
           )}
           <DropdownMenuSeparator />
