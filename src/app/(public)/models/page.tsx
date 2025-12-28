@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { Navbar } from "@/components/layout/navbar";
-import { Footer } from "@/components/layout/footer";
 import { ModelFilters } from "@/components/models/model-filters";
 import { ModelCard } from "@/components/models/model-card";
 import { Users } from "lucide-react";
@@ -160,8 +159,6 @@ export default async function ModelsPage({
           />
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 }

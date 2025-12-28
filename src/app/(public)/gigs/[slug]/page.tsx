@@ -2,7 +2,6 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { Navbar } from "@/components/layout/navbar";
-import { Footer } from "@/components/layout/footer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -316,8 +315,6 @@ export default async function OpportunityDetailPage({ params }: Props) {
           </div>
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 }

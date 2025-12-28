@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Navbar } from "@/components/layout/navbar";
-import { Footer } from "@/components/layout/footer";
 import { Heart } from "lucide-react";
 import { ModelCard } from "@/components/models/model-card";
 import Link from "next/link";
@@ -111,8 +110,6 @@ export default async function FavoritesPage() {
           </div>
         )}
       </main>
-
-      <Footer />
     </div>
   );
 }
