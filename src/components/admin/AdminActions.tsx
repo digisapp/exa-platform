@@ -437,3 +437,146 @@ export function ModelActionsDropdown({ id, modelName, isApproved, onAction }: {
     </>
   );
 }
+
+export function FanActionsDropdown({ id, fanName, isSuspended, onAction }: {
+  id: string;
+  fanName: string;
+  isSuspended: boolean;
+  onAction?: () => void;
+}) {
+  const [loading, setLoading] = useState(false);
+  const [dialogType, setDialogType] = useState<"delete" | null>(null);
+  const router = useRouter();
+
+  const handleSetSuspended = async (suspended: boolean) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/fans/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_suspended: suspended }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to update");
+      }
+
+      toast.success(suspended ? "Fan suspended" : "Fan activated");
+      onAction?.();
+      router.refresh();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Action failed";
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/fans/${id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to delete");
+      }
+
+      toast.success("Fan deleted");
+      setDialogType(null);
+      onAction?.();
+      router.refresh();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Action failed";
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            size="sm"
+            variant="outline"
+            className={`gap-1 ${!isSuspended ? "text-green-500 border-green-500/50" : "text-red-500 border-red-500/50"}`}
+          >
+            {!isSuspended ? (
+              <>
+                <Eye className="h-3 w-3" />
+                ACTIVE
+              </>
+            ) : (
+              <>
+                <EyeOff className="h-3 w-3" />
+                SUSPENDED
+              </>
+            )}
+            <ChevronDown className="h-3 w-3" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {!isSuspended ? (
+            <DropdownMenuItem disabled className="text-green-500 opacity-100">
+              <Eye className="h-4 w-4 mr-2" />
+              ACTIVE
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem onClick={() => handleSetSuspended(false)} disabled={loading}>
+              <Eye className="h-4 w-4 mr-2" />
+              ACTIVE
+            </DropdownMenuItem>
+          )}
+          {isSuspended ? (
+            <DropdownMenuItem disabled className="text-red-500 opacity-100">
+              <EyeOff className="h-4 w-4 mr-2" />
+              SUSPENDED
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem onClick={() => handleSetSuspended(true)} disabled={loading}>
+              <EyeOff className="h-4 w-4 mr-2" />
+              SUSPENDED
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() => setDialogType("delete")}
+            className="text-red-500 focus:text-red-500"
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            DELETE
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <AlertDialog open={dialogType === "delete"} onOpenChange={(open) => !open && setDialogType(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Fan?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete <strong>{fanName}</strong> and their account.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={loading}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              {loading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
