@@ -69,10 +69,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { targetActorId } = await request.json();
+    const body = await request.json();
+    let targetActorId = body.targetActorId;
+
+    // If username provided instead of targetActorId, look up the actor
+    if (!targetActorId && body.username) {
+      const { data: model } = await supabase
+        .from("models")
+        .select("user_id")
+        .eq("username", body.username)
+        .single() as { data: { user_id: string } | null };
+
+      if (model) {
+        const { data: actor } = await supabase
+          .from("actors")
+          .select("id")
+          .eq("user_id", model.user_id)
+          .single() as { data: { id: string } | null };
+        targetActorId = actor?.id;
+      }
+    }
+
     if (!targetActorId) {
       return NextResponse.json(
-        { error: "targetActorId required" },
+        { error: "targetActorId or username required" },
         { status: 400 }
       );
     }
@@ -164,12 +184,41 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Try to get from URL params first, then from body
     const { searchParams } = new URL(request.url);
-    const targetActorId = searchParams.get("targetActorId");
+    let targetActorId = searchParams.get("targetActorId");
+
+    // If not in URL, try body (for clients that send DELETE with body)
+    if (!targetActorId) {
+      try {
+        const body = await request.json();
+        targetActorId = body.targetActorId;
+
+        // If username provided instead of targetActorId, look up the actor
+        if (!targetActorId && body.username) {
+          const { data: model } = await supabase
+            .from("models")
+            .select("user_id")
+            .eq("username", body.username)
+            .single() as { data: { user_id: string } | null };
+
+          if (model) {
+            const { data: actor } = await supabase
+              .from("actors")
+              .select("id")
+              .eq("user_id", model.user_id)
+              .single() as { data: { id: string } | null };
+            targetActorId = actor?.id || null;
+          }
+        }
+      } catch {
+        // No body, that's fine
+      }
+    }
 
     if (!targetActorId) {
       return NextResponse.json(
-        { error: "targetActorId required" },
+        { error: "targetActorId or username required" },
         { status: 400 }
       );
     }
