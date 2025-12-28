@@ -27,15 +27,13 @@ import {
   Coins,
   Heart,
   Loader2,
-  ExternalLink,
   ChevronLeft,
   ChevronRight,
   TrendingUp,
-  Instagram,
   Star,
 } from "lucide-react";
 import { toast } from "sonner";
-import { ModelApprovalButton, ConvertToFanButton } from "@/components/admin/AdminActions";
+import { ModelActionsDropdown } from "@/components/admin/AdminActions";
 
 function SortIndicator({ active, direction }: { active: boolean; direction: "asc" | "desc" }) {
   if (!active) return <ArrowUpDown className="h-4 w-4 ml-1 opacity-50" />;
@@ -541,7 +539,11 @@ export default function AdminModelsPage() {
                   {models.map((model) => (
                     <TableRow key={model.id}>
                       <TableCell>
-                        <div className="flex items-center gap-3">
+                        <Link
+                          href={`/${model.username}`}
+                          target="_blank"
+                          className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+                        >
                           <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-pink-500/20 to-violet-500/20 flex-shrink-0">
                             {model.profile_photo_url ? (
                               <img
@@ -556,12 +558,12 @@ export default function AdminModelsPage() {
                             )}
                           </div>
                           <div className="min-w-0">
-                            <p className="font-medium truncate">
+                            <p className="font-medium truncate text-pink-500 hover:text-pink-400">
                               {model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username}
                             </p>
                             <p className="text-sm text-muted-foreground truncate">@{model.username}</p>
                           </div>
-                        </div>
+                        </Link>
                       </TableCell>
                       <TableCell>
                         {model.instagram_name ? (
@@ -615,16 +617,11 @@ export default function AdminModelsPage() {
                         </span>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center justify-end gap-1">
-                          <Button size="sm" variant="ghost" asChild>
-                            <Link href={`/${model.username}`} target="_blank">
-                              <ExternalLink className="h-4 w-4" />
-                            </Link>
-                          </Button>
-                          <ModelApprovalButton id={model.id} isApproved={model.is_approved} />
-                          <ConvertToFanButton
+                        <div className="flex items-center justify-end">
+                          <ModelActionsDropdown
                             id={model.id}
                             modelName={model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username}
+                            onAction={loadModels}
                           />
                         </div>
                       </TableCell>

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Loader2, CheckCircle, XCircle, UserMinus } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, UserMinus, ChevronDown, User, Trash2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,6 +16,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface AdminActionProps {
   id: string;
@@ -234,5 +241,141 @@ export function ConvertToFanButton({ id, modelName }: { id: string; modelName: s
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+  );
+}
+
+export function ModelActionsDropdown({ id, modelName, onAction }: {
+  id: string;
+  modelName: string;
+  onAction?: () => void;
+}) {
+  const [loading, setLoading] = useState(false);
+  const [dialogType, setDialogType] = useState<"fan" | "delete" | null>(null);
+  const router = useRouter();
+
+  const handleConvertToFan = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/models/${id}/convert-to-fan`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to convert");
+      }
+
+      toast.success("Converted to Fan");
+      setDialogType(null);
+      onAction?.();
+      router.refresh();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Action failed";
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/models/${id}/delete`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to delete");
+      }
+
+      toast.success("Model deleted");
+      setDialogType(null);
+      onAction?.();
+      router.refresh();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Action failed";
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button size="sm" variant="outline" className="gap-1">
+            Model
+            <ChevronDown className="h-3 w-3" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem disabled className="opacity-70">
+            <User className="h-4 w-4 mr-2" />
+            Model (current)
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setDialogType("fan")}>
+            <UserMinus className="h-4 w-4 mr-2" />
+            Convert to Fan
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() => setDialogType("delete")}
+            className="text-red-500 focus:text-red-500"
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <AlertDialog open={dialogType === "fan"} onOpenChange={(open) => !open && setDialogType(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Convert to Fan?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will convert <strong>{modelName}</strong> from a Model to a Fan account.
+              Their model profile will be deleted and they will no longer appear in the models directory.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConvertToFan}
+              disabled={loading}
+            >
+              {loading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Convert to Fan
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={dialogType === "delete"} onOpenChange={(open) => !open && setDialogType(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Model?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete <strong>{modelName}</strong> and their profile.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={loading}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              {loading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
