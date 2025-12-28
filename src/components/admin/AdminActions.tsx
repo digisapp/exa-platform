@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Loader2, CheckCircle, XCircle, UserMinus, ChevronDown, User, Trash2, EyeOff, Eye } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, UserMinus, ChevronDown, Trash2, Play, Pause } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -254,13 +254,13 @@ export function ModelActionsDropdown({ id, modelName, isApproved, onAction }: {
   const [dialogType, setDialogType] = useState<"fan" | "delete" | null>(null);
   const router = useRouter();
 
-  const handleToggleApproval = async () => {
+  const handleSetApproval = async (approved: boolean) => {
     setLoading(true);
     try {
       const res = await fetch(`/api/admin/models/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ is_approved: !isApproved }),
+        body: JSON.stringify({ is_approved: approved }),
       });
 
       if (!res.ok) {
@@ -268,7 +268,7 @@ export function ModelActionsDropdown({ id, modelName, isApproved, onAction }: {
         throw new Error(data.error || "Failed to update");
       }
 
-      toast.success(isApproved ? "Model hidden from public" : "Model approved");
+      toast.success(approved ? "Model is now LIVE" : "Model is now PAUSED");
       onAction?.();
       router.refresh();
     } catch (error: unknown) {
@@ -334,35 +334,44 @@ export function ModelActionsDropdown({ id, modelName, isApproved, onAction }: {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button size="sm" variant="outline" className="gap-1">
-            Model
+            Actions
             <ChevronDown className="h-3 w-3" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={handleToggleApproval} disabled={loading}>
-            {isApproved ? (
-              <>
-                <EyeOff className="h-4 w-4 mr-2" />
-                Hide from Public
-              </>
-            ) : (
-              <>
-                <Eye className="h-4 w-4 mr-2" />
-                Approve
-              </>
-            )}
-          </DropdownMenuItem>
+          {isApproved ? (
+            <DropdownMenuItem disabled className="text-green-500 opacity-100">
+              <Play className="h-4 w-4 mr-2" />
+              LIVE
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem onClick={() => handleSetApproval(true)} disabled={loading}>
+              <Play className="h-4 w-4 mr-2" />
+              LIVE
+            </DropdownMenuItem>
+          )}
+          {!isApproved ? (
+            <DropdownMenuItem disabled className="text-yellow-500 opacity-100">
+              <Pause className="h-4 w-4 mr-2" />
+              PAUSE
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem onClick={() => handleSetApproval(false)} disabled={loading}>
+              <Pause className="h-4 w-4 mr-2" />
+              PAUSE
+            </DropdownMenuItem>
+          )}
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => setDialogType("fan")}>
             <UserMinus className="h-4 w-4 mr-2" />
-            Convert to Fan
+            FAN
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => setDialogType("delete")}
             className="text-red-500 focus:text-red-500"
           >
             <Trash2 className="h-4 w-4 mr-2" />
-            Delete
+            DELETE
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

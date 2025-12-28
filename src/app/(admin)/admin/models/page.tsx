@@ -6,7 +6,6 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Table,
@@ -482,7 +481,6 @@ export default function AdminModelsPage() {
                     <TableHead className="w-[200px]">Model</TableHead>
                     <TableHead>Instagram</TableHead>
                     <TableHead>State</TableHead>
-                    <TableHead>Status</TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
                       onClick={() => handleSort("profile_views")}
@@ -583,11 +581,6 @@ export default function AdminModelsPage() {
                         <span className="text-sm text-muted-foreground">
                           {model.state || "-"}
                         </span>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={model.is_approved ? "default" : "secondary"}>
-                          {model.is_approved ? "Approved" : "Pending"}
-                        </Badge>
                       </TableCell>
                       <TableCell>
                         <span className={`font-medium ${model.profile_views > 100 ? "text-purple-500" : ""}`}>
