@@ -60,7 +60,8 @@ const brandLinks = [
 
 const adminLinks = [
   { href: "/admin", label: "Admin", icon: Settings },
-  ...modelLinks,
+  { href: "/dashboard", label: "Home", icon: Home },
+  { href: "/messages", label: "Chats", icon: MessageCircle },
 ];
 
 export function Navbar({ user, actorType, coinBalance = 0 }: NavbarProps) {
