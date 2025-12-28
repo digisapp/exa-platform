@@ -2,10 +2,10 @@ import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
-import { ModelCard } from "@/components/models/model-card";
 import { ModelFilters } from "@/components/models/model-filters";
-import { Badge } from "@/components/ui/badge";
+import { ModelCard } from "@/components/models/model-card";
 import { Users } from "lucide-react";
+import { ModelsGrid } from "@/components/models/models-grid";
 
 interface SearchParams {
   q?: string;
@@ -73,6 +73,46 @@ export default async function ModelsPage({
     .eq("is_approved", true)
     .limit(5) as { data: any[] | null };
 
+  // Get current user info for favorites
+  const { data: { user } } = await supabase.auth.getUser();
+  let favoriteModelIds: string[] = [];
+
+  if (user) {
+    // Get actor ID
+    const { data: actor } = await supabase
+      .from("actors")
+      .select("id")
+      .eq("user_id", user.id)
+      .single() as { data: { id: string } | null };
+
+    if (actor) {
+      // Get favorites
+      const { data: favorites } = await (supabase
+        .from("follows") as any)
+        .select("following_id")
+        .eq("follower_id", actor.id);
+
+      if (favorites) {
+        // Get model IDs from actor IDs
+        const actorIds = favorites.map((f: any) => f.following_id);
+        const { data: modelActors } = await supabase
+          .from("actors")
+          .select("id, user_id")
+          .in("id", actorIds);
+
+        if (modelActors) {
+          const userIds = modelActors.map((a: any) => a.user_id);
+          const { data: favModels } = await supabase
+            .from("models")
+            .select("id")
+            .in("user_id", userIds);
+
+          favoriteModelIds = favModels?.map((m: any) => m.id) || [];
+        }
+      }
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -113,21 +153,11 @@ export default async function ModelsPage({
             </p>
           </div>
 
-          {models && models.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {models.map((model) => (
-                <ModelCard key={model.id} model={model} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-16">
-              <Users className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
-              <h3 className="text-xl font-semibold mb-2">No models found</h3>
-              <p className="text-muted-foreground">
-                Try adjusting your search or filters
-              </p>
-            </div>
-          )}
+          <ModelsGrid
+            models={models || []}
+            isLoggedIn={!!user}
+            favoriteModelIds={favoriteModelIds}
+          />
         </div>
       </main>
 

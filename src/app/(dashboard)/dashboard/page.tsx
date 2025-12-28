@@ -191,24 +191,24 @@ async function FanBrandDashboard({
 }) {
   const supabase = await createClient();
 
-  // Get models this user follows
-  const { data: follows } = await (supabase
+  // Get user's favorite models
+  const { data: favorites } = await (supabase
     .from("follows") as any)
     .select("following_id, created_at")
     .eq("follower_id", actorId)
     .order("created_at", { ascending: false })
     .limit(10);
 
-  const followingIds = follows?.map((f: any) => f.following_id) || [];
+  const favoriteIds = favorites?.map((f: any) => f.following_id) || [];
 
-  // Get the model profiles for followed users
-  let followedModels: any[] = [];
-  if (followingIds.length > 0) {
+  // Get the model profiles for favorited users
+  let favoriteModels: any[] = [];
+  if (favoriteIds.length > 0) {
     // Get actors that are models
     const { data: actorData } = await (supabase
       .from("actors") as any)
       .select("id, user_id")
-      .in("id", followingIds)
+      .in("id", favoriteIds)
       .eq("type", "model");
 
     if (actorData && actorData.length > 0) {
@@ -218,7 +218,7 @@ async function FanBrandDashboard({
         .select("id, username, first_name, last_name, profile_photo_url, city, state, show_location, user_id")
         .in("user_id", userIds)
         .eq("is_approved", true);
-      followedModels = models || [];
+      favoriteModels = models || [];
     }
   }
 
@@ -230,10 +230,10 @@ async function FanBrandDashboard({
     .order("created_at", { ascending: false })
     .limit(8);
 
-  // Filter out models already followed
-  const followedUserIds = followedModels.map(m => m.user_id);
+  // Filter out models already favorited
+  const favoritedUserIds = favoriteModels.map(m => m.user_id);
   const discoverModels = (featuredModels || []).filter(
-    (m: any) => !followedUserIds.includes(m.user_id)
+    (m: any) => !favoritedUserIds.includes(m.user_id)
   );
 
   // Get recent coin transactions
@@ -248,14 +248,14 @@ async function FanBrandDashboard({
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {/* Following Section */}
+      {/* Favorites Section */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
-            <Heart className={`h-5 w-5 ${isBrand ? "text-blue-500" : "text-pink-500"}`} />
-            Following
+            <Heart className={`h-5 w-5 ${isBrand ? "text-blue-500" : "text-pink-500"} fill-current`} />
+            Favorites
           </CardTitle>
-          {followedModels.length > 0 && (
+          {favoriteModels.length > 0 && (
             <Button variant="ghost" size="sm" asChild>
               <Link href="/messages" className={isBrand ? "text-blue-500" : "text-pink-500"}>
                 <MessageCircle className="mr-1 h-4 w-4" />
@@ -265,9 +265,9 @@ async function FanBrandDashboard({
           )}
         </CardHeader>
         <CardContent>
-          {followedModels.length > 0 ? (
+          {favoriteModels.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {followedModels.map((model: any) => {
+              {favoriteModels.map((model: any) => {
                 const displayName = model.first_name
                   ? `${model.first_name} ${model.last_name || ''}`.trim()
                   : model.username;
@@ -308,12 +308,12 @@ async function FanBrandDashboard({
             </div>
           ) : (
             <div className="text-center py-8">
-              <Users className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-              <p className="text-muted-foreground mb-4">You&apos;re not following anyone yet</p>
+              <Heart className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+              <p className="text-muted-foreground mb-4">No favorites yet</p>
               <Button asChild className={isBrand ? "bg-blue-500 hover:bg-blue-600" : "bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"}>
                 <Link href="/models">
-                  <Users className="mr-2 h-4 w-4" />
-                  Discover Models
+                  <Heart className="mr-2 h-4 w-4" />
+                  Browse Models
                 </Link>
               </Button>
             </div>

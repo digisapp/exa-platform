@@ -1,17 +1,35 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { MapPin, Instagram } from "lucide-react";
+import { MapPin, Instagram, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface ModelCardProps {
   model: any;
   variant?: "default" | "compact";
+  showFavorite?: boolean;
+  isLoggedIn?: boolean;
+  isFavorited?: boolean;
+  onAuthRequired?: () => void;
 }
 
-export function ModelCard({ model, variant = "default" }: ModelCardProps) {
+export function ModelCard({
+  model,
+  variant = "default",
+  showFavorite = false,
+  isLoggedIn = false,
+  isFavorited: initialFavorited = false,
+  onAuthRequired,
+}: ModelCardProps) {
+  const [isFavorited, setIsFavorited] = useState(initialFavorited);
+  const [loading, setLoading] = useState(false);
+
   // Create display name from first_name and last_name
   const displayName = model.first_name
     ? `${model.first_name} ${model.last_name || ''}`.trim()
@@ -24,6 +42,41 @@ export function ModelCard({ model, variant = "default" }: ModelCardProps) {
     return null;
   };
   const level = getLevel();
+
+  const handleFavorite = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!isLoggedIn) {
+      onAuthRequired?.();
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch("/api/favorites", {
+        method: isFavorited ? "DELETE" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ modelId: model.id }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to update favorite");
+      }
+
+      setIsFavorited(!isFavorited);
+      toast.success(
+        isFavorited
+          ? `Removed from favorites`
+          : `Added to favorites`
+      );
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to update");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (variant === "compact") {
     return (
@@ -75,8 +128,25 @@ export function ModelCard({ model, variant = "default" }: ModelCardProps) {
               <span className="text-6xl">👤</span>
             </div>
           )}
+          {/* Favorite Button */}
+          {showFavorite && (
+            <button
+              onClick={handleFavorite}
+              disabled={loading}
+              className={cn(
+                "absolute top-3 right-3 z-10 p-2 rounded-full transition-all",
+                isFavorited
+                  ? "bg-red-500 text-white"
+                  : "bg-black/50 backdrop-blur-sm text-white hover:bg-black/70",
+                loading && "opacity-50 cursor-not-allowed"
+              )}
+              aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
+            >
+              <Heart className={cn("h-5 w-5", isFavorited && "fill-current")} />
+            </button>
+          )}
           {/* Level Badge */}
-          {level && (
+          {level && !showFavorite && (
             <div className="absolute top-3 right-3">
               <span className={cn("px-3 py-1 rounded-full text-xs font-semibold", level.class)}>
                 {level.icon} {level.label}
