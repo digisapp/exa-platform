@@ -15,7 +15,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Loader2, CheckCircle, Clock } from "lucide-react";
+import { Loader2, CheckCircle, Eye, EyeOff } from "lucide-react";
 
 interface BrandInquiryDialogProps {
   children: React.ReactNode;
@@ -25,11 +25,13 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const [username, setUsername] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [contactName, setContactName] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [message, setMessage] = useState("");
 
@@ -74,6 +76,11 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
       return;
     }
 
+    if (password.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+
     setLoading(true);
 
     // Check if username is taken (across models, fans, brands)
@@ -99,35 +106,65 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
     }
 
     try {
-      const { error } = await (supabase.from("brands") as any).insert([
-        {
+      // Create auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+      });
+
+      if (authError) {
+        if (authError.message.includes("already registered")) {
+          toast.error("This email is already registered. Please sign in instead.");
+          setLoading(false);
+          return;
+        }
+        throw authError;
+      }
+
+      if (!authData.user) {
+        throw new Error("Failed to create account");
+      }
+
+      // Create actor record
+      const { data: actor, error: actorError } = await (supabase
+        .from("actors") as any)
+        .insert({
+          user_id: authData.user.id,
+          type: "brand",
+        })
+        .select()
+        .single();
+
+      if (actorError) {
+        console.error("Actor error:", actorError);
+        throw actorError;
+      }
+
+      // Create brand profile
+      const { error: brandError } = await (supabase
+        .from("brands") as any)
+        .insert({
+          id: actor.id,
           username: cleanUsername,
           company_name: companyName.trim(),
           contact_name: contactName.trim(),
           email: email.trim(),
           bio: message.trim() || null,
           is_verified: false,
-          subscription_tier: "inquiry",
-          form_data: {
-            username: cleanUsername,
-            company_name: companyName.trim(),
-            contact_name: contactName.trim(),
-            email: email.trim(),
-            phone: phone.trim() || null,
-            message: message.trim() || null,
-            submitted_at: new Date().toISOString(),
-          },
-        },
-      ]);
+          subscription_tier: "free",
+        });
 
-      if (error) throw error;
+      if (brandError) {
+        console.error("Brand error:", brandError);
+        throw brandError;
+      }
 
       setSubmitted(true);
-      toast.success("Inquiry submitted!");
+      toast.success("Welcome to EXA!");
 
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Something went wrong";
-      toast.error(message);
+      const errMessage = error instanceof Error ? error.message : "Something went wrong";
+      toast.error(errMessage);
     } finally {
       setLoading(false);
     }
@@ -135,7 +172,7 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
 
   const handleCompanyNameChange = (value: string) => {
     setCompanyName(value);
-    // Auto-populate username from company name if user hasn't manually edited it
+    // Auto-populate username from company name
     const autoUsername = value.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 20);
     setUsername(autoUsername);
   };
@@ -148,9 +185,14 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
       setCompanyName("");
       setContactName("");
       setEmail("");
+      setPassword("");
       setPhone("");
       setMessage("");
     }, 300);
+  };
+
+  const handleGoToModels = () => {
+    window.location.href = "/models";
   };
 
   return (
@@ -158,23 +200,23 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         {submitted ? (
           <div className="text-center py-6">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/20 flex items-center justify-center">
               <CheckCircle className="h-8 w-8 text-green-500" />
             </div>
             <DialogHeader className="text-center">
-              <DialogTitle className="text-xl">Inquiry Received!</DialogTitle>
+              <DialogTitle className="text-xl">Welcome to EXA!</DialogTitle>
               <p className="text-muted-foreground mt-2">
-                We&apos;ll get back to you within 24-48 hours.
+                Your brand account is ready. Start browsing models!
               </p>
             </DialogHeader>
             <Button
-              onClick={handleClose}
+              onClick={handleGoToModels}
               className="mt-6 bg-gradient-to-r from-pink-500 to-violet-500"
             >
-              Got it!
+              Browse Models
             </Button>
           </div>
         ) : (
@@ -189,7 +231,7 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
                   className="h-8 w-auto"
                 />
               </div>
-              <DialogTitle className="text-xl">Brand Inquiry</DialogTitle>
+              <DialogTitle className="text-xl">Brand Sign Up</DialogTitle>
             </DialogHeader>
 
             <form onSubmit={handleSubmit} className="space-y-4 mt-4">
@@ -246,34 +288,41 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="brandPhone">Phone</Label>
-                <Input
-                  id="brandPhone"
-                  type="tel"
-                  placeholder="+1 (555) 123-4567"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  disabled={loading}
-                />
+                <Label htmlFor="brandPassword">Password</Label>
+                <div className="relative">
+                  <Input
+                    id="brandPassword"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Create a password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={loading}
+                    required
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Must be at least 6 characters
+                </p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="brandMessage">What are you looking for?</Label>
+                <Label htmlFor="brandMessage">What are you looking for? (optional)</Label>
                 <Textarea
                   id="brandMessage"
                   placeholder="Tell us about your campaign goals..."
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   disabled={loading}
-                  className="min-h-[80px]"
+                  className="min-h-[60px]"
                 />
-              </div>
-
-              <div className="p-4 rounded-lg bg-muted/50 text-sm space-y-1">
-                <p className="text-muted-foreground flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-amber-500" />
-                  We&apos;ll review your inquiry within 24-48 hours
-                </p>
               </div>
 
               <Button
@@ -284,10 +333,10 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Submitting...
+                    Creating account...
                   </>
                 ) : (
-                  "Submit Inquiry"
+                  "Create Account"
                 )}
               </Button>
             </form>
