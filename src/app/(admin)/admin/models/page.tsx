@@ -481,8 +481,9 @@ export default function AdminModelsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[250px]">Model</TableHead>
-                    <TableHead>Location</TableHead>
+                    <TableHead className="w-[200px]">Model</TableHead>
+                    <TableHead>Instagram</TableHead>
+                    <TableHead>State</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
@@ -512,12 +513,6 @@ export default function AdminModelsPage() {
                         <Heart className="h-4 w-4 mr-1" />
                         Followers
                         <SortIndicator active={sortField === "followers_count"} direction={sortDirection} />
-                      </div>
-                    </TableHead>
-                    <TableHead>
-                      <div className="flex items-center">
-                        <Instagram className="h-4 w-4 mr-1" />
-                        Instagram
                       </div>
                     </TableHead>
                     <TableHead
@@ -569,8 +564,22 @@ export default function AdminModelsPage() {
                         </div>
                       </TableCell>
                       <TableCell>
+                        {model.instagram_name ? (
+                          <a
+                            href={`https://instagram.com/${model.instagram_name.replace('@', '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-pink-500 hover:text-pink-400 transition-colors text-sm"
+                          >
+                            {model.instagram_name.replace('@', '')}
+                          </a>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
                         <span className="text-sm text-muted-foreground">
-                          {model.city && model.state ? `${model.city}, ${model.state}` : model.state || "-"}
+                          {model.state || "-"}
                         </span>
                       </TableCell>
                       <TableCell>
@@ -592,21 +601,6 @@ export default function AdminModelsPage() {
                         <span className={`font-medium ${(model.followers_count || 0) > 0 ? "text-pink-500" : ""}`}>
                           {(model.followers_count || 0).toLocaleString()}
                         </span>
-                      </TableCell>
-                      <TableCell>
-                        {model.instagram_name ? (
-                          <a
-                            href={`https://instagram.com/${model.instagram_name.replace('@', '')}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-pink-500 hover:text-pink-400 transition-colors"
-                          >
-                            <Instagram className="h-4 w-4" />
-                            <span className="text-sm">@{model.instagram_name.replace('@', '')}</span>
-                          </a>
-                        ) : (
-                          <span className="text-muted-foreground text-sm">-</span>
-                        )}
                       </TableCell>
                       <TableCell>
                         <RatingStars
