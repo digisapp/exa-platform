@@ -10,6 +10,10 @@ export const metadata: Metadata = {
   title: "EXA Models - The Model Community Platform",
   description: "Join shows, travel experiences, and build your modeling career. The community platform where models grow.",
   keywords: ["models", "fashion", "runway", "modeling agency", "casting", "fashion shows"],
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-icon.png",
+  },
 };
 
 export default function RootLayout({
