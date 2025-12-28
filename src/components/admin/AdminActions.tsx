@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Loader2, CheckCircle, XCircle, UserMinus, ChevronDown, Trash2, Eye, EyeOff } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, UserMinus, UserPlus, ChevronDown, Trash2, Eye, EyeOff } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -445,7 +445,7 @@ export function FanActionsDropdown({ id, fanName, isSuspended, onAction }: {
   onAction?: () => void;
 }) {
   const [loading, setLoading] = useState(false);
-  const [dialogType, setDialogType] = useState<"delete" | null>(null);
+  const [dialogType, setDialogType] = useState<"model" | "delete" | null>(null);
   const router = useRouter();
 
   const handleSetSuspended = async (suspended: boolean) => {
@@ -463,6 +463,31 @@ export function FanActionsDropdown({ id, fanName, isSuspended, onAction }: {
       }
 
       toast.success(suspended ? "Fan suspended" : "Fan activated");
+      onAction?.();
+      router.refresh();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Action failed";
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleConvertToModel = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/fans/${id}/convert-to-model`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to convert");
+      }
+
+      toast.success("Converted to Model");
+      setDialogType(null);
       onAction?.();
       router.refresh();
     } catch (error: unknown) {
@@ -545,6 +570,10 @@ export function FanActionsDropdown({ id, fanName, isSuspended, onAction }: {
             </DropdownMenuItem>
           )}
           <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => setDialogType("model")}>
+            <UserPlus className="h-4 w-4 mr-2" />
+            MODEL
+          </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => setDialogType("delete")}
             className="text-red-500 focus:text-red-500"
@@ -554,6 +583,29 @@ export function FanActionsDropdown({ id, fanName, isSuspended, onAction }: {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <AlertDialog open={dialogType === "model"} onOpenChange={(open) => !open && setDialogType(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Convert to Model?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will convert <strong>{fanName}</strong> from a Fan to a Model account.
+              They will appear in the models directory and can create a model profile.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConvertToModel}
+              disabled={loading}
+              className="bg-green-500 hover:bg-green-600"
+            >
+              {loading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Convert to Model
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={dialogType === "delete"} onOpenChange={(open) => !open && setDialogType(null)}>
         <AlertDialogContent>
