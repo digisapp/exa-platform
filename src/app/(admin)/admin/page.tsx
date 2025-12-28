@@ -213,9 +213,9 @@ export default async function AdminPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" asChild>
-            <Link href="/admin/models">
+            <Link href="/admin/community">
               <Users className="h-4 w-4 mr-2" />
-              Models Directory
+              Community
             </Link>
           </Button>
           <Button asChild>
@@ -1096,18 +1096,11 @@ export default async function AdminPage() {
               <p className="font-medium">Gigs</p>
             </Link>
             <Link
-              href="/admin/models"
-              className="p-4 rounded-lg border hover:border-primary/50 transition-all text-center"
-            >
-              <Users className="h-8 w-8 mx-auto mb-2 text-blue-500" />
-              <p className="font-medium">Models</p>
-            </Link>
-            <Link
-              href="/admin/fans"
+              href="/admin/community"
               className="p-4 rounded-lg border hover:border-pink-500/50 transition-all text-center"
             >
-              <Heart className="h-8 w-8 mx-auto mb-2 text-red-500" />
-              <p className="font-medium">Fans</p>
+              <Users className="h-8 w-8 mx-auto mb-2 text-pink-500" />
+              <p className="font-medium">Community</p>
             </Link>
             <Link
               href="/admin/transactions"
