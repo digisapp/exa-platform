@@ -26,7 +26,7 @@ export function FanSignupDialog({ children }: FanSignupDialogProps) {
   const [submitted, setSubmitted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const [displayName, setDisplayName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -34,6 +34,22 @@ export function FanSignupDialog({ children }: FanSignupDialogProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!username.trim()) {
+      toast.error("Please choose a username");
+      return;
+    }
+
+    // Validate username format
+    const cleanUsername = username.trim().toLowerCase().replace(/[^a-z0-9_]/g, "");
+    if (cleanUsername.length < 3) {
+      toast.error("Username must be at least 3 characters");
+      return;
+    }
+    if (cleanUsername.length > 20) {
+      toast.error("Username must be 20 characters or less");
+      return;
+    }
 
     if (!email.trim()) {
       toast.error("Please enter your email");
@@ -51,6 +67,28 @@ export function FanSignupDialog({ children }: FanSignupDialogProps) {
     }
 
     setLoading(true);
+
+    // Check if username is taken (across models, fans, brands)
+    const { data: existingModel } = await (supabase.from("models") as any)
+      .select("id")
+      .eq("username", cleanUsername)
+      .single();
+
+    const { data: existingFan } = await (supabase.from("fans") as any)
+      .select("id")
+      .eq("username", cleanUsername)
+      .single();
+
+    const { data: existingBrand } = await (supabase.from("brands") as any)
+      .select("id")
+      .eq("username", cleanUsername)
+      .single();
+
+    if (existingModel || existingFan || existingBrand) {
+      toast.error("This username is already taken");
+      setLoading(false);
+      return;
+    }
 
     try {
       // Create auth user
@@ -88,13 +126,15 @@ export function FanSignupDialog({ children }: FanSignupDialogProps) {
       }
 
       // Create fan profile
+      const cleanUsername = username.trim().toLowerCase().replace(/[^a-z0-9_]/g, "");
       const { error: fanError } = await (supabase
         .from("fans") as any)
         .insert({
           id: actor.id,
           user_id: authData.user.id,
           email: email.trim(),
-          display_name: displayName.trim() || email.split("@")[0],
+          username: cleanUsername,
+          display_name: cleanUsername,
           coin_balance: 10, // Welcome bonus
         });
 
@@ -126,7 +166,7 @@ export function FanSignupDialog({ children }: FanSignupDialogProps) {
     setOpen(false);
     setTimeout(() => {
       setSubmitted(false);
-      setDisplayName("");
+      setUsername("");
       setEmail("");
       setPassword("");
     }, 300);
@@ -177,14 +217,18 @@ export function FanSignupDialog({ children }: FanSignupDialogProps) {
 
             <form onSubmit={handleSubmit} className="space-y-4 mt-4">
               <div className="space-y-2">
-                <Label htmlFor="displayName">Display Name</Label>
+                <Label htmlFor="fanUsername">Username</Label>
                 <Input
-                  id="displayName"
-                  placeholder="How should we call you?"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
+                  id="fanUsername"
+                  placeholder="Choose a unique username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
                   disabled={loading}
+                  required
                 />
+                <p className="text-xs text-muted-foreground">
+                  Letters, numbers, and underscores only
+                </p>
               </div>
 
               <div className="space-y-2">

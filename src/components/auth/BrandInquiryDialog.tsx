@@ -26,6 +26,7 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
+  const [username, setUsername] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [contactName, setContactName] = useState("");
   const [email, setEmail] = useState("");
@@ -36,6 +37,22 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!username.trim()) {
+      toast.error("Please choose a username");
+      return;
+    }
+
+    // Validate username format
+    const cleanUsername = username.trim().toLowerCase().replace(/[^a-z0-9_]/g, "");
+    if (cleanUsername.length < 3) {
+      toast.error("Username must be at least 3 characters");
+      return;
+    }
+    if (cleanUsername.length > 20) {
+      toast.error("Username must be 20 characters or less");
+      return;
+    }
 
     if (!companyName.trim()) {
       toast.error("Please enter your company name");
@@ -59,9 +76,32 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
 
     setLoading(true);
 
+    // Check if username is taken (across models, fans, brands)
+    const { data: existingModel } = await (supabase.from("models") as any)
+      .select("id")
+      .eq("username", cleanUsername)
+      .single();
+
+    const { data: existingFan } = await (supabase.from("fans") as any)
+      .select("id")
+      .eq("username", cleanUsername)
+      .single();
+
+    const { data: existingBrand } = await (supabase.from("brands") as any)
+      .select("id")
+      .eq("username", cleanUsername)
+      .single();
+
+    if (existingModel || existingFan || existingBrand) {
+      toast.error("This username is already taken");
+      setLoading(false);
+      return;
+    }
+
     try {
       const { error } = await (supabase.from("brands") as any).insert([
         {
+          username: cleanUsername,
           company_name: companyName.trim(),
           contact_name: contactName.trim(),
           email: email.trim(),
@@ -69,6 +109,7 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
           is_verified: false,
           subscription_tier: "inquiry",
           form_data: {
+            username: cleanUsername,
             company_name: companyName.trim(),
             contact_name: contactName.trim(),
             email: email.trim(),
@@ -92,10 +133,18 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
     }
   };
 
+  const handleCompanyNameChange = (value: string) => {
+    setCompanyName(value);
+    // Auto-populate username from company name if user hasn't manually edited it
+    const autoUsername = value.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 20);
+    setUsername(autoUsername);
+  };
+
   const handleClose = () => {
     setOpen(false);
     setTimeout(() => {
       setSubmitted(false);
+      setUsername("");
       setCompanyName("");
       setContactName("");
       setEmail("");
@@ -150,10 +199,25 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
                   id="companyName"
                   placeholder="Your company"
                   value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
+                  onChange={(e) => handleCompanyNameChange(e.target.value)}
                   disabled={loading}
                   required
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="brandUsername">Username</Label>
+                <Input
+                  id="brandUsername"
+                  placeholder="Brand username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
+                  disabled={loading}
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  Auto-generated from company name
+                </p>
               </div>
 
               <div className="space-y-2">
