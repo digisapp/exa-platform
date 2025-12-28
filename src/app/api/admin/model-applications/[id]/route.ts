@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { sendModelApprovalEmail, sendModelRejectionEmail } from "@/lib/email";
 
 // Update model application status (approve/reject)
 export async function PATCH(
@@ -136,6 +137,30 @@ export async function PATCH(
         await (supabase.from("models") as any)
           .update({ is_approved: true, status: "approved" })
           .eq("user_id", application.user_id);
+      }
+
+      // Send approval email
+      const emailResult = await sendModelApprovalEmail({
+        to: application.email,
+        modelName: application.display_name || "Model",
+        username: application.instagram_username ||
+                  application.tiktok_username ||
+                  application.email.split("@")[0],
+      });
+
+      if (!emailResult.success) {
+        console.error("Failed to send approval email:", emailResult.error);
+        // Don't fail the request, just log the error
+      }
+    } else if (status === "rejected") {
+      // Send rejection email
+      const emailResult = await sendModelRejectionEmail({
+        to: application.email,
+        modelName: application.display_name || "Model",
+      });
+
+      if (!emailResult.success) {
+        console.error("Failed to send rejection email:", emailResult.error);
       }
     }
 

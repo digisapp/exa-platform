@@ -364,9 +364,20 @@ export default function AdminCommunityPage() {
     setFansLoading(false);
   }, [supabase, fansSearch, fansStateFilter, fansStatusFilter, fansReportsFilter, fansSortField, fansSortDirection, fansPage]);
 
-  useEffect(() => { void loadStats(); }, [loadStats]);
-  useEffect(() => { if (activeTab === "models") void loadModels(); }, [activeTab, loadModels]);
-  useEffect(() => { if (activeTab === "fans") void loadFans(); }, [activeTab, loadFans]);
+  useEffect(() => {
+    void loadStats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "models") void loadModels();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, modelsSearch, modelsStateFilter, modelsApprovalFilter, modelsRatingFilter, modelsSortField, modelsSortDirection, modelsPage]);
+
+  useEffect(() => {
+    if (activeTab === "fans") void loadFans();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, fansSearch, fansStateFilter, fansStatusFilter, fansReportsFilter, fansSortField, fansSortDirection, fansPage]);
 
   const handleRatingChange = (modelId: string, rating: number | null) => {
     setModels(prev => prev.map(m => m.id === modelId ? { ...m, admin_rating: rating } : m));
