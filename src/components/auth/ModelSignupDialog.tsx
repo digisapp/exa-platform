@@ -14,7 +14,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Loader2, CheckCircle, Clock, Sparkles } from "lucide-react";
+import { Loader2, CheckCircle, Clock } from "lucide-react";
+import Image from "next/image";
 
 interface ModelSignupDialogProps {
   children: React.ReactNode;
@@ -192,8 +193,14 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
           // Form state
           <>
             <DialogHeader className="text-center">
-              <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-gradient-to-br from-pink-500/20 to-violet-500/20 flex items-center justify-center">
-                <Sparkles className="h-6 w-6 text-pink-500" />
+              <div className="mx-auto mb-2">
+                <Image
+                  src="/exa-logo-white.png"
+                  alt="EXA"
+                  width={80}
+                  height={32}
+                  className="h-8 w-auto"
+                />
               </div>
               <DialogTitle className="text-xl">Sign Up</DialogTitle>
             </DialogHeader>
@@ -249,16 +256,14 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
               </div>
 
               {/* What happens next */}
-              <div className="p-4 rounded-lg bg-muted/50 text-sm space-y-2">
-                <p className="font-medium text-foreground flex items-center gap-2">
+              <div className="p-4 rounded-lg bg-muted/50 text-sm space-y-1">
+                <p className="text-muted-foreground flex items-center gap-2">
                   <Clock className="h-4 w-4 text-amber-500" />
-                  What happens next?
+                  We&apos;ll review your submission within 24 hours
                 </p>
-                <ul className="space-y-1 text-muted-foreground ml-6">
-                  <li>We&apos;ll review your submission</li>
-                  <li>Approval typically takes 24 hours</li>
-                  <li>Once approved, you&apos;ll get full model access</li>
-                </ul>
+                <p className="text-muted-foreground ml-6">
+                  Once approved, you&apos;ll get full model access
+                </p>
               </div>
 
               <Button
