@@ -333,8 +333,22 @@ export function ModelActionsDropdown({ id, modelName, isApproved, onAction }: {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button size="sm" variant="outline" className="gap-1">
-            Actions
+          <Button
+            size="sm"
+            variant="outline"
+            className={`gap-1 ${isApproved ? "text-green-500 border-green-500/50" : "text-yellow-500 border-yellow-500/50"}`}
+          >
+            {isApproved ? (
+              <>
+                <Play className="h-3 w-3" />
+                LIVE
+              </>
+            ) : (
+              <>
+                <Pause className="h-3 w-3" />
+                PAUSE
+              </>
+            )}
             <ChevronDown className="h-3 w-3" />
           </Button>
         </DropdownMenuTrigger>
