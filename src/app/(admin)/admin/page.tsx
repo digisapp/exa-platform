@@ -251,7 +251,7 @@ export default async function AdminPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{pendingModels}</p>
-                <p className="text-sm text-muted-foreground">Pending Models</p>
+                <p className="text-sm text-muted-foreground">Hidden Models</p>
               </div>
             </div>
           </CardContent>
