@@ -195,10 +195,7 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
               <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-gradient-to-br from-pink-500/20 to-violet-500/20 flex items-center justify-center">
                 <Sparkles className="h-6 w-6 text-pink-500" />
               </div>
-              <DialogTitle className="text-xl">Become a Model</DialogTitle>
-              <DialogDescription>
-                Join EXA and connect with fans worldwide
-              </DialogDescription>
+              <DialogTitle className="text-xl">Sign Up</DialogTitle>
             </DialogHeader>
 
             <form onSubmit={handleSubmit} className="space-y-4 mt-4">
