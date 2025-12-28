@@ -163,41 +163,25 @@ export default function ContentPage() {
     setUploading(true);
 
     try {
-      // Upload to Supabase storage
-      const fileExt = mediaFile.name.split(".").pop();
-      const fileName = `${modelId}/${Date.now()}.${fileExt}`;
+      // Upload via API route
+      const formData = new FormData();
+      formData.append("file", mediaFile);
 
-      const { error: uploadError } = await supabase.storage
-        .from("premium-content")
-        .upload(fileName, mediaFile);
+      const uploadResponse = await fetch("/api/upload/premium", {
+        method: "POST",
+        body: formData,
+      });
 
-      if (uploadError) {
-        // If bucket doesn't exist, try uploads bucket
-        const { error: altUploadError } = await supabase.storage
-          .from("uploads")
-          .upload(`premium/${fileName}`, mediaFile);
+      const uploadData = await uploadResponse.json();
 
-        if (altUploadError) {
-          throw new Error("Failed to upload file");
-        }
-
-        // Get public URL from uploads bucket
-        const { data: { publicUrl } } = supabase.storage
-          .from("uploads")
-          .getPublicUrl(`premium/${fileName}`);
-
-        await createContent(publicUrl);
-      } else {
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from("premium-content")
-          .getPublicUrl(fileName);
-
-        await createContent(publicUrl);
+      if (!uploadResponse.ok) {
+        throw new Error(uploadData.error || "Failed to upload file");
       }
+
+      await createContent(uploadData.url);
     } catch (error) {
       console.error("Upload error:", error);
-      toast.error("Failed to upload content");
+      toast.error(error instanceof Error ? error.message : "Failed to upload content");
     } finally {
       setUploading(false);
     }

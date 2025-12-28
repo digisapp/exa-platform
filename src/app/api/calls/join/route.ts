@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Handle declining a call
+// Handle declining or missing a call
 export async function DELETE(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -116,6 +116,7 @@ export async function DELETE(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const sessionId = searchParams.get('sessionId');
+    const reason = searchParams.get('reason'); // 'missed' or 'declined' (default)
 
     if (!sessionId) {
       return NextResponse.json({ error: 'sessionId is required' }, { status: 400 });
@@ -148,24 +149,37 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
     }
 
-    // Update call session to declined
+    // Determine status: 'missed' for timeout, 'declined' for manual decline
+    const status = reason === 'missed' ? 'missed' : 'declined';
+
+    // Update call session
     const { error: updateError } = await (supabase
       .from('video_call_sessions') as any)
       .update({
-        status: 'declined',
+        status,
         ended_at: new Date().toISOString(),
       })
       .eq('id', sessionId);
 
     if (updateError) {
-      console.error('Error declining call:', updateError);
-      return NextResponse.json({ error: 'Failed to decline call' }, { status: 500 });
+      console.error(`Error ${status} call:`, updateError);
+      return NextResponse.json({ error: `Failed to ${status} call` }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true });
+    // Add system message for missed calls
+    if (status === 'missed') {
+      await (supabase.from('messages') as any).insert({
+        conversation_id: callSession.conversation_id,
+        sender_id: callSession.initiated_by,
+        content: 'Missed video call',
+        is_system: true,
+      });
+    }
+
+    return NextResponse.json({ success: true, status });
 
   } catch (error) {
-    console.error('Error declining call:', error);
+    console.error('Error handling call response:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

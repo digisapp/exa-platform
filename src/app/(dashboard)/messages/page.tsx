@@ -30,7 +30,7 @@ export default async function MessagesPage() {
     coinBalance = model?.coin_balance || 0;
   }
 
-  // Get conversations
+  // Get conversations with participants in a single query
   const { data: participations } = await supabase
     .from("conversation_participants")
     .select(`
@@ -46,38 +46,55 @@ export default async function MessagesPage() {
     .eq("actor_id", actor.id)
     .order("joined_at", { ascending: false }) as { data: any[] | null };
 
-  // Get last message for each conversation
-  const conversations = await Promise.all(
-    (participations || []).map(async (p: any) => {
-      // Get last message
-      const { data: lastMessage } = await supabase
-        .from("messages")
-        .select("content, created_at, sender_id")
-        .eq("conversation_id", p.conversation_id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single() as { data: any };
+  const conversationIds = participations?.map(p => p.conversation_id) || [];
 
-      // Get other participants
-      const { data: otherParticipants } = await supabase
+  // Batch fetch: Get all last messages for all conversations in ONE query
+  const { data: allMessages } = conversationIds.length > 0
+    ? await supabase
+        .from("messages")
+        .select("conversation_id, content, created_at, sender_id")
+        .in("conversation_id", conversationIds)
+        .order("created_at", { ascending: false }) as { data: any[] | null }
+    : { data: [] };
+
+  // Group messages by conversation and get the latest one
+  const lastMessageMap = new Map<string, any>();
+  (allMessages || []).forEach((msg: any) => {
+    if (!lastMessageMap.has(msg.conversation_id)) {
+      lastMessageMap.set(msg.conversation_id, msg);
+    }
+  });
+
+  // Batch fetch: Get all other participants for all conversations in ONE query
+  const { data: allParticipants } = conversationIds.length > 0
+    ? await supabase
         .from("conversation_participants")
         .select(`
+          conversation_id,
           actor:actors(
             id,
             type,
             model:models(username, first_name, last_name, profile_photo_url)
           )
         `)
-        .eq("conversation_id", p.conversation_id)
-        .neq("actor_id", actor.id) as { data: any[] | null };
+        .in("conversation_id", conversationIds)
+        .neq("actor_id", actor.id) as { data: any[] | null }
+    : { data: [] };
 
-      return {
-        ...p,
-        lastMessage,
-        otherParticipants: otherParticipants?.map((op: any) => op.actor) || [],
-      };
-    })
-  );
+  // Group participants by conversation
+  const participantsMap = new Map<string, any[]>();
+  (allParticipants || []).forEach((p: any) => {
+    const existing = participantsMap.get(p.conversation_id) || [];
+    existing.push(p.actor);
+    participantsMap.set(p.conversation_id, existing);
+  });
+
+  // Combine data efficiently
+  const conversations = (participations || []).map((p: any) => ({
+    ...p,
+    lastMessage: lastMessageMap.get(p.conversation_id) || null,
+    otherParticipants: participantsMap.get(p.conversation_id) || [],
+  }));
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">

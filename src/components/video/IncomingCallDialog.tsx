@@ -34,10 +34,10 @@ export function IncomingCallDialog({
   } | null>(null);
   const [timeLeft, setTimeLeft] = useState(30);
 
-  // Auto-decline after 30 seconds
+  // Auto-miss after 30 seconds (timeout = missed, not declined)
   useEffect(() => {
     if (timeLeft <= 0) {
-      handleDecline();
+      handleMissed();
       return;
     }
 
@@ -81,11 +81,23 @@ export function IncomingCallDialog({
   const handleDecline = async () => {
     setIsDeclining(true);
     try {
-      await fetch(`/api/calls/join?sessionId=${sessionId}`, {
+      await fetch(`/api/calls/join?sessionId=${sessionId}&reason=declined`, {
         method: "DELETE",
       });
     } catch (error) {
       console.error("Error declining call:", error);
+    }
+    onClose();
+  };
+
+  const handleMissed = async () => {
+    setIsDeclining(true);
+    try {
+      await fetch(`/api/calls/join?sessionId=${sessionId}&reason=missed`, {
+        method: "DELETE",
+      });
+    } catch (error) {
+      console.error("Error marking call as missed:", error);
     }
     onClose();
   };
