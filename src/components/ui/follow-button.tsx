@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { UserPlus, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -65,19 +64,20 @@ export function FollowButton({
   return (
     <>
       <button
-        className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
           isFollowing
-            ? "bg-[#FF69B4] text-white"
-            : "bg-white/10 hover:bg-white/20 text-white/70 hover:text-[#FF69B4]"
+            ? "bg-[#FF69B4] text-white hover:bg-[#FF69B4]/80"
+            : "bg-white/10 hover:bg-white/20 text-white hover:text-[#FF69B4]"
         }`}
         onClick={handleFollow}
         disabled={loading}
-        title={isFollowing ? "Unfollow" : "Follow"}
       >
-        {isFollowing ? (
-          <UserCheck className="h-4 w-4" />
+        {loading ? (
+          "..."
+        ) : isFollowing ? (
+          "Following"
         ) : (
-          <UserPlus className="h-4 w-4" />
+          "Follow"
         )}
       </button>
 
