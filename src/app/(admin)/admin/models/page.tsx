@@ -483,6 +483,26 @@ export default function AdminModelsPage() {
                     <TableHead>State</TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort("admin_rating")}
+                    >
+                      <div className="flex items-center">
+                        <Star className="h-4 w-4 mr-1" />
+                        Rating
+                        <SortIndicator active={sortField === "admin_rating"} direction={sortDirection} />
+                      </div>
+                    </TableHead>
+                    <TableHead
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort("created_at")}
+                    >
+                      <div className="flex items-center">
+                        Joined
+                        <SortIndicator active={sortField === "created_at"} direction={sortDirection} />
+                      </div>
+                    </TableHead>
+                    <TableHead>Actions</TableHead>
+                    <TableHead
+                      className="cursor-pointer hover:bg-muted/50"
                       onClick={() => handleSort("profile_views")}
                     >
                       <div className="flex items-center">
@@ -511,26 +531,6 @@ export default function AdminModelsPage() {
                         <SortIndicator active={sortField === "followers_count"} direction={sortDirection} />
                       </div>
                     </TableHead>
-                    <TableHead
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort("admin_rating")}
-                    >
-                      <div className="flex items-center">
-                        <Star className="h-4 w-4 mr-1" />
-                        Rating
-                        <SortIndicator active={sortField === "admin_rating"} direction={sortDirection} />
-                      </div>
-                    </TableHead>
-                    <TableHead
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort("created_at")}
-                    >
-                      <div className="flex items-center">
-                        Joined
-                        <SortIndicator active={sortField === "created_at"} direction={sortDirection} />
-                      </div>
-                    </TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -583,6 +583,26 @@ export default function AdminModelsPage() {
                         </span>
                       </TableCell>
                       <TableCell>
+                        <RatingStars
+                          modelId={model.id}
+                          currentRating={model.admin_rating}
+                          onRatingChange={handleRatingChange}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-muted-foreground">
+                          {new Date(model.created_at).toLocaleDateString()}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <ModelActionsDropdown
+                          id={model.id}
+                          modelName={model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username}
+                          isApproved={model.is_approved}
+                          onAction={loadModels}
+                        />
+                      </TableCell>
+                      <TableCell>
                         <span className={`font-medium ${model.profile_views > 100 ? "text-purple-500" : ""}`}>
                           {(model.profile_views || 0).toLocaleString()}
                         </span>
@@ -596,28 +616,6 @@ export default function AdminModelsPage() {
                         <span className={`font-medium ${(model.followers_count || 0) > 0 ? "text-pink-500" : ""}`}>
                           {(model.followers_count || 0).toLocaleString()}
                         </span>
-                      </TableCell>
-                      <TableCell>
-                        <RatingStars
-                          modelId={model.id}
-                          currentRating={model.admin_rating}
-                          onRatingChange={handleRatingChange}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm text-muted-foreground">
-                          {new Date(model.created_at).toLocaleDateString()}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center justify-end">
-                          <ModelActionsDropdown
-                            id={model.id}
-                            modelName={model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username}
-                            isApproved={model.is_approved}
-                            onAction={loadModels}
-                          />
-                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
