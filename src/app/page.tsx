@@ -1,8 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { FloatingOrbs } from "@/components/ui/floating-orbs";
+import { ModelSignupDialog } from "@/components/auth/ModelSignupDialog";
 import {
   Sparkles,
   Users,
@@ -45,12 +45,12 @@ export default function HomePage() {
         {/* Quick Actions */}
         <div className="container px-8 md:px-16 py-4">
           <div className="flex justify-center gap-4">
-            <Link href="/apply">
+            <ModelSignupDialog>
               <Button className="exa-gradient-button rounded-full px-8">
                 Models
               </Button>
-            </Link>
-            <Link href="/signup">
+            </ModelSignupDialog>
+            <Link href="/fan/signup">
               <Button variant="outline" className="rounded-full px-8 border-[#00BFFF]/50 hover:border-[#00BFFF] hover:bg-[#00BFFF]/10">
                 Fans
               </Button>
@@ -82,13 +82,13 @@ export default function HomePage() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 mb-8">
-              <Link href="/apply">
+              <ModelSignupDialog>
                 <Button size="lg" className="exa-gradient-button text-lg px-10 h-14 rounded-full">
                   I&apos;m a Model
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
-              </Link>
-              <Link href="/signup">
+              </ModelSignupDialog>
+              <Link href="/fan/signup">
                 <Button
                   size="lg"
                   variant="outline"
