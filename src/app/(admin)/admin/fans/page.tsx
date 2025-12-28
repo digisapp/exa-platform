@@ -30,6 +30,7 @@ import {
   ChevronRight,
   TrendingUp,
   Calendar,
+  AlertTriangle,
 } from "lucide-react";
 import { FanActionsDropdown } from "@/components/admin/AdminActions";
 
@@ -43,6 +44,7 @@ function SortIndicator({ active, direction }: { active: boolean; direction: "asc
 interface Fan {
   id: string;
   user_id: string;
+  actor_id?: string;
   display_name: string | null;
   email: string | null;
   avatar_url: string | null;
@@ -53,9 +55,10 @@ interface Fan {
   created_at: string;
   coins_spent?: number;
   following_count?: number;
+  report_count?: number;
 }
 
-type SortField = "coins_spent" | "following_count" | "coin_balance" | "created_at";
+type SortField = "coins_spent" | "following_count" | "coin_balance" | "created_at" | "report_count";
 type SortDirection = "asc" | "desc";
 
 const US_STATES = [
@@ -77,6 +80,7 @@ export default function AdminFansPage() {
   const [search, setSearch] = useState("");
   const [stateFilter, setStateFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [reportsFilter, setReportsFilter] = useState<string>("all");
   const [sortField, setSortField] = useState<SortField>("created_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
@@ -170,6 +174,26 @@ export default function AdminFansPage() {
     // Get additional data for each fan
     if (data && data.length > 0) {
       const fanIds = data.map((f: any) => f.id);
+      const userIds = data.map((f: any) => f.user_id).filter(Boolean);
+
+      // Get actor IDs for these fans (to look up reports)
+      const { data: actors } = await (supabase
+        .from("actors") as any)
+        .select("id, user_id")
+        .in("user_id", userIds)
+        .eq("type", "fan");
+
+      const userToActorMap = new Map<string, string>();
+      actors?.forEach((a: any) => {
+        userToActorMap.set(a.user_id, a.id);
+      });
+
+      // Attach actor_id to fan data
+      data.forEach((fan: any) => {
+        fan.actor_id = userToActorMap.get(fan.user_id);
+      });
+
+      const actorIds = actors?.map((a: any) => a.id) || [];
 
       // Get coins spent for each fan (sum of negative transactions)
       const { data: transactions } = await (supabase
@@ -196,26 +220,52 @@ export default function AdminFansPage() {
         followMap.set(f.follower_id, current + 1);
       });
 
+      // Get report counts for each fan actor
+      const reportMap = new Map<string, number>();
+      if (actorIds.length > 0) {
+        const { data: reports } = await (supabase
+          .from("reports") as any)
+          .select("reported_user_id")
+          .in("reported_user_id", actorIds);
+
+        reports?.forEach((r: any) => {
+          const current = reportMap.get(r.reported_user_id) || 0;
+          reportMap.set(r.reported_user_id, current + 1);
+        });
+      }
+
       // Attach to fan data
       data.forEach((fan: any) => {
         fan.coins_spent = spentMap.get(fan.id) || 0;
         fan.following_count = followMap.get(fan.id) || 0;
+        fan.report_count = fan.actor_id ? (reportMap.get(fan.actor_id) || 0) : 0;
       });
 
+      // Filter by reports if needed
+      let filteredData = data;
+      if (reportsFilter === "has_reports") {
+        filteredData = data.filter((f: any) => f.report_count > 0);
+      }
+
       // Sort by computed fields if needed
-      if (sortField === "coins_spent" || sortField === "following_count") {
-        data.sort((a: any, b: any) => {
+      if (sortField === "coins_spent" || sortField === "following_count" || sortField === "report_count") {
+        filteredData.sort((a: any, b: any) => {
           const aVal = a[sortField] || 0;
           const bVal = b[sortField] || 0;
           return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
         });
       }
+
+      setFans(filteredData);
+      setTotalCount(count || 0);
+      setLoading(false);
+      return;
     }
 
     setFans(data || []);
     setTotalCount(count || 0);
     setLoading(false);
-  }, [supabase, search, stateFilter, statusFilter, sortField, sortDirection, page]);
+  }, [supabase, search, stateFilter, statusFilter, reportsFilter, sortField, sortDirection, page]);
 
   useEffect(() => {
     void loadStats();
@@ -341,6 +391,15 @@ export default function AdminFansPage() {
                 <SelectItem value="suspended">Suspended</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={reportsFilter} onValueChange={(v) => { setReportsFilter(v); setPage(1); }}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by reports" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Fans</SelectItem>
+                <SelectItem value="has_reports">Has Reports</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
@@ -406,6 +465,16 @@ export default function AdminFansPage() {
                       </div>
                     </TableHead>
                     <TableHead>Actions</TableHead>
+                    <TableHead
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort("report_count")}
+                    >
+                      <div className="flex items-center">
+                        <AlertTriangle className="h-4 w-4 mr-1" />
+                        Reports
+                        <SortIndicator active={sortField === "report_count"} direction={sortDirection} />
+                      </div>
+                    </TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-muted/50"
                       onClick={() => handleSort("coins_spent")}
@@ -484,6 +553,16 @@ export default function AdminFansPage() {
                           isSuspended={fan.is_suspended || false}
                           onAction={loadFans}
                         />
+                      </TableCell>
+                      <TableCell>
+                        {(fan.report_count || 0) > 0 ? (
+                          <span className="inline-flex items-center gap-1 text-red-500 font-medium">
+                            <AlertTriangle className="h-4 w-4" />
+                            {fan.report_count}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">0</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <span className={`font-medium ${(fan.coins_spent || 0) > 0 ? "text-yellow-500" : ""}`}>
