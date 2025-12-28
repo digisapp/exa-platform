@@ -38,12 +38,19 @@ export async function POST(request: NextRequest) {
 
         // Get metadata from the session
         const actorId = session.metadata?.actor_id;
-        const coins = parseInt(session.metadata?.coins || "0", 10);
+        const coinsStr = session.metadata?.coins;
         const userId = session.metadata?.user_id;
 
-        if (!actorId || !coins) {
-          console.error("Missing metadata in checkout session:", session.id);
-          return NextResponse.json({ received: true });
+        // Validate required metadata exists and coins is a valid positive number
+        if (!actorId || !coinsStr) {
+          console.error("Missing metadata in checkout session:", session.id, { actorId, coinsStr });
+          return NextResponse.json({ error: "Missing required metadata" }, { status: 400 });
+        }
+
+        const coins = parseInt(coinsStr, 10);
+        if (isNaN(coins) || coins <= 0) {
+          console.error("Invalid coins value in checkout session:", session.id, { coinsStr, coins });
+          return NextResponse.json({ error: "Invalid coins value" }, { status: 400 });
         }
 
         console.log(

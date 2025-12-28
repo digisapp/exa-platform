@@ -102,12 +102,16 @@ export async function POST(request: NextRequest) {
     // Award points to recipient for receiving tip (+2)
     const recipientModelId = await getModelIdFromActorId(supabase, recipientId);
     if (recipientModelId) {
-      await (supabase.rpc as any)("award_points", {
+      const { error: pointsError } = await (supabase.rpc as any)("award_points", {
         p_model_id: recipientModelId,
         p_action: "tip_received",
         p_points: 2,
         p_metadata: { sender_actor_id: sender.id, amount },
       });
+      if (pointsError) {
+        console.error("Failed to award points for tip:", pointsError);
+        // Non-critical error, don't fail the tip
+      }
     }
 
     // Get recipient display name for response

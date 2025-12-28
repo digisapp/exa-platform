@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Instagram, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useCallback, memo } from "react";
 import { toast } from "sonner";
 
 interface ModelCardProps {
@@ -19,7 +19,7 @@ interface ModelCardProps {
   onAuthRequired?: () => void;
 }
 
-export function ModelCard({
+export const ModelCard = memo(function ModelCard({
   model,
   variant = "default",
   showFavorite = false,
@@ -207,4 +207,4 @@ export function ModelCard({
       </div>
     </Link>
   );
-}
+});

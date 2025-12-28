@@ -11,10 +11,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { recipientUsername } = await request.json();
+    const { recipientUsername, conversationId: providedConversationId } = await request.json();
 
-    if (!recipientUsername) {
-      return NextResponse.json({ error: "Recipient username required" }, { status: 400 });
+    if (!recipientUsername && !providedConversationId) {
+      return NextResponse.json({ error: "Recipient username or conversation ID required" }, { status: 400 });
     }
 
     // Get caller's actor
@@ -28,27 +28,97 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Actor not found" }, { status: 404 });
     }
 
-    // Get recipient model and their actor
-    const { data: recipientModel } = await (supabase
-      .from("models") as any)
-      .select("id, username, first_name, user_id, video_call_rate")
-      .eq("username", recipientUsername)
-      .eq("is_approved", true)
-      .single();
+    let recipientActor: { id: string } | null = null;
+    let recipientModel: { id: string; username: string; first_name: string; user_id: string; video_call_rate: number } | null = null;
+    let conversationId: string | null = providedConversationId || null;
 
-    if (!recipientModel) {
-      return NextResponse.json({ error: "Model not found" }, { status: 404 });
+    // If conversationId provided, get recipient from conversation
+    if (providedConversationId) {
+      // Verify caller is in this conversation
+      const { data: callerParticipant } = await supabase
+        .from("conversation_participants")
+        .select("actor_id")
+        .eq("conversation_id", providedConversationId)
+        .eq("actor_id", callerActor.id)
+        .single();
+
+      if (!callerParticipant) {
+        return NextResponse.json({ error: "Not a participant in this conversation" }, { status: 403 });
+      }
+
+      // Get the other participant (recipient)
+      const { data: otherParticipant } = await supabase
+        .from("conversation_participants")
+        .select("actor_id")
+        .eq("conversation_id", providedConversationId)
+        .neq("actor_id", callerActor.id)
+        .single() as { data: { actor_id: string } | null };
+
+      if (!otherParticipant) {
+        return NextResponse.json({ error: "Recipient not found in conversation" }, { status: 404 });
+      }
+
+      recipientActor = { id: otherParticipant.actor_id };
+
+      // Get recipient's user_id from actors table
+      const { data: recipientActorData } = await supabase
+        .from("actors")
+        .select("user_id, type")
+        .eq("id", otherParticipant.actor_id)
+        .single() as { data: { user_id: string; type: string } | null };
+
+      if (recipientActorData) {
+        // Try to get model info (might be a model or fan)
+        const { data: model } = await (supabase
+          .from("models") as any)
+          .select("id, username, first_name, user_id, video_call_rate")
+          .eq("user_id", recipientActorData.user_id)
+          .single();
+
+        if (model) {
+          recipientModel = model;
+        } else {
+          // Recipient is a fan, set default values
+          recipientModel = {
+            id: otherParticipant.actor_id,
+            username: "user",
+            first_name: "User",
+            user_id: recipientActorData.user_id,
+            video_call_rate: 0,
+          };
+        }
+      }
+    } else {
+      // Use recipientUsername to find recipient
+      const { data: model } = await (supabase
+        .from("models") as any)
+        .select("id, username, first_name, user_id, video_call_rate")
+        .eq("username", recipientUsername)
+        .eq("is_approved", true)
+        .single();
+
+      if (!model) {
+        return NextResponse.json({ error: "Model not found" }, { status: 404 });
+      }
+
+      recipientModel = model;
+
+      // Get recipient's actor
+      const { data: actor } = await supabase
+        .from("actors")
+        .select("id")
+        .eq("user_id", model.user_id)
+        .single() as { data: { id: string } | null };
+
+      if (!actor) {
+        return NextResponse.json({ error: "Recipient actor not found" }, { status: 404 });
+      }
+
+      recipientActor = actor;
     }
 
-    // Get recipient's actor
-    const { data: recipientActor } = await supabase
-      .from("actors")
-      .select("id")
-      .eq("user_id", recipientModel.user_id)
-      .single() as { data: { id: string } | null };
-
-    if (!recipientActor) {
-      return NextResponse.json({ error: "Recipient actor not found" }, { status: 404 });
+    if (!recipientActor || !recipientModel) {
+      return NextResponse.json({ error: "Recipient not found" }, { status: 404 });
     }
 
     // Check caller's coin balance if they're a fan calling a model with a rate
@@ -65,54 +135,56 @@ export async function POST(request: NextRequest) {
       const minBalance = videoCallRate * 2;
       if (!fan || fan.coin_balance < minBalance) {
         return NextResponse.json({
-          error: `Insufficient coins. Need at least ${minBalance} coins to start a call.`
-        }, { status: 400 });
+          error: `Insufficient coins. Need at least ${minBalance} coins to start a call.`,
+          required: minBalance,
+          balance: fan?.coin_balance || 0,
+        }, { status: 402 });
       }
     }
 
-    // Find or create conversation
-    const { data: existingConv } = await supabase
-      .from("conversation_participants")
-      .select("conversation_id")
-      .eq("actor_id", callerActor.id) as { data: { conversation_id: string }[] | null };
+    // Find or create conversation if not provided
+    if (!conversationId) {
+      const { data: existingConv } = await supabase
+        .from("conversation_participants")
+        .select("conversation_id")
+        .eq("actor_id", callerActor.id) as { data: { conversation_id: string }[] | null };
 
-    let conversationId: string | null = null;
+      if (existingConv) {
+        for (const cp of existingConv) {
+          const { data: otherParticipant } = await supabase
+            .from("conversation_participants")
+            .select("actor_id")
+            .eq("conversation_id", cp.conversation_id)
+            .eq("actor_id", recipientActor.id)
+            .single();
 
-    if (existingConv) {
-      for (const cp of existingConv) {
-        const { data: otherParticipant } = await supabase
-          .from("conversation_participants")
-          .select("actor_id")
-          .eq("conversation_id", cp.conversation_id)
-          .eq("actor_id", recipientActor.id)
-          .single();
-
-        if (otherParticipant) {
-          conversationId = cp.conversation_id;
-          break;
+          if (otherParticipant) {
+            conversationId = cp.conversation_id;
+            break;
+          }
         }
       }
-    }
 
-    // Create conversation if doesn't exist
-    if (!conversationId) {
-      const { data: newConv, error: convError } = await (supabase
-        .from("conversations") as any)
-        .insert({ type: "direct" })
-        .select()
-        .single() as { data: { id: string } | null; error: any };
+      // Create conversation if doesn't exist
+      if (!conversationId) {
+        const { data: newConv, error: convError } = await (supabase
+          .from("conversations") as any)
+          .insert({ type: "direct" })
+          .select()
+          .single() as { data: { id: string } | null; error: any };
 
-      if (convError || !newConv) {
-        throw new Error("Failed to create conversation");
+        if (convError || !newConv) {
+          throw new Error("Failed to create conversation");
+        }
+
+        conversationId = newConv.id;
+
+        // Add participants
+        await (supabase.from("conversation_participants") as any).insert([
+          { conversation_id: conversationId, actor_id: callerActor.id },
+          { conversation_id: conversationId, actor_id: recipientActor.id },
+        ]);
       }
-
-      conversationId = newConv.id;
-
-      // Add participants
-      await (supabase.from("conversation_participants") as any).insert([
-        { conversation_id: conversationId, actor_id: callerActor.id },
-        { conversation_id: conversationId, actor_id: recipientActor.id },
-      ]);
     }
 
     // Generate room name
@@ -156,12 +228,16 @@ export async function POST(request: NextRequest) {
     // Generate token for caller
     const token = await generateToken(roomName, callerName, callerActor.id);
 
+    // Determine if coins are required (fan calling model with rate)
+    const requiresCoins = callerActor.type === "fan" && videoCallRate > 0;
+
     return NextResponse.json({
       sessionId: session.id,
       roomName,
       token,
       recipientName: recipientModel.first_name || recipientModel.username,
       videoCallRate,
+      requiresCoins,
     });
   } catch (error) {
     console.error("Start call error:", error);

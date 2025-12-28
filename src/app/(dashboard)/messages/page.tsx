@@ -1,13 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { MessageCircle, Search } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
 import { NewMessageDialog } from "@/components/chat/NewMessageDialog";
+import { ConversationList } from "@/components/chat/ConversationList";
 
 export default async function MessagesPage() {
   const supabase = await createClient();
@@ -97,71 +91,7 @@ export default async function MessagesPage() {
         />
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Search chats..." className="pl-10" />
-      </div>
-
-      {/* Conversations List */}
-      <Card>
-        <CardContent className="p-0 divide-y">
-          {conversations.length > 0 ? (
-            conversations.map((conv: any) => {
-              const otherPerson = conv.otherParticipants[0]?.model;
-              const displayName = otherPerson?.first_name
-                ? `${otherPerson.first_name} ${otherPerson.last_name || ""}`.trim()
-                : otherPerson?.username || "Unknown";
-              const isUnread = conv.lastMessage &&
-                (!conv.last_read_at || new Date(conv.lastMessage.created_at) > new Date(conv.last_read_at));
-
-              return (
-                <Link
-                  key={conv.conversation_id}
-                  href={`/messages/${conv.conversation_id}`}
-                  className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors"
-                >
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage src={otherPerson?.profile_photo_url} />
-                    <AvatarFallback>
-                      {otherPerson?.first_name?.charAt(0) || otherPerson?.username?.charAt(0)?.toUpperCase() || "?"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <p className={`font-medium ${isUnread ? "text-foreground" : ""}`}>
-                        {displayName}
-                      </p>
-                      {conv.lastMessage && (
-                        <span className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(conv.lastMessage.created_at), { addSuffix: true })}
-                        </span>
-                      )}
-                    </div>
-                    <p className={`text-sm truncate ${isUnread ? "text-foreground font-medium" : "text-muted-foreground"}`}>
-                      {conv.lastMessage?.content || "No messages yet"}
-                    </p>
-                  </div>
-                  {isUnread && (
-                    <div className="w-2 h-2 rounded-full bg-pink-500" />
-                  )}
-                </Link>
-              );
-            })
-          ) : (
-            <div className="text-center py-16">
-              <MessageCircle className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
-              <h3 className="text-xl font-semibold mb-2">No chats yet</h3>
-              <p className="text-muted-foreground mb-4">
-                Start chatting with models
-              </p>
-              <Button variant="outline" asChild>
-                <Link href="/models">Explore Models</Link>
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <ConversationList conversations={conversations} />
     </div>
   );
 }
