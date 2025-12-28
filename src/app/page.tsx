@@ -3,6 +3,8 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { FloatingOrbs } from "@/components/ui/floating-orbs";
 import { ModelSignupDialog } from "@/components/auth/ModelSignupDialog";
+import { FanSignupDialog } from "@/components/auth/FanSignupDialog";
+import { BrandInquiryDialog } from "@/components/auth/BrandInquiryDialog";
 import {
   Sparkles,
   Users,
@@ -50,16 +52,16 @@ export default function HomePage() {
                 Models
               </Button>
             </ModelSignupDialog>
-            <Link href="/fan/signup">
+            <FanSignupDialog>
               <Button variant="outline" className="rounded-full px-8 border-[#00BFFF]/50 hover:border-[#00BFFF] hover:bg-[#00BFFF]/10">
                 Fans
               </Button>
-            </Link>
-            <Link href="/brands/inquiry">
+            </FanSignupDialog>
+            <BrandInquiryDialog>
               <Button variant="outline" className="rounded-full px-8 border-[#FF69B4]/50 hover:border-[#FF69B4] hover:bg-[#FF69B4]/10">
                 Brands
               </Button>
-            </Link>
+            </BrandInquiryDialog>
           </div>
         </div>
 
@@ -88,7 +90,7 @@ export default function HomePage() {
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </ModelSignupDialog>
-              <Link href="/fan/signup">
+              <FanSignupDialog>
                 <Button
                   size="lg"
                   variant="outline"
@@ -97,7 +99,7 @@ export default function HomePage() {
                   I&apos;m a Fan
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
-              </Link>
+              </FanSignupDialog>
             </div>
 
             <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground">
