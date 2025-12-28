@@ -205,22 +205,22 @@ export default async function AdminPage() {
     .reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
 
   return (
-    <div className="container py-8 space-y-8">
+    <div className="container px-8 md:px-16 py-8 space-y-8">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
           <p className="text-muted-foreground">Manage models, gigs, and applications</p>
         </div>
         <Button asChild>
-          <Link href="/admin/opportunities/new">
+          <Link href="/admin/gigs">
             <Sparkles className="h-4 w-4 mr-2" />
-            Create Gig
+            Manage Gigs
           </Link>
         </Button>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-10 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
