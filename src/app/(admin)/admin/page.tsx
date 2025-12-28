@@ -211,12 +211,20 @@ export default async function AdminPage() {
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
           <p className="text-muted-foreground">Manage models, gigs, and applications</p>
         </div>
-        <Button asChild>
-          <Link href="/admin/gigs">
-            <Sparkles className="h-4 w-4 mr-2" />
-            Manage Gigs
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" asChild>
+            <Link href="/admin/models">
+              <Users className="h-4 w-4 mr-2" />
+              Models Directory
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link href="/admin/gigs">
+              <Sparkles className="h-4 w-4 mr-2" />
+              Manage Gigs
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
