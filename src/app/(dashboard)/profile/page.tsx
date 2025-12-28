@@ -793,7 +793,7 @@ export default function ProfilePage() {
               <CardContent className="pt-6">
                 <div className="text-center">
                   <p className="text-3xl font-bold">{(model as any).followers_count || 0}</p>
-                  <p className="text-sm text-muted-foreground">Followers</p>
+                  <p className="text-sm text-muted-foreground">Favorites</p>
                 </div>
               </CardContent>
             </Card>

@@ -491,7 +491,7 @@ export default function AdminFansPage() {
                     >
                       <div className="flex items-center">
                         <Heart className="h-4 w-4 mr-1" />
-                        Following
+                        Favorites
                         <SortIndicator active={sortField === "following_count"} direction={sortDirection} />
                       </div>
                     </TableHead>

@@ -528,7 +528,7 @@ export default function AdminModelsPage() {
                     >
                       <div className="flex items-center">
                         <Heart className="h-4 w-4 mr-1" />
-                        Followers
+                        Favorites
                         <SortIndicator active={sortField === "followers_count"} direction={sortDirection} />
                       </div>
                     </TableHead>

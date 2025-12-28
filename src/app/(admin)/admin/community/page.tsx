@@ -569,7 +569,7 @@ export default function AdminCommunityPage() {
                           <div className="flex items-center"><Coins className="h-4 w-4 mr-1" />Coins<SortIndicator active={modelsSortField === "coin_balance"} direction={modelsSortDirection} /></div>
                         </TableHead>
                         <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("followers_count")}>
-                          <div className="flex items-center"><Heart className="h-4 w-4 mr-1" />Followers<SortIndicator active={modelsSortField === "followers_count"} direction={modelsSortDirection} /></div>
+                          <div className="flex items-center"><Heart className="h-4 w-4 mr-1" />Favorites<SortIndicator active={modelsSortField === "followers_count"} direction={modelsSortDirection} /></div>
                         </TableHead>
                       </TableRow>
                     </TableHeader>
@@ -700,7 +700,7 @@ export default function AdminCommunityPage() {
                           <div className="flex items-center"><Coins className="h-4 w-4 mr-1" />Spent<SortIndicator active={fansSortField === "coins_spent"} direction={fansSortDirection} /></div>
                         </TableHead>
                         <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleFanSort("following_count")}>
-                          <div className="flex items-center"><Heart className="h-4 w-4 mr-1" />Following<SortIndicator active={fansSortField === "following_count"} direction={fansSortDirection} /></div>
+                          <div className="flex items-center"><Heart className="h-4 w-4 mr-1" />Favorites<SortIndicator active={fansSortField === "following_count"} direction={fansSortDirection} /></div>
                         </TableHead>
                         <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleFanSort("coin_balance")}>
                           <div className="flex items-center"><Coins className="h-4 w-4 mr-1" />Balance<SortIndicator active={fansSortField === "coin_balance"} direction={fansSortDirection} /></div>
