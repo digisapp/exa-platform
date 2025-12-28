@@ -621,6 +621,7 @@ export default function AdminModelsPage() {
                           <ModelActionsDropdown
                             id={model.id}
                             modelName={model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username}
+                            isApproved={model.is_approved}
                             onAction={loadModels}
                           />
                         </div>

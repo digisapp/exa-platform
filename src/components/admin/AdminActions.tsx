@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Loader2, CheckCircle, XCircle, UserMinus, ChevronDown, User, Trash2 } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, UserMinus, ChevronDown, User, Trash2, EyeOff, Eye } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -244,14 +244,40 @@ export function ConvertToFanButton({ id, modelName }: { id: string; modelName: s
   );
 }
 
-export function ModelActionsDropdown({ id, modelName, onAction }: {
+export function ModelActionsDropdown({ id, modelName, isApproved, onAction }: {
   id: string;
   modelName: string;
+  isApproved: boolean;
   onAction?: () => void;
 }) {
   const [loading, setLoading] = useState(false);
   const [dialogType, setDialogType] = useState<"fan" | "delete" | null>(null);
   const router = useRouter();
+
+  const handleToggleApproval = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/models/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_approved: !isApproved }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to update");
+      }
+
+      toast.success(isApproved ? "Model hidden from public" : "Model approved");
+      onAction?.();
+      router.refresh();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Action failed";
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleConvertToFan = async () => {
     setLoading(true);
@@ -313,15 +339,24 @@ export function ModelActionsDropdown({ id, modelName, onAction }: {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem disabled className="opacity-70">
-            <User className="h-4 w-4 mr-2" />
-            Model (current)
+          <DropdownMenuItem onClick={handleToggleApproval} disabled={loading}>
+            {isApproved ? (
+              <>
+                <EyeOff className="h-4 w-4 mr-2" />
+                Hide from Public
+              </>
+            ) : (
+              <>
+                <Eye className="h-4 w-4 mr-2" />
+                Approve
+              </>
+            )}
           </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => setDialogType("fan")}>
             <UserMinus className="h-4 w-4 mr-2" />
             Convert to Fan
           </DropdownMenuItem>
-          <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={() => setDialogType("delete")}
             className="text-red-500 focus:text-red-500"
