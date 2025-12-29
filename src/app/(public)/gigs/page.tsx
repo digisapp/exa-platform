@@ -307,11 +307,12 @@ function OpportunityCard({ opportunity }: { opportunity: any }) {
           {opportunity.compensation_type && (
             <div className="flex items-center gap-2 text-muted-foreground">
               <DollarSign className="h-4 w-4" />
-              <span className="capitalize">{opportunity.compensation_type}</span>
-              {opportunity.compensation_amount && (
+              {opportunity.compensation_type === "paid" && opportunity.compensation_amount > 0 ? (
                 <span className="font-medium text-green-500">
                   ${(opportunity.compensation_amount / 100).toFixed(0)}
                 </span>
+              ) : (
+                <span className="capitalize">{opportunity.compensation_type}</span>
               )}
             </div>
           )}

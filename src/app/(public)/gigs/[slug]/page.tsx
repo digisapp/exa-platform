@@ -330,11 +330,12 @@ export default async function OpportunityDetailPage({ params }: Props) {
                           Compensation
                         </span>
                         <span className="font-medium capitalize">
-                          {opportunity.compensation_type}
-                          {opportunity.compensation_amount && (
-                            <span className="text-green-500 ml-1">
+                          {opportunity.compensation_type === "paid" && opportunity.compensation_amount > 0 ? (
+                            <span className="text-green-500">
                               ${(opportunity.compensation_amount / 100).toFixed(0)}
                             </span>
+                          ) : (
+                            opportunity.compensation_type
                           )}
                         </span>
                       </div>
