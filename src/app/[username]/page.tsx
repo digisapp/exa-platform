@@ -193,9 +193,8 @@ export default async function ModelProfilePage({ params }: Props) {
     }
   }
 
-  // Display name - only show username separately if it's different from first name
+  // Display name - show first_name + last_name, or fallback to username
   const displayName = model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username;
-  const showUsername = model.first_name && model.username.toLowerCase() !== model.first_name.toLowerCase();
 
   // Social media links
   const socialLinks = [
@@ -262,14 +261,9 @@ export default async function ModelProfilePage({ params }: Props) {
           </div>
 
           {/* Name */}
-          <h1 className="text-2xl font-bold text-white mb-1">
+          <h1 className="text-2xl font-bold text-white mb-3">
             {displayName}
           </h1>
-
-          {/* Username - only if different from first name */}
-          {showUsername && (
-            <p className="text-[#00BFFF] text-sm mb-2">@{model.username}</p>
-          )}
 
           {/* Bio - under name */}
           {model.bio && (
