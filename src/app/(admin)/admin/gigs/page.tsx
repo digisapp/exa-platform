@@ -79,8 +79,10 @@ export default function AdminGigsPage() {
     description: "",
     location_city: "",
     location_state: "",
-    start_at: "",
-    end_at: "",
+    start_date: "",
+    start_time: "",
+    end_date: "",
+    end_time: "",
     compensation_type: "paid",
     compensation_amount: 0,
     spots: 10,
@@ -125,8 +127,10 @@ export default function AdminGigsPage() {
       description: "",
       location_city: "",
       location_state: "",
-      start_at: "",
-      end_at: "",
+      start_date: "",
+      start_time: "",
+      end_date: "",
+      end_time: "",
       compensation_type: "paid",
       compensation_amount: 0,
       spots: 10,
@@ -137,24 +141,65 @@ export default function AdminGigsPage() {
 
   function openEditForm(gig: Opportunity) {
     setEditingGig(gig);
+
+    // Parse start date/time
+    let startDate = "";
+    let startTime = "";
+    if (gig.start_at) {
+      const start = new Date(gig.start_at);
+      startDate = start.toISOString().slice(0, 10);
+      const hours = start.getHours();
+      const minutes = start.getMinutes();
+      if (hours !== 0 || minutes !== 0) {
+        startTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+      }
+    }
+
+    // Parse end date/time
+    let endDate = "";
+    let endTime = "";
+    if (gig.end_at) {
+      const end = new Date(gig.end_at);
+      endDate = end.toISOString().slice(0, 10);
+      const hours = end.getHours();
+      const minutes = end.getMinutes();
+      if (hours !== 0 || minutes !== 0) {
+        endTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+      }
+    }
+
     setFormData({
       title: gig.title,
       type: gig.type,
       description: gig.description || "",
       location_city: gig.location_city || "",
       location_state: gig.location_state || "",
-      start_at: gig.start_at ? new Date(gig.start_at).toISOString().slice(0, 16) : "",
-      end_at: gig.end_at ? new Date(gig.end_at).toISOString().slice(0, 16) : "",
+      start_date: startDate,
+      start_time: startTime,
+      end_date: endDate,
+      end_time: endTime,
       compensation_type: gig.compensation_type || "paid",
-      compensation_amount: (gig.compensation_amount || 0) / 100, // Convert from cents
+      compensation_amount: (gig.compensation_amount || 0) / 100,
       spots: gig.spots || 10,
     });
     setShowForm(true);
   }
 
+  // Helper to combine date and optional time into timestamp
+  function combineDateTime(date: string, time: string): string | null {
+    if (!date) return null;
+    if (time) {
+      return `${date}T${time}:00`;
+    }
+    return `${date}T00:00:00`;
+  }
+
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
+
+    const startAt = combineDateTime(formData.start_date, formData.start_time);
+    const endAt = combineDateTime(formData.end_date, formData.end_time);
 
     try {
       if (editingGig) {
@@ -167,8 +212,8 @@ export default function AdminGigsPage() {
             description: formData.description,
             location_city: formData.location_city,
             location_state: formData.location_state,
-            start_at: formData.start_at || null,
-            end_at: formData.end_at || null,
+            start_at: startAt,
+            end_at: endAt,
             compensation_type: formData.compensation_type,
             compensation_amount: formData.compensation_amount * 100,
             spots: formData.spots,
@@ -193,8 +238,8 @@ export default function AdminGigsPage() {
             description: formData.description,
             location_city: formData.location_city,
             location_state: formData.location_state,
-            start_at: formData.start_at || null,
-            end_at: formData.end_at || null,
+            start_at: startAt,
+            end_at: endAt,
             compensation_type: formData.compensation_type,
             compensation_amount: formData.compensation_amount * 100,
             spots: formData.spots,
@@ -486,23 +531,41 @@ export default function AdminGigsPage() {
                 </div>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid md:grid-cols-4 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="start_date">Start Date</Label>
                   <Input
                     id="start_date"
-                    type="datetime-local"
-                    value={formData.start_at}
-                    onChange={(e) => setFormData({ ...formData, start_at: e.target.value })}
+                    type="date"
+                    value={formData.start_date}
+                    onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="end_date">End Date</Label>
+                  <Label htmlFor="start_time">Start Time <span className="text-muted-foreground text-xs">(optional)</span></Label>
+                  <Input
+                    id="start_time"
+                    type="time"
+                    value={formData.start_time}
+                    onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="end_date">End Date <span className="text-muted-foreground text-xs">(optional)</span></Label>
                   <Input
                     id="end_date"
-                    type="datetime-local"
-                    value={formData.end_at}
-                    onChange={(e) => setFormData({ ...formData, end_at: e.target.value })}
+                    type="date"
+                    value={formData.end_date}
+                    onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="end_time">End Time <span className="text-muted-foreground text-xs">(optional)</span></Label>
+                  <Input
+                    id="end_time"
+                    type="time"
+                    value={formData.end_time}
+                    onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
                   />
                 </div>
               </div>
