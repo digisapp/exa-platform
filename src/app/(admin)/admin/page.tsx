@@ -881,52 +881,6 @@ export default async function AdminPage() {
           </Card>
         </TabsContent>
       </Tabs>
-
-      {/* Quick Links */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <Link
-              href="/admin/opportunities"
-              className="p-4 rounded-lg border hover:border-primary/50 transition-all text-center"
-            >
-              <Sparkles className="h-8 w-8 mx-auto mb-2 text-pink-500" />
-              <p className="font-medium">Gigs</p>
-            </Link>
-            <Link
-              href="/admin/community"
-              className="p-4 rounded-lg border hover:border-pink-500/50 transition-all text-center"
-            >
-              <Users className="h-8 w-8 mx-auto mb-2 text-pink-500" />
-              <p className="font-medium">Community</p>
-            </Link>
-            <Link
-              href="/admin/transactions"
-              className="p-4 rounded-lg border hover:border-yellow-500/50 transition-all text-center"
-            >
-              <Coins className="h-8 w-8 mx-auto mb-2 text-yellow-500" />
-              <p className="font-medium">Transactions</p>
-            </Link>
-            <Link
-              href="/admin/analytics"
-              className="p-4 rounded-lg border hover:border-primary/50 transition-all text-center"
-            >
-              <TrendingUp className="h-8 w-8 mx-auto mb-2 text-green-500" />
-              <p className="font-medium">Analytics</p>
-            </Link>
-            <Link
-              href="/admin/settings"
-              className="p-4 rounded-lg border hover:border-primary/50 transition-all text-center"
-            >
-              <Settings className="h-8 w-8 mx-auto mb-2 text-gray-500" />
-              <p className="font-medium">Settings</p>
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
