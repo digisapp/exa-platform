@@ -176,7 +176,6 @@ export default function WalletPage() {
         </div>
         <div>
           <h1 className="text-2xl font-bold">Wallet</h1>
-          <p className="text-muted-foreground">Manage your coins and earnings</p>
         </div>
       </div>
 
