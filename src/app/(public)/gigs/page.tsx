@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Sparkles,
   MapPin,
   Calendar,
   Users,
@@ -16,6 +15,7 @@ import {
   Star,
   Clock,
   PartyPopper,
+  Sparkles,
   ClipboardList,
   CheckCircle,
   XCircle,
@@ -50,14 +50,39 @@ export default async function OpportunitiesPage() {
   const { data: { user } } = await supabase.auth.getUser();
   let model: any = null;
   let myApplications: any[] = [];
+  let actorType: "model" | "fan" | "brand" | "admin" | null = null;
+  let profileData: any = null;
+  let coinBalance = 0;
 
   if (user) {
-    const { data: modelData } = await (supabase
-      .from("models") as any)
-      .select("id")
+    // Get actor info
+    const { data: actor } = await supabase
+      .from("actors")
+      .select("id, type")
       .eq("user_id", user.id)
-      .single();
-    model = modelData;
+      .single() as { data: { id: string; type: "admin" | "model" | "brand" | "fan" } | null };
+
+    actorType = actor?.type || null;
+
+    // Get profile info based on actor type
+    if (actor?.type === "model" || actor?.type === "admin") {
+      const { data } = await supabase
+        .from("models")
+        .select("id, username, first_name, last_name, profile_photo_url, coin_balance")
+        .eq("user_id", user.id)
+        .single() as { data: any };
+      profileData = data;
+      model = data;
+      coinBalance = data?.coin_balance ?? 0;
+    } else if (actor?.type === "fan") {
+      const { data } = await supabase
+        .from("fans")
+        .select("display_name, avatar_url, coin_balance")
+        .eq("id", actor.id)
+        .single() as { data: any };
+      profileData = data;
+      coinBalance = data?.coin_balance ?? 0;
+    }
 
     if (model) {
       // Get model's applications with opportunity details
@@ -103,17 +128,30 @@ export default async function OpportunitiesPage() {
   const campaigns = opportunities?.filter((o) => ["campaign", "content"].includes(o.type)) || [];
   const fun = opportunities?.filter((o) => o.type === "fun") || [];
 
+  const displayName = actorType === "fan"
+    ? profileData?.display_name
+    : profileData?.first_name
+      ? `${profileData.first_name} ${profileData.last_name || ""}`.trim()
+      : profileData?.username || undefined;
+
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      <Navbar
+        user={user ? {
+          id: user.id,
+          email: user.email || "",
+          avatar_url: profileData?.profile_photo_url || profileData?.avatar_url || undefined,
+          name: displayName,
+          username: profileData?.username || undefined,
+        } : undefined}
+        actorType={actorType}
+        coinBalance={coinBalance}
+      />
 
       <main className="container px-8 md:px-16 py-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <Sparkles className="h-8 w-8 text-pink-500" />
-            <h1 className="text-3xl font-bold">Gigs</h1>
-          </div>
+          <h1 className="text-3xl font-bold mb-2">Gigs</h1>
           <p className="text-muted-foreground">
             Apply to fashion shows, travel experiences, and brand campaigns
           </p>

@@ -65,26 +65,56 @@ export default async function OpportunityDetailPage({ params }: Props) {
   const { data: { user } } = await supabase.auth.getUser();
   let existingApplication: any = null;
   let modelId: string | null = null;
+  let actorType: "model" | "fan" | "brand" | "admin" | null = null;
+  let profileData: any = null;
+  let coinBalance = 0;
 
   if (user) {
-    // Get model ID (models.id != actors.id)
-    const { data: model } = await supabase
-      .from("models")
-      .select("id")
+    // Get actor info
+    const { data: actor } = await supabase
+      .from("actors")
+      .select("id, type")
       .eq("user_id", user.id)
-      .single() as { data: { id: string } | null };
+      .single() as { data: { id: string; type: "admin" | "model" | "brand" | "fan" } | null };
 
-    if (model) {
-      modelId = model.id;
-      const { data: app } = await supabase
-        .from("opportunity_applications")
-        .select("*")
-        .eq("opportunity_id", opportunity.id)
-        .eq("model_id", model.id)
+    actorType = actor?.type || null;
+
+    // Get profile info based on actor type
+    if (actor?.type === "model" || actor?.type === "admin") {
+      const { data: model } = await supabase
+        .from("models")
+        .select("id, username, first_name, last_name, profile_photo_url, coin_balance")
+        .eq("user_id", user.id)
         .single() as { data: any };
-      existingApplication = app;
+      profileData = model;
+      coinBalance = model?.coin_balance ?? 0;
+
+      if (model) {
+        modelId = model.id;
+        const { data: app } = await supabase
+          .from("opportunity_applications")
+          .select("*")
+          .eq("opportunity_id", opportunity.id)
+          .eq("model_id", model.id)
+          .single() as { data: any };
+        existingApplication = app;
+      }
+    } else if (actor?.type === "fan") {
+      const { data } = await supabase
+        .from("fans")
+        .select("display_name, avatar_url, coin_balance")
+        .eq("id", actor.id)
+        .single() as { data: any };
+      profileData = data;
+      coinBalance = data?.coin_balance ?? 0;
     }
   }
+
+  const displayName = actorType === "fan"
+    ? profileData?.display_name
+    : profileData?.first_name
+      ? `${profileData.first_name} ${profileData.last_name || ""}`.trim()
+      : profileData?.username || undefined;
 
   const spotsLeft = opportunity.spots ? opportunity.spots - opportunity.spots_filled : null;
   const deadline = opportunity.application_deadline
@@ -99,7 +129,17 @@ export default async function OpportunityDetailPage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      <Navbar
+        user={user ? {
+          id: user.id,
+          email: user.email || "",
+          avatar_url: profileData?.profile_photo_url || profileData?.avatar_url || undefined,
+          name: displayName,
+          username: profileData?.username || undefined,
+        } : undefined}
+        actorType={actorType}
+        coinBalance={coinBalance}
+      />
 
       <main className="container px-8 md:px-16 py-8">
         {/* Back Button */}
