@@ -34,6 +34,11 @@ import {
   Star,
   Calendar,
   AlertTriangle,
+  Link as LinkIcon,
+  Copy,
+  Check,
+  Clock,
+  UserCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ModelActionsDropdown, FanActionsDropdown } from "@/components/admin/AdminActions";
@@ -117,6 +122,31 @@ interface Model {
   admin_rating: number | null;
   created_at: string;
   followers_count?: number;
+  user_id: string | null;
+  invite_token: string | null;
+  claimed_at: string | null;
+}
+
+function CopyInviteButton({ token }: { token: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    const url = `${window.location.origin}/claim/${token}`;
+    await navigator.clipboard.writeText(url);
+    setCopied(true);
+    toast.success("Invite link copied!");
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <Button variant="ghost" size="sm" onClick={handleCopy} className="h-8 px-2">
+      {copied ? (
+        <Check className="h-4 w-4 text-green-500" />
+      ) : (
+        <Copy className="h-4 w-4" />
+      )}
+    </Button>
+  );
 }
 
 interface Fan {
@@ -173,6 +203,7 @@ export default function AdminCommunityPage() {
   const [modelsStateFilter, setModelsStateFilter] = useState<string>("all");
   const [modelsApprovalFilter, setModelsApprovalFilter] = useState<string>("all");
   const [modelsRatingFilter, setModelsRatingFilter] = useState<string>("all");
+  const [modelsClaimFilter, setModelsClaimFilter] = useState<string>("all");
   const [modelsSortField, setModelsSortField] = useState<ModelSortField>("profile_views");
   const [modelsSortDirection, setModelsSortDirection] = useState<SortDirection>("desc");
 
@@ -218,7 +249,7 @@ export default function AdminCommunityPage() {
       .select(`
         id, username, first_name, last_name, email, city, state, is_approved,
         profile_photo_url, profile_views, coin_balance, instagram_name,
-        instagram_followers, admin_rating, created_at
+        instagram_followers, admin_rating, created_at, user_id, invite_token, claimed_at
       `, { count: "exact" });
 
     if (modelsSearch) {
@@ -230,6 +261,10 @@ export default function AdminCommunityPage() {
       if (modelsRatingFilter === "rated") query = query.not("admin_rating", "is", null);
       else if (modelsRatingFilter === "unrated") query = query.is("admin_rating", null);
       else query = query.gte("admin_rating", parseInt(modelsRatingFilter));
+    }
+    if (modelsClaimFilter !== "all") {
+      if (modelsClaimFilter === "claimed") query = query.not("user_id", "is", null);
+      else if (modelsClaimFilter === "unclaimed") query = query.is("user_id", null);
     }
 
     query = query.order(modelsSortField, { ascending: modelsSortDirection === "asc", nullsFirst: false });
@@ -265,7 +300,7 @@ export default function AdminCommunityPage() {
     setModels(data || []);
     setModelsTotalCount(count || 0);
     setModelsLoading(false);
-  }, [supabase, modelsSearch, modelsStateFilter, modelsApprovalFilter, modelsRatingFilter, modelsSortField, modelsSortDirection, modelsPage]);
+  }, [supabase, modelsSearch, modelsStateFilter, modelsApprovalFilter, modelsRatingFilter, modelsClaimFilter, modelsSortField, modelsSortDirection, modelsPage]);
 
   // Load fans
   const loadFans = useCallback(async () => {
@@ -372,7 +407,7 @@ export default function AdminCommunityPage() {
   useEffect(() => {
     if (activeTab === "models") void loadModels();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, modelsSearch, modelsStateFilter, modelsApprovalFilter, modelsRatingFilter, modelsSortField, modelsSortDirection, modelsPage]);
+  }, [activeTab, modelsSearch, modelsStateFilter, modelsApprovalFilter, modelsRatingFilter, modelsClaimFilter, modelsSortField, modelsSortDirection, modelsPage]);
 
   useEffect(() => {
     if (activeTab === "fans") void loadFans();
@@ -517,6 +552,14 @@ export default function AdminCommunityPage() {
                     <SelectItem value="unrated">Unrated Only</SelectItem>
                   </SelectContent>
                 </Select>
+                <Select value={modelsClaimFilter} onValueChange={(v) => { setModelsClaimFilter(v); setModelsPage(1); }}>
+                  <SelectTrigger className="w-[180px]"><SelectValue placeholder="Filter by claim" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Models</SelectItem>
+                    <SelectItem value="claimed">Claimed (Has Login)</SelectItem>
+                    <SelectItem value="unclaimed">Unclaimed (Needs Invite)</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </CardContent>
           </Card>
@@ -553,6 +596,7 @@ export default function AdminCommunityPage() {
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-[200px]">Model</TableHead>
+                        <TableHead>Invite</TableHead>
                         <TableHead>Instagram</TableHead>
                         <TableHead>State</TableHead>
                         <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("admin_rating")}>
@@ -590,6 +634,24 @@ export default function AdminCommunityPage() {
                                 <p className="text-sm text-muted-foreground truncate">@{model.username}</p>
                               </div>
                             </Link>
+                          </TableCell>
+                          <TableCell>
+                            {model.user_id ? (
+                              <span className="inline-flex items-center gap-1 text-green-500 text-sm">
+                                <UserCheck className="h-4 w-4" />
+                                Active
+                              </span>
+                            ) : model.invite_token ? (
+                              <div className="flex items-center gap-1">
+                                <span className="inline-flex items-center gap-1 text-amber-500 text-sm">
+                                  <Clock className="h-4 w-4" />
+                                  Pending
+                                </span>
+                                <CopyInviteButton token={model.invite_token} />
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">-</span>
+                            )}
                           </TableCell>
                           <TableCell>
                             {model.instagram_name ? (
