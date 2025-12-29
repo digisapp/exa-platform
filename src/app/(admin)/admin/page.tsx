@@ -10,13 +10,8 @@ import {
   Users,
   Sparkles,
   Trophy,
-  CheckCircle,
   Clock,
-  TrendingUp,
-  Settings,
   Building2,
-  Palette,
-  Camera,
   Mail,
   Globe,
   Instagram,
@@ -26,7 +21,6 @@ import {
   UserPlus,
   BarChart3,
   ArrowUpRight,
-  ArrowDownRight,
 } from "lucide-react";
 
 export default async function AdminPage() {
@@ -51,20 +45,6 @@ export default async function AdminPage() {
     .from("models")
     .select("*", { count: "exact", head: true });
 
-  const { count: approvedModels } = await supabase
-    .from("models")
-    .select("*", { count: "exact", head: true })
-    .eq("is_approved", true);
-
-  const { count: pendingModels } = await supabase
-    .from("models")
-    .select("*", { count: "exact", head: true })
-    .eq("is_approved", false);
-
-  const { count: totalOpportunities } = await supabase
-    .from("opportunities")
-    .select("*", { count: "exact", head: true });
-
   const { count: pendingApplications } = await supabase
     .from("opportunity_applications")
     .select("*", { count: "exact", head: true })
@@ -82,30 +62,6 @@ export default async function AdminPage() {
     .from("brands") as any)
     .select("*", { count: "exact", head: true })
     .eq("subscription_tier", "inquiry");
-
-  // Get designer signups
-  const { data: designerSignups } = await (supabase
-    .from("designers") as any)
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(20);
-
-  const { count: pendingDesigners } = await (supabase
-    .from("designers") as any)
-    .select("*", { count: "exact", head: true })
-    .eq("status", "pending");
-
-  // Get media signups
-  const { data: mediaSignups } = await (supabase
-    .from("media") as any)
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(20);
-
-  const { count: pendingMedia } = await (supabase
-    .from("media") as any)
-    .select("*", { count: "exact", head: true })
-    .eq("status", "pending");
 
   // Get model applications
   const { count: pendingModelApps } = await (supabase
@@ -172,8 +128,6 @@ export default async function AdminPage() {
     .select("amount, action")
     .gte("created_at", weekAgo) as { data: { amount: number; action: string }[] | null };
 
-  const weeklyRevenue = weeklyTransactions?.filter(t => t.action === "purchase")
-    .reduce((sum, t) => sum + t.amount, 0) || 0;
   const weeklySpent = weeklyTransactions?.filter(t => t.amount < 0)
     .reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
 
@@ -283,14 +237,6 @@ export default async function AdminPage() {
           <TabsTrigger value="brands">
             <Building2 className="h-4 w-4 mr-2" />
             Brands ({pendingBrands || 0})
-          </TabsTrigger>
-          <TabsTrigger value="designers">
-            <Palette className="h-4 w-4 mr-2" />
-            Designers ({pendingDesigners || 0})
-          </TabsTrigger>
-          <TabsTrigger value="media">
-            <Camera className="h-4 w-4 mr-2" />
-            Media ({pendingMedia || 0})
           </TabsTrigger>
         </TabsList>
 
@@ -578,189 +524,6 @@ export default async function AdminPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="designers">
-          <Card>
-            <CardHeader>
-              <CardTitle>Designer Applications</CardTitle>
-              <CardDescription>Fashion designers wanting to partner</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {designerSignups && designerSignups.length > 0 ? (
-                <div className="space-y-4">
-                  {designerSignups.map((designer: any) => (
-                    <div
-                      key={designer.id}
-                      className="p-4 rounded-lg bg-muted/50 space-y-3"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-lg">
-                            {designer.first_name?.charAt(0).toUpperCase() || "D"}
-                          </div>
-                          <div>
-                            <p className="font-semibold text-lg">
-                              {designer.first_name} {designer.last_name}
-                            </p>
-                            <p className="text-sm text-purple-400">{designer.brand_name}</p>
-                          </div>
-                        </div>
-                        <Badge variant={designer.status === "pending" ? "secondary" : "default"}>
-                          {designer.status || "Pending"}
-                        </Badge>
-                      </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div className="flex items-center gap-2">
-                          <Mail className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-muted-foreground truncate">{designer.email}</span>
-                        </div>
-                        {designer.city && designer.state && (
-                          <div className="text-muted-foreground">
-                            {designer.city}, {designer.state}
-                          </div>
-                        )}
-                        {designer.specialization && (
-                          <div className="flex items-center gap-2">
-                            <Palette className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-muted-foreground">{designer.specialization}</span>
-                          </div>
-                        )}
-                        {designer.years_experience && (
-                          <div className="text-muted-foreground">
-                            Experience: {designer.years_experience} years
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {designer.website_url && (
-                          <a href={designer.website_url} target="_blank" rel="noopener noreferrer" className="text-xs px-2 py-1 rounded bg-background/50 text-cyan-500 hover:underline flex items-center gap-1">
-                            <Globe className="h-3 w-3" /> Website
-                          </a>
-                        )}
-                        {designer.instagram_url && (
-                          <a href={designer.instagram_url} target="_blank" rel="noopener noreferrer" className="text-xs px-2 py-1 rounded bg-background/50 text-pink-500 hover:underline flex items-center gap-1">
-                            <Instagram className="h-3 w-3" /> Instagram
-                          </a>
-                        )}
-                        {designer.portfolio_url && (
-                          <a href={designer.portfolio_url} target="_blank" rel="noopener noreferrer" className="text-xs px-2 py-1 rounded bg-background/50 text-purple-500 hover:underline flex items-center gap-1">
-                            <Palette className="h-3 w-3" /> Portfolio
-                          </a>
-                        )}
-                      </div>
-                      <div className="flex items-center justify-between pt-2">
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(designer.created_at).toLocaleDateString()}
-                        </span>
-                        <ApproveRejectButtons id={designer.id} type="designer" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Palette className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  No designer applications yet
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="media">
-          <Card>
-            <CardHeader>
-              <CardTitle>Media Professional Applications</CardTitle>
-              <CardDescription>Photographers and videographers</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {mediaSignups && mediaSignups.length > 0 ? (
-                <div className="space-y-4">
-                  {mediaSignups.map((media: any) => (
-                    <div
-                      key={media.id}
-                      className="p-4 rounded-lg bg-muted/50 space-y-3"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center text-white font-bold text-lg">
-                            {media.first_name?.charAt(0).toUpperCase() || "M"}
-                          </div>
-                          <div>
-                            <p className="font-semibold text-lg">
-                              {media.first_name} {media.last_name}
-                            </p>
-                            <p className="text-sm text-yellow-500 capitalize">
-                              {media.media_type?.replace(/_/g, " ")}
-                            </p>
-                          </div>
-                        </div>
-                        <Badge variant={media.status === "pending" ? "secondary" : "default"}>
-                          {media.status || "Pending"}
-                        </Badge>
-                      </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div className="flex items-center gap-2">
-                          <Mail className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-muted-foreground truncate">{media.email}</span>
-                        </div>
-                        {media.city && media.state && (
-                          <div className="text-muted-foreground">
-                            {media.city}, {media.state}
-                          </div>
-                        )}
-                        {media.specializations && (
-                          <div className="flex items-center gap-2">
-                            <Camera className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-muted-foreground">{media.specializations}</span>
-                          </div>
-                        )}
-                        {media.years_experience && (
-                          <div className="text-muted-foreground">
-                            Experience: {media.years_experience} years
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {media.website_url && (
-                          <a href={media.website_url} target="_blank" rel="noopener noreferrer" className="text-xs px-2 py-1 rounded bg-background/50 text-cyan-500 hover:underline flex items-center gap-1">
-                            <Globe className="h-3 w-3" /> Website
-                          </a>
-                        )}
-                        {media.instagram_url && (
-                          <a href={media.instagram_url} target="_blank" rel="noopener noreferrer" className="text-xs px-2 py-1 rounded bg-background/50 text-pink-500 hover:underline flex items-center gap-1">
-                            <Instagram className="h-3 w-3" /> Instagram
-                          </a>
-                        )}
-                        {media.portfolio_url && (
-                          <a href={media.portfolio_url} target="_blank" rel="noopener noreferrer" className="text-xs px-2 py-1 rounded bg-background/50 text-yellow-500 hover:underline flex items-center gap-1">
-                            <Camera className="h-3 w-3" /> Portfolio
-                          </a>
-                        )}
-                      </div>
-                      {media.available_for_shows && (
-                        <div className="flex items-center gap-2 text-xs text-green-500">
-                          <CheckCircle className="h-3 w-3" />
-                          Available for EXA shows
-                        </div>
-                      )}
-                      <div className="flex items-center justify-between pt-2">
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(media.created_at).toLocaleDateString()}
-                        </span>
-                        <ApproveRejectButtons id={media.id} type="media" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Camera className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  No media applications yet
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
     </div>
   );
