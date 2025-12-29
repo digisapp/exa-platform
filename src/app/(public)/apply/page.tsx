@@ -109,39 +109,12 @@ export default function ApplyPage() {
     );
   }
 
-  // Not logged in
+  // Not logged in - redirect to signup
   if (!isLoggedIn) {
+    router.push("/signup");
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <Link href="/" className="flex justify-center mb-4">
-              <Image
-                src="/exa-logo-white.png"
-                alt="EXA"
-                width={100}
-                height={40}
-                className="h-10 w-auto"
-              />
-            </Link>
-            <CardTitle>Become a Model</CardTitle>
-            <CardDescription>
-              Sign in or create an account to apply
-            </CardDescription>
-          </CardHeader>
-          <CardFooter className="flex flex-col gap-3">
-            <Button asChild className="w-full exa-gradient-button">
-              <Link href="/signin">Sign In</Link>
-            </Button>
-            <Button asChild variant="outline" className="w-full">
-              <Link href="/signup">Create Account</Link>
-            </Button>
-            <Link href="/" className="flex items-center justify-center text-sm text-muted-foreground hover:text-primary transition-colors mt-2">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to home
-            </Link>
-          </CardFooter>
-        </Card>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }

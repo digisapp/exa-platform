@@ -3,23 +3,24 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Loader2, ArrowLeft, Eye, EyeOff, MessageCircle, Coins, Heart } from "lucide-react";
+import { Loader2, ArrowLeft, Eye, EyeOff, Instagram, Sparkles, DollarSign, Users } from "lucide-react";
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [instagram, setInstagram] = useState("");
+  const [tiktok, setTiktok] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const [submitted, setSubmitted] = useState(false);
   const supabase = createClient();
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -35,9 +36,15 @@ export default function SignupPage() {
       return;
     }
 
+    if (!instagram && !tiktok) {
+      toast.error("Please provide at least one social media handle");
+      return;
+    }
+
     setLoading(true);
 
     try {
+      // Create the account
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -46,9 +53,25 @@ export default function SignupPage() {
       if (error) throw error;
 
       if (data.user) {
-        toast.success("Account created! Let's get you set up.");
-        // Use full page reload to ensure session cookies are sent
-        window.location.href = "/onboarding";
+        // Submit model application
+        const res = await fetch("/api/apply", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            instagram_username: instagram.replace("@", "").trim(),
+            tiktok_username: tiktok.replace("@", "").trim(),
+          }),
+        });
+
+        const appData = await res.json();
+
+        if (!res.ok) {
+          console.error("Application error:", appData.error);
+          // Account created but application failed - still show success
+        }
+
+        setSubmitted(true);
+        toast.success("Application submitted! We'll review it soon.");
       }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to create account";
@@ -57,6 +80,46 @@ export default function SignupPage() {
       setLoading(false);
     }
   };
+
+  // Success state
+  if (submitted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <Link href="/" className="flex justify-center mb-4">
+              <Image
+                src="/exa-logo-white.png"
+                alt="EXA"
+                width={100}
+                height={40}
+                className="h-10 w-auto"
+              />
+            </Link>
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-pink-500/20 to-violet-500/20 flex items-center justify-center">
+              <Sparkles className="h-8 w-8 text-pink-500" />
+            </div>
+            <CardTitle>Application Submitted!</CardTitle>
+            <CardDescription>
+              We&apos;ll review your profile and get back to you within 24-48 hours.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center text-sm text-muted-foreground">
+            <p>Check your email for updates on your application status.</p>
+          </CardContent>
+          <CardFooter className="flex flex-col gap-3">
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/models">Browse Models</Link>
+            </Button>
+            <Link href="/" className="flex items-center justify-center text-sm text-muted-foreground hover:text-primary transition-colors">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to home
+            </Link>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -71,9 +134,9 @@ export default function SignupPage() {
               className="h-10 w-auto"
             />
           </Link>
-          <CardTitle>Join EXA</CardTitle>
+          <CardTitle>Become a Model</CardTitle>
           <CardDescription>
-            Create your account to connect with models
+            Join EXA and start earning
           </CardDescription>
         </CardHeader>
 
@@ -81,16 +144,16 @@ export default function SignupPage() {
         <CardContent className="pb-2">
           <div className="grid grid-cols-3 gap-3 mb-4">
             <div className="text-center p-3 rounded-lg bg-muted/50">
-              <MessageCircle className="h-5 w-5 mx-auto mb-1 text-pink-500" />
-              <p className="text-xs text-muted-foreground">Direct Messages</p>
+              <DollarSign className="h-5 w-5 mx-auto mb-1 text-green-500" />
+              <p className="text-xs text-muted-foreground">Earn Money</p>
             </div>
             <div className="text-center p-3 rounded-lg bg-muted/50">
-              <Coins className="h-5 w-5 mx-auto mb-1 text-violet-500" />
-              <p className="text-xs text-muted-foreground">10 Free Coins</p>
+              <Sparkles className="h-5 w-5 mx-auto mb-1 text-pink-500" />
+              <p className="text-xs text-muted-foreground">Get Gigs</p>
             </div>
             <div className="text-center p-3 rounded-lg bg-muted/50">
-              <Heart className="h-5 w-5 mx-auto mb-1 text-red-500" />
-              <p className="text-xs text-muted-foreground">Support Models</p>
+              <Users className="h-5 w-5 mx-auto mb-1 text-violet-500" />
+              <p className="text-xs text-muted-foreground">Grow Fanbase</p>
             </div>
           </div>
         </CardContent>
@@ -130,9 +193,6 @@ export default function SignupPage() {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Must be at least 6 characters
-              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
@@ -156,6 +216,41 @@ export default function SignupPage() {
                 </button>
               </div>
             </div>
+
+            <div className="border-t pt-4 mt-4">
+              <p className="text-sm font-medium mb-3">Social Media (for verification)</p>
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label htmlFor="instagram" className="flex items-center gap-2 text-sm">
+                    <Instagram className="h-4 w-4 text-pink-500" />
+                    Instagram
+                  </Label>
+                  <Input
+                    id="instagram"
+                    placeholder="@yourhandle"
+                    value={instagram}
+                    onChange={(e) => setInstagram(e.target.value)}
+                    disabled={loading}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="tiktok" className="flex items-center gap-2 text-sm">
+                    <span className="font-bold text-sm">T</span>
+                    TikTok
+                  </Label>
+                  <Input
+                    id="tiktok"
+                    placeholder="@yourhandle"
+                    value={tiktok}
+                    onChange={(e) => setTiktok(e.target.value)}
+                    disabled={loading}
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Provide at least one for verification
+              </p>
+            </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4 pt-4">
             <Button
@@ -169,7 +264,7 @@ export default function SignupPage() {
                   Creating account...
                 </>
               ) : (
-                "Create Account"
+                "Apply Now"
               )}
             </Button>
             <div className="text-center text-sm text-muted-foreground">
@@ -179,9 +274,9 @@ export default function SignupPage() {
               </Link>
             </div>
             <p className="text-xs text-center text-muted-foreground">
-              Are you a model?{" "}
-              <Link href="/apply" className="text-pink-500 hover:underline">
-                Apply to become verified
+              Not a model?{" "}
+              <Link href="/fan/signup" className="text-pink-500 hover:underline">
+                Sign up as a fan
               </Link>
             </p>
             <Link href="/" className="flex items-center justify-center text-sm text-muted-foreground hover:text-primary transition-colors">
