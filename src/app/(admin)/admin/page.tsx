@@ -5,8 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ApproveRejectButtons, ModelApprovalButton, ConvertToFanButton } from "@/components/admin/AdminActions";
-import { AdminSearch } from "@/components/admin/AdminSearch";
+import { ApproveRejectButtons } from "@/components/admin/AdminActions";
 import {
   Users,
   Sparkles,
@@ -83,13 +82,6 @@ export default async function AdminPage() {
     .order("applied_at", { ascending: false })
     .limit(10);
 
-  // Get recent models
-  const { data: recentModels } = await supabase
-    .from("models")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(10);
-
   // Get brand inquiries
   const { data: brandInquiries } = await (supabase
     .from("brands") as any)
@@ -144,13 +136,6 @@ export default async function AdminPage() {
   const { count: totalFans } = await supabase
     .from("fans")
     .select("*", { count: "exact", head: true });
-
-  // Get recent fans for the Fans tab
-  const { data: recentFans } = await supabase
-    .from("fans")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(50) as { data: { id: string; user_id: string; display_name: string | null; email: string | null; coin_balance: number; created_at: string }[] | null };
 
   const { data: modelBalances } = await supabase
     .from("models")
@@ -384,14 +369,6 @@ export default async function AdminPage() {
           <TabsTrigger value="applications">
             <Clock className="h-4 w-4 mr-2" />
             Gig Apps ({pendingApplications})
-          </TabsTrigger>
-          <TabsTrigger value="models">
-            <Users className="h-4 w-4 mr-2" />
-            Models
-          </TabsTrigger>
-          <TabsTrigger value="fans">
-            <Heart className="h-4 w-4 mr-2" />
-            Fans ({totalFans || 0})
           </TabsTrigger>
           <TabsTrigger value="brands">
             <Building2 className="h-4 w-4 mr-2" />
@@ -694,125 +671,6 @@ export default async function AdminPage() {
                   No pending applications
                 </div>
               )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="models">
-          <Card>
-            <CardHeader>
-              <CardTitle>Models</CardTitle>
-              <CardDescription>Search and manage models</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <AdminSearch type="models" placeholder="Search by name, username, or email..." />
-              <div className="border-t pt-4">
-                <h4 className="text-sm font-medium mb-4 text-muted-foreground">Recent Models</h4>
-              {recentModels && recentModels.length > 0 ? (
-                <div className="space-y-4">
-                  {recentModels.map((model: any) => (
-                    <div
-                      key={model.id}
-                      className="flex items-center justify-between p-4 rounded-lg bg-muted/50"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center text-white font-bold">
-                          {model.first_name?.charAt(0) || model.username?.charAt(0)?.toUpperCase() || "?"}
-                        </div>
-                        <div>
-                          <p className="font-medium">
-                            {model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            @{model.username} • {model.city}, {model.state}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <Badge variant={model.is_approved ? "default" : "secondary"}>
-                          {model.is_approved ? "Approved" : "Pending"}
-                        </Badge>
-                        <span className="text-sm text-muted-foreground">
-                          {model.points_cached} pts
-                        </span>
-                        <Button size="sm" variant="outline" asChild>
-                          <Link href={`/${model.username}`}>View</Link>
-                        </Button>
-                        <ModelApprovalButton id={model.id} isApproved={model.is_approved} />
-                        <ConvertToFanButton
-                          id={model.id}
-                          modelName={model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  No models yet
-                </div>
-              )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="fans">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>Fans</span>
-                <span className="text-sm font-normal text-muted-foreground">
-                  Goal: 1,000,000 fans
-                </span>
-              </CardTitle>
-              <CardDescription>
-                {totalFans?.toLocaleString() || 0} total fans on the platform
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <AdminSearch type="fans" placeholder="Search by name or email..." />
-              <div className="border-t pt-4">
-                <h4 className="text-sm font-medium mb-4 text-muted-foreground">Recent Fans</h4>
-              {recentFans && recentFans.length > 0 ? (
-                <div className="space-y-3">
-                  {recentFans.map((fan: any) => (
-                    <div
-                      key={fan.id}
-                      className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500/50 to-violet-500/50 flex items-center justify-center text-white font-bold">
-                          {(fan.display_name || fan.email || "F")?.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="font-medium">
-                            {fan.display_name || "Fan"}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {fan.email}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-1 text-yellow-500">
-                          <Coins className="h-4 w-4" />
-                          <span className="font-semibold">{fan.coin_balance || 0}</span>
-                        </div>
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(fan.created_at).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Heart className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  No fans yet
-                </div>
-              )}
-              </div>
             </CardContent>
           </Card>
         </TabsContent>
