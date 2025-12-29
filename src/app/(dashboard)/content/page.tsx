@@ -248,10 +248,7 @@ export default function ContentPage() {
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Images className="h-8 w-8 text-pink-500" />
-            Content
-          </h1>
+          <h1 className="text-3xl font-bold">Content</h1>
         </div>
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
