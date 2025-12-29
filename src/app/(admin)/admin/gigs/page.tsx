@@ -388,7 +388,6 @@ export default function AdminGigsPage() {
           </Button>
           <div>
             <h1 className="text-3xl font-bold">Manage Gigs</h1>
-            <p className="text-muted-foreground">Create and manage opportunities for models</p>
           </div>
         </div>
         <Button onClick={() => { resetForm(); setShowForm(true); }}>
