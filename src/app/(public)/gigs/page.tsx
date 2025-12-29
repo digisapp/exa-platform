@@ -25,6 +25,7 @@ import { formatDistanceToNow } from "date-fns";
 
 const typeIcons: Record<string, any> = {
   show: Star,
+  photoshoot: Camera,
   travel: Plane,
   campaign: Camera,
   content: Camera,
@@ -35,6 +36,7 @@ const typeIcons: Record<string, any> = {
 
 const typeColors: Record<string, string> = {
   show: "bg-pink-500/10 text-pink-500 border-pink-500/20",
+  photoshoot: "bg-purple-500/10 text-purple-500 border-purple-500/20",
   travel: "bg-violet-500/10 text-violet-500 border-violet-500/20",
   campaign: "bg-blue-500/10 text-blue-500 border-blue-500/20",
   content: "bg-green-500/10 text-green-500 border-green-500/20",
@@ -124,6 +126,7 @@ export default async function OpportunitiesPage() {
 
   // Group by type
   const shows = opportunities?.filter((o) => o.type === "show") || [];
+  const photoshoots = opportunities?.filter((o) => o.type === "photoshoot") || [];
   const travel = opportunities?.filter((o) => o.type === "travel") || [];
   const campaigns = opportunities?.filter((o) => ["campaign", "content"].includes(o.type)) || [];
   const fun = opportunities?.filter((o) => o.type === "fun") || [];
@@ -162,6 +165,7 @@ export default async function OpportunitiesPage() {
           <TabsList className="flex-wrap">
             <TabsTrigger value="all">All ({opportunities?.length || 0})</TabsTrigger>
             <TabsTrigger value="shows">Shows ({shows.length})</TabsTrigger>
+            <TabsTrigger value="photoshoots">Photoshoots ({photoshoots.length})</TabsTrigger>
             <TabsTrigger value="travel">Travel ({travel.length})</TabsTrigger>
             <TabsTrigger value="campaigns">Campaigns ({campaigns.length})</TabsTrigger>
             <TabsTrigger value="fun">Fun ({fun.length})</TabsTrigger>
@@ -179,6 +183,10 @@ export default async function OpportunitiesPage() {
 
           <TabsContent value="shows" className="space-y-6">
             <OpportunityGrid opportunities={shows} />
+          </TabsContent>
+
+          <TabsContent value="photoshoots" className="space-y-6">
+            <OpportunityGrid opportunities={photoshoots} />
           </TabsContent>
 
           <TabsContent value="travel" className="space-y-6">
