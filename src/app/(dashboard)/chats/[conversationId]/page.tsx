@@ -67,7 +67,7 @@ export default async function ChatPage({ params }: PageProps) {
 
   if (!participation) {
     // Not a participant - redirect to messages
-    redirect("/messages");
+    redirect("/chats");
   }
 
   // Get messages
@@ -117,7 +117,7 @@ export default async function ChatPage({ params }: PageProps) {
   }
 
   if (!otherParticipant) {
-    redirect("/messages");
+    redirect("/chats");
   }
 
   return (

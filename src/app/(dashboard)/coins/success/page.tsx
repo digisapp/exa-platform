@@ -103,7 +103,7 @@ export default function CoinSuccessPage() {
               {/* Actions */}
               <div className="flex flex-col gap-3 pt-4">
                 <Button asChild className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600">
-                  <Link href="/messages">
+                  <Link href="/chats">
                     <MessageCircle className="mr-2 h-4 w-4" />
                     Start Messaging
                   </Link>

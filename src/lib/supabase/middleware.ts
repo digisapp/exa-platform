@@ -5,7 +5,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 const PROTECTED_PATHS = [
   '/dashboard',
   '/profile',
-  '/messages',
+  '/chats',
   '/settings',
   '/admin',
   '/content',

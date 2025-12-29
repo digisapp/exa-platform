@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
       ],
       mode: "payment",
       success_url: `${baseUrl}/coins/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/messages`,
+      cancel_url: `${baseUrl}/chats`,
       metadata: {
         actor_id: actor.id,
         coins: coinPackage.coins.toString(),

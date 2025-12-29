@@ -104,7 +104,7 @@ export function NewMessageDialog({
 
       setOpen(false);
       toast.success("Message sent!");
-      router.push(`/messages/${data.conversationId}`);
+      router.push(`/chats/${data.conversationId}`);
     } catch (error) {
       toast.error("Failed to send message");
     } finally {

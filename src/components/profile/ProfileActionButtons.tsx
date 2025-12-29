@@ -55,7 +55,7 @@ export function ProfileActionButtons({
     if (messageRate > 0) {
       setShowChatConfirm(true);
     } else {
-      window.location.href = `/messages?new=${modelUsername}`;
+      window.location.href = `/chats?new=${modelUsername}`;
     }
   };
 

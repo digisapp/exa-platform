@@ -5,7 +5,6 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { MessageCircle, Search } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
@@ -28,9 +27,10 @@ interface Conversation {
 
 interface ConversationListProps {
   conversations: Conversation[];
+  actorType?: string;
 }
 
-export function ConversationList({ conversations }: ConversationListProps) {
+export function ConversationList({ conversations, actorType }: ConversationListProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredConversations = useMemo(() => {
@@ -82,7 +82,7 @@ export function ConversationList({ conversations }: ConversationListProps) {
               return (
                 <Link
                   key={conv.conversation_id}
-                  href={`/messages/${conv.conversation_id}`}
+                  href={`/chats/${conv.conversation_id}`}
                   className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors"
                 >
                   <Avatar className="h-12 w-12">
@@ -131,13 +131,13 @@ export function ConversationList({ conversations }: ConversationListProps) {
               ) : (
                 <>
                   <MessageCircle className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
-                  <h3 className="font-medium mb-1">No messages yet</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Start a conversation to connect with models
+                  <h3 className="font-medium mb-1">No chats yet</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {actorType === "model"
+                      ? "When fans or brands message you, conversations will appear here"
+                      : "Start a conversation by visiting a model's profile"
+                    }
                   </p>
-                  <Button asChild>
-                    <Link href="/models">Browse Models</Link>
-                  </Button>
                 </>
               )}
             </div>

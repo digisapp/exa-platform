@@ -257,9 +257,9 @@ async function FanBrandDashboard({
           </CardTitle>
           {favoriteModels.length > 0 && (
             <Button variant="ghost" size="sm" asChild>
-              <Link href="/messages" className={isBrand ? "text-blue-500" : "text-pink-500"}>
+              <Link href="/chats" className={isBrand ? "text-blue-500" : "text-pink-500"}>
                 <MessageCircle className="mr-1 h-4 w-4" />
-                Messages
+                Chats
               </Link>
             </Button>
           )}

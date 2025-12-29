@@ -42,26 +42,26 @@ const publicLinks: { href: string; label: string; icon: any }[] = [];
 
 const modelLinks = [
   { href: "/dashboard", label: "Home", icon: Home },
-  { href: "/messages", label: "Chats", icon: MessageCircle },
+  { href: "/chats", label: "Chats", icon: MessageCircle },
   { href: "/content", label: "Content", icon: Images },
 ];
 
 const fanLinks = [
   { href: "/dashboard", label: "Home", icon: Home },
   { href: "/models", label: "Explore", icon: Users },
-  { href: "/messages", label: "Chats", icon: MessageCircle },
+  { href: "/chats", label: "Chats", icon: MessageCircle },
 ];
 
 const brandLinks = [
   { href: "/dashboard", label: "Home", icon: Home },
   { href: "/models", label: "Explore", icon: Users },
-  { href: "/messages", label: "Chats", icon: MessageCircle },
+  { href: "/chats", label: "Chats", icon: MessageCircle },
 ];
 
 const adminLinks = [
   { href: "/admin", label: "Admin", icon: Settings },
   { href: "/dashboard", label: "Home", icon: Home },
-  { href: "/messages", label: "Chats", icon: MessageCircle },
+  { href: "/chats", label: "Chats", icon: MessageCircle },
 ];
 
 export function Navbar({ user, actorType, coinBalance = 0 }: NavbarProps) {

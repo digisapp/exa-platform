@@ -206,7 +206,7 @@ export function ChatView({
     <div className="flex flex-col h-[calc(100vh-120px)]">
       {/* Header */}
       <div className="flex items-center gap-4 p-4 border-b">
-        <Link href="/messages">
+        <Link href="/chats">
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>
