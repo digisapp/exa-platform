@@ -173,8 +173,8 @@ export function Navbar({ user, actorType, coinBalance = 0 }: NavbarProps) {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <LogoutButton className="cursor-pointer text-red-500 flex items-center w-full" />
+                  <DropdownMenuItem className="p-0">
+                    <LogoutButton className="cursor-pointer text-red-500 flex items-center w-full px-2 py-1.5" />
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
