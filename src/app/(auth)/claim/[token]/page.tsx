@@ -357,7 +357,7 @@ export default function ClaimPage() {
                   disabled={submitting}
                 />
                 {confirmPassword && password !== confirmPassword && (
-                  <p className="text-xs text-red-500">Passwords don't match</p>
+                  <p className="text-xs text-red-500">Passwords don&apos;t match</p>
                 )}
               </div>
 
