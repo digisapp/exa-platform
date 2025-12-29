@@ -194,7 +194,6 @@ export default async function AdminPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Manage models, gigs, and applications</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" asChild>
