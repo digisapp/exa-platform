@@ -36,6 +36,7 @@ interface Opportunity {
   location_city: string;
   location_state: string;
   start_at: string;
+  end_at: string;
   compensation_type: string;
   compensation_amount: number;
   spots: number;
@@ -79,6 +80,7 @@ export default function AdminGigsPage() {
     location_city: "",
     location_state: "",
     start_at: "",
+    end_at: "",
     compensation_type: "paid",
     compensation_amount: 0,
     spots: 10,
@@ -124,6 +126,7 @@ export default function AdminGigsPage() {
       location_city: "",
       location_state: "",
       start_at: "",
+      end_at: "",
       compensation_type: "paid",
       compensation_amount: 0,
       spots: 10,
@@ -141,6 +144,7 @@ export default function AdminGigsPage() {
       location_city: gig.location_city || "",
       location_state: gig.location_state || "",
       start_at: gig.start_at ? new Date(gig.start_at).toISOString().slice(0, 16) : "",
+      end_at: gig.end_at ? new Date(gig.end_at).toISOString().slice(0, 16) : "",
       compensation_type: gig.compensation_type || "paid",
       compensation_amount: (gig.compensation_amount || 0) / 100, // Convert from cents
       spots: gig.spots || 10,
@@ -164,6 +168,7 @@ export default function AdminGigsPage() {
             location_city: formData.location_city,
             location_state: formData.location_state,
             start_at: formData.start_at || null,
+            end_at: formData.end_at || null,
             compensation_type: formData.compensation_type,
             compensation_amount: formData.compensation_amount * 100,
             spots: formData.spots,
@@ -183,11 +188,19 @@ export default function AdminGigsPage() {
         const { error } = await (supabase
           .from("opportunities") as any)
           .insert({
-            ...formData,
+            title: formData.title,
+            type: formData.type,
+            description: formData.description,
+            location_city: formData.location_city,
+            location_state: formData.location_state,
+            start_at: formData.start_at || null,
+            end_at: formData.end_at || null,
+            compensation_type: formData.compensation_type,
+            compensation_amount: formData.compensation_amount * 100,
+            spots: formData.spots,
             slug,
             status: "open",
             visibility: "public",
-            compensation_amount: formData.compensation_amount * 100,
           });
 
         if (error) throw error;
@@ -429,6 +442,7 @@ export default function AdminGigsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="show">Show</SelectItem>
+                      <SelectItem value="photoshoot">Photoshoot</SelectItem>
                       <SelectItem value="travel">Travel</SelectItem>
                       <SelectItem value="campaign">Campaign</SelectItem>
                       <SelectItem value="content">Content</SelectItem>
@@ -470,13 +484,25 @@ export default function AdminGigsPage() {
                     placeholder="FL"
                   />
                 </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="date">Date</Label>
+                  <Label htmlFor="start_date">Start Date</Label>
                   <Input
-                    id="date"
+                    id="start_date"
                     type="datetime-local"
                     value={formData.start_at}
                     onChange={(e) => setFormData({ ...formData, start_at: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="end_date">End Date</Label>
+                  <Input
+                    id="end_date"
+                    type="datetime-local"
+                    value={formData.end_at}
+                    onChange={(e) => setFormData({ ...formData, end_at: e.target.value })}
                   />
                 </div>
               </div>
@@ -493,9 +519,11 @@ export default function AdminGigsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="paid">Paid</SelectItem>
+                      <SelectItem value="content">Content</SelectItem>
                       <SelectItem value="tfp">TFP (Trade for Print)</SelectItem>
                       <SelectItem value="perks">Perks</SelectItem>
                       <SelectItem value="exposure">Exposure</SelectItem>
+                      <SelectItem value="none">None</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
