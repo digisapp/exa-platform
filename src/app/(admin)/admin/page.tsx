@@ -215,82 +215,12 @@ export default async function AdminPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-full bg-amber-500/10">
-                <Clock className="h-6 w-6 text-amber-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{pendingModels}</p>
-                <p className="text-sm text-muted-foreground">Hidden Models</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-full bg-pink-500/10">
-                <Sparkles className="h-6 w-6 text-pink-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{totalOpportunities}</p>
-                <p className="text-sm text-muted-foreground">Gigs</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
               <div className="p-3 rounded-full bg-green-500/10">
                 <Trophy className="h-6 w-6 text-green-500" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{pendingApplications}</p>
                 <p className="text-sm text-muted-foreground">Pending Apps</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-full bg-cyan-500/10">
-                <Building2 className="h-6 w-6 text-cyan-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{pendingBrands || 0}</p>
-                <p className="text-sm text-muted-foreground">Brand Inquiries</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-full bg-purple-500/10">
-                <Palette className="h-6 w-6 text-purple-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{pendingDesigners || 0}</p>
-                <p className="text-sm text-muted-foreground">Designer Apps</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-full bg-yellow-500/10">
-                <Camera className="h-6 w-6 text-yellow-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{pendingMedia || 0}</p>
-                <p className="text-sm text-muted-foreground">Media Apps</p>
               </div>
             </div>
           </CardContent>
