@@ -179,10 +179,7 @@ export default async function AdminPage() {
 
   return (
     <div className="container px-8 md:px-16 py-8 space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        </div>
+      <div className="flex items-center justify-end">
         <div className="flex gap-2">
           <Button variant="outline" asChild>
             <Link href="/admin/community">
