@@ -70,18 +70,6 @@ export default async function AdminPage() {
     .select("*", { count: "exact", head: true })
     .eq("status", "pending");
 
-  // Get recent applications
-  const { data: recentApplications } = await supabase
-    .from("opportunity_applications")
-    .select(`
-      *,
-      model:models(username, name),
-      opportunity:opportunities(title)
-    `)
-    .eq("status", "pending")
-    .order("applied_at", { ascending: false })
-    .limit(10);
-
   // Get brand inquiries
   const { data: brandInquiries } = await (supabase
     .from("brands") as any)
@@ -365,10 +353,6 @@ export default async function AdminPage() {
             <UserPlus className="h-4 w-4 mr-2" />
             Model Apps ({pendingModelApps || 0})
           </TabsTrigger>
-          <TabsTrigger value="applications">
-            <Clock className="h-4 w-4 mr-2" />
-            Gig Apps ({pendingApplications})
-          </TabsTrigger>
           <TabsTrigger value="brands">
             <Building2 className="h-4 w-4 mr-2" />
             Brands ({pendingBrands || 0})
@@ -628,46 +612,6 @@ export default async function AdminPage() {
                 <div className="text-center py-8 text-muted-foreground">
                   <UserPlus className="h-12 w-12 mx-auto mb-3 opacity-50" />
                   No pending model applications
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="applications">
-          <Card>
-            <CardHeader>
-              <CardTitle>Pending Applications</CardTitle>
-              <CardDescription>Review and approve gig applications</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {recentApplications && recentApplications.length > 0 ? (
-                <div className="space-y-4">
-                  {recentApplications.map((app: any) => (
-                    <div
-                      key={app.id}
-                      className="flex items-center justify-between p-4 rounded-lg bg-muted/50"
-                    >
-                      <div>
-                        <p className="font-medium">
-                          {app.model?.first_name ? `${app.model.first_name} ${app.model.last_name || ""}`.trim() : app.model?.username} → {app.opportunity?.title}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Applied {new Date(app.applied_at).toLocaleDateString()}
-                        </p>
-                        {app.note && (
-                          <p className="text-sm text-muted-foreground mt-1">
-                            &quot;{app.note}&quot;
-                          </p>
-                        )}
-                      </div>
-                      <ApproveRejectButtons id={app.id} type="application" />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  No pending applications
                 </div>
               )}
             </CardContent>
