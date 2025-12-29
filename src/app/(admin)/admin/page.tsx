@@ -501,52 +501,6 @@ export default async function AdminPage() {
             </CardContent>
           </Card>
 
-          {/* Quick Stats Grid */}
-          <div className="grid md:grid-cols-3 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Model Approval Rate</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-4xl font-bold text-green-500">
-                  {totalModels && totalModels > 0
-                    ? Math.round(((approvedModels || 0) / totalModels) * 100)
-                    : 0}%
-                </div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {approvedModels} approved / {totalModels} total
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Active Gigs</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-4xl font-bold text-pink-500">
-                  {totalOpportunities}
-                </div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {pendingApplications} pending applications
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Total Transactions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-4xl font-bold text-yellow-500">
-                  {recentTransactions || 0}
-                </div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  All-time coin transactions
-                </p>
-              </CardContent>
-            </Card>
-          </div>
         </TabsContent>
 
         <TabsContent value="model-apps">
