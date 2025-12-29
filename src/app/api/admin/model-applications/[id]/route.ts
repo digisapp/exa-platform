@@ -152,6 +152,83 @@ export async function PATCH(
         console.error("Failed to send approval email:", emailResult.error);
         // Don't fail the request, just log the error
       }
+
+      // Send welcome chat message from admin
+      try {
+        // Get model's actor ID
+        const { data: modelActor } = await supabase
+          .from("actors")
+          .select("id")
+          .eq("user_id", application.user_id)
+          .single() as { data: { id: string } | null };
+
+        if (modelActor) {
+          // Find existing conversation or create new one
+          let conversationId: string | null = null;
+
+          // Check for existing conversation between admin and model
+          const { data: existingConv } = await supabase
+            .from("conversation_participants")
+            .select("conversation_id")
+            .eq("actor_id", actor.id) as { data: { conversation_id: string }[] | null };
+
+          if (existingConv) {
+            for (const cp of existingConv) {
+              const { data: hasModel } = await supabase
+                .from("conversation_participants")
+                .select("actor_id")
+                .eq("conversation_id", cp.conversation_id)
+                .eq("actor_id", modelActor.id)
+                .single();
+              if (hasModel) {
+                conversationId = cp.conversation_id;
+                break;
+              }
+            }
+          }
+
+          // Create new conversation if none exists
+          if (!conversationId) {
+            const { data: newConv } = await (supabase
+              .from("conversations") as any)
+              .insert({ type: "direct" })
+              .select()
+              .single();
+
+            if (newConv) {
+              conversationId = newConv.id;
+              await (supabase.from("conversation_participants") as any).insert([
+                { conversation_id: conversationId, actor_id: actor.id },
+                { conversation_id: conversationId, actor_id: modelActor.id },
+              ]);
+            }
+          }
+
+          // Send welcome message
+          if (conversationId) {
+            const welcomeMessage = `Welcome to EXA, ${application.display_name || "Model"}! 🎉
+
+Your profile has been approved and you're now part of our community.
+
+Here's how to get started:
+• Complete your profile with photos and bio
+• Browse and apply to gigs
+• Connect with other models and brands
+
+If you have any questions, feel free to message us here. We're excited to have you!`;
+
+            await (supabase.from("messages") as any).insert({
+              conversation_id: conversationId,
+              sender_id: actor.id,
+              content: welcomeMessage,
+              is_system: false,
+            });
+          }
+        }
+      } catch (chatError) {
+        console.error("Failed to send welcome chat message:", chatError);
+        // Don't fail the request, just log the error
+      }
     } else if (status === "rejected") {
       // Send rejection email
       const emailResult = await sendModelRejectionEmail({
