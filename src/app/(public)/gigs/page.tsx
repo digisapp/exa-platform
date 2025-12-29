@@ -91,7 +91,7 @@ export default async function OpportunitiesPage() {
         .select(`
           id,
           status,
-          created_at,
+          applied_at,
           opportunity:opportunities (
             id,
             slug,
@@ -109,7 +109,7 @@ export default async function OpportunitiesPage() {
           )
         `)
         .eq("model_id", model.id)
-        .order("created_at", { ascending: false });
+        .order("applied_at", { ascending: false });
       myApplications = applications || [];
     }
   }
@@ -445,7 +445,7 @@ function ApplicationCard({ application }: { application: any }) {
           )}
           <div className="flex items-center gap-2 text-muted-foreground">
             <Clock className="h-4 w-4" />
-            Applied {formatDistanceToNow(new Date(application.created_at), { addSuffix: true })}
+            Applied {formatDistanceToNow(new Date(application.applied_at), { addSuffix: true })}
           </div>
         </div>
       </CardContent>
