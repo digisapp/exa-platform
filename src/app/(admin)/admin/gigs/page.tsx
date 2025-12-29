@@ -2,29 +2,28 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
   Loader2,
   Plus,
   Sparkles,
-  Calendar,
   MapPin,
-  DollarSign,
   Users,
   Eye,
   CheckCircle,
   XCircle,
-  Clock,
   ArrowLeft,
+  Pencil,
+  Trash2,
+  ToggleLeft,
+  ToggleRight,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -64,11 +63,12 @@ export default function AdminGigsPage() {
   const [gigs, setGigs] = useState<Opportunity[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
-  const [creating, setCreating] = useState(false);
-  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [editingGig, setEditingGig] = useState<Opportunity | null>(null);
   const [selectedGig, setSelectedGig] = useState<string | null>(null);
   const [processingApp, setProcessingApp] = useState<string | null>(null);
-  const router = useRouter();
+  const [processingGig, setProcessingGig] = useState<string | null>(null);
   const supabase = createClient();
 
   // Form state
@@ -116,49 +116,147 @@ export default function AdminGigsPage() {
     setApplications(data || []);
   }
 
-  async function handleCreate(e: React.FormEvent) {
+  function resetForm() {
+    setFormData({
+      title: "",
+      type: "show",
+      description: "",
+      location_city: "",
+      location_state: "",
+      start_at: "",
+      compensation_type: "paid",
+      compensation_amount: 0,
+      spots: 10,
+    });
+    setEditingGig(null);
+    setShowForm(false);
+  }
+
+  function openEditForm(gig: Opportunity) {
+    setEditingGig(gig);
+    setFormData({
+      title: gig.title,
+      type: gig.type,
+      description: gig.description || "",
+      location_city: gig.location_city || "",
+      location_state: gig.location_state || "",
+      start_at: gig.start_at ? new Date(gig.start_at).toISOString().slice(0, 16) : "",
+      compensation_type: gig.compensation_type || "paid",
+      compensation_amount: (gig.compensation_amount || 0) / 100, // Convert from cents
+      spots: gig.spots || 10,
+    });
+    setShowForm(true);
+  }
+
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    setCreating(true);
+    setSaving(true);
 
     try {
-      // Generate slug from title
-      const slug = formData.title
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)/g, "") +
-        "-" + Date.now().toString(36);
+      if (editingGig) {
+        // Update existing gig
+        const { error } = await (supabase
+          .from("opportunities") as any)
+          .update({
+            title: formData.title,
+            type: formData.type,
+            description: formData.description,
+            location_city: formData.location_city,
+            location_state: formData.location_state,
+            start_at: formData.start_at || null,
+            compensation_type: formData.compensation_type,
+            compensation_amount: formData.compensation_amount * 100,
+            spots: formData.spots,
+          })
+          .eq("id", editingGig.id);
 
+        if (error) throw error;
+        toast.success("Gig updated successfully!");
+      } else {
+        // Create new gig
+        const slug = formData.title
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-|-$)/g, "") +
+          "-" + Date.now().toString(36);
+
+        const { error } = await (supabase
+          .from("opportunities") as any)
+          .insert({
+            ...formData,
+            slug,
+            status: "open",
+            visibility: "public",
+            compensation_amount: formData.compensation_amount * 100,
+          });
+
+        if (error) throw error;
+        toast.success("Gig created successfully!");
+      }
+
+      resetForm();
+      loadGigs();
+    } catch (error) {
+      console.error("Error saving gig:", error);
+      toast.error(editingGig ? "Failed to update gig" : "Failed to create gig");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDeleteGig(gigId: string) {
+    if (!confirm("Are you sure you want to delete this gig? This cannot be undone.")) {
+      return;
+    }
+
+    setProcessingGig(gigId);
+    try {
+      // First delete any applications
+      await (supabase.from("opportunity_applications") as any)
+        .delete()
+        .eq("opportunity_id", gigId);
+
+      // Then delete the gig
       const { error } = await (supabase
         .from("opportunities") as any)
-        .insert({
-          ...formData,
-          slug,
-          status: "open",
-          visibility: "public",
-          compensation_amount: formData.compensation_amount * 100, // Convert to cents
-        });
+        .delete()
+        .eq("id", gigId);
 
       if (error) throw error;
 
-      toast.success("Gig created successfully!");
-      setShowCreateForm(false);
-      setFormData({
-        title: "",
-        type: "show",
-        description: "",
-        location_city: "",
-        location_state: "",
-        start_at: "",
-        compensation_type: "paid",
-        compensation_amount: 0,
-        spots: 10,
-      });
+      toast.success("Gig deleted");
+      if (selectedGig === gigId) {
+        setSelectedGig(null);
+        setApplications([]);
+      }
       loadGigs();
     } catch (error) {
-      console.error("Error creating gig:", error);
-      toast.error("Failed to create gig");
+      console.error("Error deleting gig:", error);
+      toast.error("Failed to delete gig");
     } finally {
-      setCreating(false);
+      setProcessingGig(null);
+    }
+  }
+
+  async function handleToggleStatus(gig: Opportunity) {
+    const newStatus = gig.status === "open" ? "closed" : "open";
+    setProcessingGig(gig.id);
+
+    try {
+      const { error } = await (supabase
+        .from("opportunities") as any)
+        .update({ status: newStatus })
+        .eq("id", gig.id);
+
+      if (error) throw error;
+
+      toast.success(`Gig ${newStatus === "open" ? "reopened" : "closed"}`);
+      loadGigs();
+    } catch (error) {
+      console.error("Error updating gig status:", error);
+      toast.error("Failed to update gig status");
+    } finally {
+      setProcessingGig(null);
     }
   }
 
@@ -179,8 +277,8 @@ export default function AdminGigsPage() {
 
       if (error) throw error;
 
-      // If accepted, send notification via chat
-      if (action === "accepted" && app.model) {
+      // Send notification via chat for both accept and decline
+      if (app.model) {
         const gig = gigs.find(g => g.id === app.opportunity_id);
 
         // Get admin's actor id
@@ -192,13 +290,19 @@ export default function AdminGigsPage() {
             .eq("user_id", user.id)
             .single() as { data: { id: string } | null };
 
-          // Get model's actor id
-          const { data: modelActor } = await supabase
+          // Get model's actor id - use user_id from model record
+          const { data: modelRecord } = await supabase
+            .from("models")
+            .select("user_id")
+            .eq("id", app.model.id)
+            .single() as { data: { user_id: string } | null };
+
+          const { data: modelActor } = modelRecord ? await supabase
             .from("actors")
             .select("id")
-            .eq("user_id", app.model.id)
+            .eq("user_id", modelRecord.user_id)
             .eq("type", "model")
-            .single() as { data: { id: string } | null };
+            .single() as { data: { id: string } | null } : { data: null };
 
           if (adminActor && modelActor) {
             // Create or get conversation
@@ -240,10 +344,14 @@ export default function AdminGigsPage() {
             }
 
             if (conversationId) {
+              const message = action === "accepted"
+                ? `Congratulations! You've been accepted for "${gig?.title || "a gig"}". We'll be in touch with more details soon!`
+                : `Thank you for your interest in "${gig?.title || "a gig"}". Unfortunately, we weren't able to accept your application at this time. We encourage you to apply for future opportunities!`;
+
               await (supabase.from("messages") as any).insert({
                 conversation_id: conversationId,
                 sender_id: adminActor.id,
-                content: `Congratulations! You've been accepted for "${gig?.title || "a gig"}". We'll be in touch with more details soon!`,
+                content: message,
                 is_system: false,
               });
             }
@@ -251,7 +359,7 @@ export default function AdminGigsPage() {
         }
       }
 
-      toast.success(action === "accepted" ? "Model accepted!" : "Application declined");
+      toast.success(action === "accepted" ? "Model accepted and notified!" : "Application declined and model notified");
       loadApplications(app.opportunity_id);
     } catch (error) {
       console.error("Error updating application:", error);
@@ -283,21 +391,23 @@ export default function AdminGigsPage() {
             <p className="text-muted-foreground">Create and manage opportunities for models</p>
           </div>
         </div>
-        <Button onClick={() => setShowCreateForm(!showCreateForm)}>
+        <Button onClick={() => { resetForm(); setShowForm(true); }}>
           <Plus className="h-4 w-4 mr-2" />
           Create Gig
         </Button>
       </div>
 
-      {/* Create Form */}
-      {showCreateForm && (
+      {/* Create/Edit Form */}
+      {showForm && (
         <Card>
           <CardHeader>
-            <CardTitle>Create New Gig</CardTitle>
-            <CardDescription>Fill in the details for the new opportunity</CardDescription>
+            <CardTitle>{editingGig ? "Edit Gig" : "Create New Gig"}</CardTitle>
+            <CardDescription>
+              {editingGig ? "Update the details for this opportunity" : "Fill in the details for the new opportunity"}
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleCreate} className="space-y-4">
+            <form onSubmit={handleSave} className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="title">Title</Label>
@@ -414,12 +524,12 @@ export default function AdminGigsPage() {
               </div>
 
               <div className="flex gap-2 justify-end">
-                <Button type="button" variant="outline" onClick={() => setShowCreateForm(false)}>
+                <Button type="button" variant="outline" onClick={resetForm}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={creating}>
-                  {creating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  Create Gig
+                <Button type="submit" disabled={saving}>
+                  {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  {editingGig ? "Update Gig" : "Create Gig"}
                 </Button>
               </div>
             </form>
@@ -447,38 +557,90 @@ export default function AdminGigsPage() {
               gigs.map((gig) => (
                 <div
                   key={gig.id}
-                  onClick={() => setSelectedGig(gig.id)}
-                  className={`p-4 rounded-lg border cursor-pointer transition-colors ${
+                  className={`p-4 rounded-lg border transition-colors ${
                     selectedGig === gig.id
                       ? "border-pink-500 bg-pink-500/10"
                       : "hover:border-muted-foreground/50"
                   }`}
                 >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="font-medium">{gig.title}</h3>
-                      <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-                        <Badge variant="outline" className="capitalize">{gig.type}</Badge>
-                        <Badge variant={gig.status === "open" ? "default" : "secondary"}>
-                          {gig.status}
-                        </Badge>
+                  <div
+                    className="cursor-pointer"
+                    onClick={() => setSelectedGig(gig.id)}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="font-medium">{gig.title}</h3>
+                        <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
+                          <Badge variant="outline" className="capitalize">{gig.type}</Badge>
+                          <Badge
+                            variant={gig.status === "open" ? "default" : "secondary"}
+                            className={gig.status === "open" ? "bg-green-500" : ""}
+                          >
+                            {gig.status}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className="text-right text-sm">
+                        <p className="font-medium">{gig.spots_filled || 0}/{gig.spots} spots</p>
+                        {gig.start_at && (
+                          <p className="text-muted-foreground">
+                            {new Date(gig.start_at).toLocaleDateString()}
+                          </p>
+                        )}
                       </div>
                     </div>
-                    <div className="text-right text-sm">
-                      <p className="font-medium">{gig.spots_filled || 0}/{gig.spots} spots</p>
-                      {gig.start_at && (
-                        <p className="text-muted-foreground">
-                          {new Date(gig.start_at).toLocaleDateString()}
-                        </p>
-                      )}
-                    </div>
+                    {(gig.location_city || gig.location_state) && (
+                      <div className="flex items-center gap-1 mt-2 text-sm text-muted-foreground">
+                        <MapPin className="h-3 w-3" />
+                        {gig.location_city}, {gig.location_state}
+                      </div>
+                    )}
                   </div>
-                  {(gig.location_city || gig.location_state) && (
-                    <div className="flex items-center gap-1 mt-2 text-sm text-muted-foreground">
-                      <MapPin className="h-3 w-3" />
-                      {gig.location_city}, {gig.location_state}
-                    </div>
-                  )}
+                  {/* Action buttons */}
+                  <div className="flex items-center gap-2 mt-3 pt-3 border-t">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => { e.stopPropagation(); openEditForm(gig); }}
+                      disabled={processingGig === gig.id}
+                    >
+                      <Pencil className="h-3 w-3 mr-1" />
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => { e.stopPropagation(); handleToggleStatus(gig); }}
+                      disabled={processingGig === gig.id}
+                    >
+                      {processingGig === gig.id ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : gig.status === "open" ? (
+                        <>
+                          <ToggleRight className="h-3 w-3 mr-1" />
+                          Close
+                        </>
+                      ) : (
+                        <>
+                          <ToggleLeft className="h-3 w-3 mr-1" />
+                          Reopen
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-red-500 hover:text-red-600 hover:bg-red-500/10 ml-auto"
+                      onClick={(e) => { e.stopPropagation(); handleDeleteGig(gig.id); }}
+                      disabled={processingGig === gig.id}
+                    >
+                      {processingGig === gig.id ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-3 w-3" />
+                      )}
+                    </Button>
+                  </div>
                 </div>
               ))
             )}
