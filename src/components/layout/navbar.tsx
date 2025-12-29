@@ -59,8 +59,7 @@ const brandLinks = [
 ];
 
 const adminLinks = [
-  { href: "/admin", label: "Admin", icon: Settings },
-  { href: "/dashboard", label: "Home", icon: Home },
+  { href: "/admin", label: "Home", icon: Home },
   { href: "/chats", label: "Chats", icon: MessageCircle },
 ];
 
