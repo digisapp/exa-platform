@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import Image from "next/image";
@@ -39,6 +39,8 @@ import {
   Check,
   Clock,
   UserCheck,
+  Mail,
+  Send,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ModelActionsDropdown, FanActionsDropdown } from "@/components/admin/AdminActions";
@@ -194,6 +196,15 @@ export default function AdminCommunityPage() {
     activeFans: 0,
   });
 
+  // Invite stats
+  const [inviteStats, setInviteStats] = useState({
+    pending: 0,
+    invited: 0,
+    claimed: 0,
+  });
+  const [sendingInvites, setSendingInvites] = useState(false);
+  const [inviteProgress, setInviteProgress] = useState({ sent: 0, total: 0 });
+
   // Models state
   const [models, setModels] = useState<Model[]>([]);
   const [modelsLoading, setModelsLoading] = useState(true);
@@ -240,6 +251,79 @@ export default function AdminCommunityPage() {
       activeFans: activeFans || 0,
     });
   }, [supabase]);
+
+  // Load invite stats
+  const loadInviteStats = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/invites/send");
+      if (res.ok) {
+        const data = await res.json();
+        setInviteStats(data);
+      }
+    } catch (error) {
+      console.error("Failed to load invite stats:", error);
+    }
+  }, []);
+
+  // Send bulk invites
+  const sendBulkInvites = async () => {
+    if (sendingInvites) return;
+
+    if (inviteStats.pending === 0) {
+      toast.info("No pending invites to send");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Send invite emails to ${inviteStats.pending} models?\n\n` +
+      `This will send up to 100 emails at a time. You may need to run this multiple times for large batches.`
+    );
+
+    if (!confirmed) return;
+
+    setSendingInvites(true);
+    setInviteProgress({ sent: 0, total: inviteStats.pending });
+
+    try {
+      let totalSent = 0;
+      let hasMore = true;
+
+      while (hasMore) {
+        const res = await fetch("/api/admin/invites/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sendAll: true }),
+        });
+
+        if (!res.ok) throw new Error("Failed to send invites");
+
+        const data = await res.json();
+        totalSent += data.sent;
+        setInviteProgress({ sent: totalSent, total: inviteStats.pending });
+
+        hasMore = data.hasMore;
+
+        if (data.failed > 0) {
+          console.warn(`${data.failed} emails failed to send`);
+        }
+
+        // Stop if we've sent too many to avoid long-running requests
+        if (totalSent >= 500) {
+          toast.info(`Sent ${totalSent} invites. Run again to continue.`);
+          break;
+        }
+      }
+
+      toast.success(`Successfully sent ${totalSent} invite emails!`);
+      await loadInviteStats();
+      await loadModels();
+    } catch (error) {
+      console.error("Failed to send invites:", error);
+      toast.error("Failed to send invites");
+    } finally {
+      setSendingInvites(false);
+    }
+  };
 
   // Load models
   const loadModels = useCallback(async () => {
@@ -401,6 +485,7 @@ export default function AdminCommunityPage() {
 
   useEffect(() => {
     void loadStats();
+    void loadInviteStats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -511,6 +596,56 @@ export default function AdminCommunityPage() {
 
         {/* Models Tab */}
         <TabsContent value="models" className="space-y-6">
+          {/* Invite Stats & Send Button */}
+          {inviteStats.pending > 0 && (
+            <Card className="border-amber-500/50 bg-amber-500/5">
+              <CardContent className="pt-6">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-5 w-5 text-amber-500" />
+                      <div>
+                        <p className="text-2xl font-bold">{inviteStats.pending.toLocaleString()}</p>
+                        <p className="text-xs text-muted-foreground">Pending Invites</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Send className="h-5 w-5 text-blue-500" />
+                      <div>
+                        <p className="text-2xl font-bold">{inviteStats.invited.toLocaleString()}</p>
+                        <p className="text-xs text-muted-foreground">Emails Sent</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <UserCheck className="h-5 w-5 text-green-500" />
+                      <div>
+                        <p className="text-2xl font-bold">{inviteStats.claimed.toLocaleString()}</p>
+                        <p className="text-xs text-muted-foreground">Claimed</p>
+                      </div>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={sendBulkInvites}
+                    disabled={sendingInvites || inviteStats.pending === 0}
+                    className="bg-gradient-to-r from-pink-500 to-violet-500"
+                  >
+                    {sendingInvites ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Sending... ({inviteProgress.sent}/{inviteProgress.total})
+                      </>
+                    ) : (
+                      <>
+                        <Mail className="mr-2 h-4 w-4" />
+                        Send All Invite Emails
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Filters */}
           <Card>
             <CardContent className="pt-6">

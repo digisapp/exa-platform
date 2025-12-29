@@ -198,6 +198,149 @@ export async function sendModelApprovalEmail({
   }
 }
 
+export async function sendModelInviteEmail({
+  to,
+  modelName,
+  claimUrl,
+}: {
+  to: string;
+  modelName: string;
+  claimUrl: string;
+}) {
+  try {
+    const resend = getResendClient();
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      subject: `${modelName}, your EXA Models profile is ready!`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 40px 30px; text-align: center;">
+              <h1 style="margin: 0; color: white; font-size: 28px; font-weight: bold;">
+                Your Profile is Ready!
+              </h1>
+              <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
+                Claim your EXA Models profile
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
+                Hey ${modelName}!
+              </p>
+              <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                Great news - your profile has been created on EXA Models! We've imported your info and you're ready to start connecting with brands, getting booked for gigs, and growing your modeling career.
+              </p>
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                Click the button below to set up your password and claim your profile:
+              </p>
+
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+                <tr>
+                  <td align="center">
+                    <a href="${claimUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: 600; font-size: 18px;">
+                      Claim My Profile
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- What you get -->
+              <h2 style="margin: 0 0 20px; color: #ffffff; font-size: 18px; font-weight: 600;">
+                What you get with EXA:
+              </h2>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
+                <tr>
+                  <td style="padding: 12px 15px; background-color: #262626; border-radius: 8px; margin-bottom: 8px;">
+                    <p style="margin: 0; color: #ffffff; font-size: 14px;">
+                      ✨ Your own model profile page
+                    </p>
+                  </td>
+                </tr>
+                <tr><td style="height: 8px;"></td></tr>
+                <tr>
+                  <td style="padding: 12px 15px; background-color: #262626; border-radius: 8px;">
+                    <p style="margin: 0; color: #ffffff; font-size: 14px;">
+                      💼 Access to paid gigs and opportunities
+                    </p>
+                  </td>
+                </tr>
+                <tr><td style="height: 8px;"></td></tr>
+                <tr>
+                  <td style="padding: 12px 15px; background-color: #262626; border-radius: 8px;">
+                    <p style="margin: 0; color: #ffffff; font-size: 14px;">
+                      💰 Earn tips from fans and sell content
+                    </p>
+                  </td>
+                </tr>
+                <tr><td style="height: 8px;"></td></tr>
+                <tr>
+                  <td style="padding: 12px 15px; background-color: #262626; border-radius: 8px;">
+                    <p style="margin: 0; color: #ffffff; font-size: 14px;">
+                      🤝 Connect with brands and other models
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0; color: #71717a; font-size: 13px; line-height: 1.5;">
+                This link is unique to you. If you have any questions, just reply to this email.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 30px; border-top: 1px solid #262626; text-align: center;">
+              <p style="margin: 0 0 10px; color: #a1a1aa; font-size: 14px;">
+                See you on EXA! 💜
+              </p>
+              <p style="margin: 0; color: #71717a; font-size: 12px;">
+                EXA Models - Where Models Shine
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      console.error("Resend error:", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error("Email send error:", error);
+    return { success: false, error };
+  }
+}
+
 export async function sendModelRejectionEmail({
   to,
   modelName,
