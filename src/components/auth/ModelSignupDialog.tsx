@@ -13,6 +13,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { Loader2, CheckCircle, Clock } from "lucide-react";
 import Image from "next/image";
@@ -30,6 +37,16 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
   const [instagram, setInstagram] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [height, setHeight] = useState("");
+
+  // Height options from 4'10" to 7'0"
+  const heightOptions = [
+    "4'10\"", "4'11\"",
+    "5'0\"", "5'1\"", "5'2\"", "5'3\"", "5'4\"", "5'5\"", "5'6\"", "5'7\"", "5'8\"", "5'9\"", "5'10\"", "5'11\"",
+    "6'0\"", "6'1\"", "6'2\"", "6'3\"", "6'4\"", "6'5\"", "6'6\"", "6'7\"", "6'8\"", "6'9\"", "6'10\"", "6'11\"",
+    "7'0\""
+  ];
 
   const supabase = createClient();
 
@@ -54,6 +71,31 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
     // Basic email validation
     if (!email.includes("@") || !email.includes(".")) {
       toast.error("Please enter a valid email");
+      return;
+    }
+
+    // Date of birth validation (must be 18+)
+    if (!dateOfBirth) {
+      toast.error("Please enter your date of birth");
+      return;
+    }
+
+    const dob = new Date(dateOfBirth);
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+      age--;
+    }
+
+    if (age < 18) {
+      toast.error("You must be at least 18 years old to apply");
+      return;
+    }
+
+    // Height validation
+    if (!height) {
+      toast.error("Please select your height");
       return;
     }
 
@@ -124,6 +166,8 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
           display_name: name.trim(),
           instagram_username: instagram.trim().replace("@", ""),
           phone: phone.trim() || null,
+          date_of_birth: dateOfBirth,
+          height: height,
           status: "pending",
         });
 
@@ -160,6 +204,8 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
       setInstagram("");
       setEmail("");
       setPhone("");
+      setDateOfBirth("");
+      setHeight("");
     }, 300);
   };
 
@@ -253,6 +299,37 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
                   onChange={(e) => setPhone(e.target.value)}
                   disabled={loading}
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="dob">Date of Birth</Label>
+                  <Input
+                    id="dob"
+                    type="date"
+                    value={dateOfBirth}
+                    onChange={(e) => setDateOfBirth(e.target.value)}
+                    disabled={loading}
+                    required
+                    max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="height">Height</Label>
+                  <Select value={height} onValueChange={setHeight} disabled={loading}>
+                    <SelectTrigger id="height">
+                      <SelectValue placeholder="Select" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {heightOptions.map((h) => (
+                        <SelectItem key={h} value={h}>
+                          {h}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               {/* What happens next */}

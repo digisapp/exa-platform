@@ -19,6 +19,7 @@ import {
   UserPlus,
   BarChart3,
   Banknote,
+  Calendar,
 } from "lucide-react";
 
 export default async function AdminPage() {
@@ -241,6 +242,25 @@ export default async function AdminPage() {
                             <span className="font-bold">T</span>
                             @{app.tiktok_username}
                           </a>
+                        )}
+                      </div>
+                      {/* DOB and Height */}
+                      <div className="flex flex-wrap gap-4 text-sm">
+                        {app.date_of_birth && (
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">DOB:</span>
+                            <span>{new Date(app.date_of_birth).toLocaleDateString()}</span>
+                            <span className="text-muted-foreground">
+                              ({Math.floor((new Date().getTime() - new Date(app.date_of_birth).getTime()) / (365.25 * 24 * 60 * 60 * 1000))} yrs)
+                            </span>
+                          </div>
+                        )}
+                        {app.height && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-muted-foreground">Height:</span>
+                            <span>{app.height}</span>
+                          </div>
                         )}
                       </div>
                       <div className="flex items-center justify-between pt-2">
