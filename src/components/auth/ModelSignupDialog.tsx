@@ -301,7 +301,7 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label htmlFor="dob">Date of Birth</Label>
                   <Input
@@ -312,6 +312,7 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
                     disabled={loading}
                     required
                     max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
+                    className="text-sm px-2"
                   />
                 </div>
 
