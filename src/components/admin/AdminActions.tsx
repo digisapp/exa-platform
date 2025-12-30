@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Loader2, CheckCircle, XCircle, UserMinus, UserPlus, ChevronDown, Trash2, Eye, EyeOff } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, UserMinus, UserPlus, ChevronDown, Trash2, Eye, EyeOff, FileText } from "lucide-react";
+import Link from "next/link";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -353,6 +354,13 @@ export function ModelActionsDropdown({ id, modelName, isApproved, onAction }: {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          <DropdownMenuItem asChild>
+            <Link href={`/admin/models/${id}`}>
+              <FileText className="h-4 w-4 mr-2" />
+              VIEW DETAILS
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           {isApproved ? (
             <DropdownMenuItem disabled className="text-green-500 opacity-100">
               <Eye className="h-4 w-4 mr-2" />

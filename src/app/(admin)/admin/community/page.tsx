@@ -942,7 +942,7 @@ export default function AdminCommunityPage() {
                       {models.map((model) => (
                         <TableRow key={model.id}>
                           <TableCell>
-                            <Link href={`/${model.username}`} target="_blank" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                            <Link href={`/admin/models/${model.id}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                               <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-pink-500/20 to-violet-500/20 flex-shrink-0">
                                 {model.profile_photo_url ? (
                                   <Image src={model.profile_photo_url} alt={model.username} width={80} height={80} className="w-full h-full object-cover" unoptimized />
