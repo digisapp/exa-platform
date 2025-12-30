@@ -104,17 +104,24 @@ export function PremiumContentCard({
       >
         {/* Preview or Full Image */}
         {(isUnlocked && mediaUrl) || content.preview_url ? (
-          <Image
-            src={isUnlocked && mediaUrl ? mediaUrl : content.preview_url!}
-            alt={content.title || "Premium content"}
-            fill
-            className={cn(
-              "object-cover transition-transform group-hover:scale-105",
-              !isUnlocked && "blur-xl"
+          <>
+            <Image
+              src={isUnlocked && mediaUrl ? mediaUrl : content.preview_url!}
+              alt={content.title || "Premium content"}
+              fill
+              className={cn(
+                "object-cover transition-all duration-300",
+                !isUnlocked && "blur-xl scale-110 brightness-75",
+                isUnlocked && "group-hover:scale-105"
+              )}
+            />
+            {/* Gradient overlay for locked content */}
+            {!isUnlocked && !isOwner && (
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
             )}
-          />
+          </>
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-pink-500/20 to-violet-500/20">
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-pink-500/30 to-violet-500/30">
             {isVideo ? (
               <Play className="h-12 w-12 text-white/50" />
             ) : (
@@ -125,15 +132,24 @@ export function PremiumContentCard({
 
         {/* Lock Overlay - only for paid content */}
         {!isUnlocked && !isOwner && !isFree && (
-          <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2">
-            <Lock className="h-8 w-8 text-white" />
-            <div className="flex items-center gap-1 bg-gradient-to-r from-pink-500 to-violet-500 px-3 py-1 rounded-full">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+            <div className="p-3 rounded-full bg-black/40 backdrop-blur-sm">
+              <Lock className="h-6 w-6 text-white" />
+            </div>
+            <div className="flex items-center gap-1.5 bg-gradient-to-r from-pink-500 to-violet-500 px-4 py-1.5 rounded-full shadow-lg">
               <Coins className="h-4 w-4 text-white" />
-              <span className="text-white font-semibold">{content.coin_price}</span>
+              <span className="text-white font-bold">{content.coin_price}</span>
             </div>
             {isVideo && (
-              <span className="text-xs text-white/70 mt-1">Video</span>
+              <span className="text-xs text-white/80 font-medium">Video</span>
             )}
+          </div>
+        )}
+
+        {/* Free badge for free content */}
+        {!isUnlocked && !isOwner && isFree && (
+          <div className="absolute bottom-2 left-2 bg-green-500 px-2 py-1 rounded-full">
+            <span className="text-xs text-white font-semibold">FREE</span>
           </div>
         )}
 

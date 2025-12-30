@@ -149,6 +149,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Use media URL as preview if no preview provided (will be blurred by frontend)
+    const finalPreviewUrl = previewUrl || mediaUrl;
+
     const { data: content, error } = await (supabase
       .from("premium_content") as any)
       .insert({
@@ -157,7 +160,7 @@ export async function POST(request: NextRequest) {
         description: description || null,
         media_url: mediaUrl,
         media_type: mediaType,
-        preview_url: previewUrl || null,
+        preview_url: finalPreviewUrl,
         coin_price: coinPrice,
       })
       .select()
