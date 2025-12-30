@@ -202,7 +202,7 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
                   className="h-8 w-auto"
                 />
               </div>
-              <DialogTitle className="text-xl">Sign Up</DialogTitle>
+              <DialogTitle className="text-xl">Model Sign Up</DialogTitle>
             </DialogHeader>
 
             <form onSubmit={handleSubmit} className="space-y-4 mt-4">
