@@ -9,8 +9,6 @@ import { ApproveRejectButtons } from "@/components/admin/AdminActions";
 import {
   Users,
   Sparkles,
-  Trophy,
-  Clock,
   Building2,
   Mail,
   Globe,
@@ -20,7 +18,6 @@ import {
   Heart,
   UserPlus,
   BarChart3,
-  ArrowUpRight,
 } from "lucide-react";
 
 export default async function AdminPage() {
@@ -44,11 +41,6 @@ export default async function AdminPage() {
   const { count: totalModels } = await supabase
     .from("models")
     .select("*", { count: "exact", head: true });
-
-  const { count: pendingApplications } = await supabase
-    .from("opportunity_applications")
-    .select("*", { count: "exact", head: true })
-    .eq("status", "pending");
 
   // Get brand inquiries
   const { data: brandInquiries } = await (supabase
@@ -92,44 +84,10 @@ export default async function AdminPage() {
   const totalCoins = (modelBalances?.reduce((sum, m) => sum + (m.coin_balance || 0), 0) || 0) +
                      (fanBalances?.reduce((sum, f) => sum + (f.coin_balance || 0), 0) || 0);
 
-  // Get recent transactions count
-  const { count: recentTransactions } = await supabase
+  // Get total transactions count
+  const { count: totalTransactions } = await supabase
     .from("coin_transactions")
     .select("*", { count: "exact", head: true });
-
-  // Get growth stats (last 7 days and 30 days)
-  const now = new Date();
-  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
-  const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
-
-  const { count: modelsThisWeek } = await supabase
-    .from("models")
-    .select("*", { count: "exact", head: true })
-    .gte("created_at", weekAgo);
-
-  const { count: modelsThisMonth } = await supabase
-    .from("models")
-    .select("*", { count: "exact", head: true })
-    .gte("created_at", monthAgo);
-
-  const { count: fansThisWeek } = await supabase
-    .from("fans")
-    .select("*", { count: "exact", head: true })
-    .gte("created_at", weekAgo);
-
-  const { count: fansThisMonth } = await supabase
-    .from("fans")
-    .select("*", { count: "exact", head: true })
-    .gte("created_at", monthAgo);
-
-  // Get coin transaction stats
-  const { data: weeklyTransactions } = await supabase
-    .from("coin_transactions")
-    .select("amount, action")
-    .gte("created_at", weekAgo) as { data: { amount: number; action: string }[] | null };
-
-  const weeklySpent = weeklyTransactions?.filter(t => t.amount < 0)
-    .reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
 
   return (
     <div className="container px-8 md:px-16 py-8 space-y-8">
@@ -156,8 +114,8 @@ export default async function AdminPage() {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      {/* Stats - Only 4 boxes */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
@@ -165,7 +123,7 @@ export default async function AdminPage() {
                 <Users className="h-6 w-6 text-blue-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{totalModels}</p>
+                <p className="text-2xl font-bold">{totalModels?.toLocaleString()}</p>
                 <p className="text-sm text-muted-foreground">Total Models</p>
               </div>
             </div>
@@ -175,22 +133,22 @@ export default async function AdminPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-full bg-green-500/10">
-                <Trophy className="h-6 w-6 text-green-500" />
+              <div className="p-3 rounded-full bg-pink-500/10">
+                <Heart className="h-6 w-6 text-pink-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{pendingApplications}</p>
-                <p className="text-sm text-muted-foreground">Pending Apps</p>
+                <p className="text-2xl font-bold">{totalFans?.toLocaleString() || 0}</p>
+                <p className="text-sm text-muted-foreground">Total Fans</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-pink-500/10 to-violet-500/10 border-pink-500/20">
+        <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-full bg-pink-500/20">
-                <Coins className="h-6 w-6 text-pink-500" />
+              <div className="p-3 rounded-full bg-yellow-500/10">
+                <Coins className="h-6 w-6 text-yellow-500" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{totalCoins.toLocaleString()}</p>
@@ -203,26 +161,12 @@ export default async function AdminPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-full bg-red-500/10">
-                <Heart className="h-6 w-6 text-red-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{totalFans || 0}</p>
-                <p className="text-sm text-muted-foreground">Fans</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
               <div className="p-3 rounded-full bg-emerald-500/10">
                 <CreditCard className="h-6 w-6 text-emerald-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{recentTransactions || 0}</p>
-                <p className="text-sm text-muted-foreground">Transactions</p>
+                <p className="text-2xl font-bold">{totalTransactions?.toLocaleString() || 0}</p>
+                <p className="text-sm text-muted-foreground">Total Transactions</p>
               </div>
             </div>
           </CardContent>
@@ -230,12 +174,8 @@ export default async function AdminPage() {
       </div>
 
       {/* Main Content */}
-      <Tabs defaultValue="overview" className="space-y-6">
+      <Tabs defaultValue="model-apps" className="space-y-6">
         <TabsList className="flex-wrap h-auto gap-2">
-          <TabsTrigger value="overview">
-            <BarChart3 className="h-4 w-4 mr-2" />
-            Overview
-          </TabsTrigger>
           <TabsTrigger value="model-apps">
             <UserPlus className="h-4 w-4 mr-2" />
             Model Apps ({pendingModelApps || 0})
@@ -245,142 +185,6 @@ export default async function AdminPage() {
             Brands ({pendingBrands || 0})
           </TabsTrigger>
         </TabsList>
-
-        {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-6">
-          {/* Growth Stats */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20">
-              <CardHeader className="pb-2">
-                <CardDescription className="flex items-center justify-between">
-                  <span>Models This Week</span>
-                  <ArrowUpRight className="h-4 w-4 text-green-500" />
-                </CardDescription>
-                <CardTitle className="text-3xl flex items-baseline gap-2">
-                  +{modelsThisWeek || 0}
-                  <span className="text-sm font-normal text-muted-foreground">
-                    / {modelsThisMonth || 0} this month
-                  </span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-sm text-muted-foreground">
-                  Total: {totalModels?.toLocaleString()} models
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-pink-500/10 to-pink-600/5 border-pink-500/20">
-              <CardHeader className="pb-2">
-                <CardDescription className="flex items-center justify-between">
-                  <span>Fans This Week</span>
-                  <ArrowUpRight className="h-4 w-4 text-green-500" />
-                </CardDescription>
-                <CardTitle className="text-3xl flex items-baseline gap-2">
-                  +{fansThisWeek || 0}
-                  <span className="text-sm font-normal text-muted-foreground">
-                    / {fansThisMonth || 0} this month
-                  </span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-sm text-muted-foreground">
-                  Total: {totalFans?.toLocaleString()} fans (Goal: 1M)
-                </div>
-                <div className="mt-2 h-2 bg-muted rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-pink-500 to-violet-500 rounded-full"
-                    style={{ width: `${Math.min(((totalFans || 0) / 1000000) * 100, 100)}%` }}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-yellow-500/10 to-orange-500/5 border-yellow-500/20">
-              <CardHeader className="pb-2">
-                <CardDescription className="flex items-center justify-between">
-                  <span>Coins in Circulation</span>
-                  <Coins className="h-4 w-4 text-yellow-500" />
-                </CardDescription>
-                <CardTitle className="text-3xl">
-                  {totalCoins.toLocaleString()}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-sm text-muted-foreground">
-                  {weeklySpent > 0 ? `${weeklySpent} spent this week` : "No spending this week"}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-green-500/10 to-emerald-500/5 border-green-500/20">
-              <CardHeader className="pb-2">
-                <CardDescription className="flex items-center justify-between">
-                  <span>Pending Actions</span>
-                  <Clock className="h-4 w-4 text-amber-500" />
-                </CardDescription>
-                <CardTitle className="text-3xl">
-                  {(pendingModelApps || 0) + (pendingApplications || 0) + (pendingBrands || 0)}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-sm text-muted-foreground space-y-1">
-                  <div>{pendingModelApps || 0} model applications</div>
-                  <div>{pendingApplications || 0} gig applications</div>
-                  <div>{pendingBrands || 0} brand inquiries</div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Goals Progress */}
-          <Card>
-            <CardHeader>
-              <CardTitle>2025 Goals Progress</CardTitle>
-              <CardDescription>Track your platform growth targets</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-blue-500" />
-                    Models
-                  </span>
-                  <span>{totalModels?.toLocaleString()} / 5,000</span>
-                </div>
-                <div className="h-3 bg-muted rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full transition-all"
-                    style={{ width: `${Math.min(((totalModels || 0) / 5000) * 100, 100)}%` }}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {((((totalModels || 0) / 5000) * 100).toFixed(1))}% of goal
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="flex items-center gap-2">
-                    <Heart className="h-4 w-4 text-pink-500" />
-                    Fans
-                  </span>
-                  <span>{totalFans?.toLocaleString()} / 1,000,000</span>
-                </div>
-                <div className="h-3 bg-muted rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-pink-500 to-violet-500 rounded-full transition-all"
-                    style={{ width: `${Math.min(((totalFans || 0) / 1000000) * 100, 100)}%` }}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {((((totalFans || 0) / 1000000) * 100).toFixed(3))}% of goal
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-        </TabsContent>
 
         <TabsContent value="model-apps">
           <Card>
