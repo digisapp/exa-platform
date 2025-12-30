@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Navbar } from "@/components/layout/navbar";
+import { BottomNav } from "@/components/layout/BottomNav";
 import { DashboardClientWrapper } from "@/components/layout/DashboardClientWrapper";
 
 // Prevent caching to ensure fresh auth state on every request
@@ -70,8 +71,17 @@ export default async function DashboardLayout({
         coinBalance={coinBalance}
       />
       <DashboardClientWrapper actorId={actor?.id || null}>
-        <main className="container px-4 md:px-8 py-8">{children}</main>
+        <main className="container px-4 md:px-8 py-8 pb-24 md:pb-8">{children}</main>
       </DashboardClientWrapper>
+      <BottomNav
+        user={{
+          avatar_url: profileData?.profile_photo_url || profileData?.avatar_url || undefined,
+          name: displayName,
+          email: user.email || "",
+        }}
+        actorType={actor?.type || null}
+        coinBalance={coinBalance}
+      />
     </div>
   );
 }

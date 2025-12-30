@@ -515,3 +515,8 @@ input:focus, textarea:focus, select:focus {
   border-radius: 50%;
   animation: pulse-glow 2s ease-in-out infinite;
 }
+
+/* Safe area padding for devices with home indicators (iPhone X+) */
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
