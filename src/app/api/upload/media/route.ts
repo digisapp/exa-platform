@@ -83,20 +83,33 @@ export async function POST(request: NextRequest) {
       data: { publicUrl },
     } = supabase.storage.from(bucket).getPublicUrl(filename);
 
-    // Determine asset_type based on file type and upload type
-    const assetType = isVideo ? "video" : uploadType;
+    // Determine asset_type based on file type
+    const assetType = isVideo ? "video" : "portfolio";
 
-    // Create media_asset record linked to model_id
+    // Get actor ID for owner_id
+    const { data: actor } = await supabase
+      .from("actors")
+      .select("id")
+      .eq("user_id", user.id)
+      .single() as { data: { id: string } | null };
+
+    if (!actor) {
+      return NextResponse.json({ error: "Actor not found" }, { status: 400 });
+    }
+
+    // Create media_asset record
     const { data: mediaAsset, error: mediaError } = await (supabase
       .from("media_assets") as any)
       .insert({
+        owner_id: actor.id,
         model_id: modelId,
+        type: isVideo ? "video" : "photo",
         asset_type: assetType,
         photo_url: isImage ? publicUrl : null,
         url: publicUrl,
         storage_path: filename,
         mime_type: file.type,
-        file_size: file.size,
+        size_bytes: file.size,
       })
       .select()
       .single();
