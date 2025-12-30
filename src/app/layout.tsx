@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/components/providers/auth-provider";
+import { PageViewTracker } from "@/components/analytics/PageViewTracker";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -27,6 +29,9 @@ export default function RootLayout({
         <AuthProvider>
           {children}
         </AuthProvider>
+        <Suspense fallback={null}>
+          <PageViewTracker />
+        </Suspense>
         <Toaster position="top-right" />
       </body>
     </html>

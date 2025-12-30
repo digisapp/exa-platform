@@ -136,6 +136,12 @@ export default async function AdminPage() {
       <div className="flex items-center justify-end">
         <div className="flex gap-2">
           <Button variant="outline" asChild>
+            <Link href="/admin/traffic">
+              <BarChart3 className="h-4 w-4 mr-2" />
+              Traffic
+            </Link>
+          </Button>
+          <Button variant="outline" asChild>
             <Link href="/admin/community">
               <Users className="h-4 w-4 mr-2" />
               Community
