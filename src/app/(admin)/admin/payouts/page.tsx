@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PayoutActions } from "@/components/admin/PayoutActions";
+import { RevealAccountNumber } from "@/components/admin/RevealAccountNumber";
 import {
   ArrowLeft,
   Wallet,
@@ -169,17 +170,31 @@ export default async function PayoutsPage() {
 
         {/* Bank Account Info */}
         {bank && (
-          <div className="p-3 rounded-lg bg-background/50 flex items-center gap-3">
-            <Building2 className="h-5 w-5 text-muted-foreground" />
-            <div className="flex-1">
-              <p className="text-sm font-medium">{bank.bank_name} •••• {bank.account_number_last4}</p>
-              <p className="text-xs text-muted-foreground">
-                {bank.account_holder_name} · {bank.account_type}
-              </p>
+          <div className="p-3 rounded-lg bg-background/50 space-y-2">
+            <div className="flex items-center gap-3">
+              <Building2 className="h-5 w-5 text-muted-foreground" />
+              <div className="flex-1">
+                <p className="text-sm font-medium">{bank.bank_name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {bank.account_holder_name} · {bank.account_type}
+                </p>
+              </div>
             </div>
-            <Badge variant="secondary" className="text-xs">
-              Routing: {bank.routing_number}
-            </Badge>
+            <div className="flex items-center gap-3 pl-8">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Account:</span>
+                <RevealAccountNumber
+                  bankAccountId={bank.id}
+                  last4={bank.account_number_last4}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Routing:</span>
+                <span className="font-mono text-sm bg-muted px-2 py-1 rounded">
+                  {bank.routing_number}
+                </span>
+              </div>
+            </div>
           </div>
         )}
 

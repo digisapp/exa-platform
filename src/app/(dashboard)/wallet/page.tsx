@@ -740,17 +740,24 @@ export default function WalletPage() {
 
     setSavingBank(true);
     try {
-      const { error } = await supabase.from("bank_accounts").insert({
-        model_id: modelId,
-        account_holder_name: bankForm.accountHolderName,
-        bank_name: bankForm.bankName,
-        routing_number: bankForm.routingNumber,
-        account_number_last4: bankForm.accountNumber.slice(-4),
-        account_type: bankForm.accountType,
-        is_primary: bankAccounts.length === 0,
+      const response = await fetch("/api/bank-accounts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          accountHolderName: bankForm.accountHolderName,
+          bankName: bankForm.bankName,
+          routingNumber: bankForm.routingNumber,
+          accountNumber: bankForm.accountNumber,
+          accountType: bankForm.accountType,
+        }),
       });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to save bank account");
+      }
+
+      const newBankAccount = await response.json();
 
       toast.success("Bank account added!");
       setShowBankDialog(false);
@@ -762,15 +769,12 @@ export default function WalletPage() {
         accountType: "checking",
       });
 
-      // Reload bank accounts
-      const { data: banks } = await supabase
-        .from("bank_accounts")
-        .select("*")
-        .eq("model_id", modelId);
-      setBankAccounts(banks || []);
+      // Add new bank account to state
+      setBankAccounts([...bankAccounts, newBankAccount]);
     } catch (error) {
       console.error("Error saving bank:", error);
-      toast.error("Failed to save bank account");
+      const message = error instanceof Error ? error.message : "Failed to save bank account";
+      toast.error(message);
     } finally {
       setSavingBank(false);
     }
@@ -792,7 +796,7 @@ export default function WalletPage() {
 
     setRequestingWithdraw(true);
     try {
-      const { error } = await supabase.rpc("create_withdrawal_request", {
+      const { error } = await (supabase.rpc as any)("create_withdrawal_request", {
         p_model_id: modelId,
         p_coins: coins,
       });
@@ -806,17 +810,20 @@ export default function WalletPage() {
       // Reload data
       const { data: model } = await supabase
         .from("models")
-        .select("coin_balance")
+        .select("coin_balance, withheld_balance")
         .eq("id", modelId)
-        .single();
-      if (model) setCoinBalance(model.coin_balance);
+        .single() as { data: { coin_balance: number; withheld_balance: number } | null };
+      if (model) {
+        setCoinBalance(model.coin_balance);
+        setWithheldBalance(model.withheld_balance || 0);
+      }
 
       const { data: withdrawalData } = await supabase
         .from("withdrawal_requests")
         .select("*")
         .eq("model_id", modelId)
         .order("requested_at", { ascending: false })
-        .limit(10);
+        .limit(10) as { data: WithdrawalRequest[] | null };
       setWithdrawals(withdrawalData || []);
     } catch (error: unknown) {
       console.error("Error requesting withdrawal:", error);

@@ -20,7 +20,7 @@ export async function PATCH(
       .from("actors")
       .select("id, type")
       .eq("user_id", user.id)
-      .single();
+      .single() as { data: { id: string; type: string } | null };
 
     if (!actor || actor.type !== "admin") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -32,7 +32,7 @@ export async function PATCH(
     // Use database functions for proper accounting
     if (status === "completed") {
       // Complete withdrawal - removes from withheld balance
-      const { error: completeError } = await supabase.rpc("complete_withdrawal", {
+      const { error: completeError } = await (supabase.rpc as any)("complete_withdrawal", {
         p_withdrawal_id: id,
       });
 
@@ -43,8 +43,8 @@ export async function PATCH(
 
       // Add admin notes if provided
       if (notes) {
-        await supabase
-          .from("withdrawal_requests")
+        await (supabase
+          .from("withdrawal_requests") as any)
           .update({
             admin_notes: notes,
             processed_by: actor.id,
@@ -53,7 +53,7 @@ export async function PATCH(
       }
     } else if (status === "failed") {
       // Cancel/reject withdrawal - refunds to available balance
-      const { error: cancelError } = await supabase.rpc("cancel_withdrawal", {
+      const { error: cancelError } = await (supabase.rpc as any)("cancel_withdrawal", {
         p_withdrawal_id: id,
       });
 
@@ -63,8 +63,8 @@ export async function PATCH(
       }
 
       // Update with failure reason
-      await supabase
-        .from("withdrawal_requests")
+      await (supabase
+        .from("withdrawal_requests") as any)
         .update({
           status: "failed",
           failure_reason: notes,
@@ -74,8 +74,8 @@ export async function PATCH(
         .eq("id", id);
     } else if (status === "processing") {
       // Just update status to processing
-      const { error } = await supabase
-        .from("withdrawal_requests")
+      const { error } = await (supabase
+        .from("withdrawal_requests") as any)
         .update({
           status: "processing",
           processed_at: new Date().toISOString(),

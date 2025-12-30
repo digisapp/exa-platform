@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS public.bank_accounts (
     model_id UUID NOT NULL REFERENCES public.models(id) ON DELETE CASCADE,
     account_holder_name TEXT NOT NULL,
     bank_name TEXT NOT NULL,
+    account_number_encrypted TEXT NOT NULL,
     account_number_last4 TEXT NOT NULL,
     routing_number TEXT NOT NULL,
     account_type TEXT NOT NULL CHECK (account_type IN ('checking', 'savings')),
@@ -96,6 +97,11 @@ CREATE POLICY "Admins can update withdrawals" ON public.withdrawal_requests
 -- ==============================================
 -- FUNCTIONS WITH PROPER ACCOUNTING
 -- ==============================================
+
+-- Drop old function versions first (in case parameter names changed)
+DROP FUNCTION IF EXISTS public.create_withdrawal_request(uuid, integer, uuid);
+DROP FUNCTION IF EXISTS public.cancel_withdrawal(uuid);
+DROP FUNCTION IF EXISTS public.complete_withdrawal(uuid);
 
 -- Create withdrawal request: Move from available to withheld
 CREATE OR REPLACE FUNCTION public.create_withdrawal_request(
