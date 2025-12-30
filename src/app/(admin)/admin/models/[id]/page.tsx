@@ -41,6 +41,7 @@ interface ModelDetails {
   last_name: string | null;
   name: string | null;
   email: string | null;
+  phone: string | null;
   bio: string | null;
   city: string | null;
   state: string | null;
@@ -423,9 +424,7 @@ export default function AdminModelDetailPage() {
             </CardHeader>
             <CardContent className="space-y-1">
               <InfoRow label="Email" value={model.email} copyable icon={Mail} />
-              {application?.phone && (
-                <InfoRow label="Phone" value={application.phone} copyable icon={Phone} />
-              )}
+              <InfoRow label="Phone" value={model.phone || application?.phone} copyable icon={Phone} />
               <InfoRow
                 label="Location"
                 value={[model.city, model.state, model.country].filter(Boolean).join(", ") || null}
