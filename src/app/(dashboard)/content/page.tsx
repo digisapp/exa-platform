@@ -35,9 +35,19 @@ import {
   Video,
   Unlock,
   Images,
+  Camera,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+
+interface MediaAsset {
+  id: string;
+  asset_type: string;
+  photo_url: string | null;
+  url: string;
+  created_at: string;
+}
 
 interface PremiumContent {
   id: string;
@@ -56,12 +66,14 @@ export default function ContentPage() {
   const supabase = createClient();
 
   const [content, setContent] = useState<PremiumContent[]>([]);
+  const [portfolio, setPortfolio] = useState<MediaAsset[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [modelId, setModelId] = useState<string | null>(null);
   const [actorId, setActorId] = useState<string | null>(null);
   const [totalEarnings, setTotalEarnings] = useState(0);
+  const [activeTab, setActiveTab] = useState("portfolio");
 
   // Form state
   const [title, setTitle] = useState("");
@@ -106,12 +118,23 @@ export default function ContentPage() {
 
     setModelId(model.id);
 
-    // Get premium content using model.id
+    // Get portfolio content (photos/videos from media_assets)
+    const { data: portfolioData } = await supabase
+      .from("media_assets")
+      .select("*")
+      .eq("model_id", model.id)
+      .in("asset_type", ["portfolio", "video"])
+      .order("created_at", { ascending: false });
+
+    setPortfolio(portfolioData || []);
+
+    // Get premium content using model.id (PPV only - coin_price > 0)
     const { data: contentData } = await supabase
       .from("premium_content")
       .select("*")
       .eq("model_id", model.id)
       .eq("is_active", true)
+      .gt("coin_price", 0)
       .order("created_at", { ascending: false });
 
     setContent(contentData || []);
@@ -198,6 +221,7 @@ export default function ContentPage() {
         toast.success("Content uploaded to your portfolio!");
         setDialogOpen(false);
         resetForm();
+        fetchContent(); // Refresh to show new content
       }
     } catch (error) {
       console.error("Upload error:", error);
@@ -244,6 +268,21 @@ export default function ContentPage() {
       setContent((prev) => prev.filter((c) => c.id !== contentId));
     } else {
       toast.error("Failed to delete content");
+    }
+  };
+
+  const handleDeletePortfolio = async (mediaId: string) => {
+    if (!confirm("Are you sure you want to delete this?")) return;
+
+    const response = await fetch(`/api/upload?id=${mediaId}`, {
+      method: "DELETE",
+    });
+
+    if (response.ok) {
+      toast.success("Deleted");
+      setPortfolio((prev) => prev.filter((p) => p.id !== mediaId));
+    } else {
+      toast.error("Failed to delete");
     }
   };
 
@@ -424,148 +463,199 @@ export default function ContentPage() {
         </Dialog>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription className="flex items-center gap-1">
-              <Images className="h-3 w-3" />
-              Total Content
-            </CardDescription>
-            <CardTitle className="text-2xl">{content.length}</CardTitle>
-          </CardHeader>
-        </Card>
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="portfolio" className="flex items-center gap-2">
+            <Camera className="h-4 w-4" />
+            Portfolio ({portfolio.length})
+          </TabsTrigger>
+          <TabsTrigger value="ppv" className="flex items-center gap-2">
+            <Lock className="h-4 w-4" />
+            PPV ({content.length})
+          </TabsTrigger>
+        </TabsList>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription className="flex items-center gap-1">
-              <Lock className="h-3 w-3" />
-              Paid Content
-            </CardDescription>
-            <CardTitle className="text-2xl">
-              {content.filter((c) => c.coin_price > 0).length}
-            </CardTitle>
-          </CardHeader>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription className="flex items-center gap-1">
-              <Eye className="h-3 w-3" />
-              Total Unlocks
-            </CardDescription>
-            <CardTitle className="text-2xl">
-              {content.reduce((sum, c) => sum + c.unlock_count, 0)}
-            </CardTitle>
-          </CardHeader>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription className="flex items-center gap-1">
-              <Coins className="h-3 w-3" />
-              Total Earnings
-            </CardDescription>
-            <CardTitle className="text-2xl text-pink-500">
-              {totalEarnings}
-            </CardTitle>
-          </CardHeader>
-        </Card>
-      </div>
-
-      {/* Content Grid */}
-      {content.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <Images className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No content yet</h3>
-            <Button
-              onClick={() => setDialogOpen(true)}
-              className="bg-gradient-to-r from-pink-500 to-violet-500"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Add Your First Content
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {content.map((item) => (
-            <Card key={item.id} className="overflow-hidden">
-              <div className="relative aspect-square">
-                {item.media_type === "video" ? (
-                  <video
-                    src={item.media_url}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <Image
-                    src={item.media_url}
-                    alt={item.title || "Premium content"}
-                    fill
-                    className="object-cover"
-                  />
-                )}
-
-                {/* Type Badge */}
-                <div className="absolute top-2 left-2 flex gap-1">
-                  <div className="bg-black/70 px-2 py-1 rounded flex items-center gap-1">
-                    {item.media_type === "video" ? (
-                      <Video className="h-3 w-3 text-white" />
-                    ) : (
-                      <ImageIcon className="h-3 w-3 text-white" />
-                    )}
-                  </div>
-                  {item.coin_price > 0 ? (
-                    <div className="bg-pink-500/90 px-2 py-1 rounded flex items-center gap-1">
-                      <Lock className="h-3 w-3 text-white" />
-                    </div>
-                  ) : (
-                    <div className="bg-green-500/90 px-2 py-1 rounded flex items-center gap-1">
-                      <Unlock className="h-3 w-3 text-white" />
-                    </div>
-                  )}
-                </div>
-
-                {/* Delete Button */}
+        {/* Portfolio Tab */}
+        <TabsContent value="portfolio" className="space-y-4">
+          {portfolio.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                <Camera className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No photos or videos yet</h3>
+                <p className="text-muted-foreground mb-4">Upload free content to show in your Photos/Videos tabs</p>
                 <Button
-                  variant="destructive"
-                  size="icon"
-                  className="absolute top-2 right-2 h-8 w-8"
-                  onClick={() => handleDelete(item.id)}
+                  onClick={() => { setIsPaid(false); setDialogOpen(true); }}
+                  className="bg-gradient-to-r from-pink-500 to-violet-500"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Photo or Video
                 </Button>
-              </div>
-
-              <CardContent className="p-3">
-                <div className="flex items-center justify-between">
-                  {item.coin_price > 0 ? (
-                    <div className="flex items-center gap-1 text-sm">
-                      <Coins className="h-4 w-4 text-pink-500" />
-                      <span className="font-semibold">{item.coin_price}</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1 text-sm text-green-500">
-                      <Unlock className="h-4 w-4" />
-                      <span className="font-semibold">Free</span>
-                    </div>
-                  )}
-                  {item.coin_price > 0 && (
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <Eye className="h-4 w-4" />
-                      <span>{item.unlock_count}</span>
-                    </div>
-                  )}
-                </div>
-                {item.title && (
-                  <p className="text-sm font-medium mt-1 truncate">{item.title}</p>
-                )}
               </CardContent>
             </Card>
-          ))}
-        </div>
-      )}
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {portfolio.map((item) => (
+                <Card key={item.id} className="overflow-hidden">
+                  <div className="relative aspect-square">
+                    {item.asset_type === "video" ? (
+                      <video
+                        src={item.url}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Image
+                        src={item.photo_url || item.url}
+                        alt="Portfolio content"
+                        fill
+                        className="object-cover"
+                      />
+                    )}
+
+                    {/* Type Badge */}
+                    <div className="absolute top-2 left-2">
+                      <div className="bg-black/70 px-2 py-1 rounded flex items-center gap-1">
+                        {item.asset_type === "video" ? (
+                          <Video className="h-3 w-3 text-white" />
+                        ) : (
+                          <ImageIcon className="h-3 w-3 text-white" />
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Delete Button */}
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2 h-8 w-8"
+                      onClick={() => handleDeletePortfolio(item.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* PPV Tab */}
+        <TabsContent value="ppv" className="space-y-4">
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription className="flex items-center gap-1">
+                  <Lock className="h-3 w-3" />
+                  PPV Items
+                </CardDescription>
+                <CardTitle className="text-2xl">{content.length}</CardTitle>
+              </CardHeader>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription className="flex items-center gap-1">
+                  <Eye className="h-3 w-3" />
+                  Total Unlocks
+                </CardDescription>
+                <CardTitle className="text-2xl">
+                  {content.reduce((sum, c) => sum + c.unlock_count, 0)}
+                </CardTitle>
+              </CardHeader>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription className="flex items-center gap-1">
+                  <Coins className="h-3 w-3" />
+                  Earnings
+                </CardDescription>
+                <CardTitle className="text-2xl text-pink-500">
+                  {totalEarnings}
+                </CardTitle>
+              </CardHeader>
+            </Card>
+          </div>
+
+          {/* PPV Content Grid */}
+          {content.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                <Lock className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No PPV content yet</h3>
+                <p className="text-muted-foreground mb-4">Upload paid content that fans can unlock with coins</p>
+                <Button
+                  onClick={() => { setIsPaid(true); setDialogOpen(true); }}
+                  className="bg-gradient-to-r from-pink-500 to-violet-500"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add PPV Content
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {content.map((item) => (
+                <Card key={item.id} className="overflow-hidden">
+                  <div className="relative aspect-square">
+                    {item.media_type === "video" ? (
+                      <video
+                        src={item.media_url}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Image
+                        src={item.media_url}
+                        alt={item.title || "PPV content"}
+                        fill
+                        className="object-cover"
+                      />
+                    )}
+
+                    {/* Type Badge */}
+                    <div className="absolute top-2 left-2 flex gap-1">
+                      <div className="bg-black/70 px-2 py-1 rounded flex items-center gap-1">
+                        {item.media_type === "video" ? (
+                          <Video className="h-3 w-3 text-white" />
+                        ) : (
+                          <ImageIcon className="h-3 w-3 text-white" />
+                        )}
+                      </div>
+                      <div className="bg-pink-500/90 px-2 py-1 rounded flex items-center gap-1">
+                        <Coins className="h-3 w-3 text-white" />
+                        <span className="text-white text-xs font-bold">{item.coin_price}</span>
+                      </div>
+                    </div>
+
+                    {/* Delete Button */}
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2 h-8 w-8"
+                      onClick={() => handleDelete(item.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  <CardContent className="p-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <Eye className="h-4 w-4" />
+                        <span>{item.unlock_count} unlocks</span>
+                      </div>
+                    </div>
+                    {item.title && (
+                      <p className="text-sm font-medium mt-1 truncate">{item.title}</p>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
