@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -12,7 +14,15 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Coins,
   Wallet,
@@ -26,15 +36,40 @@ import {
   MessageCircle,
   Plus,
   Building,
+  Banknote,
+  Clock,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
 } from "lucide-react";
 import { COIN_PACKAGES } from "@/lib/stripe-config";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface Transaction {
   id: string;
   amount: number;
   action: string;
   created_at: string;
+}
+
+interface BankAccount {
+  id: string;
+  account_holder_name: string;
+  bank_name: string;
+  account_number_last4: string;
+  routing_number: string;
+  account_type: string;
+  is_primary: boolean;
+}
+
+interface WithdrawalRequest {
+  id: string;
+  coins: number;
+  usd_amount: string;
+  status: string;
+  requested_at: string;
+  failure_reason: string | null;
 }
 
 export default function WalletPage() {
@@ -44,6 +79,29 @@ export default function WalletPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [totalEarnings, setTotalEarnings] = useState(0);
   const [thisMonthEarnings, setThisMonthEarnings] = useState(0);
+  const [modelId, setModelId] = useState<string | null>(null);
+  const [actorType, setActorType] = useState<string | null>(null);
+
+  // Payout state
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
+  const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
+  const [showBankDialog, setShowBankDialog] = useState(false);
+  const [showWithdrawDialog, setShowWithdrawDialog] = useState(false);
+  const [savingBank, setSavingBank] = useState(false);
+  const [requestingWithdraw, setRequestingWithdraw] = useState(false);
+
+  // Bank form
+  const [bankForm, setBankForm] = useState({
+    accountHolderName: "",
+    bankName: "",
+    routingNumber: "",
+    accountNumber: "",
+    accountType: "checking",
+  });
+
+  // Withdraw form
+  const [withdrawAmount, setWithdrawAmount] = useState("");
+
   const supabase = createClient();
 
   useEffect(() => {
@@ -60,15 +118,36 @@ export default function WalletPage() {
 
       if (!actor) return;
 
+      setActorType(actor.type);
+
       // Get coin balance based on actor type
       if (actor.type === "model" || actor.type === "admin") {
         // Models are linked via user_id, not actor.id
         const { data: model } = await supabase
           .from("models")
-          .select("coin_balance")
+          .select("id, coin_balance")
           .eq("user_id", user.id)
-          .single() as { data: { coin_balance: number } | null };
+          .single() as { data: { id: string; coin_balance: number } | null };
         setCoinBalance(model?.coin_balance || 0);
+        if (model) {
+          setModelId(model.id);
+
+          // Load bank accounts
+          const { data: banks } = await supabase
+            .from("bank_accounts")
+            .select("*")
+            .eq("model_id", model.id) as { data: BankAccount[] | null };
+          setBankAccounts(banks || []);
+
+          // Load withdrawal requests
+          const { data: withdrawalData } = await supabase
+            .from("withdrawal_requests")
+            .select("*")
+            .eq("model_id", model.id)
+            .order("requested_at", { ascending: false })
+            .limit(10) as { data: WithdrawalRequest[] | null };
+          setWithdrawals(withdrawalData || []);
+        }
       } else if (actor.type === "fan") {
         // Fans use actor.id as their id
         const { data: fan } = await supabase
@@ -352,30 +431,390 @@ export default function WalletPage() {
         </CardContent>
       </Card>
 
-      {/* Payout */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building className="h-5 w-5" />
-            Payout Settings
-          </CardTitle>
-          <CardDescription>Set up your bank account to receive payouts</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8">
-            <Building className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="font-semibold mb-2">Coming Soon</h3>
-            <p className="text-muted-foreground text-sm max-w-md mx-auto">
-              We&apos;re working on enabling direct payouts to your bank account.
-              For now, contact us at{" "}
-              <a href="mailto:payouts@examodels.com" className="text-pink-500 hover:underline">
-                payouts@examodels.com
-              </a>{" "}
-              to request a payout.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Payout Section - Only for Models */}
+      {(actorType === "model" || actorType === "admin") && (
+        <>
+          {/* Bank Account */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Building className="h-5 w-5" />
+                    Bank Account
+                  </CardTitle>
+                  <CardDescription>Your payout destination</CardDescription>
+                </div>
+                <Dialog open={showBankDialog} onOpenChange={setShowBankDialog}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Plus className="h-4 w-4 mr-1" />
+                      {bankAccounts.length > 0 ? "Update" : "Add Bank"}
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Add Bank Account</DialogTitle>
+                      <DialogDescription>
+                        Enter your bank details to receive payouts
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="accountHolderName">Account Holder Name</Label>
+                        <Input
+                          id="accountHolderName"
+                          placeholder="John Doe"
+                          value={bankForm.accountHolderName}
+                          onChange={(e) => setBankForm({ ...bankForm, accountHolderName: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="bankName">Bank Name</Label>
+                        <Input
+                          id="bankName"
+                          placeholder="Chase, Bank of America, etc."
+                          value={bankForm.bankName}
+                          onChange={(e) => setBankForm({ ...bankForm, bankName: e.target.value })}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="routingNumber">Routing Number</Label>
+                          <Input
+                            id="routingNumber"
+                            placeholder="9 digits"
+                            maxLength={9}
+                            value={bankForm.routingNumber}
+                            onChange={(e) => setBankForm({ ...bankForm, routingNumber: e.target.value.replace(/\D/g, "") })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="accountNumber">Account Number</Label>
+                          <Input
+                            id="accountNumber"
+                            placeholder="Account number"
+                            value={bankForm.accountNumber}
+                            onChange={(e) => setBankForm({ ...bankForm, accountNumber: e.target.value.replace(/\D/g, "") })}
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="accountType">Account Type</Label>
+                        <Select
+                          value={bankForm.accountType}
+                          onValueChange={(value) => setBankForm({ ...bankForm, accountType: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="checking">Checking</SelectItem>
+                            <SelectItem value="savings">Savings</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setShowBankDialog(false)}>
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleSaveBank}
+                        disabled={savingBank}
+                        className="bg-gradient-to-r from-pink-500 to-violet-500"
+                      >
+                        {savingBank ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Bank Account"}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {bankAccounts.length === 0 ? (
+                <div className="text-center py-6 text-muted-foreground">
+                  <Building className="h-10 w-10 mx-auto mb-3 opacity-50" />
+                  <p className="text-sm">No bank account added yet</p>
+                  <p className="text-xs mt-1">Add a bank account to request payouts</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {bankAccounts.map((bank) => (
+                    <div key={bank.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                      <div className="flex items-center gap-3">
+                        <Building className="h-5 w-5 text-muted-foreground" />
+                        <div>
+                          <p className="font-medium">{bank.bank_name} •••• {bank.account_number_last4}</p>
+                          <p className="text-xs text-muted-foreground">{bank.account_holder_name} · {bank.account_type}</p>
+                        </div>
+                      </div>
+                      {bank.is_primary && <Badge variant="secondary">Primary</Badge>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Request Payout */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Banknote className="h-5 w-5" />
+                    Request Payout
+                  </CardTitle>
+                  <CardDescription>
+                    Minimum $50 (1,000 coins) · 1 coin = $0.05
+                  </CardDescription>
+                </div>
+                <Dialog open={showWithdrawDialog} onOpenChange={setShowWithdrawDialog}>
+                  <DialogTrigger asChild>
+                    <Button
+                      disabled={coinBalance < 1000 || bankAccounts.length === 0}
+                      className="bg-gradient-to-r from-green-500 to-emerald-500"
+                    >
+                      <Banknote className="h-4 w-4 mr-1" />
+                      Withdraw
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Request Payout</DialogTitle>
+                      <DialogDescription>
+                        Enter the amount you want to withdraw
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="p-4 rounded-lg bg-muted/50">
+                        <div className="flex justify-between mb-2">
+                          <span className="text-muted-foreground">Available Balance</span>
+                          <span className="font-bold">{coinBalance.toLocaleString()} coins</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">USD Value</span>
+                          <span className="font-bold text-green-500">${(coinBalance * 0.05).toFixed(2)}</span>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="withdrawAmount">Amount (coins)</Label>
+                        <Input
+                          id="withdrawAmount"
+                          type="number"
+                          min={1000}
+                          max={coinBalance}
+                          placeholder="Minimum 1,000 coins"
+                          value={withdrawAmount}
+                          onChange={(e) => setWithdrawAmount(e.target.value)}
+                        />
+                        {withdrawAmount && (
+                          <p className="text-sm text-green-500">
+                            You&apos;ll receive: ${(parseInt(withdrawAmount) * 0.05).toFixed(2)} USD
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-start gap-2 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+                        <AlertCircle className="h-5 w-5 text-yellow-500 shrink-0 mt-0.5" />
+                        <p className="text-sm text-yellow-500">
+                          Payouts are processed within 2-5 business days
+                        </p>
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setShowWithdrawDialog(false)}>
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleRequestWithdraw}
+                        disabled={requestingWithdraw || !withdrawAmount || parseInt(withdrawAmount) < 1000}
+                        className="bg-gradient-to-r from-green-500 to-emerald-500"
+                      >
+                        {requestingWithdraw ? <Loader2 className="h-4 w-4 animate-spin" /> : "Request Payout"}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {coinBalance < 1000 ? (
+                <div className="text-center py-6 text-muted-foreground">
+                  <Coins className="h-10 w-10 mx-auto mb-3 opacity-50" />
+                  <p className="text-sm">You need at least 1,000 coins ($50) to request a payout</p>
+                  <p className="text-xs mt-1">Current balance: {coinBalance} coins (${(coinBalance * 0.05).toFixed(2)})</p>
+                </div>
+              ) : bankAccounts.length === 0 ? (
+                <div className="text-center py-6 text-muted-foreground">
+                  <Building className="h-10 w-10 mx-auto mb-3 opacity-50" />
+                  <p className="text-sm">Add a bank account first to request payouts</p>
+                </div>
+              ) : (
+                <div className="text-center py-6">
+                  <p className="text-2xl font-bold text-green-500 mb-1">
+                    ${(coinBalance * 0.05).toFixed(2)}
+                  </p>
+                  <p className="text-muted-foreground text-sm">Available for withdrawal</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Withdrawal History */}
+          {withdrawals.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  Payout History
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {withdrawals.map((w) => (
+                    <div key={w.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                      <div className="flex items-center gap-3">
+                        {w.status === "completed" && <CheckCircle className="h-5 w-5 text-green-500" />}
+                        {w.status === "pending" && <Clock className="h-5 w-5 text-yellow-500" />}
+                        {w.status === "processing" && <Loader2 className="h-5 w-5 text-blue-500 animate-spin" />}
+                        {w.status === "failed" && <XCircle className="h-5 w-5 text-red-500" />}
+                        {w.status === "cancelled" && <XCircle className="h-5 w-5 text-gray-500" />}
+                        <div>
+                          <p className="font-medium">${parseFloat(w.usd_amount).toFixed(2)}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(w.requested_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            w.status === "completed" && "bg-green-500/10 text-green-500 border-green-500/50",
+                            w.status === "pending" && "bg-yellow-500/10 text-yellow-500 border-yellow-500/50",
+                            w.status === "processing" && "bg-blue-500/10 text-blue-500 border-blue-500/50",
+                            w.status === "failed" && "bg-red-500/10 text-red-500 border-red-500/50",
+                            w.status === "cancelled" && "bg-gray-500/10 text-gray-500 border-gray-500/50"
+                          )}
+                        >
+                          {w.status}
+                        </Badge>
+                        {w.failure_reason && (
+                          <p className="text-xs text-red-400 mt-1">{w.failure_reason}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </>
+      )}
     </div>
   );
+
+  // Handler functions
+  async function handleSaveBank() {
+    if (!modelId) return;
+
+    if (!bankForm.accountHolderName || !bankForm.bankName || !bankForm.routingNumber || !bankForm.accountNumber) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    if (bankForm.routingNumber.length !== 9) {
+      toast.error("Routing number must be 9 digits");
+      return;
+    }
+
+    setSavingBank(true);
+    try {
+      const { error } = await supabase.from("bank_accounts").insert({
+        model_id: modelId,
+        account_holder_name: bankForm.accountHolderName,
+        bank_name: bankForm.bankName,
+        routing_number: bankForm.routingNumber,
+        account_number_last4: bankForm.accountNumber.slice(-4),
+        account_type: bankForm.accountType,
+        is_primary: bankAccounts.length === 0,
+      });
+
+      if (error) throw error;
+
+      toast.success("Bank account added!");
+      setShowBankDialog(false);
+      setBankForm({
+        accountHolderName: "",
+        bankName: "",
+        routingNumber: "",
+        accountNumber: "",
+        accountType: "checking",
+      });
+
+      // Reload bank accounts
+      const { data: banks } = await supabase
+        .from("bank_accounts")
+        .select("*")
+        .eq("model_id", modelId);
+      setBankAccounts(banks || []);
+    } catch (error) {
+      console.error("Error saving bank:", error);
+      toast.error("Failed to save bank account");
+    } finally {
+      setSavingBank(false);
+    }
+  }
+
+  async function handleRequestWithdraw() {
+    if (!modelId || !withdrawAmount) return;
+
+    const coins = parseInt(withdrawAmount);
+    if (coins < 1000) {
+      toast.error("Minimum withdrawal is 1,000 coins ($50)");
+      return;
+    }
+
+    if (coins > coinBalance) {
+      toast.error("Insufficient balance");
+      return;
+    }
+
+    setRequestingWithdraw(true);
+    try {
+      const { error } = await supabase.rpc("create_withdrawal_request", {
+        p_model_id: modelId,
+        p_coins: coins,
+      });
+
+      if (error) throw error;
+
+      toast.success("Withdrawal requested!");
+      setShowWithdrawDialog(false);
+      setWithdrawAmount("");
+
+      // Reload data
+      const { data: model } = await supabase
+        .from("models")
+        .select("coin_balance")
+        .eq("id", modelId)
+        .single();
+      if (model) setCoinBalance(model.coin_balance);
+
+      const { data: withdrawalData } = await supabase
+        .from("withdrawal_requests")
+        .select("*")
+        .eq("model_id", modelId)
+        .order("requested_at", { ascending: false })
+        .limit(10);
+      setWithdrawals(withdrawalData || []);
+    } catch (error: unknown) {
+      console.error("Error requesting withdrawal:", error);
+      const message = error instanceof Error ? error.message : "Failed to request withdrawal";
+      toast.error(message);
+    } finally {
+      setRequestingWithdraw(false);
+    }
+  }
 }

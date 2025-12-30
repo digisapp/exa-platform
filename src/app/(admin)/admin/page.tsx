@@ -18,6 +18,7 @@ import {
   Heart,
   UserPlus,
   BarChart3,
+  Banknote,
 } from "lucide-react";
 
 export default async function AdminPage() {
@@ -103,6 +104,12 @@ export default async function AdminPage() {
             <Link href="/admin/community">
               <Users className="h-4 w-4 mr-2" />
               Community
+            </Link>
+          </Button>
+          <Button variant="outline" asChild className="text-green-500 border-green-500/50 hover:bg-green-500/10">
+            <Link href="/admin/payouts">
+              <Banknote className="h-4 w-4 mr-2" />
+              Payouts
             </Link>
           </Button>
           <Button asChild>
