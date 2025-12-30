@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getModelIdFromActorId } from "@/lib/ids";
 import { NextRequest, NextResponse } from "next/server";
+import { sendTipReceivedEmail } from "@/lib/email";
 
 export async function POST(request: NextRequest) {
   try {
@@ -114,15 +115,43 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Get recipient display name for response
+    // Get recipient display name for response and send email
     let recipientName = "Model";
     if (recipient.type === "model") {
       const { data: model } = await supabase
         .from("models")
-        .select("first_name, username")
+        .select("email, first_name, username")
         .eq("id", recipientId)
-        .single() as { data: { first_name: string | null; username: string } | null };
+        .single() as { data: { email: string | null; first_name: string | null; username: string } | null };
       recipientName = model?.first_name || model?.username || "Model";
+
+      // Send email notification to model (non-blocking)
+      if (model?.email) {
+        // Get sender name
+        let senderName = "Someone";
+        if (sender.type === "fan") {
+          const { data: fan } = await (supabase
+            .from("fans") as any)
+            .select("display_name")
+            .eq("id", sender.id)
+            .single();
+          senderName = fan?.display_name || "A fan";
+        } else if (sender.type === "model") {
+          const { data: senderModel } = await (supabase
+            .from("models") as any)
+            .select("first_name, username")
+            .eq("user_id", user.id)
+            .single();
+          senderName = senderModel?.first_name || senderModel?.username || "A model";
+        }
+
+        sendTipReceivedEmail({
+          to: model.email,
+          modelName: model.first_name || model.username || "Model",
+          tipperName: senderName,
+          amount: result.amount,
+        }).catch((err) => console.error("Failed to send tip email:", err));
+      }
     }
 
     return NextResponse.json({

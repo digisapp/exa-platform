@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { generateRoomName, generateToken } from "@/lib/livekit";
+import { sendVideoCallRequestEmail } from "@/lib/email";
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest) {
     }
 
     let recipientActor: { id: string } | null = null;
-    let recipientModel: { id: string; username: string; first_name: string; user_id: string; video_call_rate: number } | null = null;
+    let recipientModel: { id: string; username: string; first_name: string; user_id: string; video_call_rate: number; email?: string | null } | null = null;
     let conversationId: string | null = providedConversationId || null;
 
     // If conversationId provided, get recipient from conversation
@@ -71,7 +72,7 @@ export async function POST(request: NextRequest) {
         // Try to get model info (might be a model or fan)
         const { data: model } = await (supabase
           .from("models") as any)
-          .select("id, username, first_name, user_id, video_call_rate")
+          .select("id, username, first_name, user_id, video_call_rate, email")
           .eq("user_id", recipientActorData.user_id)
           .single();
 
@@ -92,7 +93,7 @@ export async function POST(request: NextRequest) {
       // Use recipientUsername to find recipient
       const { data: model } = await (supabase
         .from("models") as any)
-        .select("id, username, first_name, user_id, video_call_rate")
+        .select("id, username, first_name, user_id, video_call_rate, email")
         .eq("username", recipientUsername)
         .eq("is_approved", true)
         .single();
@@ -230,6 +231,16 @@ export async function POST(request: NextRequest) {
 
     // Determine if coins are required (fan calling model with rate)
     const requiresCoins = callerActor.type === "fan" && videoCallRate > 0;
+
+    // Send email notification to model (non-blocking)
+    if (recipientModel?.email && videoCallRate > 0) {
+      sendVideoCallRequestEmail({
+        to: recipientModel.email,
+        modelName: recipientModel.first_name || recipientModel.username || "Model",
+        callerName,
+        callRate: videoCallRate,
+      }).catch((err) => console.error("Failed to send video call email:", err));
+    }
 
     return NextResponse.json({
       sessionId: session.id,

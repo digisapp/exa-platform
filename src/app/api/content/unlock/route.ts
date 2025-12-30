@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { sendContentPurchaseEmail } from "@/lib/email";
 
 export async function POST(request: NextRequest) {
   try {
@@ -67,7 +68,7 @@ export async function POST(request: NextRequest) {
     if (!result.already_unlocked) {
       const { data: content } = await (supabase
         .from("premium_content") as any)
-        .select("model_id")
+        .select("id, model_id, title")
         .eq("id", contentId)
         .single();
 
@@ -81,6 +82,47 @@ export async function POST(request: NextRequest) {
         if (pointsError) {
           console.error("Failed to award points for content sale:", pointsError);
           // Non-critical error, don't fail the unlock
+        }
+
+        // Send email notification to model (non-blocking)
+        try {
+          // Get model info
+          const { data: model } = await (supabase
+            .from("models") as any)
+            .select("email, first_name, username")
+            .eq("id", content.model_id)
+            .single();
+
+          // Get buyer name
+          let buyerName = "Someone";
+          if (actor.type === "fan") {
+            const { data: fan } = await (supabase
+              .from("fans") as any)
+              .select("display_name")
+              .eq("id", actor.id)
+              .single();
+            buyerName = fan?.display_name || "A fan";
+          } else if (actor.type === "model") {
+            const { data: buyerModel } = await (supabase
+              .from("models") as any)
+              .select("first_name, username")
+              .eq("user_id", user.id)
+              .single();
+            buyerName = buyerModel?.first_name || buyerModel?.username || "A model";
+          }
+
+          if (model?.email) {
+            sendContentPurchaseEmail({
+              to: model.email,
+              modelName: model.first_name || model.username || "Model",
+              buyerName,
+              contentTitle: content.title || "Exclusive Content",
+              coinsEarned: result.amount_paid,
+            }).catch((err) => console.error("Failed to send content purchase email:", err));
+          }
+        } catch (emailErr) {
+          console.error("Error preparing content purchase email:", emailErr);
+          // Non-critical, don't fail the unlock
         }
       }
     }

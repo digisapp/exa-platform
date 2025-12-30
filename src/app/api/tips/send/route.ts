@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { sendTipReceivedEmail } from "@/lib/email";
 
 export async function POST(request: NextRequest) {
   try {
@@ -71,9 +72,9 @@ export async function POST(request: NextRequest) {
     // Get recipient model by username
     const { data: recipientModel } = await supabase
       .from("models")
-      .select("id, user_id, first_name, username")
+      .select("id, user_id, email, first_name, username")
       .eq("username", recipientUsername)
-      .single() as { data: { id: string; user_id: string; first_name: string | null; username: string } | null };
+      .single() as { data: { id: string; user_id: string; email: string | null; first_name: string | null; username: string } | null };
 
     if (!recipientModel) {
       return NextResponse.json(
@@ -149,6 +150,34 @@ export async function POST(request: NextRequest) {
         sender_actor_id: sender.id,
       },
     });
+
+    // Send email notification to model (non-blocking)
+    if (recipientModel.email) {
+      // Get sender name
+      let senderName = "Someone";
+      if (sender.type === "fan") {
+        const { data: fan } = await (supabase
+          .from("fans") as any)
+          .select("display_name")
+          .eq("id", sender.id)
+          .single();
+        senderName = fan?.display_name || "A fan";
+      } else if (sender.type === "model") {
+        const { data: senderModel } = await (supabase
+          .from("models") as any)
+          .select("first_name, username")
+          .eq("user_id", user.id)
+          .single();
+        senderName = senderModel?.first_name || senderModel?.username || "A model";
+      }
+
+      sendTipReceivedEmail({
+        to: recipientModel.email,
+        modelName: recipientModel.first_name || recipientModel.username || "Model",
+        tipperName: senderName,
+        amount,
+      }).catch((err) => console.error("Failed to send tip email:", err));
+    }
 
     return NextResponse.json({
       success: true,
