@@ -121,7 +121,7 @@ DECLARE
 BEGIN
     -- Minimum check
     IF p_coins < 1000 THEN
-        RAISE EXCEPTION 'Minimum withdrawal is 1000 coins ($50)';
+        RAISE EXCEPTION 'Minimum withdrawal is 1000 coins ($100)';
     END IF;
 
     -- Check available balance (lock row for update)
@@ -150,7 +150,7 @@ BEGIN
     END IF;
 
     -- Calculate USD
-    v_usd := p_coins * 0.05;
+    v_usd := p_coins * 0.10;
 
     -- Move coins from available to withheld
     UPDATE public.models

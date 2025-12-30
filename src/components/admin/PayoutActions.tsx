@@ -132,7 +132,7 @@ export function PayoutActions({ id, status, modelName, coins, modelId }: PayoutA
           <AlertDialogHeader>
             <AlertDialogTitle>Mark as Paid?</AlertDialogTitle>
             <AlertDialogDescription>
-              Confirm that you have sent <strong>${(coins * 0.05).toFixed(2)}</strong> to <strong>{modelName}</strong>.
+              Confirm that you have sent <strong>${(coins * 0.10).toFixed(2)}</strong> to <strong>{modelName}</strong>.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-4">

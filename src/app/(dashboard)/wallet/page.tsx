@@ -271,11 +271,11 @@ export default function WalletPage() {
                 <span className="text-4xl font-bold">{coinBalance.toLocaleString()}</span>
                 <span className="text-muted-foreground">coins</span>
               </div>
-              <p className="text-sm text-green-500 mt-1">${(coinBalance * 0.05).toFixed(2)} USD</p>
+              <p className="text-sm text-green-500 mt-1">${(coinBalance * 0.10).toFixed(2)} USD</p>
               {withheldBalance > 0 && (
                 <p className="text-xs text-yellow-500 mt-2 flex items-center gap-1">
                   <Clock className="h-3 w-3" />
-                  {withheldBalance.toLocaleString()} coins pending payout (${(withheldBalance * 0.05).toFixed(2)})
+                  {withheldBalance.toLocaleString()} coins pending payout (${(withheldBalance * 0.10).toFixed(2)})
                 </p>
               )}
             </div>
@@ -576,7 +576,7 @@ export default function WalletPage() {
                     Request Payout
                   </CardTitle>
                   <CardDescription>
-                    Minimum $50 (1,000 coins) · 1 coin = $0.05
+                    Minimum $100 (1,000 coins) · 1 coin = $0.10
                   </CardDescription>
                 </div>
                 <Dialog open={showWithdrawDialog} onOpenChange={setShowWithdrawDialog}>
@@ -604,7 +604,7 @@ export default function WalletPage() {
                         </div>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">USD Value</span>
-                          <span className="font-bold text-green-500">${(coinBalance * 0.05).toFixed(2)}</span>
+                          <span className="font-bold text-green-500">${(coinBalance * 0.10).toFixed(2)}</span>
                         </div>
                       </div>
                       <div className="space-y-2">
@@ -620,7 +620,7 @@ export default function WalletPage() {
                         />
                         {withdrawAmount && (
                           <p className="text-sm text-green-500">
-                            You&apos;ll receive: ${(parseInt(withdrawAmount) * 0.05).toFixed(2)} USD
+                            You&apos;ll receive: ${(parseInt(withdrawAmount) * 0.10).toFixed(2)} USD
                           </p>
                         )}
                       </div>
@@ -651,8 +651,8 @@ export default function WalletPage() {
               {coinBalance < 1000 ? (
                 <div className="text-center py-6 text-muted-foreground">
                   <Coins className="h-10 w-10 mx-auto mb-3 opacity-50" />
-                  <p className="text-sm">You need at least 1,000 coins ($50) to request a payout</p>
-                  <p className="text-xs mt-1">Current balance: {coinBalance} coins (${(coinBalance * 0.05).toFixed(2)})</p>
+                  <p className="text-sm">You need at least 1,000 coins ($100) to request a payout</p>
+                  <p className="text-xs mt-1">Current balance: {coinBalance} coins (${(coinBalance * 0.10).toFixed(2)})</p>
                 </div>
               ) : bankAccounts.length === 0 ? (
                 <div className="text-center py-6 text-muted-foreground">
@@ -662,7 +662,7 @@ export default function WalletPage() {
               ) : (
                 <div className="text-center py-6">
                   <p className="text-2xl font-bold text-green-500 mb-1">
-                    ${(coinBalance * 0.05).toFixed(2)}
+                    ${(coinBalance * 0.10).toFixed(2)}
                   </p>
                   <p className="text-muted-foreground text-sm">Available for withdrawal</p>
                 </div>
