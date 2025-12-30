@@ -24,12 +24,13 @@ export async function GET(request: NextRequest) {
     // Use helper to get actor ID
     const actorId = user ? await getActorId(supabase, user.id) : null;
 
-    // Get premium content
+    // Get premium content (only paid content with coin_price > 0)
     const { data: content, error } = await supabase
       .from("premium_content")
       .select("id, title, description, media_type, preview_url, coin_price, unlock_count, created_at")
       .eq("model_id", modelId)
       .eq("is_active", true)
+      .gt("coin_price", 0)
       .order("created_at", { ascending: false });
 
     if (error) {

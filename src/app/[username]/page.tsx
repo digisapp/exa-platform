@@ -117,12 +117,13 @@ export default async function ModelProfilePage({ params }: Props) {
     .order("created_at", { ascending: false })
     .limit(12) as { data: any[] | null };
 
-  // Get premium content count
+  // Get PPV content count (only paid content)
   const { count: premiumContentCount } = await supabase
     .from("premium_content")
     .select("*", { count: "exact", head: true })
     .eq("model_id", model.id)
-    .eq("is_active", true);
+    .eq("is_active", true)
+    .gt("coin_price", 0);
 
   // Get current user info
   const { data: { user } } = await supabase.auth.getUser();
