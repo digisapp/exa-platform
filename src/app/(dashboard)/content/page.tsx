@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,7 +22,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Lock,
@@ -33,13 +33,15 @@ import {
   Eye,
   Image as ImageIcon,
   Video,
-  Unlock,
-  Images,
   Camera,
+  ExternalLink,
+  Sparkles,
+  TrendingUp,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface MediaAsset {
   id: string;
@@ -71,6 +73,7 @@ export default function ContentPage() {
   const [uploading, setUploading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [modelId, setModelId] = useState<string | null>(null);
+  const [modelUsername, setModelUsername] = useState<string | null>(null);
   const [actorId, setActorId] = useState<string | null>(null);
   const [totalEarnings, setTotalEarnings] = useState(0);
   const [activeTab, setActiveTab] = useState("portfolio");
@@ -86,10 +89,7 @@ export default function ContentPage() {
 
   const fetchContent = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      // Layout already handles auth redirect
-      return;
-    }
+    if (!user) return;
 
     const { data: actor } = await supabase
       .from("actors")
@@ -97,19 +97,15 @@ export default function ContentPage() {
       .eq("user_id", user.id)
       .single() as { data: { id: string; type: string } | null };
 
-    if (!actor || (actor.type !== "model" && actor.type !== "admin")) {
-      // Not a model, show empty state or redirect handled elsewhere
-      return;
-    }
+    if (!actor || (actor.type !== "model" && actor.type !== "admin")) return;
 
     setActorId(actor.id);
 
-    // Get model ID (models are linked via user_id, not actor.id)
     const { data: model } = await supabase
       .from("models")
-      .select("id")
+      .select("id, username")
       .eq("user_id", user.id)
-      .single() as { data: { id: string } | null };
+      .single() as { data: { id: string; username: string } | null };
 
     if (!model) {
       setLoading(false);
@@ -117,8 +113,9 @@ export default function ContentPage() {
     }
 
     setModelId(model.id);
+    setModelUsername(model.username);
 
-    // Get portfolio content (photos/videos from media_assets)
+    // Get portfolio content
     const { data: portfolioData } = await supabase
       .from("media_assets")
       .select("*")
@@ -128,7 +125,7 @@ export default function ContentPage() {
 
     setPortfolio(portfolioData || []);
 
-    // Get premium content using model.id (PPV only - coin_price > 0)
+    // Get PPV content
     const { data: contentData } = await supabase
       .from("premium_content")
       .select("*")
@@ -139,7 +136,7 @@ export default function ContentPage() {
 
     setContent(contentData || []);
 
-    // Get total earnings from content sales
+    // Get total earnings
     const { data: earnings } = await supabase
       .from("coin_transactions")
       .select("amount")
@@ -150,7 +147,7 @@ export default function ContentPage() {
     setTotalEarnings(total);
 
     setLoading(false);
-  }, [supabase, router]);
+  }, [supabase]);
 
   useEffect(() => {
     fetchContent();
@@ -160,7 +157,6 @@ export default function ContentPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check file type
     if (file.type.startsWith("image/")) {
       setMediaType("image");
     } else if (file.type.startsWith("video/")) {
@@ -170,7 +166,6 @@ export default function ContentPage() {
       return;
     }
 
-    // Check file size (50MB max)
     if (file.size > 50 * 1024 * 1024) {
       toast.error("File size must be less than 50MB");
       return;
@@ -190,21 +185,16 @@ export default function ContentPage() {
       formData.append("file", mediaFile);
 
       if (isPaid) {
-        // Paid content goes to premium_content (PPV tab)
         const uploadResponse = await fetch("/api/upload/premium", {
           method: "POST",
           body: formData,
         });
 
         const uploadData = await uploadResponse.json();
-
-        if (!uploadResponse.ok) {
-          throw new Error(uploadData.error || "Failed to upload file");
-        }
+        if (!uploadResponse.ok) throw new Error(uploadData.error || "Failed to upload file");
 
         await createPaidContent(uploadData.url);
       } else {
-        // Free content goes to media_assets (Photos/Videos tabs)
         formData.append("type", mediaType === "video" ? "video" : "portfolio");
 
         const uploadResponse = await fetch("/api/upload/media", {
@@ -213,19 +203,16 @@ export default function ContentPage() {
         });
 
         const uploadData = await uploadResponse.json();
+        if (!uploadResponse.ok) throw new Error(uploadData.error || "Failed to upload file");
 
-        if (!uploadResponse.ok) {
-          throw new Error(uploadData.error || "Failed to upload file");
-        }
-
-        toast.success("Content uploaded to your portfolio!");
+        toast.success("Added to your portfolio!");
         setDialogOpen(false);
         resetForm();
-        fetchContent(); // Refresh to show new content
+        fetchContent();
       }
     } catch (error) {
       console.error("Upload error:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to upload content");
+      toast.error(error instanceof Error ? error.message : "Failed to upload");
     } finally {
       setUploading(false);
     }
@@ -250,34 +237,28 @@ export default function ContentPage() {
       throw new Error(data.error || "Failed to create content");
     }
 
-    toast.success("PPV content uploaded!");
+    toast.success("PPV content created!");
     setDialogOpen(false);
     resetForm();
     fetchContent();
   };
 
   const handleDelete = async (contentId: string) => {
-    if (!confirm("Are you sure you want to delete this content?")) return;
+    if (!confirm("Delete this content?")) return;
 
-    const response = await fetch(`/api/content?id=${contentId}`, {
-      method: "DELETE",
-    });
-
+    const response = await fetch(`/api/content?id=${contentId}`, { method: "DELETE" });
     if (response.ok) {
-      toast.success("Content deleted");
+      toast.success("Deleted");
       setContent((prev) => prev.filter((c) => c.id !== contentId));
     } else {
-      toast.error("Failed to delete content");
+      toast.error("Failed to delete");
     }
   };
 
   const handleDeletePortfolio = async (mediaId: string) => {
-    if (!confirm("Are you sure you want to delete this?")) return;
+    if (!confirm("Delete this?")) return;
 
-    const response = await fetch(`/api/upload?id=${mediaId}`, {
-      method: "DELETE",
-    });
-
+    const response = await fetch(`/api/upload?id=${mediaId}`, { method: "DELETE" });
     if (response.ok) {
       toast.success("Deleted");
       setPortfolio((prev) => prev.filter((p) => p.id !== mediaId));
@@ -295,367 +276,439 @@ export default function ContentPage() {
     setMediaPreview(null);
   };
 
+  const openUploadDialog = (paid: boolean) => {
+    setIsPaid(paid);
+    setDialogOpen(true);
+  };
+
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto flex items-center justify-center">
+      <div className="flex items-center justify-center py-20">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
+  const totalUnlocks = content.reduce((sum, c) => sum + c.unlock_count, 0);
+
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="max-w-5xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Content</h1>
+          <h1 className="text-3xl font-bold">My Content</h1>
+          <p className="text-muted-foreground mt-1">
+            Manage your photos, videos, and exclusive PPV content
+          </p>
         </div>
-
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Content
+        <div className="flex items-center gap-3">
+          {modelUsername && (
+            <Button variant="outline" asChild>
+              <Link href={`/${modelUsername}`} target="_blank">
+                <ExternalLink className="mr-2 h-4 w-4" />
+                View Profile
+              </Link>
             </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Upload Content</DialogTitle>
-              <DialogDescription>
-                {isPaid
-                  ? "Paid content appears in your PPV tab - fans pay to unlock"
-                  : "Free content appears in your Photos/Videos tabs"
-                }
-              </DialogDescription>
-            </DialogHeader>
+          )}
+          <Button
+            onClick={() => openUploadDialog(false)}
+            className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Upload
+          </Button>
+        </div>
+      </div>
 
-            <div className="space-y-4 py-4">
-              {/* File Upload */}
-              <div className="space-y-2">
-                <Label>Media File</Label>
-                {mediaPreview ? (
-                  <div className="relative aspect-video rounded-lg overflow-hidden bg-black">
-                    {mediaType === "video" ? (
-                      <video
-                        src={mediaPreview}
-                        className="w-full h-full object-contain"
-                        controls
-                      />
-                    ) : (
-                      <Image
-                        src={mediaPreview}
-                        alt="Preview"
-                        fill
-                        className="object-contain"
-                      />
-                    )}
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      className="absolute top-2 right-2"
-                      onClick={() => {
-                        setMediaFile(null);
-                        setMediaPreview(null);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
-                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <Upload className="h-10 w-10 text-muted-foreground mb-3" />
-                      <p className="text-sm text-muted-foreground">
-                        Click to upload photo or video
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Max 50MB
-                      </p>
-                    </div>
-                    <input
-                      type="file"
-                      className="hidden"
-                      accept="image/*,video/*"
-                      onChange={handleFileSelect}
-                    />
-                  </label>
-                )}
+      {/* Stats Overview */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border-blue-500/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-blue-500/20">
+                <Camera className="h-5 w-5 text-blue-500" />
               </div>
-
-              {/* Title */}
-              <div className="space-y-2">
-                <Label htmlFor="title">Title (optional)</Label>
-                <Input
-                  id="title"
-                  placeholder="Give your content a title..."
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                />
+              <div>
+                <p className="text-2xl font-bold">{portfolio.length}</p>
+                <p className="text-xs text-muted-foreground">Portfolio Items</p>
               </div>
-
-              {/* Description */}
-              <div className="space-y-2">
-                <Label htmlFor="description">Description (optional)</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Describe what fans will see..."
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  rows={2}
-                />
-              </div>
-
-              {/* Free/Paid Toggle */}
-              <div className="flex items-center justify-between p-4 rounded-lg border">
-                <div className="space-y-0.5">
-                  <Label htmlFor="paid-toggle" className="text-base">Paid Content</Label>
-                  <p className="text-sm text-muted-foreground">
-                    {isPaid ? "Fans pay coins to unlock" : "Free for all fans"}
-                  </p>
-                </div>
-                <Switch
-                  id="paid-toggle"
-                  checked={isPaid}
-                  onCheckedChange={setIsPaid}
-                />
-              </div>
-
-              {/* Price - only show if paid */}
-              {isPaid && (
-                <div className="space-y-2">
-                  <Label>Price in Coins</Label>
-                  <div className="relative">
-                    <Coins className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-pink-500" />
-                    <Input
-                      type="number"
-                      min="0"
-                      value={coinPrice}
-                      onChange={(e) => setCoinPrice(e.target.value)}
-                      placeholder="Enter price"
-                      className="pl-10"
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Set to 0 for free content
-                  </p>
-                </div>
-              )}
-
-              {/* Upload Button */}
-              <Button
-                onClick={handleUpload}
-                disabled={!mediaFile || uploading}
-                className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
-              >
-                {uploading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="mr-2 h-4 w-4" />
-                    Upload Content
-                  </>
-                )}
-              </Button>
             </div>
-          </DialogContent>
-        </Dialog>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-pink-500/10 to-violet-500/10 border-pink-500/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-pink-500/20">
+                <Lock className="h-5 w-5 text-pink-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{content.length}</p>
+                <p className="text-xs text-muted-foreground">PPV Items</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-green-500/20">
+                <Eye className="h-5 w-5 text-green-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{totalUnlocks}</p>
+                <p className="text-xs text-muted-foreground">Total Unlocks</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 border-amber-500/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-amber-500/20">
+                <Coins className="h-5 w-5 text-amber-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{totalEarnings}</p>
+                <p className="text-xs text-muted-foreground">Coins Earned</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="portfolio" className="flex items-center gap-2">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2 h-12">
+          <TabsTrigger value="portfolio" className="flex items-center gap-2 text-base">
             <Camera className="h-4 w-4" />
-            Portfolio ({portfolio.length})
+            Portfolio
           </TabsTrigger>
-          <TabsTrigger value="ppv" className="flex items-center gap-2">
-            <Lock className="h-4 w-4" />
-            PPV ({content.length})
+          <TabsTrigger value="ppv" className="flex items-center gap-2 text-base">
+            <Sparkles className="h-4 w-4" />
+            PPV Content
           </TabsTrigger>
         </TabsList>
 
         {/* Portfolio Tab */}
         <TabsContent value="portfolio" className="space-y-4">
           {portfolio.length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                <Camera className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No photos or videos yet</h3>
-                <p className="text-muted-foreground mb-4">Upload free content to show in your Photos/Videos tabs</p>
+            <Card className="border-dashed">
+              <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="p-4 rounded-full bg-muted mb-4">
+                  <Camera className="h-10 w-10 text-muted-foreground" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">Build Your Portfolio</h3>
+                <p className="text-muted-foreground mb-6 max-w-sm">
+                  Upload photos and videos that showcase your work. These appear in your public profile.
+                </p>
                 <Button
-                  onClick={() => { setIsPaid(false); setDialogOpen(true); }}
+                  onClick={() => openUploadDialog(false)}
+                  size="lg"
                   className="bg-gradient-to-r from-pink-500 to-violet-500"
                 >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Photo or Video
+                  <Upload className="mr-2 h-5 w-5" />
+                  Upload Your First Photo
                 </Button>
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {portfolio.map((item) => (
-                <Card key={item.id} className="overflow-hidden">
-                  <div className="relative aspect-square">
+            <>
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  {portfolio.length} item{portfolio.length !== 1 ? 's' : ''} in your portfolio
+                </p>
+                <Button variant="outline" size="sm" onClick={() => openUploadDialog(false)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add More
+                </Button>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {portfolio.map((item) => (
+                  <div
+                    key={item.id}
+                    className="group relative aspect-square rounded-xl overflow-hidden bg-muted"
+                  >
                     {item.asset_type === "video" ? (
-                      <video
-                        src={item.url}
-                        className="w-full h-full object-cover"
-                      />
+                      <video src={item.url} className="w-full h-full object-cover" />
                     ) : (
                       <Image
                         src={item.photo_url || item.url}
-                        alt="Portfolio content"
+                        alt="Portfolio"
                         fill
-                        className="object-cover"
+                        className="object-cover transition-transform group-hover:scale-105"
                       />
                     )}
 
+                    {/* Overlay on hover */}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors" />
+
                     {/* Type Badge */}
                     <div className="absolute top-2 left-2">
-                      <div className="bg-black/70 px-2 py-1 rounded flex items-center gap-1">
+                      <div className="bg-black/60 backdrop-blur-sm px-2 py-1 rounded-full flex items-center gap-1">
                         {item.asset_type === "video" ? (
                           <Video className="h-3 w-3 text-white" />
                         ) : (
                           <ImageIcon className="h-3 w-3 text-white" />
                         )}
+                        <span className="text-white text-xs">
+                          {item.asset_type === "video" ? "Video" : "Photo"}
+                        </span>
                       </div>
                     </div>
 
-                    {/* Delete Button */}
+                    {/* Delete Button - show on hover */}
                     <Button
                       variant="destructive"
                       size="icon"
-                      className="absolute top-2 right-2 h-8 w-8"
+                      className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={() => handleDeletePortfolio(item.id)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
-                </Card>
-              ))}
-            </div>
+                ))}
+              </div>
+            </>
           )}
         </TabsContent>
 
         {/* PPV Tab */}
         <TabsContent value="ppv" className="space-y-4">
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardDescription className="flex items-center gap-1">
-                  <Lock className="h-3 w-3" />
-                  PPV Items
-                </CardDescription>
-                <CardTitle className="text-2xl">{content.length}</CardTitle>
-              </CardHeader>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardDescription className="flex items-center gap-1">
-                  <Eye className="h-3 w-3" />
-                  Total Unlocks
-                </CardDescription>
-                <CardTitle className="text-2xl">
-                  {content.reduce((sum, c) => sum + c.unlock_count, 0)}
-                </CardTitle>
-              </CardHeader>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardDescription className="flex items-center gap-1">
-                  <Coins className="h-3 w-3" />
-                  Earnings
-                </CardDescription>
-                <CardTitle className="text-2xl text-pink-500">
-                  {totalEarnings}
-                </CardTitle>
-              </CardHeader>
-            </Card>
-          </div>
-
-          {/* PPV Content Grid */}
           {content.length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                <Lock className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No PPV content yet</h3>
-                <p className="text-muted-foreground mb-4">Upload paid content that fans can unlock with coins</p>
+            <Card className="border-dashed">
+              <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="p-4 rounded-full bg-gradient-to-br from-pink-500/20 to-violet-500/20 mb-4">
+                  <Sparkles className="h-10 w-10 text-pink-500" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">Start Earning with PPV</h3>
+                <p className="text-muted-foreground mb-6 max-w-sm">
+                  Upload exclusive content that fans can unlock with coins. Set your own prices and earn from every unlock.
+                </p>
                 <Button
-                  onClick={() => { setIsPaid(true); setDialogOpen(true); }}
+                  onClick={() => openUploadDialog(true)}
+                  size="lg"
                   className="bg-gradient-to-r from-pink-500 to-violet-500"
                 >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add PPV Content
+                  <Lock className="mr-2 h-5 w-5" />
+                  Create PPV Content
                 </Button>
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {content.map((item) => (
-                <Card key={item.id} className="overflow-hidden">
-                  <div className="relative aspect-square">
+            <>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <p className="text-sm text-muted-foreground">
+                    {content.length} PPV item{content.length !== 1 ? 's' : ''}
+                  </p>
+                  {totalEarnings > 0 && (
+                    <div className="flex items-center gap-1 text-sm text-green-500">
+                      <TrendingUp className="h-4 w-4" />
+                      <span>{totalEarnings} coins earned</span>
+                    </div>
+                  )}
+                </div>
+                <Button variant="outline" size="sm" onClick={() => openUploadDialog(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add PPV
+                </Button>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {content.map((item) => (
+                  <div
+                    key={item.id}
+                    className="group relative aspect-square rounded-xl overflow-hidden bg-muted"
+                  >
                     {item.media_type === "video" ? (
-                      <video
-                        src={item.media_url}
-                        className="w-full h-full object-cover"
-                      />
+                      <video src={item.media_url} className="w-full h-full object-cover" />
                     ) : (
                       <Image
                         src={item.media_url}
-                        alt={item.title || "PPV content"}
+                        alt={item.title || "PPV"}
                         fill
-                        className="object-cover"
+                        className="object-cover transition-transform group-hover:scale-105"
                       />
                     )}
 
-                    {/* Type Badge */}
-                    <div className="absolute top-2 left-2 flex gap-1">
-                      <div className="bg-black/70 px-2 py-1 rounded flex items-center gap-1">
-                        {item.media_type === "video" ? (
-                          <Video className="h-3 w-3 text-white" />
-                        ) : (
-                          <ImageIcon className="h-3 w-3 text-white" />
-                        )}
-                      </div>
-                      <div className="bg-pink-500/90 px-2 py-1 rounded flex items-center gap-1">
-                        <Coins className="h-3 w-3 text-white" />
-                        <span className="text-white text-xs font-bold">{item.coin_price}</span>
+                    {/* Overlay on hover */}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors" />
+
+                    {/* Price Badge */}
+                    <div className="absolute top-2 left-2">
+                      <div className="bg-gradient-to-r from-pink-500 to-violet-500 px-3 py-1 rounded-full flex items-center gap-1.5 shadow-lg">
+                        <Coins className="h-3.5 w-3.5 text-white" />
+                        <span className="text-white text-sm font-bold">{item.coin_price}</span>
                       </div>
                     </div>
 
-                    {/* Delete Button */}
+                    {/* Stats Badge */}
+                    {item.unlock_count > 0 && (
+                      <div className="absolute bottom-2 left-2">
+                        <div className="bg-black/60 backdrop-blur-sm px-2 py-1 rounded-full flex items-center gap-1">
+                          <Eye className="h-3 w-3 text-white" />
+                          <span className="text-white text-xs">{item.unlock_count}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Delete Button - show on hover */}
                     <Button
                       variant="destructive"
                       size="icon"
-                      className="absolute top-2 right-2 h-8 w-8"
+                      className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={() => handleDelete(item.id)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
-                  </div>
 
-                  <CardContent className="p-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <Eye className="h-4 w-4" />
-                        <span>{item.unlock_count} unlocks</span>
-                      </div>
-                    </div>
+                    {/* Title overlay */}
                     {item.title && (
-                      <p className="text-sm font-medium mt-1 truncate">{item.title}</p>
+                      <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                        <p className="text-white text-sm font-medium truncate">{item.title}</p>
+                      </div>
                     )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Upload Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{isPaid ? "Create PPV Content" : "Upload to Portfolio"}</DialogTitle>
+            <DialogDescription>
+              {isPaid
+                ? "Set a price and fans will pay coins to unlock this content"
+                : "This will appear in your Photos/Videos tabs on your profile"
+              }
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {/* File Upload */}
+            <div className="space-y-2">
+              {mediaPreview ? (
+                <div className="relative aspect-video rounded-lg overflow-hidden bg-black">
+                  {mediaType === "video" ? (
+                    <video src={mediaPreview} className="w-full h-full object-contain" controls />
+                  ) : (
+                    <Image src={mediaPreview} alt="Preview" fill className="object-contain" />
+                  )}
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="absolute top-2 right-2"
+                    onClick={() => { setMediaFile(null); setMediaPreview(null); }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-xl cursor-pointer hover:bg-muted/50 transition-colors">
+                  <Upload className="h-10 w-10 text-muted-foreground mb-3" />
+                  <p className="text-sm font-medium">Click to upload</p>
+                  <p className="text-xs text-muted-foreground mt-1">Photo or video up to 50MB</p>
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept="image/*,video/*"
+                    onChange={handleFileSelect}
+                  />
+                </label>
+              )}
+            </div>
+
+            {/* Content Type Toggle */}
+            <div className={cn(
+              "flex items-center justify-between p-4 rounded-xl border-2 transition-colors",
+              isPaid ? "border-pink-500/50 bg-pink-500/5" : "border-muted"
+            )}>
+              <div className="space-y-0.5">
+                <Label htmlFor="paid-toggle" className="text-base font-medium">
+                  {isPaid ? "PPV Content" : "Free Content"}
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  {isPaid ? "Fans pay coins to unlock" : "Visible to everyone"}
+                </p>
+              </div>
+              <Switch
+                id="paid-toggle"
+                checked={isPaid}
+                onCheckedChange={setIsPaid}
+              />
+            </div>
+
+            {/* PPV Options */}
+            {isPaid && (
+              <div className="space-y-4 p-4 rounded-xl bg-muted/50">
+                <div className="space-y-2">
+                  <Label>Price</Label>
+                  <div className="relative">
+                    <Coins className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-pink-500" />
+                    <Input
+                      type="number"
+                      min="1"
+                      value={coinPrice}
+                      onChange={(e) => setCoinPrice(e.target.value)}
+                      className="pl-10 text-lg font-semibold"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                      coins
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="title">Title (optional)</Label>
+                  <Input
+                    id="title"
+                    placeholder="Give it a catchy title..."
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description (optional)</Label>
+                  <Textarea
+                    id="description"
+                    placeholder="Describe what fans will see..."
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    rows={2}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Upload Button */}
+            <Button
+              onClick={handleUpload}
+              disabled={!mediaFile || uploading}
+              className="w-full h-12 text-base bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
+            >
+              {uploading ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <Upload className="mr-2 h-5 w-5" />
+                  {isPaid ? `Create PPV (${coinPrice} coins)` : "Upload to Portfolio"}
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
