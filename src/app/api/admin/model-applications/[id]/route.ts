@@ -213,7 +213,7 @@ Your profile has been approved and you're now part of our community.
 Here's how to get started:
 • Complete your profile with photos and bio
 • Share your examodels.com/${application.instagram_username || application.tiktok_username || application.email.split("@")[0]} on Instagram Bio + Story
-• Engage with the community :)`;
+• Engage with the community 😊`;
 
             await (supabase.from("messages") as any).insert({
               conversation_id: conversationId,
