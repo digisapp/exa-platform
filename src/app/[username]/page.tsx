@@ -8,7 +8,6 @@ import {
   Instagram,
 } from "lucide-react";
 import type { Metadata } from "next";
-import { PremiumContentGrid } from "@/components/content/PremiumContentGrid";
 import { ShareButton } from "@/components/ui/share-button";
 import { FavoriteButton } from "@/components/ui/favorite-button";
 import { ProfileActionButtons } from "@/components/profile/ProfileActionButtons";
@@ -332,18 +331,7 @@ export default async function ModelProfilePage({ params }: Props) {
             </div>
           )}
 
-          {/* Premium Content Section */}
-          {(premiumContentCount || 0) > 0 && (
-            <div className="mb-6">
-              <PremiumContentGrid
-                modelId={model.id}
-                initialCoinBalance={coinBalance}
-                isOwner={isOwner}
-              />
-            </div>
-          )}
-
-          {/* Content Tabs (Photos/Videos) */}
+          {/* Content Tabs (Photos/Videos/PPV) */}
           <ProfileContentTabs
             photos={photos || []}
             videos={videos || []}

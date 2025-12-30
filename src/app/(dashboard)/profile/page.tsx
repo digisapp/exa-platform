@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Loader2, User, Lock, DollarSign, Camera, BarChart3 } from "lucide-react";
 import type { Model } from "@/types/database";
+import { ImageCropper } from "@/components/upload/ImageCropper";
 
 const US_STATES = [
   "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
@@ -29,6 +30,8 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const supabase = createClient();
@@ -44,7 +47,7 @@ export default function ProfilePage() {
     return daysSinceChange >= 14;
   };
 
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -58,8 +61,25 @@ export default function ProfilePage() {
       return;
     }
 
+    // Open cropper instead of uploading directly
+    const imageUrl = URL.createObjectURL(file);
+    setImageToCrop(imageUrl);
+    setCropperOpen(true);
+  };
+
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    setCropperOpen(false);
+    if (imageToCrop) {
+      URL.revokeObjectURL(imageToCrop);
+      setImageToCrop(null);
+    }
+
     setUploadingAvatar(true);
     try {
+      const file = new File([croppedBlob], "profile-photo.jpg", {
+        type: "image/jpeg",
+      });
+
       const formData = new FormData();
       formData.append("file", file);
       formData.append("type", "avatar");
@@ -80,6 +100,15 @@ export default function ProfilePage() {
       setUploadingAvatar(false);
       if (avatarInputRef.current) avatarInputRef.current.value = "";
     }
+  };
+
+  const handleCropperClose = () => {
+    setCropperOpen(false);
+    if (imageToCrop) {
+      URL.revokeObjectURL(imageToCrop);
+      setImageToCrop(null);
+    }
+    if (avatarInputRef.current) avatarInputRef.current.value = "";
   };
 
   useEffect(() => {
@@ -258,7 +287,7 @@ export default function ProfilePage() {
               ref={avatarInputRef}
               type="file"
               accept="image/jpeg,image/png,image/webp"
-              onChange={handleAvatarUpload}
+              onChange={handleAvatarSelect}
               className="hidden"
             />
             <button
@@ -858,6 +887,18 @@ export default function ProfilePage() {
           )}
         </Button>
       </div>
+
+      {/* Image Cropper Modal */}
+      {imageToCrop && (
+        <ImageCropper
+          open={cropperOpen}
+          onClose={handleCropperClose}
+          imageSrc={imageToCrop}
+          onCropComplete={handleCropComplete}
+          aspectRatio={1}
+          circularCrop={true}
+        />
+      )}
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Camera, Video, Lock } from "lucide-react";
+import { PremiumContentGrid } from "@/components/content/PremiumContentGrid";
 
 interface MediaAsset {
   id: string;
@@ -24,8 +25,11 @@ export function ProfileContentTabs({
   photos,
   videos,
   premiumContentCount,
+  modelId,
+  coinBalance,
+  isOwner,
 }: ProfileContentTabsProps) {
-  const [activeTab, setActiveTab] = useState<"photos" | "videos">("photos");
+  const [activeTab, setActiveTab] = useState<"photos" | "videos" | "ppv">("photos");
 
   const hasPhotos = photos && photos.length > 0;
   const hasVideos = videos && videos.length > 0;
@@ -70,11 +74,17 @@ export function ProfileContentTabs({
         </button>
         {premiumContentCount > 0 && (
           <button
-            className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-[#FF69B4] hover:bg-[#FF69B4]/10 transition-all"
+            onClick={() => setActiveTab("ppv")}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all",
+              activeTab === "ppv"
+                ? "bg-gradient-to-r from-pink-500/20 to-violet-500/20 text-pink-400"
+                : "text-pink-400/70 hover:text-pink-400"
+            )}
           >
             <Lock className="h-4 w-4" />
-            Premium
-            <span className="text-xs bg-[#FF69B4]/20 px-1.5 py-0.5 rounded-full">
+            PPV
+            <span className="text-xs bg-pink-500/20 px-1.5 py-0.5 rounded-full">
               {premiumContentCount}
             </span>
           </button>
@@ -132,6 +142,16 @@ export function ProfileContentTabs({
               <p>No videos yet</p>
             </div>
           )}
+        </div>
+      )}
+
+      {activeTab === "ppv" && premiumContentCount > 0 && (
+        <div>
+          <PremiumContentGrid
+            modelId={modelId}
+            initialCoinBalance={coinBalance}
+            isOwner={isOwner}
+          />
         </div>
       )}
     </div>
