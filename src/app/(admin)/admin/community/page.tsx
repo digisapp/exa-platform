@@ -49,6 +49,22 @@ import {
 import { toast } from "sonner";
 import { ModelActionsDropdown, FanActionsDropdown } from "@/components/admin/AdminActions";
 
+function formatRelativeTime(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return "Just now";
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
+  return date.toLocaleDateString();
+}
+
 function SortIndicator({ active, direction }: { active: boolean; direction: "asc" | "desc" }) {
   if (!active) return <ArrowUpDown className="h-4 w-4 ml-1 opacity-50" />;
   return direction === "asc"
@@ -136,6 +152,7 @@ interface Model {
   content_count?: number;
   last_post?: string | null;
   last_seen?: string | null;
+  last_active_at?: string | null;
   message_count?: number;
 }
 
@@ -494,9 +511,8 @@ export default function AdminCommunityPage() {
         model.content_count = contentMap.get(model.id) || 0;
         model.last_post = lastPostMap.get(model.id) || null;
         model.message_count = actorId ? (messageMap.get(actorId as string) || 0) : 0;
-        // Last seen - we'll use last_post or created_at as a proxy for now
-        // A proper implementation would track this in the database
-        model.last_seen = model.last_post || (model.user_id ? model.created_at : null);
+        // Last seen - use last_active_at if available, otherwise fall back to last_post or created_at
+        model.last_seen = model.last_active_at || model.last_post || (model.user_id ? model.created_at : null);
       });
 
       // Sort by computed fields if needed
@@ -983,7 +999,9 @@ export default function AdminCommunityPage() {
                           <TableCell><RatingStars modelId={model.id} currentRating={model.admin_rating} onRatingChange={handleRatingChange} /></TableCell>
                           <TableCell>
                             {model.last_seen ? (
-                              <span className="text-sm text-muted-foreground">{new Date(model.last_seen).toLocaleDateString()}</span>
+                              <span className={`text-sm ${model.last_active_at ? "text-green-500" : "text-muted-foreground"}`} title={new Date(model.last_seen).toLocaleString()}>
+                                {formatRelativeTime(model.last_seen)}
+                              </span>
                             ) : (
                               <span className="text-sm text-muted-foreground/50">-</span>
                             )}

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Navbar } from "@/components/layout/navbar";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { DashboardClientWrapper } from "@/components/layout/DashboardClientWrapper";
+import { ActivityTracker } from "@/components/ActivityTracker";
 
 // Prevent caching to ensure fresh auth state on every request
 export const dynamic = 'force-dynamic';
@@ -59,6 +60,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-background">
+      <ActivityTracker />
       <Navbar
         user={{
           id: user.id,
