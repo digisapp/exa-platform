@@ -95,9 +95,9 @@ export function ProfileContentTabs({
       {activeTab === "photos" && (
         <div>
           {hasPhotos ? (
-            <div className="grid grid-cols-3 gap-1 rounded-xl overflow-hidden">
+            <div className="grid grid-cols-3 gap-2">
               {photos.map((photo) => (
-                <div key={photo.id} className="aspect-square relative group">
+                <div key={photo.id} className="aspect-square relative group rounded-lg overflow-hidden">
                   <img
                     src={photo.photo_url || photo.url}
                     alt=""
