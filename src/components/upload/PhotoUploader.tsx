@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import type { MediaAsset } from "@/types/database";
+import { ImageCropper } from "./ImageCropper";
 
 interface PhotoUploaderProps {
   type: "portfolio" | "message" | "avatar";
@@ -25,33 +26,27 @@ export function PhotoUploader({
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileSelect = async (file: File) => {
-    // Validate file type
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-    if (!allowedTypes.includes(file.type)) {
-      const error = "Please select a valid image (JPEG, PNG, WebP, or GIF)";
-      onError?.(error);
-      toast.error(error);
-      return;
-    }
-
-    // Validate file size (5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      const error = "Image must be less than 5MB";
-      onError?.(error);
-      toast.error(error);
-      return;
-    }
-
+  // Actual upload function (used after validation and optional cropping)
+  const uploadFile = async (fileOrBlob: File | Blob, fileName?: string) => {
     // Create preview
-    setPreview(URL.createObjectURL(file));
+    setPreview(URL.createObjectURL(fileOrBlob));
     setUploading(true);
 
     try {
       const formData = new FormData();
-      formData.append("file", file);
+      // If it's a Blob (from cropper), convert to File with a name
+      if (fileOrBlob instanceof Blob && !(fileOrBlob instanceof File)) {
+        const file = new File([fileOrBlob], fileName || "cropped-image.jpg", {
+          type: fileOrBlob.type || "image/jpeg",
+        });
+        formData.append("file", file);
+      } else {
+        formData.append("file", fileOrBlob);
+      }
       formData.append("type", type);
 
       const response = await fetch("/api/upload", {
@@ -86,6 +81,59 @@ export function PhotoUploader({
       if (inputRef.current) {
         inputRef.current.value = "";
       }
+    }
+  };
+
+  // Handle file selection (validates and optionally shows cropper)
+  const handleFileSelect = async (file: File) => {
+    // Validate file type
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!allowedTypes.includes(file.type)) {
+      const error = "Please select a valid image (JPEG, PNG, WebP, or GIF)";
+      onError?.(error);
+      toast.error(error);
+      return;
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      const error = "Image must be less than 5MB";
+      onError?.(error);
+      toast.error(error);
+      return;
+    }
+
+    // For avatar uploads, show the cropper
+    if (type === "avatar") {
+      const imageUrl = URL.createObjectURL(file);
+      setImageToCrop(imageUrl);
+      setCropperOpen(true);
+      return;
+    }
+
+    // For other types, upload directly
+    await uploadFile(file);
+  };
+
+  // Handle cropped image from the cropper
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    setCropperOpen(false);
+    if (imageToCrop) {
+      URL.revokeObjectURL(imageToCrop);
+      setImageToCrop(null);
+    }
+    await uploadFile(croppedBlob, "profile-photo.jpg");
+  };
+
+  // Handle cropper close
+  const handleCropperClose = () => {
+    setCropperOpen(false);
+    if (imageToCrop) {
+      URL.revokeObjectURL(imageToCrop);
+      setImageToCrop(null);
+    }
+    if (inputRef.current) {
+      inputRef.current.value = "";
     }
   };
 
@@ -226,6 +274,18 @@ export function PhotoUploader({
         <p className="text-sm text-muted-foreground mt-2 text-center">
           Each portfolio photo earns you +10 points!
         </p>
+      )}
+
+      {/* Image Cropper Dialog for avatars */}
+      {imageToCrop && (
+        <ImageCropper
+          open={cropperOpen}
+          onClose={handleCropperClose}
+          imageSrc={imageToCrop}
+          onCropComplete={handleCropComplete}
+          aspectRatio={1}
+          circularCrop={true}
+        />
       )}
     </div>
   );
