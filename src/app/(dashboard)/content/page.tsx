@@ -163,22 +163,42 @@ export default function ContentPage() {
     setUploading(true);
 
     try {
-      // Upload via API route
       const formData = new FormData();
       formData.append("file", mediaFile);
 
-      const uploadResponse = await fetch("/api/upload/premium", {
-        method: "POST",
-        body: formData,
-      });
+      if (isPaid) {
+        // Paid content goes to premium_content (PPV tab)
+        const uploadResponse = await fetch("/api/upload/premium", {
+          method: "POST",
+          body: formData,
+        });
 
-      const uploadData = await uploadResponse.json();
+        const uploadData = await uploadResponse.json();
 
-      if (!uploadResponse.ok) {
-        throw new Error(uploadData.error || "Failed to upload file");
+        if (!uploadResponse.ok) {
+          throw new Error(uploadData.error || "Failed to upload file");
+        }
+
+        await createPaidContent(uploadData.url);
+      } else {
+        // Free content goes to media_assets (Photos/Videos tabs)
+        formData.append("type", mediaType === "video" ? "video" : "portfolio");
+
+        const uploadResponse = await fetch("/api/upload/media", {
+          method: "POST",
+          body: formData,
+        });
+
+        const uploadData = await uploadResponse.json();
+
+        if (!uploadResponse.ok) {
+          throw new Error(uploadData.error || "Failed to upload file");
+        }
+
+        toast.success("Content uploaded to your portfolio!");
+        setDialogOpen(false);
+        resetForm();
       }
-
-      await createContent(uploadData.url);
     } catch (error) {
       console.error("Upload error:", error);
       toast.error(error instanceof Error ? error.message : "Failed to upload content");
@@ -187,7 +207,7 @@ export default function ContentPage() {
     }
   };
 
-  const createContent = async (mediaUrl: string) => {
+  const createPaidContent = async (mediaUrl: string) => {
     const response = await fetch("/api/content", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -197,7 +217,7 @@ export default function ContentPage() {
         mediaUrl,
         mediaType,
         previewUrl: null,
-        coinPrice: isPaid ? parseInt(coinPrice) : 0,
+        coinPrice: parseInt(coinPrice) || 1,
       }),
     });
 
@@ -206,7 +226,7 @@ export default function ContentPage() {
       throw new Error(data.error || "Failed to create content");
     }
 
-    toast.success("Content uploaded!");
+    toast.success("PPV content uploaded!");
     setDialogOpen(false);
     resetForm();
     fetchContent();
@@ -262,7 +282,10 @@ export default function ContentPage() {
             <DialogHeader>
               <DialogTitle>Upload Content</DialogTitle>
               <DialogDescription>
-                Upload a photo or video for your profile page
+                {isPaid
+                  ? "Paid content appears in your PPV tab - fans pay to unlock"
+                  : "Free content appears in your Photos/Videos tabs"
+                }
               </DialogDescription>
             </DialogHeader>
 
