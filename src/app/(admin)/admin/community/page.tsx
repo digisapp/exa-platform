@@ -41,6 +41,10 @@ import {
   UserCheck,
   Mail,
   Send,
+  MessageCircle,
+  Images,
+  DollarSign,
+  Activity,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ModelActionsDropdown, FanActionsDropdown } from "@/components/admin/AdminActions";
@@ -127,6 +131,12 @@ interface Model {
   user_id: string | null;
   invite_token: string | null;
   claimed_at: string | null;
+  // New tracking fields
+  total_earned?: number;
+  content_count?: number;
+  last_post?: string | null;
+  last_seen?: string | null;
+  message_count?: number;
 }
 
 function CopyInviteButton({ token }: { token: string }) {
@@ -168,7 +178,7 @@ interface Fan {
   report_count?: number;
 }
 
-type ModelSortField = "profile_views" | "coin_balance" | "followers_count" | "instagram_followers" | "admin_rating" | "created_at";
+type ModelSortField = "profile_views" | "coin_balance" | "followers_count" | "instagram_followers" | "admin_rating" | "created_at" | "total_earned" | "content_count" | "last_post" | "last_seen" | "message_count";
 type FanSortField = "coins_spent" | "following_count" | "coin_balance" | "created_at" | "report_count";
 type SortDirection = "asc" | "desc";
 
@@ -390,25 +400,122 @@ export default function AdminCommunityPage() {
     const { data, count, error } = await query;
     if (error) { console.error(error); setModelsLoading(false); return; }
 
-    // Get follower counts
+    // Get additional data for models
     if (data?.length > 0) {
+      const modelIds = data.map((m: any) => m.id);
+      const userIds = data.map((m: any) => m.user_id).filter(Boolean);
+
+      // Get actors for these models
       const { data: actors } = await (supabase.from("actors") as any)
-        .select("id, user_id").in("user_id", data.map((m: any) => m.user_id || m.id));
+        .select("id, user_id").in("user_id", userIds);
 
-      if (actors) {
-        const actorIds = actors.map((a: any) => a.id);
-        const { data: followCounts } = await (supabase.from("follows") as any)
-          .select("following_id").in("following_id", actorIds);
+      const actorToUser = new Map(actors?.map((a: any) => [a.user_id, a.id]) || []);
+      const actorIds = actors?.map((a: any) => a.id) || [];
 
-        const followerMap = new Map<string, number>();
-        followCounts?.forEach((f: any) => {
-          followerMap.set(f.following_id, (followerMap.get(f.following_id) || 0) + 1);
-        });
+      // Get follower counts
+      const { data: followCounts } = await (supabase.from("follows") as any)
+        .select("following_id").in("following_id", actorIds);
 
-        const actorToUser = new Map(actors.map((a: any) => [a.user_id, a.id]));
-        data.forEach((model: any) => {
-          const actorId = actorToUser.get(model.user_id || model.id) || "";
-          model.followers_count = actorId ? (followerMap.get(actorId as string) || 0) : 0;
+      const followerMap = new Map<string, number>();
+      followCounts?.forEach((f: any) => {
+        followerMap.set(f.following_id, (followerMap.get(f.following_id) || 0) + 1);
+      });
+
+      // Get total earned (positive coin transactions)
+      const { data: earnings } = await (supabase.from("coin_transactions") as any)
+        .select("actor_id, amount")
+        .in("actor_id", actorIds)
+        .gt("amount", 0);
+
+      const earningsMap = new Map<string, number>();
+      earnings?.forEach((tx: any) => {
+        earningsMap.set(tx.actor_id, (earningsMap.get(tx.actor_id) || 0) + tx.amount);
+      });
+
+      // Get content counts (premium_content + media_assets)
+      const { data: premiumCounts } = await (supabase.from("premium_content") as any)
+        .select("model_id").in("model_id", modelIds);
+
+      const { data: mediaCounts } = await (supabase.from("media_assets") as any)
+        .select("model_id").in("model_id", modelIds);
+
+      const contentMap = new Map<string, number>();
+      premiumCounts?.forEach((c: any) => {
+        contentMap.set(c.model_id, (contentMap.get(c.model_id) || 0) + 1);
+      });
+      mediaCounts?.forEach((c: any) => {
+        contentMap.set(c.model_id, (contentMap.get(c.model_id) || 0) + 1);
+      });
+
+      // Get last post dates (most recent from either table)
+      const { data: lastPremium } = await (supabase.from("premium_content") as any)
+        .select("model_id, created_at")
+        .in("model_id", modelIds)
+        .order("created_at", { ascending: false });
+
+      const { data: lastMedia } = await (supabase.from("media_assets") as any)
+        .select("model_id, created_at")
+        .in("model_id", modelIds)
+        .order("created_at", { ascending: false });
+
+      const lastPostMap = new Map<string, string>();
+      // Process premium content dates
+      lastPremium?.forEach((p: any) => {
+        if (!lastPostMap.has(p.model_id) || new Date(p.created_at) > new Date(lastPostMap.get(p.model_id)!)) {
+          lastPostMap.set(p.model_id, p.created_at);
+        }
+      });
+      // Process media asset dates
+      lastMedia?.forEach((m: any) => {
+        if (!lastPostMap.has(m.model_id) || new Date(m.created_at) > new Date(lastPostMap.get(m.model_id)!)) {
+          lastPostMap.set(m.model_id, m.created_at);
+        }
+      });
+
+      // Get message/conversation counts
+      const { data: conversations } = await (supabase.from("conversation_participants") as any)
+        .select("actor_id, conversation_id")
+        .in("actor_id", actorIds);
+
+      const messageMap = new Map<string, number>();
+      conversations?.forEach((c: any) => {
+        messageMap.set(c.actor_id, (messageMap.get(c.actor_id) || 0) + 1);
+      });
+
+      // Get last seen from auth metadata (using actors' user_ids)
+      // Note: We'll use the model's user_id to check last activity
+      // For now, we can track based on when they last had activity
+
+      // Apply all the computed fields to models
+      data.forEach((model: any) => {
+        const actorId = actorToUser.get(model.user_id) || "";
+        model.followers_count = actorId ? (followerMap.get(actorId as string) || 0) : 0;
+        model.total_earned = actorId ? (earningsMap.get(actorId as string) || 0) : 0;
+        model.content_count = contentMap.get(model.id) || 0;
+        model.last_post = lastPostMap.get(model.id) || null;
+        model.message_count = actorId ? (messageMap.get(actorId as string) || 0) : 0;
+        // Last seen - we'll use last_post or created_at as a proxy for now
+        // A proper implementation would track this in the database
+        model.last_seen = model.last_post || (model.user_id ? model.created_at : null);
+      });
+
+      // Sort by computed fields if needed
+      if (["total_earned", "content_count", "last_post", "last_seen", "message_count", "followers_count"].includes(modelsSortField)) {
+        data.sort((a: any, b: any) => {
+          let aVal = a[modelsSortField];
+          let bVal = b[modelsSortField];
+
+          // Handle date sorting
+          if (modelsSortField === "last_post" || modelsSortField === "last_seen") {
+            aVal = aVal ? new Date(aVal).getTime() : 0;
+            bVal = bVal ? new Date(bVal).getTime() : 0;
+          }
+
+          // Handle null/undefined
+          aVal = aVal || 0;
+          bVal = bVal || 0;
+
+          return modelsSortDirection === "asc" ? aVal - bVal : bVal - aVal;
         });
       }
     }
@@ -804,15 +911,27 @@ export default function AdminCommunityPage() {
                         <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("admin_rating")}>
                           <div className="flex items-center"><Star className="h-4 w-4 mr-1" />Rating<SortIndicator active={modelsSortField === "admin_rating"} direction={modelsSortDirection} /></div>
                         </TableHead>
-                        <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("created_at")}>
-                          <div className="flex items-center">Joined<SortIndicator active={modelsSortField === "created_at"} direction={modelsSortDirection} /></div>
+                        <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("last_seen")}>
+                          <div className="flex items-center"><Activity className="h-4 w-4 mr-1" />Last Seen<SortIndicator active={modelsSortField === "last_seen"} direction={modelsSortDirection} /></div>
+                        </TableHead>
+                        <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("total_earned")}>
+                          <div className="flex items-center"><DollarSign className="h-4 w-4 mr-1" />Earned<SortIndicator active={modelsSortField === "total_earned"} direction={modelsSortDirection} /></div>
+                        </TableHead>
+                        <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("content_count")}>
+                          <div className="flex items-center"><Images className="h-4 w-4 mr-1" />Content<SortIndicator active={modelsSortField === "content_count"} direction={modelsSortDirection} /></div>
+                        </TableHead>
+                        <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("last_post")}>
+                          <div className="flex items-center"><Calendar className="h-4 w-4 mr-1" />Last Post<SortIndicator active={modelsSortField === "last_post"} direction={modelsSortDirection} /></div>
+                        </TableHead>
+                        <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("message_count")}>
+                          <div className="flex items-center"><MessageCircle className="h-4 w-4 mr-1" />Chats<SortIndicator active={modelsSortField === "message_count"} direction={modelsSortDirection} /></div>
                         </TableHead>
                         <TableHead>Actions</TableHead>
                         <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("profile_views")}>
                           <div className="flex items-center"><Eye className="h-4 w-4 mr-1" />Views<SortIndicator active={modelsSortField === "profile_views"} direction={modelsSortDirection} /></div>
                         </TableHead>
                         <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("coin_balance")}>
-                          <div className="flex items-center"><Coins className="h-4 w-4 mr-1" />Coins<SortIndicator active={modelsSortField === "coin_balance"} direction={modelsSortDirection} /></div>
+                          <div className="flex items-center"><Coins className="h-4 w-4 mr-1" />Balance<SortIndicator active={modelsSortField === "coin_balance"} direction={modelsSortDirection} /></div>
                         </TableHead>
                         <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("followers_count")}>
                           <div className="flex items-center"><Heart className="h-4 w-4 mr-1" />Favorites<SortIndicator active={modelsSortField === "followers_count"} direction={modelsSortDirection} /></div>
@@ -862,7 +981,23 @@ export default function AdminCommunityPage() {
                           </TableCell>
                           <TableCell><span className="text-sm text-muted-foreground">{model.state || "-"}</span></TableCell>
                           <TableCell><RatingStars modelId={model.id} currentRating={model.admin_rating} onRatingChange={handleRatingChange} /></TableCell>
-                          <TableCell><span className="text-sm text-muted-foreground">{new Date(model.created_at).toLocaleDateString()}</span></TableCell>
+                          <TableCell>
+                            {model.last_seen ? (
+                              <span className="text-sm text-muted-foreground">{new Date(model.last_seen).toLocaleDateString()}</span>
+                            ) : (
+                              <span className="text-sm text-muted-foreground/50">-</span>
+                            )}
+                          </TableCell>
+                          <TableCell><span className={`font-medium ${(model.total_earned || 0) > 0 ? "text-green-500" : ""}`}>{(model.total_earned || 0).toLocaleString()}</span></TableCell>
+                          <TableCell><span className={`font-medium ${(model.content_count || 0) > 0 ? "text-blue-500" : ""}`}>{(model.content_count || 0).toLocaleString()}</span></TableCell>
+                          <TableCell>
+                            {model.last_post ? (
+                              <span className="text-sm text-muted-foreground">{new Date(model.last_post).toLocaleDateString()}</span>
+                            ) : (
+                              <span className="text-sm text-muted-foreground/50">-</span>
+                            )}
+                          </TableCell>
+                          <TableCell><span className={`font-medium ${(model.message_count || 0) > 0 ? "text-violet-500" : ""}`}>{(model.message_count || 0).toLocaleString()}</span></TableCell>
                           <TableCell><ModelActionsDropdown id={model.id} modelName={model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username} isApproved={model.is_approved} onAction={loadModels} /></TableCell>
                           <TableCell><span className={`font-medium ${model.profile_views > 100 ? "text-purple-500" : ""}`}>{(model.profile_views || 0).toLocaleString()}</span></TableCell>
                           <TableCell><span className={`font-medium ${model.coin_balance > 0 ? "text-yellow-500" : ""}`}>{(model.coin_balance || 0).toLocaleString()}</span></TableCell>
