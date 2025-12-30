@@ -47,9 +47,12 @@ interface ModelDetails {
   state: string | null;
   country: string | null;
   height: string | null;
-  height_inches: number | null;
-  date_of_birth: string | null;
-  measurements: Record<string, string> | null;
+  dob: string | null;
+  bust: string | null;
+  waist: string | null;
+  hips: string | null;
+  dress_size: string | null;
+  shoe_size: string | null;
   hair_color: string | null;
   eye_color: string | null;
   instagram_handle: string | null;
@@ -497,15 +500,15 @@ export default function AdminModelDetailPage() {
               <InfoRow
                 label="Date of Birth"
                 value={
-                  model.date_of_birth || application?.date_of_birth
-                    ? `${formatDate(model.date_of_birth || application?.date_of_birth || null)} (${calculateAge(model.date_of_birth || application?.date_of_birth || null)} years old)`
+                  model.dob || application?.date_of_birth
+                    ? `${formatDate(model.dob || application?.date_of_birth || null)} (${calculateAge(model.dob || application?.date_of_birth || null)} years old)`
                     : null
                 }
                 icon={Calendar}
               />
               <InfoRow
                 label="Height"
-                value={model.height || application?.height || (model.height_inches ? `${Math.floor(model.height_inches / 12)}'${model.height_inches % 12}"` : null)}
+                value={model.height || application?.height}
                 icon={Ruler}
               />
               <InfoRow label="Hair Color" value={model.hair_color} />
@@ -514,19 +517,43 @@ export default function AdminModelDetailPage() {
           </Card>
 
           {/* Measurements */}
-          {model.measurements && Object.keys(model.measurements).length > 0 && (
+          {(model.bust || model.waist || model.hips || model.dress_size || model.shoe_size) && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Measurements</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4">
-                  {Object.entries(model.measurements).map(([key, value]) => (
-                    <div key={key}>
-                      <p className="text-xs text-muted-foreground capitalize">{key.replace(/_/g, " ")}</p>
-                      <p className="font-medium">{value}</p>
+                  {model.bust && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Bust</p>
+                      <p className="font-medium">{model.bust}</p>
                     </div>
-                  ))}
+                  )}
+                  {model.waist && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Waist</p>
+                      <p className="font-medium">{model.waist}</p>
+                    </div>
+                  )}
+                  {model.hips && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Hips</p>
+                      <p className="font-medium">{model.hips}</p>
+                    </div>
+                  )}
+                  {model.dress_size && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Dress Size</p>
+                      <p className="font-medium">{model.dress_size}</p>
+                    </div>
+                  )}
+                  {model.shoe_size && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Shoe Size</p>
+                      <p className="font-medium">{model.shoe_size}</p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
