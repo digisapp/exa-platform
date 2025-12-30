@@ -76,6 +76,7 @@ export default function WalletPage() {
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState<number | null>(null);
   const [coinBalance, setCoinBalance] = useState(0);
+  const [withheldBalance, setWithheldBalance] = useState(0);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [totalEarnings, setTotalEarnings] = useState(0);
   const [thisMonthEarnings, setThisMonthEarnings] = useState(0);
@@ -125,10 +126,11 @@ export default function WalletPage() {
         // Models are linked via user_id, not actor.id
         const { data: model } = await supabase
           .from("models")
-          .select("id, coin_balance")
+          .select("id, coin_balance, withheld_balance")
           .eq("user_id", user.id)
-          .single() as { data: { id: string; coin_balance: number } | null };
+          .single() as { data: { id: string; coin_balance: number; withheld_balance: number } | null };
         setCoinBalance(model?.coin_balance || 0);
+        setWithheldBalance(model?.withheld_balance || 0);
         if (model) {
           setModelId(model.id);
 
@@ -263,12 +265,19 @@ export default function WalletPage() {
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground mb-1">Current Balance</p>
+              <p className="text-sm text-muted-foreground mb-1">Available Balance</p>
               <div className="flex items-center gap-2">
                 <Coins className="h-8 w-8 text-pink-500" />
                 <span className="text-4xl font-bold">{coinBalance.toLocaleString()}</span>
                 <span className="text-muted-foreground">coins</span>
               </div>
+              <p className="text-sm text-green-500 mt-1">${(coinBalance * 0.05).toFixed(2)} USD</p>
+              {withheldBalance > 0 && (
+                <p className="text-xs text-yellow-500 mt-2 flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {withheldBalance.toLocaleString()} coins pending payout (${(withheldBalance * 0.05).toFixed(2)})
+                </p>
+              )}
             </div>
             <Dialog>
               <DialogTrigger asChild>

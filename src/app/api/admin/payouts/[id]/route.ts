@@ -27,77 +27,67 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { status, notes, modelId, coins } = body;
+    const { status, notes } = body;
 
-    // Build update object
-    const updateData: Record<string, unknown> = {
-      status,
-      updated_at: new Date().toISOString(),
-    };
-
+    // Use database functions for proper accounting
     if (status === "completed") {
-      updateData.completed_at = new Date().toISOString();
-      updateData.processed_at = new Date().toISOString();
-      updateData.processed_by = actor.id;
+      // Complete withdrawal - removes from withheld balance
+      const { error: completeError } = await supabase.rpc("complete_withdrawal", {
+        p_withdrawal_id: id,
+      });
+
+      if (completeError) {
+        console.error("Error completing withdrawal:", completeError);
+        return NextResponse.json({ error: completeError.message }, { status: 500 });
+      }
+
+      // Add admin notes if provided
       if (notes) {
-        updateData.admin_notes = notes;
-      }
-    }
-
-    if (status === "processing") {
-      updateData.processed_at = new Date().toISOString();
-      updateData.processed_by = actor.id;
-    }
-
-    if (status === "failed") {
-      updateData.failure_reason = notes;
-      updateData.processed_by = actor.id;
-
-      // Refund coins to model
-      if (modelId && coins) {
-        const { error: refundError } = await supabase
-          .from("models")
+        await supabase
+          .from("withdrawal_requests")
           .update({
-            coin_balance: supabase.rpc("increment_coin_balance", {
-              row_id: modelId,
-              amount: coins,
-            }),
+            admin_notes: notes,
+            processed_by: actor.id,
           })
-          .eq("id", modelId);
-
-        // Alternative: direct SQL update
-        const { error: updateError } = await supabase.rpc("refund_withdrawal", {
-          p_model_id: modelId,
-          p_coins: coins,
-        });
-
-        // Fallback: simple update
-        if (updateError) {
-          const { data: model } = await supabase
-            .from("models")
-            .select("coin_balance")
-            .eq("id", modelId)
-            .single();
-
-          if (model) {
-            await supabase
-              .from("models")
-              .update({ coin_balance: model.coin_balance + coins })
-              .eq("id", modelId);
-          }
-        }
+          .eq("id", id);
       }
-    }
+    } else if (status === "failed") {
+      // Cancel/reject withdrawal - refunds to available balance
+      const { error: cancelError } = await supabase.rpc("cancel_withdrawal", {
+        p_withdrawal_id: id,
+      });
 
-    // Update withdrawal request
-    const { error } = await supabase
-      .from("withdrawal_requests")
-      .update(updateData)
-      .eq("id", id);
+      if (cancelError) {
+        console.error("Error cancelling withdrawal:", cancelError);
+        return NextResponse.json({ error: cancelError.message }, { status: 500 });
+      }
 
-    if (error) {
-      console.error("Error updating withdrawal:", error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      // Update with failure reason
+      await supabase
+        .from("withdrawal_requests")
+        .update({
+          status: "failed",
+          failure_reason: notes,
+          processed_by: actor.id,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", id);
+    } else if (status === "processing") {
+      // Just update status to processing
+      const { error } = await supabase
+        .from("withdrawal_requests")
+        .update({
+          status: "processing",
+          processed_at: new Date().toISOString(),
+          processed_by: actor.id,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", id);
+
+      if (error) {
+        console.error("Error updating withdrawal:", error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
     }
 
     return NextResponse.json({ success: true });
