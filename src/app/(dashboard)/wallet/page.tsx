@@ -576,13 +576,13 @@ export default function WalletPage() {
                     Request Payout
                   </CardTitle>
                   <CardDescription>
-                    Minimum $100 (1,000 coins) · 1 coin = $0.10
+                    Minimum $50 (500 coins) · 1 coin = $0.10
                   </CardDescription>
                 </div>
                 <Dialog open={showWithdrawDialog} onOpenChange={setShowWithdrawDialog}>
                   <DialogTrigger asChild>
                     <Button
-                      disabled={coinBalance < 1000 || bankAccounts.length === 0}
+                      disabled={coinBalance < 500 || bankAccounts.length === 0}
                       className="bg-gradient-to-r from-green-500 to-emerald-500"
                     >
                       <Banknote className="h-4 w-4 mr-1" />
@@ -612,9 +612,9 @@ export default function WalletPage() {
                         <Input
                           id="withdrawAmount"
                           type="number"
-                          min={1000}
+                          min={500}
                           max={coinBalance}
-                          placeholder="Minimum 1,000 coins"
+                          placeholder="Minimum 500 coins"
                           value={withdrawAmount}
                           onChange={(e) => setWithdrawAmount(e.target.value)}
                         />
@@ -637,7 +637,7 @@ export default function WalletPage() {
                       </Button>
                       <Button
                         onClick={handleRequestWithdraw}
-                        disabled={requestingWithdraw || !withdrawAmount || parseInt(withdrawAmount) < 1000}
+                        disabled={requestingWithdraw || !withdrawAmount || parseInt(withdrawAmount) < 500}
                         className="bg-gradient-to-r from-green-500 to-emerald-500"
                       >
                         {requestingWithdraw ? <Loader2 className="h-4 w-4 animate-spin" /> : "Request Payout"}
@@ -648,10 +648,10 @@ export default function WalletPage() {
               </div>
             </CardHeader>
             <CardContent>
-              {coinBalance < 1000 ? (
+              {coinBalance < 500 ? (
                 <div className="text-center py-6 text-muted-foreground">
                   <Coins className="h-10 w-10 mx-auto mb-3 opacity-50" />
-                  <p className="text-sm">You need at least 1,000 coins ($100) to request a payout</p>
+                  <p className="text-sm">You need at least 500 coins ($50) to request a payout</p>
                   <p className="text-xs mt-1">Current balance: {coinBalance} coins (${(coinBalance * 0.10).toFixed(2)})</p>
                 </div>
               ) : bankAccounts.length === 0 ? (
@@ -784,8 +784,8 @@ export default function WalletPage() {
     if (!modelId || !withdrawAmount) return;
 
     const coins = parseInt(withdrawAmount);
-    if (coins < 1000) {
-      toast.error("Minimum withdrawal is 1,000 coins ($50)");
+    if (coins < 500) {
+      toast.error("Minimum withdrawal is 500 coins ($50)");
       return;
     }
 

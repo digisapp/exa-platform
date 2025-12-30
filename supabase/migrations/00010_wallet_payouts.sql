@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS public.withdrawal_requests (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     model_id UUID NOT NULL REFERENCES public.models(id) ON DELETE CASCADE,
     bank_account_id UUID REFERENCES public.bank_accounts(id) ON DELETE SET NULL,
-    coins INTEGER NOT NULL CHECK (coins >= 1000),
+    coins INTEGER NOT NULL CHECK (coins >= 500),
     usd_amount DECIMAL(10, 2) NOT NULL,
     status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'failed', 'cancelled')),
     admin_notes TEXT,
@@ -120,8 +120,8 @@ DECLARE
     v_usd DECIMAL(10, 2);
 BEGIN
     -- Minimum check
-    IF p_coins < 1000 THEN
-        RAISE EXCEPTION 'Minimum withdrawal is 1000 coins ($100)';
+    IF p_coins < 500 THEN
+        RAISE EXCEPTION 'Minimum withdrawal is 500 coins ($50)';
     END IF;
 
     -- Check available balance (lock row for update)
