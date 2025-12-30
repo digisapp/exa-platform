@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS public.premium_content (
   media_url text NOT NULL,
   media_type text NOT NULL CHECK (media_type IN ('image', 'video')),
   preview_url text, -- Blurred/cropped preview for non-purchasers
-  coin_price int NOT NULL DEFAULT 10 CHECK (coin_price >= 1),
+  coin_price int NOT NULL DEFAULT 10 CHECK (coin_price >= 0),
   is_active boolean DEFAULT true,
   unlock_count int DEFAULT 0,
   created_at timestamptz DEFAULT now(),
@@ -152,20 +152,20 @@ CREATE POLICY "Anyone can view active premium content"
 -- Models can manage their own content
 CREATE POLICY "Models can insert own content"
   ON public.premium_content FOR INSERT
-  WITH CHECK (model_id = auth.uid() OR EXISTS (
-    SELECT 1 FROM public.actors WHERE user_id = auth.uid() AND id = model_id
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM public.models WHERE id = model_id AND user_id = auth.uid()
   ));
 
 CREATE POLICY "Models can update own content"
   ON public.premium_content FOR UPDATE
-  USING (model_id = auth.uid() OR EXISTS (
-    SELECT 1 FROM public.actors WHERE user_id = auth.uid() AND id = model_id
+  USING (EXISTS (
+    SELECT 1 FROM public.models WHERE id = model_id AND user_id = auth.uid()
   ));
 
 CREATE POLICY "Models can delete own content"
   ON public.premium_content FOR DELETE
-  USING (model_id = auth.uid() OR EXISTS (
-    SELECT 1 FROM public.actors WHERE user_id = auth.uid() AND id = model_id
+  USING (EXISTS (
+    SELECT 1 FROM public.models WHERE id = model_id AND user_id = auth.uid()
   ));
 
 -- Users can view their own unlocks
