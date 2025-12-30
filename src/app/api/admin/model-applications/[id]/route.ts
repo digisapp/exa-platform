@@ -212,10 +212,8 @@ Your profile has been approved and you're now part of our community.
 
 Here's how to get started:
 • Complete your profile with photos and bio
-• Browse and apply to gigs
-• Connect with other models and brands
-
-If you have any questions, feel free to message us here. We're excited to have you!`;
+• Share your examodels.com/${application.instagram_username || application.tiktok_username || application.email.split("@")[0]} on Instagram Bio + Story
+• Engage with the community :)`;
 
             await (supabase.from("messages") as any).insert({
               conversation_id: conversationId,
