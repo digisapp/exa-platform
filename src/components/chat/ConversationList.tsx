@@ -16,11 +16,16 @@ interface Conversation {
     created_at: string;
   } | null;
   otherParticipants: Array<{
+    type?: string;
     model: {
       first_name: string | null;
       last_name: string | null;
       username: string;
       profile_photo_url: string | null;
+    } | null;
+    fan: {
+      display_name: string | null;
+      avatar_url: string | null;
     } | null;
   }>;
 }
@@ -33,21 +38,50 @@ interface ConversationListProps {
 export function ConversationList({ conversations, actorType }: ConversationListProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Helper to get display name and avatar for a participant
+  const getParticipantInfo = (participant: Conversation["otherParticipants"][0]) => {
+    if (participant?.model) {
+      return {
+        displayName: participant.model.first_name
+          ? `${participant.model.first_name} ${participant.model.last_name || ""}`.trim()
+          : participant.model.username,
+        avatarUrl: participant.model.profile_photo_url,
+        username: participant.model.username,
+      };
+    }
+    if (participant?.fan) {
+      return {
+        displayName: participant.fan.display_name || "Fan",
+        avatarUrl: participant.fan.avatar_url,
+        username: null,
+      };
+    }
+    // Admin/system account
+    if (participant?.type === "admin") {
+      return {
+        displayName: "EXA Team",
+        avatarUrl: null,
+        username: null,
+      };
+    }
+    return {
+      displayName: "Unknown",
+      avatarUrl: null,
+      username: null,
+    };
+  };
+
   const filteredConversations = useMemo(() => {
     if (!searchQuery.trim()) return conversations;
 
     const query = searchQuery.toLowerCase();
     return conversations.filter((conv) => {
-      const otherPerson = conv.otherParticipants[0]?.model;
-      if (!otherPerson) return false;
-
-      const displayName = otherPerson.first_name
-        ? `${otherPerson.first_name} ${otherPerson.last_name || ""}`.trim()
-        : otherPerson.username;
+      const participant = conv.otherParticipants[0];
+      const info = getParticipantInfo(participant);
 
       return (
-        displayName.toLowerCase().includes(query) ||
-        otherPerson.username.toLowerCase().includes(query)
+        info.displayName.toLowerCase().includes(query) ||
+        (info.username && info.username.toLowerCase().includes(query))
       );
     });
   }, [conversations, searchQuery]);
@@ -70,10 +104,8 @@ export function ConversationList({ conversations, actorType }: ConversationListP
         <CardContent className="p-0 divide-y">
           {filteredConversations.length > 0 ? (
             filteredConversations.map((conv) => {
-              const otherPerson = conv.otherParticipants[0]?.model;
-              const displayName = otherPerson?.first_name
-                ? `${otherPerson.first_name} ${otherPerson.last_name || ""}`.trim()
-                : otherPerson?.username || "Unknown";
+              const participant = conv.otherParticipants[0];
+              const { displayName, avatarUrl } = getParticipantInfo(participant);
               const isUnread =
                 conv.lastMessage &&
                 (!conv.last_read_at ||
@@ -86,7 +118,7 @@ export function ConversationList({ conversations, actorType }: ConversationListP
                   className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors"
                 >
                   <Avatar className="h-12 w-12">
-                    <AvatarImage src={otherPerson?.profile_photo_url || undefined} />
+                    <AvatarImage src={avatarUrl || undefined} />
                     <AvatarFallback>
                       {displayName.charAt(0).toUpperCase()}
                     </AvatarFallback>

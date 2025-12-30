@@ -61,18 +61,50 @@ export default async function MessagesPage() {
           actor:actors(
             id,
             type,
-            model:models(username, first_name, last_name, profile_photo_url)
+            user_id
           )
         `)
         .in("conversation_id", conversationIds)
         .neq("actor_id", actor.id) as { data: any[] | null }
     : { data: [] };
 
-  // Group participants by conversation
+  // Get user IDs to fetch model and fan data
+  const userIds = [...new Set((allParticipants || []).map((p: any) => p.actor?.user_id).filter(Boolean))];
+
+  // Fetch all models for these users
+  const { data: models } = userIds.length > 0
+    ? await supabase
+        .from("models")
+        .select("user_id, username, first_name, last_name, profile_photo_url")
+        .in("user_id", userIds) as { data: any[] | null }
+    : { data: [] };
+
+  // Fetch all fans for these users
+  const { data: fans } = userIds.length > 0
+    ? await supabase
+        .from("fans")
+        .select("user_id, display_name, avatar_url")
+        .in("user_id", userIds) as { data: any[] | null }
+    : { data: [] };
+
+  // Create lookup maps
+  const modelsByUserId = new Map((models || []).map((m: any) => [m.user_id, m]));
+  const fansByUserId = new Map((fans || []).map((f: any) => [f.user_id, f]));
+
+  // Group participants by conversation with enriched data
   const participantsMap = new Map<string, any[]>();
   (allParticipants || []).forEach((p: any) => {
     const existing = participantsMap.get(p.conversation_id) || [];
-    existing.push(p.actor);
+    const actorData = p.actor;
+    if (actorData) {
+      const model = modelsByUserId.get(actorData.user_id);
+      const fan = fansByUserId.get(actorData.user_id);
+      existing.push({
+        ...actorData,
+        model: model || null,
+        fan: fan || null,
+      });
+    }
     participantsMap.set(p.conversation_id, existing);
   });
 
