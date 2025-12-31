@@ -60,11 +60,6 @@ export default function BuyCoinsPage() {
     }
   };
 
-  const getBadgeVariant = (index: number): "default" | "secondary" | "destructive" | "outline" => {
-    if (index === 2) return "default"; // Popular
-    return "secondary";
-  };
-
   const calculatePerCoin = (price: number, coins: number) => {
     return ((price / 100) / coins).toFixed(2);
   };
@@ -85,26 +80,21 @@ export default function BuyCoinsPage() {
       {/* Coin Packages Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         {COIN_PACKAGES.map((pack, index) => {
-          const isPopular = index === 2;
           const isBestValue = index === COIN_PACKAGES.length - 1;
 
           return (
             <Card
               key={pack.coins}
               className={cn(
-                "relative overflow-hidden transition-all hover:shadow-lg",
-                isPopular && "border-pink-500 ring-2 ring-pink-500/20",
+                "relative overflow-hidden transition-all hover:shadow-lg hover:border-pink-500/50",
                 isBestValue && "border-violet-500 ring-2 ring-violet-500/20"
               )}
             >
               {/* Badge */}
-              {(isPopular || isBestValue) && (
+              {isBestValue && (
                 <div className="absolute top-3 right-3">
-                  <Badge variant={isPopular ? "default" : "secondary"} className={cn(
-                    isPopular && "bg-gradient-to-r from-pink-500 to-violet-500",
-                    isBestValue && "bg-gradient-to-r from-violet-500 to-purple-500"
-                  )}>
-                    {isPopular ? "Most Popular" : "Best Value"}
+                  <Badge variant="secondary" className="bg-gradient-to-r from-violet-500 to-purple-500">
+                    Best Value
                   </Badge>
                 </div>
               )}
@@ -131,10 +121,7 @@ export default function BuyCoinsPage() {
                 <Button
                   onClick={() => handlePurchase(pack.coins)}
                   disabled={loading !== null}
-                  className={cn(
-                    "w-full",
-                    isPopular && "bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
-                  )}
+                  className="w-full"
                 >
                   {loading === pack.coins ? (
                     <>
