@@ -1,0 +1,50 @@
+import { createClient } from "@/lib/supabase/server";
+import { NextResponse } from "next/server";
+
+export async function GET() {
+  try {
+    const supabase = await createClient();
+
+    // Get current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return NextResponse.json({ hasProfile: false });
+    }
+
+    // Check for actor record
+    const { data: actor } = await (supabase
+      .from("actors") as any)
+      .select("id, type")
+      .eq("user_id", user.id)
+      .single();
+
+    if (actor) {
+      return NextResponse.json({
+        hasProfile: true,
+        type: (actor as { type: string }).type,
+        actorId: (actor as { id: string }).id,
+      });
+    }
+
+    // Legacy check for model record without actor
+    const { data: model } = await (supabase
+      .from("models") as any)
+      .select("id")
+      .eq("user_id", user.id)
+      .single();
+
+    if (model) {
+      return NextResponse.json({
+        hasProfile: true,
+        type: "model",
+        actorId: (model as { id: string }).id,
+      });
+    }
+
+    return NextResponse.json({ hasProfile: false });
+  } catch (error) {
+    console.error("Check profile error:", error);
+    return NextResponse.json({ hasProfile: false });
+  }
+}

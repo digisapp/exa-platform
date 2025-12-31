@@ -31,32 +31,19 @@ export default function OnboardingPage() {
           return;
         }
 
-        // Check if user already has an actor record
-        const { data: actor } = await (supabase.from("actors") as any)
-          .select("id, type")
-          .eq("user_id", user.id)
-          .single();
+        // Use API to check existing profile (bypasses RLS issues)
+        const response = await fetch("/api/auth/check-profile");
+        const data = await response.json();
 
-        if (actor) {
+        if (data.hasProfile) {
           // Already has an account - redirect based on type
-          if (actor.type === "admin") {
+          if (data.type === "admin") {
             router.push("/admin");
-          } else if (actor.type === "model") {
+          } else if (data.type === "model") {
             router.push("/dashboard");
           } else {
             router.push("/models");
           }
-          return;
-        }
-
-        // Check if there's a model record (legacy check)
-        const { data: model } = await (supabase.from("models") as any)
-          .select("id")
-          .eq("user_id", user.id)
-          .single();
-
-        if (model) {
-          router.push("/dashboard");
           return;
         }
 
@@ -83,42 +70,17 @@ export default function OnboardingPage() {
     setLoading(true);
 
     try {
-      // Get current user
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) throw new Error("Not authenticated");
-
-      // Create actor record with type "fan"
-      const { data: actor, error: actorError } = await (supabase
-        .from("actors") as any)
-        .insert({
-          user_id: user.id,
-          type: "fan",
-        })
-        .select()
-        .single();
-
-      if (actorError) throw actorError;
-
-      // Create fan profile
-      const { error: fanError } = await (supabase
-        .from("fans") as any)
-        .insert({
-          id: actor.id,
-          user_id: user.id,
-          email: user.email,
-          display_name: displayName.trim(),
-          coin_balance: 10, // Welcome bonus!
-        });
-
-      if (fanError) throw fanError;
-
-      // Record the welcome bonus transaction
-      await (supabase.from("coin_transactions") as any).insert({
-        actor_id: actor.id,
-        amount: 10,
-        action: "signup_bonus",
-        metadata: { reason: "Welcome bonus for new signup" },
+      const response = await fetch("/api/auth/create-fan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ displayName: displayName.trim() }),
       });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to create account");
+      }
 
       toast.success("Welcome to EXA! You got 10 free coins!");
       window.location.href = "/models";
