@@ -35,7 +35,7 @@ export default async function DashboardPage() {
     .eq("user_id", user.id)
     .single();
 
-  if (!actor) redirect("/onboarding");
+  if (!actor) redirect("/fan/signup");
 
   // For fans and brands, show the fan/brand dashboard
   if (actor.type === "fan" || actor.type === "brand") {
@@ -48,7 +48,7 @@ export default async function DashboardPage() {
     .eq("user_id", user.id)
     .single();
 
-  if (!model) redirect("/onboarding");
+  if (!model) redirect("/fan/signup");
 
   // Get stats
   const { count: followerCount } = await (supabase

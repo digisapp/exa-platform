@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,64 +17,102 @@ export default function FanSignupPage() {
   const [displayName, setDisplayName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const supabase = createClient();
+
+  // Check if user is already authenticated
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (user) {
+          // Check if they already have a profile
+          const response = await fetch("/api/auth/check-profile");
+          const data = await response.json();
+
+          if (data.hasProfile) {
+            // Already has profile - redirect based on type
+            if (data.type === "admin") {
+              window.location.href = "/admin";
+            } else if (data.type === "model") {
+              window.location.href = "/dashboard";
+            } else {
+              window.location.href = "/models";
+            }
+            return;
+          }
+
+          // Authenticated but no profile - show simplified form
+          setIsAuthenticated(true);
+          setUserEmail(user.email || null);
+          setDisplayName(user.email?.split("@")[0] || "");
+        }
+      } catch (error) {
+        console.error("Auth check error:", error);
+      } finally {
+        setCheckingAuth(false);
+      }
+    };
+
+    checkAuth();
+  }, [supabase]);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (password.length < 6) {
-      toast.error("Password must be at least 6 characters");
-      return;
-    }
-
     setLoading(true);
 
     try {
-      // Create auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-      if (authError) throw authError;
-
-      if (authData.user) {
-        // Create actor record
-        const { data: actor, error: actorError } = await (supabase
-          .from("actors") as any)
-          .insert({
-            user_id: authData.user.id,
-            type: "fan",
-          })
-          .select()
-          .single();
-
-        if (actorError) throw actorError;
-
-        // Create fan profile
-        const { error: fanError } = await (supabase
-          .from("fans") as any)
-          .insert({
-            id: actor.id,
-            user_id: authData.user.id,
-            email: email,
-            display_name: displayName || email.split("@")[0],
-            coin_balance: 10, // Welcome bonus!
-          });
-
-        if (fanError) throw fanError;
-
-        // Record the welcome bonus transaction
-        await (supabase.from("coin_transactions") as any).insert({
-          actor_id: actor.id,
-          amount: 10,
-          action: "signup_bonus",
-          metadata: { reason: "Welcome bonus for new fan signup" },
+      if (isAuthenticated) {
+        // Already authenticated - just create the profile
+        const response = await fetch("/api/auth/create-fan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ displayName: displayName.trim() }),
         });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to create profile");
+        }
 
         toast.success("Welcome to EXA! You got 10 free coins!");
         window.location.href = "/models";
+      } else {
+        // New user - create auth account first
+        if (password.length < 6) {
+          toast.error("Password must be at least 6 characters");
+          setLoading(false);
+          return;
+        }
+
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+
+        if (authError) throw authError;
+
+        if (authData.user) {
+          // Create fan profile via API
+          const response = await fetch("/api/auth/create-fan", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ displayName: displayName.trim() || email.split("@")[0] }),
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || "Failed to create profile");
+          }
+
+          toast.success("Welcome to EXA! You got 10 free coins!");
+          window.location.href = "/models";
+        }
       }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to create account";
@@ -84,6 +121,15 @@ export default function FanSignupPage() {
       setLoading(false);
     }
   };
+
+  // Loading state while checking auth
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -98,9 +144,13 @@ export default function FanSignupPage() {
               className="h-10 w-auto"
             />
           </Link>
-          <CardTitle>Join as a Fan</CardTitle>
+          <CardTitle>
+            {isAuthenticated ? "Complete Your Profile" : "Join as a Fan"}
+          </CardTitle>
           <CardDescription>
-            Connect with your favorite models on EXA
+            {isAuthenticated
+              ? "Just one more step to get started"
+              : "Connect with your favorite models on EXA"}
           </CardDescription>
         </CardHeader>
 
@@ -135,44 +185,56 @@ export default function FanSignupPage() {
                 disabled={loading}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={loading}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Create a password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  disabled={loading}
-                  className="pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+
+            {!isAuthenticated && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    disabled={loading}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Create a password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      disabled={loading}
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Must be at least 6 characters
+                  </p>
+                </div>
+              </>
+            )}
+
+            {isAuthenticated && userEmail && (
+              <div className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
+                Signed in as <span className="font-medium text-foreground">{userEmail}</span>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Must be at least 6 characters
-              </p>
-            </div>
+            )}
           </CardContent>
+
           <CardFooter className="flex flex-col gap-4 pt-2">
             <Button
               type="submit"
@@ -182,24 +244,30 @@ export default function FanSignupPage() {
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating account...
+                  {isAuthenticated ? "Creating profile..." : "Creating account..."}
                 </>
               ) : (
-                "Create Fan Account"
+                isAuthenticated ? "Complete Setup" : "Create Fan Account"
               )}
             </Button>
-            <div className="text-center text-sm text-muted-foreground">
-              Already have an account?{" "}
-              <Link href="/signin" className="text-primary hover:underline font-medium">
-                Sign In
-              </Link>
-            </div>
-            <div className="text-center text-sm text-muted-foreground">
-              Want to join as a model?{" "}
-              <Link href="/signup" className="text-pink-500 hover:underline font-medium">
-                Model signup
-              </Link>
-            </div>
+
+            {!isAuthenticated && (
+              <>
+                <div className="text-center text-sm text-muted-foreground">
+                  Already have an account?{" "}
+                  <Link href="/signin" className="text-primary hover:underline font-medium">
+                    Sign In
+                  </Link>
+                </div>
+                <div className="text-center text-sm text-muted-foreground">
+                  Want to join as a model?{" "}
+                  <Link href="/signup" className="text-pink-500 hover:underline font-medium">
+                    Model signup
+                  </Link>
+                </div>
+              </>
+            )}
+
             <Link href="/" className="flex items-center justify-center text-sm text-muted-foreground hover:text-primary transition-colors">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to home

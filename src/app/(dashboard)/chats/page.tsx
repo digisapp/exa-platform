@@ -15,7 +15,7 @@ export default async function MessagesPage() {
     .eq("user_id", user.id)
     .single() as { data: { id: string; type: string } | null };
 
-  if (!actor) redirect("/onboarding");
+  if (!actor) redirect("/fan/signup");
 
   // Get conversations with participants in a single query
   const { data: participations } = await supabase

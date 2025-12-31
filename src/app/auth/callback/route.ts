@@ -78,7 +78,7 @@ export async function GET(request: Request) {
       }
 
       // New user - redirect to onboarding (creates fan account)
-      return NextResponse.redirect(`${origin}/onboarding`);
+      return NextResponse.redirect(`${origin}/fan/signup`);
     }
   }
 

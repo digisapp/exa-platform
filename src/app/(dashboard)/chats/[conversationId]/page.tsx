@@ -24,7 +24,7 @@ export default async function ChatPage({ params }: PageProps) {
     .eq("user_id", user.id)
     .single()) as { data: Actor | null };
 
-  if (!actor) redirect("/onboarding");
+  if (!actor) redirect("/fan/signup");
 
   // Get current model or fan data (for coin balance)
   let currentModel: Model | null = null;

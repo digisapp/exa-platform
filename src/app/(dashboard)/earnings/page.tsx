@@ -31,7 +31,7 @@ export default async function EarningsPage() {
     .eq("user_id", user.id)
     .single()) as { data: Actor | null };
 
-  if (!actor) redirect("/onboarding");
+  if (!actor) redirect("/fan/signup");
 
   // Only models can view earnings
   if (actor.type !== "model" && actor.type !== "admin") {
@@ -45,7 +45,7 @@ export default async function EarningsPage() {
     .eq("user_id", user.id)
     .single()) as { data: Model | null };
 
-  if (!model) redirect("/onboarding");
+  if (!model) redirect("/fan/signup");
 
   // Get all earnings transactions (positive amounts from tips and messages)
   const { data: transactions } = (await supabase

@@ -52,7 +52,7 @@ export default function LoginPage() {
           if (model) {
             window.location.href = "/dashboard";
           } else {
-            window.location.href = "/onboarding";
+            window.location.href = "/fan/signup";
           }
         }
       }
