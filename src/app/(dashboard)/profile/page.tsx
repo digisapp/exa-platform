@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,8 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2, User, Lock, DollarSign, Camera, BarChart3, Coins, Trash2, AlertTriangle } from "lucide-react";
-import type { Model, Fan, Actor } from "@/types/database";
+import { Loader2, User, Lock, DollarSign, Camera, BarChart3, Coins, Trash2, AlertTriangle, Building2, Globe } from "lucide-react";
+import type { Model, Fan, Actor, Brand } from "@/types/database";
 import { ImageCropper } from "@/components/upload/ImageCropper";
 import {
   AlertDialog,
@@ -38,6 +39,7 @@ const US_STATES = [
 export default function ProfilePage() {
   const [model, setModel] = useState<Model | null>(null);
   const [fan, setFan] = useState<Fan | null>(null);
+  const [brand, setBrand] = useState<Brand | null>(null);
   const [actor, setActor] = useState<Actor | null>(null);
   const [userEmail, setUserEmail] = useState<string>("");
   const [originalUsername, setOriginalUsername] = useState<string>("");
@@ -186,6 +188,17 @@ export default function ProfilePage() {
         if (fanData) {
           setFan(fanData);
         }
+      } else if (actorData.type === "brand") {
+        // Load brand data
+        const { data: brandData } = await supabase
+          .from("brands")
+          .select("*")
+          .eq("id", actorData.id)
+          .single() as { data: Brand | null };
+
+        if (brandData) {
+          setBrand(brandData);
+        }
       }
 
       setLoading(false);
@@ -241,6 +254,64 @@ export default function ProfilePage() {
           updated_at: new Date().toISOString(),
         })
         .eq("id", fan.id);
+
+      if (error) throw error;
+      toast.success("Settings saved!");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to save";
+      toast.error(message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleBrandSave = async () => {
+    if (!brand) return;
+    setSaving(true);
+
+    try {
+      // Validate username if provided
+      if (brand.username) {
+        if (brand.username.length < 3) {
+          throw new Error("Username must be at least 3 characters");
+        }
+        if (brand.username.length > 30) {
+          throw new Error("Username must be less than 30 characters");
+        }
+
+        // Check if username is already taken
+        const { data: existingBrand } = await (supabase.from("brands") as any)
+          .select("id")
+          .eq("username", brand.username)
+          .neq("id", brand.id)
+          .single();
+
+        const { data: existingModel } = await (supabase.from("models") as any)
+          .select("id")
+          .eq("username", brand.username)
+          .single();
+
+        const { data: existingFan } = await (supabase.from("fans") as any)
+          .select("id")
+          .eq("username", brand.username)
+          .single();
+
+        if (existingBrand || existingModel || existingFan) {
+          throw new Error("This username is already taken");
+        }
+      }
+
+      const { error } = await (supabase.from("brands") as any)
+        .update({
+          company_name: brand.company_name,
+          contact_name: brand.contact_name,
+          username: brand.username || null,
+          bio: brand.bio || null,
+          website: brand.website || null,
+          phone: (brand as any).phone || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", brand.id);
 
       if (error) throw error;
       toast.success("Settings saved!");
@@ -473,7 +544,7 @@ export default function ProfilePage() {
                 <p className="text-sm text-muted-foreground">Available coins</p>
               </div>
               <Button asChild className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600">
-                <a href="/coins">Buy Coins</a>
+                <Link href="/coins">Buy Coins</Link>
               </Button>
             </div>
             <p className="text-sm text-muted-foreground">
@@ -542,6 +613,190 @@ export default function ProfilePage() {
           </Button>
           <Button
             onClick={handleFanSave}
+            disabled={saving}
+            className="bg-gradient-to-r from-pink-500 to-violet-500"
+          >
+            {saving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              "Save Changes"
+            )}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show brand settings page
+  if (actor?.type === "brand" && brand) {
+    return (
+      <div className="max-w-2xl mx-auto space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Brand Settings</h1>
+          <p className="text-muted-foreground mt-1">Manage your brand profile</p>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5" />
+              Company Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="company_name">Company Name</Label>
+              <Input
+                id="company_name"
+                value={brand.company_name || ""}
+                onChange={(e) => setBrand({ ...brand, company_name: e.target.value })}
+                placeholder="Your company name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="brand_username">Username</Label>
+              <Input
+                id="brand_username"
+                value={brand.username || ""}
+                onChange={(e) => {
+                  const value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "");
+                  setBrand({ ...brand, username: value });
+                }}
+                placeholder="brand_username"
+              />
+              <p className="text-xs text-muted-foreground">
+                Your profile URL will be examodels.com/{brand.username || "username"}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="contact_name">Contact Person</Label>
+              <Input
+                id="contact_name"
+                value={brand.contact_name || ""}
+                onChange={(e) => setBrand({ ...brand, contact_name: e.target.value })}
+                placeholder="Your name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="brand_bio">About Your Brand</Label>
+              <Textarea
+                id="brand_bio"
+                value={brand.bio || ""}
+                onChange={(e) => setBrand({ ...brand, bio: e.target.value })}
+                placeholder="Tell models about your brand and what you're looking for..."
+                rows={3}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Globe className="h-5 w-5" />
+              Contact & Web
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="brand_email">Email</Label>
+              <Input
+                id="brand_email"
+                type="email"
+                value={userEmail}
+                disabled
+                className="bg-muted"
+              />
+              <p className="text-xs text-muted-foreground">
+                Contact support to change your email
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="brand_phone">Phone (optional)</Label>
+              <Input
+                id="brand_phone"
+                type="tel"
+                value={(brand as any).phone || ""}
+                onChange={(e) => setBrand({ ...brand, phone: e.target.value } as any)}
+                placeholder="+1 (555) 000-0000"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="website">Website</Label>
+              <Input
+                id="website"
+                type="url"
+                value={brand.website || ""}
+                onChange={(e) => setBrand({ ...brand, website: e.target.value })}
+                placeholder="https://yourcompany.com"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Danger Zone */}
+        <Card className="border-red-500/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-red-500">
+              <AlertTriangle className="h-5 w-5" />
+              Danger Zone
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium">Delete Account</p>
+                <p className="text-sm text-muted-foreground">
+                  Permanently delete your brand account
+                </p>
+              </div>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" disabled={deleting}>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Account
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete your
+                      brand account and remove your access to EXA.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDeleteAccount}
+                      className="bg-red-500 hover:bg-red-600"
+                      disabled={deleting}
+                    >
+                      {deleting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Deleting...
+                        </>
+                      ) : (
+                        "Delete Account"
+                      )}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="flex justify-end gap-4">
+          <Button variant="outline" onClick={() => router.push("/models")}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleBrandSave}
             disabled={saving}
             className="bg-gradient-to-r from-pink-500 to-violet-500"
           >

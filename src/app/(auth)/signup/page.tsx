@@ -46,7 +46,7 @@ export default function SignupPage() {
     try {
       // Create the account
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: email.toLowerCase().trim(),
         password,
       });
 

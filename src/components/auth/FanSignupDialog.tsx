@@ -93,7 +93,7 @@ export function FanSignupDialog({ children }: FanSignupDialogProps) {
     try {
       // Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: email.trim(),
+        email: email.toLowerCase().trim(),
         password,
       });
 
@@ -132,7 +132,7 @@ export function FanSignupDialog({ children }: FanSignupDialogProps) {
         .insert({
           id: actor.id,
           user_id: authData.user.id,
-          email: email.trim(),
+          email: email.toLowerCase().trim(),
           username: cleanUsername,
           display_name: cleanUsername,
           coin_balance: 10, // Welcome bonus

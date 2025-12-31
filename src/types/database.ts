@@ -191,7 +191,9 @@ export interface Database {
           id: string
           company_name: string
           contact_name: string | null
+          username: string | null
           email: string | null
+          phone: string | null
           website: string | null
           logo_url: string | null
           bio: string | null
@@ -206,7 +208,9 @@ export interface Database {
           id?: string
           company_name: string
           contact_name?: string | null
+          username?: string | null
           email?: string | null
+          phone?: string | null
           website?: string | null
           logo_url?: string | null
           bio?: string | null
@@ -221,7 +225,9 @@ export interface Database {
           id?: string
           company_name?: string
           contact_name?: string | null
+          username?: string | null
           email?: string | null
+          phone?: string | null
           website?: string | null
           logo_url?: string | null
           bio?: string | null

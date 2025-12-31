@@ -110,7 +110,7 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
     try {
       // Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: email.trim(),
+        email: email.toLowerCase().trim(),
         password,
       });
 
@@ -150,7 +150,7 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
           username: finalUsername,
           company_name: companyName.trim(),
           contact_name: contactName.trim(),
-          email: email.trim(),
+          email: email.toLowerCase().trim(),
           bio: message.trim() || null,
           is_verified: false,
           subscription_tier: "free",

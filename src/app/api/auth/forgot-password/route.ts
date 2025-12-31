@@ -1,8 +1,29 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { rateLimit, getClientIP } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   try {
+    // Rate limit: 3 requests per 60 seconds per IP
+    const clientIP = getClientIP(request);
+    const rateLimitResult = rateLimit(`forgot-password:${clientIP}`, {
+      limit: 3,
+      windowSeconds: 60,
+    });
+
+    if (!rateLimitResult.success) {
+      const retryAfter = Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000);
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(retryAfter),
+          },
+        }
+      );
+    }
+
     const { email } = await request.json();
 
     if (!email) {

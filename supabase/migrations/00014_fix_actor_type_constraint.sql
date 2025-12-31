@@ -19,3 +19,15 @@ AND m.user_id IS NULL;
 
 -- 4. Create index for user_id lookups
 CREATE INDEX IF NOT EXISTS idx_models_user_id ON public.models(user_id);
+
+-- 5. Add username and phone to brands table
+ALTER TABLE public.brands ADD COLUMN IF NOT EXISTS username TEXT UNIQUE;
+ALTER TABLE public.brands ADD COLUMN IF NOT EXISTS phone TEXT;
+
+-- 6. Create index for brand username lookups
+CREATE INDEX IF NOT EXISTS idx_brands_username ON public.brands(username);
+
+-- 7. Add RLS policies for brands to update their own profile
+DROP POLICY IF EXISTS "Brands can update own profile" ON public.brands;
+CREATE POLICY "Brands can update own profile" ON public.brands
+  FOR UPDATE USING (id = (SELECT id FROM public.actors WHERE user_id = auth.uid()));

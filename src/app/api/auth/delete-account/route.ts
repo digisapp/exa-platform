@@ -1,8 +1,29 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { rateLimit, getClientIP } from "@/lib/rate-limit";
 
-export async function DELETE() {
+export async function DELETE(request: Request) {
   try {
+    // Rate limit: 5 requests per 5 minutes per IP (account deletion is sensitive)
+    const clientIP = getClientIP(request);
+    const rateLimitResult = rateLimit(`delete-account:${clientIP}`, {
+      limit: 5,
+      windowSeconds: 300,
+    });
+
+    if (!rateLimitResult.success) {
+      const retryAfter = Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000);
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(retryAfter),
+          },
+        }
+      );
+    }
+
     const supabase = await createClient();
 
     // Get current user
@@ -15,11 +36,11 @@ export async function DELETE() {
     }
 
     // Get actor to check type
-    const { data: actor } = await supabase
-      .from("actors")
+    const { data: actor } = await (supabase
+      .from("actors") as any)
       .select("id, type")
       .eq("user_id", user.id)
-      .single();
+      .single() as { data: { id: string; type: string } | null };
 
     if (!actor) {
       return NextResponse.json({ error: "Account not found" }, { status: 404 });
@@ -33,14 +54,13 @@ export async function DELETE() {
       );
     }
 
-    // Delete fan record if exists
+    // Delete type-specific record
     if (actor.type === "fan") {
       await supabase.from("fans").delete().eq("id", actor.id);
-    }
-
-    // Delete model record if exists
-    if (actor.type === "model") {
+    } else if (actor.type === "model") {
       await supabase.from("models").delete().eq("user_id", user.id);
+    } else if (actor.type === "brand") {
+      await supabase.from("brands").delete().eq("id", actor.id);
     }
 
     // Delete actor record

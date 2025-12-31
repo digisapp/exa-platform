@@ -107,7 +107,7 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
 
       // Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: email.trim(),
+        email: email.toLowerCase().trim(),
         password: tempPassword,
       });
 
@@ -146,7 +146,7 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
         .insert({
           id: actor.id,
           user_id: authData.user.id,
-          email: email.trim(),
+          email: email.toLowerCase().trim(),
           display_name: name.trim(),
           phone: phone.trim() || null,
           coin_balance: 10, // Welcome bonus
@@ -162,7 +162,7 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
         .from("model_applications") as any)
         .insert({
           user_id: authData.user.id,
-          email: email.trim(),
+          email: email.toLowerCase().trim(),
           display_name: name.trim(),
           instagram_username: instagram.trim().replace("@", ""),
           phone: phone.trim() || null,
