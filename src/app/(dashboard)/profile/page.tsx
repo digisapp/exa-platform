@@ -173,9 +173,45 @@ export default function ProfilePage() {
     setSaving(true);
 
     try {
+      // Validate username if provided
+      if (fan.username) {
+        if (fan.username.length < 3) {
+          throw new Error("Username must be at least 3 characters");
+        }
+        if (fan.username.length > 30) {
+          throw new Error("Username must be less than 30 characters");
+        }
+
+        // Check if username is already taken
+        const { data: existing } = await (supabase.from("fans") as any)
+          .select("id")
+          .eq("username", fan.username)
+          .neq("id", fan.id)
+          .single();
+
+        if (existing) {
+          // Also check models table
+          const { data: modelExists } = await (supabase.from("models") as any)
+            .select("id")
+            .eq("username", fan.username)
+            .single();
+
+          if (modelExists) {
+            throw new Error("This username is already taken");
+          }
+        }
+
+        if (existing) {
+          throw new Error("This username is already taken");
+        }
+      }
+
       const { error } = await (supabase.from("fans") as any)
         .update({
           display_name: fan.display_name,
+          username: fan.username || null,
+          bio: fan.bio || null,
+          phone: fan.phone || null,
           updated_at: new Date().toISOString(),
         })
         .eq("id", fan.id);
@@ -295,7 +331,7 @@ export default function ProfilePage() {
   // Show fan settings page
   if (actor?.type === "fan" && fan) {
     return (
-      <div className="max-w-xl mx-auto space-y-6">
+      <div className="max-w-2xl mx-auto space-y-6">
         <div>
           <h1 className="text-3xl font-bold">Settings</h1>
           <p className="text-muted-foreground mt-1">Manage your account settings</p>
@@ -303,7 +339,49 @@ export default function ProfilePage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Account Information</CardTitle>
+            <CardTitle>Profile Information</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="display_name">Display Name</Label>
+              <Input
+                id="display_name"
+                value={fan.display_name || ""}
+                onChange={(e) => setFan({ ...fan, display_name: e.target.value })}
+                placeholder="Your display name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                value={fan.username || ""}
+                onChange={(e) => {
+                  const value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "");
+                  setFan({ ...fan, username: value });
+                }}
+                placeholder="username"
+              />
+              <p className="text-xs text-muted-foreground">
+                Letters, numbers, and underscores only
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bio">Bio</Label>
+              <Textarea
+                id="bio"
+                value={fan.bio || ""}
+                onChange={(e) => setFan({ ...fan, bio: e.target.value })}
+                placeholder="Tell us about yourself..."
+                rows={3}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Contact Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -320,12 +398,13 @@ export default function ProfilePage() {
               </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="display_name">Display Name</Label>
+              <Label htmlFor="phone">Phone Number (optional)</Label>
               <Input
-                id="display_name"
-                value={fan.display_name || ""}
-                onChange={(e) => setFan({ ...fan, display_name: e.target.value })}
-                placeholder="Your display name"
+                id="phone"
+                type="tel"
+                value={fan.phone || ""}
+                onChange={(e) => setFan({ ...fan, phone: e.target.value })}
+                placeholder="+1 (555) 000-0000"
               />
             </div>
           </CardContent>
@@ -335,19 +414,22 @@ export default function ProfilePage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Coins className="h-5 w-5 text-yellow-500" />
-              Coin Balance
+              Wallet
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-4 rounded-lg bg-gradient-to-r from-yellow-500/10 to-orange-500/10">
               <div>
                 <p className="text-3xl font-bold">{fan.coin_balance?.toLocaleString() || 0}</p>
                 <p className="text-sm text-muted-foreground">Available coins</p>
               </div>
-              <Button asChild>
+              <Button asChild className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600">
                 <a href="/coins">Buy Coins</a>
               </Button>
             </div>
+            <p className="text-sm text-muted-foreground">
+              Use coins to message models, unlock exclusive content, and more.
+            </p>
           </CardContent>
         </Card>
 

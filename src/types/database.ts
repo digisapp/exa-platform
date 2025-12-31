@@ -657,10 +657,14 @@ export interface Fan {
   id: string
   user_id: string
   display_name: string | null
+  username: string | null
   email: string | null
+  phone: string | null
+  bio: string | null
   avatar_url: string | null
   coin_balance: number
   total_coins_purchased: number
+  username_changed_at: string | null
   created_at: string
   updated_at: string
 }
