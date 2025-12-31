@@ -312,6 +312,8 @@ export function ChatView({
             ? `Message (${coinCost} coins)...`
             : "Type a message..."
         }
+        isModel={currentActor.type === "model"}
+        modelId={currentModel?.id}
       />
     </div>
   );
