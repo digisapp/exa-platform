@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { sendModelApprovalEmail, sendModelRejectionEmail } from "@/lib/email";
 
 async function isAdmin(supabase: any, userId: string) {
   const { data: actor } = await supabase
@@ -34,6 +35,21 @@ export async function PATCH(
       return NextResponse.json({ error: "Invalid is_approved value" }, { status: 400 });
     }
 
+    // Get current model data before update
+    const { data: model } = await (supabase
+      .from("models") as any)
+      .select("email, first_name, last_name, username, is_approved")
+      .eq("id", id)
+      .single();
+
+    if (!model) {
+      return NextResponse.json({ error: "Model not found" }, { status: 404 });
+    }
+
+    // Check if approval status is actually changing
+    const statusChanged = model.is_approved !== is_approved;
+
+    // Update the model
     const { error } = await (supabase
       .from("models") as any)
       .update({ is_approved, updated_at: new Date().toISOString() })
@@ -41,7 +57,36 @@ export async function PATCH(
 
     if (error) throw error;
 
-    return NextResponse.json({ success: true });
+    // Send email notification if status changed and model has email
+    if (statusChanged && model.email) {
+      const modelName = model.first_name
+        ? `${model.first_name}${model.last_name ? ' ' + model.last_name : ''}`
+        : model.username;
+
+      try {
+        if (is_approved) {
+          // Model was just approved
+          await sendModelApprovalEmail({
+            to: model.email,
+            modelName,
+            username: model.username,
+          });
+          console.log(`Approval email sent to ${model.email}`);
+        } else {
+          // Model was just rejected/hidden
+          await sendModelRejectionEmail({
+            to: model.email,
+            modelName,
+          });
+          console.log(`Rejection email sent to ${model.email}`);
+        }
+      } catch (emailError) {
+        // Log email error but don't fail the request
+        console.error("Failed to send notification email:", emailError);
+      }
+    }
+
+    return NextResponse.json({ success: true, emailSent: statusChanged && !!model.email });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Failed to update model";
     return NextResponse.json({ error: message }, { status: 500 });
