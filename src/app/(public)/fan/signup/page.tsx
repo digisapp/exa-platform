@@ -198,6 +198,7 @@ export default function FanSignupPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     disabled={loading}
+                    autoComplete="email"
                   />
                 </div>
                 <div className="space-y-2">
@@ -211,6 +212,7 @@ export default function FanSignupPage() {
                       onChange={(e) => setPassword(e.target.value)}
                       required
                       disabled={loading}
+                      autoComplete="new-password"
                       className="pr-10"
                     />
                     <button
