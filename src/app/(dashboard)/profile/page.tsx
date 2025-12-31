@@ -12,8 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2, User, Lock, DollarSign, Camera, BarChart3 } from "lucide-react";
-import type { Model } from "@/types/database";
+import { Loader2, User, Lock, DollarSign, Camera, BarChart3, Coins } from "lucide-react";
+import type { Model, Fan, Actor } from "@/types/database";
 import { ImageCropper } from "@/components/upload/ImageCropper";
 
 const US_STATES = [
@@ -26,6 +26,9 @@ const US_STATES = [
 
 export default function ProfilePage() {
   const [model, setModel] = useState<Model | null>(null);
+  const [fan, setFan] = useState<Fan | null>(null);
+  const [actor, setActor] = useState<Actor | null>(null);
+  const [userEmail, setUserEmail] = useState<string>("");
   const [originalUsername, setOriginalUsername] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -119,27 +122,44 @@ export default function ProfilePage() {
         return;
       }
 
-      const { data: actor } = await supabase
-        .from("actors")
-        .select("id, type")
-        .eq("user_id", user.id)
-        .single() as { data: { id: string; type: string } | null };
+      setUserEmail(user.email || "");
 
-      if (!actor) {
+      const { data: actorData } = await supabase
+        .from("actors")
+        .select("*")
+        .eq("user_id", user.id)
+        .single() as { data: Actor | null };
+
+      if (!actorData) {
         // Layout already handles this case
         return;
       }
 
-      // Models are linked via user_id, not actor.id
-      const { data: modelData } = await supabase
-        .from("models")
-        .select("*")
-        .eq("user_id", user.id)
-        .single() as { data: Model | null };
+      setActor(actorData);
 
-      if (modelData) {
-        setModel(modelData);
-        setOriginalUsername(modelData.username || "");
+      if (actorData.type === "model" || actorData.type === "admin") {
+        // Models are linked via user_id, not actor.id
+        const { data: modelData } = await supabase
+          .from("models")
+          .select("*")
+          .eq("user_id", user.id)
+          .single() as { data: Model | null };
+
+        if (modelData) {
+          setModel(modelData);
+          setOriginalUsername(modelData.username || "");
+        }
+      } else if (actorData.type === "fan") {
+        // Fans use actor.id as their id
+        const { data: fanData } = await supabase
+          .from("fans")
+          .select("*")
+          .eq("id", actorData.id)
+          .single() as { data: Fan | null };
+
+        if (fanData) {
+          setFan(fanData);
+        }
       }
 
       setLoading(false);
@@ -147,6 +167,28 @@ export default function ProfilePage() {
 
     loadProfile();
   }, [supabase, router]);
+
+  const handleFanSave = async () => {
+    if (!fan) return;
+    setSaving(true);
+
+    try {
+      const { error } = await (supabase.from("fans") as any)
+        .update({
+          display_name: fan.display_name,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", fan.id);
+
+      if (error) throw error;
+      toast.success("Settings saved!");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to save";
+      toast.error(message);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!model) return;
@@ -246,6 +288,88 @@ export default function ProfilePage() {
     return (
       <div className="flex items-center justify-center py-16">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  // Show fan settings page
+  if (actor?.type === "fan" && fan) {
+    return (
+      <div className="max-w-xl mx-auto space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Settings</h1>
+          <p className="text-muted-foreground mt-1">Manage your account settings</p>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Account Information</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={userEmail}
+                disabled
+                className="bg-muted"
+              />
+              <p className="text-xs text-muted-foreground">
+                Contact support to change your email
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="display_name">Display Name</Label>
+              <Input
+                id="display_name"
+                value={fan.display_name || ""}
+                onChange={(e) => setFan({ ...fan, display_name: e.target.value })}
+                placeholder="Your display name"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Coins className="h-5 w-5 text-yellow-500" />
+              Coin Balance
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-3xl font-bold">{fan.coin_balance?.toLocaleString() || 0}</p>
+                <p className="text-sm text-muted-foreground">Available coins</p>
+              </div>
+              <Button asChild>
+                <a href="/coins">Buy Coins</a>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="flex justify-end gap-4">
+          <Button variant="outline" onClick={() => router.push("/models")}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleFanSave}
+            disabled={saving}
+            className="bg-gradient-to-r from-pink-500 to-violet-500"
+          >
+            {saving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              "Save Changes"
+            )}
+          </Button>
+        </div>
       </div>
     );
   }
