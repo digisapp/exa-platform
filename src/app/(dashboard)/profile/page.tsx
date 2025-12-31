@@ -162,12 +162,26 @@ export default function ProfilePage() {
           setOriginalUsername(modelData.username || "");
         }
       } else if (actorData.type === "fan") {
-        // Fans use actor.id as their id
-        const { data: fanData } = await supabase
+        // Try to find fan by user_id first, then by actor id
+        let fanData: Fan | null = null;
+
+        const { data: fanByUser } = await supabase
           .from("fans")
           .select("*")
-          .eq("id", actorData.id)
+          .eq("user_id", user.id)
           .single() as { data: Fan | null };
+
+        if (fanByUser) {
+          fanData = fanByUser;
+        } else {
+          // Fallback to actor.id
+          const { data: fanById } = await supabase
+            .from("fans")
+            .select("*")
+            .eq("id", actorData.id)
+            .single() as { data: Fan | null };
+          fanData = fanById;
+        }
 
         if (fanData) {
           setFan(fanData);
