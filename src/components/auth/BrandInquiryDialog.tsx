@@ -27,7 +27,6 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
   const [submitted, setSubmitted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const [username, setUsername] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [contactName, setContactName] = useState("");
   const [email, setEmail] = useState("");
@@ -39,22 +38,6 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!username.trim()) {
-      toast.error("Please choose a username");
-      return;
-    }
-
-    // Validate username format
-    const cleanUsername = username.trim().toLowerCase().replace(/[^a-z0-9_]/g, "");
-    if (cleanUsername.length < 3) {
-      toast.error("Username must be at least 3 characters");
-      return;
-    }
-    if (cleanUsername.length > 20) {
-      toast.error("Username must be 20 characters or less");
-      return;
-    }
 
     if (!companyName.trim()) {
       toast.error("Please enter your company name");
@@ -83,26 +66,45 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
 
     setLoading(true);
 
-    // Check if username is taken (across models, fans, brands)
-    const { data: existingModel } = await (supabase.from("models") as any)
-      .select("id")
-      .eq("username", cleanUsername)
-      .single();
+    // Auto-generate username from company name
+    let baseUsername = companyName.trim().toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 20);
+    if (baseUsername.length < 3) {
+      baseUsername = baseUsername + "brand";
+    }
 
-    const { data: existingFan } = await (supabase.from("fans") as any)
-      .select("id")
-      .eq("username", cleanUsername)
-      .single();
+    // Check if username is taken and add number suffix if needed
+    let finalUsername = baseUsername;
+    let suffix = 1;
 
-    const { data: existingBrand } = await (supabase.from("brands") as any)
-      .select("id")
-      .eq("username", cleanUsername)
-      .single();
+    while (true) {
+      const { data: existingModel } = await (supabase.from("models") as any)
+        .select("id")
+        .eq("username", finalUsername)
+        .single();
 
-    if (existingModel || existingFan || existingBrand) {
-      toast.error("This username is already taken");
-      setLoading(false);
-      return;
+      const { data: existingFan } = await (supabase.from("fans") as any)
+        .select("id")
+        .eq("username", finalUsername)
+        .single();
+
+      const { data: existingBrand } = await (supabase.from("brands") as any)
+        .select("id")
+        .eq("username", finalUsername)
+        .single();
+
+      if (!existingModel && !existingFan && !existingBrand) {
+        break; // Username is available
+      }
+
+      // Try with a number suffix
+      finalUsername = `${baseUsername}${suffix}`;
+      suffix++;
+
+      if (suffix > 99) {
+        toast.error("Could not generate unique username. Please try again.");
+        setLoading(false);
+        return;
+      }
     }
 
     try {
@@ -145,7 +147,7 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
         .from("brands") as any)
         .insert({
           id: actor.id,
-          username: cleanUsername,
+          username: finalUsername,
           company_name: companyName.trim(),
           contact_name: contactName.trim(),
           email: email.trim(),
@@ -170,18 +172,10 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
     }
   };
 
-  const handleCompanyNameChange = (value: string) => {
-    setCompanyName(value);
-    // Auto-populate username from company name
-    const autoUsername = value.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 20);
-    setUsername(autoUsername);
-  };
-
   const handleClose = () => {
     setOpen(false);
     setTimeout(() => {
       setSubmitted(false);
-      setUsername("");
       setCompanyName("");
       setContactName("");
       setEmail("");
@@ -241,25 +235,11 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
                   id="companyName"
                   placeholder="Your company"
                   value={companyName}
-                  onChange={(e) => handleCompanyNameChange(e.target.value)}
+                  onChange={(e) => setCompanyName(e.target.value)}
                   disabled={loading}
+                  autoComplete="organization"
                   required
                 />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="brandUsername">Username</Label>
-                <Input
-                  id="brandUsername"
-                  placeholder="Brand username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
-                  disabled={loading}
-                  required
-                />
-                <p className="text-xs text-muted-foreground">
-                  Auto-generated from company name
-                </p>
               </div>
 
               <div className="space-y-2">
@@ -270,6 +250,7 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
                   value={contactName}
                   onChange={(e) => setContactName(e.target.value)}
                   disabled={loading}
+                  autoComplete="name"
                   required
                 />
               </div>
@@ -283,6 +264,7 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={loading}
+                  autoComplete="email"
                   required
                 />
               </div>
@@ -297,6 +279,7 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={loading}
+                    autoComplete="new-password"
                     required
                     className="pr-10"
                   />
