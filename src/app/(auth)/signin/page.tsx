@@ -33,27 +33,23 @@ export default function LoginPage() {
       if (error) throw error;
 
       if (data.user) {
-        // Check if user is admin
+        // Check actor type
         const { data: actor } = await (supabase.from("actors") as any)
           .select("type")
           .eq("user_id", data.user.id)
           .single();
 
         if (actor?.type === "admin") {
-          // Use full page reload to ensure session cookies are sent
           window.location.href = "/admin";
+        } else if (actor?.type === "model") {
+          window.location.href = "/dashboard";
+        } else if (actor?.type === "fan") {
+          window.location.href = "/models";
+        } else if (actor?.type === "brand") {
+          window.location.href = "/models";
         } else {
-          // Check if user has model profile
-          const { data: model } = await (supabase.from("models") as any)
-            .select("id")
-            .eq("user_id", data.user.id)
-            .single();
-
-          if (model) {
-            window.location.href = "/dashboard";
-          } else {
-            window.location.href = "/fan/signup";
-          }
+          // No actor record - new user needs to complete signup
+          window.location.href = "/fan/signup";
         }
       }
     } catch (error: unknown) {
