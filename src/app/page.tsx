@@ -62,6 +62,11 @@ export default function HomePage() {
                 Brands
               </Button>
             </BrandInquiryDialog>
+            <a href="https://www.exashows.com" target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" className="rounded-full px-8 border-[#9400D3]/50 hover:border-[#9400D3] hover:bg-[#9400D3]/10">
+                EXA Shows
+              </Button>
+            </a>
           </div>
         </div>
 
