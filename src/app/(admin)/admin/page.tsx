@@ -107,6 +107,12 @@ export default async function AdminPage() {
               Community
             </Link>
           </Button>
+          <Button variant="outline" asChild className="text-yellow-500 border-yellow-500/50 hover:bg-yellow-500/10">
+            <Link href="/admin/transactions">
+              <Coins className="h-4 w-4 mr-2" />
+              Purchases
+            </Link>
+          </Button>
           <Button variant="outline" asChild className="text-green-500 border-green-500/50 hover:bg-green-500/10">
             <Link href="/admin/payouts">
               <Banknote className="h-4 w-4 mr-2" />
