@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { sendModelApprovalEmail, sendModelRejectionEmail } from "@/lib/email";
 
@@ -278,9 +279,15 @@ export async function DELETE(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Use service role client to bypass RLS for delete
+    const adminClient = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
     // Delete the application
-    const { error: deleteError } = await (supabase
-      .from("model_applications") as any)
+    const { error: deleteError } = await adminClient
+      .from("model_applications")
       .delete()
       .eq("id", id);
 
