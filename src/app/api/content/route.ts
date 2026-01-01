@@ -55,40 +55,47 @@ export async function GET(request: NextRequest) {
     // Check if the viewer is the model themselves
     const isOwner = actorId === modelId;
 
-    // Add unlocked status and full media_url if unlocked, free, or owner
-    const contentWithStatus = await Promise.all(
-      (content || []).map(async (item: {
-        id: string;
-        title: string | null;
-        description: string | null;
-        media_type: string;
-        preview_url: string | null;
-        coin_price: number;
-        unlock_count: number;
-        created_at: string;
-      }) => {
-        // Free content (coin_price = 0) is always unlocked
+    // Determine which content IDs are unlocked
+    const unlockedContentIds = (content || [])
+      .filter((item: { id: string; coin_price: number }) => {
         const isFree = item.coin_price === 0;
-        const isUnlocked = isFree || unlockedIds.includes(item.id) || isOwner;
-
-        // If unlocked, get the full media_url
-        let mediaUrl = null;
-        if (isUnlocked) {
-          const { data: fullContent } = await supabase
-            .from("premium_content")
-            .select("media_url")
-            .eq("id", item.id)
-            .single() as { data: { media_url: string } | null };
-          mediaUrl = fullContent?.media_url;
-        }
-
-        return {
-          ...item,
-          isUnlocked,
-          mediaUrl,
-        };
+        return isFree || unlockedIds.includes(item.id) || isOwner;
       })
-    );
+      .map((item: { id: string }) => item.id);
+
+    // Batch fetch all media_urls for unlocked content in a single query
+    let mediaUrlMap = new Map<string, string>();
+    if (unlockedContentIds.length > 0) {
+      const { data: mediaUrls } = await supabase
+        .from("premium_content")
+        .select("id, media_url")
+        .in("id", unlockedContentIds);
+
+      mediaUrls?.forEach((item: { id: string; media_url: string }) => {
+        mediaUrlMap.set(item.id, item.media_url);
+      });
+    }
+
+    // Add unlocked status and media_url from the batch lookup
+    const contentWithStatus = (content || []).map((item: {
+      id: string;
+      title: string | null;
+      description: string | null;
+      media_type: string;
+      preview_url: string | null;
+      coin_price: number;
+      unlock_count: number;
+      created_at: string;
+    }) => {
+      const isFree = item.coin_price === 0;
+      const isUnlocked = isFree || unlockedIds.includes(item.id) || isOwner;
+
+      return {
+        ...item,
+        isUnlocked,
+        mediaUrl: isUnlocked ? mediaUrlMap.get(item.id) || null : null,
+      };
+    });
 
     return NextResponse.json({ content: contentWithStatus });
   } catch (error) {

@@ -384,162 +384,35 @@ export default function AdminCommunityPage() {
     }
   };
 
-  // Load models
+  // Load models via optimized API route
   const loadModels = useCallback(async () => {
     setModelsLoading(true);
 
-    let query = (supabase.from("models") as any)
-      .select(`
-        id, username, first_name, last_name, email, city, state, is_approved,
-        profile_photo_url, profile_views, coin_balance, instagram_name,
-        instagram_followers, admin_rating, created_at, user_id, invite_token, claimed_at
-      `, { count: "exact" });
+    try {
+      const params = new URLSearchParams({
+        page: modelsPage.toString(),
+        pageSize: pageSize.toString(),
+        search: modelsSearch,
+        state: modelsStateFilter,
+        approval: modelsApprovalFilter,
+        rating: modelsRatingFilter,
+        claim: modelsClaimFilter,
+        sortField: modelsSortField,
+        sortDirection: modelsSortDirection,
+      });
 
-    if (modelsSearch) {
-      query = query.or(`username.ilike.%${modelsSearch}%,first_name.ilike.%${modelsSearch}%,last_name.ilike.%${modelsSearch}%,email.ilike.%${modelsSearch}%`);
+      const res = await fetch(`/api/admin/models?${params}`);
+      if (!res.ok) throw new Error("Failed to fetch models");
+
+      const { models: data, total } = await res.json();
+      setModels(data || []);
+      setModelsTotalCount(total || 0);
+    } catch (error) {
+      console.error("Failed to load models:", error);
+    } finally {
+      setModelsLoading(false);
     }
-    if (modelsStateFilter !== "all") query = query.eq("state", modelsStateFilter);
-    if (modelsApprovalFilter !== "all") query = query.eq("is_approved", modelsApprovalFilter === "approved");
-    if (modelsRatingFilter !== "all") {
-      if (modelsRatingFilter === "rated") query = query.not("admin_rating", "is", null);
-      else if (modelsRatingFilter === "unrated") query = query.is("admin_rating", null);
-      else query = query.gte("admin_rating", parseInt(modelsRatingFilter));
-    }
-    if (modelsClaimFilter !== "all") {
-      if (modelsClaimFilter === "claimed") query = query.not("user_id", "is", null);
-      else if (modelsClaimFilter === "unclaimed") query = query.is("user_id", null);
-    }
-
-    query = query.order(modelsSortField, { ascending: modelsSortDirection === "asc", nullsFirst: false });
-    const from = (modelsPage - 1) * pageSize;
-    query = query.range(from, from + pageSize - 1);
-
-    const { data, count, error } = await query;
-    if (error) { console.error(error); setModelsLoading(false); return; }
-
-    // Get additional data for models
-    if (data?.length > 0) {
-      const modelIds = data.map((m: any) => m.id);
-      const userIds = data.map((m: any) => m.user_id).filter(Boolean);
-
-      // Get actors for these models
-      const { data: actors } = await (supabase.from("actors") as any)
-        .select("id, user_id").in("user_id", userIds);
-
-      const actorToUser = new Map(actors?.map((a: any) => [a.user_id, a.id]) || []);
-      const actorIds = actors?.map((a: any) => a.id) || [];
-
-      // Get follower counts
-      const { data: followCounts } = await (supabase.from("follows") as any)
-        .select("following_id").in("following_id", actorIds);
-
-      const followerMap = new Map<string, number>();
-      followCounts?.forEach((f: any) => {
-        followerMap.set(f.following_id, (followerMap.get(f.following_id) || 0) + 1);
-      });
-
-      // Get total earned (positive coin transactions)
-      const { data: earnings } = await (supabase.from("coin_transactions") as any)
-        .select("actor_id, amount")
-        .in("actor_id", actorIds)
-        .gt("amount", 0);
-
-      const earningsMap = new Map<string, number>();
-      earnings?.forEach((tx: any) => {
-        earningsMap.set(tx.actor_id, (earningsMap.get(tx.actor_id) || 0) + tx.amount);
-      });
-
-      // Get content counts (premium_content + media_assets)
-      const { data: premiumCounts } = await (supabase.from("premium_content") as any)
-        .select("model_id").in("model_id", modelIds);
-
-      const { data: mediaCounts } = await (supabase.from("media_assets") as any)
-        .select("model_id").in("model_id", modelIds);
-
-      const contentMap = new Map<string, number>();
-      premiumCounts?.forEach((c: any) => {
-        contentMap.set(c.model_id, (contentMap.get(c.model_id) || 0) + 1);
-      });
-      mediaCounts?.forEach((c: any) => {
-        contentMap.set(c.model_id, (contentMap.get(c.model_id) || 0) + 1);
-      });
-
-      // Get last post dates (most recent from either table)
-      const { data: lastPremium } = await (supabase.from("premium_content") as any)
-        .select("model_id, created_at")
-        .in("model_id", modelIds)
-        .order("created_at", { ascending: false });
-
-      const { data: lastMedia } = await (supabase.from("media_assets") as any)
-        .select("model_id, created_at")
-        .in("model_id", modelIds)
-        .order("created_at", { ascending: false });
-
-      const lastPostMap = new Map<string, string>();
-      // Process premium content dates
-      lastPremium?.forEach((p: any) => {
-        if (!lastPostMap.has(p.model_id) || new Date(p.created_at) > new Date(lastPostMap.get(p.model_id)!)) {
-          lastPostMap.set(p.model_id, p.created_at);
-        }
-      });
-      // Process media asset dates
-      lastMedia?.forEach((m: any) => {
-        if (!lastPostMap.has(m.model_id) || new Date(m.created_at) > new Date(lastPostMap.get(m.model_id)!)) {
-          lastPostMap.set(m.model_id, m.created_at);
-        }
-      });
-
-      // Get message/conversation counts
-      const { data: conversations } = await (supabase.from("conversation_participants") as any)
-        .select("actor_id, conversation_id")
-        .in("actor_id", actorIds);
-
-      const messageMap = new Map<string, number>();
-      conversations?.forEach((c: any) => {
-        messageMap.set(c.actor_id, (messageMap.get(c.actor_id) || 0) + 1);
-      });
-
-      // Get last seen from auth metadata (using actors' user_ids)
-      // Note: We'll use the model's user_id to check last activity
-      // For now, we can track based on when they last had activity
-
-      // Apply all the computed fields to models
-      data.forEach((model: any) => {
-        const actorId = actorToUser.get(model.user_id) || "";
-        model.followers_count = actorId ? (followerMap.get(actorId as string) || 0) : 0;
-        model.total_earned = actorId ? (earningsMap.get(actorId as string) || 0) : 0;
-        model.content_count = contentMap.get(model.id) || 0;
-        model.last_post = lastPostMap.get(model.id) || null;
-        model.message_count = actorId ? (messageMap.get(actorId as string) || 0) : 0;
-        // Last seen - use last_active_at if available, otherwise fall back to last_post or created_at
-        model.last_seen = model.last_active_at || model.last_post || (model.user_id ? model.created_at : null);
-      });
-
-      // Sort by computed fields if needed
-      if (["total_earned", "content_count", "last_post", "last_seen", "message_count", "followers_count"].includes(modelsSortField)) {
-        data.sort((a: any, b: any) => {
-          let aVal = a[modelsSortField];
-          let bVal = b[modelsSortField];
-
-          // Handle date sorting
-          if (modelsSortField === "last_post" || modelsSortField === "last_seen") {
-            aVal = aVal ? new Date(aVal).getTime() : 0;
-            bVal = bVal ? new Date(bVal).getTime() : 0;
-          }
-
-          // Handle null/undefined
-          aVal = aVal || 0;
-          bVal = bVal || 0;
-
-          return modelsSortDirection === "asc" ? aVal - bVal : bVal - aVal;
-        });
-      }
-    }
-
-    setModels(data || []);
-    setModelsTotalCount(count || 0);
-    setModelsLoading(false);
-  }, [supabase, modelsSearch, modelsStateFilter, modelsApprovalFilter, modelsRatingFilter, modelsClaimFilter, modelsSortField, modelsSortDirection, modelsPage]);
+  }, [modelsSearch, modelsStateFilter, modelsApprovalFilter, modelsRatingFilter, modelsClaimFilter, modelsSortField, modelsSortDirection, modelsPage]);
 
   // Load fans
   const loadFans = useCallback(async () => {
@@ -961,7 +834,7 @@ export default function AdminCommunityPage() {
                             <Link href={`/admin/models/${model.id}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                               <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-pink-500/20 to-violet-500/20 flex-shrink-0">
                                 {model.profile_photo_url ? (
-                                  <Image src={model.profile_photo_url} alt={model.username} width={80} height={80} className="w-full h-full object-cover" unoptimized />
+                                  <Image src={model.profile_photo_url} alt={model.username} width={80} height={80} className="w-full h-full object-cover" unoptimized={model.profile_photo_url.includes('cdninstagram.com')} />
                                 ) : (
                                   <div className="w-full h-full flex items-center justify-center text-sm font-bold">{model.first_name?.charAt(0) || model.username?.charAt(0)?.toUpperCase() || "?"}</div>
                                 )}
@@ -1131,7 +1004,7 @@ export default function AdminCommunityPage() {
                             <div className="flex items-center gap-3">
                               <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex-shrink-0">
                                 {fan.avatar_url ? (
-                                  <Image src={fan.avatar_url} alt={fan.display_name || "Fan"} width={80} height={80} className="w-full h-full object-cover" unoptimized />
+                                  <Image src={fan.avatar_url} alt={fan.display_name || "Fan"} width={80} height={80} className="w-full h-full object-cover" unoptimized={fan.avatar_url.includes('cdninstagram.com')} />
                                 ) : (
                                   <div className="w-full h-full flex items-center justify-center text-sm font-bold">{fan.display_name?.charAt(0) || fan.email?.charAt(0)?.toUpperCase() || "F"}</div>
                                 )}

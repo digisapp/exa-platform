@@ -12,17 +12,29 @@ export async function POST() {
       return NextResponse.json({ success: false }, { status: 401 });
     }
 
-    // Update last_active_at for model
-    const { error: modelError } = await (supabase
-      .from("models") as any)
-      .update({ last_active_at: new Date().toISOString() })
-      .eq("user_id", user.id);
+    // Get actor type to only update the relevant table
+    const { data: actor } = await (supabase
+      .from("actors") as any)
+      .select("type")
+      .eq("user_id", user.id)
+      .single();
 
-    // Also update for fan if exists
-    const { error: fanError } = await (supabase
-      .from("fans") as any)
-      .update({ last_active_at: new Date().toISOString() })
-      .eq("user_id", user.id);
+    if (!actor) {
+      return NextResponse.json({ success: false }, { status: 404 });
+    }
+
+    const now = new Date().toISOString();
+
+    // Only update the relevant table based on actor type
+    if (actor.type === "model") {
+      await (supabase.from("models") as any)
+        .update({ last_active_at: now })
+        .eq("user_id", user.id);
+    } else if (actor.type === "fan") {
+      await (supabase.from("fans") as any)
+        .update({ last_active_at: now })
+        .eq("user_id", user.id);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

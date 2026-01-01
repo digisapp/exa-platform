@@ -520,7 +520,7 @@ export default function AdminFansPage() {
                                 width={80}
                                 height={80}
                                 className="w-full h-full object-cover"
-                                unoptimized
+                                unoptimized={fan.avatar_url.includes('cdninstagram.com')}
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-sm font-bold">
