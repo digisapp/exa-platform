@@ -251,3 +251,49 @@ Here's how to get started:
     );
   }
 }
+
+// Delete model application (for spam)
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const supabase = await createClient();
+
+    // Auth check
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Admin check
+    const { data: actor } = await supabase
+      .from("actors")
+      .select("id, type")
+      .eq("user_id", user.id)
+      .single() as { data: { id: string; type: string } | null };
+
+    if (!actor || actor.type !== "admin") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    // Delete the application
+    const { error: deleteError } = await (supabase
+      .from("model_applications") as any)
+      .delete()
+      .eq("id", id);
+
+    if (deleteError) {
+      throw deleteError;
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Model application delete error:", error);
+    return NextResponse.json(
+      { error: "Failed to delete application" },
+      { status: 500 }
+    );
+  }
+}

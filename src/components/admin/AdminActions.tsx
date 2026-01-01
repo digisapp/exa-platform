@@ -32,7 +32,8 @@ interface AdminActionProps {
 }
 
 export function ApproveRejectButtons({ id, type, onSuccess }: AdminActionProps) {
-  const [loading, setLoading] = useState<"approve" | "reject" | null>(null);
+  const [loading, setLoading] = useState<"approve" | "reject" | "delete" | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const router = useRouter();
 
   const handleAction = async (action: "approve" | "reject") => {
@@ -91,39 +92,115 @@ export function ApproveRejectButtons({ id, type, onSuccess }: AdminActionProps) 
     }
   };
 
+  const handleDelete = async () => {
+    setLoading("delete");
+
+    try {
+      let endpoint = "";
+
+      switch (type) {
+        case "model_application":
+          endpoint = `/api/admin/model-applications/${id}`;
+          break;
+        default:
+          throw new Error("Delete not supported for this type");
+      }
+
+      const res = await fetch(endpoint, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to delete");
+      }
+
+      toast.success("Deleted!");
+      setShowDeleteDialog(false);
+      onSuccess?.();
+      router.refresh();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Delete failed";
+      toast.error(message);
+    } finally {
+      setLoading(null);
+    }
+  };
+
   return (
-    <div className="flex gap-2">
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={() => handleAction("reject")}
-        disabled={loading !== null}
-      >
-        {loading === "reject" ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <>
-            <XCircle className="h-4 w-4 mr-1" />
-            Reject
-          </>
+    <>
+      <div className="flex gap-2">
+        {type === "model_application" && (
+          <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+            <AlertDialogTrigger asChild>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-red-500 border-red-500/50 hover:bg-red-500/10"
+                disabled={loading !== null}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Application?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently delete this application. Use this for spam submissions.
+                  This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={loading === "delete"}>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDelete}
+                  disabled={loading === "delete"}
+                  className="bg-red-500 hover:bg-red-600"
+                >
+                  {loading === "delete" ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <Trash2 className="h-4 w-4 mr-2" />
+                  )}
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         )}
-      </Button>
-      <Button
-        size="sm"
-        className="bg-green-500 hover:bg-green-600"
-        onClick={() => handleAction("approve")}
-        disabled={loading !== null}
-      >
-        {loading === "approve" ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <>
-            <CheckCircle className="h-4 w-4 mr-1" />
-            Approve
-          </>
-        )}
-      </Button>
-    </div>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => handleAction("reject")}
+          disabled={loading !== null}
+        >
+          {loading === "reject" ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <>
+              <XCircle className="h-4 w-4 mr-1" />
+              Reject
+            </>
+          )}
+        </Button>
+        <Button
+          size="sm"
+          className="bg-green-500 hover:bg-green-600"
+          onClick={() => handleAction("approve")}
+          disabled={loading !== null}
+        >
+          {loading === "approve" ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <>
+              <CheckCircle className="h-4 w-4 mr-1" />
+              Approve
+            </>
+          )}
+        </Button>
+      </div>
+    </>
   );
 }
 
