@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
       .map((item: { id: string }) => item.id);
 
     // Batch fetch all media_urls for unlocked content in a single query
-    let mediaUrlMap = new Map<string, string>();
+    const mediaUrlMap = new Map<string, string>();
     if (unlockedContentIds.length > 0) {
       const { data: mediaUrls } = await supabase
         .from("premium_content")
