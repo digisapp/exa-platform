@@ -16,6 +16,7 @@ export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [instagram, setInstagram] = useState("");
   const [tiktok, setTiktok] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -42,10 +43,12 @@ export default function SignupPage() {
       return;
     }
 
+    const name = displayName.trim() || instagram.replace("@", "").trim() || tiktok.replace("@", "").trim() || email.split("@")[0];
+
     setLoading(true);
 
     try {
-      // Create the account
+      // Step 1: Create the auth account
       const { data, error } = await supabase.auth.signUp({
         email: email.toLowerCase().trim(),
         password,
@@ -54,8 +57,22 @@ export default function SignupPage() {
       if (error) throw error;
 
       if (data.user) {
-        // Submit model application
-        const res = await fetch("/api/apply", {
+        // Step 2: Create fan profile (actor + fan records)
+        const fanRes = await fetch("/api/auth/create-fan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ displayName: name }),
+        });
+
+        const fanData = await fanRes.json();
+
+        if (!fanRes.ok) {
+          // If profile creation fails, show specific error
+          throw new Error(fanData.error || "Failed to create profile");
+        }
+
+        // Step 3: Submit model application
+        const appRes = await fetch("/api/apply", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -64,11 +81,12 @@ export default function SignupPage() {
           }),
         });
 
-        const appData = await res.json();
+        const appData = await appRes.json();
 
-        if (!res.ok) {
+        if (!appRes.ok) {
+          // Application failed but account was created
           console.error("Application error:", appData.error);
-          // Account created but application failed - still show success
+          throw new Error(appData.error || "Failed to submit application");
         }
 
         setSubmitted(true);
@@ -161,6 +179,17 @@ export default function SignupPage() {
 
         <form onSubmit={handleSignup}>
           <CardContent className="space-y-4 pt-0">
+            <div className="space-y-2">
+              <Label htmlFor="displayName">Display Name</Label>
+              <Input
+                id="displayName"
+                type="text"
+                placeholder="Your name or stage name"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                disabled={loading}
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input

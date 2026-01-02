@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { instagram_username, tiktok_username } = body;
+    const { instagram_username, tiktok_username, phone, date_of_birth, height } = body;
 
     // Validate - need at least one social handle
     if (!instagram_username && !tiktok_username) {
@@ -51,26 +51,29 @@ export async function POST(request: NextRequest) {
 
     // Get user's fan info for display name
     const { data: fan } = await (supabase.from("fans") as any)
-      .select("display_name")
+      .select("id, display_name")
       .eq("user_id", user.id)
       .single();
 
-    // Get actor info
-    const { data: actor } = await supabase
-      .from("actors")
-      .select("id")
-      .eq("user_id", user.id)
-      .single() as { data: { id: string } | null };
+    // Determine display name - prefer fan display name, then instagram, then tiktok, then email
+    const displayName = fan?.display_name ||
+                        instagram_username ||
+                        tiktok_username ||
+                        user.email?.split("@")[0] ||
+                        "Unknown";
 
     // Create application
     const { error: insertError } = await (supabase.from("model_applications") as any)
       .insert({
         user_id: user.id,
-        fan_id: actor?.id || null,
-        display_name: fan?.display_name || user.email?.split("@")[0] || "Unknown",
+        fan_id: fan?.id || null,
+        display_name: displayName,
         email: user.email,
         instagram_username: instagram_username || null,
         tiktok_username: tiktok_username || null,
+        phone: phone || null,
+        date_of_birth: date_of_birth || null,
+        height: height || null,
         status: "pending",
       });
 

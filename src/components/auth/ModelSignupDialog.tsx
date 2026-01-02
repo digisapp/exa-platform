@@ -105,7 +105,7 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
       // Generate a random password for the user (they can reset later)
       const tempPassword = Math.random().toString(36).slice(-12) + "Aa1!";
 
-      // Create auth user
+      // Step 1: Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: email.toLowerCase().trim(),
         password: tempPassword,
@@ -125,64 +125,35 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
         throw new Error("Failed to create account");
       }
 
-      // Create actor record (as fan initially)
-      const { data: actor, error: actorError } = await (supabase
-        .from("actors") as any)
-        .insert({
-          user_id: authData.user.id,
-          type: "fan",
-        })
-        .select()
-        .single();
+      // Step 2: Create fan profile via API (handles actor + fan + bonus)
+      const fanRes = await fetch("/api/auth/create-fan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ displayName: name.trim() }),
+      });
 
-      if (actorError) {
-        console.error("Actor error:", actorError);
-        throw actorError;
+      if (!fanRes.ok) {
+        const fanData = await fanRes.json();
+        throw new Error(fanData.error || "Failed to create profile");
       }
 
-      // Create fan profile
-      const { error: fanError } = await (supabase
-        .from("fans") as any)
-        .insert({
-          id: actor.id,
-          user_id: authData.user.id,
-          email: email.toLowerCase().trim(),
-          display_name: name.trim(),
-          phone: phone.trim() || null,
-          coin_balance: 10, // Welcome bonus
-        });
-
-      if (fanError) {
-        console.error("Fan error:", fanError);
-        throw fanError;
-      }
-
-      // Create model application
-      const { error: appError } = await (supabase
-        .from("model_applications") as any)
-        .insert({
-          user_id: authData.user.id,
-          email: email.toLowerCase().trim(),
-          display_name: name.trim(),
+      // Step 3: Create model application via API
+      const appRes = await fetch("/api/apply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           instagram_username: instagram.trim().replace("@", ""),
+          tiktok_username: "",
           phone: phone.trim() || null,
           date_of_birth: dateOfBirth,
           height: height,
-          status: "pending",
-        });
-
-      if (appError) {
-        console.error("Application error:", appError);
-        throw appError;
-      }
-
-      // Record the welcome bonus transaction
-      await (supabase.from("coin_transactions") as any).insert({
-        actor_id: actor.id,
-        amount: 10,
-        action: "signup_bonus",
-        metadata: { reason: "Welcome bonus for new signup" },
+        }),
       });
+
+      if (!appRes.ok) {
+        const appData = await appRes.json();
+        throw new Error(appData.error || "Failed to submit application");
+      }
 
       setSubmitted(true);
       toast.success("Application submitted!");
