@@ -93,6 +93,7 @@ export interface Database {
           meet_greet_rate: number
           travel_fee: number
           show_booking_rates: boolean
+          show_on_rates_page: boolean
           username_changed_at: string | null
           user_id: string | null
           created_at: string
@@ -153,6 +154,7 @@ export interface Database {
           meet_greet_rate?: number
           travel_fee?: number
           show_booking_rates?: boolean
+          show_on_rates_page?: boolean
           username_changed_at?: string | null
           user_id?: string | null
           created_at?: string
@@ -213,6 +215,7 @@ export interface Database {
           meet_greet_rate?: number
           travel_fee?: number
           show_booking_rates?: boolean
+          show_on_rates_page?: boolean
           username_changed_at?: string | null
           user_id?: string | null
           created_at?: string

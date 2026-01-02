@@ -441,6 +441,7 @@ export default function ProfilePage() {
         meet_greet_rate: model.meet_greet_rate || 0,
         travel_fee: model.travel_fee || 0,
         show_booking_rates: model.show_booking_rates ?? true,
+        show_on_rates_page: model.show_on_rates_page ?? false,
         updated_at: new Date().toISOString(),
       };
 
@@ -1453,6 +1454,20 @@ export default function ProfilePage() {
                 <Switch
                   checked={model.show_booking_rates ?? true}
                   onCheckedChange={(v) => setModel({ ...model, show_booking_rates: v })}
+                />
+              </div>
+
+              {/* Show on Rates Directory Toggle */}
+              <div className="flex items-center justify-between p-4 rounded-lg border bg-gradient-to-r from-pink-500/10 to-violet-500/10">
+                <div>
+                  <Label className="text-base font-semibold">List on Rates Directory</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Appear on the public <Link href="/rates" className="text-pink-500 hover:underline">/rates</Link> page where brands can discover and book you
+                  </p>
+                </div>
+                <Switch
+                  checked={model.show_on_rates_page ?? false}
+                  onCheckedChange={(v) => setModel({ ...model, show_on_rates_page: v })}
                 />
               </div>
 
