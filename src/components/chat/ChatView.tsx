@@ -221,7 +221,7 @@ export function ChatView({
           <h2 className="font-semibold truncate">{otherName}</h2>
           {otherParticipant.model?.username && (
             <Link
-              href={`/models/${otherParticipant.model.username}`}
+              href={`/${otherParticipant.model.username}`}
               className="text-sm text-muted-foreground hover:text-primary"
             >
               @{otherParticipant.model.username}

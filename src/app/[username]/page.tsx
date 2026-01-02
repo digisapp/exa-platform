@@ -16,29 +16,12 @@ import { ProfileContentTabs } from "@/components/profile/ProfileContentTabs";
 
 // Reserved paths that should NOT be treated as usernames
 const RESERVED_PATHS = [
-  'signin',
-  'signup',
-  'models',
-  'gigs',
-  'dashboard',
-  'profile',
-  'messages',
-  'leaderboard',
-  'admin',
-  'onboarding',
-  'brands',
-  'designers',
-  'media',
-  'api',
-  'auth',
-  '_next',
-  'favicon.ico',
-  'wallet',
-  'content',
-  'coins',
-  'earnings',
-  'fan',
-  'opportunities',
+  'signin', 'signup', 'models', 'gigs', 'dashboard', 'profile', 'messages',
+  'leaderboard', 'admin', 'onboarding', 'brands', 'designers', 'media',
+  'api', 'auth', '_next', 'favicon.ico', 'wallet', 'content', 'coins',
+  'earnings', 'fan', 'opportunities', 'settings', 'notifications', 'search',
+  'explore', 'trending', 'popular', 'new', 'hot', 'top', 'best', 'featured',
+  'favorites', 'chats', 'claim', 'forgot-password',
 ];
 
 interface Props {

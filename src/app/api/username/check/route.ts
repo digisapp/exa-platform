@@ -8,6 +8,7 @@ const RESERVED_PATHS = [
   'api', 'auth', '_next', 'favicon.ico', 'wallet', 'content', 'coins',
   'earnings', 'fan', 'opportunities', 'settings', 'notifications', 'search',
   'explore', 'trending', 'popular', 'new', 'hot', 'top', 'best', 'featured',
+  'favorites', 'chats', 'claim', 'forgot-password',
 ];
 
 export async function GET(request: NextRequest) {
