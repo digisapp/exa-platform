@@ -16,21 +16,46 @@ export default function ResetPasswordPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(true);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
 
   useEffect(() => {
-    // Check if we have a valid session from the reset link
-    const checkSession = async () => {
+    // Listen for auth state changes (Supabase processes the URL hash)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === "PASSWORD_RECOVERY") {
+          // User clicked the reset link - they can now set a new password
+          setChecking(false);
+          setError(null);
+        } else if (event === "SIGNED_IN" && session) {
+          // Session established from reset link
+          setChecking(false);
+          setError(null);
+        }
+      }
+    );
+
+    // Also check current session after a short delay (for page refresh)
+    const timer = setTimeout(async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      if (session) {
+        setChecking(false);
+        setError(null);
+      } else if (checking) {
+        // Still no session after delay - link might be invalid
+        setChecking(false);
         setError("Invalid or expired reset link. Please request a new one.");
       }
+    }, 1500);
+
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timer);
     };
-    checkSession();
-  }, [supabase]);
+  }, [supabase, checking]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,6 +93,20 @@ export default function ResetPasswordPage() {
       setLoading(false);
     }
   };
+
+  if (checking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-pink-500" />
+            <CardTitle>Verifying Reset Link...</CardTitle>
+            <CardDescription>Please wait a moment</CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
 
   if (error) {
     return (
