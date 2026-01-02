@@ -20,6 +20,7 @@ import {
   BarChart3,
   Banknote,
   Calendar,
+  AtSign,
 } from "lucide-react";
 import { TikTokIcon } from "@/components/ui/tiktok-icon";
 
@@ -118,6 +119,12 @@ export default async function AdminPage() {
             <Link href="/admin/payouts">
               <Banknote className="h-4 w-4 mr-2" />
               Payouts
+            </Link>
+          </Button>
+          <Button variant="outline" asChild className="text-purple-500 border-purple-500/50 hover:bg-purple-500/10">
+            <Link href="/admin/usernames">
+              <AtSign className="h-4 w-4 mr-2" />
+              Usernames
             </Link>
           </Button>
           <Button asChild>
