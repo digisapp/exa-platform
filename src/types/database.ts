@@ -82,6 +82,17 @@ export interface Database {
           video_call_rate: number
           voice_call_rate: number
           message_rate: number
+          // Booking rates
+          photoshoot_hourly_rate: number
+          photoshoot_half_day_rate: number
+          photoshoot_full_day_rate: number
+          promo_hourly_rate: number
+          private_event_hourly_rate: number
+          social_companion_hourly_rate: number
+          brand_ambassador_daily_rate: number
+          meet_greet_rate: number
+          travel_fee: number
+          show_booking_rates: boolean
           username_changed_at: string | null
           user_id: string | null
           created_at: string
@@ -131,6 +142,17 @@ export interface Database {
           video_call_rate?: number
           voice_call_rate?: number
           message_rate?: number
+          // Booking rates
+          photoshoot_hourly_rate?: number
+          photoshoot_half_day_rate?: number
+          photoshoot_full_day_rate?: number
+          promo_hourly_rate?: number
+          private_event_hourly_rate?: number
+          social_companion_hourly_rate?: number
+          brand_ambassador_daily_rate?: number
+          meet_greet_rate?: number
+          travel_fee?: number
+          show_booking_rates?: boolean
           username_changed_at?: string | null
           user_id?: string | null
           created_at?: string
@@ -180,6 +202,17 @@ export interface Database {
           video_call_rate?: number
           voice_call_rate?: number
           message_rate?: number
+          // Booking rates
+          photoshoot_hourly_rate?: number
+          photoshoot_half_day_rate?: number
+          photoshoot_full_day_rate?: number
+          promo_hourly_rate?: number
+          private_event_hourly_rate?: number
+          social_companion_hourly_rate?: number
+          brand_ambassador_daily_rate?: number
+          meet_greet_rate?: number
+          travel_fee?: number
+          show_booking_rates?: boolean
           username_changed_at?: string | null
           user_id?: string | null
           created_at?: string

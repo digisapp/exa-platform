@@ -430,6 +430,17 @@ export default function ProfilePage() {
         video_call_rate: model.video_call_rate || 0,
         voice_call_rate: model.voice_call_rate || 0,
         message_rate: model.message_rate || 0,
+        // Booking rates
+        photoshoot_hourly_rate: model.photoshoot_hourly_rate || 0,
+        photoshoot_half_day_rate: model.photoshoot_half_day_rate || 0,
+        photoshoot_full_day_rate: model.photoshoot_full_day_rate || 0,
+        promo_hourly_rate: model.promo_hourly_rate || 0,
+        private_event_hourly_rate: model.private_event_hourly_rate || 0,
+        social_companion_hourly_rate: model.social_companion_hourly_rate || 0,
+        brand_ambassador_daily_rate: model.brand_ambassador_daily_rate || 0,
+        meet_greet_rate: model.meet_greet_rate || 0,
+        travel_fee: model.travel_fee || 0,
+        show_booking_rates: model.show_booking_rates ?? true,
         updated_at: new Date().toISOString(),
       };
 
@@ -1421,6 +1432,239 @@ export default function ProfilePage() {
               <p>• Message rates typically range from <strong>1-5 coins/message</strong></p>
               <p>• Higher rates can signal exclusivity but may reduce engagement</p>
               <p>• You can change your rates anytime</p>
+            </CardContent>
+          </Card>
+
+          {/* Booking Rates */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Booking Rates</CardTitle>
+              <CardDescription>
+                Set your rates for in-person services. Brands and fans will see these on your profile.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Show Booking Rates Toggle */}
+              <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/50">
+                <div>
+                  <Label className="text-base font-semibold">Show Booking Rates</Label>
+                  <p className="text-sm text-muted-foreground">Display your booking rates on your public profile</p>
+                </div>
+                <Switch
+                  checked={model.show_booking_rates ?? true}
+                  onCheckedChange={(v) => setModel({ ...model, show_booking_rates: v })}
+                />
+              </div>
+
+              {/* Photography Rates */}
+              <div className="space-y-4">
+                <h4 className="font-semibold flex items-center gap-2">
+                  <Camera className="h-4 w-4 text-pink-500" />
+                  Photography & Content
+                </h4>
+                <div className="grid gap-4">
+                  <div className="flex items-center justify-between p-3 rounded-lg border">
+                    <div>
+                      <Label>Hourly Rate</Label>
+                      <p className="text-xs text-muted-foreground">Per hour for photoshoots</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">$</span>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="10000"
+                        value={model.photoshoot_hourly_rate || ""}
+                        onChange={(e) => setModel({ ...model, photoshoot_hourly_rate: parseInt(e.target.value) || 0 })}
+                        className="w-24 text-right"
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-lg border">
+                    <div>
+                      <Label>Half-Day Rate</Label>
+                      <p className="text-xs text-muted-foreground">4 hours of shooting</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">$</span>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="50000"
+                        value={model.photoshoot_half_day_rate || ""}
+                        onChange={(e) => setModel({ ...model, photoshoot_half_day_rate: parseInt(e.target.value) || 0 })}
+                        className="w-24 text-right"
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-lg border">
+                    <div>
+                      <Label>Full-Day Rate</Label>
+                      <p className="text-xs text-muted-foreground">8 hours of shooting</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">$</span>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="100000"
+                        value={model.photoshoot_full_day_rate || ""}
+                        onChange={(e) => setModel({ ...model, photoshoot_full_day_rate: parseInt(e.target.value) || 0 })}
+                        className="w-24 text-right"
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Promotional Rates */}
+              <div className="space-y-4">
+                <h4 className="font-semibold flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4 text-blue-500" />
+                  Promotional & Events
+                </h4>
+                <div className="grid gap-4">
+                  <div className="flex items-center justify-between p-3 rounded-lg border">
+                    <div>
+                      <Label>Promo Modeling</Label>
+                      <p className="text-xs text-muted-foreground">Per hour for promotional work</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">$</span>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="10000"
+                        value={model.promo_hourly_rate || ""}
+                        onChange={(e) => setModel({ ...model, promo_hourly_rate: parseInt(e.target.value) || 0 })}
+                        className="w-24 text-right"
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-lg border">
+                    <div>
+                      <Label>Brand Ambassador</Label>
+                      <p className="text-xs text-muted-foreground">Daily rate for brand work</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">$</span>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="50000"
+                        value={model.brand_ambassador_daily_rate || ""}
+                        onChange={(e) => setModel({ ...model, brand_ambassador_daily_rate: parseInt(e.target.value) || 0 })}
+                        className="w-24 text-right"
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Private & Social Rates */}
+              <div className="space-y-4">
+                <h4 className="font-semibold flex items-center gap-2">
+                  <User className="h-4 w-4 text-violet-500" />
+                  Private & Social
+                </h4>
+                <div className="grid gap-4">
+                  <div className="flex items-center justify-between p-3 rounded-lg border">
+                    <div>
+                      <Label>Private Events</Label>
+                      <p className="text-xs text-muted-foreground">Per hour for private events</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">$</span>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="10000"
+                        value={model.private_event_hourly_rate || ""}
+                        onChange={(e) => setModel({ ...model, private_event_hourly_rate: parseInt(e.target.value) || 0 })}
+                        className="w-24 text-right"
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-lg border">
+                    <div>
+                      <Label>Social Companion</Label>
+                      <p className="text-xs text-muted-foreground">Per hour for social events</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">$</span>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="10000"
+                        value={model.social_companion_hourly_rate || ""}
+                        onChange={(e) => setModel({ ...model, social_companion_hourly_rate: parseInt(e.target.value) || 0 })}
+                        className="w-24 text-right"
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-lg border">
+                    <div>
+                      <Label>Meet & Greet</Label>
+                      <p className="text-xs text-muted-foreground">Flat fee for appearances</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">$</span>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="50000"
+                        value={model.meet_greet_rate || ""}
+                        onChange={(e) => setModel({ ...model, meet_greet_rate: parseInt(e.target.value) || 0 })}
+                        className="w-24 text-right"
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Travel Fee */}
+              <div className="space-y-4">
+                <h4 className="font-semibold flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-green-500" />
+                  Additional Fees
+                </h4>
+                <div className="flex items-center justify-between p-3 rounded-lg border">
+                  <div>
+                    <Label>Travel Fee</Label>
+                    <p className="text-xs text-muted-foreground">For out-of-area bookings</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">$</span>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="10000"
+                      value={model.travel_fee || ""}
+                      onChange={(e) => setModel({ ...model, travel_fee: parseInt(e.target.value) || 0 })}
+                      className="w-24 text-right"
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Booking Rate Tips */}
+              <div className="p-4 rounded-lg bg-muted/50 space-y-2 text-sm text-muted-foreground">
+                <p className="font-medium text-foreground">Tips for setting rates:</p>
+                <p>• Research market rates in your area</p>
+                <p>• Set rates to <strong>$0</strong> to hide that service</p>
+                <p>• Half-day should typically be 3-4x hourly rate</p>
+                <p>• Full-day should typically be 6-8x hourly rate</p>
+                <p>• Consider your experience level and portfolio quality</p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
