@@ -7,7 +7,6 @@ import {
   Megaphone,
   PartyPopper,
   MapPin,
-  Filter,
   Search,
   Calendar,
 } from "lucide-react";
