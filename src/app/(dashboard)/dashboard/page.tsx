@@ -69,14 +69,11 @@ export default async function DashboardPage() {
     .eq("is_active", true)
     .gt("coin_price", 0);
 
-  // Get total page views
-  const { data: viewsData } = await (supabase
+  // Get total page views (count rows in page_views for this model by username)
+  const { count: totalViews } = await (supabase
     .from("page_views") as any)
-    .select("view_count")
-    .eq("model_id", model.id)
-    .single();
-
-  const totalViews = (viewsData as { view_count: number } | null)?.view_count || 0;
+    .select("*", { count: "exact", head: true })
+    .eq("model_username", model.username);
 
   // Get open opportunities
   const { data: opportunities } = await (supabase
@@ -186,7 +183,7 @@ export default async function DashboardPage() {
                 <Eye className="h-5 w-5 text-blue-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{totalViews}</p>
+                <p className="text-2xl font-bold">{totalViews || 0}</p>
                 <p className="text-xs text-muted-foreground">Profile Views</p>
               </div>
             </div>
