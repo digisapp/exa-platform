@@ -10,6 +10,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Table,
   TableBody,
   TableCell,
@@ -44,6 +51,7 @@ import {
   Images,
   DollarSign,
   Activity,
+  KeyRound,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ModelActionsDropdown, FanActionsDropdown } from "@/components/admin/AdminActions";
@@ -174,6 +182,134 @@ function CopyInviteButton({ token }: { token: string }) {
         <Copy className="h-4 w-4" />
       )}
     </Button>
+  );
+}
+
+function CreateLoginButton({ modelId, modelEmail, onSuccess }: { modelId: string; modelEmail: string; onSuccess: () => void }) {
+  const [loading, setLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [credentials, setCredentials] = useState<{ email: string; password: string } | null>(null);
+  const [copiedEmail, setCopiedEmail] = useState(false);
+  const [copiedPassword, setCopiedPassword] = useState(false);
+  const [copiedBoth, setCopiedBoth] = useState(false);
+
+  const handleCreateLogin = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/models/${modelId}/create-login`, {
+        method: "POST",
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to create login");
+      }
+
+      setCredentials({ email: data.email, password: data.password });
+      setShowModal(true);
+      onSuccess();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to create login");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const copyToClipboard = async (text: string, type: "email" | "password" | "both") => {
+    await navigator.clipboard.writeText(text);
+    if (type === "email") {
+      setCopiedEmail(true);
+      setTimeout(() => setCopiedEmail(false), 2000);
+    } else if (type === "password") {
+      setCopiedPassword(true);
+      setTimeout(() => setCopiedPassword(false), 2000);
+    } else {
+      setCopiedBoth(true);
+      setTimeout(() => setCopiedBoth(false), 2000);
+    }
+    toast.success("Copied to clipboard!");
+  };
+
+  return (
+    <>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleCreateLogin}
+        disabled={loading}
+        className="h-7 px-2 text-xs gap-1"
+      >
+        {loading ? (
+          <Loader2 className="h-3 w-3 animate-spin" />
+        ) : (
+          <KeyRound className="h-3 w-3" />
+        )}
+        Create Login
+      </Button>
+
+      <Dialog open={showModal} onOpenChange={setShowModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Check className="h-5 w-5 text-green-500" />
+              Login Created!
+            </DialogTitle>
+            <DialogDescription>
+              Copy these credentials to share with the model.
+            </DialogDescription>
+          </DialogHeader>
+
+          {credentials && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Email</label>
+                <div className="flex gap-2">
+                  <Input value={credentials.email} readOnly className="font-mono" />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => copyToClipboard(credentials.email, "email")}
+                  >
+                    {copiedEmail ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Password</label>
+                <div className="flex gap-2">
+                  <Input value={credentials.password} readOnly className="font-mono" />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => copyToClipboard(credentials.password, "password")}
+                  >
+                    {copiedPassword ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
+
+              <Button
+                className="w-full"
+                onClick={() => copyToClipboard(`Email: ${credentials.email}\nPassword: ${credentials.password}`, "both")}
+              >
+                {copiedBoth ? (
+                  <>
+                    <Check className="h-4 w-4 mr-2" />
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copy Both
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -851,15 +987,20 @@ export default function AdminCommunityPage() {
                                 Active
                               </span>
                             ) : model.invite_token ? (
-                              <div className="flex items-center gap-1">
+                              <div className="flex items-center gap-2">
                                 <span className="inline-flex items-center gap-1 text-amber-500 text-sm">
                                   <Clock className="h-4 w-4" />
                                   Pending
                                 </span>
                                 <CopyInviteButton token={model.invite_token} />
+                                {model.email && (
+                                  <CreateLoginButton modelId={model.id} modelEmail={model.email} onSuccess={loadModels} />
+                                )}
                               </div>
+                            ) : model.email ? (
+                              <CreateLoginButton modelId={model.id} modelEmail={model.email} onSuccess={loadModels} />
                             ) : (
-                              <span className="text-muted-foreground text-sm">-</span>
+                              <span className="text-muted-foreground text-sm">No email</span>
                             )}
                           </TableCell>
                           <TableCell>
