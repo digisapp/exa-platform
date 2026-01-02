@@ -35,18 +35,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check for existing pending application
+    // Check for existing application (any status except rejected)
     const { data: existingApp } = await (supabase.from("model_applications") as any)
-      .select("id, status")
+      .select("id, status, created_at")
       .eq("user_id", user.id)
-      .eq("status", "pending")
+      .neq("status", "rejected")
+      .order("created_at", { ascending: false })
+      .limit(1)
       .single();
 
     if (existingApp) {
-      return NextResponse.json(
-        { error: "You already have a pending application" },
-        { status: 400 }
-      );
+      // Return success with existing application (idempotent)
+      return NextResponse.json({
+        success: true,
+        message: existingApp.status === "pending"
+          ? "Application already submitted and pending review"
+          : "Application already exists",
+        applicationId: existingApp.id,
+        status: existingApp.status,
+        existing: true,
+      });
     }
 
     // Get user's fan info for display name

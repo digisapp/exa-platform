@@ -1,28 +1,22 @@
-import { createClient } from "@/lib/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { rateLimit, getClientIP } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   try {
-    // Rate limit: 5 requests per 60 seconds per IP (increased for better UX)
+    // Rate limit: 3 requests per 60 seconds per IP
     const clientIP = getClientIP(request);
     const rateLimitResult = rateLimit(`forgot-password:${clientIP}`, {
-      limit: 5,
+      limit: 3,
       windowSeconds: 60,
     });
 
     if (!rateLimitResult.success) {
-      const retryAfter = Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000);
-      return NextResponse.json(
-        { error: "Too many requests. Please try again later." },
-        {
-          status: 429,
-          headers: {
-            "Retry-After": String(retryAfter),
-          },
-        }
-      );
+      // Still return 200 with generic message to avoid enumeration
+      return NextResponse.json({
+        success: true,
+        message: "If an account exists for this email, you'll receive a reset link. Please also check your spam folder.",
+      });
     }
 
     const { email } = await request.json();
@@ -36,63 +30,37 @@ export async function POST(request: Request) {
 
     const normalizedEmail = email.toLowerCase().trim();
 
-    // Use admin client to check if user exists in auth
+    // Use admin client for reliable email sending
     const adminClient = createSupabaseClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // Check if user exists in auth.users
-    const { data: authUsers } = await adminClient.auth.admin.listUsers();
-    const userExists = authUsers?.users?.some(
-      (u) => u.email?.toLowerCase() === normalizedEmail
-    );
-
-    // Also check models and fans tables as fallback
-    const supabase = await createClient();
-
-    const { data: model } = await supabase
-      .from("models")
-      .select("id")
-      .eq("email", normalizedEmail)
-      .single();
-
-    const { data: fan } = await supabase
-      .from("fans")
-      .select("id")
-      .eq("email", normalizedEmail)
-      .single();
-
-    // If no user found anywhere
-    if (!userExists && !model && !fan) {
-      return NextResponse.json(
-        { error: "No account found with this email address" },
-        { status: 404 }
-      );
-    }
-
     // Get origin for redirect URL
     const origin = request.headers.get("origin") || "https://www.examodels.com";
 
-    // User exists, send reset email using admin client for reliability
+    // Always attempt to send reset email - don't check if user exists
+    // This prevents email enumeration attacks
     const { error } = await adminClient.auth.resetPasswordForEmail(normalizedEmail, {
       redirectTo: `${origin}/auth/reset-password`,
     });
 
+    // Log errors server-side but don't expose to user
     if (error) {
-      console.error("Reset password email error:", error);
-      return NextResponse.json(
-        { error: "Failed to send reset email. Please try again." },
-        { status: 500 }
-      );
+      console.error("Reset password error:", error.message, "for email:", normalizedEmail);
     }
 
-    return NextResponse.json({ success: true });
+    // Always return success with generic message
+    return NextResponse.json({
+      success: true,
+      message: "If an account exists for this email, you'll receive a reset link. Please also check your spam folder.",
+    });
   } catch (error) {
     console.error("Forgot password error:", error);
-    return NextResponse.json(
-      { error: "Failed to process request" },
-      { status: 500 }
-    );
+    // Still return 200 to avoid leaking info
+    return NextResponse.json({
+      success: true,
+      message: "If an account exists for this email, you'll receive a reset link. Please also check your spam folder.",
+    });
   }
 }

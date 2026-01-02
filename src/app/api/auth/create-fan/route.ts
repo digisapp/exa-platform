@@ -32,19 +32,55 @@ export async function POST(request: Request) {
       .single();
 
     if (existingActor) {
-      return NextResponse.json(
-        { error: "Account already exists", type: (existingActor as { type: string }).type },
-        { status: 409 }
-      );
+      // Already exists - check if fan profile exists too
+      const { data: existingFan } = await (supabase
+        .from("fans") as any)
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+
+      if (existingFan) {
+        // Everything exists, just return success (idempotent)
+        return NextResponse.json({
+          success: true,
+          actorId: existingActor.id,
+          existing: true,
+        });
+      }
+
+      // Actor exists but no fan - create fan profile
+      const { error: fanError } = await (supabase
+        .from("fans") as any)
+        .upsert({
+          id: existingActor.id,
+          user_id: user.id,
+          email: user.email,
+          display_name: displayName.trim(),
+          coin_balance: 10,
+        }, { onConflict: "user_id" });
+
+      if (fanError) {
+        console.error("Fan upsert error:", fanError);
+        return NextResponse.json(
+          { error: "Failed to create profile" },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        actorId: existingActor.id,
+        existing: true,
+      });
     }
 
     // Create actor record with type "fan"
     const { data: actor, error: actorError } = await (supabase
       .from("actors") as any)
-      .insert({
+      .upsert({
         user_id: user.id,
         type: "fan",
-      })
+      }, { onConflict: "user_id" })
       .select()
       .single();
 
@@ -58,28 +94,26 @@ export async function POST(request: Request) {
 
     const actorId = (actor as { id: string }).id;
 
-    // Create fan profile
+    // Create fan profile with upsert
     const { error: fanError } = await (supabase
       .from("fans") as any)
-      .insert({
+      .upsert({
         id: actorId,
         user_id: user.id,
         email: user.email,
         display_name: displayName.trim(),
         coin_balance: 10, // Welcome bonus!
-      });
+      }, { onConflict: "user_id" });
 
     if (fanError) {
       console.error("Fan creation error:", fanError);
-      // Rollback actor creation
-      await (supabase.from("actors") as any).delete().eq("id", actorId);
       return NextResponse.json(
         { error: "Failed to create profile" },
         { status: 500 }
       );
     }
 
-    // Record the welcome bonus transaction
+    // Record the welcome bonus transaction (only if new)
     await (supabase.from("coin_transactions") as any).insert({
       actor_id: actorId,
       amount: 10,

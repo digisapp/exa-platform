@@ -50,15 +50,18 @@ export default function ForgotPasswordPage() {
             <div className="text-5xl mb-4">📧</div>
             <CardTitle>Check Your Email</CardTitle>
             <CardDescription>
-              We sent a password reset link to <strong>{email}</strong>
+              If an account exists for <strong>{email}</strong>, you&apos;ll receive a reset link.
             </CardDescription>
           </CardHeader>
-          <CardContent className="text-center text-muted-foreground">
-            <p>Click the link in your email to reset your password. The link expires in 24 hours.</p>
+          <CardContent className="text-center text-muted-foreground space-y-3">
+            <p>Check your inbox and spam folder. The link expires quickly, so click it right away.</p>
+            <p className="text-xs">
+              <strong>Tip:</strong> Open the link in Safari or Chrome, not inside Instagram or email apps.
+            </p>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
             <Button variant="ghost" onClick={() => setSent(false)} className="w-full">
-              Use a different email
+              Try a different email
             </Button>
             <Link href="/signin" className="text-sm text-muted-foreground hover:text-foreground">
               Back to Sign In
