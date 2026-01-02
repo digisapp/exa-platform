@@ -54,9 +54,26 @@ export default function SignupPage() {
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        // Provide better error messages
+        if (error.message.includes("already registered") || error.message.includes("already been registered")) {
+          throw new Error("This email is already registered. Please sign in instead.");
+        }
+        if (error.message.includes("Database error")) {
+          throw new Error("This email may already be registered. Try signing in, or use a different email.");
+        }
+        if (error.message.includes("rate limit")) {
+          throw new Error("Too many attempts. Please wait a moment and try again.");
+        }
+        throw error;
+      }
 
       if (data.user) {
+        // Check if user already exists (identities will be empty for existing unconfirmed users)
+        if (data.user.identities && data.user.identities.length === 0) {
+          throw new Error("This email is already registered. Please sign in or check your email for a confirmation link.");
+        }
+
         // Step 2: Create fan profile (actor + fan records)
         const fanRes = await fetch("/api/auth/create-fan", {
           method: "POST",

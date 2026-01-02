@@ -113,8 +113,18 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
 
       if (authError) {
         // Check if user already exists
-        if (authError.message.includes("already registered")) {
+        if (authError.message.includes("already registered") || authError.message.includes("already been registered")) {
           toast.error("This email is already registered. Please sign in instead.");
+          setLoading(false);
+          return;
+        }
+        if (authError.message.includes("Database error")) {
+          toast.error("This email may already be registered. Try signing in, or use a different email.");
+          setLoading(false);
+          return;
+        }
+        if (authError.message.includes("rate limit")) {
+          toast.error("Too many attempts. Please wait a moment and try again.");
           setLoading(false);
           return;
         }
@@ -123,6 +133,13 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
 
       if (!authData.user) {
         throw new Error("Failed to create account");
+      }
+
+      // Check if user already exists (identities will be empty for existing unconfirmed users)
+      if (authData.user.identities && authData.user.identities.length === 0) {
+        toast.error("This email is already registered. Please sign in or check your email.");
+        setLoading(false);
+        return;
       }
 
       // Step 2: Create fan profile via API (handles actor + fan + bonus)
