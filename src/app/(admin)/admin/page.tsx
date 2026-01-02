@@ -21,6 +21,7 @@ import {
   Banknote,
   Calendar,
 } from "lucide-react";
+import { TikTokIcon } from "@/components/ui/tiktok-icon";
 
 export default async function AdminPage() {
   const supabase = await createClient();
@@ -245,7 +246,7 @@ export default async function AdminPage() {
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-black/30 border border-white/20 text-white hover:text-white/80 transition-colors"
                           >
-                            <span className="font-bold">T</span>
+                            <TikTokIcon className="h-4 w-4" />
                             @{app.tiktok_username}
                           </a>
                         )}

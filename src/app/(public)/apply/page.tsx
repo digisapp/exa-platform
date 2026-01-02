@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Loader2, ArrowLeft, Instagram, CheckCircle, Clock, XCircle } from "lucide-react";
+import { TikTokIcon } from "@/components/ui/tiktok-icon";
 
 export default function ApplyPage() {
   const [instagram, setInstagram] = useState("");
@@ -229,7 +230,7 @@ export default function ApplyPage() {
 
             <div className="space-y-2">
               <Label htmlFor="tiktok" className="flex items-center gap-2">
-                <span className="text-sm font-bold">T</span>
+                <TikTokIcon className="h-4 w-4" />
                 TikTok Username
               </Label>
               <Input

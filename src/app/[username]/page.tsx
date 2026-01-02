@@ -7,6 +7,7 @@ import {
   MapPin,
   Instagram,
 } from "lucide-react";
+import { TikTokIcon } from "@/components/ui/tiktok-icon";
 import type { Metadata } from "next";
 import { ShareButton } from "@/components/ui/share-button";
 import { FavoriteButton } from "@/components/ui/favorite-button";
@@ -293,7 +294,7 @@ export default async function ModelProfilePage({ params }: Props) {
                   title={`@${link.username}`}
                 >
                   {link.platform === "instagram" && <Instagram className="h-4 w-4 text-white" />}
-                  {link.platform === "tiktok" && <span className="text-white text-sm font-bold">T</span>}
+                  {link.platform === "tiktok" && <TikTokIcon className="h-4 w-4 text-white" />}
                   {link.platform === "snapchat" && <span className="text-white text-sm">👻</span>}
                   {link.platform === "x" && <span className="text-white text-sm font-bold">𝕏</span>}
                   {link.platform === "youtube" && <span className="text-white text-sm">▶</span>}

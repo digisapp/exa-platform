@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Loader2, ArrowLeft, Eye, EyeOff, Instagram, Sparkles, DollarSign, Users } from "lucide-react";
+import { TikTokIcon } from "@/components/ui/tiktok-icon";
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
@@ -235,7 +236,7 @@ export default function SignupPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="tiktok" className="flex items-center gap-2 text-sm">
-                    <span className="font-bold text-sm">T</span>
+                    <TikTokIcon className="h-4 w-4" />
                     TikTok
                   </Label>
                   <Input
