@@ -43,6 +43,12 @@ export default function ProfilePage() {
   const [actor, setActor] = useState<Actor | null>(null);
   const [userEmail, setUserEmail] = useState<string>("");
   const [originalUsername, setOriginalUsername] = useState<string>("");
+  const [usernameStatus, setUsernameStatus] = useState<{
+    checking: boolean;
+    available: boolean | null;
+    reason: string | null;
+  }>({ checking: false, available: null, reason: null });
+  const usernameCheckTimeout = useRef<NodeJS.Timeout | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -62,6 +68,53 @@ export default function ProfilePage() {
     const now = new Date();
     const daysSinceChange = (now.getTime() - lastChange.getTime()) / (1000 * 60 * 60 * 24);
     return daysSinceChange >= 14;
+  };
+
+  // Check username availability with debounce
+  const checkUsernameAvailability = (username: string) => {
+    // Clear previous timeout
+    if (usernameCheckTimeout.current) {
+      clearTimeout(usernameCheckTimeout.current);
+    }
+
+    // Reset if empty or same as original
+    if (!username || username === originalUsername) {
+      setUsernameStatus({ checking: false, available: null, reason: null });
+      return;
+    }
+
+    // Basic validation before API call
+    if (username.length < 3) {
+      setUsernameStatus({ checking: false, available: false, reason: "Must be at least 3 characters" });
+      return;
+    }
+    if (username.length > 30) {
+      setUsernameStatus({ checking: false, available: false, reason: "Must be 30 characters or less" });
+      return;
+    }
+
+    // Set checking state
+    setUsernameStatus({ checking: true, available: null, reason: null });
+
+    // Debounce API call
+    usernameCheckTimeout.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/username/check?username=${encodeURIComponent(username)}`);
+        const data = await res.json();
+
+        if (res.ok) {
+          setUsernameStatus({
+            checking: false,
+            available: data.available,
+            reason: data.reason,
+          });
+        } else {
+          setUsernameStatus({ checking: false, available: null, reason: "Error checking username" });
+        }
+      } catch {
+        setUsernameStatus({ checking: false, available: null, reason: "Error checking username" });
+      }
+    }, 400);
   };
 
   const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -221,27 +274,12 @@ export default function ProfilePage() {
           throw new Error("Username must be less than 30 characters");
         }
 
-        // Check if username is already taken
-        const { data: existing } = await (supabase.from("fans") as any)
-          .select("id")
-          .eq("username", fan.username)
-          .neq("id", fan.id)
-          .single();
+        // Check username availability (includes reserved names check)
+        const checkRes = await fetch(`/api/username/check?username=${encodeURIComponent(fan.username)}`);
+        const checkData = await checkRes.json();
 
-        if (existing) {
-          // Also check models table
-          const { data: modelExists } = await (supabase.from("models") as any)
-            .select("id")
-            .eq("username", fan.username)
-            .single();
-
-          if (modelExists) {
-            throw new Error("This username is already taken");
-          }
-        }
-
-        if (existing) {
-          throw new Error("This username is already taken");
+        if (!checkData.available) {
+          throw new Error(checkData.reason || "This username is not available");
         }
       }
 
@@ -279,25 +317,12 @@ export default function ProfilePage() {
           throw new Error("Username must be less than 30 characters");
         }
 
-        // Check if username is already taken
-        const { data: existingBrand } = await (supabase.from("brands") as any)
-          .select("id")
-          .eq("username", brand.username)
-          .neq("id", brand.id)
-          .single();
+        // Check username availability (includes reserved names check)
+        const checkRes = await fetch(`/api/username/check?username=${encodeURIComponent(brand.username)}`);
+        const checkData = await checkRes.json();
 
-        const { data: existingModel } = await (supabase.from("models") as any)
-          .select("id")
-          .eq("username", brand.username)
-          .single();
-
-        const { data: existingFan } = await (supabase.from("fans") as any)
-          .select("id")
-          .eq("username", brand.username)
-          .single();
-
-        if (existingBrand || existingModel || existingFan) {
-          throw new Error("This username is already taken");
+        if (!checkData.available) {
+          throw new Error(checkData.reason || "This username is not available");
         }
       }
 
@@ -367,16 +392,12 @@ export default function ProfilePage() {
           throw new Error("Username must be less than 30 characters");
         }
 
-        // Check if username is already taken
-        const { data: existing } = await (supabase
-          .from("models") as any)
-          .select("id")
-          .eq("username", model.username)
-          .neq("id", model.id)
-          .single();
+        // Check username availability (includes reserved names check)
+        const checkRes = await fetch(`/api/username/check?username=${encodeURIComponent(model.username)}`);
+        const checkData = await checkRes.json();
 
-        if (existing) {
-          throw new Error("This username is already taken");
+        if (!checkData.available) {
+          throw new Error(checkData.reason || "This username is not available");
         }
       }
 
@@ -473,18 +494,48 @@ export default function ProfilePage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                value={fan.username || ""}
-                onChange={(e) => {
-                  const value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "");
-                  setFan({ ...fan, username: value });
-                }}
-                placeholder="username"
-              />
-              <p className="text-xs text-muted-foreground">
-                Letters, numbers, and underscores only
-              </p>
+              <div className="relative">
+                <Input
+                  id="username"
+                  value={fan.username || ""}
+                  onChange={(e) => {
+                    const value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "");
+                    setFan({ ...fan, username: value });
+                    checkUsernameAvailability(value);
+                  }}
+                  placeholder="username"
+                  className={fan.username ? (
+                    usernameStatus.available === true ? "pr-10 border-green-500 focus-visible:ring-green-500" :
+                    usernameStatus.available === false ? "pr-10 border-red-500 focus-visible:ring-red-500" : "pr-10"
+                  ) : ""}
+                />
+                {fan.username && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    {usernameStatus.checking ? (
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    ) : usernameStatus.available === true ? (
+                      <svg className="h-4 w-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : usernameStatus.available === false ? (
+                      <svg className="h-4 w-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    ) : null}
+                  </div>
+                )}
+              </div>
+              {fan.username && usernameStatus.available === true && (
+                <p className="text-xs text-green-500">Username is available!</p>
+              )}
+              {fan.username && usernameStatus.available === false && usernameStatus.reason && (
+                <p className="text-xs text-red-500">{usernameStatus.reason}</p>
+              )}
+              {(!fan.username || usernameStatus.available === null) && !usernameStatus.checking && (
+                <p className="text-xs text-muted-foreground">
+                  Letters, numbers, and underscores only
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="bio">Bio</Label>
@@ -658,18 +709,48 @@ export default function ProfilePage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="brand_username">Username</Label>
-              <Input
-                id="brand_username"
-                value={brand.username || ""}
-                onChange={(e) => {
-                  const value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "");
-                  setBrand({ ...brand, username: value });
-                }}
-                placeholder="brand_username"
-              />
-              <p className="text-xs text-muted-foreground">
-                Your profile URL will be examodels.com/{brand.username || "username"}
-              </p>
+              <div className="relative">
+                <Input
+                  id="brand_username"
+                  value={brand.username || ""}
+                  onChange={(e) => {
+                    const value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "");
+                    setBrand({ ...brand, username: value });
+                    checkUsernameAvailability(value);
+                  }}
+                  placeholder="brand_username"
+                  className={brand.username ? (
+                    usernameStatus.available === true ? "pr-10 border-green-500 focus-visible:ring-green-500" :
+                    usernameStatus.available === false ? "pr-10 border-red-500 focus-visible:ring-red-500" : "pr-10"
+                  ) : ""}
+                />
+                {brand.username && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    {usernameStatus.checking ? (
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    ) : usernameStatus.available === true ? (
+                      <svg className="h-4 w-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : usernameStatus.available === false ? (
+                      <svg className="h-4 w-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    ) : null}
+                  </div>
+                )}
+              </div>
+              {brand.username && usernameStatus.available === true && (
+                <p className="text-xs text-green-500">Username is available!</p>
+              )}
+              {brand.username && usernameStatus.available === false && usernameStatus.reason && (
+                <p className="text-xs text-red-500">{usernameStatus.reason}</p>
+              )}
+              {(!brand.username || usernameStatus.available === null) && !usernameStatus.checking && (
+                <p className="text-xs text-muted-foreground">
+                  Your profile URL will be examodels.com/{brand.username || "username"}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="contact_name">Contact Person</Label>
@@ -893,25 +974,53 @@ export default function ProfilePage() {
               {/* Username - Full Width */}
               <div className="space-y-2">
                 <Label htmlFor="username">Username</Label>
-                <Input
-                  id="username"
-                  value={model.username || ""}
-                  onChange={(e) => {
-                    const value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "");
-                    setModel({ ...model, username: value });
-                  }}
-                  disabled={!canChangeUsername()}
-                  placeholder="username"
-                />
+                <div className="relative">
+                  <Input
+                    id="username"
+                    value={model.username || ""}
+                    onChange={(e) => {
+                      const value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "");
+                      setModel({ ...model, username: value });
+                      checkUsernameAvailability(value);
+                    }}
+                    disabled={!canChangeUsername()}
+                    placeholder="username"
+                    className={model.username !== originalUsername ? (
+                      usernameStatus.available === true ? "pr-10 border-green-500 focus-visible:ring-green-500" :
+                      usernameStatus.available === false ? "pr-10 border-red-500 focus-visible:ring-red-500" : "pr-10"
+                    ) : ""}
+                  />
+                  {model.username !== originalUsername && canChangeUsername() && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      {usernameStatus.checking ? (
+                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                      ) : usernameStatus.available === true ? (
+                        <svg className="h-4 w-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : usernameStatus.available === false ? (
+                        <svg className="h-4 w-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      ) : null}
+                    </div>
+                  )}
+                </div>
+                {model.username !== originalUsername && usernameStatus.available === true && (
+                  <p className="text-xs text-green-500">Username is available!</p>
+                )}
+                {model.username !== originalUsername && usernameStatus.available === false && usernameStatus.reason && (
+                  <p className="text-xs text-red-500">{usernameStatus.reason}</p>
+                )}
                 {!canChangeUsername() && model.username_changed_at ? (
                   <p className="text-xs text-muted-foreground">
                     Username can be changed again on {new Date(new Date(model.username_changed_at).getTime() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString()}
                   </p>
-                ) : (
+                ) : model.username === originalUsername ? (
                   <p className="text-xs text-muted-foreground">
                     Username can only be changed once every 14 days. Your profile URL will be examodels.com/{model.username}
                   </p>
-                )}
+                ) : null}
               </div>
 
               {/* First Name and Last Name - Same Row */}
