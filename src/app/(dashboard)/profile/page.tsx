@@ -427,8 +427,8 @@ export default function ProfilePage() {
         show_location: model.show_location,
         show_social_media: model.show_social_media,
         availability_status: model.availability_status,
-        video_call_rate: model.video_call_rate || 0,
-        voice_call_rate: model.voice_call_rate || 0,
+        video_call_rate: model.video_call_rate || 1,
+        voice_call_rate: model.voice_call_rate || 1,
         message_rate: model.message_rate || 0,
         // Booking rates
         photoshoot_hourly_rate: model.photoshoot_hourly_rate || 0,
@@ -1332,16 +1332,16 @@ export default function ProfilePage() {
                     </div>
                     <div>
                       <Label className="text-base font-semibold">Video Call Rate</Label>
-                      <p className="text-sm text-muted-foreground">Per minute rate for video calls</p>
+                      <p className="text-sm text-muted-foreground">Per minute rate for video calls (min: 1 coin)</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Input
                       type="number"
-                      min="0"
+                      min="1"
                       max="1000"
-                      value={model.video_call_rate || 0}
-                      onChange={(e) => setModel({ ...model, video_call_rate: parseInt(e.target.value) || 0 })}
+                      value={model.video_call_rate || 1}
+                      onChange={(e) => setModel({ ...model, video_call_rate: Math.max(1, parseInt(e.target.value) || 1) })}
                       className="w-24 text-right"
                     />
                     <span className="text-sm text-muted-foreground">coins/min</span>
@@ -1358,16 +1358,16 @@ export default function ProfilePage() {
                     </div>
                     <div>
                       <Label className="text-base font-semibold">Voice Call Rate</Label>
-                      <p className="text-sm text-muted-foreground">Per minute rate for voice calls</p>
+                      <p className="text-sm text-muted-foreground">Per minute rate for voice calls (min: 1 coin)</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Input
                       type="number"
-                      min="0"
+                      min="1"
                       max="1000"
-                      value={model.voice_call_rate || 0}
-                      onChange={(e) => setModel({ ...model, voice_call_rate: parseInt(e.target.value) || 0 })}
+                      value={model.voice_call_rate || 1}
+                      onChange={(e) => setModel({ ...model, voice_call_rate: Math.max(1, parseInt(e.target.value) || 1) })}
                       className="w-24 text-right"
                     />
                     <span className="text-sm text-muted-foreground">coins/min</span>
@@ -1401,20 +1401,6 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-            </CardContent>
-          </Card>
-
-          {/* Rate Tips */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Rate Tips</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm text-muted-foreground">
-              <p>• Set rates to <strong>0</strong> to offer free messaging or calls</p>
-              <p>• Popular video call rates range from <strong>5-20 coins/minute</strong></p>
-              <p>• Message rates typically range from <strong>1-5 coins/message</strong></p>
-              <p>• Higher rates can signal exclusivity but may reduce engagement</p>
-              <p>• You can change your rates anytime</p>
             </CardContent>
           </Card>
 
