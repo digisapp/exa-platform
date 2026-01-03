@@ -47,6 +47,68 @@ interface AnalyticsData {
 
 const COLORS = ["#ec4899", "#8b5cf6", "#3b82f6", "#10b981", "#f59e0b", "#ef4444"];
 
+// Country name to flag emoji mapping
+const countryFlags: Record<string, string> = {
+  "United States": "🇺🇸",
+  "USA": "🇺🇸",
+  "Canada": "🇨🇦",
+  "United Kingdom": "🇬🇧",
+  "UK": "🇬🇧",
+  "Australia": "🇦🇺",
+  "Germany": "🇩🇪",
+  "France": "🇫🇷",
+  "Spain": "🇪🇸",
+  "Italy": "🇮🇹",
+  "Netherlands": "🇳🇱",
+  "Brazil": "🇧🇷",
+  "Mexico": "🇲🇽",
+  "Japan": "🇯🇵",
+  "South Korea": "🇰🇷",
+  "India": "🇮🇳",
+  "China": "🇨🇳",
+  "Russia": "🇷🇺",
+  "Philippines": "🇵🇭",
+  "Indonesia": "🇮🇩",
+  "Thailand": "🇹🇭",
+  "Vietnam": "🇻🇳",
+  "Malaysia": "🇲🇾",
+  "Singapore": "🇸🇬",
+  "Poland": "🇵🇱",
+  "Sweden": "🇸🇪",
+  "Norway": "🇳🇴",
+  "Denmark": "🇩🇰",
+  "Finland": "🇫🇮",
+  "Ireland": "🇮🇪",
+  "New Zealand": "🇳🇿",
+  "South Africa": "🇿🇦",
+  "Argentina": "🇦🇷",
+  "Colombia": "🇨🇴",
+  "Chile": "🇨🇱",
+  "Peru": "🇵🇪",
+  "Portugal": "🇵🇹",
+  "Belgium": "🇧🇪",
+  "Austria": "🇦🇹",
+  "Switzerland": "🇨🇭",
+  "Greece": "🇬🇷",
+  "Turkey": "🇹🇷",
+  "Israel": "🇮🇱",
+  "UAE": "🇦🇪",
+  "United Arab Emirates": "🇦🇪",
+  "Saudi Arabia": "🇸🇦",
+  "Egypt": "🇪🇬",
+  "Nigeria": "🇳🇬",
+  "Kenya": "🇰🇪",
+  "Pakistan": "🇵🇰",
+  "Bangladesh": "🇧🇩",
+  "Taiwan": "🇹🇼",
+  "Hong Kong": "🇭🇰",
+  "Unknown": "🌍",
+};
+
+const getCountryFlag = (country: string): string => {
+  return countryFlags[country] || "🌍";
+};
+
 const deviceIcons: Record<string, React.ReactNode> = {
   mobile: <Smartphone className="h-4 w-4" />,
   desktop: <Monitor className="h-4 w-4" />,
@@ -457,6 +519,7 @@ export default function TrafficPage() {
                   key={country.country}
                   className="p-4 rounded-lg bg-muted/50 text-center"
                 >
+                  <p className="text-3xl mb-1">{getCountryFlag(country.country)}</p>
                   <p className="text-2xl font-bold text-blue-500">{country.count.toLocaleString()}</p>
                   <p className="text-sm text-muted-foreground mt-1">{country.country}</p>
                 </div>
