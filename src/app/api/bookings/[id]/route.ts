@@ -29,15 +29,9 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get booking with model info
+    // Get booking
     const { data: booking, error } = await (supabase.from("bookings") as any)
-      .select(`
-        *,
-        model:models!bookings_model_id_fkey(
-          id, username, first_name, last_name, profile_photo_url,
-          city, state, email, user_id
-        )
-      `)
+      .select("*")
       .eq("id", id)
       .single();
 
@@ -45,31 +39,40 @@ export async function GET(
       return NextResponse.json({ error: "Booking not found" }, { status: 404 });
     }
 
+    // Get model info separately
+    if (booking.model_id) {
+      const { data: model } = await (supabase.from("models") as any)
+        .select("id, username, first_name, last_name, profile_photo_url, city, state, email, user_id")
+        .eq("id", booking.model_id)
+        .maybeSingle();
+      booking.model = model;
+    }
+
     // Get client info
-    const { data: clientActor } = await supabase
-      .from("actors")
+    const { data: clientActor } = await (supabase
+      .from("actors") as any)
       .select("id, type, user_id")
       .eq("id", booking.client_id)
-      .single() as { data: { id: string; type: string; user_id: string } | null };
+      .maybeSingle();
 
     if (clientActor) {
       if (clientActor.type === "fan") {
-        const { data: fan } = await supabase
-          .from("fans")
+        const { data: fan } = await (supabase
+          .from("fans") as any)
           .select("display_name, email, avatar_url, phone")
           .eq("id", clientActor.id)
-          .single() as { data: { display_name: string; email: string; avatar_url: string; phone: string } | null };
+          .maybeSingle();
         if (fan) {
-          booking.client = { ...fan, type: "fan" as const };
+          booking.client = { ...fan, type: "fan" };
         }
       } else if (clientActor.type === "brand") {
-        const { data: brand } = await supabase
-          .from("brands")
+        const { data: brand } = await (supabase
+          .from("brands") as any)
           .select("company_name, contact_name, email, logo_url, phone")
           .eq("id", clientActor.id)
-          .single() as { data: { company_name: string; contact_name: string; email: string; logo_url: string; phone: string } | null };
+          .maybeSingle();
         if (brand) {
-          booking.client = { ...brand, type: "brand" as const };
+          booking.client = { ...brand, type: "brand" };
         }
       }
     }
@@ -97,11 +100,11 @@ export async function PATCH(
     }
 
     // Get actor
-    const { data: actor } = await supabase
-      .from("actors")
+    const { data: actor } = await (supabase
+      .from("actors") as any)
       .select("id, type")
       .eq("user_id", user.id)
-      .single() as { data: { id: string; type: string } | null };
+      .maybeSingle();
 
     if (!actor) {
       return NextResponse.json({ error: "Actor not found" }, { status: 404 });
@@ -109,15 +112,21 @@ export async function PATCH(
 
     // Get existing booking
     const { data: booking } = await (supabase.from("bookings") as any)
-      .select(`
-        *,
-        model:models!bookings_model_id_fkey(id, user_id, username, first_name, last_name)
-      `)
+      .select("*")
       .eq("id", id)
       .single();
 
     if (!booking) {
       return NextResponse.json({ error: "Booking not found" }, { status: 404 });
+    }
+
+    // Get model info separately
+    if (booking.model_id) {
+      const { data: model } = await (supabase.from("models") as any)
+        .select("id, user_id, username, first_name, last_name")
+        .eq("id", booking.model_id)
+        .maybeSingle();
+      booking.model = model;
     }
 
     // Check permissions
@@ -217,11 +226,11 @@ export async function PATCH(
         };
         // Notify model
         if (booking.model?.user_id) {
-          const { data: modelActor } = await supabase
-            .from("actors")
+          const { data: modelActor } = await (supabase
+            .from("actors") as any)
             .select("id")
             .eq("user_id", booking.model.user_id)
-            .single() as { data: { id: string } | null };
+            .maybeSingle();
           if (modelActor) {
             notificationData = {
               actor_id: modelActor.id,
@@ -257,11 +266,11 @@ export async function PATCH(
         // Notify the other party
         const notifyActorId = isModel ? booking.client_id : null;
         if (isClient && booking.model?.user_id) {
-          const { data: modelActor } = await supabase
-            .from("actors")
+          const { data: modelActor } = await (supabase
+            .from("actors") as any)
             .select("id")
             .eq("user_id", booking.model.user_id)
-            .single() as { data: { id: string } | null };
+            .maybeSingle();
           if (modelActor) {
             notificationData = {
               actor_id: modelActor.id,
