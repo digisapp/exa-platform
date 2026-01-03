@@ -1639,6 +1639,11 @@ export default function ProfilePage() {
                 </div>
               </div>
 
+              {/* Tip */}
+              <p className="text-sm text-muted-foreground">
+                Set a rate to $0 to hide that service if you don&apos;t offer it.
+              </p>
+
             </CardContent>
           </Card>
         </TabsContent>
