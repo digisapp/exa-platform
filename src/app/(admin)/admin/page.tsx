@@ -38,7 +38,7 @@ export default async function AdminPage() {
   const { count: totalFans } = await supabase.from("fans").select("*", { count: "exact", head: true });
   const { count: totalTransactions } = await supabase.from("coin_transactions").select("*", { count: "exact", head: true });
   const { count: pendingModelApps } = await (supabase.from("model_applications") as any).select("*", { count: "exact", head: true }).eq("status", "pending");
-  const { count: pendingBrands } = await (supabase.from("brands") as any).select("*", { count: "exact", head: true }).eq("subscription_tier", "inquiry");
+  const { count: pendingBrands } = await (supabase.from("brands") as any).select("*", { count: "exact", head: true }).eq("is_verified", false);
 
   const { data: modelBalances } = await supabase.from("models").select("coin_balance") as { data: { coin_balance: number }[] | null };
   const { data: fanBalances } = await supabase.from("fans").select("coin_balance") as { data: { coin_balance: number }[] | null };

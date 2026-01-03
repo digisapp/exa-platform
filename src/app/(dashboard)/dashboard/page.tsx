@@ -759,8 +759,8 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
     .eq("id", actorId)
     .single();
 
-  const isApproved = brand?.subscription_tier !== "inquiry";
-  const isPending = brand?.subscription_tier === "inquiry";
+  const isApproved = brand?.is_verified === true;
+  const isPending = brand?.is_verified !== true;
 
   // Get user's saved/favorited models
   const { data: favorites } = await (supabase

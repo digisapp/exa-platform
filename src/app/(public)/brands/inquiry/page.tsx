@@ -90,7 +90,7 @@ export default function BrandInquiryPage() {
           website: formData.website || null,
           bio: formData.message || null,
           is_verified: false,
-          subscription_tier: "inquiry",
+          subscription_tier: "free",
           form_data: {
             ...formData,
             submitted_at: new Date().toISOString(),

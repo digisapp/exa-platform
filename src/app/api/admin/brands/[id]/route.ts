@@ -28,12 +28,12 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { subscription_tier } = body;
+    const { is_verified } = body;
 
     const { error } = await (supabase
       .from("brands") as any)
       .update({
-        subscription_tier: subscription_tier || "basic",
+        is_verified: is_verified ?? false,
         updated_at: new Date().toISOString()
       })
       .eq("id", id);

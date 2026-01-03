@@ -58,7 +58,7 @@ export function ApproveRejectButtons({ id, type, onSuccess }: AdminActionProps) 
           break;
         case "brand":
           endpoint = `/api/admin/brands/${id}`;
-          body = { subscription_tier: action === "approve" ? "basic" : "inquiry" };
+          body = { is_verified: action === "approve" };
           break;
         case "designer":
           endpoint = `/api/admin/designers/${id}`;

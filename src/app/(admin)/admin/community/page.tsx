@@ -508,7 +508,7 @@ export default function AdminCommunityPage() {
       (supabase.from("models") as any).select("*", { count: "exact", head: true }).eq("is_approved", true),
       (supabase.from("fans") as any).select("*", { count: "exact", head: true }),
       (supabase.from("fans") as any).select("*", { count: "exact", head: true }).eq("is_suspended", false),
-      (supabase.from("brands") as any).select("*", { count: "exact", head: true }).eq("subscription_tier", "inquiry"),
+      (supabase.from("brands") as any).select("*", { count: "exact", head: true }).eq("is_verified", false),
       (supabase.from("model_applications") as any).select("*", { count: "exact", head: true }).eq("status", "pending"),
     ]);
 
@@ -745,12 +745,12 @@ export default function AdminCommunityPage() {
     setFansLoading(false);
   }, [supabase, fansSearch, fansStateFilter, fansStatusFilter, fansReportsFilter, fansSortField, fansSortDirection, fansPage]);
 
-  // Load brands (inquiries)
+  // Load brands (pending verification)
   const loadBrands = useCallback(async () => {
     setBrandsLoading(true);
     const { data } = await (supabase.from("brands") as any)
       .select("*")
-      .eq("subscription_tier", "inquiry")
+      .eq("is_verified", false)
       .order("created_at", { ascending: false })
       .limit(50);
     setBrands(data || []);

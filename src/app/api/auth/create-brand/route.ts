@@ -80,7 +80,7 @@ export async function POST(request: Request) {
           email: user.email,
           bio: bio?.trim() || null,
           is_verified: false,
-          subscription_tier: "inquiry",
+          subscription_tier: "free",
         }, { onConflict: "id" });
 
       if (brandError) {
@@ -151,7 +151,7 @@ export async function POST(request: Request) {
         email: user.email,
         bio: bio?.trim() || null,
         is_verified: false,
-        subscription_tier: "inquiry",
+        subscription_tier: "free",
       }, { onConflict: "id" });
 
     if (brandError) {
