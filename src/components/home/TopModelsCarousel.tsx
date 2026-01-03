@@ -27,9 +27,10 @@ interface Model {
 
 interface TopModelsCarouselProps {
   models: Model[];
+  showRank?: boolean;
 }
 
-export function TopModelsCarousel({ models }: TopModelsCarouselProps) {
+export function TopModelsCarousel({ models, showRank = true }: TopModelsCarouselProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
@@ -130,9 +131,11 @@ export function TopModelsCarousel({ models }: TopModelsCarouselProps) {
             >
               <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-pink-500/10 to-violet-500/10 border border-white/10 hover:border-pink-500/50 transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-pink-500/20">
                 {/* Rank Badge */}
-                <div className="absolute top-3 left-3 z-10 w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center text-white font-bold text-sm">
-                  {index + 1}
-                </div>
+                {showRank && (
+                  <div className="absolute top-3 left-3 z-10 w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center text-white font-bold text-sm">
+                    {index + 1}
+                  </div>
+                )}
 
                 {/* Image */}
                 <div className="aspect-[3/4] relative">

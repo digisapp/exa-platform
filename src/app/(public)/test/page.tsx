@@ -13,19 +13,30 @@ import {
 import { TopModelsCarousel } from "@/components/home/TopModelsCarousel";
 import { UpcomingEventsCarousel } from "@/components/home/UpcomingEventsCarousel";
 
+// Shuffle array helper
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
 export default async function TestHomePage() {
   const supabase = await createClient();
 
   // Fetch top 50 models with 4-5 star admin rating
-  const { data: topModels } = await (supabase
+  const { data: topModelsData } = await (supabase
     .from("models") as any)
     .select("id, username, first_name, profile_photo_url, state, profile_views, admin_rating")
     .eq("is_approved", true)
     .not("profile_photo_url", "is", null)
     .gte("admin_rating", 4)
-    .order("admin_rating", { ascending: false })
-    .order("profile_views", { ascending: false })
     .limit(50);
+
+  // Randomize the order
+  const topModels = shuffleArray(topModelsData || []) as any[];
 
   // Fetch new faces (models marked as new_face)
   const { data: newFaces } = await (supabase
@@ -117,14 +128,11 @@ export default async function TestHomePage() {
         {/* Top Models Section */}
         <section className="py-12">
           <div className="container px-8 md:px-16 mb-8">
-            <h2 className="text-3xl md:text-4xl font-bold mb-2 exa-gradient-text">
+            <h2 className="text-3xl md:text-4xl font-bold exa-gradient-text">
               Top Models
             </h2>
-            <p className="text-muted-foreground">
-              Discover our most popular creators
-            </p>
           </div>
-          <TopModelsCarousel models={topModels || []} />
+          <TopModelsCarousel models={topModels || []} showRank={false} />
         </section>
 
         {/* New Faces Section */}
