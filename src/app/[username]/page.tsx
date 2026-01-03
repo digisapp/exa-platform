@@ -6,10 +6,6 @@ import { FloatingOrbs } from "@/components/ui/floating-orbs";
 import {
   MapPin,
   Instagram,
-  Camera,
-  Megaphone,
-  PartyPopper,
-  Plane,
   Calendar,
 } from "lucide-react";
 import { TikTokIcon } from "@/components/ui/tiktok-icon";
@@ -321,135 +317,30 @@ export default async function ModelProfilePage({ params }: Props) {
             </div>
           )}
 
-          {/* Booking Rates Section */}
+          {/* View Rates & Book Button */}
           {model.show_booking_rates !== false && (
             (() => {
-              const hasPhotographyRates = (model.photoshoot_hourly_rate || 0) > 0 ||
+              const hasAnyRates =
+                (model.photoshoot_hourly_rate || 0) > 0 ||
                 (model.photoshoot_half_day_rate || 0) > 0 ||
-                (model.photoshoot_full_day_rate || 0) > 0;
-              const hasPromoRates = (model.promo_hourly_rate || 0) > 0 ||
-                (model.brand_ambassador_daily_rate || 0) > 0;
-              const hasPrivateRates = (model.private_event_hourly_rate || 0) > 0 ||
+                (model.photoshoot_full_day_rate || 0) > 0 ||
+                (model.promo_hourly_rate || 0) > 0 ||
+                (model.brand_ambassador_daily_rate || 0) > 0 ||
+                (model.private_event_hourly_rate || 0) > 0 ||
                 (model.social_companion_hourly_rate || 0) > 0 ||
                 (model.meet_greet_rate || 0) > 0;
-              const hasTravelFee = (model.travel_fee || 0) > 0;
-              const hasAnyRates = hasPhotographyRates || hasPromoRates || hasPrivateRates;
 
               if (!hasAnyRates) return null;
 
               return (
                 <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                    <Calendar className="h-5 w-5 text-pink-400" />
-                    Booking Rates
-                  </h3>
-                  <div className="space-y-4">
-                    {/* Photography Rates */}
-                    {hasPhotographyRates && (
-                      <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-                        <h4 className="text-sm font-medium text-pink-400 mb-3 flex items-center gap-2">
-                          <Camera className="h-4 w-4" />
-                          Photography & Content
-                        </h4>
-                        <div className="grid grid-cols-1 gap-2 text-sm">
-                          {(model.photoshoot_hourly_rate || 0) > 0 && (
-                            <div className="flex justify-between">
-                              <span className="text-white/70">Hourly</span>
-                              <span className="text-white font-medium">${model.photoshoot_hourly_rate}/hr</span>
-                            </div>
-                          )}
-                          {(model.photoshoot_half_day_rate || 0) > 0 && (
-                            <div className="flex justify-between">
-                              <span className="text-white/70">Half-Day (4hrs)</span>
-                              <span className="text-white font-medium">${model.photoshoot_half_day_rate}</span>
-                            </div>
-                          )}
-                          {(model.photoshoot_full_day_rate || 0) > 0 && (
-                            <div className="flex justify-between">
-                              <span className="text-white/70">Full-Day (8hrs)</span>
-                              <span className="text-white font-medium">${model.photoshoot_full_day_rate}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Promotional Rates */}
-                    {hasPromoRates && (
-                      <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-                        <h4 className="text-sm font-medium text-blue-400 mb-3 flex items-center gap-2">
-                          <Megaphone className="h-4 w-4" />
-                          Promotional & Events
-                        </h4>
-                        <div className="grid grid-cols-1 gap-2 text-sm">
-                          {(model.promo_hourly_rate || 0) > 0 && (
-                            <div className="flex justify-between">
-                              <span className="text-white/70">Promo Modeling</span>
-                              <span className="text-white font-medium">${model.promo_hourly_rate}/hr</span>
-                            </div>
-                          )}
-                          {(model.brand_ambassador_daily_rate || 0) > 0 && (
-                            <div className="flex justify-between">
-                              <span className="text-white/70">Brand Ambassador</span>
-                              <span className="text-white font-medium">${model.brand_ambassador_daily_rate}/day</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Private & Social Rates */}
-                    {hasPrivateRates && (
-                      <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-                        <h4 className="text-sm font-medium text-violet-400 mb-3 flex items-center gap-2">
-                          <PartyPopper className="h-4 w-4" />
-                          Private & Social
-                        </h4>
-                        <div className="grid grid-cols-1 gap-2 text-sm">
-                          {(model.private_event_hourly_rate || 0) > 0 && (
-                            <div className="flex justify-between">
-                              <span className="text-white/70">Private Events</span>
-                              <span className="text-white font-medium">${model.private_event_hourly_rate}/hr</span>
-                            </div>
-                          )}
-                          {(model.social_companion_hourly_rate || 0) > 0 && (
-                            <div className="flex justify-between">
-                              <span className="text-white/70">Social Companion</span>
-                              <span className="text-white font-medium">${model.social_companion_hourly_rate}/hr</span>
-                            </div>
-                          )}
-                          {(model.meet_greet_rate || 0) > 0 && (
-                            <div className="flex justify-between">
-                              <span className="text-white/70">Meet & Greet</span>
-                              <span className="text-white font-medium">${model.meet_greet_rate}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Travel Fee */}
-                    {hasTravelFee && (
-                      <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10 text-sm">
-                        <span className="text-white/70 flex items-center gap-2">
-                          <Plane className="h-4 w-4 text-green-400" />
-                          Travel Fee
-                        </span>
-                        <span className="text-white font-medium">${model.travel_fee}</span>
-                      </div>
-                    )}
-
-                    {/* Book Now Button */}
-                    {!isOwner && (
-                      <Link
-                        href={user ? `/chats?new=${model.username}` : "/signin"}
-                        className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white font-semibold transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-pink-500/25"
-                      >
-                        <Calendar className="h-5 w-5" />
-                        Book Now
-                      </Link>
-                    )}
-                  </div>
+                  <Link
+                    href={`/${model.username}/rates`}
+                    className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white font-semibold transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-pink-500/25"
+                  >
+                    <Calendar className="h-5 w-5" />
+                    View Rates & Book
+                  </Link>
                 </div>
               );
             })()
