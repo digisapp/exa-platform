@@ -31,13 +31,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const supabase = await createClient();
 
   const { data } = await supabase
-    .from("opportunities")
+    .from("gigs")
     .select("title, description")
     .eq("slug", slug)
     .single() as { data: { title: string; description: string | null } | null };
 
   if (!data) {
-    return { title: "Opportunity Not Found | EXA" };
+    return { title: "Gig Not Found | EXA" };
   }
 
   return {
@@ -46,18 +46,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function OpportunityDetailPage({ params }: Props) {
+export default async function GigDetailPage({ params }: Props) {
   const { slug } = await params;
   const supabase = await createClient();
 
-  // Get opportunity
-  const { data: opportunity } = await supabase
-    .from("opportunities")
+  // Get gig
+  const { data: gig } = await supabase
+    .from("gigs")
     .select("*")
     .eq("slug", slug)
     .single() as { data: any };
 
-  if (!opportunity) {
+  if (!gig) {
     notFound();
   }
 
@@ -92,9 +92,9 @@ export default async function OpportunityDetailPage({ params }: Props) {
       if (model) {
         modelId = model.id;
         const { data: app } = await supabase
-          .from("opportunity_applications")
+          .from("gig_applications")
           .select("*")
-          .eq("opportunity_id", opportunity.id)
+          .eq("gig_id", gig.id)
           .eq("model_id", model.id)
           .single() as { data: any };
         existingApplication = app;
@@ -116,16 +116,16 @@ export default async function OpportunityDetailPage({ params }: Props) {
       ? `${profileData.first_name} ${profileData.last_name || ""}`.trim()
       : profileData?.username || undefined;
 
-  const spotsLeft = opportunity.spots ? opportunity.spots - opportunity.spots_filled : null;
-  const deadline = opportunity.application_deadline
-    ? new Date(opportunity.application_deadline)
+  const spotsLeft = gig.spots ? gig.spots - gig.spots_filled : null;
+  const deadline = gig.application_deadline
+    ? new Date(gig.application_deadline)
     : null;
   const isExpired = deadline && deadline < new Date();
   const isFull = spotsLeft !== null && spotsLeft <= 0;
-  const canApply = opportunity.status === "open" && !isExpired && !isFull && !existingApplication;
+  const canApply = gig.status === "open" && !isExpired && !isFull && !existingApplication;
 
   // Parse requirements
-  const requirements = opportunity.requirements as Record<string, any> | null;
+  const requirements = gig.requirements as Record<string, any> | null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -156,10 +156,10 @@ export default async function OpportunityDetailPage({ params }: Props) {
           <div className="lg:col-span-2 space-y-6">
             {/* Cover Image */}
             <div className="aspect-video rounded-2xl overflow-hidden bg-gradient-to-br from-pink-500/20 to-violet-500/20">
-              {opportunity.cover_image_url ? (
+              {gig.cover_image_url ? (
                 <img
-                  src={opportunity.cover_image_url}
-                  alt={opportunity.title}
+                  src={gig.cover_image_url}
+                  alt={gig.title}
                   className="object-cover w-full h-full"
                 />
               ) : (
@@ -171,23 +171,23 @@ export default async function OpportunityDetailPage({ params }: Props) {
 
             {/* Header */}
             <div>
-              <Badge className="mb-3 capitalize">{opportunity.type}</Badge>
-              <h1 className="text-3xl font-bold mb-2">{opportunity.title}</h1>
-              {(opportunity.location_city || opportunity.location_state) && (
+              <Badge className="mb-3 capitalize">{gig.type}</Badge>
+              <h1 className="text-3xl font-bold mb-2">{gig.title}</h1>
+              {(gig.location_city || gig.location_state) && (
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <MapPin className="h-4 w-4" />
-                  {opportunity.location_name ||
-                    `${opportunity.location_city}, ${opportunity.location_state}`}
+                  {gig.location_name ||
+                    `${gig.location_city}, ${gig.location_state}`}
                 </div>
               )}
             </div>
 
             {/* Description */}
-            {opportunity.description && (
+            {gig.description && (
               <div>
-                <h2 className="font-semibold mb-2">About This Opportunity</h2>
+                <h2 className="font-semibold mb-2">About This Gig</h2>
                 <p className="text-muted-foreground whitespace-pre-wrap">
-                  {opportunity.description}
+                  {gig.description}
                 </p>
               </div>
             )}
@@ -230,13 +230,13 @@ export default async function OpportunityDetailPage({ params }: Props) {
             )}
 
             {/* Compensation */}
-            {opportunity.compensation_description && (
+            {gig.compensation_description && (
               <Card>
                 <CardHeader>
                   <CardTitle>Compensation</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground">{opportunity.compensation_description}</p>
+                  <p className="text-muted-foreground">{gig.compensation_description}</p>
                 </CardContent>
               </Card>
             )}
@@ -266,14 +266,14 @@ export default async function OpportunityDetailPage({ params }: Props) {
                       </Badge>
                     </div>
                   ) : canApply ? (
-                    <ApplyButton opportunityId={opportunity.id} modelId={modelId} />
+                    <ApplyButton gigId={gig.id} modelId={modelId} />
                   ) : (
                     <div className="p-4 rounded-lg bg-muted text-center">
                       {!user ? (
                         <>
                           <p className="text-muted-foreground mb-2">Sign in to apply</p>
                           <Button asChild className="w-full">
-                            <Link href={`/signin?redirect=/opportunities/${slug}`}>Sign In</Link>
+                            <Link href={`/signin?redirect=/gigs/${slug}`}>Sign In</Link>
                           </Button>
                         </>
                       ) : isExpired ? (
@@ -290,14 +290,14 @@ export default async function OpportunityDetailPage({ params }: Props) {
 
                   {/* Details */}
                   <div className="space-y-3">
-                    {opportunity.start_at && (
+                    {gig.start_at && (
                       <div className="flex items-center justify-between">
                         <span className="text-muted-foreground flex items-center gap-2">
                           <Calendar className="h-4 w-4" />
                           Date
                         </span>
                         <span className="font-medium">
-                          {format(new Date(opportunity.start_at), "MMM d, yyyy")}
+                          {format(new Date(gig.start_at), "MMM d, yyyy")}
                         </span>
                       </div>
                     )}
@@ -319,23 +319,23 @@ export default async function OpportunityDetailPage({ params }: Props) {
                           Spots
                         </span>
                         <span className="font-medium">
-                          {spotsLeft} of {opportunity.spots} left
+                          {spotsLeft} of {gig.spots} left
                         </span>
                       </div>
                     )}
-                    {opportunity.compensation_type && (
+                    {gig.compensation_type && (
                       <div className="flex items-center justify-between">
                         <span className="text-muted-foreground flex items-center gap-2">
                           <DollarSign className="h-4 w-4" />
                           Compensation
                         </span>
                         <span className="font-medium capitalize">
-                          {opportunity.compensation_type === "paid" && opportunity.compensation_amount > 0 ? (
+                          {gig.compensation_type === "paid" && gig.compensation_amount > 0 ? (
                             <span className="text-green-500">
-                              ${(opportunity.compensation_amount / 100).toFixed(0)}
+                              ${(gig.compensation_amount / 100).toFixed(0)}
                             </span>
                           ) : (
-                            opportunity.compensation_type
+                            gig.compensation_type
                           )}
                         </span>
                       </div>
@@ -346,7 +346,7 @@ export default async function OpportunityDetailPage({ params }: Props) {
                         Points
                       </span>
                       <span className="font-medium text-pink-500">
-                        +{opportunity.points_for_completion}
+                        +{gig.points_for_completion}
                       </span>
                     </div>
                   </div>

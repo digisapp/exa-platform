@@ -75,9 +75,9 @@ export default async function DashboardPage() {
     .select("*", { count: "exact", head: true })
     .eq("model_username", model.username);
 
-  // Get open opportunities
-  const { data: opportunities } = await (supabase
-    .from("opportunities") as any)
+  // Get open gigs
+  const { data: gigs } = await (supabase
+    .from("gigs") as any)
     .select("id, slug, title, type, description, location_city, location_state, start_at, compensation_type, compensation_amount, spots, spots_filled")
     .eq("status", "open")
     .eq("visibility", "public")
@@ -86,8 +86,8 @@ export default async function DashboardPage() {
 
   // Get model's applications
   const { data: modelApplications } = await (supabase
-    .from("opportunity_applications") as any)
-    .select("opportunity_id, status")
+    .from("gig_applications") as any)
+    .select("gig_id, status")
     .eq("model_id", model.id);
 
   // Get recent activity
@@ -296,7 +296,7 @@ export default async function DashboardPage() {
 
         {/* Gigs */}
         <GigsFeed
-          opportunities={opportunities || []}
+          gigs={gigs || []}
           modelApplications={modelApplications || []}
           isApproved={model.is_approved}
         />

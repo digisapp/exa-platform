@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-interface Opportunity {
+interface Gig {
   id: string;
   title: string;
   slug: string;
@@ -47,7 +47,7 @@ interface Opportunity {
 
 interface Application {
   id: string;
-  opportunity_id: string;
+  gig_id: string;
   model_id: string;
   status: string;
   applied_at: string;
@@ -61,12 +61,12 @@ interface Application {
 }
 
 export default function AdminGigsPage() {
-  const [gigs, setGigs] = useState<Opportunity[]>([]);
+  const [gigs, setGigs] = useState<Gig[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [editingGig, setEditingGig] = useState<Opportunity | null>(null);
+  const [editingGig, setEditingGig] = useState<Gig | null>(null);
   const [selectedGig, setSelectedGig] = useState<string | null>(null);
   const [processingApp, setProcessingApp] = useState<string | null>(null);
   const [processingGig, setProcessingGig] = useState<string | null>(null);
@@ -101,7 +101,7 @@ export default function AdminGigsPage() {
   async function loadGigs() {
     setLoading(true);
     const { data } = await (supabase
-      .from("opportunities") as any)
+      .from("gigs") as any)
       .select("*")
       .order("created_at", { ascending: false });
     setGigs(data || []);
@@ -110,12 +110,12 @@ export default function AdminGigsPage() {
 
   async function loadApplications(gigId: string) {
     const { data } = await (supabase
-      .from("opportunity_applications") as any)
+      .from("gig_applications") as any)
       .select(`
         *,
         model:models(id, username, first_name, last_name, profile_photo_url)
       `)
-      .eq("opportunity_id", gigId)
+      .eq("gig_id", gigId)
       .order("applied_at", { ascending: false });
     setApplications(data || []);
   }
@@ -139,7 +139,7 @@ export default function AdminGigsPage() {
     setShowForm(false);
   }
 
-  function openEditForm(gig: Opportunity) {
+  function openEditForm(gig: Gig) {
     setEditingGig(gig);
 
     // Parse start date/time
@@ -205,7 +205,7 @@ export default function AdminGigsPage() {
       if (editingGig) {
         // Update existing gig
         const { error } = await (supabase
-          .from("opportunities") as any)
+          .from("gigs") as any)
           .update({
             title: formData.title,
             type: formData.type,
@@ -231,7 +231,7 @@ export default function AdminGigsPage() {
           "-" + Date.now().toString(36);
 
         const { error } = await (supabase
-          .from("opportunities") as any)
+          .from("gigs") as any)
           .insert({
             title: formData.title,
             type: formData.type,
@@ -270,13 +270,13 @@ export default function AdminGigsPage() {
     setProcessingGig(gigId);
     try {
       // First delete any applications
-      await (supabase.from("opportunity_applications") as any)
+      await (supabase.from("gig_applications") as any)
         .delete()
-        .eq("opportunity_id", gigId);
+        .eq("gig_id", gigId);
 
       // Then delete the gig
       const { error } = await (supabase
-        .from("opportunities") as any)
+        .from("gigs") as any)
         .delete()
         .eq("id", gigId);
 
@@ -296,13 +296,13 @@ export default function AdminGigsPage() {
     }
   }
 
-  async function handleToggleStatus(gig: Opportunity) {
+  async function handleToggleStatus(gig: Gig) {
     const newStatus = gig.status === "open" ? "closed" : "open";
     setProcessingGig(gig.id);
 
     try {
       const { error } = await (supabase
-        .from("opportunities") as any)
+        .from("gigs") as any)
         .update({ status: newStatus })
         .eq("id", gig.id);
 
@@ -326,7 +326,7 @@ export default function AdminGigsPage() {
 
       // Update application status
       const { error } = await (supabase
-        .from("opportunity_applications") as any)
+        .from("gig_applications") as any)
         .update({
           status: action,
           reviewed_at: new Date().toISOString()
@@ -337,7 +337,7 @@ export default function AdminGigsPage() {
 
       // Send notification via chat for both accept and decline
       if (app.model) {
-        const gig = gigs.find(g => g.id === app.opportunity_id);
+        const gig = gigs.find(g => g.id === app.gig_id);
 
         // Get admin's actor id
         const { data: { user } } = await supabase.auth.getUser();
@@ -418,7 +418,7 @@ export default function AdminGigsPage() {
       }
 
       toast.success(action === "accepted" ? "Model accepted and notified!" : "Application declined and model notified");
-      loadApplications(app.opportunity_id);
+      loadApplications(app.gig_id);
     } catch (error) {
       console.error("Error updating application:", error);
       toast.error("Failed to update application");

@@ -10,10 +10,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { opportunityId } = await request.json();
+    const { gigId } = await request.json();
 
-    if (!opportunityId) {
-      return NextResponse.json({ error: "Opportunity ID required" }, { status: 400 });
+    if (!gigId) {
+      return NextResponse.json({ error: "Gig ID required" }, { status: 400 });
     }
 
     // Get the model's ID (models are linked by user_id, not actor)
@@ -33,9 +33,9 @@ export async function POST(request: NextRequest) {
 
     // Check if already applied
     const { data: existingApp } = await (supabase
-      .from("opportunity_applications") as any)
+      .from("gig_applications") as any)
       .select("id, status")
-      .eq("opportunity_id", opportunityId)
+      .eq("gig_id", gigId)
       .eq("model_id", model.id)
       .single();
 
@@ -46,30 +46,30 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Check if opportunity is still open
-    const { data: opportunity } = await (supabase
-      .from("opportunities") as any)
+    // Check if gig is still open
+    const { data: gig } = await (supabase
+      .from("gigs") as any)
       .select("id, status, spots, spots_filled")
-      .eq("id", opportunityId)
+      .eq("id", gigId)
       .single();
 
-    if (!opportunity) {
-      return NextResponse.json({ error: "Opportunity not found" }, { status: 404 });
+    if (!gig) {
+      return NextResponse.json({ error: "Gig not found" }, { status: 404 });
     }
 
-    if (opportunity.status !== "open") {
+    if (gig.status !== "open") {
       return NextResponse.json({ error: "This gig is no longer accepting applications" }, { status: 400 });
     }
 
-    if (opportunity.spots && opportunity.spots_filled >= opportunity.spots) {
+    if (gig.spots && gig.spots_filled >= gig.spots) {
       return NextResponse.json({ error: "This gig is full" }, { status: 400 });
     }
 
     // Create application
     const { data: application, error } = await (supabase
-      .from("opportunity_applications") as any)
+      .from("gig_applications") as any)
       .insert({
-        opportunity_id: opportunityId,
+        gig_id: gigId,
         model_id: model.id,
         status: "pending",
       })

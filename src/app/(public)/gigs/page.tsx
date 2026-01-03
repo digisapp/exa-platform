@@ -45,7 +45,7 @@ const typeColors: Record<string, string> = {
   other: "bg-gray-500/10 text-gray-500 border-gray-500/20",
 };
 
-export default async function OpportunitiesPage() {
+export default async function GigsPage() {
   const supabase = await createClient();
 
   // Check if user is logged in and is a model
@@ -87,14 +87,14 @@ export default async function OpportunitiesPage() {
     }
 
     if (model) {
-      // Get model's applications with opportunity details
+      // Get model's applications with gig details
       const { data: applications } = await (supabase
-        .from("opportunity_applications") as any)
+        .from("gig_applications") as any)
         .select(`
           id,
           status,
           applied_at,
-          opportunity:opportunities (
+          gig:gigs (
             id,
             slug,
             title,
@@ -116,20 +116,20 @@ export default async function OpportunitiesPage() {
     }
   }
 
-  // Get open opportunities
-  const { data: opportunities } = await supabase
-    .from("opportunities")
+  // Get open gigs
+  const { data: gigs } = await supabase
+    .from("gigs")
     .select("*")
     .eq("status", "open")
     .eq("visibility", "public")
     .order("start_at", { ascending: true }) as { data: any[] | null };
 
   // Group by type
-  const shows = opportunities?.filter((o) => o.type === "show") || [];
-  const photoshoots = opportunities?.filter((o) => o.type === "photoshoot") || [];
-  const travel = opportunities?.filter((o) => o.type === "travel") || [];
-  const campaigns = opportunities?.filter((o) => ["campaign", "content"].includes(o.type)) || [];
-  const fun = opportunities?.filter((o) => o.type === "fun") || [];
+  const shows = gigs?.filter((o) => o.type === "show") || [];
+  const photoshoots = gigs?.filter((o) => o.type === "photoshoot") || [];
+  const travel = gigs?.filter((o) => o.type === "travel") || [];
+  const campaigns = gigs?.filter((o) => ["campaign", "content"].includes(o.type)) || [];
+  const fun = gigs?.filter((o) => o.type === "fun") || [];
 
   const displayName = actorType === "fan"
     ? profileData?.display_name
@@ -163,7 +163,7 @@ export default async function OpportunitiesPage() {
         {/* Tabs */}
         <Tabs defaultValue="all" className="space-y-6">
           <TabsList className="flex-wrap">
-            <TabsTrigger value="all">All ({opportunities?.length || 0})</TabsTrigger>
+            <TabsTrigger value="all">All ({gigs?.length || 0})</TabsTrigger>
             <TabsTrigger value="shows">Shows ({shows.length})</TabsTrigger>
             <TabsTrigger value="photoshoots">Photoshoots ({photoshoots.length})</TabsTrigger>
             <TabsTrigger value="travel">Travel ({travel.length})</TabsTrigger>
@@ -178,27 +178,27 @@ export default async function OpportunitiesPage() {
           </TabsList>
 
           <TabsContent value="all" className="space-y-6">
-            <OpportunityGrid opportunities={opportunities || []} />
+            <GigGrid gigs={gigs || []} />
           </TabsContent>
 
           <TabsContent value="shows" className="space-y-6">
-            <OpportunityGrid opportunities={shows} />
+            <GigGrid gigs={shows} />
           </TabsContent>
 
           <TabsContent value="photoshoots" className="space-y-6">
-            <OpportunityGrid opportunities={photoshoots} />
+            <GigGrid gigs={photoshoots} />
           </TabsContent>
 
           <TabsContent value="travel" className="space-y-6">
-            <OpportunityGrid opportunities={travel} />
+            <GigGrid gigs={travel} />
           </TabsContent>
 
           <TabsContent value="campaigns" className="space-y-6">
-            <OpportunityGrid opportunities={campaigns} />
+            <GigGrid gigs={campaigns} />
           </TabsContent>
 
           <TabsContent value="fun" className="space-y-6">
-            <OpportunityGrid opportunities={fun} />
+            <GigGrid gigs={fun} />
           </TabsContent>
 
           {model && (
@@ -212,8 +212,8 @@ export default async function OpportunitiesPage() {
   );
 }
 
-function OpportunityGrid({ opportunities }: { opportunities: any[] }) {
-  if (opportunities.length === 0) {
+function GigGrid({ gigs }: { gigs: any[] }) {
+  if (gigs.length === 0) {
     return (
       <div className="text-center py-16">
         <Sparkles className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
@@ -225,19 +225,19 @@ function OpportunityGrid({ opportunities }: { opportunities: any[] }) {
 
   return (
     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {opportunities.map((opportunity) => (
-        <OpportunityCard key={opportunity.id} opportunity={opportunity} />
+      {gigs.map((gig) => (
+        <GigCard key={gig.id} gig={gig} />
       ))}
     </div>
   );
 }
 
-function OpportunityCard({ opportunity }: { opportunity: any }) {
-  const Icon = typeIcons[opportunity.type] || Sparkles;
-  const spotsLeft = opportunity.spots ? opportunity.spots - opportunity.spots_filled : null;
+function GigCard({ gig }: { gig: any }) {
+  const Icon = typeIcons[gig.type] || Sparkles;
+  const spotsLeft = gig.spots ? gig.spots - gig.spots_filled : null;
   const isUrgent = spotsLeft !== null && spotsLeft <= 5;
-  const deadline = opportunity.application_deadline
-    ? new Date(opportunity.application_deadline)
+  const deadline = gig.application_deadline
+    ? new Date(gig.application_deadline)
     : null;
   const isDeadlineSoon = deadline && deadline.getTime() - Date.now() < 7 * 24 * 60 * 60 * 1000;
 
@@ -245,10 +245,10 @@ function OpportunityCard({ opportunity }: { opportunity: any }) {
     <Card className="group overflow-hidden hover:border-primary/50 transition-all flex flex-col">
       {/* Cover Image */}
       <div className="h-48 relative bg-gradient-to-br from-pink-500/20 to-violet-500/20 overflow-hidden">
-        {opportunity.cover_image_url ? (
+        {gig.cover_image_url ? (
           <img
-            src={opportunity.cover_image_url}
-            alt={opportunity.title}
+            src={gig.cover_image_url}
+            alt={gig.title}
             className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
@@ -257,9 +257,9 @@ function OpportunityCard({ opportunity }: { opportunity: any }) {
           </div>
         )}
         {/* Type Badge */}
-        <Badge className={`absolute top-3 left-3 capitalize ${typeColors[opportunity.type]}`}>
+        <Badge className={`absolute top-3 left-3 capitalize ${typeColors[gig.type]}`}>
           <Icon className="h-3 w-3 mr-1" />
-          {opportunity.type}
+          {gig.type}
         </Badge>
         {/* Urgency Badge */}
         {isUrgent && (
@@ -270,28 +270,28 @@ function OpportunityCard({ opportunity }: { opportunity: any }) {
       </div>
 
       <CardHeader className="pb-2">
-        <h3 className="font-semibold text-lg line-clamp-1">{opportunity.title}</h3>
-        {opportunity.description && (
+        <h3 className="font-semibold text-lg line-clamp-1">{gig.title}</h3>
+        {gig.description && (
           <p className="text-sm text-muted-foreground line-clamp-2">
-            {opportunity.description}
+            {gig.description}
           </p>
         )}
       </CardHeader>
 
       <CardContent className="pb-2 flex-1">
         <div className="space-y-2 text-sm">
-          {(opportunity.location_city || opportunity.location_state) && (
+          {(gig.location_city || gig.location_state) && (
             <div className="flex items-center gap-2 text-muted-foreground">
               <MapPin className="h-4 w-4" />
-              {opportunity.location_city && opportunity.location_state
-                ? `${opportunity.location_city}, ${opportunity.location_state}`
-                : opportunity.location_name}
+              {gig.location_city && gig.location_state
+                ? `${gig.location_city}, ${gig.location_state}`
+                : gig.location_name}
             </div>
           )}
-          {opportunity.start_at && (
+          {gig.start_at && (
             <div className="flex items-center gap-2 text-muted-foreground">
               <Calendar className="h-4 w-4" />
-              {new Date(opportunity.start_at).toLocaleDateString("en-US", {
+              {new Date(gig.start_at).toLocaleDateString("en-US", {
                 month: "short",
                 day: "numeric",
                 year: "numeric",
@@ -304,22 +304,22 @@ function OpportunityCard({ opportunity }: { opportunity: any }) {
               Apply by {formatDistanceToNow(deadline, { addSuffix: true })}
             </div>
           )}
-          {opportunity.compensation_type && (
+          {gig.compensation_type && (
             <div className="flex items-center gap-2 text-muted-foreground">
               <DollarSign className="h-4 w-4" />
-              {opportunity.compensation_type === "paid" && opportunity.compensation_amount > 0 ? (
+              {gig.compensation_type === "paid" && gig.compensation_amount > 0 ? (
                 <span className="font-medium text-green-500">
-                  ${(opportunity.compensation_amount / 100).toFixed(0)}
+                  ${(gig.compensation_amount / 100).toFixed(0)}
                 </span>
               ) : (
-                <span className="capitalize">{opportunity.compensation_type}</span>
+                <span className="capitalize">{gig.compensation_type}</span>
               )}
             </div>
           )}
           {spotsLeft !== null && (
             <div className="flex items-center gap-2 text-muted-foreground">
               <Users className="h-4 w-4" />
-              {spotsLeft} of {opportunity.spots} spots available
+              {spotsLeft} of {gig.spots} spots available
             </div>
           )}
         </div>
@@ -328,10 +328,10 @@ function OpportunityCard({ opportunity }: { opportunity: any }) {
       <CardFooter className="pt-4">
         <div className="flex items-center justify-between w-full">
           <div className="text-sm text-muted-foreground">
-            +{opportunity.points_for_completion} points
+            +{gig.points_for_completion} points
           </div>
           <Button asChild>
-            <Link href={`/opportunities/${opportunity.slug}`}>View Details</Link>
+            <Link href={`/gigs/${gig.slug}`}>View Details</Link>
           </Button>
         </div>
       </CardFooter>
@@ -381,10 +381,10 @@ function MyApplicationsGrid({ applications }: { applications: any[] }) {
 }
 
 function ApplicationCard({ application }: { application: any }) {
-  const opportunity = application.opportunity;
-  if (!opportunity) return null;
+  const gig = application.gig;
+  if (!gig) return null;
 
-  const Icon = typeIcons[opportunity.type] || Sparkles;
+  const Icon = typeIcons[gig.type] || Sparkles;
   const status = statusConfig[application.status] || statusConfig.pending;
   const StatusIcon = status.icon;
 
@@ -392,10 +392,10 @@ function ApplicationCard({ application }: { application: any }) {
     <Card className="group overflow-hidden hover:border-primary/50 transition-all flex flex-col">
       {/* Cover Image */}
       <div className="h-48 relative bg-gradient-to-br from-pink-500/20 to-violet-500/20 overflow-hidden">
-        {opportunity.cover_image_url ? (
+        {gig.cover_image_url ? (
           <img
-            src={opportunity.cover_image_url}
-            alt={opportunity.title}
+            src={gig.cover_image_url}
+            alt={gig.title}
             className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
@@ -404,9 +404,9 @@ function ApplicationCard({ application }: { application: any }) {
           </div>
         )}
         {/* Type Badge */}
-        <Badge className={`absolute top-3 left-3 capitalize ${typeColors[opportunity.type]}`}>
+        <Badge className={`absolute top-3 left-3 capitalize ${typeColors[gig.type]}`}>
           <Icon className="h-3 w-3 mr-1" />
-          {opportunity.type}
+          {gig.type}
         </Badge>
         {/* Status Badge */}
         <Badge className={`absolute top-3 right-3 ${status.className}`}>
@@ -416,39 +416,39 @@ function ApplicationCard({ application }: { application: any }) {
       </div>
 
       <CardHeader className="pb-2">
-        <h3 className="font-semibold text-lg line-clamp-1">{opportunity.title}</h3>
-        {opportunity.description && (
+        <h3 className="font-semibold text-lg line-clamp-1">{gig.title}</h3>
+        {gig.description && (
           <p className="text-sm text-muted-foreground line-clamp-2">
-            {opportunity.description}
+            {gig.description}
           </p>
         )}
       </CardHeader>
 
       <CardContent className="pb-2 flex-1">
         <div className="space-y-2 text-sm">
-          {(opportunity.location_city || opportunity.location_state) && (
+          {(gig.location_city || gig.location_state) && (
             <div className="flex items-center gap-2 text-muted-foreground">
               <MapPin className="h-4 w-4" />
-              {opportunity.location_city && opportunity.location_state
-                ? `${opportunity.location_city}, ${opportunity.location_state}`
-                : opportunity.location_city || opportunity.location_state}
+              {gig.location_city && gig.location_state
+                ? `${gig.location_city}, ${gig.location_state}`
+                : gig.location_city || gig.location_state}
             </div>
           )}
-          {opportunity.start_at && (
+          {gig.start_at && (
             <div className="flex items-center gap-2 text-muted-foreground">
               <Calendar className="h-4 w-4" />
-              {new Date(opportunity.start_at).toLocaleDateString("en-US", {
+              {new Date(gig.start_at).toLocaleDateString("en-US", {
                 month: "short",
                 day: "numeric",
                 year: "numeric",
               })}
             </div>
           )}
-          {opportunity.compensation_amount && (
+          {gig.compensation_amount && (
             <div className="flex items-center gap-2 text-muted-foreground">
               <DollarSign className="h-4 w-4" />
               <span className="font-medium text-green-500">
-                ${(opportunity.compensation_amount / 100).toFixed(0)}
+                ${(gig.compensation_amount / 100).toFixed(0)}
               </span>
             </div>
           )}
@@ -471,7 +471,7 @@ function ApplicationCard({ application }: { application: any }) {
             <span className="text-sm text-muted-foreground">Keep applying!</span>
           )}
           <Button variant="outline" size="sm" asChild>
-            <Link href={`/gigs/${opportunity.slug}`}>View Details</Link>
+            <Link href={`/gigs/${gig.slug}`}>View Details</Link>
           </Button>
         </div>
       </CardFooter>

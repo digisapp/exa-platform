@@ -54,7 +54,7 @@ export default async function TestHomePage() {
 
   // Fetch upcoming events/gigs
   const { data: upcomingEvents } = await (supabase
-    .from("opportunities") as any)
+    .from("gigs") as any)
     .select("id, slug, title, type, location, start_date, end_date, cover_image_url, spots_total, spots_filled")
     .eq("status", "open")
     .gte("start_date", new Date().toISOString())

@@ -195,7 +195,7 @@ export function UpcomingEventsCarousel({ events }: UpcomingEventsCarouselProps) 
               Join {selectedEvent?.title}
             </DialogTitle>
             <DialogDescription className="text-center">
-              Sign up as a model to apply for this opportunity and more exclusive gigs.
+              Sign up as a model to apply for this gig and more exclusive experiences.
             </DialogDescription>
           </DialogHeader>
 

@@ -16,7 +16,7 @@ import {
   Clock,
 } from "lucide-react";
 
-interface Opportunity {
+interface Gig {
   id: string;
   slug: string;
   title: string;
@@ -32,32 +32,32 @@ interface Opportunity {
 }
 
 interface GigsFeedProps {
-  opportunities: Opportunity[];
-  modelApplications: { opportunity_id: string; status: string }[];
+  gigs: Gig[];
+  modelApplications: { gig_id: string; status: string }[];
   isApproved: boolean;
 }
 
-export function GigsFeed({ opportunities, modelApplications, isApproved }: GigsFeedProps) {
+export function GigsFeed({ gigs, modelApplications, isApproved }: GigsFeedProps) {
   const [applying, setApplying] = useState<string | null>(null);
   const [appliedGigs, setAppliedGigs] = useState<Record<string, string>>(
     modelApplications.reduce((acc, app) => {
-      acc[app.opportunity_id] = app.status;
+      acc[app.gig_id] = app.status;
       return acc;
     }, {} as Record<string, string>)
   );
 
-  const handleApply = async (opportunityId: string) => {
+  const handleApply = async (gigId: string) => {
     if (!isApproved) {
       toast.error("Your profile must be approved to apply for gigs");
       return;
     }
 
-    setApplying(opportunityId);
+    setApplying(gigId);
     try {
       const response = await fetch("/api/gigs/apply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ opportunityId }),
+        body: JSON.stringify({ gigId }),
       });
 
       const data = await response.json();
@@ -69,7 +69,7 @@ export function GigsFeed({ opportunities, modelApplications, isApproved }: GigsF
 
       setAppliedGigs((prev) => ({
         ...prev,
-        [opportunityId]: "pending",
+        [gigId]: "pending",
       }));
 
       toast.success("Application submitted! You'll hear back soon.");
@@ -81,8 +81,8 @@ export function GigsFeed({ opportunities, modelApplications, isApproved }: GigsF
     }
   };
 
-  const getApplicationButton = (opp: Opportunity) => {
-    const status = appliedGigs[opp.id];
+  const getApplicationButton = (gig: Gig) => {
+    const status = appliedGigs[gig.id];
 
     if (status === "accepted") {
       return (
@@ -113,11 +113,11 @@ export function GigsFeed({ opportunities, modelApplications, isApproved }: GigsF
     return (
       <Button
         size="sm"
-        onClick={() => handleApply(opp.id)}
-        disabled={applying === opp.id || !isApproved}
+        onClick={() => handleApply(gig.id)}
+        disabled={applying === gig.id || !isApproved}
         className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
       >
-        {applying === opp.id ? (
+        {applying === gig.id ? (
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : (
           "Apply"
@@ -141,11 +141,11 @@ export function GigsFeed({ opportunities, modelApplications, isApproved }: GigsF
         </Button>
       </CardHeader>
       <CardContent>
-        {opportunities && opportunities.length > 0 ? (
+        {gigs && gigs.length > 0 ? (
           <div className="space-y-3">
-            {opportunities.map((opp) => (
+            {gigs.map((gig) => (
               <div
-                key={opp.id}
+                key={gig.id}
                 className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
               >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -154,37 +154,37 @@ export function GigsFeed({ opportunities, modelApplications, isApproved }: GigsF
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="font-medium text-sm truncate">{opp.title}</p>
+                      <p className="font-medium text-sm truncate">{gig.title}</p>
                       <Badge variant="outline" className="capitalize text-xs flex-shrink-0">
-                        {opp.type}
+                        {gig.type}
                       </Badge>
                     </div>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
-                      {opp.start_at && (
+                      {gig.start_at && (
                         <span className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
-                          {new Date(opp.start_at).toLocaleDateString("en-US", {
+                          {new Date(gig.start_at).toLocaleDateString("en-US", {
                             month: "short",
                             day: "numeric",
                           })}
                         </span>
                       )}
-                      {(opp.location_city || opp.location_state) && (
+                      {(gig.location_city || gig.location_state) && (
                         <span className="flex items-center gap-1">
                           <MapPin className="h-3 w-3" />
-                          {opp.location_city}, {opp.location_state}
+                          {gig.location_city}, {gig.location_state}
                         </span>
                       )}
-                      {opp.compensation_amount && opp.compensation_amount > 0 && (
+                      {gig.compensation_amount && gig.compensation_amount > 0 && (
                         <span className="text-green-500 font-medium">
-                          ${(opp.compensation_amount / 100).toFixed(0)}
+                          ${(gig.compensation_amount / 100).toFixed(0)}
                         </span>
                       )}
                     </div>
                   </div>
                 </div>
                 <div className="flex-shrink-0 ml-3">
-                  {getApplicationButton(opp)}
+                  {getApplicationButton(gig)}
                 </div>
               </div>
             ))}

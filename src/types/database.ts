@@ -9,8 +9,11 @@ export type Json =
 export type ActorType = 'model' | 'brand' | 'admin' | 'fan'
 export type ModelLevel = 'rising' | 'verified' | 'pro' | 'elite'
 export type Availability = 'available' | 'busy' | 'not_available'
-export type OpportunityType = 'show' | 'travel' | 'campaign' | 'content' | 'hosting' | 'fun' | 'other'
-export type OpportunityStatus = 'draft' | 'open' | 'closed' | 'completed' | 'cancelled'
+export type GigType = 'show' | 'travel' | 'campaign' | 'content' | 'hosting' | 'fun' | 'other'
+export type GigStatus = 'draft' | 'open' | 'closed' | 'completed' | 'cancelled'
+// Backwards compatibility aliases
+export type OpportunityType = GigType
+export type OpportunityStatus = GigStatus
 export type ApplicationStatus = 'pending' | 'accepted' | 'rejected' | 'withdrawn' | 'waitlist'
 export type CompensationType = 'paid' | 'tfp' | 'perks' | 'exposure'
 
@@ -380,10 +383,10 @@ export interface Database {
           criteria?: Json
         }
       }
-      opportunities: {
+      gigs: {
         Row: {
           id: string
-          type: OpportunityType
+          type: GigType
           title: string
           slug: string
           description: string | null
@@ -402,7 +405,7 @@ export interface Database {
           compensation_description: string | null
           requirements: Json
           visibility: string
-          status: OpportunityStatus
+          status: GigStatus
           points_for_completion: number
           created_by: string | null
           created_at: string
@@ -410,7 +413,7 @@ export interface Database {
         }
         Insert: {
           id?: string
-          type: OpportunityType
+          type: GigType
           title: string
           slug: string
           description?: string | null
@@ -429,7 +432,7 @@ export interface Database {
           compensation_description?: string | null
           requirements?: Json
           visibility?: string
-          status?: OpportunityStatus
+          status?: GigStatus
           points_for_completion?: number
           created_by?: string | null
           created_at?: string
@@ -437,7 +440,7 @@ export interface Database {
         }
         Update: {
           id?: string
-          type?: OpportunityType
+          type?: GigType
           title?: string
           slug?: string
           description?: string | null
@@ -456,7 +459,126 @@ export interface Database {
           compensation_description?: string | null
           requirements?: Json
           visibility?: string
-          status?: OpportunityStatus
+          status?: GigStatus
+          points_for_completion?: number
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      gig_applications: {
+        Row: {
+          id: string
+          gig_id: string
+          model_id: string
+          status: ApplicationStatus
+          note: string | null
+          admin_note: string | null
+          reviewed_by: string | null
+          applied_at: string
+          reviewed_at: string | null
+        }
+        Insert: {
+          id?: string
+          gig_id: string
+          model_id: string
+          status?: ApplicationStatus
+          note?: string | null
+          admin_note?: string | null
+          reviewed_by?: string | null
+          applied_at?: string
+          reviewed_at?: string | null
+        }
+        Update: {
+          id?: string
+          gig_id?: string
+          model_id?: string
+          status?: ApplicationStatus
+          note?: string | null
+          admin_note?: string | null
+          reviewed_by?: string | null
+          applied_at?: string
+          reviewed_at?: string | null
+        }
+      }
+      // Backwards compatibility aliases
+      opportunities: {
+        Row: {
+          id: string
+          type: GigType
+          title: string
+          slug: string
+          description: string | null
+          cover_image_url: string | null
+          location_name: string | null
+          location_city: string | null
+          location_state: string | null
+          location_country: string | null
+          start_at: string | null
+          end_at: string | null
+          application_deadline: string | null
+          spots: number | null
+          spots_filled: number
+          compensation_type: CompensationType | null
+          compensation_amount: number | null
+          compensation_description: string | null
+          requirements: Json
+          visibility: string
+          status: GigStatus
+          points_for_completion: number
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          type: GigType
+          title: string
+          slug: string
+          description?: string | null
+          cover_image_url?: string | null
+          location_name?: string | null
+          location_city?: string | null
+          location_state?: string | null
+          location_country?: string | null
+          start_at?: string | null
+          end_at?: string | null
+          application_deadline?: string | null
+          spots?: number | null
+          spots_filled?: number
+          compensation_type?: CompensationType | null
+          compensation_amount?: number | null
+          compensation_description?: string | null
+          requirements?: Json
+          visibility?: string
+          status?: GigStatus
+          points_for_completion?: number
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          type?: GigType
+          title?: string
+          slug?: string
+          description?: string | null
+          cover_image_url?: string | null
+          location_name?: string | null
+          location_city?: string | null
+          location_state?: string | null
+          location_country?: string | null
+          start_at?: string | null
+          end_at?: string | null
+          application_deadline?: string | null
+          spots?: number | null
+          spots_filled?: number
+          compensation_type?: CompensationType | null
+          compensation_amount?: number | null
+          compensation_description?: string | null
+          requirements?: Json
+          visibility?: string
+          status?: GigStatus
           points_for_completion?: number
           created_by?: string | null
           created_at?: string
@@ -668,8 +790,11 @@ export interface Database {
 export type Model = Database['public']['Tables']['models']['Row']
 export type Brand = Database['public']['Tables']['brands']['Row']
 export type Actor = Database['public']['Tables']['actors']['Row']
-export type Opportunity = Database['public']['Tables']['opportunities']['Row']
-export type Application = Database['public']['Tables']['opportunity_applications']['Row']
+export type Gig = Database['public']['Tables']['gigs']['Row']
+export type GigApplication = Database['public']['Tables']['gig_applications']['Row']
+// Backwards compatibility aliases
+export type Opportunity = Gig
+export type Application = GigApplication
 export type Message = Database['public']['Tables']['messages']['Row']
 export type Notification = Database['public']['Tables']['notifications']['Row']
 export type MediaAsset = Database['public']['Tables']['media_assets']['Row']
@@ -681,14 +806,18 @@ export type ModelWithPhotos = Model & {
   media_assets: MediaAsset[]
 }
 
-export type OpportunityWithApplications = Opportunity & {
-  opportunity_applications: Application[]
+export type GigWithApplications = Gig & {
+  gig_applications: GigApplication[]
 }
 
-export type ApplicationWithDetails = Application & {
-  opportunity: Opportunity
+export type GigApplicationWithDetails = GigApplication & {
+  gig: Gig
   model: Model
 }
+
+// Backwards compatibility aliases
+export type OpportunityWithApplications = GigWithApplications
+export type ApplicationWithDetails = GigApplicationWithDetails
 
 export type CoinTransaction = Database['public']['Tables']['coin_transactions']['Row']
 export type ConversationParticipant = Database['public']['Tables']['conversation_participants']['Row']

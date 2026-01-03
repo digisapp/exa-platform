@@ -35,7 +35,7 @@ export async function PATCH(
     }
 
     const { error } = await (supabase
-      .from("opportunity_applications") as any)
+      .from("gig_applications") as any)
       .update({ status, reviewed_at: new Date().toISOString() })
       .eq("id", id);
 

@@ -18,11 +18,11 @@ import { toast } from "sonner";
 import { Loader2, Sparkles } from "lucide-react";
 
 interface ApplyButtonProps {
-  opportunityId: string;
+  gigId: string;
   modelId: string | null;
 }
 
-export function ApplyButton({ opportunityId, modelId }: ApplyButtonProps) {
+export function ApplyButton({ gigId, modelId }: ApplyButtonProps) {
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
@@ -40,9 +40,9 @@ export function ApplyButton({ opportunityId, modelId }: ApplyButtonProps) {
     try {
       // Create application (uses model.id, not actor.id)
       const { error: appError } = await (supabase
-        .from("opportunity_applications") as any)
+        .from("gig_applications") as any)
         .insert({
-          opportunity_id: opportunityId,
+          gig_id: gigId,
           model_id: modelId,
           note: note || null,
         });
@@ -52,9 +52,9 @@ export function ApplyButton({ opportunityId, modelId }: ApplyButtonProps) {
       // Award points for applying
       await (supabase.rpc as any)("award_points", {
         p_model_id: modelId,
-        p_action: "opportunity_apply",
+        p_action: "gig_apply",
         p_points: 5,
-        p_metadata: { opportunity_id: opportunityId },
+        p_metadata: { gig_id: gigId },
       });
 
       toast.success("Application submitted! +5 points earned");
@@ -78,7 +78,7 @@ export function ApplyButton({ opportunityId, modelId }: ApplyButtonProps) {
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Apply for this Opportunity</DialogTitle>
+          <DialogTitle>Apply for this Gig</DialogTitle>
           <DialogDescription>
             Submit your application. You&apos;ll earn +5 points for applying!
           </DialogDescription>
@@ -90,7 +90,7 @@ export function ApplyButton({ opportunityId, modelId }: ApplyButtonProps) {
               Note to organizers (optional)
             </label>
             <Textarea
-              placeholder="Tell them why you'd be great for this opportunity..."
+              placeholder="Tell them why you'd be great for this gig..."
               value={note}
               onChange={(e) => setNote(e.target.value)}
               rows={4}
