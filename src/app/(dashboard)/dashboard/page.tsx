@@ -142,28 +142,6 @@ export default async function DashboardPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      {/* Welcome Header */}
-      <div className="flex items-center gap-4">
-        <div className="relative h-16 w-16 rounded-full overflow-hidden ring-2 ring-pink-500/30 bg-gradient-to-br from-pink-500/20 to-violet-500/20">
-          {model.profile_photo_url ? (
-            <Image
-              src={model.profile_photo_url}
-              alt={displayName}
-              fill
-              className="object-cover"
-            />
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-2xl">👤</span>
-            </div>
-          )}
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold">Welcome back, {model.first_name || model.username}!</h1>
-          <p className="text-muted-foreground">@{model.username}</p>
-        </div>
-      </div>
-
       {/* Stats Overview */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="bg-gradient-to-br from-pink-500/10 to-rose-500/10 border-pink-500/20">
