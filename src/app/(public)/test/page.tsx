@@ -3,7 +3,6 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { FloatingOrbs } from "@/components/ui/floating-orbs";
 import { ModelSignupDialog } from "@/components/auth/ModelSignupDialog";
-import { FanSignupDialog } from "@/components/auth/FanSignupDialog";
 import { BrandInquiryDialog } from "@/components/auth/BrandInquiryDialog";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -89,44 +88,70 @@ export default async function TestHomePage() {
           </div>
         </nav>
 
-        {/* Quick Actions */}
-        <div className="container px-8 md:px-16 py-4">
-          <div className="flex justify-center gap-4">
-            <ModelSignupDialog>
-              <Button className="exa-gradient-button rounded-full px-8">
-                Models
-              </Button>
-            </ModelSignupDialog>
-            <FanSignupDialog>
-              <Button variant="outline" className="rounded-full px-8 border-[#00BFFF]/50 hover:border-[#00BFFF] hover:bg-[#00BFFF]/10">
-                Fans
-              </Button>
-            </FanSignupDialog>
-            <BrandInquiryDialog>
-              <Button variant="outline" className="rounded-full px-8 border-[#FF69B4]/50 hover:border-[#FF69B4] hover:bg-[#FF69B4]/10">
-                Brands
-              </Button>
-            </BrandInquiryDialog>
-          </div>
-        </div>
+        {/* Split Hero Section */}
+        <section className="container px-8 md:px-16 py-12 md:py-20">
+          <div className="grid md:grid-cols-2 gap-8 md:gap-12">
+            {/* Models Side */}
+            <div className="relative p-8 md:p-12 rounded-3xl bg-gradient-to-br from-pink-500/10 via-violet-500/5 to-transparent border border-pink-500/20 hover:border-pink-500/40 transition-all group">
+              {/* Decorative glow */}
+              <div className="absolute -top-20 -left-20 w-40 h-40 bg-pink-500/20 rounded-full blur-3xl opacity-50 group-hover:opacity-70 transition-opacity" />
 
-        {/* Hero Section */}
-        <section className="container px-8 md:px-16 py-12 md:py-16">
-          <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
-              Join Experiences.
-              <br />
-              <span className="exa-gradient-text exa-glow-text">
-                Get Discovered.
-              </span>
-              <br />
-              Become Top Model.
-            </h1>
+              <div className="relative z-10">
+                <span className="inline-block px-4 py-1.5 rounded-full text-sm font-semibold bg-gradient-to-r from-pink-500 to-violet-500 text-white mb-6">
+                  For Models
+                </span>
 
-            <p className="text-xl text-muted-foreground max-w-2xl mb-8 leading-relaxed">
-              The community where models grow. Join fashion shows, travel experiences,
-              and brand campaigns. Earn points, level up, and get booked.
-            </p>
+                <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight mb-4">
+                  Join Experiences.
+                  <br />
+                  <span className="exa-gradient-text">Get Discovered.</span>
+                  <br />
+                  Become Top Model.
+                </h2>
+
+                <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
+                  The community where models grow. Join fashion shows, travel experiences, and brand campaigns. Earn points, level up, and get booked.
+                </p>
+
+                <ModelSignupDialog>
+                  <Button size="lg" className="exa-gradient-button text-lg px-10 h-14 rounded-full">
+                    Models Sign Up
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </ModelSignupDialog>
+              </div>
+            </div>
+
+            {/* Brands Side */}
+            <div className="relative p-8 md:p-12 rounded-3xl bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-transparent border border-cyan-500/20 hover:border-cyan-500/40 transition-all group">
+              {/* Decorative glow */}
+              <div className="absolute -top-20 -right-20 w-40 h-40 bg-cyan-500/20 rounded-full blur-3xl opacity-50 group-hover:opacity-70 transition-opacity" />
+
+              <div className="relative z-10">
+                <span className="inline-block px-4 py-1.5 rounded-full text-sm font-semibold bg-gradient-to-r from-cyan-500 to-blue-500 text-white mb-6">
+                  For Brands
+                </span>
+
+                <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight mb-4">
+                  Book Top Models
+                  <br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">for Campaigns,</span>
+                  <br />
+                  Photoshoots & Shows.
+                </h2>
+
+                <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
+                  Access our curated roster of professional models for your next campaign, photoshoot, fashion show, or brand activation.
+                </p>
+
+                <BrandInquiryDialog>
+                  <Button size="lg" className="text-lg px-10 h-14 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white">
+                    Brand Sign Up
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </BrandInquiryDialog>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -172,23 +197,25 @@ export default async function TestHomePage() {
         <section className="py-16">
           <div className="container px-8 md:px-16">
             <div className="flex flex-col items-center text-center">
+              <h2 className="text-2xl md:text-3xl font-bold mb-8">
+                Ready to get started?
+              </h2>
               <div className="flex flex-col sm:flex-row gap-4 mb-8">
                 <ModelSignupDialog>
                   <Button size="lg" className="exa-gradient-button text-lg px-10 h-14 rounded-full">
-                    I&apos;m a Model
+                    Models Sign Up
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </ModelSignupDialog>
-                <FanSignupDialog>
+                <BrandInquiryDialog>
                   <Button
                     size="lg"
-                    variant="outline"
-                    className="text-lg px-10 h-14 rounded-full border-[#00BFFF]/50 hover:border-[#00BFFF] hover:bg-[#00BFFF]/10"
+                    className="text-lg px-10 h-14 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white"
                   >
-                    I&apos;m a Fan
+                    Brand Sign Up
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
-                </FanSignupDialog>
+                </BrandInquiryDialog>
               </div>
 
               <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground">
