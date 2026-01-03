@@ -141,18 +141,29 @@ export async function POST(request: NextRequest) {
     // Auth check
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized. Please sign in first." }, { status: 401 });
     }
 
     // Get actor
-    const { data: actor } = await supabase
-      .from("actors")
+    let { data: actor } = await (supabase
+      .from("actors") as any)
       .select("id, type")
       .eq("user_id", user.id)
-      .single() as { data: { id: string; type: string } | null };
+      .maybeSingle();
 
+    // If no actor exists, create one as a fan (so they can book)
     if (!actor) {
-      return NextResponse.json({ error: "Actor not found" }, { status: 404 });
+      const { data: newActor, error: actorError } = await (supabase
+        .from("actors") as any)
+        .insert({ user_id: user.id, type: "fan" })
+        .select("id, type")
+        .single();
+
+      if (actorError || !newActor) {
+        console.error("Failed to create actor:", actorError);
+        return NextResponse.json({ error: "Failed to set up your account. Please try signing up first." }, { status: 400 });
+      }
+      actor = newActor;
     }
 
     const body = await request.json();
