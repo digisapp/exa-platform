@@ -1,6 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+
+// Disable caching to ensure fresh data
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
