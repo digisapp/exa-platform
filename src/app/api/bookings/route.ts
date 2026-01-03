@@ -51,13 +51,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Actor not found" }, { status: 404 });
     }
 
-    // Build query based on role
-    let query = (supabase.from("bookings") as any).select(`
-      *,
-      model:models!bookings_model_id_fkey(
-        id, username, first_name, last_name, profile_photo_url, city, state
-      )
-    `);
+    // Build query based on role - just select bookings, we'll fetch model data separately
+    let query = (supabase.from("bookings") as any).select("*");
 
     // If user is a model and wants their bookings as a model
     if (role === "model" || actor.type === "model") {
@@ -94,12 +89,22 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error("Failed to fetch bookings:", error);
-      return NextResponse.json({ error: "Failed to fetch bookings" }, { status: 500 });
+      return NextResponse.json({ error: "Failed to fetch bookings", details: error.message }, { status: 500 });
     }
 
-    // Add client info for model view
-    if (role === "model" || actor.type === "model") {
-      for (const booking of bookings || []) {
+    // Enrich bookings with model and client info
+    for (const booking of bookings || []) {
+      // Fetch model info
+      if (booking.model_id) {
+        const { data: model } = await (supabase.from("models") as any)
+          .select("id, username, first_name, last_name, profile_photo_url, city, state")
+          .eq("id", booking.model_id)
+          .single();
+        booking.model = model;
+      }
+
+      // Fetch client info
+      if (booking.client_id) {
         const { data: clientActor } = await supabase
           .from("actors")
           .select("id, type, user_id")
@@ -113,14 +118,14 @@ export async function GET(request: NextRequest) {
               .select("display_name, email, avatar_url")
               .eq("id", clientActor.id)
               .single() as { data: { display_name: string; email: string; avatar_url: string } | null };
-            booking.client = fan;
+            booking.client = { ...fan, type: "fan" };
           } else if (clientActor.type === "brand") {
             const { data: brand } = await supabase
               .from("brands")
               .select("company_name, contact_name, email, logo_url")
               .eq("id", clientActor.id)
               .single() as { data: { company_name: string; contact_name: string; email: string; logo_url: string } | null };
-            booking.client = brand;
+            booking.client = { ...brand, type: "brand" };
           }
         }
       }
