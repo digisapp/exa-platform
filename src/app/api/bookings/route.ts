@@ -113,7 +113,40 @@ export async function GET(request: NextRequest) {
       bookings = bookings.filter(b => b.status === status);
     }
 
-    // Return bookings without enrichment for now
+    // Enrich bookings with model and client info
+    for (const booking of bookings) {
+      // Get model info
+      if (booking.model_id) {
+        const { data: model } = await (supabase.from("models") as any)
+          .select("id, username, first_name, last_name, profile_photo_url, city, state")
+          .eq("id", booking.model_id)
+          .maybeSingle();
+        booking.model = model;
+      }
+
+      // Get client info
+      if (booking.client_id) {
+        const { data: clientActor } = await (supabase.from("actors") as any)
+          .select("id, type")
+          .eq("id", booking.client_id)
+          .maybeSingle();
+
+        if (clientActor?.type === "fan") {
+          const { data: fan } = await (supabase.from("fans") as any)
+            .select("display_name, email, avatar_url")
+            .eq("id", clientActor.id)
+            .maybeSingle();
+          booking.client = { ...fan, type: "fan" };
+        } else if (clientActor?.type === "brand") {
+          const { data: brand } = await (supabase.from("brands") as any)
+            .select("company_name, contact_name, email, logo_url")
+            .eq("id", clientActor.id)
+            .maybeSingle();
+          booking.client = { ...brand, type: "brand" };
+        }
+      }
+    }
+
     return NextResponse.json({ bookings, serviceLabels: SERVICE_LABELS });
   } catch (error: any) {
     console.error("Bookings fetch error:", error);
