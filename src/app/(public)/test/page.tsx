@@ -29,7 +29,12 @@ export default async function TestHomePage() {
   // Fetch top 50 models with 4-5 star admin rating
   const { data: topModelsData } = await (supabase
     .from("models") as any)
-    .select("id, username, first_name, profile_photo_url, state, profile_views, admin_rating")
+    .select(`
+      id, username, first_name, profile_photo_url, state, profile_views, admin_rating,
+      photoshoot_hourly_rate, photoshoot_half_day_rate, photoshoot_full_day_rate,
+      promo_hourly_rate, brand_ambassador_daily_rate, private_event_hourly_rate,
+      social_companion_hourly_rate, meet_greet_rate
+    `)
     .eq("is_approved", true)
     .not("profile_photo_url", "is", null)
     .gte("admin_rating", 4)
@@ -125,14 +130,14 @@ export default async function TestHomePage() {
           </div>
         </section>
 
-        {/* Top Models Section */}
+        {/* Book Top Models Section */}
         <section className="py-12">
           <div className="container px-8 md:px-16 mb-8">
             <h2 className="text-3xl md:text-4xl font-bold exa-gradient-text">
-              Top Models
+              Book Top Models
             </h2>
           </div>
-          <TopModelsCarousel models={topModels || []} showRank={false} />
+          <TopModelsCarousel models={topModels || []} showRank={false} showCategories={true} />
         </section>
 
         {/* New Faces Section */}

@@ -23,14 +23,51 @@ interface Model {
   city: string | null;
   state: string | null;
   profile_views: number;
+  // Rate fields for categories
+  photoshoot_hourly_rate?: number;
+  photoshoot_half_day_rate?: number;
+  photoshoot_full_day_rate?: number;
+  promo_hourly_rate?: number;
+  brand_ambassador_daily_rate?: number;
+  private_event_hourly_rate?: number;
+  social_companion_hourly_rate?: number;
+  meet_greet_rate?: number;
 }
 
 interface TopModelsCarouselProps {
   models: Model[];
   showRank?: boolean;
+  showCategories?: boolean;
 }
 
-export function TopModelsCarousel({ models, showRank = true }: TopModelsCarouselProps) {
+// Get booking categories for a model based on their rates
+function getModelCategories(model: Model): string[] {
+  const categories: string[] = [];
+
+  // Photo - any photoshoot rate
+  if (model.photoshoot_hourly_rate || model.photoshoot_half_day_rate || model.photoshoot_full_day_rate) {
+    categories.push("Photo");
+  }
+
+  // Events - private events, promo, meet & greet
+  if (model.private_event_hourly_rate || model.promo_hourly_rate || model.meet_greet_rate) {
+    categories.push("Events");
+  }
+
+  // Brand - brand ambassador
+  if (model.brand_ambassador_daily_rate) {
+    categories.push("Brand");
+  }
+
+  // Social - social companion
+  if (model.social_companion_hourly_rate) {
+    categories.push("Social");
+  }
+
+  return categories;
+}
+
+export function TopModelsCarousel({ models, showRank = true, showCategories = false }: TopModelsCarouselProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
@@ -167,6 +204,23 @@ export function TopModelsCarousel({ models, showRank = true }: TopModelsCarousel
                         {model.state}
                       </p>
                     )}
+                    {/* Category Pills */}
+                    {showCategories && (() => {
+                      const categories = getModelCategories(model);
+                      if (categories.length === 0) return null;
+                      return (
+                        <div className="flex flex-wrap gap-1.5 mt-2">
+                          {categories.map((cat) => (
+                            <span
+                              key={cat}
+                              className="px-2 py-0.5 text-xs font-medium rounded-full bg-white/20 backdrop-blur-sm text-white border border-white/30"
+                            >
+                              {cat}
+                            </span>
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
