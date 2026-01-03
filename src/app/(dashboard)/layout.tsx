@@ -50,13 +50,24 @@ export default async function DashboardLayout({
       .single() as { data: any };
     profileData = data;
     coinBalance = data?.coin_balance ?? 0;
+  } else if (actor?.type === "brand") {
+    // Brands use actor.id as their id
+    const { data } = await (supabase
+      .from("brands") as any)
+      .select("company_name, logo_url, coin_balance")
+      .eq("id", actor.id)
+      .single() as { data: any };
+    profileData = data;
+    coinBalance = data?.coin_balance ?? 0;
   }
 
   const displayName = actor?.type === "fan"
     ? profileData?.display_name
-    : profileData?.first_name
-      ? `${profileData.first_name} ${profileData.last_name || ""}`.trim()
-      : profileData?.username || undefined;
+    : actor?.type === "brand"
+      ? profileData?.company_name
+      : profileData?.first_name
+        ? `${profileData.first_name} ${profileData.last_name || ""}`.trim()
+        : profileData?.username || undefined;
 
   return (
     <div className="min-h-screen bg-background">
@@ -65,7 +76,7 @@ export default async function DashboardLayout({
         user={{
           id: user.id,
           email: user.email || "",
-          avatar_url: profileData?.profile_photo_url || profileData?.avatar_url || undefined,
+          avatar_url: profileData?.profile_photo_url || profileData?.avatar_url || profileData?.logo_url || undefined,
           name: displayName,
           username: profileData?.username || undefined,
         }}
@@ -77,7 +88,7 @@ export default async function DashboardLayout({
       </DashboardClientWrapper>
       <BottomNav
         user={{
-          avatar_url: profileData?.profile_photo_url || profileData?.avatar_url || undefined,
+          avatar_url: profileData?.profile_photo_url || profileData?.avatar_url || profileData?.logo_url || undefined,
           name: displayName,
           email: user.email || "",
         }}
