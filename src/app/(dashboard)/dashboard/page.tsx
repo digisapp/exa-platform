@@ -87,6 +87,40 @@ export default async function DashboardPage() {
     .select("*", { count: "exact", head: true })
     .eq("model_username", model.username);
 
+  // Get pending bookings for this model
+  const { data: pendingBookings } = await (supabase
+    .from("bookings") as any)
+    .select("*")
+    .eq("model_id", model.id)
+    .in("status", ["pending", "counter"])
+    .order("created_at", { ascending: false })
+    .limit(5);
+
+  // Enrich bookings with client info
+  for (const booking of pendingBookings || []) {
+    if (booking.client_id) {
+      const { data: clientActor } = await (supabase
+        .from("actors") as any)
+        .select("id, type")
+        .eq("id", booking.client_id)
+        .maybeSingle();
+
+      if (clientActor?.type === "fan") {
+        const { data: fan } = await (supabase.from("fans") as any)
+          .select("display_name, avatar_url")
+          .eq("id", clientActor.id)
+          .maybeSingle();
+        booking.client = { ...fan, type: "fan" };
+      } else if (clientActor?.type === "brand") {
+        const { data: brand } = await (supabase.from("brands") as any)
+          .select("company_name, logo_url")
+          .eq("id", clientActor.id)
+          .maybeSingle();
+        booking.client = { ...brand, type: "brand" };
+      }
+    }
+  }
+
   // Get open gigs
   const { data: gigs } = await (supabase
     .from("gigs") as any)
@@ -209,6 +243,9 @@ export default async function DashboardPage() {
             <CardTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5 text-green-500" />
               Bookings
+              {(pendingBookings?.length || 0) > 0 && (
+                <Badge className="bg-green-500 text-white ml-2">{pendingBookings?.length}</Badge>
+              )}
             </CardTitle>
             <Button variant="ghost" size="sm" asChild>
               <Link href="/bookings" className="text-green-500">
@@ -218,13 +255,55 @@ export default async function DashboardPage() {
             </Button>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-8">
-              <div className="p-4 rounded-full bg-green-500/10 inline-block mb-4">
-                <Calendar className="h-8 w-8 text-green-500" />
+            {(pendingBookings?.length || 0) > 0 ? (
+              <div className="space-y-3">
+                {pendingBookings?.map((booking: any) => (
+                  <Link
+                    key={booking.id}
+                    href="/bookings"
+                    className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors border border-transparent hover:border-green-500/30"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center overflow-hidden">
+                      {booking.client?.avatar_url || booking.client?.logo_url ? (
+                        <Image
+                          src={booking.client.avatar_url || booking.client.logo_url}
+                          alt="Client"
+                          width={40}
+                          height={40}
+                          className="object-cover"
+                        />
+                      ) : (
+                        <Building2 className="h-5 w-5 text-green-500" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">
+                        {booking.client?.company_name || booking.client?.display_name || "Client"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(booking.event_date).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        })}
+                        {" • "}
+                        {booking.total_amount?.toLocaleString()} coins
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/30 text-xs">
+                      {booking.status === "counter" ? "Counter" : "Pending"}
+                    </Badge>
+                  </Link>
+                ))}
               </div>
-              <p className="text-muted-foreground">No pending bookings</p>
-              <p className="text-sm text-muted-foreground mt-1">Booking requests will appear here</p>
-            </div>
+            ) : (
+              <div className="text-center py-8">
+                <div className="p-4 rounded-full bg-green-500/10 inline-block mb-4">
+                  <Calendar className="h-8 w-8 text-green-500" />
+                </div>
+                <p className="text-muted-foreground">No pending bookings</p>
+                <p className="text-sm text-muted-foreground mt-1">Booking requests will appear here</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
