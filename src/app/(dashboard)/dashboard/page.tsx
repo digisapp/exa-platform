@@ -815,32 +815,6 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      {/* Welcome Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold text-xl">
-            {brand?.company_name?.charAt(0).toUpperCase() || "B"}
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold">{brand?.company_name || "Brand"}</h1>
-              {isApproved ? (
-                <Badge className="bg-green-500/20 text-green-500 border-green-500/50">
-                  <CheckCircle className="h-3 w-3 mr-1" />
-                  Verified
-                </Badge>
-              ) : (
-                <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/50">
-                  <Clock className="h-3 w-3 mr-1" />
-                  Pending Approval
-                </Badge>
-              )}
-            </div>
-            <p className="text-muted-foreground">{brand?.contact_name}</p>
-          </div>
-        </div>
-      </div>
-
       {/* Pending Approval Notice */}
       {isPending && (
         <Card className="border-amber-500/50 bg-amber-500/5">
