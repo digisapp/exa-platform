@@ -90,7 +90,7 @@ export default async function TestHomePage() {
         </nav>
 
         {/* Split Hero Section */}
-        <section className="container px-8 md:px-16 py-12 md:py-20">
+        <section className="container px-8 md:px-16 py-6 md:py-10">
           <div className="grid md:grid-cols-3 gap-6 md:gap-8">
             {/* Models Side */}
             <div className="relative p-6 md:p-8 rounded-3xl bg-gradient-to-br from-pink-500/10 via-violet-500/5 to-transparent border border-pink-500/20 hover:border-pink-500/40 transition-all group">
