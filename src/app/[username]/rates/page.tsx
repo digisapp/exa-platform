@@ -16,7 +16,6 @@ import {
   Clock,
   CheckCircle2,
 } from "lucide-react";
-import { BookingRequestModal } from "@/components/bookings/BookingRequestModal";
 import { ClickableRateCard } from "@/components/bookings/ClickableRateCard";
 
 interface Props {
@@ -171,50 +170,24 @@ export default async function ModelRatesPage({ params }: Props) {
             </p>
           )}
 
-          {/* Quick Actions */}
+          {/* Message Button */}
           {!isOwner && (
-            <div className="flex gap-3">
-              {user ? (
-                <BookingRequestModal
-                  modelId={model.id}
-                  modelName={displayName}
-                  modelRates={{
-                    photoshoot_hourly_rate: model.photoshoot_hourly_rate,
-                    photoshoot_half_day_rate: model.photoshoot_half_day_rate,
-                    photoshoot_full_day_rate: model.photoshoot_full_day_rate,
-                    promo_hourly_rate: model.promo_hourly_rate,
-                    brand_ambassador_daily_rate: model.brand_ambassador_daily_rate,
-                    private_event_hourly_rate: model.private_event_hourly_rate,
-                    social_companion_hourly_rate: model.social_companion_hourly_rate,
-                    meet_greet_rate: model.meet_greet_rate,
-                  }}
-                  trigger={
-                    <button className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white font-semibold transition-all hover:scale-[1.02]">
-                      <Calendar className="h-5 w-5" />
-                      Request Booking
-                    </button>
-                  }
-                />
-              ) : (
-                <Link
-                  href="/signin"
-                  className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white font-semibold transition-all hover:scale-[1.02]"
-                >
-                  <Calendar className="h-5 w-5" />
-                  Sign In to Book
-                </Link>
-              )}
-              <Link
-                href={user ? `/chats?new=${model.username}` : "/signin"}
-                className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-white font-medium transition-colors"
-              >
-                <MessageCircle className="h-5 w-5" />
-              </Link>
-            </div>
+            <Link
+              href={user ? `/chats?new=${model.username}` : "/signin"}
+              className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-white font-medium transition-colors w-full"
+            >
+              <MessageCircle className="h-5 w-5" />
+              Send Message
+            </Link>
           )}
         </div>
 
         {/* Rates Cards */}
+        {hasAnyRates && !isOwner && (
+          <p className="text-center text-white/50 text-sm mb-4">
+            Click any service below to book
+          </p>
+        )}
         {!hasAnyRates ? (
           <div className="profile-card rounded-3xl p-8 text-center">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/10 mb-4">
@@ -426,38 +399,15 @@ export default async function ModelRatesPage({ params }: Props) {
         {!isOwner && hasAnyRates && (
           <div className="mt-6 profile-card rounded-2xl p-5">
             <p className="text-center text-white/70 mb-4">
-              Ready to book {displayName}? Send a booking request to get started.
+              Have questions? Send {displayName} a message.
             </p>
-            {user ? (
-              <BookingRequestModal
-                modelId={model.id}
-                modelName={displayName}
-                modelRates={{
-                  photoshoot_hourly_rate: model.photoshoot_hourly_rate,
-                  photoshoot_half_day_rate: model.photoshoot_half_day_rate,
-                  photoshoot_full_day_rate: model.photoshoot_full_day_rate,
-                  promo_hourly_rate: model.promo_hourly_rate,
-                  brand_ambassador_daily_rate: model.brand_ambassador_daily_rate,
-                  private_event_hourly_rate: model.private_event_hourly_rate,
-                  social_companion_hourly_rate: model.social_companion_hourly_rate,
-                  meet_greet_rate: model.meet_greet_rate,
-                }}
-                trigger={
-                  <button className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white font-semibold transition-all hover:scale-[1.02]">
-                    <Calendar className="h-5 w-5" />
-                    Request Booking
-                  </button>
-                }
-              />
-            ) : (
-              <Link
-                href="/signin"
-                className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white font-semibold transition-all hover:scale-[1.02]"
-              >
-                <Calendar className="h-5 w-5" />
-                Sign In to Book
-              </Link>
-            )}
+            <Link
+              href={user ? `/chats?new=${model.username}` : "/signin"}
+              className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-white font-medium transition-colors"
+            >
+              <MessageCircle className="h-5 w-5" />
+              {user ? "Send Message" : "Sign In to Message"}
+            </Link>
           </div>
         )}
       </div>
