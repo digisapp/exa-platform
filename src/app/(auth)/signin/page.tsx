@@ -44,7 +44,7 @@ export default function LoginPage() {
         } else if (actor?.type === "fan") {
           window.location.href = "/models";
         } else if (actor?.type === "brand") {
-          window.location.href = "/models";
+          window.location.href = "/dashboard";
         } else {
           // No actor record - new user needs to complete signup
           window.location.href = "/fan/signup";

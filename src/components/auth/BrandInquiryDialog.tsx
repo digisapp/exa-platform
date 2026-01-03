@@ -159,8 +159,8 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
     }, 300);
   };
 
-  const handleGoToModels = () => {
-    window.location.href = "/models";
+  const handleGoToDashboard = () => {
+    window.location.href = "/dashboard";
   };
 
   return (
@@ -182,10 +182,10 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
               </p>
             </DialogHeader>
             <Button
-              onClick={handleGoToModels}
-              className="mt-6 bg-gradient-to-r from-pink-500 to-violet-500"
+              onClick={handleGoToDashboard}
+              className="mt-6 bg-gradient-to-r from-cyan-500 to-blue-600"
             >
-              Browse Models
+              Go to Dashboard
             </Button>
           </div>
         ) : (
