@@ -28,8 +28,9 @@ const SERVICE_LABELS: Record<string, string> = {
 
 // GET - Fetch bookings for current user
 export async function GET(request: NextRequest) {
+  const supabase = await createClient();
+
   try {
-    const supabase = await createClient();
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
     const role = searchParams.get("role"); // 'model' or 'client'
@@ -45,11 +46,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Get actor
-    const { data: actor, error: actorError } = await supabase
-      .from("actors")
+    const { data: actor, error: actorError } = await (supabase
+      .from("actors") as any)
       .select("id, type")
       .eq("user_id", user.id)
-      .maybeSingle() as { data: { id: string; type: string } | null; error: any };
+      .maybeSingle();
 
     if (actorError) {
       console.error("Actor fetch error:", actorError);
@@ -123,26 +124,26 @@ export async function GET(request: NextRequest) {
 
         // Fetch client info
         if (booking.client_id) {
-          const { data: clientActor } = await supabase
-            .from("actors")
+          const { data: clientActor } = await (supabase
+            .from("actors") as any)
             .select("id, type, user_id")
             .eq("id", booking.client_id)
-            .maybeSingle() as { data: { id: string; type: string; user_id: string } | null };
+            .maybeSingle();
 
           if (clientActor) {
             if (clientActor.type === "fan") {
-              const { data: fan } = await supabase
-                .from("fans")
+              const { data: fan } = await (supabase
+                .from("fans") as any)
                 .select("display_name, email, avatar_url")
                 .eq("id", clientActor.id)
-                .maybeSingle() as { data: { display_name: string; email: string; avatar_url: string } | null };
+                .maybeSingle();
               booking.client = { ...fan, type: "fan" };
             } else if (clientActor.type === "brand") {
-              const { data: brand } = await supabase
-                .from("brands")
+              const { data: brand } = await (supabase
+                .from("brands") as any)
                 .select("company_name, contact_name, email, logo_url")
                 .eq("id", clientActor.id)
-                .maybeSingle() as { data: { company_name: string; contact_name: string; email: string; logo_url: string } | null };
+                .maybeSingle();
               booking.client = { ...brand, type: "brand" };
             }
           }
@@ -154,9 +155,13 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({ bookings: bookings || [], serviceLabels: SERVICE_LABELS });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Bookings fetch error:", error);
-    return NextResponse.json({ error: "Failed to fetch bookings" }, { status: 500 });
+    return NextResponse.json({
+      error: "Failed to fetch bookings",
+      message: error?.message || "Unknown error",
+      stack: error?.stack?.split("\n").slice(0, 3)
+    }, { status: 500 });
   }
 }
 
