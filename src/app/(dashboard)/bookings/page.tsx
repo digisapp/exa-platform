@@ -380,7 +380,8 @@ export default function BookingsPage() {
 
                       {/* Right: Actions */}
                       <div className="flex flex-row md:flex-col gap-2 p-4 md:p-6 bg-muted/30 md:w-48 border-t md:border-t-0 md:border-l">
-                        {booking.status === "pending" && (
+                        {/* Model actions for pending bookings */}
+                        {booking.status === "pending" && userRole === "model" && (
                           <>
                             <Button
                               size="sm"
@@ -410,6 +411,44 @@ export default function BookingsPage() {
                             >
                               <XCircle className="h-4 w-4 mr-2" />
                               Decline
+                            </Button>
+                          </>
+                        )}
+                        {/* Model actions for counter status - can accept or decline the counter they sent */}
+                        {booking.status === "counter" && userRole === "model" && (
+                          <>
+                            <p className="text-xs text-muted-foreground text-center mb-2">
+                              Waiting for client response
+                            </p>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="flex-1 border-red-500/50 text-red-500 hover:bg-red-500/10"
+                              onClick={() => openResponseModal("decline", booking)}
+                              disabled={actionLoading === booking.id}
+                            >
+                              <XCircle className="h-4 w-4 mr-2" />
+                              Withdraw
+                            </Button>
+                          </>
+                        )}
+                        {/* Client actions for counter status - accept or decline counter offer */}
+                        {booking.status === "counter" && userRole === "client" && (
+                          <>
+                            <Button
+                              size="sm"
+                              className="flex-1 bg-green-500 hover:bg-green-600"
+                              onClick={() => handleAction("accept_counter", booking.id)}
+                              disabled={actionLoading === booking.id}
+                            >
+                              {actionLoading === booking.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <>
+                                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                                  Accept {booking.counter_amount?.toLocaleString()}
+                                </>
+                              )}
                             </Button>
                           </>
                         )}
@@ -455,7 +494,11 @@ export default function BookingsPage() {
                             </Button>
                           </>
                         )}
-                        {["pending", "accepted", "confirmed", "counter"].includes(booking.status) && (
+                        {/* Cancel button - only for clients on pending, or either party on accepted/confirmed */}
+                        {(
+                          (["accepted", "confirmed"].includes(booking.status)) ||
+                          (["pending", "counter"].includes(booking.status) && userRole === "client")
+                        ) && (
                           <Button
                             size="sm"
                             variant="ghost"
