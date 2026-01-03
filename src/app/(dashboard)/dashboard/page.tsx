@@ -836,31 +836,17 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
       )}
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border-cyan-500/20 hover:border-cyan-500/40 transition-colors">
-          <CardContent className="py-3 px-4">
-            <Link href="/models" className="flex items-center gap-3 group">
-              <div className="p-2 rounded-full bg-cyan-500/20 group-hover:bg-cyan-500/30 transition-colors">
-                <Users className="h-5 w-5 text-cyan-500" />
-              </div>
-              <p className="font-semibold group-hover:text-cyan-500 transition-colors flex-1">Models</p>
-              <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-cyan-500 transition-colors" />
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20 hover:border-green-500/40 transition-colors">
-          <CardContent className="py-3 px-4">
-            <Link href="/bookings" className="flex items-center gap-3 group">
-              <div className="p-2 rounded-full bg-green-500/20 group-hover:bg-green-500/30 transition-colors">
-                <Briefcase className="h-5 w-5 text-green-500" />
-              </div>
-              <p className="font-semibold group-hover:text-green-500 transition-colors flex-1">Bookings</p>
-              <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-green-500 transition-colors" />
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
+      <Card className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20 hover:border-green-500/40 transition-colors max-w-sm">
+        <CardContent className="py-3 px-4">
+          <Link href="/bookings" className="flex items-center gap-3 group">
+            <div className="p-2 rounded-full bg-green-500/20 group-hover:bg-green-500/30 transition-colors">
+              <Briefcase className="h-5 w-5 text-green-500" />
+            </div>
+            <p className="font-semibold group-hover:text-green-500 transition-colors flex-1">Bookings</p>
+            <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-green-500 transition-colors" />
+          </Link>
+        </CardContent>
+      </Card>
 
       {/* Favorite Models */}
       <Card>
