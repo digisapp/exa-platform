@@ -88,13 +88,18 @@ export default async function DashboardPage() {
     .eq("model_username", model.username);
 
   // Get pending bookings for this model
-  const { data: pendingBookings } = await (supabase
+  const { data: pendingBookings, error: bookingsError } = await (supabase
     .from("bookings") as any)
     .select("*")
     .eq("model_id", model.id)
     .in("status", ["pending", "counter"])
     .order("created_at", { ascending: false })
     .limit(5);
+
+  if (bookingsError) {
+    console.error("Failed to fetch bookings for dashboard:", bookingsError, "model.id:", model.id);
+  }
+  console.log("Dashboard bookings query - model.id:", model.id, "found:", pendingBookings?.length || 0);
 
   // Enrich bookings with client info
   for (const booking of pendingBookings || []) {
