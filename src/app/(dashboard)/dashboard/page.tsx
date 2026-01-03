@@ -161,66 +161,63 @@ export default async function DashboardPage() {
       </div>
 
       {/* Stats Overview */}
-      <Link href="/analytics" className="block group">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="bg-gradient-to-br from-pink-500/10 to-rose-500/10 border-pink-500/20 transition-all group-hover:border-pink-500/40">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-full bg-pink-500/20">
-                  <Heart className="h-5 w-5 text-pink-500" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{followerCount || 0}</p>
-                  <p className="text-xs text-muted-foreground">Followers</p>
-                </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="bg-gradient-to-br from-pink-500/10 to-rose-500/10 border-pink-500/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-pink-500/20">
+                <Heart className="h-5 w-5 text-pink-500" />
               </div>
-            </CardContent>
-          </Card>
+              <div>
+                <p className="text-2xl font-bold">{followerCount || 0}</p>
+                <p className="text-xs text-muted-foreground">Followers</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-          <Card className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border-blue-500/20 transition-all group-hover:border-blue-500/40">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-full bg-blue-500/20">
-                  <Eye className="h-5 w-5 text-blue-500" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{totalViews || 0}</p>
-                  <p className="text-xs text-muted-foreground">Profile Views</p>
-                </div>
+        <Card className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border-blue-500/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-blue-500/20">
+                <Eye className="h-5 w-5 text-blue-500" />
               </div>
-            </CardContent>
-          </Card>
+              <div>
+                <p className="text-2xl font-bold">{totalViews || 0}</p>
+                <p className="text-xs text-muted-foreground">Profile Views</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-          <Card className="bg-gradient-to-br from-violet-500/10 to-purple-500/10 border-violet-500/20 transition-all group-hover:border-violet-500/40">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-full bg-violet-500/20">
-                  <Camera className="h-5 w-5 text-violet-500" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{portfolioCount || 0}</p>
-                  <p className="text-xs text-muted-foreground">Portfolio</p>
-                </div>
+        <Card className="bg-gradient-to-br from-violet-500/10 to-purple-500/10 border-violet-500/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-violet-500/20">
+                <Camera className="h-5 w-5 text-violet-500" />
               </div>
-            </CardContent>
-          </Card>
+              <div>
+                <p className="text-2xl font-bold">{portfolioCount || 0}</p>
+                <p className="text-xs text-muted-foreground">Portfolio</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-          <Card className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 border-amber-500/20 transition-all group-hover:border-amber-500/40">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-full bg-amber-500/20">
-                  <Lock className="h-5 w-5 text-amber-500" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{ppvCount || 0}</p>
-                  <p className="text-xs text-muted-foreground">PPV Content</p>
-                </div>
+        <Card className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 border-amber-500/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-amber-500/20">
+                <Lock className="h-5 w-5 text-amber-500" />
               </div>
-            </CardContent>
-          </Card>
-        </div>
-        <p className="text-xs text-muted-foreground text-center mt-2 group-hover:text-pink-500 transition-colors">Tap to view detailed analytics</p>
-      </Link>
+              <div>
+                <p className="text-2xl font-bold">{ppvCount || 0}</p>
+                <p className="text-xs text-muted-foreground">PPV Content</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Recent Activity & Gigs */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
