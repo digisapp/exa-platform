@@ -95,26 +95,40 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let debugInfo: any = {};
   try {
     const { id } = await params;
+    debugInfo.bookingId = id;
     const supabase = await createClient();
 
     // Auth check
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError) {
+      console.error("Auth error:", authError);
+      return NextResponse.json({ error: "Auth error", details: authError.message }, { status: 401 });
+    }
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    debugInfo.userId = user.id;
 
     // Get actor
-    const { data: actor } = await (supabase
+    const { data: actor, error: actorError } = await (supabase
       .from("actors") as any)
       .select("id, type")
       .eq("user_id", user.id)
       .maybeSingle();
 
+    if (actorError) {
+      console.error("Actor fetch error:", actorError);
+      return NextResponse.json({ error: "Failed to fetch actor", details: actorError.message }, { status: 500 });
+    }
+
     if (!actor) {
+      console.error("Actor not found for user:", user.id);
       return NextResponse.json({ error: "Actor not found" }, { status: 404 });
     }
+    debugInfo.actor = actor;
 
     // Get existing booking
     const { data: booking, error: bookingError } = await (supabase.from("bookings") as any)
@@ -124,12 +138,13 @@ export async function PATCH(
 
     if (bookingError) {
       console.error("Failed to fetch booking:", bookingError);
-      return NextResponse.json({ error: "Failed to fetch booking" }, { status: 500 });
+      return NextResponse.json({ error: "Failed to fetch booking", details: bookingError.message }, { status: 500 });
     }
 
     if (!booking) {
       return NextResponse.json({ error: "Booking not found" }, { status: 404 });
     }
+    debugInfo.bookingStatus = booking.status;
 
     // Get model info separately
     if (booking.model_id) {
@@ -634,8 +649,12 @@ export async function PATCH(
       booking: updatedBooking,
       message: `Booking ${action}ed successfully`,
     });
-  } catch (error) {
-    console.error("Booking update error:", error);
-    return NextResponse.json({ error: "Failed to update booking" }, { status: 500 });
+  } catch (error: any) {
+    console.error("Booking update error:", error, "Debug:", debugInfo);
+    return NextResponse.json({
+      error: "Failed to update booking",
+      message: error?.message || "Unknown error",
+      debug: debugInfo
+    }, { status: 500 });
   }
 }
