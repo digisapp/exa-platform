@@ -41,6 +41,7 @@ interface BookingRequestModalProps {
   modelName: string;
   modelRates: ModelRates;
   trigger?: React.ReactNode;
+  defaultServiceType?: string;
 }
 
 const SERVICE_OPTIONS = [
@@ -55,13 +56,13 @@ const SERVICE_OPTIONS = [
   { value: "other", label: "Other (Describe Below)", rateField: null, unit: null },
 ];
 
-export function BookingRequestModal({ modelId, modelName, modelRates, trigger }: BookingRequestModalProps) {
+export function BookingRequestModal({ modelId, modelName, modelRates, trigger, defaultServiceType }: BookingRequestModalProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const [formData, setFormData] = useState({
-    serviceType: "",
+    serviceType: defaultServiceType || "",
     serviceDescription: "",
     eventDate: "",
     startTime: "",

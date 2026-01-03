@@ -17,6 +17,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { BookingRequestModal } from "@/components/bookings/BookingRequestModal";
+import { ClickableRateCard } from "@/components/bookings/ClickableRateCard";
 
 interface Props {
   params: Promise<{ username: string }>;
@@ -245,31 +246,43 @@ export default async function ModelRatesPage({ params }: Props) {
                 </h3>
                 <div className="space-y-3">
                   {(model.photoshoot_hourly_rate || 0) > 0 && (
-                    <div className="flex justify-between items-center p-3 rounded-xl bg-white/5">
-                      <div>
-                        <p className="text-white font-medium">Hourly Rate</p>
-                        <p className="text-sm text-white/50">Per hour of shooting</p>
-                      </div>
-                      <p className="text-xl font-bold text-pink-400">{model.photoshoot_hourly_rate?.toLocaleString()} coins</p>
-                    </div>
+                    <ClickableRateCard
+                      modelId={model.id}
+                      modelName={displayName}
+                      modelRates={model}
+                      serviceType="photoshoot_hourly"
+                      label="Hourly Rate"
+                      description="Per hour of shooting"
+                      rate={model.photoshoot_hourly_rate}
+                      colorClass="text-pink-400"
+                      isLoggedIn={!!user}
+                    />
                   )}
                   {(model.photoshoot_half_day_rate || 0) > 0 && (
-                    <div className="flex justify-between items-center p-3 rounded-xl bg-white/5">
-                      <div>
-                        <p className="text-white font-medium">Half-Day Rate</p>
-                        <p className="text-sm text-white/50">4 hours of shooting</p>
-                      </div>
-                      <p className="text-xl font-bold text-pink-400">{model.photoshoot_half_day_rate?.toLocaleString()} coins</p>
-                    </div>
+                    <ClickableRateCard
+                      modelId={model.id}
+                      modelName={displayName}
+                      modelRates={model}
+                      serviceType="photoshoot_half_day"
+                      label="Half-Day Rate"
+                      description="4 hours of shooting"
+                      rate={model.photoshoot_half_day_rate}
+                      colorClass="text-pink-400"
+                      isLoggedIn={!!user}
+                    />
                   )}
                   {(model.photoshoot_full_day_rate || 0) > 0 && (
-                    <div className="flex justify-between items-center p-3 rounded-xl bg-white/5">
-                      <div>
-                        <p className="text-white font-medium">Full-Day Rate</p>
-                        <p className="text-sm text-white/50">8 hours of shooting</p>
-                      </div>
-                      <p className="text-xl font-bold text-pink-400">{model.photoshoot_full_day_rate?.toLocaleString()} coins</p>
-                    </div>
+                    <ClickableRateCard
+                      modelId={model.id}
+                      modelName={displayName}
+                      modelRates={model}
+                      serviceType="photoshoot_full_day"
+                      label="Full-Day Rate"
+                      description="8 hours of shooting"
+                      rate={model.photoshoot_full_day_rate}
+                      colorClass="text-pink-400"
+                      isLoggedIn={!!user}
+                    />
                   )}
                 </div>
               </div>
@@ -284,22 +297,30 @@ export default async function ModelRatesPage({ params }: Props) {
                 </h3>
                 <div className="space-y-3">
                   {(model.promo_hourly_rate || 0) > 0 && (
-                    <div className="flex justify-between items-center p-3 rounded-xl bg-white/5">
-                      <div>
-                        <p className="text-white font-medium">Promo Modeling</p>
-                        <p className="text-sm text-white/50">Per hour for promotional work</p>
-                      </div>
-                      <p className="text-xl font-bold text-blue-400">{model.promo_hourly_rate?.toLocaleString()} coins</p>
-                    </div>
+                    <ClickableRateCard
+                      modelId={model.id}
+                      modelName={displayName}
+                      modelRates={model}
+                      serviceType="promo"
+                      label="Promo Modeling"
+                      description="Per hour for promotional work"
+                      rate={model.promo_hourly_rate}
+                      colorClass="text-blue-400"
+                      isLoggedIn={!!user}
+                    />
                   )}
                   {(model.brand_ambassador_daily_rate || 0) > 0 && (
-                    <div className="flex justify-between items-center p-3 rounded-xl bg-white/5">
-                      <div>
-                        <p className="text-white font-medium">Brand Ambassador</p>
-                        <p className="text-sm text-white/50">Daily rate for brand work</p>
-                      </div>
-                      <p className="text-xl font-bold text-blue-400">{model.brand_ambassador_daily_rate?.toLocaleString()} coins</p>
-                    </div>
+                    <ClickableRateCard
+                      modelId={model.id}
+                      modelName={displayName}
+                      modelRates={model}
+                      serviceType="brand_ambassador"
+                      label="Brand Ambassador"
+                      description="Daily rate for brand work"
+                      rate={model.brand_ambassador_daily_rate}
+                      colorClass="text-blue-400"
+                      isLoggedIn={!!user}
+                    />
                   )}
                 </div>
               </div>
@@ -314,31 +335,43 @@ export default async function ModelRatesPage({ params }: Props) {
                 </h3>
                 <div className="space-y-3">
                   {(model.private_event_hourly_rate || 0) > 0 && (
-                    <div className="flex justify-between items-center p-3 rounded-xl bg-white/5">
-                      <div>
-                        <p className="text-white font-medium">Private Events</p>
-                        <p className="text-sm text-white/50">Per hour for private events</p>
-                      </div>
-                      <p className="text-xl font-bold text-violet-400">{model.private_event_hourly_rate?.toLocaleString()} coins</p>
-                    </div>
+                    <ClickableRateCard
+                      modelId={model.id}
+                      modelName={displayName}
+                      modelRates={model}
+                      serviceType="private_event"
+                      label="Private Events"
+                      description="Per hour for private events"
+                      rate={model.private_event_hourly_rate}
+                      colorClass="text-violet-400"
+                      isLoggedIn={!!user}
+                    />
                   )}
                   {(model.social_companion_hourly_rate || 0) > 0 && (
-                    <div className="flex justify-between items-center p-3 rounded-xl bg-white/5">
-                      <div>
-                        <p className="text-white font-medium">Social Companion</p>
-                        <p className="text-sm text-white/50">Per hour for social events</p>
-                      </div>
-                      <p className="text-xl font-bold text-violet-400">{model.social_companion_hourly_rate?.toLocaleString()} coins</p>
-                    </div>
+                    <ClickableRateCard
+                      modelId={model.id}
+                      modelName={displayName}
+                      modelRates={model}
+                      serviceType="social_companion"
+                      label="Social Companion"
+                      description="Per hour for social events"
+                      rate={model.social_companion_hourly_rate}
+                      colorClass="text-violet-400"
+                      isLoggedIn={!!user}
+                    />
                   )}
                   {(model.meet_greet_rate || 0) > 0 && (
-                    <div className="flex justify-between items-center p-3 rounded-xl bg-white/5">
-                      <div>
-                        <p className="text-white font-medium">Meet & Greet</p>
-                        <p className="text-sm text-white/50">Flat fee for appearances</p>
-                      </div>
-                      <p className="text-xl font-bold text-violet-400">{model.meet_greet_rate?.toLocaleString()} coins</p>
-                    </div>
+                    <ClickableRateCard
+                      modelId={model.id}
+                      modelName={displayName}
+                      modelRates={model}
+                      serviceType="meet_greet"
+                      label="Meet & Greet"
+                      description="Flat fee for appearances"
+                      rate={model.meet_greet_rate}
+                      colorClass="text-violet-400"
+                      isLoggedIn={!!user}
+                    />
                   )}
                 </div>
               </div>
