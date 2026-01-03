@@ -54,7 +54,14 @@ import {
   KeyRound,
   UserPlus,
   Sparkles,
+  Building2,
+  Globe,
+  Instagram,
+  ExternalLink,
 } from "lucide-react";
+import { TikTokIcon } from "@/components/ui/tiktok-icon";
+import { Badge } from "@/components/ui/badge";
+import { ApproveRejectButtons } from "@/components/admin/AdminActions";
 import { toast } from "sonner";
 import { ModelActionsDropdown, FanActionsDropdown } from "@/components/admin/AdminActions";
 
@@ -379,6 +386,33 @@ interface Fan {
   report_count?: number;
 }
 
+interface Brand {
+  id: string;
+  company_name: string;
+  contact_name: string | null;
+  email: string;
+  website: string | null;
+  bio: string | null;
+  subscription_tier: string;
+  form_data: {
+    industry?: string;
+    budget_range?: string;
+  } | null;
+  created_at: string;
+}
+
+interface ModelApplication {
+  id: string;
+  display_name: string;
+  email: string;
+  instagram_username: string | null;
+  tiktok_username: string | null;
+  date_of_birth: string | null;
+  height: string | null;
+  status: string;
+  created_at: string;
+}
+
 type ModelSortField = "profile_views" | "coin_balance" | "followers_count" | "instagram_followers" | "admin_rating" | "created_at" | "joined_at" | "total_earned" | "content_count" | "last_post" | "last_seen" | "message_count";
 type FanSortField = "coins_spent" | "following_count" | "coin_balance" | "created_at" | "report_count";
 type SortDirection = "asc" | "desc";
@@ -405,6 +439,8 @@ export default function AdminCommunityPage() {
     approvedModels: 0,
     totalFans: 0,
     activeFans: 0,
+    pendingBrands: 0,
+    pendingModelApps: 0,
   });
 
   // Invite stats
@@ -450,6 +486,14 @@ export default function AdminCommunityPage() {
   const [fansSortField, setFansSortField] = useState<FanSortField>("created_at");
   const [fansSortDirection, setFansSortDirection] = useState<SortDirection>("desc");
 
+  // Brands state
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [brandsLoading, setBrandsLoading] = useState(true);
+
+  // Model applications state
+  const [modelApps, setModelApps] = useState<ModelApplication[]>([]);
+  const [modelAppsLoading, setModelAppsLoading] = useState(true);
+
   // Load stats
   const loadStats = useCallback(async () => {
     const [
@@ -457,11 +501,15 @@ export default function AdminCommunityPage() {
       { count: approvedModels },
       { count: totalFans },
       { count: activeFans },
+      { count: pendingBrands },
+      { count: pendingModelApps },
     ] = await Promise.all([
       (supabase.from("models") as any).select("*", { count: "exact", head: true }),
       (supabase.from("models") as any).select("*", { count: "exact", head: true }).eq("is_approved", true),
       (supabase.from("fans") as any).select("*", { count: "exact", head: true }),
       (supabase.from("fans") as any).select("*", { count: "exact", head: true }).eq("is_suspended", false),
+      (supabase.from("brands") as any).select("*", { count: "exact", head: true }).eq("subscription_tier", "inquiry"),
+      (supabase.from("model_applications") as any).select("*", { count: "exact", head: true }).eq("status", "pending"),
     ]);
 
     setStats({
@@ -469,6 +517,8 @@ export default function AdminCommunityPage() {
       approvedModels: approvedModels || 0,
       totalFans: totalFans || 0,
       activeFans: activeFans || 0,
+      pendingBrands: pendingBrands || 0,
+      pendingModelApps: pendingModelApps || 0,
     });
   }, [supabase]);
 
@@ -695,6 +745,30 @@ export default function AdminCommunityPage() {
     setFansLoading(false);
   }, [supabase, fansSearch, fansStateFilter, fansStatusFilter, fansReportsFilter, fansSortField, fansSortDirection, fansPage]);
 
+  // Load brands (inquiries)
+  const loadBrands = useCallback(async () => {
+    setBrandsLoading(true);
+    const { data } = await (supabase.from("brands") as any)
+      .select("*")
+      .eq("subscription_tier", "inquiry")
+      .order("created_at", { ascending: false })
+      .limit(50);
+    setBrands(data || []);
+    setBrandsLoading(false);
+  }, [supabase]);
+
+  // Load model applications
+  const loadModelApps = useCallback(async () => {
+    setModelAppsLoading(true);
+    const { data } = await (supabase.from("model_applications") as any)
+      .select("*")
+      .eq("status", "pending")
+      .order("created_at", { ascending: false })
+      .limit(50);
+    setModelApps(data || []);
+    setModelAppsLoading(false);
+  }, [supabase]);
+
   useEffect(() => {
     void loadStats();
     void loadInviteStats();
@@ -702,7 +776,10 @@ export default function AdminCommunityPage() {
   }, []);
 
   useEffect(() => {
-    if (activeTab === "models") void loadModels();
+    if (activeTab === "models") {
+      void loadModels();
+      void loadModelApps(); // Also load model apps for the alert
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, modelsSearch, modelsStateFilter, modelsApprovalFilter, modelsRatingFilter, modelsClaimFilter, modelsSortField, modelsSortDirection, modelsPage]);
 
@@ -710,6 +787,11 @@ export default function AdminCommunityPage() {
     if (activeTab === "fans") void loadFans();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, fansSearch, fansStateFilter, fansStatusFilter, fansReportsFilter, fansSortField, fansSortDirection, fansPage]);
+
+  useEffect(() => {
+    if (activeTab === "brands") void loadBrands();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   const handleRatingChange = (modelId: string, rating: number | null) => {
     setModels(prev => prev.map(m => m.id === modelId ? { ...m, admin_rating: rating } : m));
@@ -799,7 +881,7 @@ export default function AdminCommunityPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
+        <TabsList className="grid w-full max-w-2xl grid-cols-3">
           <TabsTrigger value="models" className="gap-2">
             <Users className="h-4 w-4" />
             Models ({stats.totalModels.toLocaleString()})
@@ -808,10 +890,84 @@ export default function AdminCommunityPage() {
             <Heart className="h-4 w-4" />
             Fans ({stats.totalFans.toLocaleString()})
           </TabsTrigger>
+          <TabsTrigger value="brands" className="gap-2">
+            <Building2 className="h-4 w-4" />
+            Brands ({stats.pendingBrands})
+          </TabsTrigger>
         </TabsList>
 
         {/* Models Tab */}
         <TabsContent value="models" className="space-y-6">
+          {/* Model Applications Section */}
+          {stats.pendingModelApps > 0 && (
+            <Card className="border-pink-500/50 bg-pink-500/5">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <UserPlus className="h-5 w-5 text-pink-500" />
+                    <CardTitle className="text-lg">Model Applications ({stats.pendingModelApps})</CardTitle>
+                  </div>
+                </div>
+                <CardDescription>Fans who want to become verified models</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {modelAppsLoading ? (
+                  <div className="flex items-center justify-center py-6">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : modelApps.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">No pending applications</p>
+                ) : (
+                  <div className="space-y-3">
+                    {modelApps.slice(0, 5).map((app) => (
+                      <div key={app.id} className="p-3 rounded-lg bg-muted/50 flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center text-white font-bold">
+                            {app.display_name?.charAt(0).toUpperCase() || "?"}
+                          </div>
+                          <div>
+                            <p className="font-medium">{app.display_name}</p>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <span>{app.email}</span>
+                              {app.instagram_username && (
+                                <a
+                                  href={`https://instagram.com/${app.instagram_username}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-pink-500 hover:text-pink-400 flex items-center gap-1"
+                                >
+                                  <Instagram className="h-3 w-3" />
+                                  @{app.instagram_username}
+                                </a>
+                              )}
+                              {app.tiktok_username && (
+                                <a
+                                  href={`https://tiktok.com/@${app.tiktok_username}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-white hover:text-white/80 flex items-center gap-1"
+                                >
+                                  <TikTokIcon className="h-3 w-3" />
+                                  @{app.tiktok_username}
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <ApproveRejectButtons id={app.id} type="model_application" onSuccess={() => { loadModelApps(); loadStats(); }} />
+                      </div>
+                    ))}
+                    {modelApps.length > 5 && (
+                      <p className="text-xs text-muted-foreground text-center">
+                        +{modelApps.length - 5} more applications
+                      </p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Invite Stats & Send Button */}
           {inviteStats.pending > 0 && (
             <Card className="border-amber-500/50 bg-amber-500/5">
@@ -1235,6 +1391,90 @@ export default function AdminCommunityPage() {
                       ))}
                     </TableBody>
                   </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Brands Tab */}
+        <TabsContent value="brands" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Brand Inquiries</CardTitle>
+              <CardDescription>Partnership requests from brands</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {brandsLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : brands.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Building2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No brand inquiries yet</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {brands.map((brand) => (
+                    <div
+                      key={brand.id}
+                      className="p-4 rounded-lg bg-muted/50 space-y-3"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg">
+                            {brand.company_name?.charAt(0).toUpperCase() || "B"}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-lg">{brand.company_name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {brand.contact_name}
+                            </p>
+                          </div>
+                        </div>
+                        <Badge variant="outline" className="bg-cyan-500/10 text-cyan-500 border-cyan-500/50">
+                          Inquiry
+                        </Badge>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div className="flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-muted-foreground truncate">{brand.email}</span>
+                        </div>
+                        {brand.website && (
+                          <div className="flex items-center gap-2">
+                            <Globe className="h-4 w-4 text-muted-foreground" />
+                            <a href={brand.website} target="_blank" rel="noopener noreferrer" className="text-cyan-500 hover:underline truncate flex items-center gap-1">
+                              Website <ExternalLink className="h-3 w-3" />
+                            </a>
+                          </div>
+                        )}
+                        {brand.form_data?.industry && (
+                          <div className="flex items-center gap-2">
+                            <Building2 className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">{brand.form_data.industry}</span>
+                          </div>
+                        )}
+                        {brand.form_data?.budget_range && (
+                          <div className="text-muted-foreground">
+                            Budget: {brand.form_data.budget_range.replace(/_/g, " ")}
+                          </div>
+                        )}
+                      </div>
+                      {brand.bio && (
+                        <p className="text-sm text-muted-foreground bg-background/50 p-3 rounded">
+                          {brand.bio}
+                        </p>
+                      )}
+                      <div className="flex items-center justify-between pt-2">
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(brand.created_at).toLocaleDateString()}
+                        </span>
+                        <ApproveRejectButtons id={brand.id} type="brand" onSuccess={() => { loadBrands(); loadStats(); }} />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </CardContent>

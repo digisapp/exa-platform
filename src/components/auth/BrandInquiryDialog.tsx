@@ -142,7 +142,7 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
         throw actorError;
       }
 
-      // Create brand profile
+      // Create brand profile (inquiry tier so it shows in admin for approval)
       const { error: brandError } = await (supabase
         .from("brands") as any)
         .insert({
@@ -153,7 +153,7 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
           email: email.toLowerCase().trim(),
           bio: message.trim() || null,
           is_verified: false,
-          subscription_tier: "free",
+          subscription_tier: "inquiry",
         });
 
       if (brandError) {
@@ -201,9 +201,10 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
               <CheckCircle className="h-8 w-8 text-green-500" />
             </div>
             <DialogHeader className="text-center">
-              <DialogTitle className="text-xl">Welcome to EXA!</DialogTitle>
+              <DialogTitle className="text-xl">Application Submitted!</DialogTitle>
               <p className="text-muted-foreground mt-2">
-                Your brand account is ready. Start browsing models!
+                We&apos;ll review your brand and get back to you within 24 hours.
+                In the meantime, feel free to browse our models!
               </p>
             </DialogHeader>
             <Button
