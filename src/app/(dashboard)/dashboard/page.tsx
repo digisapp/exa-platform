@@ -878,31 +878,25 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border-cyan-500/20 hover:border-cyan-500/40 transition-colors">
-          <CardContent className="pt-6">
-            <Link href="/models" className="flex items-center gap-4 group">
-              <div className="p-3 rounded-full bg-cyan-500/20 group-hover:bg-cyan-500/30 transition-colors">
-                <Users className="h-6 w-6 text-cyan-500" />
+          <CardContent className="py-3 px-4">
+            <Link href="/models" className="flex items-center gap-3 group">
+              <div className="p-2 rounded-full bg-cyan-500/20 group-hover:bg-cyan-500/30 transition-colors">
+                <Users className="h-5 w-5 text-cyan-500" />
               </div>
-              <div className="flex-1">
-                <p className="font-semibold group-hover:text-cyan-500 transition-colors">Browse Models</p>
-                <p className="text-xs text-muted-foreground">Find talent for your campaigns</p>
-              </div>
-              <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-cyan-500 transition-colors" />
+              <p className="font-semibold group-hover:text-cyan-500 transition-colors flex-1">Models</p>
+              <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-cyan-500 transition-colors" />
             </Link>
           </CardContent>
         </Card>
 
         <Card className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20 hover:border-green-500/40 transition-colors">
-          <CardContent className="pt-6">
-            <Link href="/bookings" className="flex items-center gap-4 group">
-              <div className="p-3 rounded-full bg-green-500/20 group-hover:bg-green-500/30 transition-colors">
-                <Briefcase className="h-6 w-6 text-green-500" />
+          <CardContent className="py-3 px-4">
+            <Link href="/bookings" className="flex items-center gap-3 group">
+              <div className="p-2 rounded-full bg-green-500/20 group-hover:bg-green-500/30 transition-colors">
+                <Briefcase className="h-5 w-5 text-green-500" />
               </div>
-              <div className="flex-1">
-                <p className="font-semibold group-hover:text-green-500 transition-colors">My Bookings</p>
-                <p className="text-xs text-muted-foreground">Manage your inquiries</p>
-              </div>
-              <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-green-500 transition-colors" />
+              <p className="font-semibold group-hover:text-green-500 transition-colors flex-1">Bookings</p>
+              <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-green-500 transition-colors" />
             </Link>
           </CardContent>
         </Card>
