@@ -309,14 +309,9 @@ export function BookingRequestModal({ modelId, modelName, modelRates, trigger }:
                   <DollarSign className="h-5 w-5 text-pink-500" />
                   <span className="font-medium">Estimated Total</span>
                 </div>
-                <div className="text-right">
-                  <span className="text-2xl font-bold text-pink-500">
-                    {calculateTotal().toLocaleString()} coins
-                  </span>
-                  <p className="text-xs text-green-500">
-                    ≈ ${(calculateTotal() * 0.10).toFixed(2)} USD
-                  </p>
-                </div>
+                <span className="text-2xl font-bold text-pink-500">
+                  {calculateTotal().toLocaleString()} coins
+                </span>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 Final amount may vary. Model will confirm pricing.
