@@ -251,6 +251,26 @@ export default function ProfilePage() {
 
         if (brandData) {
           setBrand(brandData);
+        } else {
+          // Brand record doesn't exist - create it
+          console.log("Brand record not found, creating one for actor:", actorData.id);
+          const { data: newBrand, error: createError } = await (supabase
+            .from("brands") as any)
+            .insert({
+              id: actorData.id,
+              email: user.email,
+              company_name: "My Brand",
+              is_verified: false,
+              subscription_tier: "inquiry",
+            })
+            .select()
+            .single();
+
+          if (createError) {
+            console.error("Failed to create brand record:", createError);
+          } else if (newBrand) {
+            setBrand(newBrand as Brand);
+          }
         }
       }
 

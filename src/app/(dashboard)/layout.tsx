@@ -57,8 +57,29 @@ export default async function DashboardLayout({
       .select("company_name, logo_url, coin_balance")
       .eq("id", actor.id)
       .single() as { data: any };
-    profileData = data;
-    coinBalance = data?.coin_balance ?? 0;
+
+    if (data) {
+      profileData = data;
+      coinBalance = data?.coin_balance ?? 0;
+    } else {
+      // Brand record doesn't exist - create it
+      const { data: newBrand } = await (supabase
+        .from("brands") as any)
+        .insert({
+          id: actor.id,
+          email: user.email,
+          company_name: "My Brand",
+          is_verified: false,
+          subscription_tier: "inquiry",
+        })
+        .select("company_name, logo_url, coin_balance")
+        .single();
+
+      if (newBrand) {
+        profileData = newBrand;
+        coinBalance = newBrand?.coin_balance ?? 0;
+      }
+    }
   }
 
   const displayName = actor?.type === "fan"
