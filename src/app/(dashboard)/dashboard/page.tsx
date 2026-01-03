@@ -20,7 +20,6 @@ import {
   MapPin,
   Eye,
   Camera,
-  ExternalLink,
   TrendingUp,
   Building2,
   CheckCircle,
@@ -144,47 +143,26 @@ export default async function DashboardPage() {
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       {/* Welcome Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="relative h-16 w-16 rounded-full overflow-hidden ring-2 ring-pink-500/30 bg-gradient-to-br from-pink-500/20 to-violet-500/20">
-            {model.profile_photo_url ? (
-              <Image
-                src={model.profile_photo_url}
-                alt={displayName}
-                fill
-                className="object-cover"
-              />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-2xl">👤</span>
-              </div>
-            )}
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold">Welcome back, {model.first_name || model.username}!</h1>
-            <p className="text-muted-foreground">@{model.username}</p>
-          </div>
-        </div>
-        <Button variant="outline" asChild>
-          <Link href={`/${model.username}`} target="_blank">
-            <ExternalLink className="mr-2 h-4 w-4" />
-            View Profile
-          </Link>
-        </Button>
-      </div>
-
-      {/* Bookings Quick Action */}
-      <Card className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20 hover:border-green-500/40 transition-colors">
-        <CardContent className="p-3">
-          <Link href="/bookings" className="flex items-center gap-3 group">
-            <div className="p-2 rounded-full bg-green-500/20 group-hover:bg-green-500/30 transition-colors">
-              <Calendar className="h-5 w-5 text-green-500" />
+      <div className="flex items-center gap-4">
+        <div className="relative h-16 w-16 rounded-full overflow-hidden ring-2 ring-pink-500/30 bg-gradient-to-br from-pink-500/20 to-violet-500/20">
+          {model.profile_photo_url ? (
+            <Image
+              src={model.profile_photo_url}
+              alt={displayName}
+              fill
+              className="object-cover"
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-2xl">👤</span>
             </div>
-            <p className="flex-1 font-medium group-hover:text-green-500 transition-colors">Bookings</p>
-            <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-green-500 transition-colors" />
-          </Link>
-        </CardContent>
-      </Card>
+          )}
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold">Welcome back, {model.first_name || model.username}!</h1>
+          <p className="text-muted-foreground">@{model.username}</p>
+        </div>
+      </div>
 
       {/* Stats Overview */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -245,78 +223,30 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      {/* Recent Activity & Gigs */}
+      {/* Bookings & Gigs */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Recent Activity */}
+        {/* Bookings */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5" />
-              Recent Activity
+              <Calendar className="h-5 w-5 text-green-500" />
+              Bookings
             </CardTitle>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/bookings" className="text-green-500">
+                View All
+                <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </Button>
           </CardHeader>
           <CardContent>
-            {recentActivity.length > 0 ? (
-              <div className="space-y-2">
-                {recentActivity.map((item) => (
-                  <div key={`${item.type}-${item.id}`} className="flex items-center justify-between p-3 rounded-xl bg-muted/50 hover:bg-muted/80 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-full ${
-                        item.type === "coins"
-                          ? item.action === "tip_received" ? "bg-pink-500/20" :
-                            item.action === "content_sale" ? "bg-violet-500/20" : "bg-amber-500/20"
-                          : "bg-green-500/20"
-                      }`}>
-                        {item.type === "coins" ? (
-                          item.action === "tip_received" ? (
-                            <Heart className="h-4 w-4 text-pink-500" />
-                          ) : item.action === "content_sale" ? (
-                            <Lock className="h-4 w-4 text-violet-500" />
-                          ) : (
-                            <Coins className="h-4 w-4 text-amber-500" />
-                          )
-                        ) : (
-                          item.action === "photo_upload" || item.action === "portfolio_photo" ? (
-                            <ImageIcon className="h-4 w-4 text-green-500" />
-                          ) : (
-                            <Trophy className="h-4 w-4 text-green-500" />
-                          )
-                        )}
-                      </div>
-                      <div>
-                        <p className="font-medium capitalize text-sm">{item.action.replace(/_/g, " ")}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(item.created_at).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                    <span className={`font-bold text-sm ${
-                      item.value >= 0 ? "text-green-500" : "text-red-500"
-                    }`}>
-                      {item.type === "coins" ? (
-                        <span className="flex items-center gap-1">
-                          {item.value >= 0 ? "+" : ""}{item.value}
-                          <Coins className="h-3 w-3" />
-                        </span>
-                      ) : (
-                        `+${item.value} pts`
-                      )}
-                    </span>
-                  </div>
-                ))}
+            <div className="text-center py-8">
+              <div className="p-4 rounded-full bg-green-500/10 inline-block mb-4">
+                <Calendar className="h-8 w-8 text-green-500" />
               </div>
-            ) : (
-              <div className="text-center py-12">
-                <div className="p-4 rounded-full bg-muted inline-block mb-4">
-                  <Activity className="h-8 w-8 text-muted-foreground" />
-                </div>
-                <p className="text-muted-foreground">No recent activity</p>
-                <p className="text-sm text-muted-foreground mt-1">Upload content to get started</p>
-              </div>
-            )}
+              <p className="text-muted-foreground">No pending bookings</p>
+              <p className="text-sm text-muted-foreground mt-1">Booking requests will appear here</p>
+            </div>
           </CardContent>
         </Card>
 
@@ -327,6 +257,79 @@ export default async function DashboardPage() {
           isApproved={model.is_approved}
         />
       </div>
+
+      {/* Recent Activity */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5" />
+            Recent Activity
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {recentActivity.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {recentActivity.map((item) => (
+                <div key={`${item.type}-${item.id}`} className="flex items-center justify-between p-3 rounded-xl bg-muted/50 hover:bg-muted/80 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-full ${
+                      item.type === "coins"
+                        ? item.action === "tip_received" ? "bg-pink-500/20" :
+                          item.action === "content_sale" ? "bg-violet-500/20" : "bg-amber-500/20"
+                        : "bg-green-500/20"
+                    }`}>
+                      {item.type === "coins" ? (
+                        item.action === "tip_received" ? (
+                          <Heart className="h-4 w-4 text-pink-500" />
+                        ) : item.action === "content_sale" ? (
+                          <Lock className="h-4 w-4 text-violet-500" />
+                        ) : (
+                          <Coins className="h-4 w-4 text-amber-500" />
+                        )
+                      ) : (
+                        item.action === "photo_upload" || item.action === "portfolio_photo" ? (
+                          <ImageIcon className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <Trophy className="h-4 w-4 text-green-500" />
+                        )
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium capitalize text-sm">{item.action.replace(/_/g, " ")}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(item.created_at).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                  <span className={`font-bold text-sm ${
+                    item.value >= 0 ? "text-green-500" : "text-red-500"
+                  }`}>
+                    {item.type === "coins" ? (
+                      <span className="flex items-center gap-1">
+                        {item.value >= 0 ? "+" : ""}{item.value}
+                        <Coins className="h-3 w-3" />
+                      </span>
+                    ) : (
+                      `+${item.value} pts`
+                    )}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <div className="p-4 rounded-full bg-muted inline-block mb-4">
+                <Activity className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <p className="text-muted-foreground">No recent activity</p>
+              <p className="text-sm text-muted-foreground mt-1">Upload content to get started</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
