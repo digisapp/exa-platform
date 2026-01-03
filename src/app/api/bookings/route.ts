@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { sendBookingRequestEmail } from "@/lib/email";
 
 // Service type to rate field mapping
 const SERVICE_RATE_FIELDS: Record<string, string> = {
@@ -354,6 +355,45 @@ export async function POST(request: NextRequest) {
     } catch (notifError) {
       console.error("Failed to create notification:", notifError);
       // Don't fail the booking request if notification fails
+    }
+
+    // Send email to model (don't fail if this errors)
+    try {
+      if (model.email) {
+        // Get client name
+        let clientName = "A user";
+        let clientType: "fan" | "brand" = "fan";
+
+        if (actor.type === "fan") {
+          const { data: fan } = await (supabase.from("fans") as any)
+            .select("display_name")
+            .eq("id", actor.id)
+            .single();
+          clientName = fan?.display_name || "A fan";
+          clientType = "fan";
+        } else if (actor.type === "brand") {
+          const { data: brand } = await (supabase.from("brands") as any)
+            .select("company_name, contact_name")
+            .eq("id", actor.id)
+            .single();
+          clientName = brand?.company_name || brand?.contact_name || "A brand";
+          clientType = "brand";
+        }
+
+        await sendBookingRequestEmail({
+          to: model.email,
+          modelName: model.first_name || model.username || "there",
+          clientName,
+          clientType,
+          serviceType: SERVICE_LABELS[serviceType] || serviceType,
+          eventDate,
+          totalAmount,
+          bookingNumber: booking.booking_number,
+        });
+      }
+    } catch (emailError) {
+      console.error("Failed to send booking request email:", emailError);
+      // Don't fail the booking request if email fails
     }
 
     return NextResponse.json({

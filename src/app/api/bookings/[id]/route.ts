@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { sendBookingAcceptedEmail, sendBookingDeclinedEmail } from "@/lib/email";
 
 // Service type labels
 const SERVICE_LABELS: Record<string, string> = {
@@ -541,6 +542,68 @@ export async function PATCH(
     // Send notification
     if (notificationData) {
       await (supabase.from("notifications") as any).insert(notificationData);
+    }
+
+    // Send email to client for accept/decline actions (don't fail if this errors)
+    if (action === "accept" || action === "decline") {
+      try {
+        // Get client info and email
+        const { data: clientActorInfo } = await (supabase.from("actors") as any)
+          .select("id, type")
+          .eq("id", booking.client_id)
+          .single();
+
+        let clientEmail: string | null = null;
+        let clientName = "there";
+
+        if (clientActorInfo?.type === "fan") {
+          const { data: fan } = await (supabase.from("fans") as any)
+            .select("email, display_name")
+            .eq("id", clientActorInfo.id)
+            .single();
+          clientEmail = fan?.email;
+          clientName = fan?.display_name || "there";
+        } else if (clientActorInfo?.type === "brand") {
+          const { data: brand } = await (supabase.from("brands") as any)
+            .select("email, company_name, contact_name")
+            .eq("id", clientActorInfo.id)
+            .single();
+          clientEmail = brand?.email;
+          clientName = brand?.company_name || brand?.contact_name || "there";
+        }
+
+        if (clientEmail) {
+          const modelName = booking.model?.first_name || booking.model?.username || "The model";
+          const modelUsername = booking.model?.username || "";
+
+          if (action === "accept") {
+            await sendBookingAcceptedEmail({
+              to: clientEmail,
+              clientName,
+              modelName,
+              modelUsername,
+              serviceType: SERVICE_LABELS[booking.service_type] || booking.service_type,
+              eventDate: booking.event_date,
+              totalAmount: booking.total_amount || 0,
+              bookingNumber: booking.booking_number,
+            });
+          } else if (action === "decline") {
+            await sendBookingDeclinedEmail({
+              to: clientEmail,
+              clientName,
+              modelName,
+              modelUsername,
+              serviceType: SERVICE_LABELS[booking.service_type] || booking.service_type,
+              eventDate: booking.event_date,
+              bookingNumber: booking.booking_number,
+              reason: responseNotes || undefined,
+            });
+          }
+        }
+      } catch (emailError) {
+        console.error("Failed to send booking email:", emailError);
+        // Don't fail the booking update if email fails
+      }
     }
 
     return NextResponse.json({

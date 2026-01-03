@@ -659,6 +659,500 @@ export async function sendTipReceivedEmail({
   }
 }
 
+// ============================================
+// BOOKING NOTIFICATION EMAILS
+// ============================================
+
+export async function sendBookingRequestEmail({
+  to,
+  modelName,
+  clientName,
+  clientType,
+  serviceType,
+  eventDate,
+  totalAmount,
+  bookingNumber,
+}: {
+  to: string;
+  modelName: string;
+  clientName: string;
+  clientType: "fan" | "brand";
+  serviceType: string;
+  eventDate: string;
+  totalAmount: number;
+  bookingNumber: string;
+}) {
+  try {
+    const resend = getResendClient();
+    const bookingsUrl = "https://www.examodels.com/bookings";
+    const formattedDate = new Date(eventDate).toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      subject: `New Booking Request from ${clientName}`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 30px; text-align: center;">
+              <p style="margin: 0; font-size: 48px;">📅</p>
+              <h1 style="margin: 10px 0 0; color: white; font-size: 24px; font-weight: bold;">
+                New Booking Request!
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
+                Hey ${modelName}!
+              </p>
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                You have a new booking request from <strong style="color: #ffffff;">${clientName}</strong>${clientType === "brand" ? " (Brand)" : ""}.
+              </p>
+
+              <!-- Booking Details -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px; background-color: #262626; border-radius: 12px; overflow: hidden;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding-bottom: 15px; border-bottom: 1px solid #404040;">
+                          <p style="margin: 0 0 5px; color: #71717a; font-size: 12px; text-transform: uppercase;">Booking #</p>
+                          <p style="margin: 0; color: #ffffff; font-size: 14px;">${bookingNumber}</p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 15px 0; border-bottom: 1px solid #404040;">
+                          <p style="margin: 0 0 5px; color: #71717a; font-size: 12px; text-transform: uppercase;">Service</p>
+                          <p style="margin: 0; color: #ffffff; font-size: 16px; font-weight: 500;">${serviceType}</p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 15px 0; border-bottom: 1px solid #404040;">
+                          <p style="margin: 0 0 5px; color: #71717a; font-size: 12px; text-transform: uppercase;">Date</p>
+                          <p style="margin: 0; color: #ffffff; font-size: 16px;">${formattedDate}</p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding-top: 15px;">
+                          <p style="margin: 0 0 5px; color: #71717a; font-size: 12px; text-transform: uppercase;">Amount</p>
+                          <p style="margin: 0; color: #10b981; font-size: 24px; font-weight: bold;">${totalAmount.toLocaleString()} coins</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Urgency Note -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+                <tr>
+                  <td style="padding: 15px; background-color: #422006; border-radius: 8px; border-left: 3px solid #f59e0b;">
+                    <p style="margin: 0; color: #fcd34d; font-size: 14px;">
+                      ⏰ Respond quickly! The client's coins are soft-reserved until you accept or decline.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="${bookingsUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                      View Booking Request
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 30px; border-top: 1px solid #262626; text-align: center;">
+              <p style="margin: 0; color: #71717a; font-size: 12px;">
+                EXA Models - Where Models Shine
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      console.error("Resend error:", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error("Email send error:", error);
+    return { success: false, error };
+  }
+}
+
+export async function sendBookingAcceptedEmail({
+  to,
+  clientName,
+  modelName,
+  modelUsername,
+  serviceType,
+  eventDate,
+  totalAmount,
+  bookingNumber,
+}: {
+  to: string;
+  clientName: string;
+  modelName: string;
+  modelUsername: string;
+  serviceType: string;
+  eventDate: string;
+  totalAmount: number;
+  bookingNumber: string;
+}) {
+  try {
+    const resend = getResendClient();
+    const bookingsUrl = "https://www.examodels.com/bookings";
+    const modelProfileUrl = `https://www.examodels.com/${modelUsername}`;
+    const formattedDate = new Date(eventDate).toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      subject: `${modelName} accepted your booking request!`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 30px; text-align: center;">
+              <p style="margin: 0; font-size: 48px;">✅</p>
+              <h1 style="margin: 10px 0 0; color: white; font-size: 24px; font-weight: bold;">
+                Booking Accepted!
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
+                Great news, ${clientName}!
+              </p>
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                <strong style="color: #ffffff;">${modelName}</strong> has accepted your booking request! Your coins have been secured in escrow.
+              </p>
+
+              <!-- Booking Details -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px; background-color: #262626; border-radius: 12px; overflow: hidden;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding-bottom: 15px; border-bottom: 1px solid #404040;">
+                          <p style="margin: 0 0 5px; color: #71717a; font-size: 12px; text-transform: uppercase;">Booking #</p>
+                          <p style="margin: 0; color: #ffffff; font-size: 14px;">${bookingNumber}</p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 15px 0; border-bottom: 1px solid #404040;">
+                          <p style="margin: 0 0 5px; color: #71717a; font-size: 12px; text-transform: uppercase;">Model</p>
+                          <p style="margin: 0; color: #ffffff; font-size: 16px; font-weight: 500;">${modelName}</p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 15px 0; border-bottom: 1px solid #404040;">
+                          <p style="margin: 0 0 5px; color: #71717a; font-size: 12px; text-transform: uppercase;">Service</p>
+                          <p style="margin: 0; color: #ffffff; font-size: 16px;">${serviceType}</p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 15px 0; border-bottom: 1px solid #404040;">
+                          <p style="margin: 0 0 5px; color: #71717a; font-size: 12px; text-transform: uppercase;">Date</p>
+                          <p style="margin: 0; color: #ffffff; font-size: 16px;">${formattedDate}</p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding-top: 15px;">
+                          <p style="margin: 0 0 5px; color: #71717a; font-size: 12px; text-transform: uppercase;">Amount (In Escrow)</p>
+                          <p style="margin: 0; color: #10b981; font-size: 24px; font-weight: bold;">${totalAmount.toLocaleString()} coins</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Next Steps -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+                <tr>
+                  <td style="padding: 15px; background-color: #052e16; border-radius: 8px; border-left: 3px solid #10b981;">
+                    <p style="margin: 0 0 8px; color: #4ade80; font-size: 14px; font-weight: 600;">What's Next?</p>
+                    <p style="margin: 0; color: #86efac; font-size: 14px;">
+                      Coordinate the details with ${modelName} and confirm the booking when ready. Coins will be released to the model upon completion.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTAs -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding-bottom: 10px;">
+                    <a href="${bookingsUrl}" style="display: inline-block; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                      View Booking
+                    </a>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center">
+                    <a href="${modelProfileUrl}" style="display: inline-block; color: #a1a1aa; text-decoration: none; font-size: 14px;">
+                      View ${modelName}'s Profile
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 30px; border-top: 1px solid #262626; text-align: center;">
+              <p style="margin: 0; color: #71717a; font-size: 12px;">
+                EXA Models - Where Models Shine
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      console.error("Resend error:", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error("Email send error:", error);
+    return { success: false, error };
+  }
+}
+
+export async function sendBookingDeclinedEmail({
+  to,
+  clientName,
+  modelName,
+  modelUsername,
+  serviceType,
+  eventDate,
+  bookingNumber,
+  reason,
+}: {
+  to: string;
+  clientName: string;
+  modelName: string;
+  modelUsername: string;
+  serviceType: string;
+  eventDate: string;
+  bookingNumber: string;
+  reason?: string;
+}) {
+  try {
+    const resend = getResendClient();
+    const modelsUrl = "https://www.examodels.com/models";
+    const formattedDate = new Date(eventDate).toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+
+    const reasonHtml = reason
+      ? `
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+                <tr>
+                  <td style="padding: 15px; background-color: #262626; border-radius: 8px; border-left: 3px solid #71717a;">
+                    <p style="margin: 0 0 5px; color: #71717a; font-size: 12px;">Message from ${modelName}:</p>
+                    <p style="margin: 0; color: #ffffff; font-size: 14px; font-style: italic;">"${reason}"</p>
+                  </td>
+                </tr>
+              </table>`
+      : "";
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      subject: `Booking update: ${modelName} couldn't accept your request`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background-color: #262626; padding: 30px; text-align: center;">
+              <h1 style="margin: 0; color: white; font-size: 24px; font-weight: bold;">
+                Booking Update
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
+                Hey ${clientName},
+              </p>
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                Unfortunately, <strong style="color: #ffffff;">${modelName}</strong> wasn't able to accept your booking request. Don't worry - no coins were charged.
+              </p>
+
+              <!-- Booking Details -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px; background-color: #262626; border-radius: 12px; overflow: hidden;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding-bottom: 15px; border-bottom: 1px solid #404040;">
+                          <p style="margin: 0 0 5px; color: #71717a; font-size: 12px; text-transform: uppercase;">Booking #</p>
+                          <p style="margin: 0; color: #ffffff; font-size: 14px;">${bookingNumber}</p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 15px 0; border-bottom: 1px solid #404040;">
+                          <p style="margin: 0 0 5px; color: #71717a; font-size: 12px; text-transform: uppercase;">Service</p>
+                          <p style="margin: 0; color: #ffffff; font-size: 16px;">${serviceType}</p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 15px 0; border-bottom: 1px solid #404040;">
+                          <p style="margin: 0 0 5px; color: #71717a; font-size: 12px; text-transform: uppercase;">Requested Date</p>
+                          <p style="margin: 0; color: #ffffff; font-size: 16px;">${formattedDate}</p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding-top: 15px;">
+                          <p style="margin: 0 0 5px; color: #71717a; font-size: 12px; text-transform: uppercase;">Status</p>
+                          <p style="margin: 0; color: #ef4444; font-size: 16px; font-weight: 500;">Declined</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              ${reasonHtml}
+
+              <!-- Encouragement -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+                <tr>
+                  <td style="padding: 15px; background-color: #1e1b4b; border-radius: 8px; border-left: 3px solid #8b5cf6;">
+                    <p style="margin: 0; color: #c4b5fd; font-size: 14px;">
+                      💡 There are many other amazing models on EXA ready to work with you. Browse our talent pool to find your perfect match!
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="${modelsUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                      Browse Models
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 30px; border-top: 1px solid #262626; text-align: center;">
+              <p style="margin: 0; color: #71717a; font-size: 12px;">
+                EXA Models - Where Models Shine
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      console.error("Resend error:", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error("Email send error:", error);
+    return { success: false, error };
+  }
+}
+
 export async function sendVideoCallRequestEmail({
   to,
   modelName,
