@@ -269,27 +269,31 @@ export async function POST(request: NextRequest) {
       clientBalance = brand?.coin_balance || 0;
     }
 
-    // Check if client has enough coins
-    if (totalAmount > 0 && clientBalance < totalAmount) {
+    // Get sum of pending booking amounts for this client (soft reservation)
+    const { data: pendingBookings } = await (supabase.from("bookings") as any)
+      .select("total_amount")
+      .eq("client_id", actor.id)
+      .in("status", ["pending", "counter", "accepted"]);
+
+    const pendingTotal = (pendingBookings || []).reduce(
+      (sum: number, b: { total_amount: number }) => sum + (b.total_amount || 0),
+      0
+    );
+
+    const availableBalance = clientBalance - pendingTotal;
+
+    // Check if client has enough available balance
+    if (totalAmount > 0 && availableBalance < totalAmount) {
       return NextResponse.json({
-        error: `Insufficient coins. You need ${totalAmount.toLocaleString()} coins but only have ${clientBalance.toLocaleString()}.`,
+        error: `Insufficient available balance. You need ${totalAmount.toLocaleString()} coins but only have ${availableBalance.toLocaleString()} available (${pendingTotal.toLocaleString()} coins reserved for pending bookings).`,
         required: totalAmount,
         balance: clientBalance,
+        available: availableBalance,
+        pending: pendingTotal,
       }, { status: 402 });
     }
 
-    // Deduct coins from client (escrow)
-    if (totalAmount > 0) {
-      if (actor.type === "fan") {
-        await (supabase.from("fans") as any)
-          .update({ coin_balance: clientBalance - totalAmount })
-          .eq("id", actor.id);
-      } else if (actor.type === "brand") {
-        await (supabase.from("brands") as any)
-          .update({ coin_balance: clientBalance - totalAmount })
-          .eq("id", actor.id);
-      }
-    }
+    // NOTE: Coins are NOT deducted here - they will be escrowed when model accepts
 
     // Create booking
     const { data: booking, error } = await (supabase.from("bookings") as any)
@@ -316,37 +320,11 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error("Failed to create booking:", error);
-      // Refund the escrowed coins since booking failed
-      if (totalAmount > 0) {
-        if (actor.type === "fan") {
-          await (supabase.from("fans") as any)
-            .update({ coin_balance: clientBalance })
-            .eq("id", actor.id);
-        } else if (actor.type === "brand") {
-          await (supabase.from("brands") as any)
-            .update({ coin_balance: clientBalance })
-            .eq("id", actor.id);
-        }
-      }
       return NextResponse.json({
         error: error.message || "Failed to create booking",
         details: error.details || null,
         hint: error.hint || null
       }, { status: 500 });
-    }
-
-    // Log escrow transaction
-    if (totalAmount > 0) {
-      await (supabase.from("coin_transactions") as any).insert({
-        actor_id: actor.id,
-        amount: -totalAmount,
-        action: "booking_escrow",
-        metadata: {
-          booking_id: booking.id,
-          booking_number: booking.booking_number,
-          model_id: modelId,
-        },
-      });
     }
 
     // Create notification for model (don't fail if this errors)

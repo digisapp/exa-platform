@@ -152,6 +152,81 @@ export async function PATCH(
         if (booking.status !== "pending" && booking.status !== "counter") {
           return NextResponse.json({ error: "Can only accept pending bookings" }, { status: 400 });
         }
+
+        // Check if client has enough coins and escrow them
+        const escrowAmount = booking.total_amount || 0;
+        if (escrowAmount > 0) {
+          // Get client's actor and balance
+          const { data: clientActor } = await (supabase.from("actors") as any)
+            .select("id, type")
+            .eq("id", booking.client_id)
+            .single();
+
+          let clientBalance = 0;
+          if (clientActor?.type === "fan") {
+            const { data: fan } = await (supabase.from("fans") as any)
+              .select("coin_balance")
+              .eq("id", clientActor.id)
+              .single();
+            clientBalance = fan?.coin_balance || 0;
+          } else if (clientActor?.type === "brand") {
+            const { data: brand } = await (supabase.from("brands") as any)
+              .select("coin_balance")
+              .eq("id", clientActor.id)
+              .single();
+            clientBalance = brand?.coin_balance || 0;
+          }
+
+          if (clientBalance < escrowAmount) {
+            // Auto-decline - client doesn't have enough coins
+            await (supabase.from("bookings") as any)
+              .update({
+                status: "declined",
+                model_response_notes: "Auto-declined: Client has insufficient coins",
+                responded_at: new Date().toISOString(),
+              })
+              .eq("id", id);
+
+            // Notify client
+            await (supabase.from("notifications") as any).insert({
+              actor_id: booking.client_id,
+              type: "booking_declined",
+              title: "Booking Declined - Insufficient Funds",
+              body: `Your booking with ${booking.model?.first_name || booking.model?.username} was declined because you don't have enough coins. You need ${escrowAmount.toLocaleString()} coins but only have ${clientBalance.toLocaleString()}.`,
+              data: { booking_id: id, booking_number: booking.booking_number },
+            });
+
+            return NextResponse.json({
+              error: "Client has insufficient coins for this booking",
+              clientBalance,
+              required: escrowAmount,
+            }, { status: 402 });
+          }
+
+          // Deduct coins from client (escrow)
+          if (clientActor?.type === "fan") {
+            await (supabase.from("fans") as any)
+              .update({ coin_balance: clientBalance - escrowAmount })
+              .eq("id", clientActor.id);
+          } else if (clientActor?.type === "brand") {
+            await (supabase.from("brands") as any)
+              .update({ coin_balance: clientBalance - escrowAmount })
+              .eq("id", clientActor.id);
+          }
+
+          // Log escrow transaction
+          await (supabase.from("coin_transactions") as any).insert({
+            actor_id: clientActor.id,
+            amount: -escrowAmount,
+            action: "booking_escrow",
+            metadata: {
+              booking_id: id,
+              booking_number: booking.booking_number,
+              model_id: booking.model_id,
+            },
+          });
+        }
+
         updateData = {
           status: "accepted",
           model_response_notes: responseNotes,
@@ -220,6 +295,59 @@ export async function PATCH(
         if (booking.status !== "counter") {
           return NextResponse.json({ error: "No counter offer to accept" }, { status: 400 });
         }
+
+        // Escrow the counter amount from client
+        const counterEscrowAmount = booking.counter_amount || 0;
+        if (counterEscrowAmount > 0) {
+          // Get client's balance
+          let counterClientBalance = 0;
+          if (actor.type === "fan") {
+            const { data: fan } = await (supabase.from("fans") as any)
+              .select("coin_balance")
+              .eq("id", actor.id)
+              .single();
+            counterClientBalance = fan?.coin_balance || 0;
+          } else if (actor.type === "brand") {
+            const { data: brand } = await (supabase.from("brands") as any)
+              .select("coin_balance")
+              .eq("id", actor.id)
+              .single();
+            counterClientBalance = brand?.coin_balance || 0;
+          }
+
+          if (counterClientBalance < counterEscrowAmount) {
+            return NextResponse.json({
+              error: `Insufficient coins. You need ${counterEscrowAmount.toLocaleString()} coins but only have ${counterClientBalance.toLocaleString()}.`,
+              required: counterEscrowAmount,
+              balance: counterClientBalance,
+            }, { status: 402 });
+          }
+
+          // Deduct coins from client (escrow)
+          if (actor.type === "fan") {
+            await (supabase.from("fans") as any)
+              .update({ coin_balance: counterClientBalance - counterEscrowAmount })
+              .eq("id", actor.id);
+          } else if (actor.type === "brand") {
+            await (supabase.from("brands") as any)
+              .update({ coin_balance: counterClientBalance - counterEscrowAmount })
+              .eq("id", actor.id);
+          }
+
+          // Log escrow transaction
+          await (supabase.from("coin_transactions") as any).insert({
+            actor_id: actor.id,
+            amount: -counterEscrowAmount,
+            action: "booking_escrow",
+            metadata: {
+              booking_id: id,
+              booking_number: booking.booking_number,
+              model_id: booking.model_id,
+              counter_offer: true,
+            },
+          });
+        }
+
         updateData = {
           status: "accepted",
           total_amount: booking.counter_amount,
@@ -334,7 +462,9 @@ export async function PATCH(
     }
 
     // Handle coin transfers based on action
+    // Only process refunds/payments for bookings that had coins escrowed (accepted/confirmed status)
     const escrowAmount = booking.total_amount || 0;
+    const wasEscrowed = ["accepted", "confirmed"].includes(booking.status);
 
     if (escrowAmount > 0) {
       if (action === "complete") {
@@ -367,8 +497,8 @@ export async function PATCH(
             },
           });
         }
-      } else if (action === "decline" || action === "cancel") {
-        // Refund coins to client
+      } else if (action === "cancel" && wasEscrowed) {
+        // Only refund if coins were already escrowed (booking was accepted/confirmed)
         const { data: clientActor } = await (supabase.from("actors") as any)
           .select("id, type")
           .eq("id", booking.client_id)
@@ -400,11 +530,12 @@ export async function PATCH(
             metadata: {
               booking_id: id,
               booking_number: booking.booking_number,
-              reason: action === "decline" ? "Model declined booking" : "Booking cancelled",
+              reason: "Booking cancelled",
             },
           });
         }
       }
+      // Note: "decline" doesn't need refund since coins aren't escrowed until acceptance
     }
 
     // Send notification
