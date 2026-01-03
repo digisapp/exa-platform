@@ -3,20 +3,65 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { FloatingOrbs } from "@/components/ui/floating-orbs";
 import { ModelSignupDialog } from "@/components/auth/ModelSignupDialog";
-import { FanSignupDialog } from "@/components/auth/FanSignupDialog";
 import { BrandInquiryDialog } from "@/components/auth/BrandInquiryDialog";
+import { FanSignupDialog } from "@/components/auth/FanSignupDialog";
+import { createClient } from "@/lib/supabase/server";
 import {
-  Sparkles,
-  Users,
-  Trophy,
   ArrowRight,
-  Star,
-  Plane,
-  Camera,
   Instagram,
 } from "lucide-react";
+import { TopModelsCarousel } from "@/components/home/TopModelsCarousel";
+import { UpcomingEventsCarousel } from "@/components/home/UpcomingEventsCarousel";
 
-export default function HomePage() {
+// Shuffle array helper
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+export default async function HomePage() {
+  const supabase = await createClient();
+
+  // Fetch top 50 models with 4-5 star admin rating
+  const { data: topModelsData } = await (supabase
+    .from("models") as any)
+    .select(`
+      id, username, first_name, profile_photo_url, state, profile_views, admin_rating,
+      photoshoot_hourly_rate, photoshoot_half_day_rate, photoshoot_full_day_rate,
+      promo_hourly_rate, brand_ambassador_daily_rate, private_event_hourly_rate,
+      social_companion_hourly_rate, meet_greet_rate
+    `)
+    .eq("is_approved", true)
+    .not("profile_photo_url", "is", null)
+    .gte("admin_rating", 4)
+    .limit(50);
+
+  // Randomize the order
+  const topModels = shuffleArray(topModelsData || []) as any[];
+
+  // Fetch new faces (models marked as new_face)
+  const { data: newFaces } = await (supabase
+    .from("models") as any)
+    .select("id, username, first_name, profile_photo_url, state, profile_views")
+    .eq("is_approved", true)
+    .eq("new_face", true)
+    .not("profile_photo_url", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  // Fetch upcoming events/gigs
+  const { data: upcomingEvents } = await (supabase
+    .from("gigs") as any)
+    .select("id, slug, title, type, location, start_date, end_date, cover_image_url, spots_total, spots_filled")
+    .eq("status", "open")
+    .gte("start_date", new Date().toISOString())
+    .order("start_date", { ascending: true })
+    .limit(20);
+
   return (
     <div className="min-h-screen relative">
       {/* Floating Orbs Background */}
@@ -44,216 +89,158 @@ export default function HomePage() {
           </div>
         </nav>
 
-        {/* Quick Actions */}
-        <div className="container px-8 md:px-16 py-4">
-          <div className="flex justify-center gap-4">
-            <ModelSignupDialog>
-              <Button className="exa-gradient-button rounded-full px-8">
-                Models
-              </Button>
-            </ModelSignupDialog>
-            <FanSignupDialog>
-              <Button variant="outline" className="rounded-full px-8 border-[#00BFFF]/50 hover:border-[#00BFFF] hover:bg-[#00BFFF]/10">
-                Fans
-              </Button>
-            </FanSignupDialog>
-            <BrandInquiryDialog>
-              <Button variant="outline" className="rounded-full px-8 border-[#FF69B4]/50 hover:border-[#FF69B4] hover:bg-[#FF69B4]/10">
-                Brands
-              </Button>
-            </BrandInquiryDialog>
-          </div>
-        </div>
+        {/* Split Hero Section */}
+        <section className="container px-8 md:px-16 py-6 md:py-10">
+          <div className="grid md:grid-cols-3 gap-6 md:gap-8">
+            {/* Models Side */}
+            <div className="relative p-6 md:p-8 rounded-3xl bg-gradient-to-br from-pink-500/10 via-violet-500/5 to-transparent border border-pink-500/20 hover:border-pink-500/40 transition-all group">
+              {/* Decorative glow */}
+              <div className="absolute -top-20 -left-20 w-40 h-40 bg-pink-500/20 rounded-full blur-3xl opacity-50 group-hover:opacity-70 transition-opacity" />
 
-        {/* Hero Section */}
-        <section className="container px-8 md:px-16 py-16 md:py-24 lg:py-32">
-          <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
-              Join Experiences.
-              <br />
-              <span className="exa-gradient-text exa-glow-text">
-                Get Discovered.
-              </span>
-              <br />
-              Become Top Model.
-            </h1>
+              <div className="relative z-10">
+                <span className="inline-block px-4 py-1.5 rounded-full text-sm font-semibold bg-gradient-to-r from-pink-500 to-violet-500 text-white mb-6">
+                  For Models
+                </span>
 
-            <p className="text-xl text-muted-foreground max-w-2xl mb-10 leading-relaxed">
-              The community where models grow. Join fashion shows, travel experiences,
-              and brand campaigns. Earn points, level up, and get booked.
-            </p>
+                <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-4">
+                  Join Experiences.
+                  <br />
+                  <span className="exa-gradient-text">Get Discovered.</span>
+                </h2>
 
-            <div className="flex flex-col sm:flex-row gap-4 mb-8">
-              <ModelSignupDialog>
-                <Button size="lg" className="exa-gradient-button text-lg px-10 h-14 rounded-full">
-                  I&apos;m a Model
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </ModelSignupDialog>
-              <FanSignupDialog>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="text-lg px-10 h-14 rounded-full border-[#00BFFF]/50 hover:border-[#00BFFF] hover:bg-[#00BFFF]/10"
-                >
-                  I&apos;m a Fan
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </FanSignupDialog>
+                <ModelSignupDialog>
+                  <Button size="lg" className="exa-gradient-button text-base px-8 h-12 rounded-full">
+                    Models Sign Up
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </ModelSignupDialog>
+              </div>
             </div>
 
-            <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground">
-              <Link href="/models" className="hover:text-[#FF69B4] transition-colors">
-                Browse Models
-              </Link>
-              <span className="text-muted-foreground/50">•</span>
-              <Link href="/brands/inquiry" className="hover:text-[#FF69B4] transition-colors">
-                Brand Partnerships
-              </Link>
-            </div>
-          </div>
-        </section>
+            {/* Fans Side */}
+            <div className="relative p-6 md:p-8 rounded-3xl bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border border-amber-500/20 hover:border-amber-500/40 transition-all group">
+              {/* Decorative glow */}
+              <div className="absolute -top-20 -left-10 w-40 h-40 bg-amber-500/20 rounded-full blur-3xl opacity-50 group-hover:opacity-70 transition-opacity" />
 
-        {/* How It Works */}
-        <section className="py-24">
-          <div className="container px-8 md:px-16">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4 exa-gradient-text">
-                How EXA Works
-              </h2>
+              <div className="relative z-10">
+                <span className="inline-block px-4 py-1.5 rounded-full text-sm font-semibold bg-gradient-to-r from-amber-500 to-orange-500 text-white mb-6">
+                  For Fans
+                </span>
+
+                <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-4">
+                  Follow Models.
+                  <br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Get Exclusive.</span>
+                </h2>
+
+                <FanSignupDialog>
+                  <Button size="lg" className="text-base px-8 h-12 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white">
+                    Fan Sign Up
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </FanSignupDialog>
+              </div>
             </div>
 
-            <div className="grid md:grid-cols-4 gap-6">
-              {[
-                {
-                  icon: Users,
-                  title: "Create Profile",
-                  description: "Build your portfolio with photos, stats, and social links.",
-                  color: "#FF69B4",
-                },
-                {
-                  icon: Sparkles,
-                  title: "Apply",
-                  description: "Browse shows, travel experiences, and campaigns.",
-                  color: "#00BFFF",
-                },
-                {
-                  icon: Trophy,
-                  title: "Earn Points",
-                  description: "Complete tasks and join shows to level up.",
-                  color: "#FF00FF",
-                },
-                {
-                  icon: Star,
-                  title: "Get Discovered",
-                  description: "Higher levels mean better visibility to brands.",
-                  color: "#FFED4E",
-                },
-              ].map((step, index) => (
-                <div key={index} className="glass-card rounded-2xl p-6 text-center relative group hover:scale-105 transition-transform">
-                  <div
-                    className="absolute -top-4 -left-4 w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold"
-                    style={{ background: `linear-gradient(135deg, ${step.color}, ${step.color}80)` }}
-                  >
-                    {index + 1}
-                  </div>
-                  <div
-                    className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center"
-                    style={{ background: `${step.color}20` }}
-                  >
-                    <step.icon className="h-8 w-8" style={{ color: step.color }} />
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2">{step.title}</h3>
-                  <p className="text-muted-foreground text-sm">{step.description}</p>
-                </div>
-              ))}
+            {/* Brands Side */}
+            <div className="relative p-6 md:p-8 rounded-3xl bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-transparent border border-cyan-500/20 hover:border-cyan-500/40 transition-all group">
+              {/* Decorative glow */}
+              <div className="absolute -top-20 -right-20 w-40 h-40 bg-cyan-500/20 rounded-full blur-3xl opacity-50 group-hover:opacity-70 transition-opacity" />
+
+              <div className="relative z-10">
+                <span className="inline-block px-4 py-1.5 rounded-full text-sm font-semibold bg-gradient-to-r from-cyan-500 to-blue-500 text-white mb-6">
+                  For Brands
+                </span>
+
+                <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-4">
+                  Book Models.
+                  <br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Campaigns + more</span>
+                </h2>
+
+                <BrandInquiryDialog>
+                  <Button size="lg" className="text-base px-8 h-12 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white">
+                    Brand Sign Up
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </BrandInquiryDialog>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* Gig Types */}
-        <section className="py-24">
-          <div className="container px-8 md:px-16">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4 exa-gradient-text">
-                Gigs Await
-              </h2>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-8">
-              {[
-                {
-                  icon: Star,
-                  title: "Fashion Shows",
-                  description: "Walk the runway at Art Basel, Miami Swim Week, and exclusive events.",
-                  badge: "Most Popular",
-                  gradient: "from-[#FF69B4] to-[#FF00FF]",
-                },
-                {
-                  icon: Plane,
-                  title: "Travel Experiences",
-                  description: "Join destination shoots in Bali, Hawaii, and stunning locations worldwide.",
-                  badge: "Adventure",
-                  gradient: "from-[#9400D3] to-[#4B0082]",
-                },
-                {
-                  icon: Camera,
-                  title: "Brand Campaigns",
-                  description: "Work with top brands on lookbooks, content, and ambassador programs.",
-                  badge: "Paid",
-                  gradient: "from-[#00BFFF] to-[#0099cc]",
-                },
-              ].map((type, index) => (
-                <div
-                  key={index}
-                  className="glass-card rounded-2xl p-8 hover:scale-105 transition-all group"
-                >
-                  <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold mb-4 bg-gradient-to-r ${type.gradient} text-white`}>
-                    {type.badge}
-                  </span>
-                  <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${type.gradient} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                    <type.icon className="h-8 w-8 text-white" />
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2">{type.title}</h3>
-                  <p className="text-muted-foreground">{type.description}</p>
-                </div>
-              ))}
-            </div>
-
+        {/* Book Top Models Section */}
+        <section className="py-6">
+          <div className="container px-8 md:px-16 mb-8">
+            <h2 className="text-3xl md:text-4xl font-bold exa-gradient-text">
+              Book Top Models
+            </h2>
           </div>
+          <TopModelsCarousel models={topModels || []} showRank={false} showCategories={true} />
         </section>
 
-        {/* Levels / Gamification */}
-        <section className="py-24">
-          <div className="container px-8 md:px-16">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4 exa-gradient-text">
-                Level Up Your Career
+        {/* New Faces Section */}
+        {(newFaces?.length ?? 0) > 0 && (
+          <section className="py-12">
+            <div className="container px-8 md:px-16 mb-8">
+              <h2 className="text-3xl md:text-4xl font-bold mb-2 exa-gradient-text">
+                New Faces
               </h2>
-              <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                Earn points for every action. Higher levels unlock exclusive perks and visibility.
+              <p className="text-muted-foreground">
+                Meet our newest talent
               </p>
             </div>
+            <TopModelsCarousel models={newFaces || []} />
+          </section>
+        )}
 
-            <div className="grid md:grid-cols-4 gap-6">
-              {[
-                { level: "Rising", points: "0-499", icon: "⭐", perks: "Basic profile", class: "level-rising" },
-                { level: "Verified", points: "500-1,999", icon: "✓", perks: "Blue badge, priority search", class: "level-verified" },
-                { level: "Pro", points: "2,000-4,999", icon: "💎", perks: "Featured placement", class: "level-pro" },
-                { level: "Elite", points: "5,000+", icon: "👑", perks: "VIP gigs", class: "level-elite" },
-              ].map((tier, index) => (
-                <div
-                  key={index}
-                  className="glass-card rounded-2xl p-6 text-center hover:scale-105 transition-transform"
-                >
-                  <div className="text-5xl mb-4">{tier.icon}</div>
-                  <span className={`inline-block px-4 py-1 rounded-full text-sm font-semibold mb-3 ${tier.class}`}>
-                    {tier.level}
-                  </span>
-                  <div className="text-sm text-muted-foreground mb-3">{tier.points} points</div>
-                  <p className="text-sm">{tier.perks}</p>
-                </div>
-              ))}
+        {/* Upcoming Experiences Section */}
+        <section className="py-12">
+          <div className="container px-8 md:px-16 mb-8">
+            <h2 className="text-3xl md:text-4xl font-bold mb-2 exa-gradient-text">
+              Upcoming Experiences
+            </h2>
+            <p className="text-muted-foreground">
+              Fashion shows, travel experiences, and brand campaigns
+            </p>
+          </div>
+          <UpcomingEventsCarousel events={upcomingEvents || []} />
+        </section>
+
+        {/* CTA Section */}
+        <section className="py-16">
+          <div className="container px-8 md:px-16">
+            <div className="flex flex-col items-center text-center">
+              <h2 className="text-2xl md:text-3xl font-bold mb-8">
+                Ready to get started?
+              </h2>
+              <div className="flex flex-col sm:flex-row gap-4 mb-8">
+                <ModelSignupDialog>
+                  <Button size="lg" className="exa-gradient-button text-lg px-10 h-14 rounded-full">
+                    Models Sign Up
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </ModelSignupDialog>
+                <BrandInquiryDialog>
+                  <Button
+                    size="lg"
+                    className="text-lg px-10 h-14 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white"
+                  >
+                    Brand Sign Up
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </BrandInquiryDialog>
+              </div>
+
+              <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground">
+                <Link href="/models" className="hover:text-[#FF69B4] transition-colors">
+                  Browse Models
+                </Link>
+                <span className="text-muted-foreground/50">•</span>
+                <Link href="/brands/inquiry" className="hover:text-[#FF69B4] transition-colors">
+                  Brand Partnerships
+                </Link>
+              </div>
             </div>
           </div>
         </section>
