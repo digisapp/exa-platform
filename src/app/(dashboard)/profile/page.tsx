@@ -427,8 +427,8 @@ export default function ProfilePage() {
         show_location: model.show_location,
         show_social_media: model.show_social_media,
         availability_status: model.availability_status,
-        video_call_rate: model.video_call_rate || 1,
-        voice_call_rate: model.voice_call_rate || 1,
+        video_call_rate: model.video_call_rate || 5,
+        voice_call_rate: model.voice_call_rate || 5,
         message_rate: model.message_rate || 0,
         // Booking rates
         photoshoot_hourly_rate: model.photoshoot_hourly_rate || 0,
@@ -1332,16 +1332,16 @@ export default function ProfilePage() {
                     </div>
                     <div>
                       <Label className="text-base font-semibold">Video Call Rate</Label>
-                      <p className="text-sm text-muted-foreground">Per minute rate for video calls (min: 1 coin)</p>
+                      <p className="text-sm text-muted-foreground">Per minute rate for video calls (min: 5 coins)</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Input
                       type="number"
-                      min="1"
+                      min="5"
                       max="1000"
-                      value={model.video_call_rate || 1}
-                      onChange={(e) => setModel({ ...model, video_call_rate: Math.max(1, parseInt(e.target.value) || 1) })}
+                      value={model.video_call_rate || 5}
+                      onChange={(e) => setModel({ ...model, video_call_rate: Math.max(5, parseInt(e.target.value) || 5) })}
                       className="w-24 text-right"
                     />
                     <span className="text-sm text-muted-foreground">coins/min</span>
@@ -1358,16 +1358,16 @@ export default function ProfilePage() {
                     </div>
                     <div>
                       <Label className="text-base font-semibold">Voice Call Rate</Label>
-                      <p className="text-sm text-muted-foreground">Per minute rate for voice calls (min: 1 coin)</p>
+                      <p className="text-sm text-muted-foreground">Per minute rate for voice calls (min: 5 coins)</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Input
                       type="number"
-                      min="1"
+                      min="5"
                       max="1000"
-                      value={model.voice_call_rate || 1}
-                      onChange={(e) => setModel({ ...model, voice_call_rate: Math.max(1, parseInt(e.target.value) || 1) })}
+                      value={model.voice_call_rate || 5}
+                      onChange={(e) => setModel({ ...model, voice_call_rate: Math.max(5, parseInt(e.target.value) || 5) })}
                       className="w-24 text-right"
                     />
                     <span className="text-sm text-muted-foreground">coins/min</span>
