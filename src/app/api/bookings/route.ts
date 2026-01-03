@@ -28,9 +28,8 @@ const SERVICE_LABELS: Record<string, string> = {
 
 // GET - Fetch bookings for current user
 export async function GET(request: NextRequest) {
-  const supabase = await createClient();
-
   try {
+    const supabase = await createClient();
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
     const role = searchParams.get("role"); // 'model' or 'client'
@@ -58,109 +57,69 @@ export async function GET(request: NextRequest) {
     }
 
     if (!actor) {
-      // Return empty bookings for users without an actor
       return NextResponse.json({ bookings: [], serviceLabels: SERVICE_LABELS });
     }
 
-    // Build query based on role
-    let query = (supabase.from("bookings") as any).select("*");
-
-    // If user is a model and wants their bookings as a model
+    // For models, get their model ID
+    let modelId: string | null = null;
     if (role === "model" || actor.type === "model") {
-      const { data: model, error: modelError } = await (supabase.from("models") as any)
+      const { data: model } = await (supabase.from("models") as any)
         .select("id")
         .eq("user_id", user.id)
         .maybeSingle();
 
-      if (modelError) {
-        console.error("Model fetch error:", modelError);
-      }
-
-      if (model) {
-        query = query.eq("model_id", model.id);
-      } else {
-        // Model not found, return empty
+      if (!model) {
         return NextResponse.json({ bookings: [], serviceLabels: SERVICE_LABELS });
       }
+      modelId = model.id;
+    }
+
+    // Simple query - just get bookings without complex filters first
+    let bookings: any[] = [];
+
+    if (modelId) {
+      const { data, error } = await (supabase.from("bookings") as any)
+        .select("*")
+        .eq("model_id", modelId)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Bookings query error (model):", error);
+        return NextResponse.json({ error: "Failed to fetch bookings", details: error.message }, { status: 500 });
+      }
+      bookings = data || [];
     } else {
-      // Get bookings as client
-      query = query.eq("client_id", actor.id);
-    }
+      const { data, error } = await (supabase.from("bookings") as any)
+        .select("*")
+        .eq("client_id", actor.id)
+        .order("created_at", { ascending: false });
 
-    // Filter by status
-    if (status) {
-      if (status === "pending") {
-        query = query.in("status", ["pending", "counter"]);
-      } else if (status === "upcoming") {
-        query = query.in("status", ["accepted", "confirmed"]).gte("event_date", new Date().toISOString().split("T")[0]);
-      } else if (status === "past") {
-        query = query.in("status", ["completed", "cancelled", "no_show", "declined"]);
-      } else {
-        query = query.eq("status", status);
+      if (error) {
+        console.error("Bookings query error (client):", error);
+        return NextResponse.json({ error: "Failed to fetch bookings", details: error.message }, { status: 500 });
       }
+      bookings = data || [];
     }
 
-    // Order by date
-    query = query.order("created_at", { ascending: false });
-
-    const { data: bookings, error } = await query;
-
-    if (error) {
-      console.error("Failed to fetch bookings:", error);
-      return NextResponse.json({ error: "Failed to fetch bookings", details: error.message }, { status: 500 });
+    // Filter by status in JS instead of SQL to avoid potential issues
+    if (status === "pending") {
+      bookings = bookings.filter(b => ["pending", "counter"].includes(b.status));
+    } else if (status === "upcoming") {
+      const today = new Date().toISOString().split("T")[0];
+      bookings = bookings.filter(b => ["accepted", "confirmed"].includes(b.status) && b.event_date >= today);
+    } else if (status === "past") {
+      bookings = bookings.filter(b => ["completed", "cancelled", "no_show", "declined"].includes(b.status));
+    } else if (status) {
+      bookings = bookings.filter(b => b.status === status);
     }
 
-    // Enrich bookings with model and client info
-    for (const booking of bookings || []) {
-      try {
-        // Fetch model info
-        if (booking.model_id) {
-          const { data: model } = await (supabase.from("models") as any)
-            .select("id, username, first_name, last_name, profile_photo_url, city, state")
-            .eq("id", booking.model_id)
-            .maybeSingle();
-          booking.model = model;
-        }
-
-        // Fetch client info
-        if (booking.client_id) {
-          const { data: clientActor } = await (supabase
-            .from("actors") as any)
-            .select("id, type, user_id")
-            .eq("id", booking.client_id)
-            .maybeSingle();
-
-          if (clientActor) {
-            if (clientActor.type === "fan") {
-              const { data: fan } = await (supabase
-                .from("fans") as any)
-                .select("display_name, email, avatar_url")
-                .eq("id", clientActor.id)
-                .maybeSingle();
-              booking.client = { ...fan, type: "fan" };
-            } else if (clientActor.type === "brand") {
-              const { data: brand } = await (supabase
-                .from("brands") as any)
-                .select("company_name, contact_name, email, logo_url")
-                .eq("id", clientActor.id)
-                .maybeSingle();
-              booking.client = { ...brand, type: "brand" };
-            }
-          }
-        }
-      } catch (enrichError) {
-        console.error("Error enriching booking:", enrichError);
-        // Continue with other bookings
-      }
-    }
-
-    return NextResponse.json({ bookings: bookings || [], serviceLabels: SERVICE_LABELS });
+    // Return bookings without enrichment for now
+    return NextResponse.json({ bookings, serviceLabels: SERVICE_LABELS });
   } catch (error: any) {
     console.error("Bookings fetch error:", error);
     return NextResponse.json({
       error: "Failed to fetch bookings",
-      message: error?.message || "Unknown error",
-      stack: error?.stack?.split("\n").slice(0, 3)
+      message: error?.message || "Unknown error"
     }, { status: 500 });
   }
 }
