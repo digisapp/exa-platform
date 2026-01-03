@@ -95,7 +95,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  let debugInfo: any = {};
+  const debugInfo: any = {};
   try {
     const { id } = await params;
     debugInfo.bookingId = id;
@@ -646,7 +646,6 @@ export async function PATCH(
               to: clientEmail,
               clientName,
               modelName,
-              modelUsername,
               serviceType: SERVICE_LABELS[booking.service_type] || booking.service_type,
               eventDate: booking.event_date,
               bookingNumber: booking.booking_number,

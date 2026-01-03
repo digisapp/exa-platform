@@ -990,7 +990,6 @@ export async function sendBookingDeclinedEmail({
   to,
   clientName,
   modelName,
-  modelUsername,
   serviceType,
   eventDate,
   bookingNumber,
@@ -999,7 +998,6 @@ export async function sendBookingDeclinedEmail({
   to: string;
   clientName: string;
   modelName: string;
-  modelUsername: string;
   serviceType: string;
   eventDate: string;
   bookingNumber: string;
