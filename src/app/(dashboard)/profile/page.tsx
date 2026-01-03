@@ -907,6 +907,19 @@ export default function ProfilePage() {
     );
   }
 
+  // If brand user but brand data is missing
+  if (actor?.type === "brand" && !brand) {
+    return (
+      <div className="max-w-2xl mx-auto py-16 text-center space-y-4">
+        <Building2 className="h-16 w-16 text-muted-foreground mx-auto" />
+        <h1 className="text-2xl font-bold">Brand Profile Not Found</h1>
+        <p className="text-muted-foreground">
+          Your brand profile could not be loaded. Please contact support if this issue persists.
+        </p>
+      </div>
+    );
+  }
+
   if (!model) {
     return <div>Profile not found</div>;
   }
