@@ -476,15 +476,31 @@ export async function PATCH(
     }
 
     // Update booking
+    debugInfo.updateData = updateData;
+    debugInfo.action = action;
+
     const { data: updatedBooking, error } = await (supabase.from("bookings") as any)
       .update(updateData)
       .eq("id", id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
-      console.error("Failed to update booking:", error);
-      return NextResponse.json({ error: "Failed to update booking" }, { status: 500 });
+      console.error("Failed to update booking:", error, "updateData:", updateData);
+      return NextResponse.json({
+        error: "Failed to update booking",
+        details: error.message,
+        code: error.code,
+        debug: debugInfo
+      }, { status: 500 });
+    }
+
+    if (!updatedBooking) {
+      console.error("No booking updated - RLS might be blocking");
+      return NextResponse.json({
+        error: "Booking update failed - permission denied",
+        debug: debugInfo
+      }, { status: 403 });
     }
 
     // Handle coin transfers based on action
