@@ -243,8 +243,19 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error("Failed to create booking:", error);
-      console.error("Booking data:", { modelId, clientId: actor.id, serviceType, eventDate });
-      return NextResponse.json({ error: error.message || "Failed to create booking" }, { status: 500 });
+      console.error("Booking data:", {
+        modelId,
+        clientId: actor.id,
+        actorType: actor.type,
+        userId: user.id,
+        serviceType,
+        eventDate
+      });
+      return NextResponse.json({
+        error: error.message || "Failed to create booking",
+        details: error.details || null,
+        hint: error.hint || null
+      }, { status: 500 });
     }
 
     // Create notification for model (don't fail if this errors)
