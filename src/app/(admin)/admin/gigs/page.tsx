@@ -460,7 +460,7 @@ export default function AdminGigsPage() {
           <CardHeader>
             <CardTitle>{editingGig ? "Edit Gig" : "Create New Gig"}</CardTitle>
             <CardDescription>
-              {editingGig ? "Update the details for this opportunity" : "Fill in the details for the new opportunity"}
+              {editingGig ? "Update the details for this gig" : "Fill in the details for the new gig"}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -505,7 +505,7 @@ export default function AdminGigsPage() {
                   id="description"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Describe the opportunity..."
+                  placeholder="Describe the gig..."
                   rows={3}
                 />
               </div>

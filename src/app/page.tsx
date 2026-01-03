@@ -171,7 +171,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Opportunity Types */}
+        {/* Gig Types */}
         <section className="py-24">
           <div className="container px-8 md:px-16">
             <div className="text-center mb-16">
