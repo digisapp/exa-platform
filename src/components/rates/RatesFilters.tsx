@@ -20,20 +20,37 @@ export function RatesFilters({ states }: RatesFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const currentState = searchParams.get("state") || "";
-  const currentService = searchParams.get("service") || "";
+  const currentState = searchParams.get("state") || "all";
+  const currentService = searchParams.get("service") || "all";
   const currentMinPrice = searchParams.get("minPrice") || "";
   const currentMaxPrice = searchParams.get("maxPrice") || "";
+  const currentPriceRange = currentMinPrice && currentMaxPrice ? `${currentMinPrice}-${currentMaxPrice}` : "all";
 
-  const hasFilters = currentState || currentService || currentMinPrice || currentMaxPrice;
+  const hasFilters = currentState !== "all" || currentService !== "all" || currentPriceRange !== "all";
 
   const updateFilter = useCallback(
     (key: string, value: string) => {
       const params = new URLSearchParams(searchParams.toString());
-      if (value) {
+      if (value && value !== "all") {
         params.set(key, value);
       } else {
         params.delete(key);
+      }
+      router.push(`/rates?${params.toString()}`);
+    },
+    [router, searchParams]
+  );
+
+  const updatePriceRange = useCallback(
+    (value: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (value && value !== "all") {
+        const [min, max] = value.split("-");
+        params.set("minPrice", min);
+        params.set("maxPrice", max);
+      } else {
+        params.delete("minPrice");
+        params.delete("maxPrice");
       }
       router.push(`/rates?${params.toString()}`);
     },
@@ -52,7 +69,7 @@ export function RatesFilters({ states }: RatesFiltersProps) {
           <SelectValue placeholder="All States" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">All States</SelectItem>
+          <SelectItem value="all">All States</SelectItem>
           {states.map((state) => (
             <SelectItem key={state} value={state}>
               {state}
@@ -67,7 +84,7 @@ export function RatesFilters({ states }: RatesFiltersProps) {
           <SelectValue placeholder="All Services" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">All Services</SelectItem>
+          <SelectItem value="all">All Services</SelectItem>
           <SelectItem value="photography">Photography</SelectItem>
           <SelectItem value="promotional">Promotional</SelectItem>
           <SelectItem value="private">Private Events</SelectItem>
@@ -75,24 +92,12 @@ export function RatesFilters({ states }: RatesFiltersProps) {
       </Select>
 
       {/* Price Range Filter */}
-      <Select
-        value={currentMinPrice && currentMaxPrice ? `${currentMinPrice}-${currentMaxPrice}` : ""}
-        onValueChange={(v) => {
-          if (v) {
-            const [min, max] = v.split("-");
-            updateFilter("minPrice", min);
-            setTimeout(() => updateFilter("maxPrice", max), 0);
-          } else {
-            updateFilter("minPrice", "");
-            setTimeout(() => updateFilter("maxPrice", ""), 0);
-          }
-        }}
-      >
+      <Select value={currentPriceRange} onValueChange={updatePriceRange}>
         <SelectTrigger className="w-[160px]">
           <SelectValue placeholder="Any Price" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">Any Price</SelectItem>
+          <SelectItem value="all">Any Price</SelectItem>
           <SelectItem value="0-100">Under $100/hr</SelectItem>
           <SelectItem value="100-250">$100 - $250/hr</SelectItem>
           <SelectItem value="250-500">$250 - $500/hr</SelectItem>
