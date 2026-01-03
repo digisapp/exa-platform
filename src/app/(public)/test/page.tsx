@@ -136,10 +136,6 @@ export default async function TestHomePage() {
                   Photoshoots + more
                 </h2>
 
-                <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-                  Access models for your next campaign, photoshoot, fashion show, or brand activation.
-                </p>
-
                 <BrandInquiryDialog>
                   <Button size="lg" className="text-lg px-10 h-14 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white">
                     Brand Sign Up
