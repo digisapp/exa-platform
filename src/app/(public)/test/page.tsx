@@ -109,10 +109,6 @@ export default async function TestHomePage() {
                   Become Top Model.
                 </h2>
 
-                <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-                  The community where models grow. Join fashion shows, travel experiences, and brand campaigns. Earn points, level up, and get booked.
-                </p>
-
                 <ModelSignupDialog>
                   <Button size="lg" className="exa-gradient-button text-lg px-10 h-14 rounded-full">
                     Models Sign Up
@@ -141,7 +137,7 @@ export default async function TestHomePage() {
                 </h2>
 
                 <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-                  Access our curated roster of professional models for your next campaign, photoshoot, fashion show, or brand activation.
+                  Access models for your next campaign, photoshoot, fashion show, or brand activation.
                 </p>
 
                 <BrandInquiryDialog>
