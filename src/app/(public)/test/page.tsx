@@ -170,7 +170,7 @@ export default async function TestHomePage() {
         </section>
 
         {/* Book Top Models Section */}
-        <section className="py-12">
+        <section className="py-6">
           <div className="container px-8 md:px-16 mb-8">
             <h2 className="text-3xl md:text-4xl font-bold exa-gradient-text">
               Book Top Models
