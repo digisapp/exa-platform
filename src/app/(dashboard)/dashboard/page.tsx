@@ -923,16 +923,16 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
         </Card>
       </div>
 
-      {/* Saved Models */}
+      {/* Favorite Models */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
-            <Star className="h-5 w-5 text-cyan-500 fill-cyan-500" />
-            Saved Models
+            <Heart className="h-5 w-5 text-pink-500 fill-pink-500" />
+            Favorite Models
           </CardTitle>
           {savedModels.length > 0 && (
             <Button variant="ghost" size="sm" asChild>
-              <Link href="/favorites" className="text-cyan-500">
+              <Link href="/favorites" className="text-pink-500">
                 View All
                 <ArrowRight className="ml-1 h-4 w-4" />
               </Link>
