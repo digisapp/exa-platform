@@ -52,6 +52,8 @@ import {
   DollarSign,
   Activity,
   KeyRound,
+  UserPlus,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ModelActionsDropdown, FanActionsDropdown } from "@/components/admin/AdminActions";
@@ -134,6 +136,51 @@ function RatingStars({ modelId, currentRating, onRatingChange }: {
   );
 }
 
+function NewFaceToggle({ modelId, isNewFace, onToggle }: {
+  modelId: string;
+  isNewFace: boolean;
+  onToggle: (modelId: string, newFace: boolean) => void;
+}) {
+  const [updating, setUpdating] = useState(false);
+
+  const handleToggle = async () => {
+    const newValue = !isNewFace;
+    setUpdating(true);
+
+    try {
+      const res = await fetch(`/api/admin/models/${modelId}/new-face`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ new_face: newValue }),
+      });
+
+      if (!res.ok) throw new Error("Failed to update");
+
+      onToggle(modelId, newValue);
+      toast.success(newValue ? "Marked as New Face" : "Removed New Face badge");
+    } catch {
+      toast.error("Failed to update");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleToggle}
+      disabled={updating}
+      className={`p-1.5 rounded-full transition-all ${
+        isNewFace
+          ? "bg-gradient-to-r from-pink-500 to-violet-500 text-white"
+          : "bg-muted/50 text-muted-foreground hover:bg-muted"
+      } ${updating ? "opacity-50" : ""}`}
+      title={isNewFace ? "Remove New Face" : "Mark as New Face"}
+    >
+      <Sparkles className="h-4 w-4" />
+    </button>
+  );
+}
+
 interface Model {
   id: string;
   username: string;
@@ -149,6 +196,7 @@ interface Model {
   instagram_name: string | null;
   instagram_followers: number | null;
   admin_rating: number | null;
+  new_face: boolean;
   created_at: string;
   followers_count?: number;
   user_id: string | null;
@@ -161,6 +209,7 @@ interface Model {
   last_seen?: string | null;
   last_active_at?: string | null;
   message_count?: number;
+  joined_at?: string | null;
 }
 
 function CopyInviteButton({ token }: { token: string }) {
@@ -330,7 +379,7 @@ interface Fan {
   report_count?: number;
 }
 
-type ModelSortField = "profile_views" | "coin_balance" | "followers_count" | "instagram_followers" | "admin_rating" | "created_at" | "total_earned" | "content_count" | "last_post" | "last_seen" | "message_count";
+type ModelSortField = "profile_views" | "coin_balance" | "followers_count" | "instagram_followers" | "admin_rating" | "created_at" | "joined_at" | "total_earned" | "content_count" | "last_post" | "last_seen" | "message_count";
 type FanSortField = "coins_spent" | "following_count" | "coin_balance" | "created_at" | "report_count";
 type SortDirection = "asc" | "desc";
 
@@ -386,7 +435,7 @@ export default function AdminCommunityPage() {
   const [modelsApprovalFilter, setModelsApprovalFilter] = useState<string>("all");
   const [modelsRatingFilter, setModelsRatingFilter] = useState<string>("all");
   const [modelsClaimFilter, setModelsClaimFilter] = useState<string>("all");
-  const [modelsSortField, setModelsSortField] = useState<ModelSortField>("profile_views");
+  const [modelsSortField, setModelsSortField] = useState<ModelSortField>("joined_at");
   const [modelsSortDirection, setModelsSortDirection] = useState<SortDirection>("desc");
 
   // Fans state
@@ -666,6 +715,10 @@ export default function AdminCommunityPage() {
     setModels(prev => prev.map(m => m.id === modelId ? { ...m, admin_rating: rating } : m));
   };
 
+  const handleNewFaceToggle = (modelId: string, newFace: boolean) => {
+    setModels(prev => prev.map(m => m.id === modelId ? { ...m, new_face: newFace } : m));
+  };
+
   const handleModelSort = (field: ModelSortField) => {
     if (modelsSortField === field) setModelsSortDirection(d => d === "asc" ? "desc" : "asc");
     else { setModelsSortField(field); setModelsSortDirection("desc"); }
@@ -929,11 +982,17 @@ export default function AdminCommunityPage() {
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-[200px]">Model</TableHead>
+                        <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("joined_at")}>
+                          <div className="flex items-center"><UserPlus className="h-4 w-4 mr-1" />Joined<SortIndicator active={modelsSortField === "joined_at"} direction={modelsSortDirection} /></div>
+                        </TableHead>
                         <TableHead>Invite</TableHead>
                         <TableHead>Instagram</TableHead>
                         <TableHead>State</TableHead>
                         <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("admin_rating")}>
                           <div className="flex items-center"><Star className="h-4 w-4 mr-1" />Rating<SortIndicator active={modelsSortField === "admin_rating"} direction={modelsSortDirection} /></div>
+                        </TableHead>
+                        <TableHead>
+                          <div className="flex items-center"><Sparkles className="h-4 w-4 mr-1" />New Face</div>
                         </TableHead>
                         <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("last_seen")}>
                           <div className="flex items-center"><Activity className="h-4 w-4 mr-1" />Last Seen<SortIndicator active={modelsSortField === "last_seen"} direction={modelsSortDirection} /></div>
@@ -981,6 +1040,11 @@ export default function AdminCommunityPage() {
                             </Link>
                           </TableCell>
                           <TableCell>
+                            <span className="text-sm text-muted-foreground">
+                              {(model.joined_at || model.claimed_at || model.created_at) ? new Date(model.joined_at || model.claimed_at || model.created_at).toLocaleDateString() : "-"}
+                            </span>
+                          </TableCell>
+                          <TableCell>
                             {model.user_id ? (
                               <span className="inline-flex items-center gap-1 text-green-500 text-sm">
                                 <UserCheck className="h-4 w-4" />
@@ -1010,6 +1074,7 @@ export default function AdminCommunityPage() {
                           </TableCell>
                           <TableCell><span className="text-sm text-muted-foreground">{model.state || "-"}</span></TableCell>
                           <TableCell><RatingStars modelId={model.id} currentRating={model.admin_rating} onRatingChange={handleRatingChange} /></TableCell>
+                          <TableCell><NewFaceToggle modelId={model.id} isNewFace={model.new_face || false} onToggle={handleNewFaceToggle} /></TableCell>
                           <TableCell>
                             {model.last_seen ? (
                               <span className={`text-sm ${model.last_active_at ? "text-green-500" : "text-muted-foreground"}`} title={new Date(model.last_seen).toLocaleString()}>

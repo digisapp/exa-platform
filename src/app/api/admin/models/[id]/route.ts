@@ -38,7 +38,7 @@ export async function PATCH(
     // Get current model data before update
     const { data: model } = await (supabase
       .from("models") as any)
-      .select("email, first_name, last_name, username, is_approved")
+      .select("email, first_name, last_name, username, is_approved, user_id")
       .eq("id", id)
       .single();
 
@@ -56,6 +56,19 @@ export async function PATCH(
       .eq("id", id);
 
     if (error) throw error;
+
+    // Update actor type based on approval status
+    if (model.user_id) {
+      const newActorType = is_approved ? "model" : "fan";
+      const { error: actorError } = await (supabase
+        .from("actors") as any)
+        .update({ type: newActorType })
+        .eq("user_id", model.user_id);
+
+      if (actorError) {
+        console.error("Error updating actor type:", actorError);
+      }
+    }
 
     // Send email notification if status changed and model has email
     if (statusChanged && model.email) {

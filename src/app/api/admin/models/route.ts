@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     const approvalFilter = searchParams.get("approval") || "all";
     const ratingFilter = searchParams.get("rating") || "all";
     const claimFilter = searchParams.get("claim") || "all";
-    const sortField = searchParams.get("sortField") || "profile_views";
+    const sortField = searchParams.get("sortField") || "joined_at";
     const sortDirection = searchParams.get("sortDirection") || "desc";
 
     // Build base query
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
       .select(`
         id, username, first_name, last_name, email, city, state, is_approved,
         profile_photo_url, profile_views, coin_balance, instagram_name,
-        instagram_followers, admin_rating, created_at, user_id, invite_token,
+        instagram_followers, admin_rating, new_face, created_at, user_id, invite_token,
         claimed_at, last_active_at
       `, { count: "exact" });
 
@@ -185,17 +185,18 @@ export async function GET(request: NextRequest) {
         last_post: lastPostMap.get(model.id) || null,
         message_count: actorId ? (messageMap.get(actorId as string) || 0) : 0,
         last_seen: model.last_active_at || lastPostMap.get(model.id) || (model.user_id ? model.created_at : null),
+        joined_at: model.claimed_at || model.created_at,
       };
     });
 
     // Sort by computed fields if needed
-    const computedFields = ["total_earned", "content_count", "last_post", "last_seen", "message_count", "followers_count"];
+    const computedFields = ["total_earned", "content_count", "last_post", "last_seen", "message_count", "followers_count", "joined_at"];
     if (computedFields.includes(sortField)) {
       enrichedModels.sort((a: any, b: any) => {
         let aVal = a[sortField];
         let bVal = b[sortField];
 
-        if (sortField === "last_post" || sortField === "last_seen") {
+        if (sortField === "last_post" || sortField === "last_seen" || sortField === "joined_at") {
           aVal = aVal ? new Date(aVal).getTime() : 0;
           bVal = bVal ? new Date(bVal).getTime() : 0;
         }

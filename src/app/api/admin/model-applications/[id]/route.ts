@@ -138,6 +138,16 @@ export async function PATCH(
         await (supabase.from("models") as any)
           .update({ is_approved: true, status: "approved" })
           .eq("user_id", application.user_id);
+
+        // Update actor type to model (in case it was still 'fan')
+        const { error: actorError } = await (supabase
+          .from("actors") as any)
+          .update({ type: "model" })
+          .eq("user_id", application.user_id);
+
+        if (actorError) {
+          console.error("Error updating actor type:", actorError);
+        }
       }
 
       // Send approval email
