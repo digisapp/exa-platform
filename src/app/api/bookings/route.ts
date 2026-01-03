@@ -35,34 +35,51 @@ export async function GET(request: NextRequest) {
     const role = searchParams.get("role"); // 'model' or 'client'
 
     // Auth check
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError) {
+      console.error("Auth error:", authError);
+      return NextResponse.json({ error: "Auth error", details: authError.message }, { status: 401 });
+    }
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Get actor
-    const { data: actor } = await supabase
+    const { data: actor, error: actorError } = await supabase
       .from("actors")
       .select("id, type")
       .eq("user_id", user.id)
-      .single() as { data: { id: string; type: string } | null };
+      .maybeSingle() as { data: { id: string; type: string } | null; error: any };
 
-    if (!actor) {
-      return NextResponse.json({ error: "Actor not found" }, { status: 404 });
+    if (actorError) {
+      console.error("Actor fetch error:", actorError);
+      return NextResponse.json({ error: "Failed to get actor", details: actorError.message }, { status: 500 });
     }
 
-    // Build query based on role - just select bookings, we'll fetch model data separately
+    if (!actor) {
+      // Return empty bookings for users without an actor
+      return NextResponse.json({ bookings: [], serviceLabels: SERVICE_LABELS });
+    }
+
+    // Build query based on role
     let query = (supabase.from("bookings") as any).select("*");
 
     // If user is a model and wants their bookings as a model
     if (role === "model" || actor.type === "model") {
-      const { data: model } = await (supabase.from("models") as any)
+      const { data: model, error: modelError } = await (supabase.from("models") as any)
         .select("id")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
+
+      if (modelError) {
+        console.error("Model fetch error:", modelError);
+      }
 
       if (model) {
         query = query.eq("model_id", model.id);
+      } else {
+        // Model not found, return empty
+        return NextResponse.json({ bookings: [], serviceLabels: SERVICE_LABELS });
       }
     } else {
       // Get bookings as client
@@ -94,40 +111,45 @@ export async function GET(request: NextRequest) {
 
     // Enrich bookings with model and client info
     for (const booking of bookings || []) {
-      // Fetch model info
-      if (booking.model_id) {
-        const { data: model } = await (supabase.from("models") as any)
-          .select("id, username, first_name, last_name, profile_photo_url, city, state")
-          .eq("id", booking.model_id)
-          .single();
-        booking.model = model;
-      }
+      try {
+        // Fetch model info
+        if (booking.model_id) {
+          const { data: model } = await (supabase.from("models") as any)
+            .select("id, username, first_name, last_name, profile_photo_url, city, state")
+            .eq("id", booking.model_id)
+            .maybeSingle();
+          booking.model = model;
+        }
 
-      // Fetch client info
-      if (booking.client_id) {
-        const { data: clientActor } = await supabase
-          .from("actors")
-          .select("id, type, user_id")
-          .eq("id", booking.client_id)
-          .single() as { data: { id: string; type: string; user_id: string } | null };
+        // Fetch client info
+        if (booking.client_id) {
+          const { data: clientActor } = await supabase
+            .from("actors")
+            .select("id, type, user_id")
+            .eq("id", booking.client_id)
+            .maybeSingle() as { data: { id: string; type: string; user_id: string } | null };
 
-        if (clientActor) {
-          if (clientActor.type === "fan") {
-            const { data: fan } = await supabase
-              .from("fans")
-              .select("display_name, email, avatar_url")
-              .eq("id", clientActor.id)
-              .single() as { data: { display_name: string; email: string; avatar_url: string } | null };
-            booking.client = { ...fan, type: "fan" };
-          } else if (clientActor.type === "brand") {
-            const { data: brand } = await supabase
-              .from("brands")
-              .select("company_name, contact_name, email, logo_url")
-              .eq("id", clientActor.id)
-              .single() as { data: { company_name: string; contact_name: string; email: string; logo_url: string } | null };
-            booking.client = { ...brand, type: "brand" };
+          if (clientActor) {
+            if (clientActor.type === "fan") {
+              const { data: fan } = await supabase
+                .from("fans")
+                .select("display_name, email, avatar_url")
+                .eq("id", clientActor.id)
+                .maybeSingle() as { data: { display_name: string; email: string; avatar_url: string } | null };
+              booking.client = { ...fan, type: "fan" };
+            } else if (clientActor.type === "brand") {
+              const { data: brand } = await supabase
+                .from("brands")
+                .select("company_name, contact_name, email, logo_url")
+                .eq("id", clientActor.id)
+                .maybeSingle() as { data: { company_name: string; contact_name: string; email: string; logo_url: string } | null };
+              booking.client = { ...brand, type: "brand" };
+            }
           }
         }
+      } catch (enrichError) {
+        console.error("Error enriching booking:", enrichError);
+        // Continue with other bookings
       }
     }
 

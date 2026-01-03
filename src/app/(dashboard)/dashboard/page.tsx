@@ -192,7 +192,7 @@ export default async function DashboardPage() {
               <div className="p-2 rounded-full bg-violet-500/20 group-hover:bg-violet-500/30 transition-colors">
                 <Briefcase className="h-5 w-5 text-violet-500" />
               </div>
-              <p className="flex-1 font-medium text-sm group-hover:text-violet-500 transition-colors">Find Gigs</p>
+              <p className="flex-1 font-medium text-sm group-hover:text-violet-500 transition-colors">Gigs</p>
             </Link>
           </CardContent>
         </Card>
