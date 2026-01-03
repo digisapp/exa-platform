@@ -892,21 +892,6 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-violet-500/10 to-purple-500/10 border-violet-500/20 hover:border-violet-500/40 transition-colors">
-          <CardContent className="pt-6">
-            <Link href="/gigs" className="flex items-center gap-4 group">
-              <div className="p-3 rounded-full bg-violet-500/20 group-hover:bg-violet-500/30 transition-colors">
-                <Calendar className="h-6 w-6 text-violet-500" />
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold group-hover:text-violet-500 transition-colors">View Experiences</p>
-                <p className="text-xs text-muted-foreground">Upcoming shows & events</p>
-              </div>
-              <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-violet-500 transition-colors" />
-            </Link>
-          </CardContent>
-        </Card>
-
         <Card className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20 hover:border-green-500/40 transition-colors">
           <CardContent className="pt-6">
             <Link href="/bookings" className="flex items-center gap-4 group">
