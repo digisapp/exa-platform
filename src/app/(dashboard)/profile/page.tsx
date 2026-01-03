@@ -1467,17 +1467,22 @@ export default function ProfilePage() {
                       <Label>Hourly Rate</Label>
                       <p className="text-xs text-muted-foreground">Per hour for photoshoots</p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground">$</span>
-                      <Input
-                        type="number"
-                        min="0"
-                        max="10000"
-                        value={model.photoshoot_hourly_rate || ""}
-                        onChange={(e) => setModel({ ...model, photoshoot_hourly_rate: parseInt(e.target.value) || 0 })}
-                        className="w-24 text-right"
-                        placeholder="150"
-                      />
+                    <div className="flex flex-col items-end gap-1">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100000"
+                          value={model.photoshoot_hourly_rate || ""}
+                          onChange={(e) => setModel({ ...model, photoshoot_hourly_rate: parseInt(e.target.value) || 0 })}
+                          className="w-24 text-right"
+                          placeholder="1500"
+                        />
+                        <span className="text-sm text-muted-foreground">coins</span>
+                      </div>
+                      {(model.photoshoot_hourly_rate || 0) > 0 && (
+                        <span className="text-xs text-green-500">= ${((model.photoshoot_hourly_rate || 0) * 0.10).toFixed(2)} USD</span>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-lg border">
@@ -1485,17 +1490,22 @@ export default function ProfilePage() {
                       <Label>Half-Day Rate</Label>
                       <p className="text-xs text-muted-foreground">4 hours of shooting</p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground">$</span>
-                      <Input
-                        type="number"
-                        min="0"
-                        max="50000"
-                        value={model.photoshoot_half_day_rate || ""}
-                        onChange={(e) => setModel({ ...model, photoshoot_half_day_rate: parseInt(e.target.value) || 0 })}
-                        className="w-24 text-right"
-                        placeholder="500"
-                      />
+                    <div className="flex flex-col items-end gap-1">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min="0"
+                          max="500000"
+                          value={model.photoshoot_half_day_rate || ""}
+                          onChange={(e) => setModel({ ...model, photoshoot_half_day_rate: parseInt(e.target.value) || 0 })}
+                          className="w-24 text-right"
+                          placeholder="5000"
+                        />
+                        <span className="text-sm text-muted-foreground">coins</span>
+                      </div>
+                      {(model.photoshoot_half_day_rate || 0) > 0 && (
+                        <span className="text-xs text-green-500">= ${((model.photoshoot_half_day_rate || 0) * 0.10).toFixed(2)} USD</span>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-lg border">
@@ -1503,17 +1513,22 @@ export default function ProfilePage() {
                       <Label>Full-Day Rate</Label>
                       <p className="text-xs text-muted-foreground">8 hours of shooting</p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground">$</span>
-                      <Input
-                        type="number"
-                        min="0"
-                        max="100000"
-                        value={model.photoshoot_full_day_rate || ""}
-                        onChange={(e) => setModel({ ...model, photoshoot_full_day_rate: parseInt(e.target.value) || 0 })}
-                        className="w-24 text-right"
-                        placeholder="800"
-                      />
+                    <div className="flex flex-col items-end gap-1">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min="0"
+                          max="1000000"
+                          value={model.photoshoot_full_day_rate || ""}
+                          onChange={(e) => setModel({ ...model, photoshoot_full_day_rate: parseInt(e.target.value) || 0 })}
+                          className="w-24 text-right"
+                          placeholder="8000"
+                        />
+                        <span className="text-sm text-muted-foreground">coins</span>
+                      </div>
+                      {(model.photoshoot_full_day_rate || 0) > 0 && (
+                        <span className="text-xs text-green-500">= ${((model.photoshoot_full_day_rate || 0) * 0.10).toFixed(2)} USD</span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1531,17 +1546,22 @@ export default function ProfilePage() {
                       <Label>Promo Modeling</Label>
                       <p className="text-xs text-muted-foreground">Per hour for promotional work</p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground">$</span>
-                      <Input
-                        type="number"
-                        min="0"
-                        max="10000"
-                        value={model.promo_hourly_rate || ""}
-                        onChange={(e) => setModel({ ...model, promo_hourly_rate: parseInt(e.target.value) || 0 })}
-                        className="w-24 text-right"
-                        placeholder="75"
-                      />
+                    <div className="flex flex-col items-end gap-1">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100000"
+                          value={model.promo_hourly_rate || ""}
+                          onChange={(e) => setModel({ ...model, promo_hourly_rate: parseInt(e.target.value) || 0 })}
+                          className="w-24 text-right"
+                          placeholder="750"
+                        />
+                        <span className="text-sm text-muted-foreground">coins</span>
+                      </div>
+                      {(model.promo_hourly_rate || 0) > 0 && (
+                        <span className="text-xs text-green-500">= ${((model.promo_hourly_rate || 0) * 0.10).toFixed(2)} USD</span>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-lg border">
@@ -1549,17 +1569,22 @@ export default function ProfilePage() {
                       <Label>Brand Ambassador</Label>
                       <p className="text-xs text-muted-foreground">Daily rate for brand work</p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground">$</span>
-                      <Input
-                        type="number"
-                        min="0"
-                        max="50000"
-                        value={model.brand_ambassador_daily_rate || ""}
-                        onChange={(e) => setModel({ ...model, brand_ambassador_daily_rate: parseInt(e.target.value) || 0 })}
-                        className="w-24 text-right"
-                        placeholder="300"
-                      />
+                    <div className="flex flex-col items-end gap-1">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min="0"
+                          max="500000"
+                          value={model.brand_ambassador_daily_rate || ""}
+                          onChange={(e) => setModel({ ...model, brand_ambassador_daily_rate: parseInt(e.target.value) || 0 })}
+                          className="w-24 text-right"
+                          placeholder="3000"
+                        />
+                        <span className="text-sm text-muted-foreground">coins</span>
+                      </div>
+                      {(model.brand_ambassador_daily_rate || 0) > 0 && (
+                        <span className="text-xs text-green-500">= ${((model.brand_ambassador_daily_rate || 0) * 0.10).toFixed(2)} USD</span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1577,17 +1602,22 @@ export default function ProfilePage() {
                       <Label>Private Events</Label>
                       <p className="text-xs text-muted-foreground">Per hour for private events</p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground">$</span>
-                      <Input
-                        type="number"
-                        min="0"
-                        max="10000"
-                        value={model.private_event_hourly_rate || ""}
-                        onChange={(e) => setModel({ ...model, private_event_hourly_rate: parseInt(e.target.value) || 0 })}
-                        className="w-24 text-right"
-                        placeholder="200"
-                      />
+                    <div className="flex flex-col items-end gap-1">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100000"
+                          value={model.private_event_hourly_rate || ""}
+                          onChange={(e) => setModel({ ...model, private_event_hourly_rate: parseInt(e.target.value) || 0 })}
+                          className="w-24 text-right"
+                          placeholder="2000"
+                        />
+                        <span className="text-sm text-muted-foreground">coins</span>
+                      </div>
+                      {(model.private_event_hourly_rate || 0) > 0 && (
+                        <span className="text-xs text-green-500">= ${((model.private_event_hourly_rate || 0) * 0.10).toFixed(2)} USD</span>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-lg border">
@@ -1595,17 +1625,22 @@ export default function ProfilePage() {
                       <Label>Social Companion</Label>
                       <p className="text-xs text-muted-foreground">Per hour for social events</p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground">$</span>
-                      <Input
-                        type="number"
-                        min="0"
-                        max="10000"
-                        value={model.social_companion_hourly_rate || ""}
-                        onChange={(e) => setModel({ ...model, social_companion_hourly_rate: parseInt(e.target.value) || 0 })}
-                        className="w-24 text-right"
-                        placeholder="150"
-                      />
+                    <div className="flex flex-col items-end gap-1">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100000"
+                          value={model.social_companion_hourly_rate || ""}
+                          onChange={(e) => setModel({ ...model, social_companion_hourly_rate: parseInt(e.target.value) || 0 })}
+                          className="w-24 text-right"
+                          placeholder="1500"
+                        />
+                        <span className="text-sm text-muted-foreground">coins</span>
+                      </div>
+                      {(model.social_companion_hourly_rate || 0) > 0 && (
+                        <span className="text-xs text-green-500">= ${((model.social_companion_hourly_rate || 0) * 0.10).toFixed(2)} USD</span>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-lg border">
@@ -1613,17 +1648,22 @@ export default function ProfilePage() {
                       <Label>Meet & Greet</Label>
                       <p className="text-xs text-muted-foreground">Flat fee for appearances</p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground">$</span>
-                      <Input
-                        type="number"
-                        min="0"
-                        max="50000"
-                        value={model.meet_greet_rate || ""}
-                        onChange={(e) => setModel({ ...model, meet_greet_rate: parseInt(e.target.value) || 0 })}
-                        className="w-24 text-right"
-                        placeholder="100"
-                      />
+                    <div className="flex flex-col items-end gap-1">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min="0"
+                          max="500000"
+                          value={model.meet_greet_rate || ""}
+                          onChange={(e) => setModel({ ...model, meet_greet_rate: parseInt(e.target.value) || 0 })}
+                          className="w-24 text-right"
+                          placeholder="1000"
+                        />
+                        <span className="text-sm text-muted-foreground">coins</span>
+                      </div>
+                      {(model.meet_greet_rate || 0) > 0 && (
+                        <span className="text-xs text-green-500">= ${((model.meet_greet_rate || 0) * 0.10).toFixed(2)} USD</span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1640,24 +1680,29 @@ export default function ProfilePage() {
                     <Label>Travel Fee</Label>
                     <p className="text-xs text-muted-foreground">For out-of-area bookings</p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground">$</span>
-                    <Input
-                      type="number"
-                      min="0"
-                      max="10000"
-                      value={model.travel_fee || ""}
-                      onChange={(e) => setModel({ ...model, travel_fee: parseInt(e.target.value) || 0 })}
-                      className="w-24 text-right"
-                      placeholder="50"
-                    />
+                  <div className="flex flex-col items-end gap-1">
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min="0"
+                        max="100000"
+                        value={model.travel_fee || ""}
+                        onChange={(e) => setModel({ ...model, travel_fee: parseInt(e.target.value) || 0 })}
+                        className="w-24 text-right"
+                        placeholder="500"
+                      />
+                      <span className="text-sm text-muted-foreground">coins</span>
+                    </div>
+                    {(model.travel_fee || 0) > 0 && (
+                      <span className="text-xs text-green-500">= ${((model.travel_fee || 0) * 0.10).toFixed(2)} USD</span>
+                    )}
                   </div>
                 </div>
               </div>
 
               {/* Tip */}
               <p className="text-sm text-muted-foreground">
-                Set a rate to $0 to hide that service if you don&apos;t offer it.
+                Set a rate to 0 coins to hide that service if you don&apos;t offer it.
               </p>
 
             </CardContent>

@@ -199,7 +199,7 @@ export async function PATCH(
           actor_id: booking.client_id,
           type: "booking_counter",
           title: "Counter Offer Received",
-          body: `${booking.model?.first_name || booking.model?.username} sent a counter offer of $${counterAmount}`,
+          body: `${booking.model?.first_name || booking.model?.username} sent a counter offer of ${counterAmount.toLocaleString()} coins`,
           data: { booking_id: id, booking_number: booking.booking_number, counter_amount: counterAmount },
         };
         break;
@@ -227,7 +227,7 @@ export async function PATCH(
               actor_id: modelActor.id,
               type: "counter_accepted",
               title: "Counter Offer Accepted",
-              body: `Your counter offer of $${booking.counter_amount} was accepted`,
+              body: `Your counter offer of ${booking.counter_amount?.toLocaleString()} coins was accepted`,
               data: { booking_id: id, booking_number: booking.booking_number },
             };
           }

@@ -259,13 +259,19 @@ export default function BookingsPage() {
                           </div>
                           <div className="text-right">
                             <p className="text-2xl font-bold text-pink-500">
-                              ${booking.status === "counter" && booking.counter_amount
+                              {(booking.status === "counter" && booking.counter_amount
                                 ? booking.counter_amount
-                                : booking.total_amount}
+                                : booking.total_amount
+                              ).toLocaleString()} coins
+                            </p>
+                            <p className="text-xs text-green-500">
+                              ≈ ${((booking.status === "counter" && booking.counter_amount
+                                ? booking.counter_amount
+                                : booking.total_amount) * 0.10).toFixed(2)} USD
                             </p>
                             {booking.status === "counter" && booking.counter_amount && (
                               <p className="text-xs text-muted-foreground line-through">
-                                Original: ${booking.total_amount}
+                                Original: {booking.total_amount.toLocaleString()} coins
                               </p>
                             )}
                           </div>
@@ -493,16 +499,23 @@ export default function BookingsPage() {
             {responseModal.action === "counter" && (
               <>
                 <div className="space-y-2">
-                  <Label>Counter Amount ($)</Label>
+                  <Label>Counter Amount (coins)</Label>
                   <Input
                     type="number"
                     value={counterAmount}
                     onChange={(e) => setCounterAmount(e.target.value)}
                     placeholder="Enter your counter offer"
                   />
-                  <p className="text-xs text-muted-foreground">
-                    Original amount: ${responseModal.booking?.total_amount}
-                  </p>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">
+                      Original: {responseModal.booking?.total_amount?.toLocaleString()} coins
+                    </span>
+                    {counterAmount && (
+                      <span className="text-green-500">
+                        ≈ ${(parseInt(counterAmount) * 0.10).toFixed(2)} USD
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Explain Your Counter (Optional)</Label>

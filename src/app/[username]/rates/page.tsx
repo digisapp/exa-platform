@@ -250,7 +250,10 @@ export default async function ModelRatesPage({ params }: Props) {
                         <p className="text-white font-medium">Hourly Rate</p>
                         <p className="text-sm text-white/50">Per hour of shooting</p>
                       </div>
-                      <p className="text-xl font-bold text-pink-400">${model.photoshoot_hourly_rate}</p>
+                      <div className="text-right">
+                        <p className="text-xl font-bold text-pink-400">{model.photoshoot_hourly_rate?.toLocaleString()} coins</p>
+                        <p className="text-xs text-white/40">≈ ${(model.photoshoot_hourly_rate * 0.10).toFixed(2)} USD</p>
+                      </div>
                     </div>
                   )}
                   {(model.photoshoot_half_day_rate || 0) > 0 && (
@@ -259,7 +262,10 @@ export default async function ModelRatesPage({ params }: Props) {
                         <p className="text-white font-medium">Half-Day Rate</p>
                         <p className="text-sm text-white/50">4 hours of shooting</p>
                       </div>
-                      <p className="text-xl font-bold text-pink-400">${model.photoshoot_half_day_rate}</p>
+                      <div className="text-right">
+                        <p className="text-xl font-bold text-pink-400">{model.photoshoot_half_day_rate?.toLocaleString()} coins</p>
+                        <p className="text-xs text-white/40">≈ ${(model.photoshoot_half_day_rate * 0.10).toFixed(2)} USD</p>
+                      </div>
                     </div>
                   )}
                   {(model.photoshoot_full_day_rate || 0) > 0 && (
@@ -268,7 +274,10 @@ export default async function ModelRatesPage({ params }: Props) {
                         <p className="text-white font-medium">Full-Day Rate</p>
                         <p className="text-sm text-white/50">8 hours of shooting</p>
                       </div>
-                      <p className="text-xl font-bold text-pink-400">${model.photoshoot_full_day_rate}</p>
+                      <div className="text-right">
+                        <p className="text-xl font-bold text-pink-400">{model.photoshoot_full_day_rate?.toLocaleString()} coins</p>
+                        <p className="text-xs text-white/40">≈ ${(model.photoshoot_full_day_rate * 0.10).toFixed(2)} USD</p>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -289,7 +298,10 @@ export default async function ModelRatesPage({ params }: Props) {
                         <p className="text-white font-medium">Promo Modeling</p>
                         <p className="text-sm text-white/50">Per hour for promotional work</p>
                       </div>
-                      <p className="text-xl font-bold text-blue-400">${model.promo_hourly_rate}</p>
+                      <div className="text-right">
+                        <p className="text-xl font-bold text-blue-400">{model.promo_hourly_rate?.toLocaleString()} coins</p>
+                        <p className="text-xs text-white/40">≈ ${(model.promo_hourly_rate * 0.10).toFixed(2)} USD</p>
+                      </div>
                     </div>
                   )}
                   {(model.brand_ambassador_daily_rate || 0) > 0 && (
@@ -298,7 +310,10 @@ export default async function ModelRatesPage({ params }: Props) {
                         <p className="text-white font-medium">Brand Ambassador</p>
                         <p className="text-sm text-white/50">Daily rate for brand work</p>
                       </div>
-                      <p className="text-xl font-bold text-blue-400">${model.brand_ambassador_daily_rate}</p>
+                      <div className="text-right">
+                        <p className="text-xl font-bold text-blue-400">{model.brand_ambassador_daily_rate?.toLocaleString()} coins</p>
+                        <p className="text-xs text-white/40">≈ ${(model.brand_ambassador_daily_rate * 0.10).toFixed(2)} USD</p>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -319,7 +334,10 @@ export default async function ModelRatesPage({ params }: Props) {
                         <p className="text-white font-medium">Private Events</p>
                         <p className="text-sm text-white/50">Per hour for private events</p>
                       </div>
-                      <p className="text-xl font-bold text-violet-400">${model.private_event_hourly_rate}</p>
+                      <div className="text-right">
+                        <p className="text-xl font-bold text-violet-400">{model.private_event_hourly_rate?.toLocaleString()} coins</p>
+                        <p className="text-xs text-white/40">≈ ${(model.private_event_hourly_rate * 0.10).toFixed(2)} USD</p>
+                      </div>
                     </div>
                   )}
                   {(model.social_companion_hourly_rate || 0) > 0 && (
@@ -328,7 +346,10 @@ export default async function ModelRatesPage({ params }: Props) {
                         <p className="text-white font-medium">Social Companion</p>
                         <p className="text-sm text-white/50">Per hour for social events</p>
                       </div>
-                      <p className="text-xl font-bold text-violet-400">${model.social_companion_hourly_rate}</p>
+                      <div className="text-right">
+                        <p className="text-xl font-bold text-violet-400">{model.social_companion_hourly_rate?.toLocaleString()} coins</p>
+                        <p className="text-xs text-white/40">≈ ${(model.social_companion_hourly_rate * 0.10).toFixed(2)} USD</p>
+                      </div>
                     </div>
                   )}
                   {(model.meet_greet_rate || 0) > 0 && (
@@ -337,7 +358,10 @@ export default async function ModelRatesPage({ params }: Props) {
                         <p className="text-white font-medium">Meet & Greet</p>
                         <p className="text-sm text-white/50">Flat fee for appearances</p>
                       </div>
-                      <p className="text-xl font-bold text-violet-400">${model.meet_greet_rate}</p>
+                      <div className="text-right">
+                        <p className="text-xl font-bold text-violet-400">{model.meet_greet_rate?.toLocaleString()} coins</p>
+                        <p className="text-xs text-white/40">≈ ${(model.meet_greet_rate * 0.10).toFixed(2)} USD</p>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -355,7 +379,10 @@ export default async function ModelRatesPage({ params }: Props) {
                       <p className="text-sm text-white/50">For out-of-area bookings</p>
                     </div>
                   </div>
-                  <p className="text-xl font-bold text-green-400">${model.travel_fee}</p>
+                  <div className="text-right">
+                    <p className="text-xl font-bold text-green-400">{model.travel_fee?.toLocaleString()} coins</p>
+                    <p className="text-xs text-white/40">≈ ${(model.travel_fee * 0.10).toFixed(2)} USD</p>
+                  </div>
                 </div>
               </div>
             )}
