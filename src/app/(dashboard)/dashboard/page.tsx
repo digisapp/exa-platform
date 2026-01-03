@@ -854,12 +854,13 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
                 const displayName = model.first_name
                   ? `${model.first_name} ${model.last_name || ''}`.trim()
                   : model.username;
-                // Get the lowest hourly rate from available rates
-                const rates = [
+                // Get rate display - prefer hourly, fallback to daily
+                const hourlyRates = [
                   model.photoshoot_hourly_rate,
                   model.promo_hourly_rate,
                 ].filter((r): r is number => r != null && r > 0);
-                const lowestRate = rates.length > 0 ? Math.min(...rates) : null;
+                const lowestHourly = hourlyRates.length > 0 ? Math.min(...hourlyRates) : null;
+                const dailyRate = model.brand_ambassador_daily_rate > 0 ? model.brand_ambassador_daily_rate : null;
                 return (
                   <Link
                     key={model.id}
@@ -884,11 +885,15 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
                       </div>
                       <p className="font-medium text-sm truncate">{displayName}</p>
                       <p className="text-xs text-cyan-500">@{model.username}</p>
-                      {lowestRate !== null && (
+                      {lowestHourly !== null ? (
                         <p className="text-xs text-muted-foreground mt-1">
-                          From ${lowestRate}/hr
+                          From ${lowestHourly}/hr
                         </p>
-                      )}
+                      ) : dailyRate !== null ? (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          From ${dailyRate}/day
+                        </p>
+                      ) : null}
                     </div>
                   </Link>
                 );
@@ -933,12 +938,13 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
                 const displayName = model.first_name
                   ? `${model.first_name} ${model.last_name || ''}`.trim()
                   : model.username;
-                // Get the lowest hourly rate from available rates
-                const rates = [
+                // Get rate display - prefer hourly, fallback to daily
+                const hourlyRates = [
                   model.photoshoot_hourly_rate,
                   model.promo_hourly_rate,
                 ].filter((r): r is number => r != null && r > 0);
-                const lowestRate = rates.length > 0 ? Math.min(...rates) : null;
+                const lowestHourly = hourlyRates.length > 0 ? Math.min(...hourlyRates) : null;
+                const dailyRate = model.brand_ambassador_daily_rate > 0 ? model.brand_ambassador_daily_rate : null;
                 return (
                   <Link
                     key={model.id}
@@ -980,9 +986,11 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
                       )}
                     </div>
                     <div className="text-right">
-                      {lowestRate !== null && (
-                        <p className="text-sm font-medium text-cyan-500">${lowestRate}/hr</p>
-                      )}
+                      {lowestHourly !== null ? (
+                        <p className="text-sm font-medium text-cyan-500">${lowestHourly}/hr</p>
+                      ) : dailyRate !== null ? (
+                        <p className="text-sm font-medium text-cyan-500">${dailyRate}/day</p>
+                      ) : null}
                       <ArrowRight className="h-4 w-4 text-muted-foreground ml-auto mt-1" />
                     </div>
                   </Link>
