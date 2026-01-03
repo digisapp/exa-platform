@@ -112,6 +112,7 @@ export default function BookingsPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("pending");
+  const [userRole, setUserRole] = useState<"model" | "client">("client");
   const [responseModal, setResponseModal] = useState<{
     open: boolean;
     action: "accept" | "decline" | "counter" | null;
@@ -121,10 +122,30 @@ export default function BookingsPage() {
   const [counterAmount, setCounterAmount] = useState("");
   const [counterNotes, setCounterNotes] = useState("");
 
+  // Determine user role on mount
+  useEffect(() => {
+    const checkUserRole = async () => {
+      try {
+        const res = await fetch("/api/auth/me");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.actor?.type === "model") {
+            setUserRole("model");
+          } else {
+            setUserRole("client");
+          }
+        }
+      } catch (error) {
+        console.error("Failed to check user role:", error);
+      }
+    };
+    checkUserRole();
+  }, []);
+
   const fetchBookings = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/bookings?role=model&status=${activeTab}`);
+      const response = await fetch(`/api/bookings?role=${userRole}&status=${activeTab}`);
       const data = await response.json();
 
       if (!response.ok) {
@@ -143,7 +164,7 @@ export default function BookingsPage() {
   useEffect(() => {
     fetchBookings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
+  }, [activeTab, userRole]);
 
   const handleAction = async (action: string, bookingId: string, additionalData?: any) => {
     try {
