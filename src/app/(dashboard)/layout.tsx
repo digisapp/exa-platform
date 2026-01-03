@@ -70,7 +70,7 @@ export default async function DashboardLayout({
           email: user.email,
           company_name: "My Brand",
           is_verified: false,
-          subscription_tier: "inquiry",
+          subscription_tier: "free",
         })
         .select("company_name, logo_url, coin_balance")
         .single();

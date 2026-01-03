@@ -261,7 +261,7 @@ export default function ProfilePage() {
               email: user.email,
               company_name: "My Brand",
               is_verified: false,
-              subscription_tier: "inquiry",
+              subscription_tier: "free",
             })
             .select()
             .single();
