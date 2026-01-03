@@ -1335,16 +1335,19 @@ export default function ProfilePage() {
                       <p className="text-sm text-muted-foreground">Per minute rate for video calls (min: 5 coins)</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      min="5"
-                      max="1000"
-                      value={model.video_call_rate || 5}
-                      onChange={(e) => setModel({ ...model, video_call_rate: Math.max(5, parseInt(e.target.value) || 5) })}
-                      className="w-24 text-right"
-                    />
-                    <span className="text-sm text-muted-foreground">coins/min</span>
+                  <div className="flex flex-col items-end gap-1">
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min="5"
+                        max="1000"
+                        value={model.video_call_rate || 5}
+                        onChange={(e) => setModel({ ...model, video_call_rate: Math.max(5, parseInt(e.target.value) || 5) })}
+                        className="w-24 text-right"
+                      />
+                      <span className="text-sm text-muted-foreground">coins/min</span>
+                    </div>
+                    <span className="text-xs text-green-500">= ${((model.video_call_rate || 5) * 0.10).toFixed(2)}/min USD</span>
                   </div>
                 </div>
 
@@ -1361,16 +1364,19 @@ export default function ProfilePage() {
                       <p className="text-sm text-muted-foreground">Per minute rate for voice calls (min: 5 coins)</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      min="5"
-                      max="1000"
-                      value={model.voice_call_rate || 5}
-                      onChange={(e) => setModel({ ...model, voice_call_rate: Math.max(5, parseInt(e.target.value) || 5) })}
-                      className="w-24 text-right"
-                    />
-                    <span className="text-sm text-muted-foreground">coins/min</span>
+                  <div className="flex flex-col items-end gap-1">
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min="5"
+                        max="1000"
+                        value={model.voice_call_rate || 5}
+                        onChange={(e) => setModel({ ...model, voice_call_rate: Math.max(5, parseInt(e.target.value) || 5) })}
+                        className="w-24 text-right"
+                      />
+                      <span className="text-sm text-muted-foreground">coins/min</span>
+                    </div>
+                    <span className="text-xs text-green-500">= ${((model.voice_call_rate || 5) * 0.10).toFixed(2)}/min USD</span>
                   </div>
                 </div>
 
@@ -1387,19 +1393,29 @@ export default function ProfilePage() {
                       <p className="text-sm text-muted-foreground">Cost per message to chat with you</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={model.message_rate || 0}
-                      onChange={(e) => setModel({ ...model, message_rate: parseInt(e.target.value) || 0 })}
-                      className="w-24 text-right"
-                    />
-                    <span className="text-sm text-muted-foreground">coins/msg</span>
+                  <div className="flex flex-col items-end gap-1">
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={model.message_rate || 0}
+                        onChange={(e) => setModel({ ...model, message_rate: parseInt(e.target.value) || 0 })}
+                        className="w-24 text-right"
+                      />
+                      <span className="text-sm text-muted-foreground">coins/msg</span>
+                    </div>
+                    {(model.message_rate || 0) > 0 && (
+                      <span className="text-xs text-green-500">= ${((model.message_rate || 0) * 0.10).toFixed(2)}/msg USD</span>
+                    )}
                   </div>
                 </div>
               </div>
+
+              {/* Conversion Info */}
+              <p className="text-xs text-muted-foreground text-center">
+                1 coin = $0.10 USD
+              </p>
 
             </CardContent>
           </Card>
@@ -1460,7 +1476,7 @@ export default function ProfilePage() {
                         value={model.photoshoot_hourly_rate || ""}
                         onChange={(e) => setModel({ ...model, photoshoot_hourly_rate: parseInt(e.target.value) || 0 })}
                         className="w-24 text-right"
-                        placeholder="0"
+                        placeholder="150"
                       />
                     </div>
                   </div>
@@ -1478,7 +1494,7 @@ export default function ProfilePage() {
                         value={model.photoshoot_half_day_rate || ""}
                         onChange={(e) => setModel({ ...model, photoshoot_half_day_rate: parseInt(e.target.value) || 0 })}
                         className="w-24 text-right"
-                        placeholder="0"
+                        placeholder="500"
                       />
                     </div>
                   </div>
@@ -1496,7 +1512,7 @@ export default function ProfilePage() {
                         value={model.photoshoot_full_day_rate || ""}
                         onChange={(e) => setModel({ ...model, photoshoot_full_day_rate: parseInt(e.target.value) || 0 })}
                         className="w-24 text-right"
-                        placeholder="0"
+                        placeholder="800"
                       />
                     </div>
                   </div>
@@ -1524,7 +1540,7 @@ export default function ProfilePage() {
                         value={model.promo_hourly_rate || ""}
                         onChange={(e) => setModel({ ...model, promo_hourly_rate: parseInt(e.target.value) || 0 })}
                         className="w-24 text-right"
-                        placeholder="0"
+                        placeholder="75"
                       />
                     </div>
                   </div>
@@ -1542,7 +1558,7 @@ export default function ProfilePage() {
                         value={model.brand_ambassador_daily_rate || ""}
                         onChange={(e) => setModel({ ...model, brand_ambassador_daily_rate: parseInt(e.target.value) || 0 })}
                         className="w-24 text-right"
-                        placeholder="0"
+                        placeholder="300"
                       />
                     </div>
                   </div>
@@ -1570,7 +1586,7 @@ export default function ProfilePage() {
                         value={model.private_event_hourly_rate || ""}
                         onChange={(e) => setModel({ ...model, private_event_hourly_rate: parseInt(e.target.value) || 0 })}
                         className="w-24 text-right"
-                        placeholder="0"
+                        placeholder="200"
                       />
                     </div>
                   </div>
@@ -1588,7 +1604,7 @@ export default function ProfilePage() {
                         value={model.social_companion_hourly_rate || ""}
                         onChange={(e) => setModel({ ...model, social_companion_hourly_rate: parseInt(e.target.value) || 0 })}
                         className="w-24 text-right"
-                        placeholder="0"
+                        placeholder="150"
                       />
                     </div>
                   </div>
@@ -1606,7 +1622,7 @@ export default function ProfilePage() {
                         value={model.meet_greet_rate || ""}
                         onChange={(e) => setModel({ ...model, meet_greet_rate: parseInt(e.target.value) || 0 })}
                         className="w-24 text-right"
-                        placeholder="0"
+                        placeholder="100"
                       />
                     </div>
                   </div>
@@ -1633,7 +1649,7 @@ export default function ProfilePage() {
                       value={model.travel_fee || ""}
                       onChange={(e) => setModel({ ...model, travel_fee: parseInt(e.target.value) || 0 })}
                       className="w-24 text-right"
-                      placeholder="0"
+                      placeholder="50"
                     />
                   </div>
                 </div>
