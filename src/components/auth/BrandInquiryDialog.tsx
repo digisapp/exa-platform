@@ -72,28 +72,20 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
       baseUsername = baseUsername + "brand";
     }
 
-    // Check if username is taken and add number suffix if needed
+    // Check if username is taken (only check models table which is publicly readable)
     let finalUsername = baseUsername;
     let suffix = 1;
 
     while (true) {
+      // Only check models table - it has public read access
+      // Brands table will enforce uniqueness at insert time
       const { data: existingModel } = await (supabase.from("models") as any)
         .select("id")
         .eq("username", finalUsername)
-        .single();
+        .maybeSingle();
 
-      const { data: existingFan } = await (supabase.from("fans") as any)
-        .select("id")
-        .eq("username", finalUsername)
-        .single();
-
-      const { data: existingBrand } = await (supabase.from("brands") as any)
-        .select("id")
-        .eq("username", finalUsername)
-        .single();
-
-      if (!existingModel && !existingFan && !existingBrand) {
-        break; // Username is available
+      if (!existingModel) {
+        break; // Username is available in models
       }
 
       // Try with a number suffix
@@ -127,42 +119,24 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
         throw new Error("Failed to create account");
       }
 
-      // Create actor record
-      const { data: actor, error: actorError } = await (supabase
-        .from("actors") as any)
-        .insert({
-          user_id: authData.user.id,
-          type: "brand",
-        })
-        .select()
-        .single();
-
-      if (actorError) {
-        console.error("Actor error:", actorError);
-        throw actorError;
-      }
-
-      // Create brand profile (inquiry tier so it shows in admin for approval)
-      const { error: brandError } = await (supabase
-        .from("brands") as any)
-        .insert({
-          id: actor.id,
-          username: finalUsername,
-          company_name: companyName.trim(),
-          contact_name: contactName.trim(),
-          email: email.toLowerCase().trim(),
+      // Use API route to create actor and brand profile (bypasses RLS)
+      const res = await fetch("/api/auth/create-brand", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          companyName: companyName.trim(),
+          contactName: contactName.trim(),
           bio: message.trim() || null,
-          is_verified: false,
-          subscription_tier: "inquiry",
-        });
+        }),
+      });
 
-      if (brandError) {
-        console.error("Brand error:", brandError);
-        throw brandError;
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to create brand profile");
       }
 
       setSubmitted(true);
-      toast.success("Welcome to EXA!");
+      toast.success("Application submitted!");
 
     } catch (error: unknown) {
       const errMessage = error instanceof Error ? error.message : "Something went wrong";
