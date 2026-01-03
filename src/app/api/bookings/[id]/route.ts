@@ -161,20 +161,20 @@ export async function PATCH(
           const { data: clientActor } = await (supabase.from("actors") as any)
             .select("id, type")
             .eq("id", booking.client_id)
-            .single();
+            .maybeSingle();
 
           let clientBalance = 0;
           if (clientActor?.type === "fan") {
             const { data: fan } = await (supabase.from("fans") as any)
               .select("coin_balance")
               .eq("id", clientActor.id)
-              .single();
+              .maybeSingle();
             clientBalance = fan?.coin_balance || 0;
           } else if (clientActor?.type === "brand") {
             const { data: brand } = await (supabase.from("brands") as any)
               .select("coin_balance")
               .eq("id", clientActor.id)
-              .single();
+              .maybeSingle();
             clientBalance = brand?.coin_balance || 0;
           }
 
@@ -306,13 +306,13 @@ export async function PATCH(
             const { data: fan } = await (supabase.from("fans") as any)
               .select("coin_balance")
               .eq("id", actor.id)
-              .single();
+              .maybeSingle();
             counterClientBalance = fan?.coin_balance || 0;
           } else if (actor.type === "brand") {
             const { data: brand } = await (supabase.from("brands") as any)
               .select("coin_balance")
               .eq("id", actor.id)
-              .single();
+              .maybeSingle();
             counterClientBalance = brand?.coin_balance || 0;
           }
 
@@ -473,7 +473,7 @@ export async function PATCH(
         const { data: modelRecord } = await (supabase.from("models") as any)
           .select("coin_balance")
           .eq("id", booking.model_id)
-          .single();
+          .maybeSingle();
 
         const modelBalance = modelRecord?.coin_balance || 0;
         await (supabase.from("models") as any)
@@ -500,48 +500,61 @@ export async function PATCH(
         }
       } else if (action === "cancel" && wasEscrowed) {
         // Only refund if coins were already escrowed (booking was accepted/confirmed)
-        const { data: clientActor } = await (supabase.from("actors") as any)
-          .select("id, type")
-          .eq("id", booking.client_id)
-          .single();
+        try {
+          const { data: clientActor } = await (supabase.from("actors") as any)
+            .select("id, type")
+            .eq("id", booking.client_id)
+            .maybeSingle();
 
-        if (clientActor) {
-          if (clientActor.type === "fan") {
-            const { data: fan } = await (supabase.from("fans") as any)
-              .select("coin_balance")
-              .eq("id", clientActor.id)
-              .single();
-            await (supabase.from("fans") as any)
-              .update({ coin_balance: (fan?.coin_balance || 0) + escrowAmount })
-              .eq("id", clientActor.id);
-          } else if (clientActor.type === "brand") {
-            const { data: brand } = await (supabase.from("brands") as any)
-              .select("coin_balance")
-              .eq("id", clientActor.id)
-              .single();
-            await (supabase.from("brands") as any)
-              .update({ coin_balance: (brand?.coin_balance || 0) + escrowAmount })
-              .eq("id", clientActor.id);
+          if (clientActor) {
+            if (clientActor.type === "fan") {
+              const { data: fan } = await (supabase.from("fans") as any)
+                .select("coin_balance")
+                .eq("id", clientActor.id)
+                .maybeSingle();
+              if (fan) {
+                await (supabase.from("fans") as any)
+                  .update({ coin_balance: (fan.coin_balance || 0) + escrowAmount })
+                  .eq("id", clientActor.id);
+              }
+            } else if (clientActor.type === "brand") {
+              const { data: brand } = await (supabase.from("brands") as any)
+                .select("coin_balance")
+                .eq("id", clientActor.id)
+                .maybeSingle();
+              if (brand) {
+                await (supabase.from("brands") as any)
+                  .update({ coin_balance: (brand.coin_balance || 0) + escrowAmount })
+                  .eq("id", clientActor.id);
+              }
+            }
+
+            await (supabase.from("coin_transactions") as any).insert({
+              actor_id: clientActor.id,
+              amount: escrowAmount,
+              action: "booking_refund",
+              metadata: {
+                booking_id: id,
+                booking_number: booking.booking_number,
+                reason: "Booking cancelled",
+              },
+            });
           }
-
-          await (supabase.from("coin_transactions") as any).insert({
-            actor_id: clientActor.id,
-            amount: escrowAmount,
-            action: "booking_refund",
-            metadata: {
-              booking_id: id,
-              booking_number: booking.booking_number,
-              reason: "Booking cancelled",
-            },
-          });
+        } catch (refundError) {
+          console.error("Failed to process refund:", refundError);
+          // Continue with cancellation even if refund fails - can be handled manually
         }
       }
       // Note: "decline" doesn't need refund since coins aren't escrowed until acceptance
     }
 
-    // Send notification
+    // Send notification (don't fail if this errors)
     if (notificationData) {
-      await (supabase.from("notifications") as any).insert(notificationData);
+      try {
+        await (supabase.from("notifications") as any).insert(notificationData);
+      } catch (notifError) {
+        console.error("Failed to send notification:", notifError);
+      }
     }
 
     // Send email to client for accept/decline actions (don't fail if this errors)
@@ -551,7 +564,7 @@ export async function PATCH(
         const { data: clientActorInfo } = await (supabase.from("actors") as any)
           .select("id, type")
           .eq("id", booking.client_id)
-          .single();
+          .maybeSingle();
 
         let clientEmail: string | null = null;
         let clientName = "there";
@@ -560,14 +573,14 @@ export async function PATCH(
           const { data: fan } = await (supabase.from("fans") as any)
             .select("email, display_name")
             .eq("id", clientActorInfo.id)
-            .single();
+            .maybeSingle();
           clientEmail = fan?.email;
           clientName = fan?.display_name || "there";
         } else if (clientActorInfo?.type === "brand") {
           const { data: brand } = await (supabase.from("brands") as any)
             .select("email, company_name, contact_name")
             .eq("id", clientActorInfo.id)
-            .single();
+            .maybeSingle();
           clientEmail = brand?.email;
           clientName = brand?.company_name || brand?.contact_name || "there";
         }
