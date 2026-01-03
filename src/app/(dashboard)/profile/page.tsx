@@ -1671,15 +1671,6 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* Booking Rate Tips */}
-              <div className="p-4 rounded-lg bg-muted/50 space-y-2 text-sm text-muted-foreground">
-                <p className="font-medium text-foreground">Tips for setting rates:</p>
-                <p>• Research market rates in your area</p>
-                <p>• Set rates to <strong>$0</strong> to hide that service</p>
-                <p>• Half-day should typically be 3-4x hourly rate</p>
-                <p>• Full-day should typically be 6-8x hourly rate</p>
-                <p>• Consider your experience level and portfolio quality</p>
-              </div>
             </CardContent>
           </Card>
         </TabsContent>
