@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Home, MessageCircle, Coins, Users, Images } from "lucide-react";
+import { Home, MessageCircle, Coins, Users, Images, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface BottomNavProps {
@@ -46,7 +46,7 @@ export function BottomNav({ user, actorType, coinBalance, unreadCount = 0 }: Bot
           <span className="text-[10px] font-medium">Home</span>
         </Link>
 
-        {/* Explore (for fans) or Content (for models) */}
+        {/* Explore (for fans/brands) or Bookings (for models) */}
         {actorType === "fan" || actorType === "brand" ? (
           <Link
             href="/models"
@@ -60,14 +60,14 @@ export function BottomNav({ user, actorType, coinBalance, unreadCount = 0 }: Bot
           </Link>
         ) : actorType === "model" ? (
           <Link
-            href="/content"
+            href="/bookings"
             className={cn(
               "flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors",
-              isActive("/content") ? "text-pink-500" : "text-muted-foreground"
+              isActive("/bookings") ? "text-pink-500" : "text-muted-foreground"
             )}
           >
-            <Images className="h-5 w-5" />
-            <span className="text-[10px] font-medium">Content</span>
+            <Calendar className="h-5 w-5" />
+            <span className="text-[10px] font-medium">Bookings</span>
           </Link>
         ) : null}
 
