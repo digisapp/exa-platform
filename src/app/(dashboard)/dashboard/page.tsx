@@ -181,10 +181,7 @@ export default async function DashboardPage() {
               <div className="p-3 rounded-full bg-green-500/20 group-hover:bg-green-500/30 transition-colors">
                 <Calendar className="h-6 w-6 text-green-500" />
               </div>
-              <div className="flex-1">
-                <p className="font-semibold group-hover:text-green-500 transition-colors">Bookings</p>
-                <p className="text-xs text-muted-foreground">View booking requests</p>
-              </div>
+              <p className="flex-1 font-semibold group-hover:text-green-500 transition-colors">Bookings</p>
               <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-green-500 transition-colors" />
             </Link>
           </CardContent>
@@ -196,10 +193,7 @@ export default async function DashboardPage() {
               <div className="p-3 rounded-full bg-violet-500/20 group-hover:bg-violet-500/30 transition-colors">
                 <Briefcase className="h-6 w-6 text-violet-500" />
               </div>
-              <div className="flex-1">
-                <p className="font-semibold group-hover:text-violet-500 transition-colors">Find Gigs</p>
-                <p className="text-xs text-muted-foreground">Browse available opportunities</p>
-              </div>
+              <p className="flex-1 font-semibold group-hover:text-violet-500 transition-colors">Find Gigs</p>
               <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-violet-500 transition-colors" />
             </Link>
           </CardContent>
@@ -211,10 +205,7 @@ export default async function DashboardPage() {
               <div className="p-3 rounded-full bg-pink-500/20 group-hover:bg-pink-500/30 transition-colors">
                 <MessageCircle className="h-6 w-6 text-pink-500" />
               </div>
-              <div className="flex-1">
-                <p className="font-semibold group-hover:text-pink-500 transition-colors">Messages</p>
-                <p className="text-xs text-muted-foreground">Chat with clients</p>
-              </div>
+              <p className="flex-1 font-semibold group-hover:text-pink-500 transition-colors">Chats</p>
               <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-pink-500 transition-colors" />
             </Link>
           </CardContent>
