@@ -243,31 +243,37 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error("Failed to create booking:", error);
-      return NextResponse.json({ error: "Failed to create booking" }, { status: 500 });
+      console.error("Booking data:", { modelId, clientId: actor.id, serviceType, eventDate });
+      return NextResponse.json({ error: error.message || "Failed to create booking" }, { status: 500 });
     }
 
-    // Create notification for model
-    if (model.user_id) {
-      const { data: modelActor } = await supabase
-        .from("actors")
-        .select("id")
-        .eq("user_id", model.user_id)
-        .single() as { data: { id: string } | null };
+    // Create notification for model (don't fail if this errors)
+    try {
+      if (model.user_id) {
+        const { data: modelActor } = await supabase
+          .from("actors")
+          .select("id")
+          .eq("user_id", model.user_id)
+          .single() as { data: { id: string } | null };
 
-      if (modelActor) {
-        await (supabase.from("notifications") as any).insert({
-          actor_id: modelActor.id,
-          type: "booking_request",
-          title: "New Booking Request",
-          body: `You have a new ${SERVICE_LABELS[serviceType] || serviceType} booking request for ${new Date(eventDate).toLocaleDateString()}`,
-          data: {
-            booking_id: booking.id,
-            booking_number: booking.booking_number,
-            service_type: serviceType,
-            event_date: eventDate,
-          },
-        });
+        if (modelActor) {
+          await (supabase.from("notifications") as any).insert({
+            actor_id: modelActor.id,
+            type: "booking_request",
+            title: "New Booking Request",
+            body: `You have a new ${SERVICE_LABELS[serviceType] || serviceType} booking request for ${new Date(eventDate).toLocaleDateString()}`,
+            data: {
+              booking_id: booking.id,
+              booking_number: booking.booking_number,
+              service_type: serviceType,
+              event_date: eventDate,
+            },
+          });
+        }
       }
+    } catch (notifError) {
+      console.error("Failed to create notification:", notifError);
+      // Don't fail the booking request if notification fails
     }
 
     return NextResponse.json({
