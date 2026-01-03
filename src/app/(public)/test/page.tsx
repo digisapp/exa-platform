@@ -129,11 +129,11 @@ export default async function TestHomePage() {
                 </span>
 
                 <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight mb-4">
-                  Book Top Models
+                  Book Models
                   <br />
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">for Campaigns,</span>
                   <br />
-                  Photoshoots & Shows.
+                  Photoshoots + more
                 </h2>
 
                 <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
