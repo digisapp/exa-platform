@@ -854,11 +854,12 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
                 const displayName = model.first_name
                   ? `${model.first_name} ${model.last_name || ''}`.trim()
                   : model.username;
-                const lowestRate = Math.min(
-                  model.photoshoot_hourly_rate || 9999,
-                  model.promo_hourly_rate || 9999,
-                  (model.brand_ambassador_daily_rate || 9999) / 8
-                );
+                // Get the lowest hourly rate from available rates
+                const rates = [
+                  model.photoshoot_hourly_rate,
+                  model.promo_hourly_rate,
+                ].filter((r): r is number => r != null && r > 0);
+                const lowestRate = rates.length > 0 ? Math.min(...rates) : null;
                 return (
                   <Link
                     key={model.id}
@@ -883,7 +884,7 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
                       </div>
                       <p className="font-medium text-sm truncate">{displayName}</p>
                       <p className="text-xs text-cyan-500">@{model.username}</p>
-                      {lowestRate < 9999 && (
+                      {lowestRate !== null && (
                         <p className="text-xs text-muted-foreground mt-1">
                           From ${lowestRate}/hr
                         </p>
@@ -932,11 +933,12 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
                 const displayName = model.first_name
                   ? `${model.first_name} ${model.last_name || ''}`.trim()
                   : model.username;
-                const lowestRate = Math.min(
-                  model.photoshoot_hourly_rate || 9999,
-                  model.promo_hourly_rate || 9999,
-                  (model.brand_ambassador_daily_rate || 9999) / 8
-                );
+                // Get the lowest hourly rate from available rates
+                const rates = [
+                  model.photoshoot_hourly_rate,
+                  model.promo_hourly_rate,
+                ].filter((r): r is number => r != null && r > 0);
+                const lowestRate = rates.length > 0 ? Math.min(...rates) : null;
                 return (
                   <Link
                     key={model.id}
@@ -978,7 +980,7 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
                       )}
                     </div>
                     <div className="text-right">
-                      {lowestRate < 9999 && (
+                      {lowestRate !== null && (
                         <p className="text-sm font-medium text-cyan-500">${lowestRate}/hr</p>
                       )}
                       <ArrowRight className="h-4 w-4 text-muted-foreground ml-auto mt-1" />
