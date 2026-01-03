@@ -174,39 +174,36 @@ export default async function DashboardPage() {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-3">
         <Card className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20 hover:border-green-500/40 transition-colors">
-          <CardContent className="pt-6">
-            <Link href="/bookings" className="flex items-center gap-4 group">
-              <div className="p-3 rounded-full bg-green-500/20 group-hover:bg-green-500/30 transition-colors">
-                <Calendar className="h-6 w-6 text-green-500" />
+          <CardContent className="p-3">
+            <Link href="/bookings" className="flex items-center gap-3 group">
+              <div className="p-2 rounded-full bg-green-500/20 group-hover:bg-green-500/30 transition-colors">
+                <Calendar className="h-5 w-5 text-green-500" />
               </div>
-              <p className="flex-1 font-semibold group-hover:text-green-500 transition-colors">Bookings</p>
-              <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-green-500 transition-colors" />
+              <p className="flex-1 font-medium text-sm group-hover:text-green-500 transition-colors">Bookings</p>
             </Link>
           </CardContent>
         </Card>
 
         <Card className="bg-gradient-to-br from-violet-500/10 to-purple-500/10 border-violet-500/20 hover:border-violet-500/40 transition-colors">
-          <CardContent className="pt-6">
-            <Link href="/gigs" className="flex items-center gap-4 group">
-              <div className="p-3 rounded-full bg-violet-500/20 group-hover:bg-violet-500/30 transition-colors">
-                <Briefcase className="h-6 w-6 text-violet-500" />
+          <CardContent className="p-3">
+            <Link href="/gigs" className="flex items-center gap-3 group">
+              <div className="p-2 rounded-full bg-violet-500/20 group-hover:bg-violet-500/30 transition-colors">
+                <Briefcase className="h-5 w-5 text-violet-500" />
               </div>
-              <p className="flex-1 font-semibold group-hover:text-violet-500 transition-colors">Find Gigs</p>
-              <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-violet-500 transition-colors" />
+              <p className="flex-1 font-medium text-sm group-hover:text-violet-500 transition-colors">Find Gigs</p>
             </Link>
           </CardContent>
         </Card>
 
         <Card className="bg-gradient-to-br from-pink-500/10 to-rose-500/10 border-pink-500/20 hover:border-pink-500/40 transition-colors">
-          <CardContent className="pt-6">
-            <Link href="/chats" className="flex items-center gap-4 group">
-              <div className="p-3 rounded-full bg-pink-500/20 group-hover:bg-pink-500/30 transition-colors">
-                <MessageCircle className="h-6 w-6 text-pink-500" />
+          <CardContent className="p-3">
+            <Link href="/chats" className="flex items-center gap-3 group">
+              <div className="p-2 rounded-full bg-pink-500/20 group-hover:bg-pink-500/30 transition-colors">
+                <MessageCircle className="h-5 w-5 text-pink-500" />
               </div>
-              <p className="flex-1 font-semibold group-hover:text-pink-500 transition-colors">Chats</p>
-              <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-pink-500 transition-colors" />
+              <p className="flex-1 font-medium text-sm group-hover:text-pink-500 transition-colors">Chats</p>
             </Link>
           </CardContent>
         </Card>
