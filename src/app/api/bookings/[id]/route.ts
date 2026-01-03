@@ -34,9 +34,14 @@ export async function GET(
     const { data: booking, error } = await (supabase.from("bookings") as any)
       .select("*")
       .eq("id", id)
-      .single();
+      .maybeSingle();
 
-    if (error || !booking) {
+    if (error) {
+      console.error("Failed to fetch booking:", error);
+      return NextResponse.json({ error: "Failed to fetch booking" }, { status: 500 });
+    }
+
+    if (!booking) {
       return NextResponse.json({ error: "Booking not found" }, { status: 404 });
     }
 
@@ -112,10 +117,15 @@ export async function PATCH(
     }
 
     // Get existing booking
-    const { data: booking } = await (supabase.from("bookings") as any)
+    const { data: booking, error: bookingError } = await (supabase.from("bookings") as any)
       .select("*")
       .eq("id", id)
-      .single();
+      .maybeSingle();
+
+    if (bookingError) {
+      console.error("Failed to fetch booking:", bookingError);
+      return NextResponse.json({ error: "Failed to fetch booking" }, { status: 500 });
+    }
 
     if (!booking) {
       return NextResponse.json({ error: "Booking not found" }, { status: 404 });
