@@ -1401,24 +1401,6 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* Earnings Preview */}
-              <div className="mt-6 p-4 rounded-lg bg-muted/50">
-                <h4 className="font-semibold mb-2">Earnings Preview</h4>
-                <div className="grid grid-cols-3 gap-4 text-sm">
-                  <div>
-                    <p className="text-muted-foreground">10 min video call</p>
-                    <p className="font-semibold text-pink-500">{(model.video_call_rate || 0) * 10} coins</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">10 min voice call</p>
-                    <p className="font-semibold text-blue-500">{(model.voice_call_rate || 0) * 10} coins</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">10 messages</p>
-                    <p className="font-semibold text-green-500">{(model.message_rate || 0) * 10} coins</p>
-                  </div>
-                </div>
-              </div>
             </CardContent>
           </Card>
 
