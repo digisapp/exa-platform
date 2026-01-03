@@ -333,6 +333,80 @@ export async function PATCH(
       return NextResponse.json({ error: "Failed to update booking" }, { status: 500 });
     }
 
+    // Handle coin transfers based on action
+    const escrowAmount = booking.total_amount || 0;
+
+    if (escrowAmount > 0) {
+      if (action === "complete") {
+        // Release coins to model
+        const { data: modelRecord } = await (supabase.from("models") as any)
+          .select("coin_balance")
+          .eq("id", booking.model_id)
+          .single();
+
+        const modelBalance = modelRecord?.coin_balance || 0;
+        await (supabase.from("models") as any)
+          .update({ coin_balance: modelBalance + escrowAmount })
+          .eq("id", booking.model_id);
+
+        // Get model's actor ID for transaction log
+        const { data: modelActor } = await (supabase.from("actors") as any)
+          .select("id")
+          .eq("user_id", booking.model?.user_id)
+          .maybeSingle();
+
+        if (modelActor) {
+          await (supabase.from("coin_transactions") as any).insert({
+            actor_id: modelActor.id,
+            amount: escrowAmount,
+            action: "booking_payment",
+            metadata: {
+              booking_id: id,
+              booking_number: booking.booking_number,
+              client_id: booking.client_id,
+            },
+          });
+        }
+      } else if (action === "decline" || action === "cancel") {
+        // Refund coins to client
+        const { data: clientActor } = await (supabase.from("actors") as any)
+          .select("id, type")
+          .eq("id", booking.client_id)
+          .single();
+
+        if (clientActor) {
+          if (clientActor.type === "fan") {
+            const { data: fan } = await (supabase.from("fans") as any)
+              .select("coin_balance")
+              .eq("id", clientActor.id)
+              .single();
+            await (supabase.from("fans") as any)
+              .update({ coin_balance: (fan?.coin_balance || 0) + escrowAmount })
+              .eq("id", clientActor.id);
+          } else if (clientActor.type === "brand") {
+            const { data: brand } = await (supabase.from("brands") as any)
+              .select("coin_balance")
+              .eq("id", clientActor.id)
+              .single();
+            await (supabase.from("brands") as any)
+              .update({ coin_balance: (brand?.coin_balance || 0) + escrowAmount })
+              .eq("id", clientActor.id);
+          }
+
+          await (supabase.from("coin_transactions") as any).insert({
+            actor_id: clientActor.id,
+            amount: escrowAmount,
+            action: "booking_refund",
+            metadata: {
+              booking_id: id,
+              booking_number: booking.booking_number,
+              reason: action === "decline" ? "Model declined booking" : "Booking cancelled",
+            },
+          });
+        }
+      }
+    }
+
     // Send notification
     if (notificationData) {
       await (supabase.from("notifications") as any).insert(notificationData);

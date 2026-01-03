@@ -253,6 +253,44 @@ export async function POST(request: NextRequest) {
       totalAmount = quotedRate * durationHours;
     }
 
+    // Check client's coin balance
+    let clientBalance = 0;
+    if (actor.type === "fan") {
+      const { data: fan } = await (supabase.from("fans") as any)
+        .select("coin_balance")
+        .eq("id", actor.id)
+        .single();
+      clientBalance = fan?.coin_balance || 0;
+    } else if (actor.type === "brand") {
+      const { data: brand } = await (supabase.from("brands") as any)
+        .select("coin_balance")
+        .eq("id", actor.id)
+        .single();
+      clientBalance = brand?.coin_balance || 0;
+    }
+
+    // Check if client has enough coins
+    if (totalAmount > 0 && clientBalance < totalAmount) {
+      return NextResponse.json({
+        error: `Insufficient coins. You need ${totalAmount.toLocaleString()} coins but only have ${clientBalance.toLocaleString()}.`,
+        required: totalAmount,
+        balance: clientBalance,
+      }, { status: 402 });
+    }
+
+    // Deduct coins from client (escrow)
+    if (totalAmount > 0) {
+      if (actor.type === "fan") {
+        await (supabase.from("fans") as any)
+          .update({ coin_balance: clientBalance - totalAmount })
+          .eq("id", actor.id);
+      } else if (actor.type === "brand") {
+        await (supabase.from("brands") as any)
+          .update({ coin_balance: clientBalance - totalAmount })
+          .eq("id", actor.id);
+      }
+    }
+
     // Create booking
     const { data: booking, error } = await (supabase.from("bookings") as any)
       .insert({
@@ -278,19 +316,37 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error("Failed to create booking:", error);
-      console.error("Booking data:", {
-        modelId,
-        clientId: actor.id,
-        actorType: actor.type,
-        userId: user.id,
-        serviceType,
-        eventDate
-      });
+      // Refund the escrowed coins since booking failed
+      if (totalAmount > 0) {
+        if (actor.type === "fan") {
+          await (supabase.from("fans") as any)
+            .update({ coin_balance: clientBalance })
+            .eq("id", actor.id);
+        } else if (actor.type === "brand") {
+          await (supabase.from("brands") as any)
+            .update({ coin_balance: clientBalance })
+            .eq("id", actor.id);
+        }
+      }
       return NextResponse.json({
         error: error.message || "Failed to create booking",
         details: error.details || null,
         hint: error.hint || null
       }, { status: 500 });
+    }
+
+    // Log escrow transaction
+    if (totalAmount > 0) {
+      await (supabase.from("coin_transactions") as any).insert({
+        actor_id: actor.id,
+        amount: -totalAmount,
+        action: "booking_escrow",
+        metadata: {
+          booking_id: booking.id,
+          booking_number: booking.booking_number,
+          model_id: modelId,
+        },
+      });
     }
 
     // Create notification for model (don't fail if this errors)
