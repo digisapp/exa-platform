@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { FloatingOrbs } from "@/components/ui/floating-orbs";
 import { ModelSignupDialog } from "@/components/auth/ModelSignupDialog";
 import { BrandInquiryDialog } from "@/components/auth/BrandInquiryDialog";
+import { FanSignupDialog } from "@/components/auth/FanSignupDialog";
 import { createClient } from "@/lib/supabase/server";
 import {
   ArrowRight,
@@ -90,9 +91,9 @@ export default async function TestHomePage() {
 
         {/* Split Hero Section */}
         <section className="container px-8 md:px-16 py-12 md:py-20">
-          <div className="grid md:grid-cols-2 gap-8 md:gap-12">
+          <div className="grid md:grid-cols-3 gap-6 md:gap-8">
             {/* Models Side */}
-            <div className="relative p-8 md:p-12 rounded-3xl bg-gradient-to-br from-pink-500/10 via-violet-500/5 to-transparent border border-pink-500/20 hover:border-pink-500/40 transition-all group">
+            <div className="relative p-6 md:p-8 rounded-3xl bg-gradient-to-br from-pink-500/10 via-violet-500/5 to-transparent border border-pink-500/20 hover:border-pink-500/40 transition-all group">
               {/* Decorative glow */}
               <div className="absolute -top-20 -left-20 w-40 h-40 bg-pink-500/20 rounded-full blur-3xl opacity-50 group-hover:opacity-70 transition-opacity" />
 
@@ -101,25 +102,48 @@ export default async function TestHomePage() {
                   For Models
                 </span>
 
-                <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight mb-4">
+                <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-4">
                   Join Experiences.
                   <br />
                   <span className="exa-gradient-text">Get Discovered.</span>
-                  <br />
-                  Become Top Model.
                 </h2>
 
                 <ModelSignupDialog>
-                  <Button size="lg" className="exa-gradient-button text-lg px-10 h-14 rounded-full">
+                  <Button size="lg" className="exa-gradient-button text-base px-8 h-12 rounded-full">
                     Models Sign Up
-                    <ArrowRight className="ml-2 h-5 w-5" />
+                    <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </ModelSignupDialog>
               </div>
             </div>
 
+            {/* Fans Side */}
+            <div className="relative p-6 md:p-8 rounded-3xl bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border border-amber-500/20 hover:border-amber-500/40 transition-all group">
+              {/* Decorative glow */}
+              <div className="absolute -top-20 -left-10 w-40 h-40 bg-amber-500/20 rounded-full blur-3xl opacity-50 group-hover:opacity-70 transition-opacity" />
+
+              <div className="relative z-10">
+                <span className="inline-block px-4 py-1.5 rounded-full text-sm font-semibold bg-gradient-to-r from-amber-500 to-orange-500 text-white mb-6">
+                  For Fans
+                </span>
+
+                <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-4">
+                  Follow Models.
+                  <br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Get Exclusive.</span>
+                </h2>
+
+                <FanSignupDialog>
+                  <Button size="lg" className="text-base px-8 h-12 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white">
+                    Fan Sign Up
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </FanSignupDialog>
+              </div>
+            </div>
+
             {/* Brands Side */}
-            <div className="relative p-8 md:p-12 rounded-3xl bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-transparent border border-cyan-500/20 hover:border-cyan-500/40 transition-all group">
+            <div className="relative p-6 md:p-8 rounded-3xl bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-transparent border border-cyan-500/20 hover:border-cyan-500/40 transition-all group">
               {/* Decorative glow */}
               <div className="absolute -top-20 -right-20 w-40 h-40 bg-cyan-500/20 rounded-full blur-3xl opacity-50 group-hover:opacity-70 transition-opacity" />
 
@@ -128,18 +152,16 @@ export default async function TestHomePage() {
                   For Brands
                 </span>
 
-                <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight mb-4">
-                  Book Models
+                <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-4">
+                  Book Models.
                   <br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Campaigns,</span>
-                  <br />
-                  Photoshoots + more
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Campaigns + more</span>
                 </h2>
 
                 <BrandInquiryDialog>
-                  <Button size="lg" className="text-lg px-10 h-14 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white">
+                  <Button size="lg" className="text-base px-8 h-12 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white">
                     Brand Sign Up
-                    <ArrowRight className="ml-2 h-5 w-5" />
+                    <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </BrandInquiryDialog>
               </div>
