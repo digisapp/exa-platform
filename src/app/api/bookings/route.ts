@@ -191,6 +191,26 @@ export async function POST(request: NextRequest) {
       actor = newActor;
     }
 
+    // Check if brand has active subscription
+    if (actor.type === "brand") {
+      const { data: brand } = await (supabase
+        .from("brands") as any)
+        .select("subscription_tier, subscription_status")
+        .eq("id", actor.id)
+        .maybeSingle();
+
+      const hasActiveSubscription = brand?.subscription_status === "active" ||
+        (brand?.subscription_tier && brand.subscription_tier !== "free");
+
+      if (!hasActiveSubscription) {
+        return NextResponse.json({
+          error: "Subscription required",
+          message: "Please subscribe to send booking requests",
+          code: "SUBSCRIPTION_REQUIRED"
+        }, { status: 403 });
+      }
+    }
+
     const body = await request.json();
     const {
       modelId,

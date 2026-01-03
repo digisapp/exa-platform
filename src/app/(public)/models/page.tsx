@@ -4,6 +4,7 @@ import { Navbar } from "@/components/layout/navbar";
 import { ModelFilters } from "@/components/models/model-filters";
 import { ModelCard } from "@/components/models/model-card";
 import { ModelsGrid } from "@/components/models/models-grid";
+import { BrandPaywallWrapper } from "@/components/brands/BrandPaywallWrapper";
 
 interface SearchParams {
   q?: string;
@@ -106,6 +107,14 @@ export default async function ModelsPage({
           .single() as { data: any };
         profileData = data;
         coinBalance = data?.coin_balance ?? 0;
+      } else if (actor.type === "brand") {
+        const { data } = await (supabase
+          .from("brands") as any)
+          .select("company_name, logo_url, coin_balance, subscription_tier, subscription_status")
+          .eq("id", actor.id)
+          .single() as { data: any };
+        profileData = data;
+        coinBalance = data?.coin_balance ?? 0;
       }
 
       // Get favorites
@@ -137,9 +146,16 @@ export default async function ModelsPage({
 
   const displayName = actorType === "fan"
     ? profileData?.display_name
-    : profileData?.first_name
-      ? `${profileData.first_name} ${profileData.last_name || ""}`.trim()
-      : profileData?.username || undefined;
+    : actorType === "brand"
+      ? profileData?.company_name
+      : profileData?.first_name
+        ? `${profileData.first_name} ${profileData.last_name || ""}`.trim()
+        : profileData?.username || undefined;
+
+  // Check if brand has active subscription
+  const isFreeBrand = actorType === "brand" &&
+    (!profileData?.subscription_tier || profileData.subscription_tier === "free") &&
+    profileData?.subscription_status !== "active";
 
   return (
     <div className="min-h-screen bg-background">
@@ -147,7 +163,7 @@ export default async function ModelsPage({
         user={user ? {
           id: user.id,
           email: user.email || "",
-          avatar_url: profileData?.profile_photo_url || profileData?.avatar_url || undefined,
+          avatar_url: profileData?.profile_photo_url || profileData?.avatar_url || profileData?.logo_url || undefined,
           name: displayName,
           username: profileData?.username || undefined,
         } : undefined}
@@ -155,7 +171,10 @@ export default async function ModelsPage({
         coinBalance={coinBalance}
       />
 
-      <main className="container px-8 md:px-16 py-8">
+      {/* Paywall for free brands */}
+      {isFreeBrand && <BrandPaywallWrapper />}
+
+      <main className={`container px-8 md:px-16 py-8 ${isFreeBrand ? "blur-sm pointer-events-none select-none" : ""}`}>
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold">Models</h1>

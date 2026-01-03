@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { createClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
+import { BRAND_SUBSCRIPTION_TIERS, BrandTier } from "@/lib/stripe-config";
 
 // Create admin client for webhook (no auth context)
 const supabaseAdmin = createClient(
@@ -36,12 +37,17 @@ export async function POST(request: NextRequest) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
 
-        // Get metadata from the session
+        // Check if this is a subscription checkout
+        if (session.mode === "subscription") {
+          await handleSubscriptionCheckout(session);
+          break;
+        }
+
+        // Handle regular coin purchase
         const actorId = session.metadata?.actor_id;
         const coinsStr = session.metadata?.coins;
         const userId = session.metadata?.user_id;
 
-        // Validate required metadata exists and coins is a valid positive number
         if (!actorId || !coinsStr) {
           console.error("Missing metadata in checkout session:", session.id, { actorId, coinsStr });
           return NextResponse.json({ error: "Missing required metadata" }, { status: 400 });
@@ -53,37 +59,27 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: "Invalid coins value" }, { status: 400 });
         }
 
-        console.log(
-          `Processing coin purchase: ${coins} coins for actor ${actorId}`
-        );
+        console.log(`Processing coin purchase: ${coins} coins for actor ${actorId}`);
 
-        // Credit coins using the add_coins function
-        const { data: credited, error: creditError } = await supabaseAdmin.rpc(
-          "add_coins",
-          {
-            p_actor_id: actorId,
-            p_amount: coins,
-            p_action: "purchase",
-            p_metadata: {
-              stripe_session_id: session.id,
-              stripe_payment_intent: session.payment_intent,
-              amount_paid: session.amount_total,
-              currency: session.currency,
-            },
-          }
-        );
+        const { error: creditError } = await supabaseAdmin.rpc("add_coins", {
+          p_actor_id: actorId,
+          p_amount: coins,
+          p_action: "purchase",
+          p_metadata: {
+            stripe_session_id: session.id,
+            stripe_payment_intent: session.payment_intent,
+            amount_paid: session.amount_total,
+            currency: session.currency,
+          },
+        });
 
         if (creditError) {
           console.error("Error crediting coins:", creditError);
-          return NextResponse.json(
-            { error: "Failed to credit coins" },
-            { status: 500 }
-          );
+          return NextResponse.json({ error: "Failed to credit coins" }, { status: 500 });
         }
 
         console.log(`Successfully credited ${coins} coins to actor ${actorId}`);
 
-        // Get updated balance for logging (use user_id to find model)
         if (userId) {
           const { data: model } = await supabaseAdmin
             .from("models")
@@ -92,22 +88,55 @@ export async function POST(request: NextRequest) {
             .single();
 
           if (model) {
-            console.log(
-              `New balance for ${model.first_name || model.email}: ${model.coin_balance} coins`
-            );
+            console.log(`New balance for ${model.first_name || model.email}: ${model.coin_balance} coins`);
           }
         }
+        break;
+      }
 
+      case "customer.subscription.created":
+      case "customer.subscription.updated": {
+        const subscription = event.data.object as Stripe.Subscription;
+        await handleSubscriptionUpdate(subscription);
+        break;
+      }
+
+      case "customer.subscription.deleted": {
+        const subscription = event.data.object as Stripe.Subscription;
+        await handleSubscriptionCanceled(subscription);
+        break;
+      }
+
+      case "invoice.paid": {
+        const invoice = event.data.object as Stripe.Invoice;
+        // Grant monthly coins on successful invoice payment (renewal)
+        const subscriptionId = (invoice as any).subscription;
+        if (subscriptionId && invoice.billing_reason === "subscription_cycle") {
+          await grantMonthlyCoins(invoice);
+        }
+        break;
+      }
+
+      case "invoice.payment_failed": {
+        const invoice = event.data.object as Stripe.Invoice;
+        console.error("Invoice payment failed:", invoice.id);
+        // Update subscription status to past_due
+        const failedSubId = (invoice as any).subscription;
+        if (failedSubId) {
+          const subscriptionId = typeof failedSubId === "string"
+            ? failedSubId
+            : failedSubId.id;
+          await supabaseAdmin
+            .from("brands")
+            .update({ subscription_status: "past_due" })
+            .eq("stripe_subscription_id", subscriptionId);
+        }
         break;
       }
 
       case "payment_intent.payment_failed": {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
-        console.error(
-          "Payment failed:",
-          paymentIntent.id,
-          paymentIntent.last_payment_error?.message
-        );
+        console.error("Payment failed:", paymentIntent.id, paymentIntent.last_payment_error?.message);
         break;
       }
 
@@ -118,11 +147,154 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true });
   } catch (error) {
     console.error("Error processing webhook:", error);
-    return NextResponse.json(
-      { error: "Webhook processing failed" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Webhook processing failed" }, { status: 500 });
   }
+}
+
+async function handleSubscriptionCheckout(session: Stripe.Checkout.Session) {
+  const brandId = session.metadata?.brand_id;
+  const actorId = session.metadata?.actor_id;
+  const tier = session.metadata?.tier as BrandTier;
+  const billingCycle = session.metadata?.billing_cycle;
+  const monthlyCoins = parseInt(session.metadata?.monthly_coins || "0", 10);
+
+  if (!brandId || !tier) {
+    console.error("Missing brand subscription metadata:", session.id);
+    return;
+  }
+
+  const subscriptionId = typeof session.subscription === "string"
+    ? session.subscription
+    : session.subscription?.id;
+
+  console.log(`Processing brand subscription: ${tier} for brand ${brandId}`);
+
+  // Update brand with subscription info
+  const { error: updateError } = await supabaseAdmin
+    .from("brands")
+    .update({
+      subscription_tier: tier,
+      subscription_status: "active",
+      stripe_subscription_id: subscriptionId,
+      billing_cycle: billingCycle,
+      is_verified: tier === "pro" || tier === "enterprise", // Pro+ get verified badge
+      coins_granted_at: new Date().toISOString(),
+    })
+    .eq("id", brandId);
+
+  if (updateError) {
+    console.error("Error updating brand subscription:", updateError);
+    return;
+  }
+
+  // Grant initial coins
+  if (monthlyCoins > 0 && actorId) {
+    const { error: coinError } = await supabaseAdmin.rpc("add_coins", {
+      p_actor_id: actorId,
+      p_amount: monthlyCoins,
+      p_action: "subscription_grant",
+      p_metadata: {
+        tier,
+        billing_cycle: billingCycle,
+        stripe_subscription_id: subscriptionId,
+      },
+    });
+
+    if (coinError) {
+      console.error("Error granting subscription coins:", coinError);
+    } else {
+      console.log(`Granted ${monthlyCoins} coins to brand ${brandId}`);
+    }
+  }
+}
+
+async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
+  const brandId = subscription.metadata?.brand_id;
+  if (!brandId) {
+    console.log("No brand_id in subscription metadata");
+    return;
+  }
+
+  const status = subscription.status;
+  const tier = subscription.metadata?.tier as BrandTier;
+  const periodEnd = (subscription as any).current_period_end;
+
+  await supabaseAdmin
+    .from("brands")
+    .update({
+      subscription_status: status,
+      subscription_tier: tier || "starter",
+      subscription_ends_at: periodEnd
+        ? new Date(periodEnd * 1000).toISOString()
+        : null,
+    })
+    .eq("id", brandId);
+
+  console.log(`Updated subscription status to ${status} for brand ${brandId}`);
+}
+
+async function handleSubscriptionCanceled(subscription: Stripe.Subscription) {
+  const brandId = subscription.metadata?.brand_id;
+  if (!brandId) return;
+
+  await supabaseAdmin
+    .from("brands")
+    .update({
+      subscription_status: "canceled",
+      subscription_tier: "free",
+      is_verified: false,
+      stripe_subscription_id: null,
+    })
+    .eq("id", brandId);
+
+  console.log(`Subscription canceled for brand ${brandId}`);
+}
+
+async function grantMonthlyCoins(invoice: Stripe.Invoice) {
+  const invoiceSubscription = (invoice as any).subscription;
+  const subscriptionId = typeof invoiceSubscription === "string"
+    ? invoiceSubscription
+    : invoiceSubscription?.id;
+
+  if (!subscriptionId) return;
+
+  // Get subscription to find tier info
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const brandId = subscription.metadata?.brand_id;
+  const actorId = subscription.metadata?.actor_id;
+  const tier = subscription.metadata?.tier as BrandTier;
+
+  if (!brandId || !actorId || !tier) {
+    console.error("Missing metadata for coin grant:", { brandId, actorId, tier });
+    return;
+  }
+
+  const tierConfig = BRAND_SUBSCRIPTION_TIERS[tier];
+  if (!tierConfig || tierConfig.monthlyCoins <= 0) return;
+
+  // Grant monthly coins
+  const { error } = await supabaseAdmin.rpc("add_coins", {
+    p_actor_id: actorId,
+    p_amount: tierConfig.monthlyCoins,
+    p_action: "subscription_renewal",
+    p_metadata: {
+      tier,
+      invoice_id: invoice.id,
+      stripe_subscription_id: subscriptionId,
+    },
+  });
+
+  if (error) {
+    console.error("Error granting renewal coins:", error);
+  } else {
+    console.log(`Granted ${tierConfig.monthlyCoins} renewal coins to brand ${brandId}`);
+  }
+
+  // Update coins_granted_at
+  await supabaseAdmin
+    .from("brands")
+    .update({ coins_granted_at: new Date().toISOString() })
+    .eq("id", brandId);
 }
 
 // Disable body parsing for webhook signature verification

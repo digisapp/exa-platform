@@ -46,6 +46,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if brand has active subscription
+    if (sender.type === "brand") {
+      const { data: brand } = await (supabase
+        .from("brands") as any)
+        .select("subscription_tier, subscription_status")
+        .eq("id", sender.id)
+        .maybeSingle();
+
+      const hasActiveSubscription = brand?.subscription_status === "active" ||
+        (brand?.subscription_tier && brand.subscription_tier !== "free");
+
+      if (!hasActiveSubscription) {
+        return NextResponse.json({
+          error: "Subscription required",
+          message: "Please subscribe to message models",
+          code: "SUBSCRIPTION_REQUIRED"
+        }, { status: 403 });
+      }
+    }
+
     // Verify sender is part of conversation
     const { data: participation } = await supabase
       .from("conversation_participants")
