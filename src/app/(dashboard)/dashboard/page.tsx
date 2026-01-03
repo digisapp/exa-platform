@@ -886,12 +886,12 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
                       <p className="font-medium text-sm truncate">{displayName}</p>
                       <p className="text-xs text-cyan-500">@{model.username}</p>
                       {lowestHourly !== null ? (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          From ${lowestHourly}/hr
+                        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                          From {lowestHourly} <Coins className="h-3 w-3" />/hr
                         </p>
                       ) : dailyRate !== null ? (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          From ${dailyRate}/day
+                        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                          From {dailyRate} <Coins className="h-3 w-3" />/day
                         </p>
                       ) : null}
                     </div>
@@ -987,9 +987,9 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
                     </div>
                     <div className="text-right">
                       {lowestHourly !== null ? (
-                        <p className="text-sm font-medium text-cyan-500">${lowestHourly}/hr</p>
+                        <p className="text-sm font-medium text-cyan-500 flex items-center gap-1">{lowestHourly} <Coins className="h-3 w-3" />/hr</p>
                       ) : dailyRate !== null ? (
-                        <p className="text-sm font-medium text-cyan-500">${dailyRate}/day</p>
+                        <p className="text-sm font-medium text-cyan-500 flex items-center gap-1">{dailyRate} <Coins className="h-3 w-3" />/day</p>
                       ) : null}
                       <ArrowRight className="h-4 w-4 text-muted-foreground ml-auto mt-1" />
                     </div>

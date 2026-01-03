@@ -1343,7 +1343,6 @@ export default function ProfilePage() {
                       />
                       <span className="text-sm text-muted-foreground">coins/min</span>
                     </div>
-                    <span className="text-xs text-green-500">= ${((model.video_call_rate || 5) * 0.10).toFixed(2)}/min USD</span>
                   </div>
                 </div>
 
@@ -1372,7 +1371,6 @@ export default function ProfilePage() {
                       />
                       <span className="text-sm text-muted-foreground">coins/min</span>
                     </div>
-                    <span className="text-xs text-green-500">= ${((model.voice_call_rate || 5) * 0.10).toFixed(2)}/min USD</span>
                   </div>
                 </div>
 
@@ -1401,17 +1399,10 @@ export default function ProfilePage() {
                       />
                       <span className="text-sm text-muted-foreground">coins/msg</span>
                     </div>
-                    {(model.message_rate || 0) > 0 && (
-                      <span className="text-xs text-green-500">= ${((model.message_rate || 0) * 0.10).toFixed(2)}/msg USD</span>
-                    )}
                   </div>
                 </div>
               </div>
 
-              {/* Conversion Info */}
-              <p className="text-xs text-muted-foreground text-center">
-                1 coin = $0.10 USD
-              </p>
 
             </CardContent>
           </Card>
@@ -1476,9 +1467,6 @@ export default function ProfilePage() {
                         />
                         <span className="text-sm text-muted-foreground">coins</span>
                       </div>
-                      {(model.photoshoot_hourly_rate || 0) > 0 && (
-                        <span className="text-xs text-green-500">= ${((model.photoshoot_hourly_rate || 0) * 0.10).toFixed(2)} USD</span>
-                      )}
                     </div>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-lg border">
@@ -1499,9 +1487,6 @@ export default function ProfilePage() {
                         />
                         <span className="text-sm text-muted-foreground">coins</span>
                       </div>
-                      {(model.photoshoot_half_day_rate || 0) > 0 && (
-                        <span className="text-xs text-green-500">= ${((model.photoshoot_half_day_rate || 0) * 0.10).toFixed(2)} USD</span>
-                      )}
                     </div>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-lg border">
@@ -1522,9 +1507,6 @@ export default function ProfilePage() {
                         />
                         <span className="text-sm text-muted-foreground">coins</span>
                       </div>
-                      {(model.photoshoot_full_day_rate || 0) > 0 && (
-                        <span className="text-xs text-green-500">= ${((model.photoshoot_full_day_rate || 0) * 0.10).toFixed(2)} USD</span>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -1555,9 +1537,6 @@ export default function ProfilePage() {
                         />
                         <span className="text-sm text-muted-foreground">coins</span>
                       </div>
-                      {(model.promo_hourly_rate || 0) > 0 && (
-                        <span className="text-xs text-green-500">= ${((model.promo_hourly_rate || 0) * 0.10).toFixed(2)} USD</span>
-                      )}
                     </div>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-lg border">
@@ -1578,9 +1557,6 @@ export default function ProfilePage() {
                         />
                         <span className="text-sm text-muted-foreground">coins</span>
                       </div>
-                      {(model.brand_ambassador_daily_rate || 0) > 0 && (
-                        <span className="text-xs text-green-500">= ${((model.brand_ambassador_daily_rate || 0) * 0.10).toFixed(2)} USD</span>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -1611,9 +1587,6 @@ export default function ProfilePage() {
                         />
                         <span className="text-sm text-muted-foreground">coins</span>
                       </div>
-                      {(model.private_event_hourly_rate || 0) > 0 && (
-                        <span className="text-xs text-green-500">= ${((model.private_event_hourly_rate || 0) * 0.10).toFixed(2)} USD</span>
-                      )}
                     </div>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-lg border">
@@ -1634,9 +1607,6 @@ export default function ProfilePage() {
                         />
                         <span className="text-sm text-muted-foreground">coins</span>
                       </div>
-                      {(model.social_companion_hourly_rate || 0) > 0 && (
-                        <span className="text-xs text-green-500">= ${((model.social_companion_hourly_rate || 0) * 0.10).toFixed(2)} USD</span>
-                      )}
                     </div>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-lg border">
@@ -1657,9 +1627,6 @@ export default function ProfilePage() {
                         />
                         <span className="text-sm text-muted-foreground">coins</span>
                       </div>
-                      {(model.meet_greet_rate || 0) > 0 && (
-                        <span className="text-xs text-green-500">= ${((model.meet_greet_rate || 0) * 0.10).toFixed(2)} USD</span>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -1689,9 +1656,6 @@ export default function ProfilePage() {
                       />
                       <span className="text-sm text-muted-foreground">coins</span>
                     </div>
-                    {(model.travel_fee || 0) > 0 && (
-                      <span className="text-xs text-green-500">= ${((model.travel_fee || 0) * 0.10).toFixed(2)} USD</span>
-                    )}
                   </div>
                 </div>
               </div>

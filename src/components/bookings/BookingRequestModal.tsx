@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Calendar, Loader2, MapPin, DollarSign } from "lucide-react";
+import { Calendar, Loader2, MapPin, Coins } from "lucide-react";
 
 interface ModelRates {
   photoshoot_hourly_rate?: number;
@@ -306,7 +306,7 @@ export function BookingRequestModal({ modelId, modelName, modelRates, trigger }:
             <div className="p-4 rounded-lg bg-gradient-to-r from-pink-500/10 to-violet-500/10 border border-pink-500/20">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <DollarSign className="h-5 w-5 text-pink-500" />
+                  <Coins className="h-5 w-5 text-pink-500" />
                   <span className="font-medium">Estimated Total</span>
                 </div>
                 <span className="text-2xl font-bold text-pink-500">

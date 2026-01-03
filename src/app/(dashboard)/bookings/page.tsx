@@ -264,11 +264,6 @@ export default function BookingsPage() {
                                 : booking.total_amount
                               ).toLocaleString()} coins
                             </p>
-                            <p className="text-xs text-green-500">
-                              ≈ ${((booking.status === "counter" && booking.counter_amount
-                                ? booking.counter_amount
-                                : booking.total_amount) * 0.10).toFixed(2)} USD
-                            </p>
                             {booking.status === "counter" && booking.counter_amount && (
                               <p className="text-xs text-muted-foreground line-through">
                                 Original: {booking.total_amount.toLocaleString()} coins
@@ -510,11 +505,6 @@ export default function BookingsPage() {
                     <span className="text-muted-foreground">
                       Original: {responseModal.booking?.total_amount?.toLocaleString()} coins
                     </span>
-                    {counterAmount && (
-                      <span className="text-green-500">
-                        ≈ ${(parseInt(counterAmount) * 0.10).toFixed(2)} USD
-                      </span>
-                    )}
                   </div>
                 </div>
                 <div className="space-y-2">
