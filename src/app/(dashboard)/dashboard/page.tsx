@@ -839,20 +839,6 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
             <p className="text-muted-foreground">{brand?.contact_name}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" asChild>
-            <Link href="/chats">
-              <MessageCircle className="mr-2 h-4 w-4" />
-              Messages
-            </Link>
-          </Button>
-          <Button asChild className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700">
-            <Link href="/models">
-              <Search className="mr-2 h-4 w-4" />
-              Find Models
-            </Link>
-          </Button>
-        </div>
       </div>
 
       {/* Pending Approval Notice */}
