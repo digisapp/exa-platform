@@ -88,6 +88,7 @@ export default async function DashboardPage() {
     .eq("model_username", model.username);
 
   // Get pending bookings for this model
+  // Query directly but check both model_id match and RLS
   const { data: pendingBookings, error: bookingsError } = await (supabase
     .from("bookings") as any)
     .select("*")
@@ -99,7 +100,14 @@ export default async function DashboardPage() {
   if (bookingsError) {
     console.error("Failed to fetch bookings for dashboard:", bookingsError, "model.id:", model.id);
   }
-  console.log("Dashboard bookings query - model.id:", model.id, "found:", pendingBookings?.length || 0);
+
+  // Also try fetching ALL bookings for this model to debug
+  const { data: allModelBookings } = await (supabase
+    .from("bookings") as any)
+    .select("id, status, model_id")
+    .eq("model_id", model.id);
+
+  console.log("Dashboard debug - model.id:", model.id, "pending:", pendingBookings?.length || 0, "all:", allModelBookings?.length || 0, "statuses:", allModelBookings?.map((b: any) => b.status));
 
   // Enrich bookings with client info
   for (const booking of pendingBookings || []) {
@@ -251,6 +259,8 @@ export default async function DashboardPage() {
               {(pendingBookings?.length || 0) > 0 && (
                 <Badge className="bg-green-500 text-white ml-2">{pendingBookings?.length}</Badge>
               )}
+              {/* Debug: model.id */}
+              <span className="text-[10px] text-muted-foreground font-mono hidden">{model.id}</span>
             </CardTitle>
             <Button variant="ghost" size="sm" asChild>
               <Link href="/bookings" className="text-green-500">
