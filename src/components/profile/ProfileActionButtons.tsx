@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Video, Coins, Loader2, Phone } from "lucide-react";
+import { MessageCircle, Video, Coins, Loader2, Phone, Gift } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -204,10 +204,8 @@ export function ProfileActionButtons({
     }
   };
 
-  // Don't show action buttons on your own profile
-  if (isOwner) {
-    return null;
-  }
+  // Show disabled buttons on your own profile so you can preview layout
+  const isDisabled = isOwner;
 
   // Show video call room if call is active
   if (callSession) {
@@ -226,44 +224,49 @@ export function ProfileActionButtons({
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-2 mb-6">
+      {isDisabled && (
+        <p className="text-center text-xs text-white/50 mb-2">Preview only - this is how fans see your profile</p>
+      )}
+      <div className={`grid grid-cols-4 gap-2 mb-6 ${isDisabled ? "opacity-60 pointer-events-none" : ""}`}>
         <Button
-          className="exa-gradient-button h-11 text-sm font-semibold rounded-full"
+          className="exa-gradient-button h-11 text-sm font-semibold rounded-full px-2"
           onClick={handleChat}
+          disabled={isDisabled}
         >
-          <MessageCircle className="mr-1.5 h-4 w-4" />
-          Chat
+          <MessageCircle className="h-4 w-4 sm:mr-1" />
+          <span className="hidden sm:inline">Chat</span>
         </Button>
         <Button
-          className="exa-gradient-button h-11 text-sm font-semibold rounded-full"
+          className="exa-gradient-button h-11 text-sm font-semibold rounded-full px-2"
           onClick={handleVideoCall}
-          disabled={startingCall}
+          disabled={isDisabled || startingCall}
         >
           {startingCall ? (
-            <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+            <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            <Video className="mr-1.5 h-4 w-4" />
+            <Video className="h-4 w-4 sm:mr-1" />
           )}
-          {startingCall ? "Calling..." : "Video"}
+          <span className="hidden sm:inline">{startingCall ? "..." : "Video"}</span>
         </Button>
         <Button
-          className="h-11 text-sm font-semibold rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white"
+          className="h-11 text-sm font-semibold rounded-full px-2 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white"
           onClick={handleVoiceCall}
-          disabled={startingVoiceCall}
+          disabled={isDisabled || startingVoiceCall}
         >
           {startingVoiceCall ? (
-            <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+            <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            <Phone className="mr-1.5 h-4 w-4" />
+            <Phone className="h-4 w-4 sm:mr-1" />
           )}
-          {startingVoiceCall ? "Calling..." : "Voice"}
+          <span className="hidden sm:inline">{startingVoiceCall ? "..." : "Voice"}</span>
         </Button>
         <Button
-          className="h-11 text-sm font-semibold rounded-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white"
+          className="h-11 text-sm font-semibold rounded-full px-2 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white"
           onClick={handleTip}
+          disabled={isDisabled}
         >
-          <Coins className="mr-1.5 h-4 w-4" />
-          Tip
+          <Gift className="h-4 w-4 sm:mr-1" />
+          <span className="hidden sm:inline">Tip</span>
         </Button>
       </div>
 
