@@ -43,6 +43,7 @@ import {
   AlertTriangle,
   Copy,
   Check,
+  CheckCircle,
   Clock,
   UserCheck,
   Mail,
@@ -394,6 +395,7 @@ interface Brand {
   website: string | null;
   bio: string | null;
   subscription_tier: string;
+  is_verified: boolean;
   form_data: {
     industry?: string;
     budget_range?: string;
@@ -489,6 +491,7 @@ export default function AdminCommunityPage() {
   // Brands state
   const [brands, setBrands] = useState<Brand[]>([]);
   const [brandsLoading, setBrandsLoading] = useState(true);
+  const [brandsFilter, setBrandsFilter] = useState<"pending" | "approved" | "all">("pending");
 
   // Model applications state
   const [modelApps, setModelApps] = useState<ModelApplication[]>([]);
@@ -745,17 +748,23 @@ export default function AdminCommunityPage() {
     setFansLoading(false);
   }, [supabase, fansSearch, fansStateFilter, fansStatusFilter, fansReportsFilter, fansSortField, fansSortDirection, fansPage]);
 
-  // Load brands (pending verification)
+  // Load brands
   const loadBrands = useCallback(async () => {
     setBrandsLoading(true);
-    const { data } = await (supabase.from("brands") as any)
-      .select("*")
-      .eq("is_verified", false)
+    let query = (supabase.from("brands") as any).select("*");
+
+    if (brandsFilter === "pending") {
+      query = query.eq("is_verified", false);
+    } else if (brandsFilter === "approved") {
+      query = query.eq("is_verified", true);
+    }
+
+    const { data } = await query
       .order("created_at", { ascending: false })
       .limit(50);
     setBrands(data || []);
     setBrandsLoading(false);
-  }, [supabase]);
+  }, [supabase, brandsFilter]);
 
   // Load model applications
   const loadModelApps = useCallback(async () => {
@@ -791,7 +800,7 @@ export default function AdminCommunityPage() {
   useEffect(() => {
     if (activeTab === "brands") void loadBrands();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
+  }, [activeTab, brandsFilter]);
 
   const handleRatingChange = (modelId: string, rating: number | null) => {
     setModels(prev => prev.map(m => m.id === modelId ? { ...m, admin_rating: rating } : m));
@@ -1361,10 +1370,35 @@ export default function AdminCommunityPage() {
 
         {/* Brands Tab */}
         <TabsContent value="brands" className="space-y-6">
+          {/* Filter */}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <Select value={brandsFilter} onValueChange={(v: "pending" | "approved" | "all") => setBrandsFilter(v)}>
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Filter brands" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending Approval</SelectItem>
+                    <SelectItem value="approved">Approved</SelectItem>
+                    <SelectItem value="all">All Brands</SelectItem>
+                  </SelectContent>
+                </Select>
+                <span className="text-sm text-muted-foreground">
+                  Showing {brands.length} {brandsFilter === "all" ? "brands" : brandsFilter === "pending" ? "pending" : "approved"}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
-              <CardTitle>Brand Inquiries</CardTitle>
-              <CardDescription>Partnership requests from brands</CardDescription>
+              <CardTitle>
+                {brandsFilter === "pending" ? "Pending Brand Inquiries" : brandsFilter === "approved" ? "Approved Brands" : "All Brands"}
+              </CardTitle>
+              <CardDescription>
+                {brandsFilter === "pending" ? "Partnership requests awaiting approval" : brandsFilter === "approved" ? "Verified brand partners" : "All brand inquiries and partners"}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {brandsLoading ? (
@@ -1374,7 +1408,7 @@ export default function AdminCommunityPage() {
               ) : brands.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <Building2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No brand inquiries yet</p>
+                  <p>{brandsFilter === "pending" ? "No pending brand inquiries" : brandsFilter === "approved" ? "No approved brands yet" : "No brands yet"}</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -1395,9 +1429,17 @@ export default function AdminCommunityPage() {
                             </p>
                           </div>
                         </div>
-                        <Badge variant="outline" className="bg-cyan-500/10 text-cyan-500 border-cyan-500/50">
-                          Inquiry
-                        </Badge>
+                        {brand.is_verified ? (
+                          <Badge className="bg-green-500/10 text-green-500 border-green-500/50">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Approved
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/50">
+                            <Clock className="h-3 w-3 mr-1" />
+                            Pending
+                          </Badge>
+                        )}
                       </div>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                         <div className="flex items-center gap-2">
@@ -1433,7 +1475,9 @@ export default function AdminCommunityPage() {
                         <span className="text-xs text-muted-foreground">
                           {new Date(brand.created_at).toLocaleDateString()}
                         </span>
-                        <ApproveRejectButtons id={brand.id} type="brand" onSuccess={() => { loadBrands(); loadStats(); }} />
+                        {!brand.is_verified && (
+                          <ApproveRejectButtons id={brand.id} type="brand" onSuccess={() => { loadBrands(); loadStats(); }} />
+                        )}
                       </div>
                     </div>
                   ))}
