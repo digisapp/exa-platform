@@ -2,36 +2,71 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
-// Admin client for storage operations (bypasses RLS)
-const supabaseAdmin = createAdminClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 export async function POST(request: NextRequest) {
   try {
+    console.log("Gig upload: Starting...");
+
+    // Check environment variables
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.error("Gig upload: Missing environment variables");
+      return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
+    }
+
+    // Create admin client for storage operations (bypasses RLS)
+    const supabaseAdmin = createAdminClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    );
+
     const supabase = await createClient();
 
     // Auth check
     const {
       data: { user },
+      error: authError,
     } = await supabase.auth.getUser();
+
+    if (authError) {
+      console.error("Gig upload: Auth error:", authError);
+      return NextResponse.json({ error: "Auth error" }, { status: 401 });
+    }
+
     if (!user) {
+      console.log("Gig upload: No user found");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    console.log("Gig upload: User authenticated:", user.id);
+
     // Verify admin
-    const { data: actor } = await supabase
+    const { data: actor, error: actorError } = await supabase
       .from("actors")
       .select("id, type")
       .eq("user_id", user.id)
-      .single() as { data: { id: string; type: string } | null };
+      .single() as { data: { id: string; type: string } | null; error: any };
+
+    if (actorError) {
+      console.error("Gig upload: Actor query error:", actorError);
+      return NextResponse.json({ error: "Failed to verify user" }, { status: 500 });
+    }
 
     if (!actor || actor.type !== "admin") {
+      console.log("Gig upload: Not admin. Actor:", actor);
       return NextResponse.json({ error: "Admin access required" }, { status: 403 });
     }
 
-    const { filename, contentType } = await request.json();
+    console.log("Gig upload: Admin verified");
+
+    let body;
+    try {
+      body = await request.json();
+    } catch (parseError) {
+      console.error("Gig upload: JSON parse error:", parseError);
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+
+    const { filename, contentType } = body;
+    console.log("Gig upload: filename:", filename, "contentType:", contentType);
 
     if (!filename || !contentType) {
       return NextResponse.json({ error: "Missing filename or contentType" }, { status: 400 });
@@ -42,6 +77,8 @@ export async function POST(request: NextRequest) {
     const ext = filename.split(".").pop() || "jpg";
     const path = `${timestamp}.${ext}`;
 
+    console.log("Gig upload: Creating signed URL for path:", path);
+
     // Create signed upload URL using admin client
     const { data, error } = await supabaseAdmin.storage
       .from("gigs")
@@ -51,6 +88,8 @@ export async function POST(request: NextRequest) {
       console.error("Signed URL error:", error);
       return NextResponse.json({ error: `Failed to create upload URL: ${error.message}` }, { status: 500 });
     }
+
+    console.log("Gig upload: Signed URL created successfully");
 
     // Get the public URL for after upload
     const { data: { publicUrl } } = supabaseAdmin.storage
