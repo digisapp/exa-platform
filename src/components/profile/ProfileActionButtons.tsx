@@ -204,10 +204,8 @@ export function ProfileActionButtons({
     }
   };
 
-  // Don't show action buttons on your own profile
-  if (isOwner) {
-    return null;
-  }
+  // On own profile, show buttons but make them non-clickable (no grayed out look)
+  const isPreview = isOwner;
 
   // Show video call room if call is active
   if (callSession) {
@@ -226,7 +224,7 @@ export function ProfileActionButtons({
 
   return (
     <>
-      <div className="flex gap-2 mb-6">
+      <div className={`flex gap-2 mb-6 ${isPreview ? "pointer-events-none" : ""}`}>
         <Button
           className="exa-gradient-button h-11 text-sm font-semibold rounded-full px-3 flex-1"
           onClick={handleChat}
