@@ -908,7 +908,7 @@ export default function AdminCommunityPage() {
                     <CardTitle className="text-lg">Model Applications ({stats.pendingModelApps})</CardTitle>
                   </div>
                 </div>
-                <CardDescription>New model applications awaiting review</CardDescription>
+                <CardDescription>Signups from the Models Sign Up form</CardDescription>
               </CardHeader>
               <CardContent>
                 {modelAppsLoading ? (
