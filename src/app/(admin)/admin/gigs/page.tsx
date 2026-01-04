@@ -24,6 +24,8 @@ import {
   Trash2,
   ToggleLeft,
   ToggleRight,
+  X,
+  ImageIcon,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -33,6 +35,7 @@ interface Gig {
   slug: string;
   type: string;
   description: string;
+  cover_image_url: string | null;
   location_city: string;
   location_state: string;
   start_at: string;
@@ -70,6 +73,7 @@ export default function AdminGigsPage() {
   const [selectedGig, setSelectedGig] = useState<string | null>(null);
   const [processingApp, setProcessingApp] = useState<string | null>(null);
   const [processingGig, setProcessingGig] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const supabase = createClient();
 
   // Form state
@@ -77,6 +81,7 @@ export default function AdminGigsPage() {
     title: "",
     type: "show",
     description: "",
+    cover_image_url: "",
     location_city: "",
     location_state: "",
     start_date: "",
@@ -125,6 +130,7 @@ export default function AdminGigsPage() {
       title: "",
       type: "show",
       description: "",
+      cover_image_url: "",
       location_city: "",
       location_state: "",
       start_date: "",
@@ -172,6 +178,7 @@ export default function AdminGigsPage() {
       title: gig.title,
       type: gig.type,
       description: gig.description || "",
+      cover_image_url: gig.cover_image_url || "",
       location_city: gig.location_city || "",
       location_state: gig.location_state || "",
       start_date: startDate,
@@ -183,6 +190,39 @@ export default function AdminGigsPage() {
       spots: gig.spots || 10,
     });
     setShowForm(true);
+  }
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const formDataUpload = new FormData();
+      formDataUpload.append("file", file);
+      if (editingGig) {
+        formDataUpload.append("gigId", editingGig.id);
+      }
+
+      const response = await fetch("/api/admin/gigs/upload", {
+        method: "POST",
+        body: formDataUpload,
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.url) {
+        setFormData({ ...formData, cover_image_url: data.url });
+        toast.success("Flyer uploaded successfully!");
+      } else {
+        toast.error(data.error || "Failed to upload flyer");
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("Failed to upload flyer");
+    } finally {
+      setUploading(false);
+    }
   }
 
   // Helper to combine date and optional time into timestamp
@@ -210,6 +250,7 @@ export default function AdminGigsPage() {
             title: formData.title,
             type: formData.type,
             description: formData.description,
+            cover_image_url: formData.cover_image_url || null,
             location_city: formData.location_city,
             location_state: formData.location_state,
             start_at: startAt,
@@ -236,6 +277,7 @@ export default function AdminGigsPage() {
             title: formData.title,
             type: formData.type,
             description: formData.description,
+            cover_image_url: formData.cover_image_url || null,
             location_city: formData.location_city,
             location_state: formData.location_state,
             start_at: startAt,
@@ -508,6 +550,54 @@ export default function AdminGigsPage() {
                   placeholder="Describe the gig..."
                   rows={3}
                 />
+              </div>
+
+              {/* Flyer Upload */}
+              <div className="space-y-2">
+                <Label>Flyer / Cover Image <span className="text-muted-foreground text-xs">(optional)</span></Label>
+                <div className="flex items-start gap-4">
+                  {formData.cover_image_url ? (
+                    <div className="relative">
+                      <img
+                        src={formData.cover_image_url}
+                        alt="Gig flyer"
+                        className="w-32 h-40 object-cover rounded-lg border"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute -top-2 -right-2 h-6 w-6"
+                        onClick={() => setFormData({ ...formData, cover_image_url: "" })}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center w-32 h-40 border-2 border-dashed border-muted-foreground/25 rounded-lg cursor-pointer hover:border-muted-foreground/50 transition-colors">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleImageUpload}
+                        disabled={uploading}
+                      />
+                      {uploading ? (
+                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                      ) : (
+                        <>
+                          <ImageIcon className="h-8 w-8 text-muted-foreground mb-2" />
+                          <span className="text-xs text-muted-foreground text-center px-2">Upload Flyer</span>
+                        </>
+                      )}
+                    </label>
+                  )}
+                  <div className="text-sm text-muted-foreground">
+                    <p>Upload a flyer or promotional image for this gig.</p>
+                    <p className="mt-1">Recommended: Portrait orientation (e.g., 800x1000px)</p>
+                    <p>Max size: 10MB</p>
+                  </div>
+                </div>
               </div>
 
               <div className="grid md:grid-cols-3 gap-4">
