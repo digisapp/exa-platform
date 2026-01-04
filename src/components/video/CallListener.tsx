@@ -14,6 +14,7 @@ export function CallListener({ actorId }: CallListenerProps) {
     sessionId: string;
     callerName: string;
     callerAvatar?: string;
+    callType?: "video" | "voice";
   } | null>(null);
   const supabase = createClient();
 
@@ -75,13 +76,16 @@ export function CallListener({ actorId }: CallListenerProps) {
             }
           }
 
+          const callType = callSession.call_type || "video";
           setIncomingCall({
             sessionId: callSession.id,
             callerName,
             callerAvatar,
+            callType,
           });
 
-          toast.info(`${callerName} is calling you...`, {
+          const callTypeLabel = callType === "voice" ? "voice" : "video";
+          toast.info(`${callerName} is ${callTypeLabel} calling you...`, {
             duration: 5000,
           });
         }
@@ -100,6 +104,7 @@ export function CallListener({ actorId }: CallListenerProps) {
       sessionId={incomingCall.sessionId}
       callerName={incomingCall.callerName}
       callerAvatar={incomingCall.callerAvatar}
+      callType={incomingCall.callType}
       onClose={() => setIncomingCall(null)}
     />
   );

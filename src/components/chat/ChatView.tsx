@@ -45,6 +45,7 @@ export function ChatView({
     sessionId: string;
     callerName: string;
     callerAvatar?: string;
+    callType?: "video" | "voice";
   } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
@@ -136,12 +137,15 @@ export function ChatView({
             callSession.conversation_id === conversation.id &&
             callSession.status === "pending"
           ) {
+            const callType = callSession.call_type || "video";
             setIncomingCall({
               sessionId: callSession.id,
               callerName: otherName,
               callerAvatar: otherAvatar || undefined,
+              callType,
             });
-            toast.info(`${otherName} is calling you...`);
+            const callTypeLabel = callType === "voice" ? "voice" : "video";
+            toast.info(`${otherName} is ${callTypeLabel} calling you...`);
           }
         }
       )
@@ -260,6 +264,7 @@ export function ChatView({
           sessionId={incomingCall.sessionId}
           callerName={incomingCall.callerName}
           callerAvatar={incomingCall.callerAvatar}
+          callType={incomingCall.callType}
           onClose={() => setIncomingCall(null)}
         />
       )}

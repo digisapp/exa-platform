@@ -17,6 +17,7 @@ interface IncomingCallDialogProps {
   sessionId: string;
   callerName: string;
   callerAvatar?: string;
+  callType?: "video" | "voice";
   onClose: () => void;
 }
 
@@ -24,6 +25,7 @@ export function IncomingCallDialog({
   sessionId,
   callerName,
   callerAvatar,
+  callType: initialCallType = "video",
   onClose,
 }: IncomingCallDialogProps) {
   const [isJoining, setIsJoining] = useState(false);
@@ -31,8 +33,10 @@ export function IncomingCallDialog({
   const [callSession, setCallSession] = useState<{
     token: string;
     roomName: string;
+    callType: "video" | "voice";
   } | null>(null);
   const [timeLeft, setTimeLeft] = useState(30);
+  const [callType] = useState<"video" | "voice">(initialCallType);
 
   // Auto-miss after 30 seconds (timeout = missed, not declined)
   useEffect(() => {
@@ -68,6 +72,7 @@ export function IncomingCallDialog({
       setCallSession({
         token: data.token,
         roomName: data.roomName,
+        callType: data.callType || callType,
       });
     } catch (error) {
       console.error("Error joining call:", error);
@@ -114,15 +119,18 @@ export function IncomingCallDialog({
         roomName={callSession.roomName}
         sessionId={sessionId}
         onCallEnd={handleCallEnd}
+        callType={callSession.callType}
       />
     );
   }
+
+  const callTypeLabel = callType === "voice" ? "Voice" : "Video";
 
   return (
     <Dialog open onOpenChange={() => handleDecline()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-center">Incoming Video Call</DialogTitle>
+          <DialogTitle className="text-center">Incoming {callTypeLabel} Call</DialogTitle>
         </DialogHeader>
 
         <div className="flex flex-col items-center py-6">
