@@ -196,27 +196,55 @@ export default function AdminGigsPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Validate file type
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Invalid file type. Use JPEG, PNG, WebP, or GIF.");
+      return;
+    }
+
+    // Validate file size (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File too large. Maximum size is 10MB.");
+      return;
+    }
+
     setUploading(true);
     try {
-      const formDataUpload = new FormData();
-      formDataUpload.append("file", file);
-      if (editingGig) {
-        formDataUpload.append("gigId", editingGig.id);
-      }
-
+      // Step 1: Get signed upload URL from our API
       const response = await fetch("/api/admin/gigs/upload", {
         method: "POST",
-        body: formDataUpload,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filename: file.name,
+          contentType: file.type,
+        }),
       });
 
       const data = await response.json();
 
-      if (response.ok && data.url) {
-        setFormData({ ...formData, cover_image_url: data.url });
-        toast.success("Flyer uploaded successfully!");
-      } else {
-        toast.error(data.error || "Failed to upload flyer");
+      if (!response.ok) {
+        toast.error(data.error || "Failed to get upload URL");
+        return;
       }
+
+      // Step 2: Upload directly to Supabase Storage using signed URL
+      const uploadResponse = await fetch(data.signedUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": file.type,
+        },
+        body: file,
+      });
+
+      if (!uploadResponse.ok) {
+        toast.error("Failed to upload file");
+        return;
+      }
+
+      // Step 3: Set the public URL
+      setFormData({ ...formData, cover_image_url: data.publicUrl });
+      toast.success("Flyer uploaded successfully!");
     } catch (error) {
       console.error("Upload error:", error);
       toast.error("Failed to upload flyer");
