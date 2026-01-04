@@ -41,10 +41,15 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
+  Receipt,
+  ExternalLink,
+  Download,
+  Crown,
 } from "lucide-react";
 import { COIN_PACKAGES } from "@/lib/stripe-config";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import Link from "next/link";
 
 interface Transaction {
   id: string;
@@ -72,6 +77,25 @@ interface WithdrawalRequest {
   failure_reason: string | null;
 }
 
+interface BrandPayment {
+  id: string;
+  amount: number;
+  status: string;
+  created: number;
+  period_start: number;
+  period_end: number;
+  invoice_pdf: string | null;
+  hosted_invoice_url: string | null;
+  description: string;
+}
+
+interface BrandSubscription {
+  tier: string;
+  status: string;
+  billing_cycle: string;
+  coins_granted_at: string | null;
+}
+
 export default function WalletPage() {
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState<number | null>(null);
@@ -82,6 +106,10 @@ export default function WalletPage() {
   const [thisMonthEarnings, setThisMonthEarnings] = useState(0);
   const [modelId, setModelId] = useState<string | null>(null);
   const [actorType, setActorType] = useState<string | null>(null);
+
+  // Brand state
+  const [brandPayments, setBrandPayments] = useState<BrandPayment[]>([]);
+  const [brandSubscription, setBrandSubscription] = useState<BrandSubscription | null>(null);
 
   // Payout state
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
@@ -158,6 +186,26 @@ export default function WalletPage() {
           .eq("id", actor.id)
           .single() as { data: { coin_balance: number } | null };
         setCoinBalance(fan?.coin_balance || 0);
+      } else if (actor.type === "brand") {
+        // Brands use actor.id as their id
+        const { data: brand } = await (supabase
+          .from("brands") as any)
+          .select("coin_balance")
+          .eq("id", actor.id)
+          .single() as { data: { coin_balance: number } | null };
+        setCoinBalance(brand?.coin_balance || 0);
+
+        // Fetch brand payment history
+        try {
+          const response = await fetch("/api/brands/payments");
+          if (response.ok) {
+            const data = await response.json();
+            setBrandPayments(data.payments || []);
+            setBrandSubscription(data.subscription);
+          }
+        } catch (error) {
+          console.error("Error fetching brand payments:", error);
+        }
       }
 
       // Get transactions
@@ -719,6 +767,146 @@ export default function WalletPage() {
               </CardContent>
             </Card>
           )}
+        </>
+      )}
+
+      {/* Brand Subscription & Payment History */}
+      {actorType === "brand" && (
+        <>
+          {/* Subscription Status */}
+          {brandSubscription && (
+            <Card className="bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border-cyan-500/20">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Crown className="h-5 w-5 text-cyan-500" />
+                      Subscription
+                    </CardTitle>
+                    <CardDescription>Your current plan</CardDescription>
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      brandSubscription.status === "active" && "bg-green-500/10 text-green-500 border-green-500/50",
+                      brandSubscription.status === "past_due" && "bg-yellow-500/10 text-yellow-500 border-yellow-500/50",
+                      brandSubscription.status === "canceled" && "bg-red-500/10 text-red-500 border-red-500/50",
+                      brandSubscription.status === "paused" && "bg-gray-500/10 text-gray-500 border-gray-500/50"
+                    )}
+                  >
+                    {brandSubscription.status}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Plan</p>
+                    <p className="font-semibold capitalize">{brandSubscription.tier}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Billing</p>
+                    <p className="font-semibold capitalize">{brandSubscription.billing_cycle || "Monthly"}</p>
+                  </div>
+                  {brandSubscription.coins_granted_at && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Last Coins Added</p>
+                      <p className="font-semibold">
+                        {new Date(brandSubscription.coins_granted_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  )}
+                </div>
+                <div className="mt-4 pt-4 border-t border-border/50">
+                  <Link href="/brands/pricing">
+                    <Button variant="outline" size="sm">
+                      Manage Subscription
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Payment History */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Receipt className="h-5 w-5" />
+                Payment History
+              </CardTitle>
+              <CardDescription>Your subscription payments</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {brandPayments.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Receipt className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No payment history yet</p>
+                  <p className="text-sm mt-1">Subscribe to a plan to see your payments here</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {brandPayments.map((payment) => (
+                    <div
+                      key={payment.id}
+                      className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-full bg-background">
+                          {payment.status === "paid" ? (
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                          ) : payment.status === "open" ? (
+                            <Clock className="h-4 w-4 text-yellow-500" />
+                          ) : (
+                            <XCircle className="h-4 w-4 text-red-500" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">{payment.description}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(payment.created * 1000).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="font-bold text-green-500">
+                          ${(payment.amount / 100).toFixed(2)}
+                        </span>
+                        <div className="flex gap-1">
+                          {payment.hosted_invoice_url && (
+                            <a
+                              href={payment.hosted_invoice_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-1.5 rounded hover:bg-muted transition-colors"
+                              title="View Invoice"
+                            >
+                              <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                            </a>
+                          )}
+                          {payment.invoice_pdf && (
+                            <a
+                              href={payment.invoice_pdf}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-1.5 rounded hover:bg-muted transition-colors"
+                              title="Download PDF"
+                            >
+                              <Download className="h-4 w-4 text-muted-foreground" />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </>
       )}
     </div>

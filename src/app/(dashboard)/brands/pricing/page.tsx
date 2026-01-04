@@ -202,13 +202,13 @@ export default function BrandPricingPage() {
           <div className="p-4 rounded-lg bg-muted/50">
             <h3 className="font-medium mb-1">What happens if I run out of coins?</h3>
             <p className="text-sm text-muted-foreground">
-              You can purchase additional coins at any time. Your monthly coin allowance resets with each billing cycle.
+              You can purchase additional coins at any time. Your coins roll over each month — they never expire or reset. Each billing cycle adds more coins to your existing balance.
             </p>
           </div>
           <div className="p-4 rounded-lg bg-muted/50">
             <h3 className="font-medium mb-1">Can I cancel my subscription?</h3>
             <p className="text-sm text-muted-foreground">
-              Yes, you can cancel anytime. You&apos;ll retain access until the end of your billing period.
+              Yes, you can cancel anytime. Your account will be paused and your coins will be held safely. When you resubscribe, your coins will be available again.
             </p>
           </div>
         </div>

@@ -237,17 +237,20 @@ async function handleSubscriptionCanceled(subscription: Stripe.Subscription) {
   const brandId = subscription.metadata?.brand_id;
   if (!brandId) return;
 
+  // When subscription is canceled, pause the account but keep coins
+  // Admin can manually reactivate when brand resubscribes
+  // Coins are NOT removed - they're held in the account
   await supabaseAdmin
     .from("brands")
     .update({
-      subscription_status: "canceled",
-      subscription_tier: "free",
-      is_verified: false,
+      subscription_status: "paused",
+      // Keep the tier info for reference, but mark as paused
+      // is_verified stays as is - admin decides if it should be removed
       stripe_subscription_id: null,
     })
     .eq("id", brandId);
 
-  console.log(`Subscription canceled for brand ${brandId}`);
+  console.log(`Subscription paused for brand ${brandId} - coins preserved`);
 }
 
 async function grantMonthlyCoins(invoice: Stripe.Invoice) {
