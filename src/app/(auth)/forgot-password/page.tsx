@@ -46,21 +46,21 @@ export default function ForgotPasswordPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="text-5xl mb-4">📧</div>
-            <CardTitle>Check Your Email</CardTitle>
-            <CardDescription>
-              If an account exists for <strong>{email}</strong>, you&apos;ll receive a reset link.
+          <CardHeader className="text-center pb-2">
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-pink-500/20 to-violet-500/20 flex items-center justify-center">
+                <svg className="w-8 h-8 text-pink-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+            </div>
+            <CardTitle className="text-xl">Check your inbox</CardTitle>
+            <CardDescription className="pt-2">
+              We sent a reset link to <strong className="text-foreground">{email}</strong>
             </CardDescription>
           </CardHeader>
-          <CardContent className="text-center text-muted-foreground space-y-3">
-            <p>Check your inbox and spam folder. The link expires quickly, so click it right away.</p>
-            <p className="text-xs">
-              <strong>Tip:</strong> Open the link in Safari or Chrome, not inside Instagram or email apps.
-            </p>
-          </CardContent>
-          <CardFooter className="flex flex-col gap-4">
-            <Button variant="ghost" onClick={() => setSent(false)} className="w-full">
+          <CardFooter className="flex flex-col gap-3 pt-4">
+            <Button variant="outline" onClick={() => setSent(false)} className="w-full">
               Try a different email
             </Button>
             <Link href="/signin" className="text-sm text-muted-foreground hover:text-foreground">
