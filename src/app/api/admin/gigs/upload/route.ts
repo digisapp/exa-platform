@@ -1,8 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
-// This route just verifies admin access and returns a signed upload URL
-// The actual upload happens directly to Supabase Storage from the client
+// Admin client for storage operations (bypasses RLS)
+const supabaseAdmin = createAdminClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,18 +42,18 @@ export async function POST(request: NextRequest) {
     const ext = filename.split(".").pop() || "jpg";
     const path = `${timestamp}.${ext}`;
 
-    // Create signed upload URL
-    const { data, error } = await supabase.storage
+    // Create signed upload URL using admin client
+    const { data, error } = await supabaseAdmin.storage
       .from("gigs")
       .createSignedUploadUrl(path);
 
     if (error) {
       console.error("Signed URL error:", error);
-      return NextResponse.json({ error: "Failed to create upload URL" }, { status: 500 });
+      return NextResponse.json({ error: `Failed to create upload URL: ${error.message}` }, { status: 500 });
     }
 
     // Get the public URL for after upload
-    const { data: { publicUrl } } = supabase.storage
+    const { data: { publicUrl } } = supabaseAdmin.storage
       .from("gigs")
       .getPublicUrl(path);
 
