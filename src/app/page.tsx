@@ -247,12 +247,6 @@ export default async function HomePage() {
                 <span className="text-muted-foreground">One Platform. Models Worldwide.</span>
               </div>
               <div className="flex items-center gap-6">
-                <Link href="/models" className="text-muted-foreground hover:text-[#FF69B4] transition-colors">
-                  Models
-                </Link>
-                <Link href="/leaderboard" className="text-muted-foreground hover:text-[#FF69B4] transition-colors">
-                  Leaderboard
-                </Link>
                 <a
                   href="https://instagram.com/examodels"
                   target="_blank"
