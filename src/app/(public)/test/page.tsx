@@ -232,15 +232,6 @@ export default async function TestHomePage() {
                 </BrandInquiryDialog>
               </div>
 
-              <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground">
-                <Link href="/models" className="hover:text-[#FF69B4] transition-colors">
-                  Browse Models
-                </Link>
-                <span className="text-muted-foreground/50">•</span>
-                <Link href="/brands/inquiry" className="hover:text-[#FF69B4] transition-colors">
-                  Brand Partnerships
-                </Link>
-              </div>
             </div>
           </div>
         </section>
