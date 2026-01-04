@@ -207,44 +207,6 @@ export default async function HomePage() {
           <UpcomingEventsCarousel events={upcomingEvents || []} />
         </section>
 
-        {/* CTA Section */}
-        <section className="py-16">
-          <div className="container px-8 md:px-16">
-            <div className="flex flex-col items-center text-center">
-              <h2 className="text-2xl md:text-3xl font-bold mb-8">
-                Ready to get started?
-              </h2>
-              <div className="flex flex-col sm:flex-row gap-4 mb-8">
-                <ModelSignupDialog>
-                  <Button size="lg" className="exa-gradient-button text-lg px-10 h-14 rounded-full">
-                    Models Sign Up
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </ModelSignupDialog>
-                <BrandInquiryDialog>
-                  <Button
-                    size="lg"
-                    className="text-lg px-10 h-14 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white"
-                  >
-                    Brand Sign Up
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </BrandInquiryDialog>
-              </div>
-
-              <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground">
-                <Link href="/models" className="hover:text-[#FF69B4] transition-colors">
-                  Browse Models
-                </Link>
-                <span className="text-muted-foreground/50">•</span>
-                <Link href="/brands/inquiry" className="hover:text-[#FF69B4] transition-colors">
-                  Brand Partnerships
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* Footer */}
         <footer className="py-12 border-t border-[#FF69B4]/20">
           <div className="container px-8 md:px-16">
