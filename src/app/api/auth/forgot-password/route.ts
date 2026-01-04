@@ -36,13 +36,13 @@ export async function POST(request: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // Get origin for redirect URL
-    const origin = request.headers.get("origin") || "https://www.examodels.com";
+    // Always use production URL for redirect (must match Supabase allowed redirects)
+    const redirectUrl = "https://www.examodels.com/auth/callback?type=recovery";
 
     // Always attempt to send reset email - don't check if user exists
     // This prevents email enumeration attacks
     const { error } = await adminClient.auth.resetPasswordForEmail(normalizedEmail, {
-      redirectTo: `${origin}/auth/reset-password`,
+      redirectTo: redirectUrl,
     });
 
     // Log errors server-side but don't expose to user
