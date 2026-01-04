@@ -75,6 +75,12 @@ export async function PATCH(
         .eq("user_id", application.user_id)
         .single();
 
+      // Use admin client to bypass RLS for actor updates
+      const adminClient = createSupabaseClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      );
+
       if (!existingModel) {
         // Create model record
         const username = application.instagram_username ||
@@ -87,7 +93,7 @@ export async function PATCH(
 
         while (true) {
           const checkUsername = attempt === 0 ? finalUsername : `${finalUsername}${attempt}`;
-          const { data: usernameCheck } = await (supabase.from("models") as any)
+          const { data: usernameCheck } = await (adminClient.from("models") as any)
             .select("id")
             .eq("username", checkUsername)
             .single();
@@ -104,7 +110,7 @@ export async function PATCH(
         }
 
         // Create the model record
-        const { error: modelError } = await (supabase.from("models") as any)
+        const { error: modelError } = await (adminClient.from("models") as any)
           .insert({
             user_id: application.user_id,
             email: application.email,
@@ -124,9 +130,9 @@ export async function PATCH(
           // Don't fail the whole request, just log
         }
 
-        // Update actor type to model
-        const { data: updatedActor, error: actorError } = await (supabase
-          .from("actors") as any)
+        // Update actor type to model using admin client
+        const { data: updatedActor, error: actorError } = await adminClient
+          .from("actors")
           .update({ type: "model" })
           .eq("user_id", application.user_id)
           .select("id")
@@ -134,12 +140,14 @@ export async function PATCH(
 
         if (actorError) {
           console.error("Error updating actor type:", actorError);
+        } else {
+          console.log("Successfully updated actor type to model for user:", application.user_id);
         }
 
         // Delete the old fan record (cleanup)
         if (updatedActor?.id) {
-          const { error: fanDeleteError } = await (supabase
-            .from("fans") as any)
+          const { error: fanDeleteError } = await adminClient
+            .from("fans")
             .delete()
             .eq("id", updatedActor.id);
 
@@ -149,13 +157,13 @@ export async function PATCH(
         }
       } else {
         // Model exists, just approve it
-        await (supabase.from("models") as any)
+        await (adminClient.from("models") as any)
           .update({ is_approved: true, status: "approved" })
           .eq("user_id", application.user_id);
 
         // Update actor type to model (in case it was still 'fan')
-        const { data: updatedActor, error: actorError } = await (supabase
-          .from("actors") as any)
+        const { data: updatedActor, error: actorError } = await adminClient
+          .from("actors")
           .update({ type: "model" })
           .eq("user_id", application.user_id)
           .select("id")
@@ -163,12 +171,14 @@ export async function PATCH(
 
         if (actorError) {
           console.error("Error updating actor type:", actorError);
+        } else {
+          console.log("Successfully updated actor type to model for user:", application.user_id);
         }
 
         // Delete the old fan record (cleanup)
         if (updatedActor?.id) {
-          const { error: fanDeleteError } = await (supabase
-            .from("fans") as any)
+          const { error: fanDeleteError } = await adminClient
+            .from("fans")
             .delete()
             .eq("id", updatedActor.id);
 
