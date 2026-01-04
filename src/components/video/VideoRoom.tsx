@@ -30,6 +30,7 @@ interface VideoRoomProps {
   recipientName?: string;
   coinBalance?: number;
   onTipSuccess?: (amount: number, newBalance: number) => void;
+  callType?: "video" | "voice";
 }
 
 export function VideoRoom({
@@ -42,6 +43,7 @@ export function VideoRoom({
   recipientName,
   coinBalance = 0,
   onTipSuccess,
+  callType = "video",
 }: VideoRoomProps) {
   const [isConnected, setIsConnected] = useState(false);
   const [localCoinBalance, setLocalCoinBalance] = useState(coinBalance);
@@ -101,6 +103,7 @@ export function VideoRoom({
           recipientName={recipientName}
           coinBalance={localCoinBalance}
           onTipSuccess={handleTipSuccess}
+          callType={callType}
         />
         <RoomAudioRenderer />
       </LiveKitRoom>
@@ -117,6 +120,7 @@ interface VideoCallContentProps {
   recipientName?: string;
   coinBalance?: number;
   onTipSuccess?: (amount: number, newBalance: number) => void;
+  callType?: "video" | "voice";
 }
 
 function VideoCallContent({
@@ -128,10 +132,12 @@ function VideoCallContent({
   recipientName,
   coinBalance = 0,
   onTipSuccess,
+  callType = "video",
 }: VideoCallContentProps) {
   const [callDuration, setCallDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
-  const [isVideoOff, setIsVideoOff] = useState(false);
+  // For voice calls, start with video off
+  const [isVideoOff, setIsVideoOff] = useState(callType === "voice");
   const [showTipMenu, setShowTipMenu] = useState(false);
   const [tippingAmount, setTippingAmount] = useState<number | null>(null);
   const participants = useParticipants();
@@ -148,6 +154,13 @@ function VideoCallContent({
 
     return () => clearInterval(interval);
   }, [isConnected]);
+
+  // Disable camera for voice calls when connected
+  useEffect(() => {
+    if (isConnected && callType === "voice" && room.localParticipant) {
+      room.localParticipant.setCameraEnabled(false);
+    }
+  }, [isConnected, callType, room.localParticipant]);
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);

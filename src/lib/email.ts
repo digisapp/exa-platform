@@ -1156,20 +1156,24 @@ export async function sendVideoCallRequestEmail({
   modelName,
   callerName,
   callRate,
+  callType = "video",
 }: {
   to: string;
   modelName: string;
   callerName: string;
   callRate: number;
+  callType?: "video" | "voice";
 }) {
   try {
     const resend = getResendClient();
     const dashboardUrl = "https://www.examodels.com/chats";
+    const callTypeLabel = callType === "voice" ? "voice" : "video";
+    const emoji = callType === "voice" ? "🎙️" : "📹";
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
       to: [to],
-      subject: `📞 ${callerName} wants to video call you!`,
+      subject: `${emoji} ${callerName} wants to ${callTypeLabel} call you!`,
       html: `
 <!DOCTYPE html>
 <html>
@@ -1186,9 +1190,9 @@ export async function sendVideoCallRequestEmail({
           <!-- Header -->
           <tr>
             <td style="background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); padding: 30px; text-align: center;">
-              <p style="margin: 0; font-size: 48px;">📞</p>
+              <p style="margin: 0; font-size: 48px;">${emoji}</p>
               <h1 style="margin: 10px 0 0; color: white; font-size: 24px; font-weight: bold;">
-                Incoming Call Request!
+                Incoming ${callTypeLabel.charAt(0).toUpperCase() + callTypeLabel.slice(1)} Call Request!
               </h1>
             </td>
           </tr>
@@ -1200,7 +1204,7 @@ export async function sendVideoCallRequestEmail({
                 Hey ${modelName}! 📱
               </p>
               <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
-                <strong style="color: #ffffff;">${callerName}</strong> is trying to video call you! Open your chats to accept the call.
+                <strong style="color: #ffffff;">${callerName}</strong> is trying to ${callTypeLabel} call you! Open your chats to accept the call.
               </p>
 
               <!-- Call Info -->

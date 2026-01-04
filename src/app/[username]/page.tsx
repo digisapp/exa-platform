@@ -296,6 +296,7 @@ export default async function ModelProfilePage({ params }: Props) {
             modelActorId={modelActorId}
             messageRate={model.message_rate || 0}
             videoCallRate={model.video_call_rate || 0}
+            voiceCallRate={model.voice_call_rate || 0}
           />
 
           {/* Affiliate Links - Linktree Style */}
