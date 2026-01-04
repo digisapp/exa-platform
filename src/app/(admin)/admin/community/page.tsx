@@ -1138,42 +1138,27 @@ export default function AdminCommunityPage() {
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-[200px]">Model</TableHead>
+                        <TableHead>Instagram</TableHead>
+                        <TableHead>State</TableHead>
+                        <TableHead>Actions</TableHead>
+                        <TableHead>Invite</TableHead>
                         <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("joined_at")}>
                           <div className="flex items-center"><UserPlus className="h-4 w-4 mr-1" />Joined<SortIndicator active={modelsSortField === "joined_at"} direction={modelsSortDirection} /></div>
                         </TableHead>
-                        <TableHead>Invite</TableHead>
-                        <TableHead>Instagram</TableHead>
-                        <TableHead>State</TableHead>
                         <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("admin_rating")}>
                           <div className="flex items-center"><Star className="h-4 w-4 mr-1" />Rating<SortIndicator active={modelsSortField === "admin_rating"} direction={modelsSortDirection} /></div>
                         </TableHead>
                         <TableHead>
                           <div className="flex items-center"><Sparkles className="h-4 w-4 mr-1" />New Face</div>
                         </TableHead>
-                        <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("last_seen")}>
-                          <div className="flex items-center"><Activity className="h-4 w-4 mr-1" />Last Seen<SortIndicator active={modelsSortField === "last_seen"} direction={modelsSortDirection} /></div>
-                        </TableHead>
-                        <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("total_earned")}>
-                          <div className="flex items-center"><DollarSign className="h-4 w-4 mr-1" />Earned<SortIndicator active={modelsSortField === "total_earned"} direction={modelsSortDirection} /></div>
-                        </TableHead>
-                        <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("content_count")}>
-                          <div className="flex items-center"><Images className="h-4 w-4 mr-1" />Content<SortIndicator active={modelsSortField === "content_count"} direction={modelsSortDirection} /></div>
-                        </TableHead>
-                        <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("last_post")}>
-                          <div className="flex items-center"><Calendar className="h-4 w-4 mr-1" />Last Post<SortIndicator active={modelsSortField === "last_post"} direction={modelsSortDirection} /></div>
-                        </TableHead>
-                        <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("message_count")}>
-                          <div className="flex items-center"><MessageCircle className="h-4 w-4 mr-1" />Chats<SortIndicator active={modelsSortField === "message_count"} direction={modelsSortDirection} /></div>
-                        </TableHead>
-                        <TableHead>Actions</TableHead>
                         <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("profile_views")}>
                           <div className="flex items-center"><Eye className="h-4 w-4 mr-1" />Views<SortIndicator active={modelsSortField === "profile_views"} direction={modelsSortDirection} /></div>
                         </TableHead>
-                        <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("coin_balance")}>
-                          <div className="flex items-center"><Coins className="h-4 w-4 mr-1" />Balance<SortIndicator active={modelsSortField === "coin_balance"} direction={modelsSortDirection} /></div>
-                        </TableHead>
                         <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("followers_count")}>
                           <div className="flex items-center"><Heart className="h-4 w-4 mr-1" />Favorites<SortIndicator active={modelsSortField === "followers_count"} direction={modelsSortDirection} /></div>
+                        </TableHead>
+                        <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("total_earned")}>
+                          <div className="flex items-center"><DollarSign className="h-4 w-4 mr-1" />Earned<SortIndicator active={modelsSortField === "total_earned"} direction={modelsSortDirection} /></div>
                         </TableHead>
                       </TableRow>
                     </TableHeader>
@@ -1196,10 +1181,12 @@ export default function AdminCommunityPage() {
                             </Link>
                           </TableCell>
                           <TableCell>
-                            <span className="text-sm text-muted-foreground">
-                              {(model.joined_at || model.claimed_at || model.created_at) ? new Date(model.joined_at || model.claimed_at || model.created_at).toLocaleDateString() : "-"}
-                            </span>
+                            {model.instagram_name ? (
+                              <a href={`https://instagram.com/${model.instagram_name.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-pink-500 hover:text-pink-400 transition-colors text-sm">{model.instagram_name.replace('@', '')}</a>
+                            ) : <span className="text-muted-foreground text-sm">-</span>}
                           </TableCell>
+                          <TableCell><span className="text-sm text-muted-foreground">{model.state || "-"}</span></TableCell>
+                          <TableCell><ModelActionsDropdown id={model.id} modelName={model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username} isApproved={model.is_approved} onAction={loadModels} /></TableCell>
                           <TableCell>
                             {model.user_id ? (
                               <span className="inline-flex items-center gap-1 text-green-500 text-sm">
@@ -1224,36 +1211,15 @@ export default function AdminCommunityPage() {
                             )}
                           </TableCell>
                           <TableCell>
-                            {model.instagram_name ? (
-                              <a href={`https://instagram.com/${model.instagram_name.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-pink-500 hover:text-pink-400 transition-colors text-sm">{model.instagram_name.replace('@', '')}</a>
-                            ) : <span className="text-muted-foreground text-sm">-</span>}
+                            <span className="text-sm text-muted-foreground">
+                              {(model.joined_at || model.claimed_at || model.created_at) ? new Date(model.joined_at || model.claimed_at || model.created_at).toLocaleDateString() : "-"}
+                            </span>
                           </TableCell>
-                          <TableCell><span className="text-sm text-muted-foreground">{model.state || "-"}</span></TableCell>
                           <TableCell><RatingStars modelId={model.id} currentRating={model.admin_rating} onRatingChange={handleRatingChange} /></TableCell>
                           <TableCell><NewFaceToggle modelId={model.id} isNewFace={model.new_face || false} onToggle={handleNewFaceToggle} /></TableCell>
-                          <TableCell>
-                            {model.last_seen ? (
-                              <span className={`text-sm ${model.last_active_at ? "text-green-500" : "text-muted-foreground"}`} title={new Date(model.last_seen).toLocaleString()}>
-                                {formatRelativeTime(model.last_seen)}
-                              </span>
-                            ) : (
-                              <span className="text-sm text-muted-foreground/50">-</span>
-                            )}
-                          </TableCell>
-                          <TableCell><span className={`font-medium ${(model.total_earned || 0) > 0 ? "text-green-500" : ""}`}>{(model.total_earned || 0).toLocaleString()}</span></TableCell>
-                          <TableCell><span className={`font-medium ${(model.content_count || 0) > 0 ? "text-blue-500" : ""}`}>{(model.content_count || 0).toLocaleString()}</span></TableCell>
-                          <TableCell>
-                            {model.last_post ? (
-                              <span className="text-sm text-muted-foreground">{new Date(model.last_post).toLocaleDateString()}</span>
-                            ) : (
-                              <span className="text-sm text-muted-foreground/50">-</span>
-                            )}
-                          </TableCell>
-                          <TableCell><span className={`font-medium ${(model.message_count || 0) > 0 ? "text-violet-500" : ""}`}>{(model.message_count || 0).toLocaleString()}</span></TableCell>
-                          <TableCell><ModelActionsDropdown id={model.id} modelName={model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username} isApproved={model.is_approved} onAction={loadModels} /></TableCell>
                           <TableCell><span className={`font-medium ${model.profile_views > 100 ? "text-purple-500" : ""}`}>{(model.profile_views || 0).toLocaleString()}</span></TableCell>
-                          <TableCell><span className={`font-medium ${model.coin_balance > 0 ? "text-yellow-500" : ""}`}>{(model.coin_balance || 0).toLocaleString()}</span></TableCell>
                           <TableCell><span className={`font-medium ${(model.followers_count || 0) > 0 ? "text-pink-500" : ""}`}>{(model.followers_count || 0).toLocaleString()}</span></TableCell>
+                          <TableCell><span className={`font-medium ${(model.total_earned || 0) > 0 ? "text-green-500" : ""}`}>{(model.total_earned || 0).toLocaleString()}</span></TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
