@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { toast } from "sonner";
 import { Loader2, CheckCircle } from "lucide-react";
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -20,42 +20,97 @@ export default function ResetPasswordPage() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
 
   useEffect(() => {
-    // Listen for auth state changes (Supabase processes the URL hash)
+    let mounted = true;
+
+    async function handleAuth() {
+      // Method 1: Check for PKCE code in URL query params
+      const code = searchParams.get("code");
+      if (code) {
+        console.log("Found code in URL, exchanging for session...");
+        const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+        if (mounted) {
+          if (exchangeError) {
+            console.error("Code exchange error:", exchangeError);
+            setChecking(false);
+            setError("Invalid or expired reset link. Please request a new one.");
+          } else if (data.session) {
+            console.log("Session established from code exchange");
+            setChecking(false);
+            setError(null);
+          }
+        }
+        return;
+      }
+
+      // Method 2: Check for hash fragment tokens (legacy/fallback)
+      const hash = window.location.hash;
+      if (hash && hash.includes("access_token")) {
+        console.log("Found hash fragment, letting Supabase handle it...");
+        // Supabase client will auto-process the hash
+        // Wait for onAuthStateChange to fire
+        return;
+      }
+
+      // Method 3: Check if we already have a session (page refresh after auth)
+      const { data: { session } } = await supabase.auth.getSession();
+      if (mounted && session) {
+        console.log("Existing session found");
+        setChecking(false);
+        setError(null);
+        return;
+      }
+
+      // No code, no hash, no session - wait a bit for onAuthStateChange
+      // (in case Supabase is still processing)
+    }
+
+    // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log("Auth state change:", event);
         if (event === "PASSWORD_RECOVERY") {
           // User clicked the reset link - they can now set a new password
-          setChecking(false);
-          setError(null);
+          if (mounted) {
+            setChecking(false);
+            setError(null);
+          }
         } else if (event === "SIGNED_IN" && session) {
           // Session established from reset link
-          setChecking(false);
-          setError(null);
+          if (mounted) {
+            setChecking(false);
+            setError(null);
+          }
         }
       }
     );
 
-    // Also check current session after a short delay (for page refresh)
+    // Start auth handling
+    handleAuth();
+
+    // Fallback timeout - if nothing works after 3 seconds, show error
     const timer = setTimeout(async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        setChecking(false);
-        setError(null);
-      } else if (checking) {
-        // Still no session after delay - link might be invalid
-        setChecking(false);
-        setError("Invalid or expired reset link. Please request a new one.");
+      if (mounted && checking) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          setChecking(false);
+          setError(null);
+        } else {
+          setChecking(false);
+          setError("Invalid or expired reset link. Please request a new one.");
+        }
       }
-    }, 1500);
+    }, 3000);
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
       clearTimeout(timer);
     };
-  }, [supabase, checking]);
+  }, [supabase, searchParams, checking]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -212,5 +267,26 @@ export default function ResetPasswordPage() {
         </form>
       </Card>
     </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-pink-500" />
+          <CardTitle>Loading...</CardTitle>
+        </CardHeader>
+      </Card>
+    </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }
