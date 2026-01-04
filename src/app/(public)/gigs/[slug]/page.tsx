@@ -154,20 +154,16 @@ export default async function GigDetailPage({ params }: Props) {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Cover Image */}
-            <div className="aspect-video rounded-2xl overflow-hidden bg-gradient-to-br from-pink-500/20 to-violet-500/20">
-              {gig.cover_image_url ? (
+            {/* Cover Image - Ultra wide banner */}
+            {gig.cover_image_url && (
+              <div className="aspect-[21/9] rounded-2xl overflow-hidden bg-gradient-to-br from-pink-500/20 to-violet-500/20">
                 <img
                   src={gig.cover_image_url}
                   alt={gig.title}
-                  className="object-cover w-full h-full"
+                  className="w-full h-full object-cover"
                 />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <span className="text-8xl">✨</span>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Header */}
             <div>
