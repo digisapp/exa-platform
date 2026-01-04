@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { FloatingOrbs } from "@/components/ui/floating-orbs";
 import { ModelSignupDialog } from "@/components/auth/ModelSignupDialog";
@@ -25,6 +26,12 @@ function shuffleArray<T>(array: T[]): T[] {
 
 export default async function HomePage() {
   const supabase = await createClient();
+
+  // If user is already logged in, redirect to dashboard
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    redirect("/dashboard");
+  }
 
   // Fetch top 50 models with 4-5 star admin rating
   const { data: topModelsData } = await (supabase
