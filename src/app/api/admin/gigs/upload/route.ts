@@ -36,11 +36,11 @@ export async function POST(request: NextRequest) {
     // Generate unique path
     const timestamp = Date.now();
     const ext = filename.split(".").pop() || "jpg";
-    const path = `gigs/${timestamp}.${ext}`;
+    const path = `${timestamp}.${ext}`;
 
     // Create signed upload URL
     const { data, error } = await supabase.storage
-      .from("portfolio")
+      .from("gigs")
       .createSignedUploadUrl(path);
 
     if (error) {
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
 
     // Get the public URL for after upload
     const { data: { publicUrl } } = supabase.storage
-      .from("portfolio")
+      .from("gigs")
       .getPublicUrl(path);
 
     return NextResponse.json({
