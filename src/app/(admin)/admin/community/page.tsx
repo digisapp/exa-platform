@@ -1137,6 +1137,9 @@ export default function AdminCommunityPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("admin_rating")}>
+                          <div className="flex items-center"><Star className="h-4 w-4 mr-1" />Rating<SortIndicator active={modelsSortField === "admin_rating"} direction={modelsSortDirection} /></div>
+                        </TableHead>
                         <TableHead className="w-[200px]">Model</TableHead>
                         <TableHead>Instagram</TableHead>
                         <TableHead>State</TableHead>
@@ -1144,9 +1147,6 @@ export default function AdminCommunityPage() {
                         <TableHead>Invite</TableHead>
                         <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("joined_at")}>
                           <div className="flex items-center"><UserPlus className="h-4 w-4 mr-1" />Joined<SortIndicator active={modelsSortField === "joined_at"} direction={modelsSortDirection} /></div>
-                        </TableHead>
-                        <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("admin_rating")}>
-                          <div className="flex items-center"><Star className="h-4 w-4 mr-1" />Rating<SortIndicator active={modelsSortField === "admin_rating"} direction={modelsSortDirection} /></div>
                         </TableHead>
                         <TableHead>
                           <div className="flex items-center"><Sparkles className="h-4 w-4 mr-1" />New Face</div>
@@ -1165,6 +1165,7 @@ export default function AdminCommunityPage() {
                     <TableBody>
                       {models.map((model) => (
                         <TableRow key={model.id}>
+                          <TableCell><RatingStars modelId={model.id} currentRating={model.admin_rating} onRatingChange={handleRatingChange} /></TableCell>
                           <TableCell>
                             <Link href={`/admin/models/${model.id}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                               <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-pink-500/20 to-violet-500/20 flex-shrink-0">
@@ -1215,7 +1216,6 @@ export default function AdminCommunityPage() {
                               {(model.joined_at || model.claimed_at || model.created_at) ? new Date(model.joined_at || model.claimed_at || model.created_at).toLocaleDateString() : "-"}
                             </span>
                           </TableCell>
-                          <TableCell><RatingStars modelId={model.id} currentRating={model.admin_rating} onRatingChange={handleRatingChange} /></TableCell>
                           <TableCell><NewFaceToggle modelId={model.id} isNewFace={model.new_face || false} onToggle={handleNewFaceToggle} /></TableCell>
                           <TableCell><span className={`font-medium ${model.profile_views > 100 ? "text-purple-500" : ""}`}>{(model.profile_views || 0).toLocaleString()}</span></TableCell>
                           <TableCell><span className={`font-medium ${(model.followers_count || 0) > 0 ? "text-pink-500" : ""}`}>{(model.followers_count || 0).toLocaleString()}</span></TableCell>
