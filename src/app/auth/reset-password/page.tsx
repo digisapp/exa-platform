@@ -60,9 +60,32 @@ function ResetPasswordForm() {
       // Check for hash fragment tokens (legacy/fallback)
       const hash = window.location.hash;
       if (hash && hash.includes("access_token")) {
-        console.log("Found hash fragment, letting Supabase handle it...");
-        // Supabase client will auto-process the hash
-        // Wait for onAuthStateChange to fire
+        console.log("Found hash fragment, processing...");
+        // Extract tokens from hash and set session
+        const hashParams = new URLSearchParams(hash.substring(1));
+        const accessToken = hashParams.get("access_token");
+        const refreshToken = hashParams.get("refresh_token");
+
+        if (accessToken) {
+          const { data, error: sessionError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken || "",
+          });
+
+          if (mounted) {
+            if (sessionError) {
+              console.error("Session error:", sessionError);
+              setChecking(false);
+              setError("Invalid or expired reset link. Please request a new one.");
+            } else if (data.session) {
+              console.log("Session established from hash tokens");
+              setChecking(false);
+              setError(null);
+              // Clear the hash from URL
+              window.history.replaceState(null, "", window.location.pathname);
+            }
+          }
+        }
         return;
       }
 
