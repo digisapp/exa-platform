@@ -22,6 +22,7 @@ import {
   Settings,
   Coins,
   Images,
+  Crown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/auth/logout-button";
@@ -165,6 +166,14 @@ export function Navbar({ user, actorType, coinBalance = 0 }: NavbarProps) {
                       </span>
                     </Link>
                   </DropdownMenuItem>
+                  {actorType === "brand" && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/brands/subscription" className="cursor-pointer">
+                        <Crown className="mr-2 h-4 w-4" />
+                        Subscription
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   {actorType !== "admin" && (
                     <DropdownMenuItem asChild>
                       <Link href="/profile" className="cursor-pointer">
