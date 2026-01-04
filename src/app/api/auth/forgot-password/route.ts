@@ -37,7 +37,8 @@ export async function POST(request: Request) {
     );
 
     // Always use production URL for redirect (must match Supabase allowed redirects)
-    const redirectUrl = "https://www.examodels.com/auth/callback?type=recovery";
+    // Go directly to reset-password page which handles code exchange
+    const redirectUrl = "https://www.examodels.com/auth/reset-password";
 
     // Always attempt to send reset email - don't check if user exists
     // This prevents email enumeration attacks
