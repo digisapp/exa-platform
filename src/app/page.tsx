@@ -194,8 +194,21 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* Book Top Models Section */}
+        {/* Upcoming Experiences Section */}
         <section className="py-6">
+          <div className="container px-8 md:px-16 mb-8">
+            <h2 className="text-3xl md:text-4xl font-bold mb-2 exa-gradient-text">
+              Upcoming Experiences
+            </h2>
+            <p className="text-muted-foreground">
+              Fashion shows, travel experiences, and brand campaigns
+            </p>
+          </div>
+          <UpcomingEventsCarousel events={upcomingEvents || []} />
+        </section>
+
+        {/* Book Top Models Section */}
+        <section className="py-12">
           <div className="container px-8 md:px-16 mb-8">
             <h2 className="text-3xl md:text-4xl font-bold exa-gradient-text">
               Book Top Models
@@ -218,19 +231,6 @@ export default async function HomePage() {
             <TopModelsCarousel models={newFaces || []} />
           </section>
         )}
-
-        {/* Upcoming Experiences Section */}
-        <section className="py-12">
-          <div className="container px-8 md:px-16 mb-8">
-            <h2 className="text-3xl md:text-4xl font-bold mb-2 exa-gradient-text">
-              Upcoming Experiences
-            </h2>
-            <p className="text-muted-foreground">
-              Fashion shows, travel experiences, and brand campaigns
-            </p>
-          </div>
-          <UpcomingEventsCarousel events={upcomingEvents || []} />
-        </section>
 
         {/* Footer */}
         <footer className="py-12 border-t border-[#FF69B4]/20">
