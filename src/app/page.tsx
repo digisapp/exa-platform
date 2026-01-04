@@ -69,6 +69,31 @@ export default async function HomePage() {
 
       {/* Content */}
       <div className="relative z-10">
+        {/* Scrolling Digis Banner */}
+        <a
+          href="https://digis.cc"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block bg-gradient-to-r from-violet-600 via-pink-500 to-violet-600 bg-[length:200%_100%] animate-gradient py-2 hover:opacity-90 transition-opacity cursor-pointer"
+        >
+          <div className="overflow-hidden whitespace-nowrap">
+            <div className="inline-block animate-marquee">
+              <span className="mx-8 text-sm font-medium text-white">
+                ✨ Join our Digis Community — Live Streams, Virtual Gifts, AI Twin & Chats ✨
+              </span>
+              <span className="mx-8 text-sm font-medium text-white">
+                🎁 Join our Digis Community — Live Streams, Virtual Gifts, AI Twin & Chats 🎁
+              </span>
+              <span className="mx-8 text-sm font-medium text-white">
+                ✨ Join our Digis Community — Live Streams, Virtual Gifts, AI Twin & Chats ✨
+              </span>
+              <span className="mx-8 text-sm font-medium text-white">
+                🎁 Join our Digis Community — Live Streams, Virtual Gifts, AI Twin & Chats 🎁
+              </span>
+            </div>
+          </div>
+        </a>
+
         {/* Navigation */}
         <nav className="container px-8 md:px-16 py-6">
           <div className="flex items-center justify-between">
@@ -164,32 +189,6 @@ export default async function HomePage() {
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </BrandInquiryDialog>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Announcement Banner */}
-        <section className="container px-8 md:px-16 py-6">
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-pink-500/20 via-violet-500/20 to-cyan-500/20 border border-white/10 p-4 md:p-6">
-            <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
-            <div className="relative flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 text-center md:text-left">
-              <div className="flex items-center gap-2">
-                <span className="text-sm md:text-base text-muted-foreground">Powered by</span>
-                <a href="https://digis.cc" target="_blank" rel="noopener noreferrer" className="font-bold text-white hover:text-pink-400 transition-colors">
-                  digis.cc
-                </a>
-              </div>
-              <div className="hidden md:block w-px h-6 bg-white/20" />
-              <div className="flex items-center gap-2">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-pink-500"></span>
-                </span>
-                <span className="text-sm md:text-base font-medium">Miami Swim Week 2025 — Models Apply Now</span>
-                <Link href="/gigs" className="text-pink-400 hover:text-pink-300 font-semibold transition-colors">
-                  View Gigs →
-                </Link>
               </div>
             </div>
           </div>

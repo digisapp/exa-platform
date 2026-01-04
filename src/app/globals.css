@@ -520,3 +520,34 @@ input:focus, textarea:focus, select:focus {
 .safe-area-pb {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
+
+/* Marquee Animation */
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 20s linear infinite;
+}
+
+/* Gradient Animation */
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient {
+  animation: gradient 3s ease infinite;
+}
