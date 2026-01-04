@@ -27,7 +27,18 @@ function ResetPasswordForm() {
     let mounted = true;
 
     async function handleAuth() {
-      // Method 1: Check for PKCE code in URL query params
+      // First, check if we already have a session (might have been auto-exchanged)
+      const { data: { session: existingSession } } = await supabase.auth.getSession();
+      if (existingSession) {
+        console.log("Existing session found");
+        if (mounted) {
+          setChecking(false);
+          setError(null);
+        }
+        return;
+      }
+
+      // Check for PKCE code in URL query params
       const code = searchParams.get("code");
       if (code) {
         console.log("Found code in URL, exchanging for session...");
@@ -46,7 +57,7 @@ function ResetPasswordForm() {
         return;
       }
 
-      // Method 2: Check for hash fragment tokens (legacy/fallback)
+      // Check for hash fragment tokens (legacy/fallback)
       const hash = window.location.hash;
       if (hash && hash.includes("access_token")) {
         console.log("Found hash fragment, letting Supabase handle it...");
@@ -55,17 +66,7 @@ function ResetPasswordForm() {
         return;
       }
 
-      // Method 3: Check if we already have a session (page refresh after auth)
-      const { data: { session } } = await supabase.auth.getSession();
-      if (mounted && session) {
-        console.log("Existing session found");
-        setChecking(false);
-        setError(null);
-        return;
-      }
-
-      // No code, no hash, no session - wait a bit for onAuthStateChange
-      // (in case Supabase is still processing)
+      // No session, no code, no hash - wait for onAuthStateChange
     }
 
     // Listen for auth state changes
