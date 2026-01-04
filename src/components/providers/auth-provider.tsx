@@ -41,9 +41,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        // Don't refresh if we're on the reset password page
-        const isResetPasswordPage = window.location.pathname === '/auth/reset-password';
-        if (isResetPasswordPage && event === 'SIGNED_IN') {
+        // Don't do anything if we're on auth pages - let them handle it
+        const isAuthPage = window.location.pathname.startsWith('/auth/');
+        if (isAuthPage) {
           return;
         }
 
