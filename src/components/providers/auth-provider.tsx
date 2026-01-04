@@ -36,6 +36,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       async (event, session) => {
         setUser(session?.user ?? null);
 
+        // Don't refresh during password recovery - let the reset page handle it
+        if (event === 'PASSWORD_RECOVERY') {
+          return;
+        }
+
+        // Don't refresh if we're on the reset password page
+        const isResetPasswordPage = window.location.pathname === '/auth/reset-password';
+        if (isResetPasswordPage && event === 'SIGNED_IN') {
+          return;
+        }
+
         // Refresh the page data when auth state changes
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           router.refresh();
