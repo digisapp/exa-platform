@@ -95,6 +95,7 @@ export async function POST(request: NextRequest) {
       sessionId: callSession.id,
       roomName: callSession.room_name,
       token,
+      callType: callSession.call_type || "video",
     });
 
   } catch (error) {
@@ -168,10 +169,11 @@ export async function DELETE(request: NextRequest) {
 
     // Add system message for missed calls
     if (status === 'missed') {
+      const callTypeLabel = callSession.call_type === "voice" ? "voice" : "video";
       await (supabase.from('messages') as any).insert({
         conversation_id: callSession.conversation_id,
         sender_id: callSession.initiated_by,
-        content: 'Missed video call',
+        content: `Missed ${callTypeLabel} call`,
         is_system: true,
       });
     }

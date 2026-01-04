@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateRoomName, generateToken } from "@/lib/livekit";
 import { sendVideoCallRequestEmail } from "@/lib/email";
 
+export type CallType = "video" | "voice";
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -12,7 +14,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { recipientUsername, conversationId: providedConversationId } = await request.json();
+    const { recipientUsername, conversationId: providedConversationId, callType = "video" } = await request.json() as {
+      recipientUsername?: string;
+      conversationId?: string;
+      callType?: CallType;
+    };
 
     if (!recipientUsername && !providedConversationId) {
       return NextResponse.json({ error: "Recipient username or conversation ID required" }, { status: 400 });
@@ -30,7 +36,7 @@ export async function POST(request: NextRequest) {
     }
 
     let recipientActor: { id: string } | null = null;
-    let recipientModel: { id: string; username: string; first_name: string; user_id: string; video_call_rate: number; email?: string | null } | null = null;
+    let recipientModel: { id: string; username: string; first_name: string; user_id: string; video_call_rate: number; voice_call_rate: number; email?: string | null } | null = null;
     let conversationId: string | null = providedConversationId || null;
 
     // If conversationId provided, get recipient from conversation
@@ -72,7 +78,7 @@ export async function POST(request: NextRequest) {
         // Try to get model info (might be a model or fan)
         const { data: model } = await (supabase
           .from("models") as any)
-          .select("id, username, first_name, user_id, video_call_rate, email")
+          .select("id, username, first_name, user_id, video_call_rate, voice_call_rate, email")
           .eq("user_id", recipientActorData.user_id)
           .single();
 
@@ -86,6 +92,7 @@ export async function POST(request: NextRequest) {
             first_name: "User",
             user_id: recipientActorData.user_id,
             video_call_rate: 0,
+            voice_call_rate: 0,
           };
         }
       }
@@ -93,7 +100,7 @@ export async function POST(request: NextRequest) {
       // Use recipientUsername to find recipient
       const { data: model } = await (supabase
         .from("models") as any)
-        .select("id, username, first_name, user_id, video_call_rate, email")
+        .select("id, username, first_name, user_id, video_call_rate, voice_call_rate, email")
         .eq("username", recipientUsername)
         .eq("is_approved", true)
         .single();
@@ -123,9 +130,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Check caller's coin balance if they're a fan calling a model with a rate
-    const videoCallRate = recipientModel.video_call_rate || 0;
+    const callRate = callType === "voice"
+      ? (recipientModel.voice_call_rate || 0)
+      : (recipientModel.video_call_rate || 0);
 
-    if (callerActor.type === "fan" && videoCallRate > 0) {
+    if (callerActor.type === "fan" && callRate > 0) {
       const { data: fan } = await supabase
         .from("fans")
         .select("coin_balance")
@@ -133,10 +142,10 @@ export async function POST(request: NextRequest) {
         .single() as { data: { coin_balance: number } | null };
 
       // Require at least 2 minutes worth of coins
-      const minBalance = videoCallRate * 2;
+      const minBalance = callRate * 2;
       if (!fan || fan.coin_balance < minBalance) {
         return NextResponse.json({
-          error: `Insufficient coins. Need at least ${minBalance} coins to start a call.`,
+          error: `Insufficient coins. Need at least ${minBalance} coins to start a ${callType} call.`,
           required: minBalance,
           balance: fan?.coin_balance || 0,
         }, { status: 402 });
@@ -200,6 +209,7 @@ export async function POST(request: NextRequest) {
         initiated_by: callerActor.id,
         recipient_id: recipientActor.id,
         status: "pending",
+        call_type: callType,
       })
       .select()
       .single();
@@ -230,16 +240,17 @@ export async function POST(request: NextRequest) {
     const token = await generateToken(roomName, callerName, callerActor.id);
 
     // Determine if coins are required (fan calling model with rate)
-    const requiresCoins = callerActor.type === "fan" && videoCallRate > 0;
+    const requiresCoins = callerActor.type === "fan" && callRate > 0;
 
     // Send email notification to model (non-blocking)
-    if (recipientModel?.email && videoCallRate > 0) {
+    if (recipientModel?.email && callRate > 0) {
       sendVideoCallRequestEmail({
         to: recipientModel.email,
         modelName: recipientModel.first_name || recipientModel.username || "Model",
         callerName,
-        callRate: videoCallRate,
-      }).catch((err) => console.error("Failed to send video call email:", err));
+        callRate,
+        callType,
+      }).catch((err) => console.error(`Failed to send ${callType} call email:`, err));
     }
 
     return NextResponse.json({
@@ -247,7 +258,8 @@ export async function POST(request: NextRequest) {
       roomName,
       token,
       recipientName: recipientModel.first_name || recipientModel.username,
-      videoCallRate,
+      callRate,
+      callType,
       requiresCoins,
     });
   } catch (error) {

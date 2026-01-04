@@ -52,13 +52,17 @@ export async function POST(request: NextRequest) {
       .eq("id", session.recipient_id)
       .single() as { data: { user_id: string } | null };
 
-    // Get video call rate from recipient model
+    // Get call rates from recipient model
     const { data: recipientModel } = await (supabase.from("models") as any)
-      .select("video_call_rate, user_id, coin_balance")
+      .select("video_call_rate, voice_call_rate, user_id, coin_balance")
       .eq("user_id", recipientActorData?.user_id)
       .single();
 
-    const ratePerMinute = recipientModel?.video_call_rate || 0;
+    // Use appropriate rate based on call type
+    const callType = session.call_type || "video";
+    const ratePerMinute = callType === "voice"
+      ? (recipientModel?.voice_call_rate || 0)
+      : (recipientModel?.video_call_rate || 0);
     const coinsToCharge = calculateCallCost(durationSeconds, ratePerMinute);
 
     // Charge coins from caller if they initiated and there's a rate
@@ -85,11 +89,12 @@ export async function POST(request: NextRequest) {
             .eq("id", session.initiated_by);
 
           // Record transaction
+          const actionName = callType === "voice" ? "voice_call" : "video_call";
           await (supabase.from("coin_transactions") as any).insert({
             actor_id: session.initiated_by,
             amount: -coinsToCharge,
-            action: "video_call",
-            metadata: { session_id: sessionId, duration_seconds: durationSeconds },
+            action: actionName,
+            metadata: { session_id: sessionId, duration_seconds: durationSeconds, call_type: callType },
           });
         }
       }
@@ -101,11 +106,12 @@ export async function POST(request: NextRequest) {
           .eq("user_id", recipientModel.user_id);
 
         // Record model earnings
+        const receivedActionName = callType === "voice" ? "voice_call_received" : "video_call_received";
         await (supabase.from("coin_transactions") as any).insert({
           actor_id: session.recipient_id,
           amount: coinsToCharge,
-          action: "video_call_received",
-          metadata: { session_id: sessionId, duration_seconds: durationSeconds },
+          action: receivedActionName,
+          metadata: { session_id: sessionId, duration_seconds: durationSeconds, call_type: callType },
         });
       }
     }
@@ -125,11 +131,12 @@ export async function POST(request: NextRequest) {
     const seconds = durationSeconds % 60;
     const durationStr = minutes + ":" + seconds.toString().padStart(2, "0");
     const coinsStr = coinsToCharge > 0 ? " (" + coinsToCharge + " coins)" : "";
+    const callTypeLabel = callType === "voice" ? "Voice" : "Video";
 
     await (supabase.from("messages") as any).insert({
       conversation_id: session.conversation_id,
       sender_id: actor.id,
-      content: "Video call ended - " + durationStr + coinsStr,
+      content: `${callTypeLabel} call ended - ${durationStr}${coinsStr}`,
       is_system: true,
     });
 
