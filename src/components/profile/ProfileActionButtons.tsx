@@ -204,8 +204,10 @@ export function ProfileActionButtons({
     }
   };
 
-  // Show disabled buttons on your own profile so you can preview layout
-  const isDisabled = isOwner;
+  // Don't show action buttons on your own profile
+  if (isOwner) {
+    return null;
+  }
 
   // Show video call room if call is active
   if (callSession) {
@@ -224,14 +226,10 @@ export function ProfileActionButtons({
 
   return (
     <>
-      {isDisabled && (
-        <p className="text-center text-xs text-white/50 mb-2">Preview only - this is how fans see your profile</p>
-      )}
-      <div className={`flex gap-2 mb-6 ${isDisabled ? "opacity-60 pointer-events-none" : ""}`}>
+      <div className="flex gap-2 mb-6">
         <Button
           className="exa-gradient-button h-11 text-sm font-semibold rounded-full px-3 flex-1"
           onClick={handleChat}
-          disabled={isDisabled}
         >
           <MessageCircle className="h-4 w-4 mr-1.5" />
           Chat
@@ -239,7 +237,7 @@ export function ProfileActionButtons({
         <Button
           className="exa-gradient-button h-11 text-sm font-semibold rounded-full px-3 flex-1"
           onClick={handleVideoCall}
-          disabled={isDisabled || startingCall}
+          disabled={startingCall}
         >
           {startingCall ? (
             <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
@@ -251,7 +249,7 @@ export function ProfileActionButtons({
         <Button
           className="h-11 w-11 text-sm font-semibold rounded-full p-0 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white flex-shrink-0"
           onClick={handleVoiceCall}
-          disabled={isDisabled || startingVoiceCall}
+          disabled={startingVoiceCall}
         >
           {startingVoiceCall ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -262,7 +260,6 @@ export function ProfileActionButtons({
         <Button
           className="h-11 w-11 text-sm font-semibold rounded-full p-0 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white flex-shrink-0"
           onClick={handleTip}
-          disabled={isDisabled}
         >
           <Gift className="h-4 w-4" />
         </Button>
