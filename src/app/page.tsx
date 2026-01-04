@@ -169,6 +169,32 @@ export default async function HomePage() {
           </div>
         </section>
 
+        {/* Announcement Banner */}
+        <section className="container px-8 md:px-16 py-6">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-pink-500/20 via-violet-500/20 to-cyan-500/20 border border-white/10 p-4 md:p-6">
+            <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
+            <div className="relative flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 text-center md:text-left">
+              <div className="flex items-center gap-2">
+                <span className="text-sm md:text-base text-muted-foreground">Powered by</span>
+                <a href="https://digis.cc" target="_blank" rel="noopener noreferrer" className="font-bold text-white hover:text-pink-400 transition-colors">
+                  digis.cc
+                </a>
+              </div>
+              <div className="hidden md:block w-px h-6 bg-white/20" />
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-pink-500"></span>
+                </span>
+                <span className="text-sm md:text-base font-medium">Miami Swim Week 2025 — Models Apply Now</span>
+                <Link href="/gigs" className="text-pink-400 hover:text-pink-300 font-semibold transition-colors">
+                  View Gigs →
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Book Top Models Section */}
         <section className="py-6">
           <div className="container px-8 md:px-16 mb-8">
@@ -205,6 +231,59 @@ export default async function HomePage() {
             </p>
           </div>
           <UpcomingEventsCarousel events={upcomingEvents || []} />
+        </section>
+
+        {/* Featured Partners Section */}
+        <section className="py-16 container px-8 md:px-16">
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* digis.cc Card */}
+            <a
+              href="https://digis.cc"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-600/20 to-purple-900/20 border border-violet-500/30 p-8 hover:border-violet-500/60 transition-all"
+            >
+              <div className="absolute top-0 right-0 w-64 h-64 bg-violet-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-violet-500/20 transition-colors" />
+              <div className="relative z-10">
+                <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-violet-500/20 text-violet-300 mb-4">
+                  Technology Partner
+                </span>
+                <h3 className="text-2xl md:text-3xl font-bold mb-2 group-hover:text-violet-300 transition-colors">
+                  digis.cc
+                </h3>
+                <p className="text-muted-foreground mb-4">
+                  The platform powering EXA Models. Build your own creator economy.
+                </p>
+                <span className="text-violet-400 font-semibold group-hover:text-violet-300 transition-colors flex items-center gap-2">
+                  Learn More
+                  <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                </span>
+              </div>
+            </a>
+
+            {/* Miami Swim Week Card */}
+            <Link
+              href="/gigs"
+              className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-cyan-600/20 to-blue-900/20 border border-cyan-500/30 p-8 hover:border-cyan-500/60 transition-all"
+            >
+              <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-cyan-500/20 transition-colors" />
+              <div className="relative z-10">
+                <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-cyan-500/20 text-cyan-300 mb-4">
+                  Featured Event
+                </span>
+                <h3 className="text-2xl md:text-3xl font-bold mb-2 group-hover:text-cyan-300 transition-colors">
+                  Miami Swim Week 2025
+                </h3>
+                <p className="text-muted-foreground mb-4">
+                  Join the biggest swimwear fashion event. Models are now being selected.
+                </p>
+                <span className="text-cyan-400 font-semibold group-hover:text-cyan-300 transition-colors flex items-center gap-2">
+                  Apply Now
+                  <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                </span>
+              </div>
+            </Link>
+          </div>
         </section>
 
         {/* Footer */}
