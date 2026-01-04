@@ -394,16 +394,17 @@ export default function AdminGigsPage() {
       const app = applications.find(a => a.id === appId);
       if (!app) return;
 
-      // Update application status
-      const { error } = await (supabase
-        .from("gig_applications") as any)
-        .update({
-          status: action,
-          reviewed_at: new Date().toISOString()
-        })
-        .eq("id", appId);
+      // Update application status via API (bypasses RLS)
+      const response = await fetch(`/api/admin/gig-applications/${appId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: action }),
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to update application");
+      }
 
       // Send notification via chat for both accept and decline
       if (app.model) {
