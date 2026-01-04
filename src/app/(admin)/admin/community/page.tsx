@@ -919,44 +919,40 @@ export default function AdminCommunityPage() {
                   <p className="text-sm text-muted-foreground text-center py-4">No pending applications</p>
                 ) : (
                   <div className="space-y-3">
-                    {modelApps.slice(0, 5).map((app) => (
-                      <div key={app.id} className="p-3 rounded-lg bg-muted/50 flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center text-white font-bold">
-                            {app.display_name?.charAt(0).toUpperCase() || "?"}
-                          </div>
-                          <div>
-                            <p className="font-medium">{app.display_name}</p>
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <span>{app.email}</span>
-                              {app.instagram_username && (
-                                <a
-                                  href={`https://instagram.com/${app.instagram_username}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-pink-500 hover:text-pink-400 flex items-center gap-1"
-                                >
-                                  <Instagram className="h-3 w-3" />
-                                  @{app.instagram_username}
-                                </a>
-                              )}
-                              {app.tiktok_username && (
-                                <a
-                                  href={`https://tiktok.com/@${app.tiktok_username}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-white hover:text-white/80 flex items-center gap-1"
-                                >
-                                  <TikTokIcon className="h-3 w-3" />
-                                  @{app.tiktok_username}
-                                </a>
-                              )}
+                    {modelApps.slice(0, 5).map((app) => {
+                      // Calculate age from date_of_birth
+                      const age = app.date_of_birth
+                        ? Math.floor((new Date().getTime() - new Date(app.date_of_birth).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+                        : null;
+                      return (
+                        <div key={app.id} className="p-3 rounded-lg bg-muted/50 flex items-center justify-between gap-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center text-white font-bold">
+                              {app.display_name?.charAt(0).toUpperCase() || "?"}
+                            </div>
+                            <div>
+                              <p className="font-medium">{app.display_name}</p>
+                              <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                                {app.instagram_username && (
+                                  <a
+                                    href={`https://instagram.com/${app.instagram_username}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-pink-500 hover:text-pink-400 flex items-center gap-1"
+                                  >
+                                    <Instagram className="h-3 w-3" />
+                                    @{app.instagram_username}
+                                  </a>
+                                )}
+                                {age && <span>{age} yrs</span>}
+                                {app.height && <span>{app.height}</span>}
+                              </div>
                             </div>
                           </div>
+                          <ApproveRejectButtons id={app.id} type="model_application" onSuccess={() => { loadModelApps(); loadStats(); }} />
                         </div>
-                        <ApproveRejectButtons id={app.id} type="model_application" onSuccess={() => { loadModelApps(); loadStats(); }} />
-                      </div>
-                    ))}
+                      );
+                    })}
                     {modelApps.length > 5 && (
                       <p className="text-xs text-muted-foreground text-center">
                         +{modelApps.length - 5} more applications
