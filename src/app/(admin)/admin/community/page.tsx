@@ -1141,7 +1141,7 @@ export default function AdminCommunityPage() {
                           <div className="flex items-center"><Star className="h-4 w-4 mr-1" />Rating<SortIndicator active={modelsSortField === "admin_rating"} direction={modelsSortDirection} /></div>
                         </TableHead>
                         <TableHead className="w-[180px]">Model</TableHead>
-                        <TableHead className="w-[120px]">Instagram</TableHead>
+                        <TableHead className="w-[90px]">Instagram</TableHead>
                         <TableHead className="w-[80px]">State</TableHead>
                         <TableHead>Actions</TableHead>
                         <TableHead>Invite</TableHead>
