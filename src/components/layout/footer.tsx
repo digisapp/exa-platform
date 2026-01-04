@@ -43,11 +43,6 @@ export function Footer() {
                   Join EXA
                 </Link>
               </li>
-              <li>
-                <Link href="/leaderboard" className="text-muted-foreground hover:text-primary transition-colors">
-                  Leaderboard
-                </Link>
-              </li>
             </ul>
           </div>
 
@@ -58,11 +53,6 @@ export function Footer() {
               <li>
                 <Link href="/brands" className="text-muted-foreground hover:text-primary transition-colors">
                   Brand Portal
-                </Link>
-              </li>
-              <li>
-                <Link href="/models" className="text-muted-foreground hover:text-primary transition-colors">
-                  Browse Models
                 </Link>
               </li>
               <li>
