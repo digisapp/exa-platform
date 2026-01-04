@@ -13,6 +13,7 @@ const PROTECTED_PATHS = [
   '/coins',
   '/wallet',
   '/gigs',
+  '/bookings',
 ]
 
 export async function updateSession(request: NextRequest) {
@@ -51,6 +52,8 @@ export async function updateSession(request: NextRequest) {
               // Ensure cookies persist across browser sessions
               sameSite: 'lax',
               secure: process.env.NODE_ENV === 'production',
+              // Ensure path is set for all routes
+              path: '/',
             })
           })
         },
@@ -59,7 +62,40 @@ export async function updateSession(request: NextRequest) {
   )
 
   // IMPORTANT: Do not remove this - it refreshes the auth token
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user }, error } = await supabase.auth.getUser()
+
+  // If there's an auth error but we have cookies, try to recover
+  // This can happen when returning from external sites like Stripe
+  if (error && !user) {
+    // Check if we have auth cookies - if so, the session might just need refresh
+    const hasAuthCookies = request.cookies.getAll().some(c =>
+      c.name.includes('auth-token') || c.name.includes('sb-')
+    )
+
+    if (hasAuthCookies) {
+      // Try refreshing the session
+      const { data: { session } } = await supabase.auth.refreshSession()
+      if (session?.user) {
+        // Session recovered, continue with the user
+        const recoveredUser = session.user
+
+        // Check admin routes
+        if (request.nextUrl.pathname.startsWith('/admin')) {
+          const { data: actor } = await supabase
+            .from('actors')
+            .select('type')
+            .eq('user_id', recoveredUser.id)
+            .single()
+
+          if (actor?.type !== 'admin') {
+            return NextResponse.redirect(new URL('/dashboard', request.url))
+          }
+        }
+
+        return response
+      }
+    }
+  }
 
   // Check if this is a protected route
   const isProtectedPath = PROTECTED_PATHS.some(path =>
