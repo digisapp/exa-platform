@@ -20,11 +20,12 @@ interface Event {
   slug: string;
   title: string;
   type: string;
-  location: string | null;
-  start_date: string | null;
-  end_date: string | null;
+  location_city: string | null;
+  location_state: string | null;
+  start_at: string | null;
+  end_at: string | null;
   cover_image_url: string | null;
-  spots_total: number | null;
+  spots: number | null;
   spots_filled: number | null;
 }
 
@@ -117,9 +118,12 @@ export function UpcomingEventsCarousel({ events }: UpcomingEventsCarouselProps) 
           {events.map((event) => {
             const Icon = typeIcons[event.type] || Sparkles;
             const gradient = typeGradients[event.type] || "from-pink-500 to-violet-500";
-            const spotsLeft = event.spots_total && event.spots_filled
-              ? event.spots_total - event.spots_filled
+            const spotsLeft = event.spots && event.spots_filled !== null
+              ? event.spots - event.spots_filled
               : null;
+            const location = event.location_city && event.location_state
+              ? `${event.location_city}, ${event.location_state}`
+              : event.location_city || null;
 
             return (
               <div
@@ -158,17 +162,17 @@ export function UpcomingEventsCarousel({ events }: UpcomingEventsCarouselProps) 
                         {event.title}
                       </h3>
 
-                      {event.start_date && (
+                      {event.start_at && (
                         <p className="text-sm text-white/70 flex items-center gap-1 mb-1">
                           <Calendar className="h-3 w-3" />
-                          {format(new Date(event.start_date), "MMM d, yyyy")}
+                          {format(new Date(event.start_at), "MMM d, yyyy")}
                         </p>
                       )}
 
-                      {event.location && (
+                      {location && (
                         <p className="text-sm text-white/70 flex items-center gap-1 mb-1">
                           <MapPin className="h-3 w-3" />
-                          {event.location}
+                          {location}
                         </p>
                       )}
 
@@ -222,16 +226,16 @@ export function UpcomingEventsCarousel({ events }: UpcomingEventsCarouselProps) 
               <h3 className="text-lg font-semibold mb-2 text-center">{selectedEvent.title}</h3>
 
               <div className="flex flex-wrap justify-center gap-4 text-sm text-muted-foreground mb-4">
-                {selectedEvent.start_date && (
+                {selectedEvent.start_at && (
                   <span className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
-                    {format(new Date(selectedEvent.start_date), "MMM d, yyyy")}
+                    {format(new Date(selectedEvent.start_at), "MMM d, yyyy")}
                   </span>
                 )}
-                {selectedEvent.location && (
+                {(selectedEvent.location_city || selectedEvent.location_state) && (
                   <span className="flex items-center gap-1">
                     <MapPin className="h-4 w-4" />
-                    {selectedEvent.location}
+                    {[selectedEvent.location_city, selectedEvent.location_state].filter(Boolean).join(", ")}
                   </span>
                 )}
               </div>

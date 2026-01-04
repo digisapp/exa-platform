@@ -56,10 +56,10 @@ export default async function HomePage() {
   // Fetch upcoming events/gigs
   const { data: upcomingEvents } = await (supabase
     .from("gigs") as any)
-    .select("id, slug, title, type, location, start_date, end_date, cover_image_url, spots_total, spots_filled")
+    .select("id, slug, title, type, location_city, location_state, start_at, end_at, cover_image_url, spots, spots_filled")
     .eq("status", "open")
-    .gte("start_date", new Date().toISOString())
-    .order("start_date", { ascending: true })
+    .gte("start_at", new Date().toISOString())
+    .order("start_at", { ascending: true })
     .limit(20);
 
   return (
@@ -230,59 +230,6 @@ export default async function HomePage() {
             </p>
           </div>
           <UpcomingEventsCarousel events={upcomingEvents || []} />
-        </section>
-
-        {/* Featured Partners Section */}
-        <section className="py-16 container px-8 md:px-16">
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* digis.cc Card */}
-            <a
-              href="https://digis.cc"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-600/20 to-purple-900/20 border border-violet-500/30 p-8 hover:border-violet-500/60 transition-all"
-            >
-              <div className="absolute top-0 right-0 w-64 h-64 bg-violet-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-violet-500/20 transition-colors" />
-              <div className="relative z-10">
-                <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-violet-500/20 text-violet-300 mb-4">
-                  Technology Partner
-                </span>
-                <h3 className="text-2xl md:text-3xl font-bold mb-2 group-hover:text-violet-300 transition-colors">
-                  digis.cc
-                </h3>
-                <p className="text-muted-foreground mb-4">
-                  The platform powering EXA Models. Build your own creator economy.
-                </p>
-                <span className="text-violet-400 font-semibold group-hover:text-violet-300 transition-colors flex items-center gap-2">
-                  Learn More
-                  <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                </span>
-              </div>
-            </a>
-
-            {/* Miami Swim Week Card */}
-            <Link
-              href="/gigs"
-              className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-cyan-600/20 to-blue-900/20 border border-cyan-500/30 p-8 hover:border-cyan-500/60 transition-all"
-            >
-              <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-cyan-500/20 transition-colors" />
-              <div className="relative z-10">
-                <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-cyan-500/20 text-cyan-300 mb-4">
-                  Featured Event
-                </span>
-                <h3 className="text-2xl md:text-3xl font-bold mb-2 group-hover:text-cyan-300 transition-colors">
-                  Miami Swim Week 2025
-                </h3>
-                <p className="text-muted-foreground mb-4">
-                  Join the biggest swimwear fashion event. Models are now being selected.
-                </p>
-                <span className="text-cyan-400 font-semibold group-hover:text-cyan-300 transition-colors flex items-center gap-2">
-                  Apply Now
-                  <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                </span>
-              </div>
-            </Link>
-          </div>
         </section>
 
         {/* Footer */}
