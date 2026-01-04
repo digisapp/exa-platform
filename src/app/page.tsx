@@ -219,7 +219,7 @@ export default async function HomePage() {
                   height={32}
                   className="h-8 w-auto"
                 />
-                <span className="text-muted-foreground">Global Model Platform</span>
+                <span className="text-muted-foreground">One Platform. Models Worldwide.</span>
               </div>
               <div className="flex items-center gap-6">
                 <Link href="/models" className="text-muted-foreground hover:text-[#FF69B4] transition-colors">
