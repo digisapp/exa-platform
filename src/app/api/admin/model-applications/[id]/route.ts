@@ -125,13 +125,27 @@ export async function PATCH(
         }
 
         // Update actor type to model
-        const { error: actorError } = await (supabase
+        const { data: updatedActor, error: actorError } = await (supabase
           .from("actors") as any)
           .update({ type: "model" })
-          .eq("user_id", application.user_id);
+          .eq("user_id", application.user_id)
+          .select("id")
+          .single();
 
         if (actorError) {
           console.error("Error updating actor type:", actorError);
+        }
+
+        // Delete the old fan record (cleanup)
+        if (updatedActor?.id) {
+          const { error: fanDeleteError } = await (supabase
+            .from("fans") as any)
+            .delete()
+            .eq("id", updatedActor.id);
+
+          if (fanDeleteError) {
+            console.error("Error deleting old fan record:", fanDeleteError);
+          }
         }
       } else {
         // Model exists, just approve it
@@ -140,13 +154,27 @@ export async function PATCH(
           .eq("user_id", application.user_id);
 
         // Update actor type to model (in case it was still 'fan')
-        const { error: actorError } = await (supabase
+        const { data: updatedActor, error: actorError } = await (supabase
           .from("actors") as any)
           .update({ type: "model" })
-          .eq("user_id", application.user_id);
+          .eq("user_id", application.user_id)
+          .select("id")
+          .single();
 
         if (actorError) {
           console.error("Error updating actor type:", actorError);
+        }
+
+        // Delete the old fan record (cleanup)
+        if (updatedActor?.id) {
+          const { error: fanDeleteError } = await (supabase
+            .from("fans") as any)
+            .delete()
+            .eq("id", updatedActor.id);
+
+          if (fanDeleteError) {
+            console.error("Error deleting old fan record:", fanDeleteError);
+          }
         }
       }
 
