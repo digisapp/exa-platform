@@ -1137,12 +1137,12 @@ export default function AdminCommunityPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("admin_rating")}>
+                        <TableHead className="w-[100px] cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("admin_rating")}>
                           <div className="flex items-center"><Star className="h-4 w-4 mr-1" />Rating<SortIndicator active={modelsSortField === "admin_rating"} direction={modelsSortDirection} /></div>
                         </TableHead>
-                        <TableHead className="w-[200px]">Model</TableHead>
-                        <TableHead>Instagram</TableHead>
-                        <TableHead>State</TableHead>
+                        <TableHead className="w-[180px]">Model</TableHead>
+                        <TableHead className="w-[120px]">Instagram</TableHead>
+                        <TableHead className="w-[80px]">State</TableHead>
                         <TableHead>Actions</TableHead>
                         <TableHead>Invite</TableHead>
                         <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("joined_at")}>
