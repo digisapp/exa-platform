@@ -308,32 +308,40 @@ export default function WalletPage() {
         </div>
       </div>
 
-      {/* Balance Card */}
-      <Card className="bg-gradient-to-br from-pink-500/10 to-violet-500/10 border-pink-500/20">
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Available Balance</p>
-              <div className="flex items-center gap-2">
-                <Coins className="h-8 w-8 text-pink-500" />
-                <span className="text-4xl font-bold">{coinBalance.toLocaleString()}</span>
-                <span className="text-muted-foreground">coins</span>
-              </div>
-              <p className="text-sm text-green-500 mt-1">${(coinBalance * 0.10).toFixed(2)} USD</p>
-              {withheldBalance > 0 && (
-                <p className="text-xs text-yellow-500 mt-2 flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {withheldBalance.toLocaleString()} coins pending payout (${(withheldBalance * 0.10).toFixed(2)})
-                </p>
-              )}
-            </div>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button className="bg-gradient-to-r from-pink-500 to-violet-500">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Buy Coins
-                </Button>
-              </DialogTrigger>
+      {/* Check if brand is on free tier */}
+      {(() => {
+        const isFreeBrand = actorType === "brand" && (!brandSubscription?.status || brandSubscription?.status === "paused" || brandSubscription?.tier === "free");
+        const canBuyCoins = !isFreeBrand;
+
+        return (
+          <>
+            {/* Balance Card */}
+            <Card className="bg-gradient-to-br from-pink-500/10 to-violet-500/10 border-pink-500/20">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Available Balance</p>
+                    <div className="flex items-center gap-2">
+                      <Coins className="h-8 w-8 text-pink-500" />
+                      <span className="text-4xl font-bold">{coinBalance.toLocaleString()}</span>
+                      <span className="text-muted-foreground">coins</span>
+                    </div>
+                    <p className="text-sm text-green-500 mt-1">${(coinBalance * 0.10).toFixed(2)} USD</p>
+                    {withheldBalance > 0 && (
+                      <p className="text-xs text-yellow-500 mt-2 flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {withheldBalance.toLocaleString()} coins pending payout (${(withheldBalance * 0.10).toFixed(2)})
+                      </p>
+                    )}
+                  </div>
+                  {canBuyCoins ? (
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button className="bg-gradient-to-r from-pink-500 to-violet-500">
+                          <Plus className="mr-2 h-4 w-4" />
+                          Buy Coins
+                        </Button>
+                      </DialogTrigger>
               <DialogContent className="sm:max-w-lg">
                 <DialogHeader>
                   <DialogTitle>Buy Coins</DialogTitle>
@@ -377,12 +385,49 @@ export default function WalletPage() {
                       </div>
                     );
                   })}
+                    </div>
+                  </DialogContent>
+                </Dialog>
+                  ) : (
+                    <Link href="/brands/pricing">
+                      <Button className="bg-gradient-to-r from-cyan-500 to-blue-500">
+                        <Crown className="mr-2 h-4 w-4" />
+                        Subscribe to Buy
+                      </Button>
+                    </Link>
+                  )}
                 </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </CardContent>
-      </Card>
+              </CardContent>
+            </Card>
+
+            {/* Upgrade Prompt for Free Brands */}
+            {isFreeBrand && (
+              <Card className="border-cyan-500/30 bg-gradient-to-br from-cyan-500/5 to-blue-500/5">
+                <CardContent className="pt-6">
+                  <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+                    <div className="p-3 rounded-full bg-cyan-500/10">
+                      <Lock className="h-6 w-6 text-cyan-500" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold mb-1">Subscribe to Purchase Coins</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Upgrade to a paid plan to buy coins, message models, and send booking requests.
+                        Your subscription includes monthly coins!
+                      </p>
+                    </div>
+                    <Link href="/brands/pricing">
+                      <Button className="bg-gradient-to-r from-cyan-500 to-blue-500">
+                        View Plans
+                        <ArrowUpRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </>
+        );
+      })()}
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
