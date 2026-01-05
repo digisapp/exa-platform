@@ -226,7 +226,7 @@ export default async function ModelProfilePage({ params }: Props) {
           {/* Profile Image */}
           <div className="flex justify-center mb-4">
             <div className="relative">
-              <div className={`w-32 h-32 rounded-full overflow-hidden ${isOwner ? 'profile-pic-breathing' : 'ring-2 ring-white/30 shadow-[0_0_30px_rgba(255,105,180,0.3),0_0_60px_rgba(0,191,255,0.2)]'}`}>
+              <div className={`w-40 h-40 rounded-full overflow-hidden ${isOwner ? 'profile-pic-breathing' : 'ring-2 ring-white/30 shadow-[0_0_30px_rgba(255,105,180,0.3),0_0_60px_rgba(0,191,255,0.2)]'}`}>
                 {model.profile_photo_url ? (
                   <img
                     src={model.profile_photo_url}
@@ -235,7 +235,7 @@ export default async function ModelProfilePage({ params }: Props) {
                   />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-[#1a0033] to-[#2d1b69] flex items-center justify-center">
-                    <span className="text-4xl">👤</span>
+                    <span className="text-5xl">👤</span>
                   </div>
                 )}
               </div>
