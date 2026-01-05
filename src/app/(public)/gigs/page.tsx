@@ -3,7 +3,6 @@ import Link from "next/link";
 import { Navbar } from "@/components/layout/navbar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   MapPin,
@@ -236,108 +235,116 @@ function GigGrid({ gigs }: { gigs: any[] }) {
 
 function GigCard({ gig }: { gig: any }) {
   const Icon = typeIcons[gig.type] || Sparkles;
-  const spotsLeft = gig.spots ? gig.spots - gig.spots_filled : null;
+  const spotsLeft = gig.spots ? gig.spots - (gig.spots_filled || 0) : null;
   const isUrgent = spotsLeft !== null && spotsLeft <= 5;
-  const deadline = gig.application_deadline
-    ? new Date(gig.application_deadline)
-    : null;
-  const isDeadlineSoon = deadline && deadline.getTime() - Date.now() < 7 * 24 * 60 * 60 * 1000;
 
   return (
-    <Card className="group overflow-hidden hover:border-primary/50 transition-all flex flex-col">
-      {/* Cover Image */}
-      <div className="h-48 relative bg-gradient-to-br from-pink-500/20 to-violet-500/20 overflow-hidden">
-        {gig.cover_image_url ? (
-          <img
-            src={gig.cover_image_url}
-            alt={gig.title}
-            className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
-          />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Icon className="h-16 w-16 text-muted-foreground/30" />
-          </div>
-        )}
-        {/* Type Badge */}
-        <Badge className={`absolute top-3 left-3 capitalize ${typeColors[gig.type]}`}>
-          <Icon className="h-3 w-3 mr-1" />
-          {gig.type}
-        </Badge>
-        {/* Urgency Badge */}
-        {isUrgent && (
-          <Badge variant="destructive" className="absolute top-3 right-3">
-            {spotsLeft} spots left!
+    <Link href={`/gigs/${gig.slug}`}>
+      <div className="glass-card rounded-2xl overflow-hidden hover:scale-[1.02] transition-all h-full group">
+        {/* Portrait Image with Overlay */}
+        <div className="aspect-[3/4] relative bg-gradient-to-br from-pink-500/20 to-violet-500/20 overflow-hidden">
+          {gig.cover_image_url ? (
+            <img
+              src={gig.cover_image_url}
+              alt={gig.title}
+              className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-300"
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Icon className="h-20 w-20 text-muted-foreground/30" />
+            </div>
+          )}
+
+          {/* Type Badge */}
+          <Badge className={`absolute top-3 left-3 capitalize ${typeColors[gig.type]}`}>
+            <Icon className="h-3 w-3 mr-1" />
+            {gig.type}
           </Badge>
-        )}
-      </div>
 
-      <CardHeader className="pb-2">
-        <h3 className="font-semibold text-lg line-clamp-1">{gig.title}</h3>
-        {gig.description && (
-          <p className="text-sm text-muted-foreground line-clamp-2">
-            {gig.description}
-          </p>
-        )}
-      </CardHeader>
+          {/* Urgency Badge */}
+          {isUrgent && (
+            <Badge variant="destructive" className="absolute top-3 right-3">
+              {spotsLeft} spots left!
+            </Badge>
+          )}
 
-      <CardContent className="pb-2 flex-1">
-        <div className="space-y-2 text-sm">
-          {(gig.location_city || gig.location_state) && (
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <MapPin className="h-4 w-4" />
-              {gig.location_city && gig.location_state
-                ? `${gig.location_city}, ${gig.location_state}`
-                : gig.location_name}
-            </div>
-          )}
-          {gig.start_at && (
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Calendar className="h-4 w-4" />
-              {new Date(gig.start_at).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })}
-            </div>
-          )}
-          {deadline && (
-            <div className={`flex items-center gap-2 ${isDeadlineSoon ? "text-amber-500" : "text-muted-foreground"}`}>
-              <Clock className="h-4 w-4" />
-              Apply by {formatDistanceToNow(deadline, { addSuffix: true })}
-            </div>
-          )}
-          {gig.compensation_type && (
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <DollarSign className="h-4 w-4" />
-              {gig.compensation_type === "paid" && gig.compensation_amount > 0 ? (
-                <span className="font-medium text-green-500">
-                  ${(gig.compensation_amount / 100).toFixed(0)}
-                </span>
-              ) : (
-                <span className="capitalize">{gig.compensation_type}</span>
-              )}
-            </div>
-          )}
-          {spotsLeft !== null && (
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Users className="h-4 w-4" />
-              {spotsLeft} of {gig.spots} spots available
-            </div>
-          )}
-        </div>
-      </CardContent>
-
-      <CardFooter className="pt-4">
-        <div className="flex items-center justify-between w-full">
-          <div className="text-sm text-muted-foreground">
-            +{gig.points_for_completion} points
+          {/* Bottom Title Bar - Always Visible */}
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-4 pt-12">
+            <h3 className="font-semibold text-white text-lg line-clamp-2">{gig.title}</h3>
+            {(gig.location_city || gig.location_state) && (
+              <p className="text-sm text-white/80 flex items-center gap-1 mt-1">
+                <MapPin className="h-3.5 w-3.5 text-pink-400" />
+                {gig.location_city && gig.location_state
+                  ? `${gig.location_city}, ${gig.location_state}`
+                  : gig.location_city || gig.location_state}
+              </p>
+            )}
           </div>
-          <Button asChild>
-            <Link href={`/gigs/${gig.slug}`}>View Details</Link>
-          </Button>
+
+          {/* Hover Overlay with Full Details */}
+          <div className="absolute inset-0 bg-black/85 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-4">
+            <div className="space-y-3">
+              <h3 className="font-bold text-white text-xl">{gig.title}</h3>
+
+              {gig.description && (
+                <p className="text-sm text-white/80 line-clamp-3">
+                  {gig.description}
+                </p>
+              )}
+
+              <div className="space-y-2 text-sm">
+                {(gig.location_city || gig.location_state) && (
+                  <div className="flex items-center gap-2 text-white/90">
+                    <MapPin className="h-4 w-4 text-pink-400" />
+                    {gig.location_city && gig.location_state
+                      ? `${gig.location_city}, ${gig.location_state}`
+                      : gig.location_city || gig.location_state}
+                  </div>
+                )}
+
+                {gig.start_at && (
+                  <div className="flex items-center gap-2 text-white/90">
+                    <Calendar className="h-4 w-4 text-violet-400" />
+                    {new Date(gig.start_at).toLocaleDateString("en-US", {
+                      month: "long",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </div>
+                )}
+
+                {gig.compensation_type && (
+                  <div className="flex items-center gap-2 text-white/90">
+                    <DollarSign className="h-4 w-4 text-green-400" />
+                    {gig.compensation_type === "paid" && gig.compensation_amount > 0 ? (
+                      <span className="font-medium text-green-400">
+                        ${(gig.compensation_amount / 100).toFixed(0)}
+                      </span>
+                    ) : (
+                      <span className="capitalize">{gig.compensation_type}</span>
+                    )}
+                  </div>
+                )}
+
+                {spotsLeft !== null && (
+                  <div className="flex items-center gap-2 text-white/90">
+                    <Users className="h-4 w-4 text-cyan-400" />
+                    {spotsLeft} of {gig.spots} spots available
+                  </div>
+                )}
+              </div>
+
+              {/* View Details Button */}
+              <div className="pt-2">
+                <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 text-white text-sm font-medium">
+                  View Details
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
-      </CardFooter>
-    </Card>
+      </div>
+    </Link>
   );
 }
 
@@ -396,105 +403,107 @@ function ApplicationCard({ application }: { application: any }) {
   const StatusIcon = status.icon;
 
   return (
-    <Card className="group overflow-hidden hover:border-primary/50 transition-all flex flex-col">
-      {/* Cover Image */}
-      <div className="h-48 relative bg-gradient-to-br from-pink-500/20 to-violet-500/20 overflow-hidden">
+    <div className="glass-card rounded-2xl overflow-hidden hover:scale-[1.02] transition-all h-full group">
+      {/* Portrait Image with Overlay */}
+      <div className="aspect-[3/4] relative bg-gradient-to-br from-pink-500/20 to-violet-500/20 overflow-hidden">
         {gig.cover_image_url ? (
           <img
             src={gig.cover_image_url}
             alt={gig.title}
-            className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
+            className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-300"
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
-            <Icon className="h-16 w-16 text-muted-foreground/30" />
+            <Icon className="h-20 w-20 text-muted-foreground/30" />
           </div>
         )}
+
         {/* Type Badge */}
         <Badge className={`absolute top-3 left-3 capitalize ${typeColors[gig.type]}`}>
           <Icon className="h-3 w-3 mr-1" />
           {gig.type}
         </Badge>
+
         {/* Status Badge */}
         <Badge className={`absolute top-3 right-3 ${status.className}`}>
           <StatusIcon className={`h-3 w-3 mr-1 ${application.status === "pending" ? "animate-spin" : ""}`} />
           {status.label}
         </Badge>
+
+        {/* Bottom Info Bar - Always Visible */}
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-4 pt-12">
+          <h3 className="font-semibold text-white text-lg line-clamp-2">{gig.title}</h3>
+          <div className="flex items-center gap-2 mt-1">
+            <span className={`text-sm font-medium ${
+              application.status === "accepted" ? "text-green-400" :
+              application.status === "pending" ? "text-amber-400" :
+              application.status === "cancelled" ? "text-red-400" :
+              "text-white/70"
+            }`}>
+              {application.status === "accepted" && "You're in!"}
+              {application.status === "pending" && "Awaiting response"}
+              {application.status === "rejected" && "Not selected"}
+              {application.status === "cancelled" && "Cancelled"}
+            </span>
+          </div>
+        </div>
+
+        {/* Hover Overlay with Full Details */}
+        <div className="absolute inset-0 bg-black/85 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-4">
+          <div className="space-y-3">
+            <h3 className="font-bold text-white text-xl">{gig.title}</h3>
+
+            <div className="space-y-2 text-sm">
+              {(gig.location_city || gig.location_state) && (
+                <div className="flex items-center gap-2 text-white/90">
+                  <MapPin className="h-4 w-4 text-pink-400" />
+                  {gig.location_city && gig.location_state
+                    ? `${gig.location_city}, ${gig.location_state}`
+                    : gig.location_city || gig.location_state}
+                </div>
+              )}
+
+              {gig.start_at && (
+                <div className="flex items-center gap-2 text-white/90">
+                  <Calendar className="h-4 w-4 text-violet-400" />
+                  {new Date(gig.start_at).toLocaleDateString("en-US", {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </div>
+              )}
+
+              {gig.compensation_amount && (
+                <div className="flex items-center gap-2 text-white/90">
+                  <DollarSign className="h-4 w-4 text-green-400" />
+                  <span className="font-medium text-green-400">
+                    ${(gig.compensation_amount / 100).toFixed(0)}
+                  </span>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2 text-white/90">
+                <Clock className="h-4 w-4 text-cyan-400" />
+                Applied {formatDistanceToNow(new Date(application.applied_at), { addSuffix: true })}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2 pt-2">
+              {application.status === "pending" && (
+                <WithdrawApplicationButton
+                  applicationId={application.id}
+                  gigTitle={gig.title}
+                />
+              )}
+              <Button variant="outline" size="sm" asChild className="border-white/30 text-white hover:bg-white/10">
+                <Link href={`/gigs/${gig.slug}`}>View Details</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
-
-      <CardHeader className="pb-2">
-        <h3 className="font-semibold text-lg line-clamp-1">{gig.title}</h3>
-        {gig.description && (
-          <p className="text-sm text-muted-foreground line-clamp-2">
-            {gig.description}
-          </p>
-        )}
-      </CardHeader>
-
-      <CardContent className="pb-2 flex-1">
-        <div className="space-y-2 text-sm">
-          {(gig.location_city || gig.location_state) && (
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <MapPin className="h-4 w-4" />
-              {gig.location_city && gig.location_state
-                ? `${gig.location_city}, ${gig.location_state}`
-                : gig.location_city || gig.location_state}
-            </div>
-          )}
-          {gig.start_at && (
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Calendar className="h-4 w-4" />
-              {new Date(gig.start_at).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })}
-            </div>
-          )}
-          {gig.compensation_amount && (
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <DollarSign className="h-4 w-4" />
-              <span className="font-medium text-green-500">
-                ${(gig.compensation_amount / 100).toFixed(0)}
-              </span>
-            </div>
-          )}
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Clock className="h-4 w-4" />
-            Applied {formatDistanceToNow(new Date(application.applied_at), { addSuffix: true })}
-          </div>
-        </div>
-      </CardContent>
-
-      <CardFooter className="pt-4">
-        <div className="flex items-center justify-between w-full gap-2">
-          <div className="flex-1">
-            {application.status === "accepted" && (
-              <span className="text-sm text-green-500 font-medium">You&apos;re in!</span>
-            )}
-            {application.status === "pending" && (
-              <span className="text-sm text-muted-foreground">Awaiting response</span>
-            )}
-            {application.status === "rejected" && (
-              <span className="text-sm text-muted-foreground">Keep applying!</span>
-            )}
-            {application.status === "cancelled" && (
-              <span className="text-sm text-red-500">Cancelled by admin</span>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            {application.status === "pending" && (
-              <WithdrawApplicationButton
-                applicationId={application.id}
-                gigTitle={gig.title}
-              />
-            )}
-            <Button variant="outline" size="sm" asChild>
-              <Link href={`/gigs/${gig.slug}`}>View</Link>
-            </Button>
-          </div>
-        </div>
-      </CardFooter>
-    </Card>
+    </div>
   );
 }
