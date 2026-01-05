@@ -140,6 +140,26 @@ export default async function ModelRatesPage({ params }: Props) {
                   {model.city && model.state ? `${model.city}, ${model.state}` : model.city || model.state}
                 </p>
               )}
+              {/* Focus Tags */}
+              {model.focus_tags && model.focus_tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {model.focus_tags.map((tag: string) => {
+                    const labels: Record<string, string> = {
+                      fashion: "Fashion", commercial: "Commercial", fitness: "Fitness",
+                      swimwear: "Swimwear", beauty: "Beauty", editorial: "Editorial",
+                      ecommerce: "E-Commerce", promo: "Promo/Event", luxury: "Luxury", lifestyle: "Lifestyle"
+                    };
+                    return (
+                      <span
+                        key={tag}
+                        className="px-2 py-0.5 text-xs font-medium rounded-full bg-gradient-to-r from-pink-500/20 to-violet-500/20 text-pink-300 border border-white/10"
+                      >
+                        {labels[tag] || tag}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
 
