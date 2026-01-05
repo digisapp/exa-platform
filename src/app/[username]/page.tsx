@@ -266,27 +266,6 @@ export default async function ModelProfilePage({ params }: Props) {
             </div>
           )}
 
-          {/* Focus Tags */}
-          {model.focus_tags && model.focus_tags.length > 0 && (
-            <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
-              {model.focus_tags.map((tag: string) => {
-                const labels: Record<string, string> = {
-                  fashion: "Fashion", commercial: "Commercial", fitness: "Fitness",
-                  swimwear: "Swimwear", beauty: "Beauty", editorial: "Editorial",
-                  ecommerce: "E-Commerce", promo: "Promo/Event", luxury: "Luxury", lifestyle: "Lifestyle"
-                };
-                return (
-                  <span
-                    key={tag}
-                    className="px-3 py-1 text-xs font-medium rounded-full bg-gradient-to-r from-pink-500/20 to-violet-500/20 text-white/80 border border-white/10"
-                  >
-                    {labels[tag] || tag}
-                  </span>
-                );
-              })}
-            </div>
-          )}
-
           {/* Social Media Icons - Consistent Design */}
           {model.show_social_media && socialLinks.length > 0 && (
             <div className="flex items-center justify-center gap-2 mb-5">
