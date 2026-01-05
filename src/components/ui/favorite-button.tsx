@@ -80,8 +80,8 @@ export function FavoriteButton({
 
       toast.success(
         isFavorited
-          ? `Removed ${modelUsername} from favorites`
-          : `Added ${modelUsername} to favorites`
+          ? `Unfollowed ${modelUsername}`
+          : `Following ${modelUsername}`
       );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to update favorite");
@@ -100,7 +100,7 @@ export function FavoriteButton({
         } ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
         onClick={handleFavorite}
         disabled={loading}
-        aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
+        aria-label={isFavorited ? "Unfollow" : "Follow"}
       >
         <Heart
           className={`${iconSizes[size]} ${isFavorited ? "fill-current" : ""}`}
@@ -122,11 +122,11 @@ export function FavoriteButton({
             </div>
             <DialogHeader className="text-center">
               <DialogTitle className="text-xl font-bold">
-                Sign in to save favorites
+                Sign in to follow
               </DialogTitle>
             </DialogHeader>
             <p className="text-muted-foreground mt-2 mb-6">
-              Create an account to save your favorite models
+              Create an account to follow models
             </p>
             <div className="flex flex-col gap-3 w-full">
               <Link href="/signin" className="w-full">

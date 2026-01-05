@@ -523,7 +523,7 @@ async function FanDashboard({ actorId }: { actorId: string }) {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{favoriteModels.length}</p>
-                  <p className="text-xs text-muted-foreground">Favorites</p>
+                  <p className="text-xs text-muted-foreground">Following</p>
                 </div>
               </div>
             </CardContent>
@@ -545,12 +545,12 @@ async function FanDashboard({ actorId }: { actorId: string }) {
           </Card>
         </div>
 
-      {/* Favorites Section */}
+      {/* Following Section */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Heart className="h-5 w-5 text-pink-500 fill-current" />
-            Your Favorites
+            Following
           </CardTitle>
           {favoriteModels.length > 0 && (
             <Button variant="ghost" size="sm" asChild>
@@ -608,8 +608,8 @@ async function FanDashboard({ actorId }: { actorId: string }) {
               <div className="p-4 rounded-full bg-gradient-to-br from-pink-500/20 to-violet-500/20 inline-block mb-4">
                 <Heart className="h-8 w-8 text-pink-500" />
               </div>
-              <h3 className="font-semibold mb-2">No favorites yet</h3>
-              <p className="text-muted-foreground text-sm mb-4">Discover amazing models and add them to your favorites</p>
+              <h3 className="font-semibold mb-2">Not following anyone yet</h3>
+              <p className="text-muted-foreground text-sm mb-4">Discover amazing models and follow them</p>
               <Button asChild className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600">
                 <Link href="/models">
                   <Sparkles className="mr-2 h-4 w-4" />
@@ -853,11 +853,11 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Heart className="h-5 w-5 text-pink-500 fill-pink-500" />
-            Favorite Models
+            Following
           </CardTitle>
           {savedModels.length > 0 && (
             <Button variant="ghost" size="sm" asChild>
-              <Link href="/favorites" className="text-pink-500">
+              <Link href="/following" className="text-pink-500">
                 View All
                 <ArrowRight className="ml-1 h-4 w-4" />
               </Link>

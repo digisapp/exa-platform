@@ -1,22 +1,22 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Navbar } from "@/components/layout/navbar";
-import { Heart } from "lucide-react";
+import { Users } from "lucide-react";
 import { ModelCard } from "@/components/models/model-card";
 import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Favorites | EXA",
-  description: "Your favorite models on EXA",
+  title: "Following | EXA",
+  description: "Models you follow on EXA",
 };
 
-export default async function FavoritesPage() {
+export default async function FollowingPage() {
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
-    redirect("/signin?redirect=/favorites");
+    redirect("/signin?redirect=/following");
   }
 
   // Get actor ID
@@ -30,8 +30,8 @@ export default async function FavoritesPage() {
     redirect("/signin");
   }
 
-  // Get favorites with model details
-  const { data: favorites } = await (supabase
+  // Get followed models
+  const { data: follows } = await (supabase
     .from("follows") as any)
     .select(`
       created_at,
@@ -44,10 +44,10 @@ export default async function FavoritesPage() {
     .order("created_at", { ascending: false });
 
   // Get the user_ids from the followed actors
-  const userIds = favorites?.map((f: any) => f.actors?.user_id).filter(Boolean) || [];
+  const userIds = follows?.map((f: any) => f.actors?.user_id).filter(Boolean) || [];
 
   // Get the model profiles
-  const { data: favoriteModels } = userIds.length > 0
+  const { data: followedModels } = userIds.length > 0
     ? await supabase
         .from("models")
         .select("*")
@@ -57,10 +57,10 @@ export default async function FavoritesPage() {
 
   // Create a map of user_id to model for ordering
   const modelsByUserId = new Map(
-    (favoriteModels || []).map((m: any) => [m.user_id, m])
+    (followedModels || []).map((m: any) => [m.user_id, m])
   );
 
-  // Order models by the original favorites order
+  // Order models by the original follow order
   const orderedModels = userIds
     .map((userId: string) => modelsByUserId.get(userId))
     .filter(Boolean);
@@ -73,11 +73,11 @@ export default async function FavoritesPage() {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3">
-            <Heart className="h-8 w-8 text-pink-500 fill-pink-500" />
-            <h1 className="text-3xl font-bold">Favorites</h1>
+            <Users className="h-8 w-8 text-pink-500" />
+            <h1 className="text-3xl font-bold">Following</h1>
           </div>
           <p className="text-muted-foreground mt-2">
-            {orderedModels.length} {orderedModels.length === 1 ? "model" : "models"} saved
+            {orderedModels.length} {orderedModels.length === 1 ? "model" : "models"} you follow
           </p>
         </div>
 
@@ -96,10 +96,10 @@ export default async function FavoritesPage() {
           </div>
         ) : (
           <div className="text-center py-16">
-            <Heart className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">No favorites yet</h2>
+            <Users className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Not following anyone yet</h2>
             <p className="text-muted-foreground mb-6">
-              Start exploring and save models you like by clicking the heart icon.
+              Discover models and click the heart icon to follow them.
             </p>
             <Link
               href="/models"

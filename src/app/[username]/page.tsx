@@ -13,6 +13,7 @@ import { SnapchatIcon } from "@/components/ui/snapchat-icon";
 import type { Metadata } from "next";
 import { ShareButton } from "@/components/ui/share-button";
 import { FavoriteButton } from "@/components/ui/favorite-button";
+import { AddToListButton } from "@/components/ui/add-to-list-button";
 import { ProfileActionButtons } from "@/components/profile/ProfileActionButtons";
 import { ProfileContentTabs } from "@/components/profile/ProfileContentTabs";
 
@@ -115,6 +116,7 @@ export default async function ModelProfilePage({ params }: Props) {
   const { data: { user } } = await supabase.auth.getUser();
   let currentActorId: string | null = null;
   let coinBalance = 0;
+  let isBrand = false;
 
   if (user) {
     const { data: actor } = await supabase
@@ -125,6 +127,7 @@ export default async function ModelProfilePage({ params }: Props) {
 
     if (actor) {
       currentActorId = actor.id;
+      isBrand = actor.type === "brand";
 
       if (actor.type === "fan") {
         const { data: fan } = await supabase
@@ -133,6 +136,13 @@ export default async function ModelProfilePage({ params }: Props) {
           .eq("id", actor.id)
           .single() as { data: { coin_balance: number } | null };
         coinBalance = fan?.coin_balance || 0;
+      } else if (actor.type === "brand") {
+        const { data: brandData } = await (supabase
+          .from("brands") as any)
+          .select("coin_balance")
+          .eq("id", actor.id)
+          .single() as { data: { coin_balance: number } | null };
+        coinBalance = brandData?.coin_balance || 0;
       } else {
         const { data: modelData } = await supabase
           .from("models")
@@ -219,6 +229,12 @@ export default async function ModelProfilePage({ params }: Props) {
                 initialFavorited={isFavorited}
                 count={favoriteCount}
               />
+              {isBrand && !isOwner && (
+                <AddToListButton
+                  modelId={model.id}
+                  modelName={displayName}
+                />
+              )}
               <ShareButton title={displayName} />
             </div>
           </div>

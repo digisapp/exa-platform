@@ -45,8 +45,8 @@ export function ModelsGrid({ models, isLoggedIn, favoriteModelIds }: ModelsGridP
       <AuthRequiredDialog
         open={showAuthDialog}
         onOpenChange={setShowAuthDialog}
-        title="Sign in to favorite"
-        description="Create an account or sign in to save your favorite models."
+        title="Sign in to follow"
+        description="Create an account or sign in to follow models."
       />
     </>
   );

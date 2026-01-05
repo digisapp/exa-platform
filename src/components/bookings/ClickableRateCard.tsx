@@ -49,6 +49,7 @@ export function ClickableRateCard({
         </div>
         <div className="text-right">
           <p className={`text-xl font-bold ${colorClass}`}>{rate.toLocaleString()} coins</p>
+          <p className="text-xs text-white/50">~${Math.round(rate * 0.15).toLocaleString()} USD</p>
           <p className="text-xs text-white/40 group-hover:text-white/60">Click to book</p>
         </div>
       </Link>
@@ -69,6 +70,7 @@ export function ClickableRateCard({
           </div>
           <div className="text-right">
             <p className={`text-xl font-bold ${colorClass}`}>{rate.toLocaleString()} coins</p>
+            <p className="text-xs text-white/50">~${Math.round(rate * 0.15).toLocaleString()} USD</p>
             <p className="text-xs text-white/40 group-hover:text-white/60">Click to book</p>
           </div>
         </button>

@@ -68,8 +68,8 @@ export const ModelCard = memo(function ModelCard({
       setIsFavorited(!isFavorited);
       toast.success(
         isFavorited
-          ? `Removed from favorites`
-          : `Added to favorites`
+          ? `Unfollowed`
+          : `Following`
       );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to update");
@@ -148,7 +148,7 @@ export const ModelCard = memo(function ModelCard({
                   : "bg-black/50 backdrop-blur-sm text-white hover:bg-black/70",
                 loading && "opacity-50 cursor-not-allowed"
               )}
-              aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
+              aria-label={isFavorited ? "Unfollow" : "Follow"}
             >
               <Heart className={cn("h-5 w-5", isFavorited && "fill-current")} />
             </button>

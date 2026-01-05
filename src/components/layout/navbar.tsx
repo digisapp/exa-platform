@@ -23,6 +23,8 @@ import {
   Coins,
   Images,
   Crown,
+  Heart,
+  ListPlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/auth/logout-button";
@@ -45,17 +47,20 @@ const modelLinks = [
   { href: "/dashboard", label: "Home", icon: Home },
   { href: "/chats", label: "Chats", icon: MessageCircle },
   { href: "/content", label: "Content", icon: Images },
+  { href: "/followers", label: "Followers", icon: Heart },
 ];
 
 const fanLinks = [
   { href: "/dashboard", label: "Home", icon: Home },
   { href: "/models", label: "Explore", icon: Users },
   { href: "/chats", label: "Chats", icon: MessageCircle },
+  { href: "/following", label: "Following", icon: Heart },
 ];
 
 const brandLinks = [
   { href: "/dashboard", label: "Home", icon: Home },
   { href: "/models", label: "Explore", icon: Users },
+  { href: "/lists", label: "Lists", icon: ListPlus },
   { href: "/chats", label: "Chats", icon: MessageCircle },
 ];
 

@@ -34,10 +34,10 @@ export const BRAND_SUBSCRIPTION_TIERS = {
     name: "Starter",
     monthlyPrice: 14900, // $149
     annualPrice: 149000, // $1,490 (save ~$298)
-    monthlyCoins: 500,
+    monthlyCoins: 1000,
     features: [
       "Full model profile access",
-      "500 coins/month included",
+      "1,000 coins/month included",
       "Message models directly",
       "Send booking requests",
       "Email support",
@@ -49,11 +49,11 @@ export const BRAND_SUBSCRIPTION_TIERS = {
     name: "Professional",
     monthlyPrice: 34900, // $349
     annualPrice: 349000, // $3,490 (save ~$698)
-    monthlyCoins: 1200,
+    monthlyCoins: 2500,
     popular: true,
     features: [
       "Everything in Starter",
-      "1,200 coins/month included",
+      "2,500 coins/month included",
       "Verified Brand badge",
       "Listed on Verified Brands page",
       "Priority support",
@@ -65,10 +65,10 @@ export const BRAND_SUBSCRIPTION_TIERS = {
     name: "Enterprise",
     monthlyPrice: 69900, // $699
     annualPrice: 699000, // $6,990 (save ~$1,398)
-    monthlyCoins: 2500,
+    monthlyCoins: 5000,
     features: [
       "Everything in Professional",
-      "2,500 coins/month included",
+      "5,000 coins/month included",
       "Featured brand placement",
       "Dedicated account manager",
       "Custom campaigns",
