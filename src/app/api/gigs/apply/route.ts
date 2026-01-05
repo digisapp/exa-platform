@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 
 // POST - Apply to a gig
 export async function POST(request: NextRequest) {
@@ -156,6 +157,9 @@ export async function DELETE(request: NextRequest) {
     if (error) {
       throw error;
     }
+
+    // Revalidate the gigs page to show updated applications
+    revalidatePath("/gigs");
 
     return NextResponse.json({ success: true });
   } catch (error) {

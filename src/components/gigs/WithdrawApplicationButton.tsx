@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,7 +25,6 @@ export function WithdrawApplicationButton({
   applicationId,
   gigTitle,
 }: WithdrawApplicationButtonProps) {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   const handleWithdraw = async () => {
@@ -44,7 +42,8 @@ export function WithdrawApplicationButton({
       }
 
       toast.success("Application withdrawn");
-      router.refresh();
+      // Hard reload to ensure server component refetches data
+      window.location.reload();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to withdraw");
     } finally {
