@@ -927,8 +927,8 @@ export default function AdminCommunityPage() {
                 ) : modelApps.length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-4">No pending applications</p>
                 ) : (
-                  <div className="space-y-3">
-                    {modelApps.slice(0, 5).map((app) => {
+                  <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                    {modelApps.map((app) => {
                       // Calculate age from date_of_birth
                       const age = app.date_of_birth
                         ? Math.floor((new Date().getTime() - new Date(app.date_of_birth).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
@@ -962,11 +962,6 @@ export default function AdminCommunityPage() {
                         </div>
                       );
                     })}
-                    {modelApps.length > 5 && (
-                      <p className="text-xs text-muted-foreground text-center">
-                        +{modelApps.length - 5} more applications
-                      </p>
-                    )}
                   </div>
                 )}
               </CardContent>
