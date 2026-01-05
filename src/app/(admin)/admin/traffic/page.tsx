@@ -47,66 +47,60 @@ interface AnalyticsData {
 
 const COLORS = ["#ec4899", "#8b5cf6", "#3b82f6", "#10b981", "#f59e0b", "#ef4444"];
 
-// Country name to flag emoji mapping
-const countryFlags: Record<string, string> = {
-  "United States": "🇺🇸",
-  "USA": "🇺🇸",
-  "Canada": "🇨🇦",
-  "United Kingdom": "🇬🇧",
-  "UK": "🇬🇧",
-  "Australia": "🇦🇺",
-  "Germany": "🇩🇪",
-  "France": "🇫🇷",
-  "Spain": "🇪🇸",
-  "Italy": "🇮🇹",
-  "Netherlands": "🇳🇱",
-  "Brazil": "🇧🇷",
-  "Mexico": "🇲🇽",
-  "Japan": "🇯🇵",
-  "South Korea": "🇰🇷",
-  "India": "🇮🇳",
-  "China": "🇨🇳",
-  "Russia": "🇷🇺",
-  "Philippines": "🇵🇭",
-  "Indonesia": "🇮🇩",
-  "Thailand": "🇹🇭",
-  "Vietnam": "🇻🇳",
-  "Malaysia": "🇲🇾",
-  "Singapore": "🇸🇬",
-  "Poland": "🇵🇱",
-  "Sweden": "🇸🇪",
-  "Norway": "🇳🇴",
-  "Denmark": "🇩🇰",
-  "Finland": "🇫🇮",
-  "Ireland": "🇮🇪",
-  "New Zealand": "🇳🇿",
-  "South Africa": "🇿🇦",
-  "Argentina": "🇦🇷",
-  "Colombia": "🇨🇴",
-  "Chile": "🇨🇱",
-  "Peru": "🇵🇪",
-  "Portugal": "🇵🇹",
-  "Belgium": "🇧🇪",
-  "Austria": "🇦🇹",
-  "Switzerland": "🇨🇭",
-  "Greece": "🇬🇷",
-  "Turkey": "🇹🇷",
-  "Israel": "🇮🇱",
-  "UAE": "🇦🇪",
-  "United Arab Emirates": "🇦🇪",
-  "Saudi Arabia": "🇸🇦",
-  "Egypt": "🇪🇬",
-  "Nigeria": "🇳🇬",
-  "Kenya": "🇰🇪",
-  "Pakistan": "🇵🇰",
-  "Bangladesh": "🇧🇩",
-  "Taiwan": "🇹🇼",
-  "Hong Kong": "🇭🇰",
-  "Unknown": "🌍",
+// Convert 2-letter ISO country code to flag emoji
+const codeToFlag = (code: string): string => {
+  if (!code || code.length !== 2) return "🌍";
+  const upper = code.toUpperCase();
+  const codePoints = [...upper].map(c => 0x1F1E6 + c.charCodeAt(0) - 65);
+  return String.fromCodePoint(...codePoints);
+};
+
+// Country name to ISO code mapping
+const countryToCode: Record<string, string> = {
+  "United States": "US", "USA": "US", "Canada": "CA", "United Kingdom": "GB", "UK": "GB",
+  "Australia": "AU", "Germany": "DE", "France": "FR", "Spain": "ES", "Italy": "IT",
+  "Netherlands": "NL", "Brazil": "BR", "Mexico": "MX", "Japan": "JP", "South Korea": "KR",
+  "India": "IN", "China": "CN", "Russia": "RU", "Philippines": "PH", "Indonesia": "ID",
+  "Thailand": "TH", "Vietnam": "VN", "Malaysia": "MY", "Singapore": "SG", "Poland": "PL",
+  "Sweden": "SE", "Norway": "NO", "Denmark": "DK", "Finland": "FI", "Ireland": "IE",
+  "New Zealand": "NZ", "South Africa": "ZA", "Argentina": "AR", "Colombia": "CO",
+  "Chile": "CL", "Peru": "PE", "Portugal": "PT", "Belgium": "BE", "Austria": "AT",
+  "Switzerland": "CH", "Greece": "GR", "Turkey": "TR", "Israel": "IL", "UAE": "AE",
+  "United Arab Emirates": "AE", "Saudi Arabia": "SA", "Egypt": "EG", "Nigeria": "NG",
+  "Kenya": "KE", "Pakistan": "PK", "Bangladesh": "BD", "Taiwan": "TW", "Hong Kong": "HK",
+  "Czech Republic": "CZ", "Czechia": "CZ", "Romania": "RO", "Hungary": "HU", "Ukraine": "UA",
+  "Puerto Rico": "PR", "Costa Rica": "CR", "Panama": "PA", "Dominican Republic": "DO",
+  "Jamaica": "JM", "Trinidad and Tobago": "TT", "Venezuela": "VE", "Ecuador": "EC",
+  "Guatemala": "GT", "Cuba": "CU", "Bolivia": "BO", "Paraguay": "PY", "Uruguay": "UY",
+  "Morocco": "MA", "Algeria": "DZ", "Tunisia": "TN", "Ghana": "GH", "Ethiopia": "ET",
+  "Tanzania": "TZ", "Uganda": "UG", "Cameroon": "CM", "Ivory Coast": "CI",
+  "Sri Lanka": "LK", "Nepal": "NP", "Myanmar": "MM", "Cambodia": "KH", "Laos": "LA",
+  "Kuwait": "KW", "Qatar": "QA", "Bahrain": "BH", "Oman": "OM", "Jordan": "JO",
+  "Lebanon": "LB", "Iraq": "IQ", "Iran": "IR", "Afghanistan": "AF", "Kazakhstan": "KZ",
+  "Uzbekistan": "UZ", "Azerbaijan": "AZ", "Georgia": "GE", "Armenia": "AM",
+  "Croatia": "HR", "Serbia": "RS", "Bulgaria": "BG", "Slovakia": "SK", "Slovenia": "SI",
+  "Lithuania": "LT", "Latvia": "LV", "Estonia": "EE", "Belarus": "BY", "Moldova": "MD",
+  "Iceland": "IS", "Luxembourg": "LU", "Malta": "MT", "Cyprus": "CY", "Monaco": "MC",
 };
 
 const getCountryFlag = (country: string): string => {
-  return countryFlags[country] || "🌍";
+  // If it's already a 2-letter code, convert directly
+  if (country.length === 2) {
+    return codeToFlag(country);
+  }
+  // Look up the country name to get the code
+  const code = countryToCode[country];
+  if (code) {
+    return codeToFlag(code);
+  }
+  // Try case-insensitive match
+  const lowerCountry = country.toLowerCase();
+  for (const [name, code] of Object.entries(countryToCode)) {
+    if (name.toLowerCase() === lowerCountry) {
+      return codeToFlag(code);
+    }
+  }
+  return "🌍";
 };
 
 const deviceIcons: Record<string, React.ReactNode> = {
