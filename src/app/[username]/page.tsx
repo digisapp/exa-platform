@@ -303,19 +303,33 @@ export default async function ModelProfilePage({ params }: Props) {
           {/* Affiliate Links - Linktree Style */}
           {model.affiliate_links && model.affiliate_links.length > 0 && (
             <div className="mb-6 space-y-3">
-              {model.affiliate_links.map((link: { title: string; url: string }, index: number) => (
-                link.title && link.url && (
+              {model.affiliate_links.map((link: { title: string; url: string }, index: number) => {
+                if (!link.title || !link.url) return null;
+                let domain = '';
+                try {
+                  domain = new URL(link.url).hostname;
+                } catch {
+                  domain = '';
+                }
+                return (
                   <a
                     key={index}
                     href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group flex items-center justify-center w-full px-5 py-4 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 hover:border-white/20 transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-pink-500/10"
+                    className="group relative flex items-center justify-center w-full px-5 py-4 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 hover:border-white/20 transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-pink-500/10"
                   >
+                    {domain && (
+                      <img
+                        src={`https://www.google.com/s2/favicons?domain=${domain}&sz=32`}
+                        alt=""
+                        className="absolute left-4 w-6 h-6 rounded"
+                      />
+                    )}
                     <span className="font-medium text-white">{link.title}</span>
                   </a>
-                )
-              ))}
+                );
+              })}
             </div>
           )}
 
