@@ -235,7 +235,7 @@ export default async function HomePage() {
                 Meet our newest talent
               </p>
             </div>
-            <TopModelsCarousel models={newFaces || []} />
+            <TopModelsCarousel models={newFaces || []} showRank={false} />
           </section>
         )}
 
