@@ -60,13 +60,6 @@ const US_STATES = [
   { value: "Wyoming", label: "Wyoming" },
 ];
 
-const LEVELS = [
-  { value: "rising", label: "⭐ Rising" },
-  { value: "verified", label: "✓ Verified" },
-  { value: "pro", label: "💎 Pro" },
-  { value: "elite", label: "👑 Elite" },
-];
-
 const SORT_OPTIONS = [
   { value: "newest", label: "Newest" },
   { value: "followers", label: "Most Followers" },
@@ -111,7 +104,7 @@ export function ModelFilters() {
     router.push("/models");
   };
 
-  const hasFilters = searchParams.get("q") || searchParams.get("state") || searchParams.get("level") || searchParams.get("focus");
+  const hasFilters = searchParams.get("q") || searchParams.get("state") || searchParams.get("focus");
 
   return (
     <div className="space-y-4">
@@ -158,23 +151,6 @@ export function ModelFilters() {
             {US_STATES.map((state) => (
               <SelectItem key={state.value} value={state.value}>
                 {state.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select
-          value={searchParams.get("level") || "all"}
-          onValueChange={(v) => updateParams("level", v === "all" ? null : v)}
-        >
-          <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="All Levels" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Levels</SelectItem>
-            {LEVELS.map((level) => (
-              <SelectItem key={level.value} value={level.value}>
-                {level.label}
               </SelectItem>
             ))}
           </SelectContent>
