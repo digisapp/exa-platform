@@ -42,7 +42,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         // Don't do anything if we're on auth pages - let them handle it
-        const isAuthPage = window.location.pathname.startsWith('/auth/');
+        const pathname = window.location.pathname;
+        const isAuthPage = pathname.startsWith('/auth/') ||
+          pathname === '/signin' ||
+          pathname === '/signup' ||
+          pathname === '/forgot-password' ||
+          pathname.startsWith('/claim/');
         if (isAuthPage) {
           return;
         }
