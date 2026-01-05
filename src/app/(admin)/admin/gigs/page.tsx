@@ -388,7 +388,7 @@ export default function AdminGigsPage() {
     }
   }
 
-  async function handleApplicationAction(appId: string, action: "accepted" | "rejected") {
+  async function handleApplicationAction(appId: string, action: "accepted" | "rejected" | "cancelled") {
     setProcessingApp(appId);
     try {
       const app = applications.find(a => a.id === appId);
@@ -475,6 +475,8 @@ export default function AdminGigsPage() {
             if (conversationId) {
               const message = action === "accepted"
                 ? `Congratulations! You've been accepted for "${gig?.title || "a gig"}". We'll be in touch with more details soon!`
+                : action === "cancelled"
+                ? `Your spot for "${gig?.title || "a gig"}" has been cancelled. If you have questions, please reach out to us.`
                 : `Thank you for your interest in "${gig?.title || "a gig"}". Unfortunately, we weren't able to accept your application at this time. We encourage you to apply for future opportunities!`;
 
               await (supabase.from("messages") as any).insert({
@@ -488,7 +490,12 @@ export default function AdminGigsPage() {
         }
       }
 
-      toast.success(action === "accepted" ? "Model accepted and notified!" : "Application declined and model notified");
+      const toastMessage = action === "accepted"
+        ? "Model accepted and notified!"
+        : action === "cancelled"
+        ? "Model cancelled and notified"
+        : "Application declined and model notified";
+      toast.success(toastMessage);
       loadApplications(app.gig_id);
     } catch (error) {
       console.error("Error updating application:", error);
@@ -945,17 +952,33 @@ export default function AdminGigsPage() {
                           )}
                         </Button>
                       </>
+                    ) : app.status === "accepted" ? (
+                      <div className="flex items-center gap-2">
+                        <Badge variant="default" className="bg-green-500">
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Accepted
+                        </Badge>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-red-500 hover:text-red-600 hover:bg-red-500/10 h-7 px-2"
+                          onClick={() => handleApplicationAction(app.id, "cancelled")}
+                          disabled={processingApp === app.id}
+                        >
+                          {processingApp === app.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <X className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
                     ) : (
                       <Badge
-                        variant={app.status === "accepted" ? "default" : "secondary"}
-                        className={app.status === "accepted" ? "bg-green-500" : ""}
+                        variant="secondary"
+                        className={app.status === "cancelled" ? "bg-red-500/10 text-red-500" : ""}
                       >
-                        {app.status === "accepted" ? (
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                        ) : (
-                          <XCircle className="h-3 w-3 mr-1" />
-                        )}
-                        {app.status}
+                        <XCircle className="h-3 w-3 mr-1" />
+                        {app.status === "cancelled" ? "Cancelled" : app.status}
                       </Badge>
                     )}
                   </div>

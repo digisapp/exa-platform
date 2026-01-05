@@ -4,8 +4,6 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
-    console.log("Gig upload: Starting...");
-
     // Check environment variables
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
       console.error("Gig upload: Missing environment variables");
@@ -32,11 +30,8 @@ export async function POST(request: NextRequest) {
     }
 
     if (!user) {
-      console.log("Gig upload: No user found");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    console.log("Gig upload: User authenticated:", user.id);
 
     // Verify admin
     const { data: actor, error: actorError } = await supabase
@@ -51,11 +46,8 @@ export async function POST(request: NextRequest) {
     }
 
     if (!actor || actor.type !== "admin") {
-      console.log("Gig upload: Not admin. Actor:", actor);
       return NextResponse.json({ error: "Admin access required" }, { status: 403 });
     }
-
-    console.log("Gig upload: Admin verified");
 
     let body;
     try {
@@ -66,7 +58,6 @@ export async function POST(request: NextRequest) {
     }
 
     const { filename, contentType } = body;
-    console.log("Gig upload: filename:", filename, "contentType:", contentType);
 
     if (!filename || !contentType) {
       return NextResponse.json({ error: "Missing filename or contentType" }, { status: 400 });
@@ -77,8 +68,6 @@ export async function POST(request: NextRequest) {
     const ext = filename.split(".").pop() || "jpg";
     const path = `${timestamp}.${ext}`;
 
-    console.log("Gig upload: Creating signed URL for path:", path);
-
     // Create signed upload URL using admin client
     const { data, error } = await supabaseAdmin.storage
       .from("gigs")
@@ -88,8 +77,6 @@ export async function POST(request: NextRequest) {
       console.error("Signed URL error:", error);
       return NextResponse.json({ error: `Failed to create upload URL: ${error.message}` }, { status: 500 });
     }
-
-    console.log("Gig upload: Signed URL created successfully");
 
     // Get the public URL for after upload
     const { data: { publicUrl } } = supabaseAdmin.storage

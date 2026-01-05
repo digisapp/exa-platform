@@ -138,22 +138,12 @@ export async function PATCH(
           .select("id")
           .single();
 
-        if (actorError) {
-          console.error("Error updating actor type:", actorError);
-        } else {
-          console.log("Successfully updated actor type to model for user:", application.user_id);
-        }
-
         // Delete the old fan record (cleanup)
-        if (updatedActor?.id) {
-          const { error: fanDeleteError } = await adminClient
+        if (!actorError && updatedActor?.id) {
+          await adminClient
             .from("fans")
             .delete()
             .eq("id", updatedActor.id);
-
-          if (fanDeleteError) {
-            console.error("Error deleting old fan record:", fanDeleteError);
-          }
         }
       } else {
         // Model exists, just approve it
@@ -169,22 +159,12 @@ export async function PATCH(
           .select("id")
           .single();
 
-        if (actorError) {
-          console.error("Error updating actor type:", actorError);
-        } else {
-          console.log("Successfully updated actor type to model for user:", application.user_id);
-        }
-
         // Delete the old fan record (cleanup)
-        if (updatedActor?.id) {
-          const { error: fanDeleteError } = await adminClient
+        if (!actorError && updatedActor?.id) {
+          await adminClient
             .from("fans")
             .delete()
             .eq("id", updatedActor.id);
-
-          if (fanDeleteError) {
-            console.error("Error deleting old fan record:", fanDeleteError);
-          }
         }
       }
 

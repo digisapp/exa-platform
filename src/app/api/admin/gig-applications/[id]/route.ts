@@ -30,7 +30,7 @@ export async function PATCH(
     const body = await request.json();
     const { status } = body;
 
-    if (!status || !["accepted", "rejected", "pending"].includes(status)) {
+    if (!status || !["accepted", "rejected", "pending", "cancelled"].includes(status)) {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
     }
 
@@ -65,8 +65,13 @@ export async function PATCH(
     }
 
     // If accepted, increment spots_filled on the gig
-    if (status === "accepted") {
+    if (status === "accepted" && application.status !== "accepted") {
       await adminClient.rpc("increment_gig_spots_filled", { gig_id: application.gig_id });
+    }
+
+    // If cancelling an accepted application, decrement spots_filled
+    if ((status === "cancelled" || status === "rejected") && application.status === "accepted") {
+      await adminClient.rpc("decrement_gig_spots_filled", { gig_id: application.gig_id });
     }
 
     return NextResponse.json({

@@ -30,7 +30,6 @@ function ResetPasswordForm() {
       // First, check if we already have a session (might have been auto-exchanged)
       const { data: { session: existingSession } } = await supabase.auth.getSession();
       if (existingSession) {
-        console.log("Existing session found");
         if (mounted) {
           setChecking(false);
           setError(null);
@@ -41,7 +40,6 @@ function ResetPasswordForm() {
       // Check for PKCE code in URL query params
       const code = searchParams.get("code");
       if (code) {
-        console.log("Found code in URL, exchanging for session...");
         const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
         if (mounted) {
           if (exchangeError) {
@@ -49,7 +47,6 @@ function ResetPasswordForm() {
             setChecking(false);
             setError("Invalid or expired reset link. Please request a new one.");
           } else if (data.session) {
-            console.log("Session established from code exchange");
             setChecking(false);
             setError(null);
           }
@@ -60,7 +57,6 @@ function ResetPasswordForm() {
       // Check for hash fragment tokens (legacy/fallback)
       const hash = window.location.hash;
       if (hash && hash.includes("access_token")) {
-        console.log("Found hash fragment, processing...");
         // Extract tokens from hash and set session
         const hashParams = new URLSearchParams(hash.substring(1));
         const accessToken = hashParams.get("access_token");
@@ -78,7 +74,6 @@ function ResetPasswordForm() {
               setChecking(false);
               setError("Invalid or expired reset link. Please request a new one.");
             } else if (data.session) {
-              console.log("Session established from hash tokens");
               setChecking(false);
               setError(null);
               // Clear the hash from URL
@@ -95,7 +90,6 @@ function ResetPasswordForm() {
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log("Auth state change:", event);
         if (event === "PASSWORD_RECOVERY") {
           // User clicked the reset link - they can now set a new password
           if (mounted) {

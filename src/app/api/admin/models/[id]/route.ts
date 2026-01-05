@@ -84,14 +84,12 @@ export async function PATCH(
             modelName,
             username: model.username,
           });
-          console.log(`Approval email sent to ${model.email}`);
         } else {
           // Model was just rejected/hidden
           await sendModelRejectionEmail({
             to: model.email,
             modelName,
           });
-          console.log(`Rejection email sent to ${model.email}`);
         }
       } catch (emailError) {
         // Log email error but don't fail the request

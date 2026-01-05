@@ -30,8 +30,6 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  console.log(`Received Stripe event: ${event.type}`);
-
   try {
     switch (event.type) {
       case "checkout.session.completed": {
@@ -59,8 +57,6 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: "Invalid coins value" }, { status: 400 });
         }
 
-        console.log(`Processing coin purchase: ${coins} coins for actor ${actorId}`);
-
         const { error: creditError } = await supabaseAdmin.rpc("add_coins", {
           p_actor_id: actorId,
           p_amount: coins,
@@ -78,19 +74,6 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: "Failed to credit coins" }, { status: 500 });
         }
 
-        console.log(`Successfully credited ${coins} coins to actor ${actorId}`);
-
-        if (userId) {
-          const { data: model } = await supabaseAdmin
-            .from("models")
-            .select("coin_balance, first_name, email")
-            .eq("user_id", userId)
-            .single();
-
-          if (model) {
-            console.log(`New balance for ${model.first_name || model.email}: ${model.coin_balance} coins`);
-          }
-        }
         break;
       }
 
@@ -141,7 +124,8 @@ export async function POST(request: NextRequest) {
       }
 
       default:
-        console.log(`Unhandled event type: ${event.type}`);
+        // Unhandled event type
+        break;
     }
 
     return NextResponse.json({ received: true });
@@ -166,8 +150,6 @@ async function handleSubscriptionCheckout(session: Stripe.Checkout.Session) {
   const subscriptionId = typeof session.subscription === "string"
     ? session.subscription
     : session.subscription?.id;
-
-  console.log(`Processing brand subscription: ${tier} for brand ${brandId}`);
 
   // Update brand with subscription info
   const { error: updateError } = await supabaseAdmin
@@ -202,8 +184,6 @@ async function handleSubscriptionCheckout(session: Stripe.Checkout.Session) {
 
     if (coinError) {
       console.error("Error granting subscription coins:", coinError);
-    } else {
-      console.log(`Granted ${monthlyCoins} coins to brand ${brandId}`);
     }
   }
 }
@@ -211,7 +191,6 @@ async function handleSubscriptionCheckout(session: Stripe.Checkout.Session) {
 async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
   const brandId = subscription.metadata?.brand_id;
   if (!brandId) {
-    console.log("No brand_id in subscription metadata");
     return;
   }
 
@@ -229,8 +208,6 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
         : null,
     })
     .eq("id", brandId);
-
-  console.log(`Updated subscription status to ${status} for brand ${brandId}`);
 }
 
 async function handleSubscriptionCanceled(subscription: Stripe.Subscription) {
@@ -249,8 +226,6 @@ async function handleSubscriptionCanceled(subscription: Stripe.Subscription) {
       stripe_subscription_id: null,
     })
     .eq("id", brandId);
-
-  console.log(`Subscription paused for brand ${brandId} - coins preserved`);
 }
 
 async function grantMonthlyCoins(invoice: Stripe.Invoice) {
@@ -289,8 +264,6 @@ async function grantMonthlyCoins(invoice: Stripe.Invoice) {
 
   if (error) {
     console.error("Error granting renewal coins:", error);
-  } else {
-    console.log(`Granted ${tierConfig.monthlyCoins} renewal coins to brand ${brandId}`);
   }
 
   // Update coins_granted_at

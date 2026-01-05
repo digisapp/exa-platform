@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
+// POST - Apply to a gig
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -92,6 +93,75 @@ export async function POST(request: NextRequest) {
     console.error("Apply to gig error:", error);
     return NextResponse.json(
       { error: "Failed to apply to gig" },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE - Withdraw application (only pending applications)
+export async function DELETE(request: NextRequest) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { applicationId } = await request.json();
+
+    if (!applicationId) {
+      return NextResponse.json({ error: "Application ID required" }, { status: 400 });
+    }
+
+    // Get the model's ID
+    const { data: model } = await (supabase
+      .from("models") as any)
+      .select("id")
+      .eq("user_id", user.id)
+      .single();
+
+    if (!model) {
+      return NextResponse.json({ error: "Model profile not found" }, { status: 404 });
+    }
+
+    // Get the application and verify ownership
+    const { data: application } = await (supabase
+      .from("gig_applications") as any)
+      .select("id, status, model_id")
+      .eq("id", applicationId)
+      .single();
+
+    if (!application) {
+      return NextResponse.json({ error: "Application not found" }, { status: 404 });
+    }
+
+    if (application.model_id !== model.id) {
+      return NextResponse.json({ error: "Not your application" }, { status: 403 });
+    }
+
+    // Only allow withdrawing pending applications
+    if (application.status !== "pending") {
+      return NextResponse.json({
+        error: "Can only withdraw pending applications. Contact admin for accepted applications."
+      }, { status: 400 });
+    }
+
+    // Delete the application
+    const { error } = await (supabase
+      .from("gig_applications") as any)
+      .delete()
+      .eq("id", applicationId);
+
+    if (error) {
+      throw error;
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Withdraw application error:", error);
+    return NextResponse.json(
+      { error: "Failed to withdraw application" },
       { status: 500 }
     );
   }

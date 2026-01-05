@@ -1,11 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Navbar } from "@/components/layout/navbar";
-import { Users, Heart } from "lucide-react";
+import { Users, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 
 export const metadata: Metadata = {
@@ -106,6 +107,7 @@ export default async function FollowersPage() {
 
     return {
       id: follow.id,
+      actorId: followerActor.id,
       displayName,
       avatarUrl,
       profileUrl,
@@ -211,8 +213,17 @@ export default async function FollowersPage() {
                       </p>
                     </div>
 
-                    {/* Heart Icon */}
-                    <Heart className="h-5 w-5 text-pink-500 fill-pink-500" />
+                    {/* Message Button */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 text-muted-foreground hover:text-pink-500 hover:bg-pink-500/10"
+                      asChild
+                    >
+                      <Link href={`/chats?new=${follower.actorId}`}>
+                        <MessageCircle className="h-5 w-5" />
+                      </Link>
+                    </Button>
                   </div>
                 </CardContent>
               </Card>

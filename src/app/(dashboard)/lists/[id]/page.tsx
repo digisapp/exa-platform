@@ -7,6 +7,7 @@ import type { Metadata } from "next";
 import { Button } from "@/components/ui/button";
 import { ModelCard } from "@/components/models/model-card";
 import { RemoveFromListButton } from "@/components/lists/RemoveFromListButton";
+import { BulkAddModelsDialog } from "@/components/lists/BulkAddModelsDialog";
 
 export const metadata: Metadata = {
   title: "List | EXA",
@@ -97,20 +98,27 @@ export default async function ListDetailPage({
         </Link>
 
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div
-              className="w-4 h-4 rounded-full"
-              style={{ backgroundColor: list.color }}
-            />
-            <h1 className="text-3xl font-bold">{list.name}</h1>
+        <div className="flex items-start justify-between mb-8">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <div
+                className="w-4 h-4 rounded-full"
+                style={{ backgroundColor: list.color }}
+              />
+              <h1 className="text-3xl font-bold">{list.name}</h1>
+            </div>
+            {list.description && (
+              <p className="text-muted-foreground">{list.description}</p>
+            )}
+            <p className="text-sm text-muted-foreground mt-2">
+              {orderedModels.length} {orderedModels.length === 1 ? "model" : "models"}
+            </p>
           </div>
-          {list.description && (
-            <p className="text-muted-foreground">{list.description}</p>
-          )}
-          <p className="text-sm text-muted-foreground mt-2">
-            {orderedModels.length} {orderedModels.length === 1 ? "model" : "models"}
-          </p>
+          <BulkAddModelsDialog
+            listId={id}
+            listName={list.name}
+            existingModelIds={modelIds}
+          />
         </div>
 
         {/* Models Grid */}

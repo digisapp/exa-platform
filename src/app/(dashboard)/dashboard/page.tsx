@@ -22,11 +22,8 @@ import {
   Users,
   MessageCircle,
   MapPin,
-  Eye,
-  Camera,
   TrendingUp,
   Building2,
-  CheckCircle,
   Clock,
   Calendar,
   Star,
@@ -66,31 +63,6 @@ export default async function DashboardPage() {
 
   if (!model) redirect("/fan/signup");
 
-  // Get stats
-  const { count: followerCount } = await (supabase
-    .from("follows") as any)
-    .select("*", { count: "exact", head: true })
-    .eq("following_id", actor.id);
-
-  const { count: portfolioCount } = await supabase
-    .from("media_assets")
-    .select("*", { count: "exact", head: true })
-    .eq("model_id", model.id)
-    .in("asset_type", ["portfolio", "video"]);
-
-  const { count: ppvCount } = await supabase
-    .from("premium_content")
-    .select("*", { count: "exact", head: true })
-    .eq("model_id", model.id)
-    .eq("is_active", true)
-    .gt("coin_price", 0);
-
-  // Get total page views (count rows in page_views for this model by username)
-  const { count: totalViews } = await (supabase
-    .from("page_views") as any)
-    .select("*", { count: "exact", head: true })
-    .eq("model_username", model.username);
-
   // Get pending bookings for this model
   // Query directly but check both model_id match and RLS
   const { data: pendingBookings, error: bookingsError } = await (supabase
@@ -101,17 +73,6 @@ export default async function DashboardPage() {
     .order("created_at", { ascending: false })
     .limit(5);
 
-  if (bookingsError) {
-    console.error("Failed to fetch bookings for dashboard:", bookingsError, "model.id:", model.id);
-  }
-
-  // Also try fetching ALL bookings for this model to debug
-  const { data: allModelBookings } = await (supabase
-    .from("bookings") as any)
-    .select("id, status, model_id")
-    .eq("model_id", model.id);
-
-  console.log("Dashboard debug - model.id:", model.id, "pending:", pendingBookings?.length || 0, "all:", allModelBookings?.length || 0, "statuses:", allModelBookings?.map((b: any) => b.status));
 
   // Enrich bookings with client info
   for (const booking of pendingBookings || []) {
@@ -193,65 +154,6 @@ export default async function DashboardPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      {/* Stats Overview */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-pink-500/10 to-rose-500/10 border-pink-500/20">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-pink-500/20">
-                <Heart className="h-5 w-5 text-pink-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{followerCount || 0}</p>
-                <p className="text-xs text-muted-foreground">Followers</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border-blue-500/20">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-blue-500/20">
-                <Eye className="h-5 w-5 text-blue-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{totalViews || 0}</p>
-                <p className="text-xs text-muted-foreground">Profile Views</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-violet-500/10 to-purple-500/10 border-violet-500/20">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-violet-500/20">
-                <Camera className="h-5 w-5 text-violet-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{portfolioCount || 0}</p>
-                <p className="text-xs text-muted-foreground">Portfolio</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 border-amber-500/20">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-amber-500/20">
-                <Lock className="h-5 w-5 text-amber-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{ppvCount || 0}</p>
-                <p className="text-xs text-muted-foreground">PPV Content</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Bookings & Gigs */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Bookings */}

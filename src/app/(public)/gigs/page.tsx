@@ -20,7 +20,9 @@ import {
   CheckCircle,
   XCircle,
   Loader2,
+  Ban,
 } from "lucide-react";
+import { WithdrawApplicationButton } from "@/components/gigs/WithdrawApplicationButton";
 import { formatDistanceToNow } from "date-fns";
 
 const typeIcons: Record<string, any> = {
@@ -355,6 +357,11 @@ const statusConfig: Record<string, { icon: any; label: string; className: string
     label: "Not Selected",
     className: "bg-gray-500/10 text-gray-500 border-gray-500/20",
   },
+  cancelled: {
+    icon: Ban,
+    label: "Cancelled",
+    className: "bg-red-500/10 text-red-500 border-red-500/20",
+  },
 };
 
 function MyApplicationsGrid({ applications }: { applications: any[] }) {
@@ -460,19 +467,32 @@ function ApplicationCard({ application }: { application: any }) {
       </CardContent>
 
       <CardFooter className="pt-4">
-        <div className="flex items-center justify-between w-full">
-          {application.status === "accepted" && (
-            <span className="text-sm text-green-500 font-medium">You&apos;re in!</span>
-          )}
-          {application.status === "pending" && (
-            <span className="text-sm text-muted-foreground">Awaiting response</span>
-          )}
-          {application.status === "rejected" && (
-            <span className="text-sm text-muted-foreground">Keep applying!</span>
-          )}
-          <Button variant="outline" size="sm" asChild>
-            <Link href={`/gigs/${gig.slug}`}>View Details</Link>
-          </Button>
+        <div className="flex items-center justify-between w-full gap-2">
+          <div className="flex-1">
+            {application.status === "accepted" && (
+              <span className="text-sm text-green-500 font-medium">You&apos;re in!</span>
+            )}
+            {application.status === "pending" && (
+              <span className="text-sm text-muted-foreground">Awaiting response</span>
+            )}
+            {application.status === "rejected" && (
+              <span className="text-sm text-muted-foreground">Keep applying!</span>
+            )}
+            {application.status === "cancelled" && (
+              <span className="text-sm text-red-500">Cancelled by admin</span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {application.status === "pending" && (
+              <WithdrawApplicationButton
+                applicationId={application.id}
+                gigTitle={gig.title}
+              />
+            )}
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/gigs/${gig.slug}`}>View</Link>
+            </Button>
+          </div>
         </div>
       </CardFooter>
     </Card>

@@ -228,6 +228,7 @@ export default async function ModelProfilePage({ params }: Props) {
                 isOwner={isOwner}
                 initialFavorited={isFavorited}
                 count={favoriteCount}
+                showCount={true}
               />
               {isBrand && !isOwner && (
                 <AddToListButton

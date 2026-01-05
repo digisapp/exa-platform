@@ -61,8 +61,6 @@ export async function POST(request: Request) {
             .eq("user_id", user.id);
         }
 
-        console.log(`Linked existing model ${existingModel.id} to user ${user.id}`);
-
         return NextResponse.json({
           success: true,
           actorId: existingModel.id,

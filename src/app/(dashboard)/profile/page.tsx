@@ -13,7 +13,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2, User, Lock, DollarSign, Camera, BarChart3, Coins, Trash2, AlertTriangle, Building2, Globe } from "lucide-react";
+import { Loader2, User, Lock, DollarSign, Camera, BarChart3, Coins, Trash2, AlertTriangle, Building2, Globe, Users, Heart, MessageCircle } from "lucide-react";
+import Image from "next/image";
+import { formatDistanceToNow } from "date-fns";
 import type { Model, Fan, Actor, Brand } from "@/types/database";
 import { ImageCropper } from "@/components/upload/ImageCropper";
 import {
@@ -55,6 +57,10 @@ export default function ProfilePage() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [cropperOpen, setCropperOpen] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+  const [followers, setFollowers] = useState<any[]>([]);
+  const [followersLoading, setFollowersLoading] = useState(false);
+  const [pageViews, setPageViews] = useState<number>(0);
+  const [followerCount, setFollowerCount] = useState<number>(0);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const supabase = createClient();
@@ -215,6 +221,20 @@ export default function ProfilePage() {
         if (modelData) {
           setModel(modelData);
           setOriginalUsername(modelData.username || "");
+
+          // Fetch page views count
+          const { count: viewCount } = await (supabase
+            .from("page_views") as any)
+            .select("*", { count: "exact", head: true })
+            .eq("model_username", modelData.username);
+          setPageViews(viewCount || 0);
+
+          // Fetch follower count
+          const { count: fCount } = await (supabase
+            .from("follows") as any)
+            .select("*", { count: "exact", head: true })
+            .eq("following_id", actorData.id);
+          setFollowerCount(fCount || 0);
         }
       } else if (actorData.type === "fan") {
         // Try to find fan by user_id first, then by actor id
@@ -253,7 +273,6 @@ export default function ProfilePage() {
           setBrand(brandData);
         } else {
           // Brand record doesn't exist - create it
-          console.log("Brand record not found, creating one for actor:", actorData.id);
           const { data: newBrand, error: createError } = await (supabase
             .from("brands") as any)
             .insert({
@@ -279,6 +298,121 @@ export default function ProfilePage() {
 
     loadProfile();
   }, [supabase, router]);
+
+  // Load followers when tab is selected
+  const loadFollowers = async () => {
+    if (!actor || followersLoading || followers.length > 0) return;
+    setFollowersLoading(true);
+
+    try {
+      // Get followers
+      const { data: follows } = await (supabase
+        .from("follows") as any)
+        .select(`
+          id,
+          created_at,
+          follower_id,
+          actors!follows_follower_id_fkey (
+            id,
+            type,
+            user_id
+          )
+        `)
+        .eq("following_id", actor.id)
+        .order("created_at", { ascending: false });
+
+      if (!follows) {
+        setFollowers([]);
+        return;
+      }
+
+      // Get follower details based on their type
+      const followerActors = follows.map((f: any) => f.actors).filter(Boolean);
+
+      // Get fan details
+      const fanActorIds = followerActors.filter((a: any) => a.type === "fan").map((a: any) => a.id);
+      const { data: fans } = fanActorIds.length > 0
+        ? await supabase.from("fans").select("id, display_name, avatar_url").in("id", fanActorIds)
+        : { data: [] };
+      const fansMap = new Map((fans || []).map((f: any) => [f.id, f]));
+
+      // Get model details
+      const modelUserIds = followerActors.filter((a: any) => a.type === "model").map((a: any) => a.user_id);
+      const { data: models } = modelUserIds.length > 0
+        ? await supabase.from("models").select("user_id, username, first_name, last_name, profile_photo_url").in("user_id", modelUserIds)
+        : { data: [] };
+      const modelsMap = new Map((models || []).map((m: any) => [m.user_id, m]));
+
+      // Get brand details
+      const brandActorIds = followerActors.filter((a: any) => a.type === "brand").map((a: any) => a.id);
+      const { data: brands } = brandActorIds.length > 0
+        ? await (supabase.from("brands") as any).select("id, company_name, logo_url").in("id", brandActorIds)
+        : { data: [] };
+      const brandsMap = new Map((brands || []).map((b: any) => [b.id, b]));
+
+      // Build enriched followers list
+      const enrichedFollowers = follows.map((follow: any) => {
+        const followerActor = follow.actors;
+        if (!followerActor) return null;
+
+        let displayName = "Unknown";
+        let avatarUrl = null;
+        let profileUrl = null;
+        const type = followerActor.type;
+
+        if (type === "fan") {
+          const fan = fansMap.get(followerActor.id) as any;
+          displayName = fan?.display_name || "Anonymous Fan";
+          avatarUrl = fan?.avatar_url;
+        } else if (type === "model") {
+          const model = modelsMap.get(followerActor.user_id) as any;
+          displayName = model?.first_name
+            ? `${model.first_name} ${model.last_name || ""}`.trim()
+            : model?.username || "Model";
+          avatarUrl = model?.profile_photo_url;
+          profileUrl = model?.username ? `/${model.username}` : null;
+        } else if (type === "brand") {
+          const brand = brandsMap.get(followerActor.id) as any;
+          displayName = brand?.company_name || "Brand";
+          avatarUrl = brand?.logo_url;
+        }
+
+        return {
+          id: follow.id,
+          actorId: followerActor.id,
+          displayName,
+          avatarUrl,
+          profileUrl,
+          type,
+          followedAt: follow.created_at,
+        };
+      }).filter(Boolean);
+
+      setFollowers(enrichedFollowers);
+    } catch (error) {
+      toast.error("Failed to load followers");
+    } finally {
+      setFollowersLoading(false);
+    }
+  };
+
+  const getTypeLabel = (type: string) => {
+    switch (type) {
+      case "fan": return "Fan";
+      case "model": return "Model";
+      case "brand": return "Brand";
+      default: return type;
+    }
+  };
+
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case "fan": return "bg-amber-500/20 text-amber-500";
+      case "model": return "bg-pink-500/20 text-pink-500";
+      case "brand": return "bg-cyan-500/20 text-cyan-500";
+      default: return "bg-gray-500/20 text-gray-500";
+    }
+  };
 
   const handleFanSave = async () => {
     if (!fan) return;
@@ -947,8 +1081,19 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      <div>
+      <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Edit Profile</h1>
+        {/* Stats */}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-pink-500/10 border border-pink-500/20">
+            <Heart className="h-4 w-4 text-pink-500" />
+            <span className="text-sm font-medium">{followerCount} followers</span>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20">
+            <BarChart3 className="h-4 w-4 text-blue-500" />
+            <span className="text-sm font-medium">{pageViews} views</span>
+          </div>
+        </div>
       </div>
 
       <Tabs defaultValue="profile" className="space-y-6">
@@ -960,6 +1105,10 @@ export default function ProfilePage() {
           <TabsTrigger value="rates">
             <DollarSign className="h-4 w-4 mr-2" />
             Rates
+          </TabsTrigger>
+          <TabsTrigger value="followers" onClick={loadFollowers}>
+            <Users className="h-4 w-4 mr-2" />
+            Followers
           </TabsTrigger>
           <TabsTrigger value="privacy">
             <Lock className="h-4 w-4 mr-2" />
@@ -1753,6 +1902,112 @@ export default function ProfilePage() {
                 Set a rate to 0 coins to hide that service if you don&apos;t offer it.
               </p>
 
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="followers" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-pink-500" />
+                Your Followers
+              </CardTitle>
+              <CardDescription>
+                {followerCount} {followerCount === 1 ? "person" : "people"} following you
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {followersLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : followers.length > 0 ? (
+                <div className="space-y-3">
+                  {followers.map((follower: any) => (
+                    <div
+                      key={follower.id}
+                      className="flex items-center gap-4 p-3 rounded-lg border hover:border-pink-500/30 transition-colors"
+                    >
+                      {/* Avatar */}
+                      {follower.profileUrl ? (
+                        <Link href={follower.profileUrl}>
+                          <div className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-pink-500/30 hover:ring-pink-500/60 transition-all">
+                            {follower.avatarUrl ? (
+                              <Image
+                                src={follower.avatarUrl}
+                                alt={follower.displayName}
+                                width={48}
+                                height={48}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gradient-to-br from-pink-500/20 to-violet-500/20 flex items-center justify-center text-lg font-bold">
+                                {follower.displayName.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                          </div>
+                        </Link>
+                      ) : (
+                        <div className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-white/20">
+                          {follower.avatarUrl ? (
+                            <Image
+                              src={follower.avatarUrl}
+                              alt={follower.displayName}
+                              width={48}
+                              height={48}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-pink-500/20 to-violet-500/20 flex items-center justify-center text-lg font-bold">
+                              {follower.displayName.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Info */}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          {follower.profileUrl ? (
+                            <Link href={follower.profileUrl} className="font-medium hover:text-pink-500 transition-colors">
+                              {follower.displayName}
+                            </Link>
+                          ) : (
+                            <span className="font-medium">{follower.displayName}</span>
+                          )}
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getTypeColor(follower.type)}`}>
+                            {getTypeLabel(follower.type)}
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Followed {formatDistanceToNow(new Date(follower.followedAt), { addSuffix: true })}
+                        </p>
+                      </div>
+
+                      {/* Message Button */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 text-muted-foreground hover:text-pink-500 hover:bg-pink-500/10"
+                        asChild
+                      >
+                        <Link href={`/chats?new=${follower.actorId}`}>
+                          <MessageCircle className="h-5 w-5" />
+                        </Link>
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Users className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No followers yet</h3>
+                  <p className="text-muted-foreground">
+                    Share your profile to get more followers!
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
