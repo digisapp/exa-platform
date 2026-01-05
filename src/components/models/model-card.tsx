@@ -109,10 +109,17 @@ export const ModelCard = memo(function ModelCard({
     );
   }
 
+  // Focus tag labels
+  const focusLabels: Record<string, string> = {
+    fashion: "Fashion", commercial: "Commercial", fitness: "Fitness",
+    swimwear: "Swimwear", beauty: "Beauty", editorial: "Editorial",
+    ecommerce: "E-Comm", promo: "Promo", luxury: "Luxury", lifestyle: "Lifestyle"
+  };
+
   return (
     <Link href={`/${model.username}`}>
       <div className="glass-card rounded-2xl overflow-hidden hover:scale-[1.02] transition-all h-full group">
-        {/* Image */}
+        {/* Image with Hover Overlay */}
         <div className="aspect-[3/4] relative bg-gradient-to-br from-[#FF69B4]/20 to-[#9400D3]/20 overflow-hidden">
           {model.profile_photo_url ? (
             <Image
@@ -128,6 +135,7 @@ export const ModelCard = memo(function ModelCard({
               <span className="text-6xl">👤</span>
             </div>
           )}
+
           {/* Favorite Button */}
           {showFavorite && (
             <button
@@ -145,6 +153,7 @@ export const ModelCard = memo(function ModelCard({
               <Heart className={cn("h-5 w-5", isFavorited && "fill-current")} />
             </button>
           )}
+
           {/* Level Badge */}
           {level && !showFavorite && (
             <div className="absolute top-3 right-3">
@@ -153,6 +162,7 @@ export const ModelCard = memo(function ModelCard({
               </span>
             </div>
           )}
+
           {/* Availability indicator */}
           {model.availability_status === 'available' && (
             <div className="absolute top-3 left-3">
@@ -162,67 +172,51 @@ export const ModelCard = memo(function ModelCard({
               </div>
             </div>
           )}
-        </div>
 
-        <div className="p-4">
-          <div className="space-y-2">
-            <div className="flex items-start justify-between">
-              <div className="min-w-0 flex-1">
-                <h3 className="font-semibold truncate">{displayName}</h3>
-                <p className="text-sm text-[#00BFFF]">@{model.username}</p>
-              </div>
-              {model.instagram_followers && model.instagram_followers > 0 && (
-                <div className="text-right">
-                  <p className="text-sm font-medium text-[#FF69B4]">
-                    {model.instagram_followers >= 1000
-                      ? `${(model.instagram_followers / 1000).toFixed(1)}k`
-                      : model.instagram_followers}
-                  </p>
-                  <p className="text-xs text-muted-foreground">followers</p>
+          {/* Bottom Name Bar - Always Visible */}
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-3 pt-8">
+            <h3 className="font-semibold text-white truncate">{displayName}</h3>
+            <p className="text-sm text-[#00BFFF]">@{model.username}</p>
+          </div>
+
+          {/* Hover Overlay with Details */}
+          <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-4">
+            <div className="space-y-2">
+              <h3 className="font-semibold text-white text-lg">{displayName}</h3>
+              <p className="text-sm text-[#00BFFF]">@{model.username}</p>
+
+              {model.show_location && (model.city || model.state) && (
+                <div className="flex items-center gap-1 text-sm text-white/80">
+                  <MapPin className="h-3.5 w-3.5 text-[#FF69B4]" />
+                  {model.city && model.state ? `${model.city}, ${model.state}` : model.city || model.state}
+                </div>
+              )}
+
+              {model.show_social_media && model.instagram_name && (
+                <div className="flex items-center gap-1 text-sm text-white/80">
+                  <Instagram className="h-3.5 w-3.5" />
+                  @{model.instagram_name}
+                </div>
+              )}
+
+              {model.height && model.show_measurements && (
+                <p className="text-sm text-white/80">{model.height}</p>
+              )}
+
+              {/* Focus Tags */}
+              {model.focus_tags && model.focus_tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {model.focus_tags.slice(0, 3).map((tag: string) => (
+                    <span
+                      key={tag}
+                      className="px-2 py-0.5 text-xs font-medium rounded-full bg-gradient-to-r from-pink-500/30 to-violet-500/30 text-white border border-white/20"
+                    >
+                      {focusLabels[tag] || tag}
+                    </span>
+                  ))}
                 </div>
               )}
             </div>
-
-            {model.show_location && (model.city || model.state) && (
-              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                <MapPin className="h-3.5 w-3.5 text-[#FF69B4]" />
-                {model.city && model.state ? `${model.city}, ${model.state}` : model.city || model.state}
-              </div>
-            )}
-
-            {model.show_social_media && model.instagram_name && (
-              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                <Instagram className="h-3.5 w-3.5" />
-                @{model.instagram_name}
-              </div>
-            )}
-
-            {model.height && model.show_measurements && (
-              <p className="text-sm text-muted-foreground">
-                {model.height}
-              </p>
-            )}
-
-            {/* Focus Tags */}
-            {model.focus_tags && model.focus_tags.length > 0 && (
-              <div className="flex flex-wrap gap-1 pt-1">
-                {model.focus_tags.slice(0, 3).map((tag: string) => {
-                  const labels: Record<string, string> = {
-                    fashion: "Fashion", commercial: "Commercial", fitness: "Fitness",
-                    swimwear: "Swimwear", beauty: "Beauty", editorial: "Editorial",
-                    ecommerce: "E-Comm", promo: "Promo", luxury: "Luxury", lifestyle: "Lifestyle"
-                  };
-                  return (
-                    <span
-                      key={tag}
-                      className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-gradient-to-r from-pink-500/20 to-violet-500/20 text-pink-300"
-                    >
-                      {labels[tag] || tag}
-                    </span>
-                  );
-                })}
-              </div>
-            )}
           </div>
         </div>
       </div>
