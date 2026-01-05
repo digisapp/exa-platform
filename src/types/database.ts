@@ -101,6 +101,7 @@ export interface Database {
           user_id: string | null
           created_at: string
           updated_at: string
+          focus_tags: string[]
         }
         Insert: {
           id: string
@@ -162,6 +163,7 @@ export interface Database {
           user_id?: string | null
           created_at?: string
           updated_at?: string
+          focus_tags?: string[]
         }
         Update: {
           id?: string
@@ -223,6 +225,7 @@ export interface Database {
           user_id?: string | null
           created_at?: string
           updated_at?: string
+          focus_tags?: string[]
         }
       }
       brands: {

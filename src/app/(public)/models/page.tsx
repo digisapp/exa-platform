@@ -11,6 +11,7 @@ interface SearchParams {
   state?: string;
   level?: string;
   sort?: string;
+  focus?: string;
 }
 
 export default async function ModelsPage({
@@ -42,6 +43,11 @@ export default async function ModelsPage({
     query = query.eq("is_verified", true);
   } else if (params.level === 'featured') {
     query = query.eq("is_featured", true);
+  }
+
+  // Filter by focus
+  if (params.focus) {
+    query = query.contains("focus_tags", [params.focus]);
   }
 
   // Sort

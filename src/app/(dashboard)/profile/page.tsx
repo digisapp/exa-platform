@@ -462,6 +462,7 @@ export default function ProfilePage() {
         travel_fee: model.travel_fee || 0,
         show_booking_rates: model.show_booking_rates ?? true,
         show_on_rates_page: model.show_on_rates_page ?? false,
+        focus_tags: model.focus_tags || [],
         updated_at: new Date().toISOString(),
       };
 
@@ -1093,6 +1094,60 @@ export default function ProfilePage() {
                   placeholder="Tell people about yourself..."
                 />
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Focus / Work Type */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Focus</CardTitle>
+              <CardDescription>Select up to 3 areas that best describe your work (helps brands find you)</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
+                {[
+                  { value: "fashion", label: "Fashion" },
+                  { value: "commercial", label: "Commercial" },
+                  { value: "fitness", label: "Fitness" },
+                  { value: "swimwear", label: "Swimwear" },
+                  { value: "beauty", label: "Beauty" },
+                  { value: "editorial", label: "Editorial" },
+                  { value: "ecommerce", label: "E-Commerce" },
+                  { value: "promo", label: "Promo/Event" },
+                  { value: "luxury", label: "Luxury" },
+                  { value: "lifestyle", label: "Lifestyle" },
+                ].map((focus) => {
+                  const isSelected = (model.focus_tags || []).includes(focus.value);
+                  const canSelect = (model.focus_tags || []).length < 3 || isSelected;
+                  return (
+                    <button
+                      key={focus.value}
+                      type="button"
+                      onClick={() => {
+                        const currentTags = model.focus_tags || [];
+                        if (isSelected) {
+                          setModel({ ...model, focus_tags: currentTags.filter(t => t !== focus.value) });
+                        } else if (canSelect) {
+                          setModel({ ...model, focus_tags: [...currentTags, focus.value] });
+                        }
+                      }}
+                      disabled={!canSelect && !isSelected}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                        isSelected
+                          ? "bg-gradient-to-r from-pink-500 to-violet-500 text-white"
+                          : canSelect
+                            ? "bg-muted hover:bg-muted/80 text-foreground"
+                            : "bg-muted/50 text-muted-foreground cursor-not-allowed"
+                      }`}
+                    >
+                      {focus.label}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-muted-foreground mt-3">
+                {(model.focus_tags || []).length}/3 selected
+              </p>
             </CardContent>
           </Card>
 

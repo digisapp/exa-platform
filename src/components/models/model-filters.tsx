@@ -73,6 +73,19 @@ const SORT_OPTIONS = [
   { value: "name", label: "Name A-Z" },
 ];
 
+const FOCUS_OPTIONS = [
+  { value: "fashion", label: "Fashion" },
+  { value: "commercial", label: "Commercial" },
+  { value: "fitness", label: "Fitness" },
+  { value: "swimwear", label: "Swimwear" },
+  { value: "beauty", label: "Beauty" },
+  { value: "editorial", label: "Editorial" },
+  { value: "ecommerce", label: "E-Commerce" },
+  { value: "promo", label: "Promo/Event" },
+  { value: "luxury", label: "Luxury" },
+  { value: "lifestyle", label: "Lifestyle" },
+];
+
 export function ModelFilters() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -98,7 +111,7 @@ export function ModelFilters() {
     router.push("/models");
   };
 
-  const hasFilters = searchParams.get("q") || searchParams.get("state") || searchParams.get("level");
+  const hasFilters = searchParams.get("q") || searchParams.get("state") || searchParams.get("level") || searchParams.get("focus");
 
   return (
     <div className="space-y-4">
@@ -116,6 +129,23 @@ export function ModelFilters() {
       </form>
 
       <div className="flex flex-wrap gap-3">
+        <Select
+          value={searchParams.get("focus") || "all"}
+          onValueChange={(v) => updateParams("focus", v === "all" ? null : v)}
+        >
+          <SelectTrigger className="w-[150px]">
+            <SelectValue placeholder="All Focus" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Focus</SelectItem>
+            {FOCUS_OPTIONS.map((focus) => (
+              <SelectItem key={focus.value} value={focus.value}>
+                {focus.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
         <Select
           value={searchParams.get("state") || "all"}
           onValueChange={(v) => updateParams("state", v === "all" ? null : v)}
