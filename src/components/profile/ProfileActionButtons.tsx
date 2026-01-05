@@ -226,7 +226,7 @@ export function ProfileActionButtons({
     <>
       <div className={`flex gap-2 mb-6 ${isPreview ? "pointer-events-none" : ""}`}>
         <Button
-          className="exa-gradient-button h-11 text-sm font-semibold rounded-full px-3 flex-1"
+          className="exa-gradient-button h-11 text-sm font-semibold rounded-full px-4"
           onClick={handleChat}
         >
           <MessageCircle className="h-4 w-4 mr-1.5" />
@@ -242,18 +242,19 @@ export function ProfileActionButtons({
           ) : (
             <Video className="h-4 w-4 mr-1.5" />
           )}
-          {startingCall ? "..." : "Video"}
+          {startingCall ? "..." : "Video Call"}
         </Button>
         <Button
-          className="h-11 w-11 text-sm font-semibold rounded-full p-0 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white flex-shrink-0"
+          className="h-11 text-sm font-semibold rounded-full px-3 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white flex-1"
           onClick={handleVoiceCall}
           disabled={startingVoiceCall}
         >
           {startingVoiceCall ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
           ) : (
-            <Phone className="h-4 w-4" />
+            <Phone className="h-4 w-4 mr-1.5" />
           )}
+          {startingVoiceCall ? "..." : "Voice"}
         </Button>
         <Button
           className="h-11 w-11 text-sm font-semibold rounded-full p-0 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white flex-shrink-0"
