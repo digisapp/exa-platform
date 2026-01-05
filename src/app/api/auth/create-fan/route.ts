@@ -24,6 +24,53 @@ export async function POST(request: Request) {
       );
     }
 
+    // FIRST: Check if there's an existing model record with this email (from imports)
+    // This handles models who were imported before they had an auth account
+    if (user.email) {
+      const { data: existingModel } = await (supabase
+        .from("models") as any)
+        .select("id, user_id, is_approved")
+        .eq("email", user.email.toLowerCase())
+        .is("user_id", null)
+        .single();
+
+      if (existingModel) {
+        // Link the existing model to this user
+        await (supabase.from("models") as any)
+          .update({ user_id: user.id })
+          .eq("id", existingModel.id);
+
+        // Check if actor already exists
+        const { data: existingActor } = await (supabase
+          .from("actors") as any)
+          .select("id")
+          .eq("user_id", user.id)
+          .single();
+
+        if (!existingActor) {
+          // Create actor record for this model
+          await (supabase.from("actors") as any)
+            .insert({
+              user_id: user.id,
+              type: "model",
+            });
+        } else {
+          // Update existing actor to type model if it was fan
+          await (supabase.from("actors") as any)
+            .update({ type: "model" })
+            .eq("user_id", user.id);
+        }
+
+        console.log(`Linked existing model ${existingModel.id} to user ${user.id}`);
+
+        return NextResponse.json({
+          success: true,
+          actorId: existingModel.id,
+          linkedExistingModel: true,
+        });
+      }
+    }
+
     // Check if user already has an actor record
     const { data: existingActor } = await (supabase
       .from("actors") as any)
