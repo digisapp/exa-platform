@@ -67,6 +67,14 @@ const SORT_OPTIONS = [
   { value: "name", label: "Name A-Z" },
 ];
 
+const HEIGHT_RANGES = [
+  { value: "petite", label: "5'2\" & under" },
+  { value: "short", label: "5'3\" - 5'5\"" },
+  { value: "average", label: "5'6\" - 5'8\"" },
+  { value: "tall", label: "5'9\" - 5'11\"" },
+  { value: "vtall", label: "6'0\" & above" },
+];
+
 const FOCUS_OPTIONS = [
   { value: "fashion", label: "Fashion" },
   { value: "commercial", label: "Commercial" },
@@ -105,7 +113,7 @@ export function ModelFilters() {
     router.push("/models");
   };
 
-  const hasFilters = searchParams.get("q") || searchParams.get("state") || searchParams.get("focus");
+  const hasFilters = searchParams.get("q") || searchParams.get("state") || searchParams.get("focus") || searchParams.get("height");
 
   return (
     <div className="space-y-4">
@@ -152,6 +160,23 @@ export function ModelFilters() {
             {US_STATES.map((state) => (
               <SelectItem key={state.value} value={state.value}>
                 {state.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={searchParams.get("height") || "all"}
+          onValueChange={(v) => updateParams("height", v === "all" ? null : v)}
+        >
+          <SelectTrigger className="w-[150px]">
+            <SelectValue placeholder="All Heights" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Heights</SelectItem>
+            {HEIGHT_RANGES.map((range) => (
+              <SelectItem key={range.value} value={range.value}>
+                {range.label}
               </SelectItem>
             ))}
           </SelectContent>

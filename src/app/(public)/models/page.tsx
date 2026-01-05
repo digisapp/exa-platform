@@ -12,6 +12,7 @@ interface SearchParams {
   level?: string;
   sort?: string;
   focus?: string;
+  height?: string;
 }
 
 export default async function ModelsPage({
@@ -48,6 +49,22 @@ export default async function ModelsPage({
   // Filter by focus
   if (params.focus) {
     query = query.contains("focus_tags", [params.focus]);
+  }
+
+  // Filter by height range
+  if (params.height) {
+    const heightPatterns: Record<string, string[]> = {
+      petite: ["4'%", "5'0%", "5'1%", "5'2%"],
+      short: ["5'3%", "5'4%", "5'5%"],
+      average: ["5'6%", "5'7%", "5'8%"],
+      tall: ["5'9%", "5'10%", "5'11%"],
+      vtall: ["6'%"],
+    };
+    const patterns = heightPatterns[params.height];
+    if (patterns) {
+      const orConditions = patterns.map(p => `height.ilike.${p}`).join(",");
+      query = query.or(orConditions);
+    }
   }
 
   // Sort
