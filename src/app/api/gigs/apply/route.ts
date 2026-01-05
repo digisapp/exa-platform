@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 
@@ -148,13 +149,20 @@ export async function DELETE(request: NextRequest) {
       }, { status: 400 });
     }
 
+    // Use service role client to bypass RLS for delete
+    const adminClient = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
     // Delete the application
-    const { error } = await (supabase
-      .from("gig_applications") as any)
+    const { error } = await adminClient
+      .from("gig_applications")
       .delete()
       .eq("id", applicationId);
 
     if (error) {
+      console.error("Delete error:", error);
       throw error;
     }
 
