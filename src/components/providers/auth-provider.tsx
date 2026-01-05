@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
@@ -20,6 +20,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const supabase = createClient();
+  const lastRefreshRef = useRef<number>(0);
+  const hasInitializedRef = useRef<boolean>(false);
 
   useEffect(() => {
     // Get initial session
@@ -27,6 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
       setLoading(false);
+      hasInitializedRef.current = true;
     };
 
     getInitialSession();
@@ -52,12 +55,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
+        // Skip INITIAL_SESSION event - we handle this in getInitialSession
+        if (event === 'INITIAL_SESSION') {
+          return;
+        }
+
+        // Debounce refreshes - don't refresh more than once every 5 seconds
+        const now = Date.now();
+        if (now - lastRefreshRef.current < 5000) {
+          return;
+        }
+
         // Refresh the page data when auth state changes
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          router.refresh();
+          // Only refresh if we've already initialized (not on first load)
+          if (hasInitializedRef.current) {
+            lastRefreshRef.current = now;
+            router.refresh();
+          }
         }
 
         if (event === 'SIGNED_OUT') {
+          lastRefreshRef.current = now;
           router.push('/');
           router.refresh();
         }
