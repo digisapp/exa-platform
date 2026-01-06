@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
-import { Navbar } from "@/components/layout/navbar";
 import { ArrowLeft, Users } from "lucide-react";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -37,13 +36,6 @@ export default async function ListDetailPage({
   if (!actor || actor.type !== "brand") {
     redirect("/dashboard");
   }
-
-  // Get brand profile for navbar
-  const { data: brand } = await (supabase
-    .from("brands") as any)
-    .select("company_name, logo_url, coin_balance")
-    .eq("id", actor.id)
-    .single();
 
   // Get list with items
   const { data: list, error } = await (supabase
@@ -91,83 +83,70 @@ export default async function ListDetailPage({
     .filter((m: any) => m.id) || [];
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar
-        user={{
-          id: user.id,
-          email: user.email || "",
-          avatar_url: brand?.logo_url || undefined,
-          name: brand?.company_name || undefined,
-        }}
-        actorType="brand"
-        coinBalance={brand?.coin_balance ?? 0}
-      />
+    <>
+      {/* Back Link */}
+      <Link
+        href="/lists"
+        className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to Lists
+      </Link>
 
-      <main className="container px-8 md:px-16 py-8">
-        {/* Back Link */}
-        <Link
-          href="/lists"
-          className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Lists
-        </Link>
-
-        {/* Header */}
-        <div className="flex items-start justify-between mb-8">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <div
-                className="w-4 h-4 rounded-full"
-                style={{ backgroundColor: list.color }}
-              />
-              <h1 className="text-3xl font-bold">{list.name}</h1>
-            </div>
-            {list.description && (
-              <p className="text-muted-foreground">{list.description}</p>
-            )}
-            <p className="text-sm text-muted-foreground mt-2">
-              {orderedModels.length} {orderedModels.length === 1 ? "model" : "models"}
-            </p>
+      {/* Header */}
+      <div className="flex items-start justify-between mb-8">
+        <div>
+          <div className="flex items-center gap-3 mb-2">
+            <div
+              className="w-4 h-4 rounded-full"
+              style={{ backgroundColor: list.color }}
+            />
+            <h1 className="text-3xl font-bold">{list.name}</h1>
           </div>
-          <BulkAddModelsDialog
-            listId={id}
-            listName={list.name}
-            existingModelIds={modelIds}
-          />
+          {list.description && (
+            <p className="text-muted-foreground">{list.description}</p>
+          )}
+          <p className="text-sm text-muted-foreground mt-2">
+            {orderedModels.length} {orderedModels.length === 1 ? "model" : "models"}
+          </p>
         </div>
+        <BulkAddModelsDialog
+          listId={id}
+          listName={list.name}
+          existingModelIds={modelIds}
+        />
+      </div>
 
-        {/* Models Grid */}
-        {orderedModels.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {orderedModels.map((model: any) => (
-              <div key={model.id} className="relative group">
-                <ModelCard
-                  model={model}
-                  showFavorite={false}
-                  isLoggedIn={true}
-                />
-                <RemoveFromListButton
-                  listId={id}
-                  modelId={model.id}
-                  modelName={model.first_name || model.username}
-                />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-16">
-            <Users className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">No models in this list</h2>
-            <p className="text-muted-foreground mb-6">
-              Browse models and add them to this list using the list icon.
-            </p>
-            <Button asChild>
-              <Link href="/models">Browse Models</Link>
-            </Button>
-          </div>
-        )}
-      </main>
-    </div>
+      {/* Models Grid */}
+      {orderedModels.length > 0 ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {orderedModels.map((model: any) => (
+            <div key={model.id} className="relative group">
+              <ModelCard
+                model={model}
+                showFavorite={false}
+                isLoggedIn={true}
+              />
+              <RemoveFromListButton
+                listId={id}
+                modelId={model.id}
+                modelName={model.first_name || model.username}
+              />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-16">
+          <Users className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold mb-2">No models in this list</h2>
+          <p className="text-muted-foreground mb-6">
+            Browse models and add them to this list using the list icon.
+          </p>
+          <Button asChild>
+            <Link href="/models">Browse Models</Link>
+          </Button>
+        </div>
+      )}
+    </>
   );
 }

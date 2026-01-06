@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { Navbar } from "@/components/layout/navbar";
 import { ListPlus } from "lucide-react";
 import type { Metadata } from "next";
 import { CreateListDialog } from "@/components/lists/CreateListDialog";
@@ -29,13 +28,6 @@ export default async function ListsPage() {
   if (!actor || actor.type !== "brand") {
     redirect("/dashboard");
   }
-
-  // Get brand profile for navbar
-  const { data: brand } = await (supabase
-    .from("brands") as any)
-    .select("company_name, logo_url, coin_balance")
-    .eq("id", actor.id)
-    .single();
 
   // Get all lists with items
   const { data: lists } = await (supabase
@@ -78,36 +70,23 @@ export default async function ListsPage() {
   })) || [];
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar
-        user={{
-          id: user.id,
-          email: user.email || "",
-          avatar_url: brand?.logo_url || undefined,
-          name: brand?.company_name || undefined,
-        }}
-        actorType="brand"
-        coinBalance={brand?.coin_balance ?? 0}
-      />
-
-      <main className="container px-8 md:px-16 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <div className="flex items-center gap-3">
-              <ListPlus className="h-8 w-8 text-violet-500" />
-              <h1 className="text-3xl font-bold">My Lists</h1>
-            </div>
-            <p className="text-muted-foreground mt-2">
-              Organize models into lists for your campaigns and projects
-            </p>
+    <>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <div className="flex items-center gap-3">
+            <ListPlus className="h-8 w-8 text-violet-500" />
+            <h1 className="text-3xl font-bold">My Lists</h1>
           </div>
-          {enrichedLists.length > 0 && <CreateListDialog />}
+          <p className="text-muted-foreground mt-2">
+            Organize models into lists for your campaigns and projects
+          </p>
         </div>
+        {enrichedLists.length > 0 && <CreateListDialog />}
+      </div>
 
-        {/* Lists Grid with Search */}
-        <ListsGrid lists={enrichedLists} />
-      </main>
-    </div>
+      {/* Lists Grid with Search */}
+      <ListsGrid lists={enrichedLists} />
+    </>
   );
 }
