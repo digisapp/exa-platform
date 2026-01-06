@@ -298,37 +298,44 @@ export default function BrandSubscriptionPage() {
       </Card>
 
       {/* Upgrade Options */}
-      {(currentTier === "free" || currentTier === "starter" || currentTier === "pro" || isPaused) && (
+      {(currentTier === "free" || currentTier === "discovery" || currentTier === "starter" || currentTier === "pro" || isPaused) && (
         <Card>
           <CardHeader>
             <CardTitle>{isPaused ? "Resubscribe" : "Upgrade Your Plan"}</CardTitle>
             <CardDescription>
               {isPaused
                 ? "Reactivate your subscription to continue using all features"
-                : "Get more coins and features with a higher tier"}
+                : "Access 5,000+ curated models with direct messaging and calling"}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {Object.entries(BRAND_SUBSCRIPTION_TIERS)
                 .filter(([key]) => key !== "free")
                 .map(([key, tier]) => {
                   const isCurrentPlan = key === currentTier && isActive;
-                  const isDowngrade = !isPaused && (
-                    (currentTier === "enterprise" && key !== "enterprise") ||
-                    (currentTier === "pro" && key === "starter")
-                  );
+                  const tierOrder = ["discovery", "starter", "pro", "enterprise"];
+                  const currentIndex = tierOrder.indexOf(currentTier);
+                  const tierIndex = tierOrder.indexOf(key);
+                  const isDowngrade = !isPaused && currentIndex > tierIndex && currentIndex !== -1;
+                  const isPopular = "popular" in tier && tier.popular;
 
                   return (
                     <div
                       key={key}
                       className={cn(
-                        "p-4 rounded-xl border-2 transition-all",
+                        "p-4 rounded-xl border-2 transition-all relative",
                         isCurrentPlan && "border-cyan-500 bg-cyan-500/5",
-                        !isCurrentPlan && !isDowngrade && "border-border hover:border-cyan-500/50",
+                        isPopular && !isCurrentPlan && "border-violet-500 bg-violet-500/5",
+                        !isCurrentPlan && !isPopular && !isDowngrade && "border-border hover:border-cyan-500/50",
                         isDowngrade && "border-border opacity-50"
                       )}
                     >
+                      {isPopular && !isCurrentPlan && (
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                          <Badge className="bg-violet-500">Most Popular</Badge>
+                        </div>
+                      )}
                       <div className="flex items-center justify-between mb-3">
                         <h3 className="font-semibold">{tier.name}</h3>
                         {isCurrentPlan && (
@@ -340,12 +347,24 @@ export default function BrandSubscriptionPage() {
                         <span className="text-sm font-normal text-muted-foreground">/mo</span>
                       </p>
                       <p className="text-sm text-muted-foreground mb-4">
-                        {tier.monthlyCoins.toLocaleString()} coins/month
+                        {tier.monthlyCoins > 0
+                          ? `${tier.monthlyCoins.toLocaleString()} coins/month`
+                          : "No messaging/calling"
+                        }
                       </p>
+                      <ul className="text-xs text-muted-foreground space-y-1 mb-4">
+                        {tier.features.slice(0, 3).map((feature, i) => (
+                          <li key={i} className="flex items-start gap-1">
+                            <CheckCircle className="h-3 w-3 text-green-500 mt-0.5 flex-shrink-0" />
+                            <span>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
                       <Button
                         className={cn(
                           "w-full",
-                          !isCurrentPlan && !isDowngrade && "bg-gradient-to-r from-cyan-500 to-blue-500"
+                          isPopular && !isCurrentPlan && !isDowngrade && "bg-gradient-to-r from-violet-500 to-pink-500",
+                          !isPopular && !isCurrentPlan && !isDowngrade && "bg-gradient-to-r from-cyan-500 to-blue-500"
                         )}
                         variant={isCurrentPlan || isDowngrade ? "outline" : "default"}
                         disabled={isCurrentPlan || isDowngrade || upgrading !== null}
@@ -367,7 +386,7 @@ export default function BrandSubscriptionPage() {
                           </>
                         ) : (
                           <>
-                            Upgrade
+                            {currentIndex === -1 || tierIndex > currentIndex ? "Subscribe" : "Upgrade"}
                             <ArrowRight className="h-4 w-4 ml-2" />
                           </>
                         )}

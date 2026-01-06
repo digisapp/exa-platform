@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { BRAND_SUBSCRIPTION_TIERS, BrandTier } from "@/lib/stripe-config";
 
 // GET /api/lists - Get all lists for current brand
 export async function GET() {
@@ -70,18 +71,43 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Only brands can create lists" }, { status: 403 });
   }
 
+  // Use service role client to bypass RLS
+  const adminClient = createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
+  // Get brand's subscription tier
+  const { data: brand } = await (adminClient
+    .from("brands") as any)
+    .select("subscription_tier, subscription_status")
+    .eq("id", actor.id)
+    .single();
+
+  const tier = (brand?.subscription_status === "active" ? brand?.subscription_tier : "free") as BrandTier || "free";
+  const tierConfig = BRAND_SUBSCRIPTION_TIERS[tier];
+
+  // Check list limit (skip if unlimited: -1)
+  if (tierConfig.maxLists !== -1) {
+    const { count } = await (adminClient
+      .from("brand_lists") as any)
+      .select("id", { count: "exact", head: true })
+      .eq("brand_id", actor.id);
+
+    if ((count || 0) >= tierConfig.maxLists) {
+      return NextResponse.json({
+        error: `You've reached your list limit (${tierConfig.maxLists} lists). Upgrade your plan to create more lists.`,
+        code: "LIST_LIMIT_REACHED"
+      }, { status: 403 });
+    }
+  }
+
   const body = await request.json();
   const { name, description, color } = body;
 
   if (!name || name.trim().length === 0) {
     return NextResponse.json({ error: "List name is required" }, { status: 400 });
   }
-
-  // Use service role client to bypass RLS for insert
-  const adminClient = createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
 
   // Create the list
   const { data: list, error } = await (adminClient

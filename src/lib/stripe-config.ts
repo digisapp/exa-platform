@@ -19,6 +19,13 @@ export const BRAND_SUBSCRIPTION_TIERS = {
     monthlyPrice: 0,
     annualPrice: 0,
     monthlyCoins: 0,
+    maxLists: 0,
+    maxModelsPerList: 0,
+    teamSeats: 1,
+    hasMessaging: false,
+    hasCalling: false,
+    hasVerifiedBadge: false,
+    hasBulkTools: false,
     features: [
       "Browse models (limited preview)",
       "View model rates",
@@ -29,33 +36,76 @@ export const BRAND_SUBSCRIPTION_TIERS = {
       "Cannot send booking requests",
     ],
   },
-  starter: {
-    id: "starter",
-    name: "Starter",
-    monthlyPrice: 14900, // $149
-    annualPrice: 149000, // $1,490 (save ~$298)
-    monthlyCoins: 1000,
+  discovery: {
+    id: "discovery",
+    name: "Discovery",
+    monthlyPrice: 19900, // $199
+    annualPrice: 199000, // $1,990 (save ~$398)
+    monthlyCoins: 0,
+    maxLists: 5,
+    maxModelsPerList: 50,
+    teamSeats: 1,
+    hasMessaging: false,
+    hasCalling: false,
+    hasVerifiedBadge: false,
+    hasBulkTools: false,
     features: [
       "Full model profile access",
-      "1,000 coins/month included",
-      "Message models directly",
+      "5 lists (50 models each)",
       "Send booking requests",
       "Email support",
     ],
-    restrictions: [],
+    restrictions: [
+      "No direct messaging",
+      "No direct calling",
+    ],
+  },
+  starter: {
+    id: "starter",
+    name: "Starter",
+    monthlyPrice: 49900, // $499
+    annualPrice: 499000, // $4,990 (save ~$998)
+    monthlyCoins: 1000,
+    maxLists: 15,
+    maxModelsPerList: 100,
+    teamSeats: 1,
+    hasMessaging: true,
+    hasCalling: false,
+    hasVerifiedBadge: false,
+    hasBulkTools: false,
+    features: [
+      "Everything in Discovery",
+      "15 lists (100 models each)",
+      "1,000 coins/month included",
+      "Direct messaging with models",
+      "Email support",
+    ],
+    restrictions: [
+      "No direct calling",
+    ],
   },
   pro: {
     id: "pro",
     name: "Professional",
-    monthlyPrice: 34900, // $349
-    annualPrice: 349000, // $3,490 (save ~$698)
+    monthlyPrice: 99900, // $999
+    annualPrice: 999000, // $9,990 (save ~$1,998)
     monthlyCoins: 2500,
+    maxLists: 50,
+    maxModelsPerList: 250,
+    teamSeats: 2,
+    hasMessaging: true,
+    hasCalling: true,
+    hasVerifiedBadge: true,
+    hasBulkTools: true,
     popular: true,
     features: [
       "Everything in Starter",
+      "50 lists (250 models each)",
       "2,500 coins/month included",
+      "Direct calling with models",
+      "Bulk add tools",
+      "2 team seats",
       "Verified Brand badge",
-      "Listed on Verified Brands page",
       "Priority support",
     ],
     restrictions: [],
@@ -63,13 +113,21 @@ export const BRAND_SUBSCRIPTION_TIERS = {
   enterprise: {
     id: "enterprise",
     name: "Enterprise",
-    monthlyPrice: 69900, // $699
-    annualPrice: 699000, // $6,990 (save ~$1,398)
+    monthlyPrice: 199900, // $1,999
+    annualPrice: 1999000, // $19,990 (save ~$3,998)
     monthlyCoins: 5000,
+    maxLists: -1, // unlimited
+    maxModelsPerList: -1, // unlimited
+    teamSeats: 5,
+    hasMessaging: true,
+    hasCalling: true,
+    hasVerifiedBadge: true,
+    hasBulkTools: true,
     features: [
       "Everything in Professional",
+      "Unlimited lists & models",
       "5,000 coins/month included",
-      "Featured brand placement",
+      "5 team seats",
       "Dedicated account manager",
       "Custom campaigns",
     ],
