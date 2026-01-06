@@ -243,7 +243,7 @@ export default function BrandAnalyticsPage() {
               <TrendingUp className="h-5 w-5" />
               Frequent Collaborators
             </CardTitle>
-            <CardDescription>Models you've worked with most</CardDescription>
+            <CardDescription>Models you&apos;ve worked with most</CardDescription>
           </CardHeader>
           <CardContent>
             {data.frequentCollaborators.length === 0 ? (

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ModelCard } from "@/components/models/model-card";
 import { RemoveFromListButton } from "@/components/lists/RemoveFromListButton";
 import { BulkAddModelsDialog } from "@/components/lists/BulkAddModelsDialog";
+import { SendOfferDialog } from "@/components/offers/SendOfferDialog";
 
 export const metadata: Metadata = {
   title: "List | EXA",
@@ -110,11 +111,20 @@ export default async function ListDetailPage({
             {orderedModels.length} {orderedModels.length === 1 ? "model" : "models"}
           </p>
         </div>
-        <BulkAddModelsDialog
-          listId={id}
-          listName={list.name}
-          existingModelIds={modelIds}
-        />
+        <div className="flex items-center gap-3">
+          <BulkAddModelsDialog
+            listId={id}
+            listName={list.name}
+            existingModelIds={modelIds}
+          />
+          {orderedModels.length > 0 && (
+            <SendOfferDialog
+              listId={id}
+              listName={list.name}
+              modelCount={orderedModels.length}
+            />
+          )}
+        </div>
       </div>
 
       {/* Models Grid */}
