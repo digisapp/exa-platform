@@ -27,6 +27,8 @@ import {
   ListPlus,
   BarChart3,
   Gift,
+  Plus,
+  ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/auth/logout-button";
@@ -62,10 +64,14 @@ const fanLinks = [
 const brandLinks = [
   { href: "/dashboard", label: "Home", icon: Home },
   { href: "/models", label: "Explore", icon: Users },
-  { href: "/lists", label: "Lists", icon: ListPlus },
-  { href: "/brands/offers", label: "Offers", icon: Gift },
   { href: "/chats", label: "Chats", icon: MessageCircle },
   { href: "/brands/analytics", label: "Analytics", icon: BarChart3 },
+];
+
+// Create dropdown items for brands
+const brandCreateItems = [
+  { href: "/lists", label: "Lists", icon: ListPlus },
+  { href: "/brands/offers", label: "Offers", icon: Gift },
 ];
 
 const adminLinks = [
@@ -116,6 +122,36 @@ export function Navbar({ user, actorType, coinBalance = 0 }: NavbarProps) {
               {link.label}
             </Link>
           ))}
+
+          {/* Create dropdown for brands */}
+          {actorType === "brand" && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className={cn(
+                    "flex items-center gap-1.5 text-sm font-medium transition-colors hover:text-primary",
+                    (pathname.startsWith("/lists") || pathname.startsWith("/brands/offers"))
+                      ? "text-primary"
+                      : "text-muted-foreground"
+                  )}
+                >
+                  <Plus className="h-4 w-4" />
+                  Create
+                  <ChevronDown className="h-3 w-3" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                {brandCreateItems.map((item) => (
+                  <DropdownMenuItem key={item.href} asChild>
+                    <Link href={item.href} className="cursor-pointer">
+                      <item.icon className="mr-2 h-4 w-4" />
+                      {item.label}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </nav>
 
         {/* Right side */}
@@ -243,6 +279,29 @@ export function Navbar({ user, actorType, coinBalance = 0 }: NavbarProps) {
                     {link.label}
                   </Link>
                 ))}
+
+                {/* Create section for brands in mobile */}
+                {actorType === "brand" && (
+                  <>
+                    <div className="border-t border-border my-2" />
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider px-2">Create</p>
+                    {brandCreateItems.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={cn(
+                          "flex items-center gap-3 text-lg font-medium transition-colors hover:text-primary p-2 rounded-lg",
+                          pathname.startsWith(item.href)
+                            ? "text-primary bg-primary/10"
+                            : "text-muted-foreground"
+                        )}
+                      >
+                        <item.icon className="h-5 w-5" />
+                        {item.label}
+                      </Link>
+                    ))}
+                  </>
+                )}
               </nav>
             </SheetContent>
           </Sheet>
