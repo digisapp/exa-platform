@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { sendBookingAcceptedEmail, sendBookingDeclinedEmail } from "@/lib/email";
 
@@ -475,15 +476,21 @@ export async function PATCH(
         return NextResponse.json({ error: "Invalid action" }, { status: 400 });
     }
 
-    // Update booking
+    // Update booking using service role client to bypass RLS
     debugInfo.updateData = updateData;
     debugInfo.action = action;
 
-    const { data: updatedBooking, error } = await (supabase.from("bookings") as any)
+    const adminClient = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    const { data: updatedBooking, error } = await adminClient
+      .from("bookings")
       .update(updateData)
       .eq("id", id)
       .select()
-      .maybeSingle();
+      .single();
 
     if (error) {
       console.error("Failed to update booking:", error, "updateData:", updateData);
@@ -496,11 +503,11 @@ export async function PATCH(
     }
 
     if (!updatedBooking) {
-      console.error("No booking updated - RLS might be blocking");
+      console.error("No booking updated");
       return NextResponse.json({
-        error: "Booking update failed - permission denied",
+        error: "Booking update failed",
         debug: debugInfo
-      }, { status: 403 });
+      }, { status: 500 });
     }
 
     // Handle coin transfers based on action
@@ -671,5 +678,80 @@ export async function PATCH(
       message: error?.message || "Unknown error",
       debug: debugInfo
     }, { status: 500 });
+  }
+}
+
+// DELETE - Delete a booking (only pending bookings by client or admin)
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const supabase = await createClient();
+
+    // Auth check
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Get actor
+    const { data: actor } = await (supabase.from("actors") as any)
+      .select("id, type")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (!actor) {
+      return NextResponse.json({ error: "Actor not found" }, { status: 404 });
+    }
+
+    // Use service role client to bypass RLS
+    const adminClient = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    // Get booking
+    const { data: booking, error: fetchError } = await adminClient
+      .from("bookings")
+      .select("id, status, client_id, model_id")
+      .eq("id", id)
+      .single();
+
+    if (fetchError || !booking) {
+      return NextResponse.json({ error: "Booking not found" }, { status: 404 });
+    }
+
+    // Check permissions - only client who made the booking or admin can delete
+    const isClient = booking.client_id === actor.id;
+    const isAdmin = actor.type === "admin";
+
+    if (!isClient && !isAdmin) {
+      return NextResponse.json({ error: "Only the client or admin can delete this booking" }, { status: 403 });
+    }
+
+    // Only allow deleting pending bookings
+    if (booking.status !== "pending") {
+      return NextResponse.json({
+        error: "Can only delete pending bookings. Use cancel for accepted bookings."
+      }, { status: 400 });
+    }
+
+    // Delete the booking
+    const { error: deleteError } = await adminClient
+      .from("bookings")
+      .delete()
+      .eq("id", id);
+
+    if (deleteError) {
+      console.error("Delete booking error:", deleteError);
+      return NextResponse.json({ error: "Failed to delete booking" }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, message: "Booking deleted" });
+  } catch (error) {
+    console.error("Delete booking error:", error);
+    return NextResponse.json({ error: "Failed to delete booking" }, { status: 500 });
   }
 }
