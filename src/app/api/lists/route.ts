@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
 // GET /api/lists - Get all lists for current brand
@@ -76,8 +77,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "List name is required" }, { status: 400 });
   }
 
+  // Use service role client to bypass RLS for insert
+  const adminClient = createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
   // Create the list
-  const { data: list, error } = await (supabase
+  const { data: list, error } = await (adminClient
     .from("brand_lists") as any)
     .insert({
       brand_id: actor.id,

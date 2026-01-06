@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
 // GET /api/lists/[id] - Get single list with models
@@ -104,7 +105,13 @@ export async function PUT(
   if (description !== undefined) updates.description = description?.trim() || null;
   if (color !== undefined) updates.color = color;
 
-  const { data: list, error } = await (supabase
+  // Use service role client to bypass RLS for update
+  const adminClient = createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
+  const { data: list, error } = await (adminClient
     .from("brand_lists") as any)
     .update(updates)
     .eq("id", id)
@@ -150,7 +157,13 @@ export async function DELETE(
     return NextResponse.json({ error: "Only brands can delete lists" }, { status: 403 });
   }
 
-  const { error } = await (supabase
+  // Use service role client to bypass RLS for delete
+  const adminClient = createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
+  const { error } = await (adminClient
     .from("brand_lists") as any)
     .delete()
     .eq("id", id)

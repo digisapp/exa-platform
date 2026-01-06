@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
 // GET /api/lists/model/[modelId] - Get all lists and whether this model is in each
@@ -98,9 +99,15 @@ export async function POST(
     return NextResponse.json({ error: "List not found" }, { status: 404 });
   }
 
+  // Use service role client to bypass RLS for insert/delete
+  const adminClient = createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
   if (add) {
     // Add model to list
-    const { error } = await (supabase
+    const { error } = await (adminClient
       .from("brand_list_items") as any)
       .upsert({
         list_id: listId,
@@ -112,7 +119,7 @@ export async function POST(
     }
   } else {
     // Remove model from list
-    const { error } = await (supabase
+    const { error } = await (adminClient
       .from("brand_list_items") as any)
       .delete()
       .eq("list_id", listId)
