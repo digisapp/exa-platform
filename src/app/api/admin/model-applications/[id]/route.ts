@@ -82,11 +82,12 @@ export async function PATCH(
         .single();
 
       // Also check for existing model by Instagram username (might be imported with no user_id)
+      // Use case-insensitive matching since Instagram usernames can vary in casing
       let existingModelByInstagram = null;
       if (application.instagram_username && !existingModelByUser) {
         const { data: igModel } = await (adminClient.from("models") as any)
           .select("id, username, user_id")
-          .eq("instagram_name", application.instagram_username)
+          .ilike("instagram_name", application.instagram_username)
           .single();
 
         if (igModel && !igModel.user_id) {
@@ -94,12 +95,12 @@ export async function PATCH(
         }
       }
 
-      // Also check by email if no match yet
+      // Also check by email if no match yet (case-insensitive)
       let existingModelByEmail = null;
       if (!existingModelByUser && !existingModelByInstagram && application.email) {
         const { data: emailModel } = await (adminClient.from("models") as any)
           .select("id, username, user_id")
-          .eq("email", application.email)
+          .ilike("email", application.email)
           .single();
 
         if (emailModel && !emailModel.user_id) {
