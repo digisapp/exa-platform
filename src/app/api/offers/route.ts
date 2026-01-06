@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+import { sendOfferReceivedEmail } from "@/lib/email";
 
 const adminClient = createSupabaseClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -175,6 +176,10 @@ export async function POST(request: NextRequest) {
       compensation_amount,
       compensation_description,
       spots,
+      // Recurring offer fields
+      is_recurring,
+      recurrence_pattern,
+      recurrence_end_date,
     } = body;
 
     if (!list_id || !title) {
@@ -210,6 +215,10 @@ export async function POST(request: NextRequest) {
         compensation_description,
         spots: spots || 1,
         status: "open",
+        // Recurring offer fields
+        is_recurring: is_recurring || false,
+        recurrence_pattern: is_recurring ? recurrence_pattern : null,
+        recurrence_end_date: is_recurring ? recurrence_end_date : null,
       })
       .select()
       .single();
@@ -231,7 +240,59 @@ export async function POST(request: NextRequest) {
 
       await (adminClient.from("offer_responses") as any).insert(responses);
 
-      // TODO: Send notifications to models (push notification, email, etc.)
+      // Get brand name for email
+      const { data: brandData } = await (supabase
+        .from("brands") as any)
+        .select("company_name")
+        .eq("id", actor.id)
+        .single();
+      const brandName = brandData?.company_name || "A brand";
+
+      // Get model details for sending emails
+      const modelIds = listItems.map((item: any) => item.model_id);
+      const { data: models } = await (adminClient
+        .from("models") as any)
+        .select("id, first_name, username, user_id")
+        .in("id", modelIds);
+
+      if (models && models.length > 0) {
+        // Get user emails
+        const userIds = models.map((m: any) => m.user_id);
+        const { data: users } = await adminClient.auth.admin.listUsers();
+        const userEmails = new Map(
+          users?.users?.filter((u: any) => userIds.includes(u.id)).map((u: any) => [u.id, u.email]) || []
+        );
+
+        // Build location string
+        const locationParts = [location_name, location_city, location_state].filter(Boolean);
+        const locationStr = locationParts.length > 0 ? locationParts.join(", ") : undefined;
+
+        // Build compensation string
+        let compensationStr: string | undefined;
+        if (compensation_type === "paid" && compensation_amount) {
+          compensationStr = `$${compensation_amount}`;
+        } else if (compensation_description) {
+          compensationStr = compensation_description;
+        }
+
+        // Send emails to all models (fire and forget)
+        for (const model of models) {
+          const email = userEmails.get(model.user_id);
+          if (email) {
+            sendOfferReceivedEmail({
+              to: email,
+              modelName: model.first_name || model.username,
+              brandName,
+              offerTitle: title,
+              eventDate: event_date ? new Date(event_date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }) : "",
+              eventTime: event_time,
+              location: locationStr,
+              compensation: compensationStr,
+              offerId: offer.id,
+            }).catch((err) => console.error("Failed to send offer email:", err));
+          }
+        }
+      }
     }
 
     return NextResponse.json({ offer, models_notified: listItems?.length || 0 });

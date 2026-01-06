@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { MapPin, Instagram, Heart } from "lucide-react";
+import { MapPin, Instagram, Heart, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useCallback, memo } from "react";
 import { toast } from "sonner";
@@ -199,7 +199,25 @@ export const ModelCard = memo(function ModelCard({
           {/* Hover Overlay with Details */}
           <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-4">
             <div className="space-y-2">
-              <h3 className="font-semibold text-white text-lg">{displayName}</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold text-white text-lg">{displayName}</h3>
+                {model.reliability_score !== null && model.reliability_score !== undefined && (
+                  <span
+                    className={cn(
+                      "flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium",
+                      model.reliability_score >= 90
+                        ? "bg-green-500/20 text-green-400"
+                        : model.reliability_score >= 70
+                        ? "bg-amber-500/20 text-amber-400"
+                        : "bg-red-500/20 text-red-400"
+                    )}
+                    title="Reliability score based on show-up rate"
+                  >
+                    <Star className="h-3 w-3" />
+                    {model.reliability_score}%
+                  </span>
+                )}
+              </div>
               <p className="text-sm text-[#00BFFF]">@{model.username}</p>
 
               {model.show_location && (model.city || model.state) && (

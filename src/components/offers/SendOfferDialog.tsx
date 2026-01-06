@@ -20,8 +20,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Send, Loader2 } from "lucide-react";
+import { Send, Loader2, Repeat } from "lucide-react";
 
 interface SendOfferDialogProps {
   listId: string;
@@ -44,6 +45,10 @@ export function SendOfferDialog({ listId, listName, modelCount }: SendOfferDialo
     compensation_amount: 0,
     compensation_description: "",
     spots: 1,
+    // Recurring offer fields
+    is_recurring: false,
+    recurrence_pattern: "weekly",
+    recurrence_end_date: "",
   });
 
   async function handleSubmit(e: React.FormEvent) {
@@ -65,6 +70,12 @@ export function SendOfferDialog({ listId, listName, modelCount }: SendOfferDialo
           compensation_amount: formData.compensation_type === "paid"
             ? formData.compensation_amount * 100
             : 0,
+          // Only include recurring fields if is_recurring is true
+          is_recurring: formData.is_recurring,
+          recurrence_pattern: formData.is_recurring ? formData.recurrence_pattern : null,
+          recurrence_end_date: formData.is_recurring && formData.recurrence_end_date
+            ? formData.recurrence_end_date
+            : null,
         }),
       });
 
@@ -79,7 +90,7 @@ export function SendOfferDialog({ listId, listName, modelCount }: SendOfferDialo
         return;
       }
 
-      toast.success(`Offer sent to ${data.models_notified} models!`);
+      toast.success(`Offer sent to ${data.models_notified} models!${formData.is_recurring ? " (Recurring)" : ""}`);
       setOpen(false);
       setFormData({
         title: "",
@@ -93,6 +104,9 @@ export function SendOfferDialog({ listId, listName, modelCount }: SendOfferDialo
         compensation_amount: 0,
         compensation_description: "",
         spots: 1,
+        is_recurring: false,
+        recurrence_pattern: "weekly",
+        recurrence_end_date: "",
       });
     } catch (error) {
       console.error("Error sending offer:", error);
@@ -257,6 +271,55 @@ export function SendOfferDialog({ listId, listName, modelCount }: SendOfferDialo
               value={formData.spots}
               onChange={(e) => setFormData({ ...formData, spots: parseInt(e.target.value) || 1 })}
             />
+          </div>
+
+          {/* Recurring Options */}
+          <div className="space-y-4 pt-2 border-t">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="is_recurring"
+                checked={formData.is_recurring}
+                onCheckedChange={(checked) => setFormData({ ...formData, is_recurring: checked === true })}
+              />
+              <Label htmlFor="is_recurring" className="flex items-center gap-2 cursor-pointer">
+                <Repeat className="h-4 w-4 text-violet-400" />
+                Make this a recurring offer
+              </Label>
+            </div>
+
+            {formData.is_recurring && (
+              <div className="grid grid-cols-2 gap-3 pl-6">
+                <div className="space-y-2">
+                  <Label htmlFor="recurrence_pattern">Repeat</Label>
+                  <Select
+                    value={formData.recurrence_pattern}
+                    onValueChange={(v) => setFormData({ ...formData, recurrence_pattern: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="weekly">Weekly</SelectItem>
+                      <SelectItem value="biweekly">Every 2 weeks</SelectItem>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="recurrence_end_date">Until (optional)</Label>
+                  <Input
+                    id="recurrence_end_date"
+                    type="date"
+                    value={formData.recurrence_end_date}
+                    onChange={(e) => setFormData({ ...formData, recurrence_end_date: e.target.value })}
+                    min={formData.event_date || undefined}
+                  />
+                </div>
+                <p className="col-span-2 text-xs text-zinc-500">
+                  A new offer will be automatically created for the next {formData.recurrence_pattern === "weekly" ? "week" : formData.recurrence_pattern === "biweekly" ? "two weeks" : "month"} after each event.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Submit */}

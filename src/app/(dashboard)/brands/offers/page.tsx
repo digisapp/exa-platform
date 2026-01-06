@@ -29,6 +29,9 @@ import {
   UserCheck,
   UserX,
   MoreHorizontal,
+  Check,
+  X,
+  Star,
 } from "lucide-react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
@@ -63,6 +66,8 @@ interface Response {
   notes: string | null;
   responded_at: string | null;
   created_at: string;
+  checked_in_at: string | null;
+  no_show: boolean;
   model: {
     id: string;
     username: string;
@@ -71,6 +76,7 @@ interface Response {
     profile_photo_url: string | null;
     city: string | null;
     state: string | null;
+    reliability_score: number | null;
   } | null;
 }
 
@@ -132,6 +138,21 @@ export default function BrandOffersPage() {
       fetchOffers();
     } catch (error) {
       toast.error("Failed to update status");
+    }
+  }
+
+  async function handleCheckin(offerId: string, responseId: string, action: "checkin" | "noshow") {
+    try {
+      const res = await fetch(`/api/offers/${offerId}/checkin`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ response_id: responseId, action }),
+      });
+      if (!res.ok) throw new Error("Failed to update");
+      toast.success(action === "checkin" ? "Marked as checked in!" : "Marked as no-show");
+      fetchOffers();
+    } catch (error) {
+      toast.error("Failed to update check-in status");
     }
   }
 
@@ -350,80 +371,148 @@ export default function BrandOffersPage() {
                           const order: Record<string, number> = { confirmed: 0, accepted: 1, pending: 2, declined: 3 };
                           return (order[a.status] || 4) - (order[b.status] || 4);
                         })
-                        .map((response) => (
-                          <div
-                            key={response.id}
-                            className="flex items-center gap-3 p-3 rounded-lg border"
-                          >
-                            <Avatar className="h-10 w-10">
-                              <AvatarImage src={response.model?.profile_photo_url || undefined} />
-                              <AvatarFallback>
-                                {response.model?.first_name?.[0] || response.model?.username?.[0] || "?"}
-                              </AvatarFallback>
-                            </Avatar>
+                        .map((response) => {
+                          // Check if event date has passed (for check-in buttons)
+                          const eventPassed = currentOffer.event_date
+                            ? new Date(currentOffer.event_date) < new Date()
+                            : false;
+                          const canCheckIn = eventPassed && ["accepted", "confirmed"].includes(response.status);
+                          const isCheckedIn = response.checked_in_at && !response.no_show;
+                          const isNoShow = response.no_show;
 
-                            <div className="flex-1 min-w-0">
-                              <Link
-                                href={`/${response.model?.username}`}
-                                className="font-medium hover:text-pink-500 truncate block"
-                              >
-                                {response.model?.first_name
-                                  ? `${response.model.first_name} ${response.model.last_name || ""}`.trim()
-                                  : `@${response.model?.username}`}
-                              </Link>
-                              <p className="text-xs text-muted-foreground">
-                                {response.model?.city && response.model?.state
-                                  ? `${response.model.city}, ${response.model.state}`
-                                  : `@${response.model?.username}`}
-                              </p>
-                            </div>
+                          return (
+                            <div
+                              key={response.id}
+                              className="flex items-center gap-3 p-3 rounded-lg border"
+                            >
+                              <Avatar className="h-10 w-10">
+                                <AvatarImage src={response.model?.profile_photo_url || undefined} />
+                                <AvatarFallback>
+                                  {response.model?.first_name?.[0] || response.model?.username?.[0] || "?"}
+                                </AvatarFallback>
+                              </Avatar>
 
-                            <div className="flex items-center gap-2">
-                              {response.status === "accepted" && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="text-blue-500 border-blue-500/50 hover:bg-blue-500/10"
-                                  onClick={() => updateResponseStatus(
-                                    currentOffer.id,
-                                    response.id,
-                                    response.model_id,
-                                    "confirmed"
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <Link
+                                    href={`/${response.model?.username}`}
+                                    className="font-medium hover:text-pink-500 truncate"
+                                  >
+                                    {response.model?.first_name
+                                      ? `${response.model.first_name} ${response.model.last_name || ""}`.trim()
+                                      : `@${response.model?.username}`}
+                                  </Link>
+                                  {response.model?.reliability_score !== null && response.model?.reliability_score !== undefined && (
+                                    <span
+                                      className={`text-xs flex items-center gap-0.5 ${
+                                        response.model.reliability_score >= 90 ? "text-green-500" :
+                                        response.model.reliability_score >= 70 ? "text-amber-500" :
+                                        "text-red-500"
+                                      }`}
+                                      title="Reliability score"
+                                    >
+                                      <Star className="h-3 w-3" />
+                                      {response.model.reliability_score}%
+                                    </span>
                                   )}
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                  {response.model?.city && response.model?.state
+                                    ? `${response.model.city}, ${response.model.state}`
+                                    : `@${response.model?.username}`}
+                                </p>
+                              </div>
+
+                              <div className="flex items-center gap-2">
+                                {/* Check-in buttons - shown after event for confirmed/accepted */}
+                                {canCheckIn && !isCheckedIn && !isNoShow && (
+                                  <>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="text-green-500 border-green-500/50 hover:bg-green-500/10"
+                                      onClick={() => handleCheckin(currentOffer.id, response.id, "checkin")}
+                                      title="Mark as showed up"
+                                    >
+                                      <Check className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="text-red-500 border-red-500/50 hover:bg-red-500/10"
+                                      onClick={() => handleCheckin(currentOffer.id, response.id, "noshow")}
+                                      title="Mark as no-show"
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  </>
+                                )}
+
+                                {/* Checked in badge */}
+                                {isCheckedIn && (
+                                  <Badge className="bg-green-500/10 text-green-500 border-green-500/20">
+                                    <Check className="h-3 w-3 mr-1" />
+                                    Showed
+                                  </Badge>
+                                )}
+
+                                {/* No-show badge */}
+                                {isNoShow && (
+                                  <Badge className="bg-red-500/10 text-red-500 border-red-500/20">
+                                    <X className="h-3 w-3 mr-1" />
+                                    No-show
+                                  </Badge>
+                                )}
+
+                                {response.status === "accepted" && !eventPassed && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-blue-500 border-blue-500/50 hover:bg-blue-500/10"
+                                    onClick={() => updateResponseStatus(
+                                      currentOffer.id,
+                                      response.id,
+                                      response.model_id,
+                                      "confirmed"
+                                    )}
+                                  >
+                                    <CheckCircle className="h-4 w-4 mr-1" />
+                                    Confirm
+                                  </Button>
+                                )}
+
+                                {/* Status badge - only show if not checked in or no-show */}
+                                {!isCheckedIn && !isNoShow && (
+                                  <Badge
+                                    className={
+                                      response.status === "accepted" ? "bg-green-500/10 text-green-500 border-green-500/20" :
+                                      response.status === "confirmed" ? "bg-blue-500/10 text-blue-500 border-blue-500/20" :
+                                      response.status === "declined" ? "bg-red-500/10 text-red-500 border-red-500/20" :
+                                      "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                                    }
+                                  >
+                                    {response.status === "accepted" && <CheckCircle className="h-3 w-3 mr-1" />}
+                                    {response.status === "confirmed" && <CheckCircle className="h-3 w-3 mr-1" />}
+                                    {response.status === "declined" && <XCircle className="h-3 w-3 mr-1" />}
+                                    {response.status === "pending" && <Clock className="h-3 w-3 mr-1" />}
+                                    {response.status}
+                                  </Badge>
+                                )}
+
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-8 w-8"
+                                  asChild
                                 >
-                                  <CheckCircle className="h-4 w-4 mr-1" />
-                                  Confirm
+                                  <Link href={`/chats?model=${response.model?.username}`}>
+                                    <MessageCircle className="h-4 w-4" />
+                                  </Link>
                                 </Button>
-                              )}
-
-                              <Badge
-                                className={
-                                  response.status === "accepted" ? "bg-green-500/10 text-green-500 border-green-500/20" :
-                                  response.status === "confirmed" ? "bg-blue-500/10 text-blue-500 border-blue-500/20" :
-                                  response.status === "declined" ? "bg-red-500/10 text-red-500 border-red-500/20" :
-                                  "bg-amber-500/10 text-amber-500 border-amber-500/20"
-                                }
-                              >
-                                {response.status === "accepted" && <CheckCircle className="h-3 w-3 mr-1" />}
-                                {response.status === "confirmed" && <CheckCircle className="h-3 w-3 mr-1" />}
-                                {response.status === "declined" && <XCircle className="h-3 w-3 mr-1" />}
-                                {response.status === "pending" && <Clock className="h-3 w-3 mr-1" />}
-                                {response.status}
-                              </Badge>
-
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="h-8 w-8"
-                                asChild
-                              >
-                                <Link href={`/chats?model=${response.model?.username}`}>
-                                  <MessageCircle className="h-4 w-4" />
-                                </Link>
-                              </Button>
+                              </div>
                             </div>
-                          </div>
-                        ))
+                          );
+                        })
                     )}
                   </div>
                 </CardContent>

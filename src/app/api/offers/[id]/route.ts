@@ -60,7 +60,7 @@ export async function GET(
         .from("offer_responses") as any)
         .select(`
           *,
-          model:models(id, username, first_name, last_name, profile_photo_url, city, state)
+          model:models(id, username, first_name, last_name, profile_photo_url, city, state, reliability_score)
         `)
         .eq("offer_id", id)
         .order("responded_at", { ascending: false, nullsFirst: false });

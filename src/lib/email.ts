@@ -1270,3 +1270,306 @@ export async function sendVideoCallRequestEmail({
     return { success: false, error };
   }
 }
+
+// Send email when model receives a new offer
+export async function sendOfferReceivedEmail({
+  to,
+  modelName,
+  brandName,
+  offerTitle,
+  eventDate,
+  eventTime,
+  location,
+  compensation,
+  offerId,
+}: {
+  to: string;
+  modelName: string;
+  brandName: string;
+  offerTitle: string;
+  eventDate: string;
+  eventTime?: string;
+  location?: string;
+  compensation?: string;
+  offerId: string;
+}) {
+  try {
+    const resend = getResendClient();
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.examodels.com";
+    const offerUrl = `${baseUrl}/models/offers/${offerId}`;
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      subject: `🎉 New Offer from ${brandName}: ${offerTitle}`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #09090b; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #09090b; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #18181b; border-radius: 16px; overflow: hidden; border: 1px solid #27272a;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 30px; text-align: center;">
+              <h1 style="margin: 0; color: white; font-size: 24px; font-weight: bold;">
+                New Offer! 🎁
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
+                Hey ${modelName}! 👋
+              </p>
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                <strong style="color: #ffffff;">${brandName}</strong> has sent you an exciting offer!
+              </p>
+
+              <!-- Offer Card -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px; background-color: #262626; border-radius: 12px; overflow: hidden;">
+                <tr>
+                  <td style="padding: 25px;">
+                    <h2 style="margin: 0 0 15px; color: #ffffff; font-size: 20px;">${offerTitle}</h2>
+
+                    ${eventDate ? `
+                    <table cellpadding="0" cellspacing="0" style="margin-bottom: 10px;">
+                      <tr>
+                        <td style="color: #71717a; font-size: 14px; padding-right: 10px;">📅</td>
+                        <td style="color: #ffffff; font-size: 14px;">${eventDate}${eventTime ? ` at ${eventTime}` : ""}</td>
+                      </tr>
+                    </table>
+                    ` : ""}
+
+                    ${location ? `
+                    <table cellpadding="0" cellspacing="0" style="margin-bottom: 10px;">
+                      <tr>
+                        <td style="color: #71717a; font-size: 14px; padding-right: 10px;">📍</td>
+                        <td style="color: #ffffff; font-size: 14px;">${location}</td>
+                      </tr>
+                    </table>
+                    ` : ""}
+
+                    ${compensation ? `
+                    <table cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="color: #71717a; font-size: 14px; padding-right: 10px;">💰</td>
+                        <td style="color: #10b981; font-size: 14px; font-weight: 600;">${compensation}</td>
+                      </tr>
+                    </table>
+                    ` : ""}
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Urgency Note -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+                <tr>
+                  <td style="padding: 15px; background-color: #1e1b4b; border-radius: 8px; border-left: 3px solid #8b5cf6;">
+                    <p style="margin: 0; color: #c4b5fd; font-size: 14px;">
+                      ⚡ Respond quickly! Spots fill up fast.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="${offerUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                      View Offer Details
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 30px; border-top: 1px solid #262626; text-align: center;">
+              <p style="margin: 0; color: #71717a; font-size: 12px;">
+                EXA Models - Where Models Shine
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      console.error("Resend error:", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error("Email send error:", error);
+    return { success: false, error };
+  }
+}
+
+// Send reminder email before event
+export async function sendOfferReminderEmail({
+  to,
+  modelName,
+  offerTitle,
+  eventDate,
+  eventTime,
+  location,
+  brandName,
+  brandContact,
+}: {
+  to: string;
+  modelName: string;
+  offerTitle: string;
+  eventDate: string;
+  eventTime?: string;
+  location?: string;
+  brandName: string;
+  brandContact?: string;
+}) {
+  try {
+    const resend = getResendClient();
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.examodels.com";
+    const dashboardUrl = `${baseUrl}/models/offers`;
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      subject: `⏰ Reminder: ${offerTitle} is coming up!`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #09090b; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #09090b; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #18181b; border-radius: 16px; overflow: hidden; border: 1px solid #27272a;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #f59e0b 0%, #ec4899 100%); padding: 30px; text-align: center;">
+              <h1 style="margin: 0; color: white; font-size: 24px; font-weight: bold;">
+                Event Reminder ⏰
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
+                Hey ${modelName}! 👋
+              </p>
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                Just a friendly reminder that your confirmed event with <strong style="color: #ffffff;">${brandName}</strong> is coming up soon!
+              </p>
+
+              <!-- Event Card -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px; background-color: #262626; border-radius: 12px; overflow: hidden;">
+                <tr>
+                  <td style="padding: 25px;">
+                    <h2 style="margin: 0 0 15px; color: #ffffff; font-size: 20px;">${offerTitle}</h2>
+
+                    <table cellpadding="0" cellspacing="0" style="margin-bottom: 10px;">
+                      <tr>
+                        <td style="color: #71717a; font-size: 14px; padding-right: 10px;">📅</td>
+                        <td style="color: #fbbf24; font-size: 16px; font-weight: 600;">${eventDate}${eventTime ? ` at ${eventTime}` : ""}</td>
+                      </tr>
+                    </table>
+
+                    ${location ? `
+                    <table cellpadding="0" cellspacing="0" style="margin-bottom: 10px;">
+                      <tr>
+                        <td style="color: #71717a; font-size: 14px; padding-right: 10px;">📍</td>
+                        <td style="color: #ffffff; font-size: 14px;">${location}</td>
+                      </tr>
+                    </table>
+                    ` : ""}
+
+                    ${brandContact ? `
+                    <table cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="color: #71717a; font-size: 14px; padding-right: 10px;">📞</td>
+                        <td style="color: #ffffff; font-size: 14px;">${brandContact}</td>
+                      </tr>
+                    </table>
+                    ` : ""}
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Tips -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+                <tr>
+                  <td style="padding: 20px; background-color: #1e1b4b; border-radius: 8px;">
+                    <p style="margin: 0 0 10px; color: #c4b5fd; font-size: 14px; font-weight: 600;">Quick Tips:</p>
+                    <p style="margin: 0 0 8px; color: #a1a1aa; font-size: 13px;">✓ Arrive 10-15 minutes early</p>
+                    <p style="margin: 0 0 8px; color: #a1a1aa; font-size: 13px;">✓ Bring your ID and any required items</p>
+                    <p style="margin: 0; color: #a1a1aa; font-size: 13px;">✓ Message the brand if you have any questions</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="${dashboardUrl}" style="display: inline-block; background: linear-gradient(135deg, #f59e0b 0%, #ec4899 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                      View My Offers
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 30px; border-top: 1px solid #262626; text-align: center;">
+              <p style="margin: 0; color: #71717a; font-size: 12px;">
+                EXA Models - Where Models Shine
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      console.error("Resend error:", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error("Email send error:", error);
+    return { success: false, error };
+  }
+}
