@@ -106,51 +106,44 @@ export default async function DashboardPage() {
     }
   }
 
-  // Get pending offers for this model (via campaigns they're in)
-  const { data: campaignMemberships } = await (supabase
-    .from("campaign_models") as any)
-    .select("campaign_id")
-    .eq("model_id", model.id);
-
-  const campaignIds = campaignMemberships?.map((cm: any) => cm.campaign_id) || [];
-
-  let pendingOffers: any[] = [];
-  if (campaignIds.length > 0) {
-    // Get offer responses for this model that are pending
-    const { data: offerResponses } = await (supabase
-      .from("offer_responses") as any)
-      .select(`
+  // Get pending offers for this model - query offer_responses directly
+  // Models have RLS access to their own offer_responses
+  const { data: offerResponses } = await (supabase
+    .from("offer_responses") as any)
+    .select(`
+      id,
+      status,
+      offer_id,
+      offers (
         id,
-        status,
-        offer_id,
-        offers (
-          id,
-          title,
-          event_date,
-          event_time,
-          location,
-          compensation,
-          notes,
-          created_at,
-          brand_id
-        )
-      `)
-      .eq("model_id", model.id)
-      .eq("status", "pending")
-      .order("created_at", { ascending: false })
-      .limit(5);
+        title,
+        event_date,
+        event_time,
+        location_name,
+        location_city,
+        compensation_type,
+        compensation_amount,
+        compensation_description,
+        created_at,
+        brand_id
+      )
+    `)
+    .eq("model_id", model.id)
+    .eq("status", "pending")
+    .order("created_at", { ascending: false })
+    .limit(5);
 
-    // Enrich with brand info
-    for (const response of offerResponses || []) {
-      if (response.offers?.brand_id) {
-        const { data: brand } = await (supabase.from("brands") as any)
-          .select("company_name, logo_url")
-          .eq("id", response.offers.brand_id)
-          .maybeSingle();
-        response.brand = brand;
-      }
+  // Enrich with brand info
+  const pendingOffers: any[] = [];
+  for (const response of offerResponses || []) {
+    if (response.offers?.brand_id) {
+      const { data: brand } = await (supabase.from("brands") as any)
+        .select("company_name, logo_url")
+        .eq("id", response.offers.brand_id)
+        .maybeSingle();
+      response.brand = brand;
+      pendingOffers.push(response);
     }
-    pendingOffers = offerResponses || [];
   }
 
   // Get open gigs
@@ -263,12 +256,17 @@ export default async function DashboardPage() {
                             })}
                           </span>
                         )}
-                        {offer.compensation && (
+                        {(offer.compensation_type === "paid" && offer.compensation_amount) ? (
                           <span className="flex items-center gap-1 text-green-600">
                             <DollarSign className="h-3 w-3" />
-                            {offer.compensation}
+                            ${offer.compensation_amount}
                           </span>
-                        )}
+                        ) : offer.compensation_description ? (
+                          <span className="flex items-center gap-1 text-green-600">
+                            <DollarSign className="h-3 w-3" />
+                            {offer.compensation_description}
+                          </span>
+                        ) : null}
                       </div>
                     </div>
                     <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/30 text-xs">
