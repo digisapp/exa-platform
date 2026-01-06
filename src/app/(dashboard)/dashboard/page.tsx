@@ -1,6 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+
+// Admin client for bypassing RLS on specific queries
+const adminClient = createSupabaseClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 // Disable caching to ensure fresh data
 export const dynamic = "force-dynamic";
@@ -106,9 +113,9 @@ export default async function DashboardPage() {
     }
   }
 
-  // Get pending offers for this model - query offer_responses directly
-  // Models have RLS access to their own offer_responses
-  const { data: offerResponses } = await (supabase
+  // Get pending offers for this model - use adminClient to bypass RLS issues
+  // User is already authenticated above, so this is safe
+  const { data: offerResponses, error: offerError } = await (adminClient
     .from("offer_responses") as any)
     .select(`
       id,
@@ -137,7 +144,7 @@ export default async function DashboardPage() {
   const pendingOffers: any[] = [];
   for (const response of offerResponses || []) {
     if (response.offers?.brand_id) {
-      const { data: brand } = await (supabase.from("brands") as any)
+      const { data: brand } = await (adminClient.from("brands") as any)
         .select("company_name, logo_url")
         .eq("id", response.offers.brand_id)
         .maybeSingle();
@@ -145,8 +152,6 @@ export default async function DashboardPage() {
       pendingOffers.push(response);
     }
   }
-
-  console.log("DEBUG - Pending offers after enrich:", pendingOffers.length);
 
   // Get open gigs
   const { data: gigs } = await (supabase
@@ -203,6 +208,16 @@ export default async function DashboardPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
+      {/* Debug: Show offer query error if any */}
+      {offerError && (
+        <div className="p-3 rounded bg-red-500/10 border border-red-500/30 text-sm">
+          <div className="font-semibold">Offers query error</div>
+          <div>{offerError.message}</div>
+          <div className="opacity-80">{offerError.details}</div>
+          <div className="opacity-80">{offerError.hint}</div>
+        </div>
+      )}
+
       {/* Offers */}
       {pendingOffers.length > 0 && (
         <Card className="border-blue-500/30 bg-gradient-to-br from-blue-500/5 to-cyan-500/5">

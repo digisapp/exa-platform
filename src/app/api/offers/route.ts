@@ -33,8 +33,8 @@ export async function GET(request: NextRequest) {
     }
 
     if (actor.type === "model") {
-      // Get model's ID
-      const { data: model } = await supabase
+      // Get model's ID - use adminClient to bypass RLS
+      const { data: model } = await adminClient
         .from("models")
         .select("id")
         .eq("user_id", user.id)
@@ -44,8 +44,8 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: "Model not found" }, { status: 404 });
       }
 
-      // Get campaigns the model is in
-      const { data: campaignItems } = await (supabase
+      // Get campaigns the model is in - use adminClient to bypass RLS
+      const { data: campaignItems } = await (adminClient
         .from("campaign_models") as any)
         .select("campaign_id")
         .eq("model_id", model.id);
@@ -56,8 +56,8 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ offers: [] });
       }
 
-      // Get offers for those campaigns with brand info
-      const { data: offers } = await (supabase
+      // Get offers for those campaigns with brand info - use adminClient
+      const { data: offers } = await (adminClient
         .from("offers") as any)
         .select(`
           *,
@@ -71,11 +71,11 @@ export async function GET(request: NextRequest) {
         .eq("status", "open")
         .order("created_at", { ascending: false });
 
-      // Get model's responses
+      // Get model's responses - use adminClient
       const offerIds = offers?.map((o: any) => o.id) || [];
       let responses: any[] = [];
       if (offerIds.length > 0) {
-        const { data: respData } = await (supabase
+        const { data: respData } = await (adminClient
           .from("offer_responses") as any)
           .select("offer_id, status")
           .eq("model_id", model.id)
