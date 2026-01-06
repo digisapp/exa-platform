@@ -65,7 +65,6 @@ const brandLinks = [
   { href: "/dashboard", label: "Home", icon: Home },
   { href: "/models", label: "Explore", icon: Users },
   { href: "/chats", label: "Chats", icon: MessageCircle },
-  { href: "/brands/analytics", label: "Analytics", icon: BarChart3 },
 ];
 
 // Create dropdown items for brands
@@ -212,12 +211,20 @@ export function Navbar({ user, actorType, coinBalance = 0 }: NavbarProps) {
                     </Link>
                   </DropdownMenuItem>
                   {actorType === "brand" && (
-                    <DropdownMenuItem asChild>
-                      <Link href="/brands/subscription" className="cursor-pointer">
-                        <Crown className="mr-2 h-4 w-4" />
-                        Subscription
-                      </Link>
-                    </DropdownMenuItem>
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link href="/brands/analytics" className="cursor-pointer">
+                          <BarChart3 className="mr-2 h-4 w-4" />
+                          Analytics
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/brands/subscription" className="cursor-pointer">
+                          <Crown className="mr-2 h-4 w-4" />
+                          Subscription
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
                   )}
                   {actorType !== "admin" && (
                     <DropdownMenuItem asChild>
@@ -300,6 +307,19 @@ export function Navbar({ user, actorType, coinBalance = 0 }: NavbarProps) {
                         {item.label}
                       </Link>
                     ))}
+                    <div className="border-t border-border my-2" />
+                    <Link
+                      href="/brands/analytics"
+                      className={cn(
+                        "flex items-center gap-3 text-lg font-medium transition-colors hover:text-primary p-2 rounded-lg",
+                        pathname === "/brands/analytics"
+                          ? "text-primary bg-primary/10"
+                          : "text-muted-foreground"
+                      )}
+                    >
+                      <BarChart3 className="h-5 w-5" />
+                      Analytics
+                    </Link>
                   </>
                 )}
               </nav>
