@@ -30,6 +30,17 @@ export default async function ModelsPage({
     redirect("/signin?redirect=/models");
   }
 
+  // Check actor type - models cannot access this page
+  const { data: actorCheck } = await supabase
+    .from("actors")
+    .select("type")
+    .eq("user_id", user.id)
+    .single() as { data: { type: string } | null };
+
+  if (actorCheck?.type === "model") {
+    redirect("/dashboard");
+  }
+
   // Build query
   let query = supabase
     .from("models")
