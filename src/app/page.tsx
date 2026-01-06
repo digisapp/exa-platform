@@ -27,9 +27,19 @@ function shuffleArray<T>(array: T[]): T[] {
 export default async function HomePage() {
   const supabase = await createClient();
 
-  // If user is already logged in, redirect to dashboard
+  // If user is already logged in, redirect to appropriate dashboard
   const { data: { user } } = await supabase.auth.getUser();
   if (user) {
+    // Check if admin
+    const { data: actor } = await supabase
+      .from("actors")
+      .select("type")
+      .eq("user_id", user.id)
+      .single() as { data: { type: string } | null };
+
+    if (actor?.type === "admin") {
+      redirect("/admin");
+    }
     redirect("/dashboard");
   }
 

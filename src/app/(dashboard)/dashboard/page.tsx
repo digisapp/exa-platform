@@ -45,6 +45,11 @@ export default async function DashboardPage() {
 
   if (!actor) redirect("/fan/signup");
 
+  // For admins, redirect to admin dashboard
+  if (actor.type === "admin") {
+    redirect("/admin");
+  }
+
   // For fans, show fan dashboard
   if (actor.type === "fan") {
     return <FanDashboard actorId={actor.id} />;
@@ -55,7 +60,7 @@ export default async function DashboardPage() {
     return <BrandDashboard actorId={actor.id} />;
   }
 
-  // For models/admins, get model data
+  // For models, get model data
   const { data: model } = await (supabase.from("models") as any)
     .select("*")
     .eq("user_id", user.id)
