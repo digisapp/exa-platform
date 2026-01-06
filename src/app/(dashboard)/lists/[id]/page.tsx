@@ -38,6 +38,13 @@ export default async function ListDetailPage({
     redirect("/dashboard");
   }
 
+  // Get brand profile for navbar
+  const { data: brand } = await (supabase
+    .from("brands") as any)
+    .select("company_name, logo_url, coin_balance")
+    .eq("id", actor.id)
+    .single();
+
   // Get list with items
   const { data: list, error } = await (supabase
     .from("brand_lists") as any)
@@ -85,7 +92,16 @@ export default async function ListDetailPage({
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      <Navbar
+        user={{
+          id: user.id,
+          email: user.email || "",
+          avatar_url: brand?.logo_url || undefined,
+          name: brand?.company_name || undefined,
+        }}
+        actorType="brand"
+        coinBalance={brand?.coin_balance ?? 0}
+      />
 
       <main className="container px-8 md:px-16 py-8">
         {/* Back Link */}
