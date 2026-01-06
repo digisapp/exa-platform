@@ -146,6 +146,8 @@ export default async function DashboardPage() {
     }
   }
 
+  console.log("DEBUG - Pending offers after enrich:", pendingOffers.length);
+
   // Get open gigs
   const { data: gigs } = await (supabase
     .from("gigs") as any)
