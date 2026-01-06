@@ -462,37 +462,25 @@ export default function ProfilePage() {
     setSaving(true);
 
     try {
-      // Validate username if provided
-      if (brand.username) {
-        if (brand.username.length < 3) {
-          throw new Error("Username must be at least 3 characters");
-        }
-        if (brand.username.length > 30) {
-          throw new Error("Username must be less than 30 characters");
-        }
-
-        // Check username availability (includes reserved names check)
-        const checkRes = await fetch(`/api/username/check?username=${encodeURIComponent(brand.username)}`);
-        const checkData = await checkRes.json();
-
-        if (!checkData.available) {
-          throw new Error(checkData.reason || "This username is not available");
-        }
-      }
-
-      const { error } = await (supabase.from("brands") as any)
-        .update({
+      const response = await fetch("/api/brands/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           company_name: brand.company_name,
           contact_name: brand.contact_name,
           username: brand.username || null,
           bio: brand.bio || null,
           website: brand.website || null,
           phone: (brand as any).phone || null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", brand.id);
+        }),
+      });
 
-      if (error) throw error;
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to save");
+      }
+
       toast.success("Settings saved!");
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to save";
