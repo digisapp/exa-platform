@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { useState, useCallback, memo } from "react";
 import { toast } from "sonner";
 import { AddToCampaignButton } from "@/components/ui/add-to-campaign-button";
+import { ModelNotesDialog } from "@/components/brands/ModelNotesDialog";
 
 interface ModelCardProps {
   model: any;
@@ -157,12 +158,16 @@ export const ModelCard = memo(function ModelCard({
             </button>
           )}
 
-          {/* Add to Campaign Button (for brands) */}
+          {/* Brand Actions (Campaign + Notes) */}
           {showListButton && (
             <div
-              className="absolute top-3 right-3 z-10"
+              className="absolute top-3 right-3 z-10 flex items-center gap-1.5"
               onClick={(e) => e.preventDefault()}
             >
+              <ModelNotesDialog
+                modelId={model.id}
+                modelName={displayName}
+              />
               <AddToCampaignButton
                 modelId={model.id}
                 modelName={displayName}

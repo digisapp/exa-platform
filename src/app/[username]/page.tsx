@@ -14,6 +14,7 @@ import type { Metadata } from "next";
 import { ShareButton } from "@/components/ui/share-button";
 import { FavoriteButton } from "@/components/ui/favorite-button";
 import { AddToCampaignButton } from "@/components/ui/add-to-campaign-button";
+import { ModelNotesDialog } from "@/components/brands/ModelNotesDialog";
 import { ProfileActionButtons } from "@/components/profile/ProfileActionButtons";
 import { ProfileContentTabs } from "@/components/profile/ProfileContentTabs";
 
@@ -231,10 +232,16 @@ export default async function ModelProfilePage({ params }: Props) {
                 showCount={true}
               />
               {isBrand && !isOwner && (
-                <AddToCampaignButton
-                  modelId={model.id}
-                  modelName={displayName}
-                />
+                <>
+                  <ModelNotesDialog
+                    modelId={model.id}
+                    modelName={displayName}
+                  />
+                  <AddToCampaignButton
+                    modelId={model.id}
+                    modelName={displayName}
+                  />
+                </>
               )}
               <ShareButton title={displayName} />
             </div>

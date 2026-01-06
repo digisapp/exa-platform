@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ModelCard } from "@/components/models/model-card";
 import { RemoveFromCampaignButton } from "@/components/campaigns/RemoveFromCampaignButton";
 import { BulkAddModelsDialog } from "@/components/campaigns/BulkAddModelsDialog";
+import { ModelTagsDisplay } from "@/components/brands/ModelTagsDisplay";
 import { SendOfferDialog } from "@/components/offers/SendOfferDialog";
 import { CampaignOffers } from "@/components/campaigns/CampaignOffers";
 
@@ -138,6 +139,10 @@ export default async function CampaignDetailPage({
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {orderedModels.map((model: any) => (
               <div key={model.id} className="relative group">
+                <ModelTagsDisplay
+                  modelId={model.id}
+                  modelName={model.first_name || model.username}
+                />
                 <ModelCard
                   model={model}
                   showFavorite={false}
