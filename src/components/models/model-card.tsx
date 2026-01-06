@@ -9,11 +9,13 @@ import { MapPin, Instagram, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useCallback, memo } from "react";
 import { toast } from "sonner";
+import { AddToListButton } from "@/components/ui/add-to-list-button";
 
 interface ModelCardProps {
   model: any;
   variant?: "default" | "compact";
   showFavorite?: boolean;
+  showListButton?: boolean;
   isLoggedIn?: boolean;
   isFavorited?: boolean;
   onAuthRequired?: () => void;
@@ -23,6 +25,7 @@ export const ModelCard = memo(function ModelCard({
   model,
   variant = "default",
   showFavorite = false,
+  showListButton = false,
   isLoggedIn = false,
   isFavorited: initialFavorited = false,
   onAuthRequired,
@@ -152,6 +155,20 @@ export const ModelCard = memo(function ModelCard({
             >
               <Heart className={cn("h-5 w-5", isFavorited && "fill-current")} />
             </button>
+          )}
+
+          {/* Add to List Button (for brands) */}
+          {showListButton && (
+            <div
+              className="absolute top-3 right-3 z-10"
+              onClick={(e) => e.preventDefault()}
+            >
+              <AddToListButton
+                modelId={model.id}
+                modelName={displayName}
+                size="sm"
+              />
+            </div>
           )}
 
           {/* Level Badge */}

@@ -234,6 +234,7 @@ export default async function ModelsPage({
             models={models || []}
             isLoggedIn={!!user}
             favoriteModelIds={favoriteModelIds}
+            actorType={actorType}
           />
         </div>
       </main>

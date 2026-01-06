@@ -8,9 +8,10 @@ interface ModelsGridProps {
   models: any[];
   isLoggedIn: boolean;
   favoriteModelIds: string[];
+  actorType?: "model" | "fan" | "brand" | "admin" | null;
 }
 
-export function ModelsGrid({ models, isLoggedIn, favoriteModelIds }: ModelsGridProps) {
+export function ModelsGrid({ models, isLoggedIn, favoriteModelIds, actorType }: ModelsGridProps) {
   const [showAuthDialog, setShowAuthDialog] = useState(false);
 
   // Memoize the callback to prevent unnecessary re-renders
@@ -28,7 +29,8 @@ export function ModelsGrid({ models, isLoggedIn, favoriteModelIds }: ModelsGridP
           <ModelCard
             key={model.id}
             model={model}
-            showFavorite={true}
+            showFavorite={actorType !== "brand"}
+            showListButton={actorType === "brand"}
             isLoggedIn={isLoggedIn}
             isFavorited={favoriteSet.has(model.id)}
             onAuthRequired={handleAuthRequired}
