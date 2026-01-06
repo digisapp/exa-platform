@@ -202,7 +202,7 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
     .from("brands")
     .update({
       subscription_status: status,
-      subscription_tier: tier || "starter",
+      subscription_tier: tier || "free",
       subscription_ends_at: periodEnd
         ? new Date(periodEnd * 1000).toISOString()
         : null,
