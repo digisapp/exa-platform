@@ -6,6 +6,7 @@ import { ModelFilters } from "@/components/models/model-filters";
 import { ModelCard } from "@/components/models/model-card";
 import { ModelsGrid } from "@/components/models/models-grid";
 import { BrandPaywallWrapper } from "@/components/brands/BrandPaywallWrapper";
+import { FanCoinGateWrapper } from "@/components/fans/FanCoinGate";
 
 interface SearchParams {
   q?: string;
@@ -195,6 +196,10 @@ export default async function ModelsPage({
     (!profileData?.subscription_tier || profileData.subscription_tier === "free") &&
     profileData?.subscription_status !== "active";
 
+  // Check if fan has minimum coin balance (50 coins required)
+  const MIN_FAN_COINS = 50;
+  const isFanWithoutCoins = actorType === "fan" && coinBalance < MIN_FAN_COINS;
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar
@@ -212,7 +217,10 @@ export default async function ModelsPage({
       {/* Paywall for free brands */}
       {isFreeBrand && <BrandPaywallWrapper />}
 
-      <main className={`container px-8 md:px-16 py-8 ${isFreeBrand ? "blur-sm pointer-events-none select-none" : ""}`}>
+      {/* Coin gate for fans without minimum balance */}
+      {isFanWithoutCoins && <FanCoinGateWrapper currentBalance={coinBalance} />}
+
+      <main className={`container px-8 md:px-16 py-8 ${isFreeBrand || isFanWithoutCoins ? "blur-sm pointer-events-none select-none" : ""}`}>
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold">Models</h1>
