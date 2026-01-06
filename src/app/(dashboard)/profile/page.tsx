@@ -1258,6 +1258,7 @@ export default function ProfilePage() {
                   { value: "fashion", label: "Fashion" },
                   { value: "commercial", label: "Commercial" },
                   { value: "fitness", label: "Fitness" },
+                  { value: "athlete", label: "Athlete" },
                   { value: "swimwear", label: "Swimwear" },
                   { value: "beauty", label: "Beauty" },
                   { value: "editorial", label: "Editorial" },

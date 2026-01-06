@@ -114,7 +114,7 @@ export const ModelCard = memo(function ModelCard({
 
   // Focus tag labels
   const focusLabels: Record<string, string> = {
-    fashion: "Fashion", commercial: "Commercial", fitness: "Fitness",
+    fashion: "Fashion", commercial: "Commercial", fitness: "Fitness", athlete: "Athlete",
     swimwear: "Swimwear", beauty: "Beauty", editorial: "Editorial",
     ecommerce: "E-Comm", promo: "Promo", luxury: "Luxury", lifestyle: "Lifestyle"
   };

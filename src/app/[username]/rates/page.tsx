@@ -145,7 +145,7 @@ export default async function ModelRatesPage({ params }: Props) {
                 <div className="flex flex-wrap gap-1.5 mt-2">
                   {model.focus_tags.map((tag: string) => {
                     const labels: Record<string, string> = {
-                      fashion: "Fashion", commercial: "Commercial", fitness: "Fitness",
+                      fashion: "Fashion", commercial: "Commercial", fitness: "Fitness", athlete: "Athlete",
                       swimwear: "Swimwear", beauty: "Beauty", editorial: "Editorial",
                       ecommerce: "E-Commerce", promo: "Promo/Event", luxury: "Luxury", lifestyle: "Lifestyle"
                     };
