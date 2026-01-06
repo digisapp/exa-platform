@@ -13,7 +13,7 @@ import { SnapchatIcon } from "@/components/ui/snapchat-icon";
 import type { Metadata } from "next";
 import { ShareButton } from "@/components/ui/share-button";
 import { FavoriteButton } from "@/components/ui/favorite-button";
-import { AddToListButton } from "@/components/ui/add-to-list-button";
+import { AddToCampaignButton } from "@/components/ui/add-to-campaign-button";
 import { ProfileActionButtons } from "@/components/profile/ProfileActionButtons";
 import { ProfileContentTabs } from "@/components/profile/ProfileContentTabs";
 
@@ -231,7 +231,7 @@ export default async function ModelProfilePage({ params }: Props) {
                 showCount={true}
               />
               {isBrand && !isOwner && (
-                <AddToListButton
+                <AddToCampaignButton
                   modelId={model.id}
                   modelName={displayName}
                 />

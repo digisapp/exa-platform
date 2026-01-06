@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
-// GET /api/lists/[id] - Get single list with models
+// GET /api/campaigns/[id] - Get single campaign with models
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -23,15 +23,15 @@ export async function GET(
     .single() as { data: { id: string; type: string } | null };
 
   if (!actor || actor.type !== "brand") {
-    return NextResponse.json({ error: "Only brands can access lists" }, { status: 403 });
+    return NextResponse.json({ error: "Only brands can access campaigns" }, { status: 403 });
   }
 
-  // Get list with items
-  const { data: list, error } = await (supabase
-    .from("brand_lists") as any)
+  // Get campaign with models
+  const { data: campaign, error } = await (supabase
+    .from("campaigns") as any)
     .select(`
       *,
-      brand_list_items (
+      campaign_models (
         id,
         model_id,
         notes,
@@ -42,12 +42,12 @@ export async function GET(
     .eq("brand_id", actor.id)
     .single();
 
-  if (error || !list) {
-    return NextResponse.json({ error: "List not found" }, { status: 404 });
+  if (error || !campaign) {
+    return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
   }
 
-  // Get model details for items
-  const modelIds = list.brand_list_items?.map((item: any) => item.model_id) || [];
+  // Get model details
+  const modelIds = campaign.campaign_models?.map((item: any) => item.model_id) || [];
   let models: any[] = [];
 
   if (modelIds.length > 0) {
@@ -58,22 +58,22 @@ export async function GET(
     models = modelData || [];
   }
 
-  // Merge model data with list items
-  const itemsWithModels = list.brand_list_items?.map((item: any) => ({
+  // Merge model data with campaign models
+  const modelsWithData = campaign.campaign_models?.map((item: any) => ({
     ...item,
     model: models.find(m => m.id === item.model_id),
   })) || [];
 
   return NextResponse.json({
-    list: {
-      ...list,
-      brand_list_items: itemsWithModels,
-      item_count: itemsWithModels.length,
+    campaign: {
+      ...campaign,
+      campaign_models: modelsWithData,
+      model_count: modelsWithData.length,
     },
   });
 }
 
-// PUT /api/lists/[id] - Update list
+// PUT /api/campaigns/[id] - Update campaign
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -94,7 +94,7 @@ export async function PUT(
     .single() as { data: { id: string; type: string } | null };
 
   if (!actor || actor.type !== "brand") {
-    return NextResponse.json({ error: "Only brands can update lists" }, { status: 403 });
+    return NextResponse.json({ error: "Only brands can update campaigns" }, { status: 403 });
   }
 
   const body = await request.json();
@@ -111,8 +111,8 @@ export async function PUT(
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  const { data: list, error } = await (adminClient
-    .from("brand_lists") as any)
+  const { data: campaign, error } = await (adminClient
+    .from("campaigns") as any)
     .update(updates)
     .eq("id", id)
     .eq("brand_id", actor.id)
@@ -121,19 +121,19 @@ export async function PUT(
 
   if (error) {
     if (error.code === "23505") {
-      return NextResponse.json({ error: "A list with this name already exists" }, { status: 400 });
+      return NextResponse.json({ error: "A campaign with this name already exists" }, { status: 400 });
     }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  if (!list) {
-    return NextResponse.json({ error: "List not found" }, { status: 404 });
+  if (!campaign) {
+    return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
   }
 
-  return NextResponse.json({ list });
+  return NextResponse.json({ campaign });
 }
 
-// DELETE /api/lists/[id] - Delete list
+// DELETE /api/campaigns/[id] - Delete campaign
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -154,7 +154,7 @@ export async function DELETE(
     .single() as { data: { id: string; type: string } | null };
 
   if (!actor || actor.type !== "brand") {
-    return NextResponse.json({ error: "Only brands can delete lists" }, { status: 403 });
+    return NextResponse.json({ error: "Only brands can delete campaigns" }, { status: 403 });
   }
 
   // Use service role client to bypass RLS for delete
@@ -164,7 +164,7 @@ export async function DELETE(
   );
 
   const { error } = await (adminClient
-    .from("brand_lists") as any)
+    .from("campaigns") as any)
     .delete()
     .eq("id", id)
     .eq("brand_id", actor.id);

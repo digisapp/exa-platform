@@ -26,7 +26,7 @@ const COLORS = [
   "#84cc16", // lime
 ];
 
-export function CreateListDialog() {
+export function CreateCampaignDialog() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -36,13 +36,13 @@ export function CreateListDialog() {
 
   const handleCreate = async () => {
     if (!name.trim()) {
-      toast.error("Please enter a list name");
+      toast.error("Please enter a campaign name");
       return;
     }
 
     setLoading(true);
     try {
-      const res = await fetch("/api/lists", {
+      const res = await fetch("/api/campaigns", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: name.trim(), description: description.trim(), color }),
@@ -50,17 +50,17 @@ export function CreateListDialog() {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Failed to create list");
+        throw new Error(data.error || "Failed to create campaign");
       }
 
-      toast.success(`Created "${name}" list`);
+      toast.success(`Created "${name}" campaign`);
       setOpen(false);
       setName("");
       setDescription("");
       setColor(COLORS[0]);
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to create list");
+      toast.error(error instanceof Error ? error.message : "Failed to create campaign");
     } finally {
       setLoading(false);
     }
@@ -71,18 +71,18 @@ export function CreateListDialog() {
       <DialogTrigger asChild>
         <Button className="bg-violet-500 hover:bg-violet-600">
           <Plus className="h-4 w-4 mr-2" />
-          Create List
+          New Campaign
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create New List</DialogTitle>
+          <DialogTitle>Create New Campaign</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 mt-4">
           <div>
-            <label className="text-sm font-medium mb-2 block">List Name</label>
+            <label className="text-sm font-medium mb-2 block">Campaign Name</label>
             <Input
-              placeholder="e.g., Summer Campaign, Miami Shoot"
+              placeholder="e.g., Summer Promo, Miami Event"
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
@@ -90,7 +90,7 @@ export function CreateListDialog() {
           <div>
             <label className="text-sm font-medium mb-2 block">Description (optional)</label>
             <Textarea
-              placeholder="What is this list for?"
+              placeholder="What is this campaign for?"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
@@ -120,7 +120,7 @@ export function CreateListDialog() {
               disabled={loading || !name.trim()}
               className="bg-violet-500 hover:bg-violet-600"
             >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create List"}
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create Campaign"}
             </Button>
           </div>
         </div>

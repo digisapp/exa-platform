@@ -1,21 +1,21 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { ListPlus } from "lucide-react";
+import { Megaphone } from "lucide-react";
 import type { Metadata } from "next";
-import { CreateListDialog } from "@/components/lists/CreateListDialog";
-import { ListsGrid } from "@/components/lists/ListsGrid";
+import { CreateCampaignDialog } from "@/components/campaigns/CreateCampaignDialog";
+import { CampaignsGrid } from "@/components/campaigns/CampaignsGrid";
 
 export const metadata: Metadata = {
-  title: "My Lists | EXA",
-  description: "Manage your model lists on EXA",
+  title: "Campaigns | EXA",
+  description: "Manage your model campaigns on EXA",
 };
 
-export default async function ListsPage() {
+export default async function CampaignsPage() {
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
-    redirect("/signin?redirect=/lists");
+    redirect("/signin?redirect=/campaigns");
   }
 
   // Get actor and verify it's a brand
@@ -29,12 +29,12 @@ export default async function ListsPage() {
     redirect("/dashboard");
   }
 
-  // Get all lists with items
-  const { data: lists } = await (supabase
-    .from("brand_lists") as any)
+  // Get all campaigns with models
+  const { data: campaigns } = await (supabase
+    .from("campaigns") as any)
     .select(`
       *,
-      brand_list_items (
+      campaign_models (
         id,
         model_id,
         added_at
@@ -43,9 +43,9 @@ export default async function ListsPage() {
     .eq("brand_id", actor.id)
     .order("created_at", { ascending: false });
 
-  // Get model details for list previews
-  const allModelIds = lists?.flatMap((list: any) =>
-    list.brand_list_items?.map((item: any) => item.model_id) || []
+  // Get model details for campaign previews
+  const allModelIds = campaigns?.flatMap((campaign: any) =>
+    campaign.campaign_models?.map((item: any) => item.model_id) || []
   ) || [];
 
   const modelsMap = new Map();
@@ -59,14 +59,14 @@ export default async function ListsPage() {
     models?.forEach((m: any) => modelsMap.set(m.id, m));
   }
 
-  // Enrich lists with model data
-  const enrichedLists = lists?.map((list: any) => ({
-    id: list.id,
-    name: list.name,
-    description: list.description,
-    color: list.color,
-    models: list.brand_list_items?.map((item: any) => modelsMap.get(item.model_id)).filter(Boolean) || [],
-    item_count: list.brand_list_items?.length || 0,
+  // Enrich campaigns with model data
+  const enrichedCampaigns = campaigns?.map((campaign: any) => ({
+    id: campaign.id,
+    name: campaign.name,
+    description: campaign.description,
+    color: campaign.color,
+    models: campaign.campaign_models?.map((item: any) => modelsMap.get(item.model_id)).filter(Boolean) || [],
+    model_count: campaign.campaign_models?.length || 0,
   })) || [];
 
   return (
@@ -75,18 +75,18 @@ export default async function ListsPage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <div className="flex items-center gap-3">
-            <ListPlus className="h-8 w-8 text-violet-500" />
-            <h1 className="text-3xl font-bold">My Lists</h1>
+            <Megaphone className="h-8 w-8 text-violet-500" />
+            <h1 className="text-3xl font-bold">Campaigns</h1>
           </div>
           <p className="text-muted-foreground mt-2">
-            Organize models into lists for your campaigns and projects
+            Organize models and send offers for your events and projects
           </p>
         </div>
-        {enrichedLists.length > 0 && <CreateListDialog />}
+        {enrichedCampaigns.length > 0 && <CreateCampaignDialog />}
       </div>
 
-      {/* Lists Grid with Search */}
-      <ListsGrid lists={enrichedLists} />
+      {/* Campaigns Grid with Search */}
+      <CampaignsGrid campaigns={enrichedCampaigns} />
     </>
   );
 }

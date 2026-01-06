@@ -17,30 +17,30 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-interface DeleteListButtonProps {
-  listId: string;
-  listName: string;
+interface DeleteCampaignButtonProps {
+  campaignId: string;
+  campaignName: string;
 }
 
-export function DeleteListButton({ listId, listName }: DeleteListButtonProps) {
+export function DeleteCampaignButton({ campaignId, campaignName }: DeleteCampaignButtonProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   const handleDelete = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/lists/${listId}`, {
+      const res = await fetch(`/api/campaigns/${campaignId}`, {
         method: "DELETE",
       });
 
       if (!res.ok) {
-        throw new Error("Failed to delete list");
+        throw new Error("Failed to delete campaign");
       }
 
-      toast.success(`Deleted "${listName}" list`);
+      toast.success(`Deleted "${campaignName}" campaign`);
       router.refresh();
     } catch (error) {
-      toast.error("Failed to delete list");
+      toast.error("Failed to delete campaign");
     } finally {
       setLoading(false);
     }
@@ -55,9 +55,9 @@ export function DeleteListButton({ listId, listName }: DeleteListButtonProps) {
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete &ldquo;{listName}&rdquo;?</AlertDialogTitle>
+          <AlertDialogTitle>Delete &ldquo;{campaignName}&rdquo;?</AlertDialogTitle>
           <AlertDialogDescription>
-            This will permanently delete this list and remove all models from it. This action cannot be undone.
+            This will permanently delete this campaign and remove all models from it. This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

@@ -9,7 +9,7 @@ import { MapPin, Instagram, Heart, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useCallback, memo } from "react";
 import { toast } from "sonner";
-import { AddToListButton } from "@/components/ui/add-to-list-button";
+import { AddToCampaignButton } from "@/components/ui/add-to-campaign-button";
 
 interface ModelCardProps {
   model: any;
@@ -157,13 +157,13 @@ export const ModelCard = memo(function ModelCard({
             </button>
           )}
 
-          {/* Add to List Button (for brands) */}
+          {/* Add to Campaign Button (for brands) */}
           {showListButton && (
             <div
               className="absolute top-3 right-3 z-10"
               onClick={(e) => e.preventDefault()}
             >
-              <AddToListButton
+              <AddToCampaignButton
                 modelId={model.id}
                 modelName={displayName}
                 size="sm"

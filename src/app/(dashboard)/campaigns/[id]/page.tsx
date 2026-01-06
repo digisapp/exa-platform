@@ -5,16 +5,17 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Button } from "@/components/ui/button";
 import { ModelCard } from "@/components/models/model-card";
-import { RemoveFromListButton } from "@/components/lists/RemoveFromListButton";
-import { BulkAddModelsDialog } from "@/components/lists/BulkAddModelsDialog";
+import { RemoveFromCampaignButton } from "@/components/campaigns/RemoveFromCampaignButton";
+import { BulkAddModelsDialog } from "@/components/campaigns/BulkAddModelsDialog";
 import { SendOfferDialog } from "@/components/offers/SendOfferDialog";
+import { CampaignOffers } from "@/components/campaigns/CampaignOffers";
 
 export const metadata: Metadata = {
-  title: "List | EXA",
-  description: "View your model list on EXA",
+  title: "Campaign | EXA",
+  description: "View your campaign on EXA",
 };
 
-export default async function ListDetailPage({
+export default async function CampaignDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -24,7 +25,7 @@ export default async function ListDetailPage({
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
-    redirect("/signin?redirect=/lists");
+    redirect("/signin?redirect=/campaigns");
   }
 
   // Get actor and verify it's a brand
@@ -38,12 +39,12 @@ export default async function ListDetailPage({
     redirect("/dashboard");
   }
 
-  // Get list with items
-  const { data: list, error } = await (supabase
-    .from("brand_lists") as any)
+  // Get campaign with models
+  const { data: campaign, error } = await (supabase
+    .from("campaigns") as any)
     .select(`
       *,
-      brand_list_items (
+      campaign_models (
         id,
         model_id,
         notes,
@@ -54,12 +55,12 @@ export default async function ListDetailPage({
     .eq("brand_id", actor.id)
     .single();
 
-  if (error || !list) {
+  if (error || !campaign) {
     notFound();
   }
 
   // Get model details
-  const modelIds = list.brand_list_items?.map((item: any) => item.model_id) || [];
+  const modelIds = campaign.campaign_models?.map((item: any) => item.model_id) || [];
   let models: any[] = [];
 
   if (modelIds.length > 0) {
@@ -73,11 +74,11 @@ export default async function ListDetailPage({
   // Create a map for quick lookup
   const modelsMap = new Map(models.map(m => [m.id, m]));
 
-  // Merge with list items to preserve order and get notes
-  const orderedModels = list.brand_list_items
+  // Merge with campaign items to preserve order and get notes
+  const orderedModels = campaign.campaign_models
     ?.map((item: any) => ({
       ...modelsMap.get(item.model_id),
-      listItemId: item.id,
+      campaignItemId: item.id,
       notes: item.notes,
       addedAt: item.added_at,
     }))
@@ -87,11 +88,11 @@ export default async function ListDetailPage({
     <>
       {/* Back Link */}
       <Link
-        href="/lists"
+        href="/campaigns"
         className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
-        Back to Lists
+        Back to Campaigns
       </Link>
 
       {/* Header */}
@@ -100,12 +101,12 @@ export default async function ListDetailPage({
           <div className="flex items-center gap-3 mb-2">
             <div
               className="w-4 h-4 rounded-full"
-              style={{ backgroundColor: list.color }}
+              style={{ backgroundColor: campaign.color }}
             />
-            <h1 className="text-3xl font-bold">{list.name}</h1>
+            <h1 className="text-3xl font-bold">{campaign.name}</h1>
           </div>
-          {list.description && (
-            <p className="text-muted-foreground">{list.description}</p>
+          {campaign.description && (
+            <p className="text-muted-foreground">{campaign.description}</p>
           )}
           <p className="text-sm text-muted-foreground mt-2">
             {orderedModels.length} {orderedModels.length === 1 ? "model" : "models"}
@@ -113,50 +114,56 @@ export default async function ListDetailPage({
         </div>
         <div className="flex items-center gap-3">
           <BulkAddModelsDialog
-            listId={id}
-            listName={list.name}
+            campaignId={id}
+            campaignName={campaign.name}
             existingModelIds={modelIds}
           />
           {orderedModels.length > 0 && (
             <SendOfferDialog
-              listId={id}
-              listName={list.name}
+              campaignId={id}
+              campaignName={campaign.name}
               modelCount={orderedModels.length}
             />
           )}
         </div>
       </div>
 
-      {/* Models Grid */}
-      {orderedModels.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {orderedModels.map((model: any) => (
-            <div key={model.id} className="relative group">
-              <ModelCard
-                model={model}
-                showFavorite={false}
-                isLoggedIn={true}
-              />
-              <RemoveFromListButton
-                listId={id}
-                modelId={model.id}
-                modelName={model.first_name || model.username}
-              />
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-16">
-          <Users className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold mb-2">No models in this list</h2>
-          <p className="text-muted-foreground mb-6">
-            Browse models and add them to this list using the list icon.
-          </p>
-          <Button asChild>
-            <Link href="/models">Browse Models</Link>
-          </Button>
-        </div>
-      )}
+      {/* Offers Section */}
+      <CampaignOffers campaignId={id} />
+
+      {/* Models Section */}
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold mb-4">Models in Campaign</h2>
+        {orderedModels.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            {orderedModels.map((model: any) => (
+              <div key={model.id} className="relative group">
+                <ModelCard
+                  model={model}
+                  showFavorite={false}
+                  isLoggedIn={true}
+                />
+                <RemoveFromCampaignButton
+                  campaignId={id}
+                  modelId={model.id}
+                  modelName={model.first_name || model.username}
+                />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-16">
+            <Users className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">No models in this campaign</h2>
+            <p className="text-muted-foreground mb-6">
+              Browse models and add them to this campaign.
+            </p>
+            <Button asChild>
+              <Link href="/models">Browse Models</Link>
+            </Button>
+          </div>
+        )}
+      </div>
     </>
   );
 }

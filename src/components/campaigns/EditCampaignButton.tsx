@@ -29,36 +29,36 @@ const COLORS = [
   "#6366f1", // indigo
 ];
 
-interface EditListButtonProps {
-  listId: string;
-  listName: string;
-  listDescription?: string | null;
-  listColor: string;
+interface EditCampaignButtonProps {
+  campaignId: string;
+  campaignName: string;
+  campaignDescription?: string | null;
+  campaignColor: string;
 }
 
-export function EditListButton({
-  listId,
-  listName,
-  listDescription,
-  listColor,
-}: EditListButtonProps) {
+export function EditCampaignButton({
+  campaignId,
+  campaignName,
+  campaignDescription,
+  campaignColor,
+}: EditCampaignButtonProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [name, setName] = useState(listName);
-  const [description, setDescription] = useState(listDescription || "");
-  const [color, setColor] = useState(listColor);
+  const [name, setName] = useState(campaignName);
+  const [description, setDescription] = useState(campaignDescription || "");
+  const [color, setColor] = useState(campaignColor);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      toast.error("List name is required");
+      toast.error("Campaign name is required");
       return;
     }
 
     setLoading(true);
     try {
-      const res = await fetch(`/api/lists/${listId}`, {
+      const res = await fetch(`/api/campaigns/${campaignId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: name.trim(), description: description.trim() || null, color }),
@@ -66,14 +66,14 @@ export function EditListButton({
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Failed to update list");
+        throw new Error(data.error || "Failed to update campaign");
       }
 
-      toast.success("List updated");
+      toast.success("Campaign updated");
       setOpen(false);
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to update list");
+      toast.error(error instanceof Error ? error.message : "Failed to update campaign");
     } finally {
       setLoading(false);
     }
@@ -89,9 +89,9 @@ export function EditListButton({
       <DialogContent>
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Edit List</DialogTitle>
+            <DialogTitle>Edit Campaign</DialogTitle>
             <DialogDescription>
-              Update the name, description, or color of your list.
+              Update the name, description, or color of your campaign.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -101,7 +101,7 @@ export function EditListButton({
                 id="edit-name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g., Summer Campaign"
+                placeholder="e.g., Summer Promo"
                 disabled={loading}
               />
             </div>

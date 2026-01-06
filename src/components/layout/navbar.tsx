@@ -24,9 +24,8 @@ import {
   Images,
   Crown,
   Heart,
-  ListPlus,
+  Megaphone,
   BarChart3,
-  Gift,
   Plus,
   ChevronDown,
 } from "lucide-react";
@@ -69,8 +68,7 @@ const brandLinks = [
 
 // Create dropdown items for brands
 const brandCreateItems = [
-  { href: "/lists", label: "Lists", icon: ListPlus },
-  { href: "/brands/offers", label: "Offers", icon: Gift },
+  { href: "/campaigns", label: "Campaigns", icon: Megaphone },
 ];
 
 const adminLinks = [
@@ -129,7 +127,7 @@ export function Navbar({ user, actorType, coinBalance = 0 }: NavbarProps) {
                 <button
                   className={cn(
                     "flex items-center gap-1.5 text-sm font-medium transition-colors hover:text-primary",
-                    (pathname.startsWith("/lists") || pathname.startsWith("/brands/offers"))
+                    pathname.startsWith("/campaigns")
                       ? "text-primary"
                       : "text-muted-foreground"
                   )}

@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
-// GET /api/lists/model/[modelId] - Get all lists and whether this model is in each
+// GET /api/campaigns/model/[modelId] - Get all campaigns and whether this model is in each
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ modelId: string }> }
@@ -23,17 +23,17 @@ export async function GET(
     .single() as { data: { id: string; type: string } | null };
 
   if (!actor || actor.type !== "brand") {
-    return NextResponse.json({ error: "Only brands can access lists" }, { status: 403 });
+    return NextResponse.json({ error: "Only brands can access campaigns" }, { status: 403 });
   }
 
-  // Get all lists for this brand
-  const { data: lists, error } = await (supabase
-    .from("brand_lists") as any)
+  // Get all campaigns for this brand
+  const { data: campaigns, error } = await (supabase
+    .from("campaigns") as any)
     .select(`
       id,
       name,
       color,
-      brand_list_items (
+      campaign_models (
         model_id
       )
     `)
@@ -44,19 +44,19 @@ export async function GET(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Format lists with inList boolean
-  const listsWithStatus = lists?.map((list: any) => ({
-    id: list.id,
-    name: list.name,
-    color: list.color,
-    inList: list.brand_list_items?.some((item: any) => item.model_id === modelId) || false,
-    itemCount: list.brand_list_items?.length || 0,
+  // Format campaigns with inCampaign boolean
+  const campaignsWithStatus = campaigns?.map((campaign: any) => ({
+    id: campaign.id,
+    name: campaign.name,
+    color: campaign.color,
+    inCampaign: campaign.campaign_models?.some((item: any) => item.model_id === modelId) || false,
+    modelCount: campaign.campaign_models?.length || 0,
   })) || [];
 
-  return NextResponse.json({ lists: listsWithStatus });
+  return NextResponse.json({ campaigns: campaignsWithStatus });
 }
 
-// POST /api/lists/model/[modelId] - Toggle model in list
+// POST /api/campaigns/model/[modelId] - Toggle model in campaign
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ modelId: string }> }
@@ -77,26 +77,26 @@ export async function POST(
     .single() as { data: { id: string; type: string } | null };
 
   if (!actor || actor.type !== "brand") {
-    return NextResponse.json({ error: "Only brands can modify lists" }, { status: 403 });
+    return NextResponse.json({ error: "Only brands can modify campaigns" }, { status: 403 });
   }
 
   const body = await request.json();
-  const { listId, add } = body;
+  const { campaignId, add } = body;
 
-  if (!listId) {
-    return NextResponse.json({ error: "List ID is required" }, { status: 400 });
+  if (!campaignId) {
+    return NextResponse.json({ error: "Campaign ID is required" }, { status: 400 });
   }
 
-  // Verify the list belongs to this brand
-  const { data: list } = await (supabase
-    .from("brand_lists") as any)
+  // Verify the campaign belongs to this brand
+  const { data: campaign } = await (supabase
+    .from("campaigns") as any)
     .select("id")
-    .eq("id", listId)
+    .eq("id", campaignId)
     .eq("brand_id", actor.id)
     .single();
 
-  if (!list) {
-    return NextResponse.json({ error: "List not found" }, { status: 404 });
+  if (!campaign) {
+    return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
   }
 
   // Use service role client to bypass RLS for insert/delete
@@ -106,23 +106,23 @@ export async function POST(
   );
 
   if (add) {
-    // Add model to list
+    // Add model to campaign
     const { error } = await (adminClient
-      .from("brand_list_items") as any)
+      .from("campaign_models") as any)
       .upsert({
-        list_id: listId,
+        campaign_id: campaignId,
         model_id: modelId,
-      }, { onConflict: "list_id,model_id" });
+      }, { onConflict: "campaign_id,model_id" });
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
   } else {
-    // Remove model from list
+    // Remove model from campaign
     const { error } = await (adminClient
-      .from("brand_list_items") as any)
+      .from("campaign_models") as any)
       .delete()
-      .eq("list_id", listId)
+      .eq("campaign_id", campaignId)
       .eq("model_id", modelId);
 
     if (error) {

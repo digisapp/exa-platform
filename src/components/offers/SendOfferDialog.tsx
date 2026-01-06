@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,12 +26,13 @@ import { toast } from "sonner";
 import { Send, Loader2, Repeat } from "lucide-react";
 
 interface SendOfferDialogProps {
-  listId: string;
-  listName: string;
+  campaignId: string;
+  campaignName: string;
   modelCount: number;
 }
 
-export function SendOfferDialog({ listId, listName, modelCount }: SendOfferDialogProps) {
+export function SendOfferDialog({ campaignId, campaignName, modelCount }: SendOfferDialogProps) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [formData, setFormData] = useState({
@@ -65,7 +67,7 @@ export function SendOfferDialog({ listId, listName, modelCount }: SendOfferDialo
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          list_id: listId,
+          campaign_id: campaignId,
           ...formData,
           compensation_amount: formData.compensation_type === "paid"
             ? formData.compensation_amount * 100
@@ -108,6 +110,7 @@ export function SendOfferDialog({ listId, listName, modelCount }: SendOfferDialo
         recurrence_pattern: "weekly",
         recurrence_end_date: "",
       });
+      router.refresh();
     } catch (error) {
       console.error("Error sending offer:", error);
       toast.error("Failed to send offer");
@@ -126,9 +129,9 @@ export function SendOfferDialog({ listId, listName, modelCount }: SendOfferDialo
       </DialogTrigger>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Send Offer to &quot;{listName}&quot;</DialogTitle>
+          <DialogTitle>Send Offer to &quot;{campaignName}&quot;</DialogTitle>
           <DialogDescription>
-            This offer will be sent to {modelCount} {modelCount === 1 ? "model" : "models"} in this list.
+            This offer will be sent to {modelCount} {modelCount === 1 ? "model" : "models"} in this campaign.
           </DialogDescription>
         </DialogHeader>
 

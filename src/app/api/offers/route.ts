@@ -9,11 +9,13 @@ const adminClient = createSupabaseClient(
 );
 
 // GET /api/offers - Get offers
-// For models: offers sent to lists they're in
-// For brands: offers they've sent
+// For models: offers sent to campaigns they're in
+// For brands: offers they've sent (optionally filtered by campaignId)
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
+    const url = new URL(request.url);
+    const campaignId = url.searchParams.get("campaignId");
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -42,19 +44,19 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: "Model not found" }, { status: 404 });
       }
 
-      // Get lists the model is in
-      const { data: listItems } = await (supabase
-        .from("brand_list_items") as any)
-        .select("list_id")
+      // Get campaigns the model is in
+      const { data: campaignItems } = await (supabase
+        .from("campaign_models") as any)
+        .select("campaign_id")
         .eq("model_id", model.id);
 
-      const listIds = listItems?.map((item: any) => item.list_id) || [];
+      const campaignIds = campaignItems?.map((item: any) => item.campaign_id) || [];
 
-      if (listIds.length === 0) {
+      if (campaignIds.length === 0) {
         return NextResponse.json({ offers: [] });
       }
 
-      // Get offers for those lists with brand info
+      // Get offers for those campaigns with brand info
       const { data: offers } = await (supabase
         .from("offers") as any)
         .select(`
@@ -63,9 +65,9 @@ export async function GET(request: NextRequest) {
             id,
             brands:brands(id, company_name, logo_url)
           ),
-          list:brand_lists(id, name)
+          campaign:campaigns(id, name)
         `)
-        .in("list_id", listIds)
+        .in("campaign_id", campaignIds)
         .eq("status", "open")
         .order("created_at", { ascending: false });
 
@@ -92,16 +94,30 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({ offers: offersWithResponse });
     } else if (actor.type === "brand") {
-      // Get brand's offers
-      const { data: offers } = await (supabase
+      // Get brand's offers with model responses
+      let query = (supabase
         .from("offers") as any)
         .select(`
           *,
-          list:brand_lists(id, name),
-          responses:offer_responses(id, model_id, status, responded_at)
+          campaign:campaigns(id, name),
+          responses:offer_responses(
+            id,
+            model_id,
+            status,
+            responded_at,
+            checked_in_at,
+            no_show,
+            model:models(id, username, first_name, last_name, profile_photo_url, reliability_score)
+          )
         `)
-        .eq("brand_id", actor.id)
-        .order("created_at", { ascending: false });
+        .eq("brand_id", actor.id);
+
+      // Filter by campaign if specified
+      if (campaignId) {
+        query = query.eq("campaign_id", campaignId);
+      }
+
+      const { data: offers } = await query.order("created_at", { ascending: false });
 
       return NextResponse.json({ offers: offers || [] });
     } else if (actor.type === "admin") {
@@ -114,7 +130,7 @@ export async function GET(request: NextRequest) {
             id,
             brands:brands(id, company_name, logo_url)
           ),
-          list:brand_lists(id, name)
+          campaign:campaigns(id, name)
         `)
         .order("created_at", { ascending: false });
 
@@ -128,7 +144,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/offers - Brand creates and sends offer to a list
+// POST /api/offers - Brand creates and sends offer to a campaign
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -164,7 +180,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const {
-      list_id,
+      campaign_id,
       title,
       description,
       location_name,
@@ -182,19 +198,19 @@ export async function POST(request: NextRequest) {
       recurrence_end_date,
     } = body;
 
-    if (!list_id || !title) {
-      return NextResponse.json({ error: "List and title are required" }, { status: 400 });
+    if (!campaign_id || !title) {
+      return NextResponse.json({ error: "Campaign and title are required" }, { status: 400 });
     }
 
-    // Verify the list belongs to this brand
-    const { data: list } = await (supabase
-      .from("brand_lists") as any)
+    // Verify the campaign belongs to this brand
+    const { data: campaign } = await (supabase
+      .from("campaigns") as any)
       .select("id, name, brand_id")
-      .eq("id", list_id)
+      .eq("id", campaign_id)
       .single();
 
-    if (!list || list.brand_id !== actor.id) {
-      return NextResponse.json({ error: "List not found" }, { status: 404 });
+    if (!campaign || campaign.brand_id !== actor.id) {
+      return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
     }
 
     // Create the offer
@@ -202,7 +218,7 @@ export async function POST(request: NextRequest) {
       .from("offers") as any)
       .insert({
         brand_id: actor.id,
-        list_id,
+        campaign_id,
         title,
         description,
         location_name,
@@ -225,14 +241,14 @@ export async function POST(request: NextRequest) {
 
     if (error) throw error;
 
-    // Get models in this list to create pending responses
-    const { data: listItems } = await (supabase
-      .from("brand_list_items") as any)
+    // Get models in this campaign to create pending responses
+    const { data: campaignModels } = await (supabase
+      .from("campaign_models") as any)
       .select("model_id")
-      .eq("list_id", list_id);
+      .eq("campaign_id", campaign_id);
 
-    if (listItems && listItems.length > 0) {
-      const responses = listItems.map((item: any) => ({
+    if (campaignModels && campaignModels.length > 0) {
+      const responses = campaignModels.map((item: any) => ({
         offer_id: offer.id,
         model_id: item.model_id,
         status: "pending",
@@ -249,7 +265,7 @@ export async function POST(request: NextRequest) {
       const brandName = brandData?.company_name || "A brand";
 
       // Get model details for sending emails
-      const modelIds = listItems.map((item: any) => item.model_id);
+      const modelIds = campaignModels.map((item: any) => item.model_id);
       const { data: models } = await (adminClient
         .from("models") as any)
         .select("id, first_name, username, user_id")
@@ -295,7 +311,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ offer, models_notified: listItems?.length || 0 });
+    return NextResponse.json({ offer, models_notified: campaignModels?.length || 0 });
   } catch (error) {
     console.error("Error creating offer:", error);
     return NextResponse.json({ error: "Failed to create offer" }, { status: 500 });

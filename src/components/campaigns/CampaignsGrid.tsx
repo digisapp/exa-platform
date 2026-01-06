@@ -3,12 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Search, ListPlus } from "lucide-react";
+import { Search, Megaphone } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DeleteListButton } from "@/components/lists/DeleteListButton";
-import { EditListButton } from "@/components/lists/EditListButton";
-import { CreateListDialog } from "@/components/lists/CreateListDialog";
+import { DeleteCampaignButton } from "@/components/campaigns/DeleteCampaignButton";
+import { EditCampaignButton } from "@/components/campaigns/EditCampaignButton";
+import { CreateCampaignDialog } from "@/components/campaigns/CreateCampaignDialog";
 
 interface Model {
   id: string;
@@ -18,30 +18,30 @@ interface Model {
   profile_photo_url?: string;
 }
 
-interface List {
+interface Campaign {
   id: string;
   name: string;
   description?: string | null;
   color: string;
   models: Model[];
-  item_count: number;
+  model_count: number;
 }
 
-interface ListsGridProps {
-  lists: List[];
+interface CampaignsGridProps {
+  campaigns: Campaign[];
 }
 
-export function ListsGrid({ lists }: ListsGridProps) {
+export function CampaignsGrid({ campaigns }: CampaignsGridProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredLists = lists.filter((list) => {
+  const filteredCampaigns = campaigns.filter((campaign) => {
     const query = searchQuery.toLowerCase();
-    // Search by list name
-    if (list.name.toLowerCase().includes(query)) return true;
+    // Search by campaign name
+    if (campaign.name.toLowerCase().includes(query)) return true;
     // Search by description
-    if (list.description?.toLowerCase().includes(query)) return true;
-    // Search by model names in the list
-    if (list.models.some((model) => {
+    if (campaign.description?.toLowerCase().includes(query)) return true;
+    // Search by model names in the campaign
+    if (campaign.models.some((model) => {
       const modelName = model.first_name
         ? `${model.first_name} ${model.last_name || ""}`.trim().toLowerCase()
         : model.username?.toLowerCase() || "";
@@ -50,15 +50,15 @@ export function ListsGrid({ lists }: ListsGridProps) {
     return false;
   });
 
-  if (lists.length === 0) {
+  if (campaigns.length === 0) {
     return (
       <div className="text-center py-16">
-        <ListPlus className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
-        <h2 className="text-xl font-semibold mb-2">No lists yet</h2>
+        <Megaphone className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
+        <h2 className="text-xl font-semibold mb-2">No campaigns yet</h2>
         <p className="text-muted-foreground mb-6">
-          Create lists to organize models for your campaigns and projects.
+          Create campaigns to organize models and send offers for your events.
         </p>
-        <CreateListDialog />
+        <CreateCampaignDialog />
       </div>
     );
   }
@@ -66,11 +66,11 @@ export function ListsGrid({ lists }: ListsGridProps) {
   return (
     <div className="space-y-6">
       {/* Search */}
-      {lists.length > 3 && (
+      {campaigns.length > 3 && (
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search lists or models..."
+            placeholder="Search campaigns or models..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
@@ -78,40 +78,40 @@ export function ListsGrid({ lists }: ListsGridProps) {
         </div>
       )}
 
-      {/* Lists Grid */}
-      {filteredLists.length > 0 ? (
+      {/* Campaigns Grid */}
+      {filteredCampaigns.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredLists.map((list) => (
-            <Card key={list.id} className="group hover:border-violet-500/50 transition-colors">
+          {filteredCampaigns.map((campaign) => (
+            <Card key={campaign.id} className="group hover:border-violet-500/50 transition-colors">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div
                       className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: list.color }}
+                      style={{ backgroundColor: campaign.color }}
                     />
-                    <CardTitle className="text-lg">{list.name}</CardTitle>
+                    <CardTitle className="text-lg">{campaign.name}</CardTitle>
                   </div>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <EditListButton
-                      listId={list.id}
-                      listName={list.name}
-                      listDescription={list.description}
-                      listColor={list.color}
+                    <EditCampaignButton
+                      campaignId={campaign.id}
+                      campaignName={campaign.name}
+                      campaignDescription={campaign.description}
+                      campaignColor={campaign.color}
                     />
-                    <DeleteListButton listId={list.id} listName={list.name} />
+                    <DeleteCampaignButton campaignId={campaign.id} campaignName={campaign.name} />
                   </div>
                 </div>
-                {list.description && (
-                  <p className="text-sm text-muted-foreground mt-1">{list.description}</p>
+                {campaign.description && (
+                  <p className="text-sm text-muted-foreground mt-1">{campaign.description}</p>
                 )}
               </CardHeader>
               <CardContent>
-                <Link href={`/lists/${list.id}`}>
+                <Link href={`/campaigns/${campaign.id}`}>
                   <div className="space-y-3 cursor-pointer">
                     {/* Model Avatars Preview */}
                     <div className="flex items-center">
-                      {list.models.slice(0, 5).map((model, idx) => (
+                      {campaign.models.slice(0, 5).map((model, idx) => (
                         <div
                           key={model.id}
                           className="w-10 h-10 rounded-full border-2 border-background overflow-hidden"
@@ -132,22 +132,22 @@ export function ListsGrid({ lists }: ListsGridProps) {
                           )}
                         </div>
                       ))}
-                      {list.item_count > 5 && (
+                      {campaign.model_count > 5 && (
                         <div
                           className="w-10 h-10 rounded-full border-2 border-background bg-muted flex items-center justify-center text-xs font-medium"
                           style={{ marginLeft: -12 }}
                         >
-                          +{list.item_count - 5}
+                          +{campaign.model_count - 5}
                         </div>
                       )}
                     </div>
 
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">
-                        {list.item_count} {list.item_count === 1 ? "model" : "models"}
+                        {campaign.model_count} {campaign.model_count === 1 ? "model" : "models"}
                       </span>
                       <span className="text-violet-500 group-hover:underline">
-                        View List
+                        View Campaign
                       </span>
                     </div>
                   </div>
@@ -159,7 +159,7 @@ export function ListsGrid({ lists }: ListsGridProps) {
       ) : (
         <div className="text-center py-12">
           <Search className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No lists found</h3>
+          <h3 className="text-lg font-semibold mb-2">No campaigns found</h3>
           <p className="text-muted-foreground">
             Try a different search term
           </p>

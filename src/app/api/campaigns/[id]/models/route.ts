@@ -3,12 +3,12 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { BRAND_SUBSCRIPTION_TIERS, BrandTier } from "@/lib/stripe-config";
 
-// POST /api/lists/[id]/items - Add model to list
+// POST /api/campaigns/[id]/models - Add model to campaign
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id: listId } = await params;
+  const { id: campaignId } = await params;
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
@@ -24,7 +24,7 @@ export async function POST(
     .single() as { data: { id: string; type: string } | null };
 
   if (!actor || actor.type !== "brand") {
-    return NextResponse.json({ error: "Only brands can add to lists" }, { status: 403 });
+    return NextResponse.json({ error: "Only brands can add to campaigns" }, { status: 403 });
   }
 
   // Use service role client to bypass RLS
@@ -33,16 +33,16 @@ export async function POST(
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  // Verify the list belongs to this brand
-  const { data: list } = await (supabase
-    .from("brand_lists") as any)
+  // Verify the campaign belongs to this brand
+  const { data: campaign } = await (supabase
+    .from("campaigns") as any)
     .select("id")
-    .eq("id", listId)
+    .eq("id", campaignId)
     .eq("brand_id", actor.id)
     .single();
 
-  if (!list) {
-    return NextResponse.json({ error: "List not found" }, { status: 404 });
+  if (!campaign) {
+    return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
   }
 
   // Get brand's subscription tier
@@ -55,17 +55,17 @@ export async function POST(
   const tier = (brand?.subscription_status === "active" ? brand?.subscription_tier : "free") as BrandTier || "free";
   const tierConfig = BRAND_SUBSCRIPTION_TIERS[tier];
 
-  // Check models per list limit (skip if unlimited: -1)
+  // Check models per campaign limit (skip if unlimited: -1)
   if (tierConfig.maxModelsPerList !== -1) {
     const { count } = await (adminClient
-      .from("brand_list_items") as any)
+      .from("campaign_models") as any)
       .select("id", { count: "exact", head: true })
-      .eq("list_id", listId);
+      .eq("campaign_id", campaignId);
 
     if ((count || 0) >= tierConfig.maxModelsPerList) {
       return NextResponse.json({
-        error: `This list has reached its limit (${tierConfig.maxModelsPerList} models). Upgrade your plan to add more models per list.`,
-        code: "LIST_ITEM_LIMIT_REACHED"
+        error: `This campaign has reached its limit (${tierConfig.maxModelsPerList} models). Upgrade your plan to add more models.`,
+        code: "CAMPAIGN_MODEL_LIMIT_REACHED"
       }, { status: 403 });
     }
   }
@@ -77,11 +77,11 @@ export async function POST(
     return NextResponse.json({ error: "Model ID is required" }, { status: 400 });
   }
 
-  // Add model to list
+  // Add model to campaign
   const { data: item, error } = await (adminClient
-    .from("brand_list_items") as any)
+    .from("campaign_models") as any)
     .insert({
-      list_id: listId,
+      campaign_id: campaignId,
       model_id: modelId,
       notes: notes?.trim() || null,
     })
@@ -90,7 +90,7 @@ export async function POST(
 
   if (error) {
     if (error.code === "23505") {
-      return NextResponse.json({ error: "Model is already in this list" }, { status: 400 });
+      return NextResponse.json({ error: "Model is already in this campaign" }, { status: 400 });
     }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -98,12 +98,12 @@ export async function POST(
   return NextResponse.json({ item });
 }
 
-// DELETE /api/lists/[id]/items - Remove model from list
+// DELETE /api/campaigns/[id]/models - Remove model from campaign
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id: listId } = await params;
+  const { id: campaignId } = await params;
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
@@ -119,7 +119,7 @@ export async function DELETE(
     .single() as { data: { id: string; type: string } | null };
 
   if (!actor || actor.type !== "brand") {
-    return NextResponse.json({ error: "Only brands can remove from lists" }, { status: 403 });
+    return NextResponse.json({ error: "Only brands can remove from campaigns" }, { status: 403 });
   }
 
   // Get modelId from query params
@@ -130,16 +130,16 @@ export async function DELETE(
     return NextResponse.json({ error: "Model ID is required" }, { status: 400 });
   }
 
-  // Verify the list belongs to this brand
-  const { data: list } = await (supabase
-    .from("brand_lists") as any)
+  // Verify the campaign belongs to this brand
+  const { data: campaign } = await (supabase
+    .from("campaigns") as any)
     .select("id")
-    .eq("id", listId)
+    .eq("id", campaignId)
     .eq("brand_id", actor.id)
     .single();
 
-  if (!list) {
-    return NextResponse.json({ error: "List not found" }, { status: 404 });
+  if (!campaign) {
+    return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
   }
 
   // Use service role client to bypass RLS for delete
@@ -148,11 +148,11 @@ export async function DELETE(
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  // Remove model from list
+  // Remove model from campaign
   const { error } = await (adminClient
-    .from("brand_list_items") as any)
+    .from("campaign_models") as any)
     .delete()
-    .eq("list_id", listId)
+    .eq("campaign_id", campaignId)
     .eq("model_id", modelId);
 
   if (error) {

@@ -5,31 +5,31 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { X, Loader2 } from "lucide-react";
 
-interface RemoveFromListButtonProps {
-  listId: string;
+interface RemoveFromCampaignButtonProps {
+  campaignId: string;
   modelId: string;
   modelName: string;
 }
 
-export function RemoveFromListButton({ listId, modelId, modelName }: RemoveFromListButtonProps) {
+export function RemoveFromCampaignButton({ campaignId, modelId, modelName }: RemoveFromCampaignButtonProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   const handleRemove = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/lists/${listId}/items?modelId=${modelId}`, {
+      const res = await fetch(`/api/campaigns/${campaignId}/models?modelId=${modelId}`, {
         method: "DELETE",
       });
 
       if (!res.ok) {
-        throw new Error("Failed to remove from list");
+        throw new Error("Failed to remove from campaign");
       }
 
-      toast.success(`Removed ${modelName} from list`);
+      toast.success(`Removed ${modelName} from campaign`);
       router.refresh();
     } catch (error) {
-      toast.error("Failed to remove from list");
+      toast.error("Failed to remove from campaign");
     } finally {
       setLoading(false);
     }

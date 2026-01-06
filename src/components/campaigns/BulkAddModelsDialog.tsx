@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Plus, Search, Loader2, Check, X } from "lucide-react";
+import { Plus, Search, Loader2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Image from "next/image";
@@ -28,18 +28,17 @@ interface Model {
 }
 
 interface BulkAddModelsDialogProps {
-  listId: string;
-  listName: string;
+  campaignId: string;
+  campaignName: string;
   existingModelIds: string[];
 }
 
-export function BulkAddModelsDialog({ listId, listName, existingModelIds }: BulkAddModelsDialogProps) {
+export function BulkAddModelsDialog({ campaignId, campaignName, existingModelIds }: BulkAddModelsDialogProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [models, setModels] = useState<Model[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [loading, setLoading] = useState(false);
   const [searching, setSearching] = useState(false);
   const [adding, setAdding] = useState(false);
 
@@ -53,7 +52,7 @@ export function BulkAddModelsDialog({ listId, listName, existingModelIds }: Bulk
         const res = await fetch(`/api/models/search?q=${encodeURIComponent(searchQuery)}&limit=20`);
         if (res.ok) {
           const data = await res.json();
-          // Filter out models already in the list
+          // Filter out models already in the campaign
           const filtered = (data.models || []).filter(
             (m: Model) => !existingModelIds.includes(m.id)
           );
@@ -85,9 +84,9 @@ export function BulkAddModelsDialog({ listId, listName, existingModelIds }: Bulk
 
     setAdding(true);
     try {
-      // Add each selected model to the list
+      // Add each selected model to the campaign
       const promises = Array.from(selectedIds).map((modelId) =>
-        fetch(`/api/lists/${listId}/items`, {
+        fetch(`/api/campaigns/${campaignId}/models`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ modelId }),
@@ -96,13 +95,13 @@ export function BulkAddModelsDialog({ listId, listName, existingModelIds }: Bulk
 
       await Promise.all(promises);
 
-      toast.success(`Added ${selectedIds.size} model${selectedIds.size > 1 ? "s" : ""} to ${listName}`);
+      toast.success(`Added ${selectedIds.size} model${selectedIds.size > 1 ? "s" : ""} to ${campaignName}`);
       setOpen(false);
       setSelectedIds(new Set());
       setSearchQuery("");
       router.refresh();
     } catch (error) {
-      toast.error("Failed to add models to list");
+      toast.error("Failed to add models to campaign");
     } finally {
       setAdding(false);
     }
@@ -124,9 +123,9 @@ export function BulkAddModelsDialog({ listId, listName, existingModelIds }: Bulk
       </DialogTrigger>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Add Models to {listName}</DialogTitle>
+          <DialogTitle>Add Models to {campaignName}</DialogTitle>
           <DialogDescription>
-            Search and select models to add to this list.
+            Search and select models to add to this campaign.
           </DialogDescription>
         </DialogHeader>
 

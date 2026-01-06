@@ -3,7 +3,7 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { BRAND_SUBSCRIPTION_TIERS, BrandTier } from "@/lib/stripe-config";
 
-// GET /api/lists - Get all lists for current brand
+// GET /api/campaigns - Get all campaigns for current brand
 export async function GET() {
   const supabase = await createClient();
 
@@ -20,15 +20,15 @@ export async function GET() {
     .single() as { data: { id: string; type: string } | null };
 
   if (!actor || actor.type !== "brand") {
-    return NextResponse.json({ error: "Only brands can access lists" }, { status: 403 });
+    return NextResponse.json({ error: "Only brands can access campaigns" }, { status: 403 });
   }
 
-  // Get all lists for this brand with item counts
-  const { data: lists, error } = await (supabase
-    .from("brand_lists") as any)
+  // Get all campaigns for this brand with model counts
+  const { data: campaigns, error } = await (supabase
+    .from("campaigns") as any)
     .select(`
       *,
-      brand_list_items (
+      campaign_models (
         id,
         model_id,
         notes,
@@ -42,16 +42,16 @@ export async function GET() {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Add item count to each list
-  const listsWithCounts = lists?.map((list: any) => ({
-    ...list,
-    item_count: list.brand_list_items?.length || 0,
+  // Add model count to each campaign
+  const campaignsWithCounts = campaigns?.map((campaign: any) => ({
+    ...campaign,
+    model_count: campaign.campaign_models?.length || 0,
   })) || [];
 
-  return NextResponse.json({ lists: listsWithCounts });
+  return NextResponse.json({ campaigns: campaignsWithCounts });
 }
 
-// POST /api/lists - Create new list
+// POST /api/campaigns - Create new campaign
 export async function POST(request: Request) {
   const supabase = await createClient();
 
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
     .single() as { data: { id: string; type: string } | null };
 
   if (!actor || actor.type !== "brand") {
-    return NextResponse.json({ error: "Only brands can create lists" }, { status: 403 });
+    return NextResponse.json({ error: "Only brands can create campaigns" }, { status: 403 });
   }
 
   // Use service role client to bypass RLS
@@ -87,17 +87,17 @@ export async function POST(request: Request) {
   const tier = (brand?.subscription_status === "active" ? brand?.subscription_tier : "free") as BrandTier || "free";
   const tierConfig = BRAND_SUBSCRIPTION_TIERS[tier];
 
-  // Check list limit (skip if unlimited: -1)
+  // Check campaign limit (skip if unlimited: -1)
   if (tierConfig.maxLists !== -1) {
     const { count } = await (adminClient
-      .from("brand_lists") as any)
+      .from("campaigns") as any)
       .select("id", { count: "exact", head: true })
       .eq("brand_id", actor.id);
 
     if ((count || 0) >= tierConfig.maxLists) {
       return NextResponse.json({
-        error: `You've reached your list limit (${tierConfig.maxLists} lists). Upgrade your plan to create more lists.`,
-        code: "LIST_LIMIT_REACHED"
+        error: `You've reached your campaign limit (${tierConfig.maxLists} campaigns). Upgrade your plan to create more.`,
+        code: "CAMPAIGN_LIMIT_REACHED"
       }, { status: 403 });
     }
   }
@@ -106,12 +106,12 @@ export async function POST(request: Request) {
   const { name, description, color } = body;
 
   if (!name || name.trim().length === 0) {
-    return NextResponse.json({ error: "List name is required" }, { status: 400 });
+    return NextResponse.json({ error: "Campaign name is required" }, { status: 400 });
   }
 
-  // Create the list
-  const { data: list, error } = await (adminClient
-    .from("brand_lists") as any)
+  // Create the campaign
+  const { data: campaign, error } = await (adminClient
+    .from("campaigns") as any)
     .insert({
       brand_id: actor.id,
       name: name.trim(),
@@ -123,10 +123,10 @@ export async function POST(request: Request) {
 
   if (error) {
     if (error.code === "23505") {
-      return NextResponse.json({ error: "A list with this name already exists" }, { status: 400 });
+      return NextResponse.json({ error: "A campaign with this name already exists" }, { status: 400 });
     }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ list, item_count: 0 });
+  return NextResponse.json({ campaign, model_count: 0 });
 }
