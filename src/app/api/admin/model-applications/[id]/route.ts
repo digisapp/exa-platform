@@ -69,20 +69,80 @@ export async function PATCH(
 
     // If approved, convert fan to model
     if (status === "approved") {
-      // Check if model already exists
-      const { data: existingModel } = await (supabase.from("models") as any)
-        .select("id")
-        .eq("user_id", application.user_id)
-        .single();
-
       // Use admin client to bypass RLS for actor updates
       const adminClient = createSupabaseClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.SUPABASE_SERVICE_ROLE_KEY!
       );
 
-      if (!existingModel) {
-        // Create model record
+      // Check if model already exists by user_id
+      const { data: existingModelByUser } = await (adminClient.from("models") as any)
+        .select("id")
+        .eq("user_id", application.user_id)
+        .single();
+
+      // Also check for existing model by Instagram username (might be imported with no user_id)
+      let existingModelByInstagram = null;
+      if (application.instagram_username && !existingModelByUser) {
+        const { data: igModel } = await (adminClient.from("models") as any)
+          .select("id, username, user_id")
+          .eq("instagram_name", application.instagram_username)
+          .single();
+
+        if (igModel && !igModel.user_id) {
+          existingModelByInstagram = igModel;
+        }
+      }
+
+      // Also check by email if no match yet
+      let existingModelByEmail = null;
+      if (!existingModelByUser && !existingModelByInstagram && application.email) {
+        const { data: emailModel } = await (adminClient.from("models") as any)
+          .select("id, username, user_id")
+          .eq("email", application.email)
+          .single();
+
+        if (emailModel && !emailModel.user_id) {
+          existingModelByEmail = emailModel;
+        }
+      }
+
+      // Determine which existing model to link to
+      const existingModel = existingModelByUser || existingModelByInstagram || existingModelByEmail;
+
+      if (existingModel && !existingModelByUser) {
+        // Found existing model by Instagram/email - link user_id to it
+        console.log(`Linking user ${application.user_id} to existing model ${existingModel.id} (${existingModel.username})`);
+
+        const { error: linkError } = await (adminClient.from("models") as any)
+          .update({
+            user_id: application.user_id,
+            is_approved: true,
+            status: "approved",
+          })
+          .eq("id", existingModel.id);
+
+        if (linkError) {
+          console.error("Error linking model:", linkError);
+        }
+
+        // Update actor type to model
+        const { data: updatedActor, error: actorError } = await adminClient
+          .from("actors")
+          .update({ type: "model" })
+          .eq("user_id", application.user_id)
+          .select("id")
+          .single();
+
+        // Delete the old fan record (cleanup)
+        if (!actorError && updatedActor?.id) {
+          await adminClient
+            .from("fans")
+            .delete()
+            .eq("id", updatedActor.id);
+        }
+      } else if (!existingModel) {
+        // No existing model found - create new one
         const username = application.instagram_username ||
           application.tiktok_username ||
           application.email.split("@")[0];
@@ -127,7 +187,6 @@ export async function PATCH(
 
         if (modelError) {
           console.error("Error creating model:", modelError);
-          // Don't fail the whole request, just log
         }
 
         // Update actor type to model using admin client
@@ -146,7 +205,7 @@ export async function PATCH(
             .eq("id", updatedActor.id);
         }
       } else {
-        // Model exists, just approve it
+        // Model already exists by user_id, just approve it
         await (adminClient.from("models") as any)
           .update({ is_approved: true, status: "approved" })
           .eq("user_id", application.user_id);
