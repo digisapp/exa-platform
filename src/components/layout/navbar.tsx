@@ -25,6 +25,7 @@ import {
   Crown,
   Heart,
   ListPlus,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/auth/logout-button";
@@ -61,6 +62,7 @@ const brandLinks = [
   { href: "/models", label: "Explore", icon: Users },
   { href: "/lists", label: "Lists", icon: ListPlus },
   { href: "/chats", label: "Chats", icon: MessageCircle },
+  { href: "/brands/analytics", label: "Analytics", icon: BarChart3 },
 ];
 
 const adminLinks = [
