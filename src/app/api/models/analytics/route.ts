@@ -129,7 +129,11 @@ export async function GET() {
         const brands = brandsResult.data || [];
 
         topFans = topFanIds.map(actorId => {
-          const actor = fanActors.find((a: any) => a.id === actorId);
+          const actor = fanActors.find((a: any) => a.id === actorId) as {
+            id: string;
+            type: string;
+            user_id: string;
+          } | undefined;
           if (!actor) return null;
 
           if (actor.type === "fan") {
@@ -187,7 +191,11 @@ export async function GET() {
           .sort((a: any, b: any) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime())
           .slice(0, 5)
           .map((booking: any) => {
-            const clientActor = clientActors?.find((a: any) => a.id === booking.client_id);
+            const clientActor = clientActors?.find((a: any) => a.id === booking.client_id) as {
+              id: string;
+              type: string;
+              user_id: string;
+            } | undefined;
             let client = null;
 
             if (clientActor?.type === "fan") {

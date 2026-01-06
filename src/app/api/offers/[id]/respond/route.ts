@@ -15,7 +15,6 @@ export async function POST(
   try {
     const { id: offerId } = await params;
     const supabase = await createClient();
-    const adminClient = createAdminClient();
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {

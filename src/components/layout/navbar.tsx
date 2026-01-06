@@ -26,6 +26,7 @@ import {
   Heart,
   ListPlus,
   BarChart3,
+  Gift,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/auth/logout-button";
@@ -62,6 +63,7 @@ const brandLinks = [
   { href: "/dashboard", label: "Home", icon: Home },
   { href: "/models", label: "Explore", icon: Users },
   { href: "/lists", label: "Lists", icon: ListPlus },
+  { href: "/brands/offers", label: "Offers", icon: Gift },
   { href: "/chats", label: "Chats", icon: MessageCircle },
   { href: "/brands/analytics", label: "Analytics", icon: BarChart3 },
 ];

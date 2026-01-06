@@ -577,7 +577,7 @@ function OffersGrid({ offers }: { offers: any[] }) {
       <div className="text-center py-16">
         <Gift className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
         <h3 className="text-xl font-semibold mb-2">No offers yet</h3>
-        <p className="text-muted-foreground">When brands send you offers, they'll appear here!</p>
+        <p className="text-muted-foreground">When brands send you offers, they&apos;ll appear here!</p>
       </div>
     );
   }

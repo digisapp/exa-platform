@@ -101,7 +101,6 @@ export async function PATCH(
   try {
     const { id } = await params;
     const supabase = await createClient();
-    const adminClient = createAdminClient();
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -114,7 +113,7 @@ export async function PATCH(
       .eq("user_id", user.id)
       .single() as { data: { id: string; type: string } | null };
 
-    if (!actor || actor.type !== "brand") {
+    if (!actor || (actor.type !== "brand" && actor.type !== "admin")) {
       return NextResponse.json({ error: "Only brands can update offers" }, { status: 403 });
     }
 
@@ -130,6 +129,54 @@ export async function PATCH(
     }
 
     const body = await request.json();
+
+    // Handle response status update
+    if (body.update_response) {
+      const { id: responseId, status: responseStatus } = body.update_response;
+
+      if (!responseId || !responseStatus) {
+        return NextResponse.json({ error: "Response ID and status required" }, { status: 400 });
+      }
+
+      // Get current response to check previous status
+      const { data: currentResponse } = await (supabase
+        .from("offer_responses") as any)
+        .select("status")
+        .eq("id", responseId)
+        .eq("offer_id", id)
+        .single();
+
+      if (!currentResponse) {
+        return NextResponse.json({ error: "Response not found" }, { status: 404 });
+      }
+
+      const previousStatus = currentResponse.status;
+
+      // Update response
+      const { error: updateError } = await (adminClient
+        .from("offer_responses") as any)
+        .update({
+          status: responseStatus,
+          responded_at: new Date().toISOString(),
+        })
+        .eq("id", responseId);
+
+      if (updateError) throw updateError;
+
+      // Update spots_filled if status changed to/from accepted/confirmed
+      const wasAccepted = ["accepted", "confirmed"].includes(previousStatus);
+      const isAccepted = ["accepted", "confirmed"].includes(responseStatus);
+
+      if (isAccepted && !wasAccepted) {
+        await adminClient.rpc("increment_offer_spots_filled", { p_offer_id: id });
+      } else if (!isAccepted && wasAccepted) {
+        await adminClient.rpc("decrement_offer_spots_filled", { p_offer_id: id });
+      }
+
+      return NextResponse.json({ success: true });
+    }
+
+    // Handle offer field updates
     const allowedFields = [
       "title", "description", "location_name", "location_city", "location_state",
       "event_date", "event_time", "compensation_type", "compensation_amount",
@@ -173,7 +220,6 @@ export async function DELETE(
   try {
     const { id } = await params;
     const supabase = await createClient();
-    const adminClient = createAdminClient();
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -186,7 +232,7 @@ export async function DELETE(
       .eq("user_id", user.id)
       .single() as { data: { id: string; type: string } | null };
 
-    if (!actor || actor.type !== "brand") {
+    if (!actor || (actor.type !== "brand" && actor.type !== "admin")) {
       return NextResponse.json({ error: "Only brands can delete offers" }, { status: 403 });
     }
 

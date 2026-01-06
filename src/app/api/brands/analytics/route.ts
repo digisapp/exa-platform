@@ -99,13 +99,26 @@ export async function GET() {
         .in("id", topModelIds);
 
       if (models) {
-        frequentCollaborators = topModelIds.map(id => {
-          const model = models.find((m: any) => m.id === id);
-          return {
-            ...model,
-            booking_count: modelBookingCounts[id],
-          };
-        }).filter(m => m.id);
+        frequentCollaborators = topModelIds
+          .map(id => {
+            const model = models.find((m: any) => m.id === id) as {
+              id: string;
+              username: string;
+              first_name: string | null;
+              last_name: string | null;
+              profile_photo_url: string | null;
+            } | undefined;
+            if (!model) return null;
+            return {
+              id: model.id,
+              username: model.username,
+              first_name: model.first_name,
+              last_name: model.last_name,
+              profile_photo_url: model.profile_photo_url,
+              booking_count: modelBookingCounts[id],
+            };
+          })
+          .filter(Boolean);
       }
     }
 
