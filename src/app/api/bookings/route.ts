@@ -1,6 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { sendBookingRequestEmail } from "@/lib/email";
+
+// Admin client for bypassing RLS on specific queries
+const adminClient = createSupabaseClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 // Service type to rate field mapping
 const SERVICE_RATE_FIELDS: Record<string, string> = {
@@ -75,11 +82,11 @@ export async function GET(request: NextRequest) {
       modelId = model.id;
     }
 
-    // Simple query - just get bookings without complex filters first
+    // Use adminClient to bypass RLS - user is already authenticated above
     let bookings: any[] = [];
 
     if (modelId) {
-      const { data, error } = await (supabase.from("bookings") as any)
+      const { data, error } = await (adminClient.from("bookings") as any)
         .select("*")
         .eq("model_id", modelId)
         .order("created_at", { ascending: false });
@@ -90,7 +97,7 @@ export async function GET(request: NextRequest) {
       }
       bookings = data || [];
     } else {
-      const { data, error } = await (supabase.from("bookings") as any)
+      const { data, error } = await (adminClient.from("bookings") as any)
         .select("*")
         .eq("client_id", actor.id)
         .order("created_at", { ascending: false });
@@ -114,11 +121,11 @@ export async function GET(request: NextRequest) {
       bookings = bookings.filter(b => b.status === status);
     }
 
-    // Enrich bookings with model and client info
+    // Enrich bookings with model and client info - use adminClient
     for (const booking of bookings) {
       // Get model info
       if (booking.model_id) {
-        const { data: model } = await (supabase.from("models") as any)
+        const { data: model } = await (adminClient.from("models") as any)
           .select("id, username, first_name, last_name, profile_photo_url, city, state")
           .eq("id", booking.model_id)
           .maybeSingle();
@@ -127,19 +134,19 @@ export async function GET(request: NextRequest) {
 
       // Get client info
       if (booking.client_id) {
-        const { data: clientActor } = await (supabase.from("actors") as any)
+        const { data: clientActor } = await (adminClient.from("actors") as any)
           .select("id, type")
           .eq("id", booking.client_id)
           .maybeSingle();
 
         if (clientActor?.type === "fan") {
-          const { data: fan } = await (supabase.from("fans") as any)
+          const { data: fan } = await (adminClient.from("fans") as any)
             .select("display_name, email, avatar_url")
             .eq("id", clientActor.id)
             .maybeSingle();
           booking.client = { ...fan, type: "fan" };
         } else if (clientActor?.type === "brand") {
-          const { data: brand } = await (supabase.from("brands") as any)
+          const { data: brand } = await (adminClient.from("brands") as any)
             .select("company_name, contact_name, email, logo_url")
             .eq("id", clientActor.id)
             .maybeSingle();

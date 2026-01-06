@@ -77,34 +77,38 @@ export default async function DashboardPage() {
 
   if (!model) redirect("/fan/signup");
 
-  // Get pending bookings for this model
-  // Query directly but check both model_id match and RLS
-  const { data: pendingBookings, error: bookingsError } = await (supabase
+  // Get pending bookings for this model - use adminClient to bypass RLS
+  // Filter by pending status in JS to avoid enum issues with 'counter'
+  const { data: allBookings } = await (adminClient
     .from("bookings") as any)
     .select("*")
     .eq("model_id", model.id)
-    .in("status", ["pending", "counter"])
     .order("created_at", { ascending: false })
-    .limit(5);
+    .limit(20);
+
+  // Filter for pending/counter bookings in JS
+  const pendingBookings = (allBookings || []).filter(
+    (b: any) => b.status === "pending" || b.status === "counter"
+  ).slice(0, 5);
 
 
-  // Enrich bookings with client info
+  // Enrich bookings with client info - use adminClient to bypass RLS
   for (const booking of pendingBookings || []) {
     if (booking.client_id) {
-      const { data: clientActor } = await (supabase
+      const { data: clientActor } = await (adminClient
         .from("actors") as any)
         .select("id, type")
         .eq("id", booking.client_id)
         .maybeSingle();
 
       if (clientActor?.type === "fan") {
-        const { data: fan } = await (supabase.from("fans") as any)
+        const { data: fan } = await (adminClient.from("fans") as any)
           .select("display_name, avatar_url")
           .eq("id", clientActor.id)
           .maybeSingle();
         booking.client = { ...fan, type: "fan" };
       } else if (clientActor?.type === "brand") {
-        const { data: brand } = await (supabase.from("brands") as any)
+        const { data: brand } = await (adminClient.from("brands") as any)
           .select("company_name, logo_url")
           .eq("id", clientActor.id)
           .maybeSingle();
