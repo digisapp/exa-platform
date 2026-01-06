@@ -48,6 +48,7 @@ const modelLinks = [
   { href: "/dashboard", label: "Home", icon: Home },
   { href: "/chats", label: "Chats", icon: MessageCircle },
   { href: "/content", label: "Content", icon: Images },
+  { href: "/analytics", label: "Analytics", icon: BarChart3 },
 ];
 
 const fanLinks = [
