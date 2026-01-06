@@ -115,7 +115,7 @@ export default async function DashboardPage() {
 
   // Get pending offers for this model - use adminClient to bypass RLS issues
   // User is already authenticated above, so this is safe
-  const { data: offerResponses, error: offerError } = await (adminClient
+  const { data: offerResponses } = await (adminClient
     .from("offer_responses") as any)
     .select(`
       id,
@@ -208,16 +208,6 @@ export default async function DashboardPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      {/* Debug: Show offer query error if any */}
-      {offerError && (
-        <div className="p-3 rounded bg-red-500/10 border border-red-500/30 text-sm">
-          <div className="font-semibold">Offers query error</div>
-          <div>{offerError.message}</div>
-          <div className="opacity-80">{offerError.details}</div>
-          <div className="opacity-80">{offerError.hint}</div>
-        </div>
-      )}
-
       {/* Offers */}
       {pendingOffers.length > 0 && (
         <Card className="border-blue-500/30 bg-gradient-to-br from-blue-500/5 to-cyan-500/5">
