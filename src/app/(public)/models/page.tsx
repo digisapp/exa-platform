@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Navbar } from "@/components/layout/navbar";
 import { ModelFilters } from "@/components/models/model-filters";
@@ -22,6 +23,12 @@ export default async function ModelsPage({
 }) {
   const params = await searchParams;
   const supabase = await createClient();
+
+  // Require authentication - guests cannot view models
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    redirect("/signin?redirect=/models");
+  }
 
   // Build query
   let query = supabase
@@ -96,73 +103,70 @@ export default async function ModelsPage({
     .limit(5) as { data: any[] | null };
 
   // Get current user info for favorites and navbar
-  const { data: { user } } = await supabase.auth.getUser();
   let favoriteModelIds: string[] = [];
   let actorType: "model" | "fan" | "brand" | "admin" | null = null;
   let profileData: any = null;
   let coinBalance = 0;
 
-  if (user) {
-    // Get actor ID and type
-    const { data: actor } = await supabase
-      .from("actors")
-      .select("id, type")
-      .eq("user_id", user.id)
-      .single() as { data: { id: string; type: "admin" | "model" | "brand" | "fan" } | null };
+  // Get actor ID and type
+  const { data: actor } = await supabase
+    .from("actors")
+    .select("id, type")
+    .eq("user_id", user.id)
+    .single() as { data: { id: string; type: "admin" | "model" | "brand" | "fan" } | null };
 
-    actorType = actor?.type || null;
+  actorType = actor?.type || null;
 
-    if (actor) {
-      // Get profile info based on actor type
-      if (actor.type === "model" || actor.type === "admin") {
-        const { data } = await supabase
+  if (actor) {
+    // Get profile info based on actor type
+    if (actor.type === "model" || actor.type === "admin") {
+      const { data } = await supabase
+        .from("models")
+        .select("username, first_name, last_name, profile_photo_url, coin_balance")
+        .eq("user_id", user.id)
+        .single() as { data: any };
+      profileData = data;
+      coinBalance = data?.coin_balance ?? 0;
+    } else if (actor.type === "fan") {
+      const { data } = await supabase
+        .from("fans")
+        .select("display_name, avatar_url, coin_balance")
+        .eq("id", actor.id)
+        .single() as { data: any };
+      profileData = data;
+      coinBalance = data?.coin_balance ?? 0;
+    } else if (actor.type === "brand") {
+      const { data } = await (supabase
+        .from("brands") as any)
+        .select("company_name, logo_url, coin_balance, subscription_tier, subscription_status")
+        .eq("id", actor.id)
+        .single() as { data: any };
+      profileData = data;
+      coinBalance = data?.coin_balance ?? 0;
+    }
+
+    // Get favorites
+    const { data: favorites } = await (supabase
+      .from("follows") as any)
+      .select("following_id")
+      .eq("follower_id", actor.id);
+
+    if (favorites) {
+      // Get model IDs from actor IDs
+      const actorIds = favorites.map((f: any) => f.following_id);
+      const { data: modelActors } = await supabase
+        .from("actors")
+        .select("id, user_id")
+        .in("id", actorIds);
+
+      if (modelActors) {
+        const userIds = modelActors.map((a: any) => a.user_id);
+        const { data: favModels } = await supabase
           .from("models")
-          .select("username, first_name, last_name, profile_photo_url, coin_balance")
-          .eq("user_id", user.id)
-          .single() as { data: any };
-        profileData = data;
-        coinBalance = data?.coin_balance ?? 0;
-      } else if (actor.type === "fan") {
-        const { data } = await supabase
-          .from("fans")
-          .select("display_name, avatar_url, coin_balance")
-          .eq("id", actor.id)
-          .single() as { data: any };
-        profileData = data;
-        coinBalance = data?.coin_balance ?? 0;
-      } else if (actor.type === "brand") {
-        const { data } = await (supabase
-          .from("brands") as any)
-          .select("company_name, logo_url, coin_balance, subscription_tier, subscription_status")
-          .eq("id", actor.id)
-          .single() as { data: any };
-        profileData = data;
-        coinBalance = data?.coin_balance ?? 0;
-      }
+          .select("id")
+          .in("user_id", userIds);
 
-      // Get favorites
-      const { data: favorites } = await (supabase
-        .from("follows") as any)
-        .select("following_id")
-        .eq("follower_id", actor.id);
-
-      if (favorites) {
-        // Get model IDs from actor IDs
-        const actorIds = favorites.map((f: any) => f.following_id);
-        const { data: modelActors } = await supabase
-          .from("actors")
-          .select("id, user_id")
-          .in("id", actorIds);
-
-        if (modelActors) {
-          const userIds = modelActors.map((a: any) => a.user_id);
-          const { data: favModels } = await supabase
-            .from("models")
-            .select("id")
-            .in("user_id", userIds);
-
-          favoriteModelIds = favModels?.map((m: any) => m.id) || [];
-        }
+        favoriteModelIds = favModels?.map((m: any) => m.id) || [];
       }
     }
   }
