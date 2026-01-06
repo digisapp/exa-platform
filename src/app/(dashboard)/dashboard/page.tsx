@@ -29,6 +29,8 @@ import {
   Star,
   Search,
   Briefcase,
+  Mail,
+  DollarSign,
 } from "lucide-react";
 
 export default async function DashboardPage() {
@@ -104,6 +106,53 @@ export default async function DashboardPage() {
     }
   }
 
+  // Get pending offers for this model (via campaigns they're in)
+  const { data: campaignMemberships } = await (supabase
+    .from("campaign_models") as any)
+    .select("campaign_id")
+    .eq("model_id", model.id);
+
+  const campaignIds = campaignMemberships?.map((cm: any) => cm.campaign_id) || [];
+
+  let pendingOffers: any[] = [];
+  if (campaignIds.length > 0) {
+    // Get offer responses for this model that are pending
+    const { data: offerResponses } = await (supabase
+      .from("offer_responses") as any)
+      .select(`
+        id,
+        status,
+        offer_id,
+        offers (
+          id,
+          title,
+          event_date,
+          event_time,
+          location,
+          compensation,
+          notes,
+          created_at,
+          brand_id
+        )
+      `)
+      .eq("model_id", model.id)
+      .eq("status", "pending")
+      .order("created_at", { ascending: false })
+      .limit(5);
+
+    // Enrich with brand info
+    for (const response of offerResponses || []) {
+      if (response.offers?.brand_id) {
+        const { data: brand } = await (supabase.from("brands") as any)
+          .select("company_name, logo_url")
+          .eq("id", response.offers.brand_id)
+          .maybeSingle();
+        response.brand = brand;
+      }
+    }
+    pendingOffers = offerResponses || [];
+  }
+
   // Get open gigs
   const { data: gigs } = await (supabase
     .from("gigs") as any)
@@ -159,6 +208,80 @@ export default async function DashboardPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
+      {/* Offers */}
+      {pendingOffers.length > 0 && (
+        <Card className="border-blue-500/30 bg-gradient-to-br from-blue-500/5 to-cyan-500/5">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5 text-blue-500" />
+              New Offers
+              <Badge className="bg-blue-500 text-white ml-2">{pendingOffers.length}</Badge>
+            </CardTitle>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/offers" className="text-blue-500">
+                View All
+                <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {pendingOffers.map((response: any) => {
+                const offer = response.offers;
+                if (!offer) return null;
+                return (
+                  <Link
+                    key={response.id}
+                    href={`/offers/${offer.id}`}
+                    className="flex items-center gap-3 p-4 rounded-xl bg-white/50 dark:bg-muted/50 hover:bg-white dark:hover:bg-muted transition-colors border border-transparent hover:border-blue-500/30"
+                  >
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center overflow-hidden flex-shrink-0">
+                      {response.brand?.logo_url ? (
+                        <Image
+                          src={response.brand.logo_url}
+                          alt={response.brand.company_name || "Brand"}
+                          width={48}
+                          height={48}
+                          className="object-cover"
+                        />
+                      ) : (
+                        <Building2 className="h-6 w-6 text-blue-500" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">{offer.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {response.brand?.company_name || "Brand"}
+                      </p>
+                      <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                        {offer.event_date && (
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {new Date(offer.event_date).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                            })}
+                          </span>
+                        )}
+                        {offer.compensation && (
+                          <span className="flex items-center gap-1 text-green-600">
+                            <DollarSign className="h-3 w-3" />
+                            {offer.compensation}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/30 text-xs">
+                      New
+                    </Badge>
+                  </Link>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Bookings & Gigs */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Bookings */}
