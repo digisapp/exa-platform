@@ -297,7 +297,7 @@ export default async function ModelProfilePage({ params }: Props) {
                     )}
                   </div>
                   {/* Water drop badge icon */}
-                  <div className="absolute -bottom-1 -right-1 w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center shadow-lg border-2 border-[#1a0033] group-hover:scale-110 transition-transform">
+                  <div className="absolute -top-1 -right-1 w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center shadow-lg border-2 border-[#1a0033] group-hover:scale-110 transition-transform">
                     <span className="text-lg">💧</span>
                   </div>
                   {/* Hover tooltip */}
