@@ -46,6 +46,14 @@ interface Gig {
   spots_filled: number;
   status: string;
   created_at: string;
+  event_id: string | null;
+}
+
+interface Event {
+  id: string;
+  name: string;
+  short_name: string;
+  year: number;
 }
 
 interface Application {
@@ -65,6 +73,7 @@ interface Application {
 
 export default function AdminGigsPage() {
   const [gigs, setGigs] = useState<Gig[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -91,10 +100,12 @@ export default function AdminGigsPage() {
     compensation_type: "paid",
     compensation_amount: 0,
     spots: 10,
+    event_id: "",
   });
 
   useEffect(() => {
     loadGigs();
+    loadEvents();
   }, []);
 
   useEffect(() => {
@@ -111,6 +122,15 @@ export default function AdminGigsPage() {
       .order("created_at", { ascending: false });
     setGigs(data || []);
     setLoading(false);
+  }
+
+  async function loadEvents() {
+    const { data } = await (supabase
+      .from("events") as any)
+      .select("id, name, short_name, year")
+      .in("status", ["upcoming", "active"])
+      .order("start_date", { ascending: true });
+    setEvents(data || []);
   }
 
   async function loadApplications(gigId: string) {
@@ -140,6 +160,7 @@ export default function AdminGigsPage() {
       compensation_type: "paid",
       compensation_amount: 0,
       spots: 10,
+      event_id: "",
     });
     setEditingGig(null);
     setShowForm(false);
@@ -188,6 +209,7 @@ export default function AdminGigsPage() {
       compensation_type: gig.compensation_type || "paid",
       compensation_amount: (gig.compensation_amount || 0) / 100,
       spots: gig.spots || 10,
+      event_id: gig.event_id || "",
     });
     setShowForm(true);
   }
@@ -286,6 +308,7 @@ export default function AdminGigsPage() {
             compensation_type: formData.compensation_type,
             compensation_amount: formData.compensation_amount * 100,
             spots: formData.spots,
+            event_id: formData.event_id || null,
           })
           .eq("id", editingGig.id);
 
@@ -316,6 +339,7 @@ export default function AdminGigsPage() {
             slug,
             status: "open",
             visibility: "public",
+            event_id: formData.event_id || null,
           });
 
         if (error) throw error;
@@ -577,6 +601,32 @@ export default function AdminGigsPage() {
                 </div>
               </div>
 
+              {/* Event Link */}
+              {events.length > 0 && (
+                <div className="space-y-2">
+                  <Label htmlFor="event">Link to Event <span className="text-muted-foreground text-xs">(optional - for badges)</span></Label>
+                  <Select
+                    value={formData.event_id}
+                    onValueChange={(v) => setFormData({ ...formData, event_id: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select an event (models get badge when accepted)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">No event</SelectItem>
+                      {events.map((event) => (
+                        <SelectItem key={event.id} value={event.id}>
+                          {event.short_name} {event.year} - {event.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    When linked to an event, accepted models will automatically receive the event badge on their profile.
+                  </p>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="description">Description</Label>
                 <Textarea
@@ -786,7 +836,7 @@ export default function AdminGigsPage() {
                     <div className="flex items-start justify-between">
                       <div>
                         <h3 className="font-medium">{gig.title}</h3>
-                        <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
+                        <div className="flex flex-wrap items-center gap-2 mt-1 text-sm text-muted-foreground">
                           <Badge variant="outline" className="capitalize">{gig.type}</Badge>
                           <Badge
                             variant={gig.status === "open" ? "default" : "secondary"}
@@ -794,6 +844,11 @@ export default function AdminGigsPage() {
                           >
                             {gig.status}
                           </Badge>
+                          {gig.event_id && (
+                            <Badge variant="outline" className="bg-pink-500/10 text-pink-500 border-pink-500/30">
+                              {events.find(e => e.id === gig.event_id)?.short_name || "Event"}
+                            </Badge>
+                          )}
                         </div>
                       </div>
                       <div className="text-right text-sm">

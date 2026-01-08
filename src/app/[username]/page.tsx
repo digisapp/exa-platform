@@ -26,6 +26,7 @@ const RESERVED_PATHS = [
   'earnings', 'fan', 'opportunities', 'settings', 'notifications', 'search',
   'explore', 'trending', 'popular', 'new', 'hot', 'top', 'best', 'featured',
   'favorites', 'chats', 'claim', 'forgot-password', 'rates', 'book', 'booking',
+  'events',
 ];
 
 interface Props {
@@ -86,6 +87,31 @@ export default async function ModelProfilePage({ params }: Props) {
   if (!model) {
     notFound();
   }
+
+  // Get model's event badges
+  const { data: eventBadges } = await supabase
+    .from("model_badges")
+    .select(`
+      earned_at,
+      badges!inner (
+        id,
+        slug,
+        name,
+        icon,
+        badge_type,
+        events!inner (
+          id,
+          slug,
+          name,
+          short_name,
+          year,
+          badge_image_url
+        )
+      )
+    `)
+    .eq("model_id", model.id)
+    .eq("badges.badge_type", "event")
+    .eq("badges.is_active", true) as { data: any[] | null };
 
   // Get portfolio photos
   const { data: photos } = await supabase
@@ -274,6 +300,29 @@ export default async function ModelProfilePage({ params }: Props) {
           <h1 className="text-2xl font-bold text-white mb-3">
             {displayName}
           </h1>
+
+          {/* Event Badges */}
+          {eventBadges && eventBadges.length > 0 && (
+            <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
+              {eventBadges.map((mb: any) => {
+                const badge = mb.badges;
+                const event = badge.events;
+                return (
+                  <Link
+                    key={badge.id}
+                    href={`/events/${event.slug}?ref=${model.affiliate_code}`}
+                    className="group relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-pink-500/20 to-violet-500/20 border border-pink-500/30 hover:border-pink-500/50 hover:from-pink-500/30 hover:to-violet-500/30 transition-all hover:scale-105"
+                    title={`Confirmed for ${event.name}`}
+                  >
+                    <span className="text-sm">{badge.icon || '🏆'}</span>
+                    <span className="text-xs font-semibold text-white">
+                      {event.short_name} {event.year}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
 
           {/* Bio - under name */}
           {model.bio && (

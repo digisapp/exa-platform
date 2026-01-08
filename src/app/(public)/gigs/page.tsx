@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
+
+export const metadata: Metadata = {
+  title: "Gigs",
+  robots: { index: false, follow: false },
+};
 import Link from "next/link";
 import { Navbar } from "@/components/layout/navbar";
 import { Badge } from "@/components/ui/badge";

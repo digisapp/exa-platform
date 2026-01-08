@@ -16,6 +16,9 @@ export type OpportunityType = GigType
 export type OpportunityStatus = GigStatus
 export type ApplicationStatus = 'pending' | 'accepted' | 'rejected' | 'withdrawn' | 'waitlist'
 export type CompensationType = 'paid' | 'tfp' | 'perks' | 'exposure'
+export type EventStatus = 'upcoming' | 'active' | 'completed' | 'cancelled'
+export type BadgeType = 'achievement' | 'event'
+export type AffiliateCommissionStatus = 'pending' | 'confirmed' | 'paid' | 'cancelled'
 
 export interface Database {
   public: {
@@ -102,6 +105,7 @@ export interface Database {
           created_at: string
           updated_at: string
           focus_tags: string[]
+          affiliate_code: string | null
         }
         Insert: {
           id: string
@@ -164,6 +168,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
           focus_tags?: string[]
+          affiliate_code?: string | null
         }
         Update: {
           id?: string
@@ -226,6 +231,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
           focus_tags?: string[]
+          affiliate_code?: string | null
         }
       }
       brands: {
@@ -366,6 +372,9 @@ export interface Database {
           icon: string | null
           points_required: number | null
           criteria: Json
+          event_id: string | null
+          badge_type: BadgeType
+          is_active: boolean
         }
         Insert: {
           id?: string
@@ -375,6 +384,9 @@ export interface Database {
           icon?: string | null
           points_required?: number | null
           criteria?: Json
+          event_id?: string | null
+          badge_type?: BadgeType
+          is_active?: boolean
         }
         Update: {
           id?: string
@@ -384,6 +396,9 @@ export interface Database {
           icon?: string | null
           points_required?: number | null
           criteria?: Json
+          event_id?: string | null
+          badge_type?: BadgeType
+          is_active?: boolean
         }
       }
       gigs: {
@@ -413,6 +428,7 @@ export interface Database {
           created_by: string | null
           created_at: string
           updated_at: string
+          event_id: string | null
         }
         Insert: {
           id?: string
@@ -440,6 +456,7 @@ export interface Database {
           created_by?: string | null
           created_at?: string
           updated_at?: string
+          event_id?: string | null
         }
         Update: {
           id?: string
@@ -467,6 +484,7 @@ export interface Database {
           created_by?: string | null
           created_at?: string
           updated_at?: string
+          event_id?: string | null
         }
       }
       gig_applications: {
@@ -532,6 +550,7 @@ export interface Database {
           created_by: string | null
           created_at: string
           updated_at: string
+          event_id: string | null
         }
         Insert: {
           id?: string
@@ -559,6 +578,7 @@ export interface Database {
           created_by?: string | null
           created_at?: string
           updated_at?: string
+          event_id?: string | null
         }
         Update: {
           id?: string
@@ -586,6 +606,7 @@ export interface Database {
           created_by?: string | null
           created_at?: string
           updated_at?: string
+          event_id?: string | null
         }
       }
       opportunity_applications: {
@@ -785,6 +806,182 @@ export interface Database {
           joined_at?: string
         }
       }
+      events: {
+        Row: {
+          id: string
+          slug: string
+          name: string
+          short_name: string
+          description: string | null
+          cover_image_url: string | null
+          logo_url: string | null
+          badge_image_url: string | null
+          location_name: string | null
+          location_city: string | null
+          location_state: string | null
+          location_country: string
+          start_date: string | null
+          end_date: string | null
+          year: number
+          ticket_url: string | null
+          ticket_price_cents: number | null
+          points_awarded: number
+          status: EventStatus
+          meta_title: string | null
+          meta_description: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          slug: string
+          name: string
+          short_name: string
+          description?: string | null
+          cover_image_url?: string | null
+          logo_url?: string | null
+          badge_image_url?: string | null
+          location_name?: string | null
+          location_city?: string | null
+          location_state?: string | null
+          location_country?: string
+          start_date?: string | null
+          end_date?: string | null
+          year: number
+          ticket_url?: string | null
+          ticket_price_cents?: number | null
+          points_awarded?: number
+          status?: EventStatus
+          meta_title?: string | null
+          meta_description?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          slug?: string
+          name?: string
+          short_name?: string
+          description?: string | null
+          cover_image_url?: string | null
+          logo_url?: string | null
+          badge_image_url?: string | null
+          location_name?: string | null
+          location_city?: string | null
+          location_state?: string | null
+          location_country?: string
+          start_date?: string | null
+          end_date?: string | null
+          year?: number
+          ticket_url?: string | null
+          ticket_price_cents?: number | null
+          points_awarded?: number
+          status?: EventStatus
+          meta_title?: string | null
+          meta_description?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      affiliate_clicks: {
+        Row: {
+          id: string
+          model_id: string
+          event_id: string | null
+          visitor_id: string | null
+          ip_hash: string | null
+          user_agent: string | null
+          referrer: string | null
+          source: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          model_id: string
+          event_id?: string | null
+          visitor_id?: string | null
+          ip_hash?: string | null
+          user_agent?: string | null
+          referrer?: string | null
+          source?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          model_id?: string
+          event_id?: string | null
+          visitor_id?: string | null
+          ip_hash?: string | null
+          user_agent?: string | null
+          referrer?: string | null
+          source?: string | null
+          created_at?: string
+        }
+      }
+      affiliate_commissions: {
+        Row: {
+          id: string
+          model_id: string
+          event_id: string
+          click_id: string | null
+          order_id: string | null
+          sale_amount_cents: number
+          commission_rate: number
+          commission_amount_cents: number
+          status: AffiliateCommissionStatus
+          paid_at: string | null
+          payment_reference: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          model_id: string
+          event_id: string
+          click_id?: string | null
+          order_id?: string | null
+          sale_amount_cents: number
+          commission_rate?: number
+          commission_amount_cents: number
+          status?: AffiliateCommissionStatus
+          paid_at?: string | null
+          payment_reference?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          model_id?: string
+          event_id?: string
+          click_id?: string | null
+          order_id?: string | null
+          sale_amount_cents?: number
+          commission_rate?: number
+          commission_amount_cents?: number
+          status?: AffiliateCommissionStatus
+          paid_at?: string | null
+          payment_reference?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      model_badges: {
+        Row: {
+          model_id: string
+          badge_id: string
+          earned_at: string
+        }
+        Insert: {
+          model_id: string
+          badge_id: string
+          earned_at?: string
+        }
+        Update: {
+          model_id?: string
+          badge_id?: string
+          earned_at?: string
+        }
+      }
     }
   }
 }
@@ -825,6 +1022,20 @@ export type ApplicationWithDetails = GigApplicationWithDetails
 export type CoinTransaction = Database['public']['Tables']['coin_transactions']['Row']
 export type ConversationParticipant = Database['public']['Tables']['conversation_participants']['Row']
 export type Conversation = Database['public']['Tables']['conversations']['Row']
+export type Event = Database['public']['Tables']['events']['Row']
+export type AffiliateClick = Database['public']['Tables']['affiliate_clicks']['Row']
+export type AffiliateCommission = Database['public']['Tables']['affiliate_commissions']['Row']
+export type ModelBadge = Database['public']['Tables']['model_badges']['Row']
+
+// Extended badge type with event info
+export type EventBadge = Badge & {
+  event?: Event
+}
+
+// Model badge with full details
+export type ModelBadgeWithDetails = ModelBadge & {
+  badge: Badge & { event?: Event }
+}
 
 // Fan type
 export interface Fan {

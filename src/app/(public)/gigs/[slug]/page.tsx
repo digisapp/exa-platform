@@ -43,6 +43,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `${data.title} | EXA Gigs`,
     description: data.description || `Apply for ${data.title} on EXA Models`,
+    robots: { index: false, follow: false },
   };
 }
 
