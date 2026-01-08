@@ -289,17 +289,21 @@ export default async function ModelProfilePage({ params }: Props) {
                   )}
                 </div>
               )}
-              {/* Online Indicator */}
-              {model.availability_status === 'available' && (
-                <div className="absolute bottom-1 right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-[#1a0033]" />
-              )}
-            </div>
+              </div>
           </div>
 
           {/* Name */}
-          <h1 className="text-2xl font-bold text-white mb-3">
+          <h1 className="text-2xl font-bold text-white mb-1">
             {displayName}
           </h1>
+
+          {/* Status Pill */}
+          {model.availability_status === 'available' && (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-500/20 border border-green-500/50 mb-3">
+              <span className="w-2 h-2 bg-green-500 rounded-full" />
+              <span className="text-green-400 text-sm font-medium">Available</span>
+            </div>
+          )}
 
 
           {/* Bio - under name */}
