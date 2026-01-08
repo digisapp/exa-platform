@@ -301,7 +301,7 @@ export interface Database {
           is_primary: boolean
           display_order: number
           source: string
-          opportunity_id: string | null
+          gig_id: string | null
           created_at: string
         }
         Insert: {
@@ -317,7 +317,7 @@ export interface Database {
           is_primary?: boolean
           display_order?: number
           source?: string
-          opportunity_id?: string | null
+          gig_id?: string | null
           created_at?: string
         }
         Update: {
@@ -333,7 +333,7 @@ export interface Database {
           is_primary?: boolean
           display_order?: number
           source?: string
-          opportunity_id?: string | null
+          gig_id?: string | null
           created_at?: string
         }
       }
@@ -522,134 +522,12 @@ export interface Database {
           reviewed_at?: string | null
         }
       }
-      // Backwards compatibility aliases
-      opportunities: {
-        Row: {
-          id: string
-          type: GigType
-          title: string
-          slug: string
-          description: string | null
-          cover_image_url: string | null
-          location_name: string | null
-          location_city: string | null
-          location_state: string | null
-          location_country: string | null
-          start_at: string | null
-          end_at: string | null
-          application_deadline: string | null
-          spots: number | null
-          spots_filled: number
-          compensation_type: CompensationType | null
-          compensation_amount: number | null
-          compensation_description: string | null
-          requirements: Json
-          visibility: string
-          status: GigStatus
-          points_for_completion: number
-          created_by: string | null
-          created_at: string
-          updated_at: string
-          event_id: string | null
-        }
-        Insert: {
-          id?: string
-          type: GigType
-          title: string
-          slug: string
-          description?: string | null
-          cover_image_url?: string | null
-          location_name?: string | null
-          location_city?: string | null
-          location_state?: string | null
-          location_country?: string | null
-          start_at?: string | null
-          end_at?: string | null
-          application_deadline?: string | null
-          spots?: number | null
-          spots_filled?: number
-          compensation_type?: CompensationType | null
-          compensation_amount?: number | null
-          compensation_description?: string | null
-          requirements?: Json
-          visibility?: string
-          status?: GigStatus
-          points_for_completion?: number
-          created_by?: string | null
-          created_at?: string
-          updated_at?: string
-          event_id?: string | null
-        }
-        Update: {
-          id?: string
-          type?: GigType
-          title?: string
-          slug?: string
-          description?: string | null
-          cover_image_url?: string | null
-          location_name?: string | null
-          location_city?: string | null
-          location_state?: string | null
-          location_country?: string | null
-          start_at?: string | null
-          end_at?: string | null
-          application_deadline?: string | null
-          spots?: number | null
-          spots_filled?: number
-          compensation_type?: CompensationType | null
-          compensation_amount?: number | null
-          compensation_description?: string | null
-          requirements?: Json
-          visibility?: string
-          status?: GigStatus
-          points_for_completion?: number
-          created_by?: string | null
-          created_at?: string
-          updated_at?: string
-          event_id?: string | null
-        }
-      }
-      opportunity_applications: {
-        Row: {
-          id: string
-          opportunity_id: string
-          model_id: string
-          status: ApplicationStatus
-          note: string | null
-          admin_note: string | null
-          reviewed_by: string | null
-          applied_at: string
-          reviewed_at: string | null
-        }
-        Insert: {
-          id?: string
-          opportunity_id: string
-          model_id: string
-          status?: ApplicationStatus
-          note?: string | null
-          admin_note?: string | null
-          reviewed_by?: string | null
-          applied_at?: string
-          reviewed_at?: string | null
-        }
-        Update: {
-          id?: string
-          opportunity_id?: string
-          model_id?: string
-          status?: ApplicationStatus
-          note?: string | null
-          admin_note?: string | null
-          reviewed_by?: string | null
-          applied_at?: string
-          reviewed_at?: string | null
-        }
-      }
       conversations: {
         Row: {
           id: string
           type: string
           title: string | null
-          opportunity_id: string | null
+          gig_id: string | null
           created_at: string
           updated_at: string
         }
@@ -657,7 +535,7 @@ export interface Database {
           id?: string
           type?: string
           title?: string | null
-          opportunity_id?: string | null
+          gig_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -665,7 +543,7 @@ export interface Database {
           id?: string
           type?: string
           title?: string | null
-          opportunity_id?: string | null
+          gig_id?: string | null
           created_at?: string
           updated_at?: string
         }

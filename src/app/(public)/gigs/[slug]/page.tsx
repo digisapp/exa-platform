@@ -19,7 +19,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
-import { ApplyButton } from "@/components/opportunities/apply-button";
+import { ApplyButton } from "@/components/gigs/ApplyButton";
 import type { Metadata } from "next";
 
 interface Props {
