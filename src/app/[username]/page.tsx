@@ -283,7 +283,7 @@ export default async function ModelProfilePage({ params }: Props) {
                   className="block relative"
                   title={`Confirmed ${eventBadges[0].badges.events.name} Model`}
                 >
-                  <div className={`w-40 h-40 rounded-full overflow-hidden ring-[3px] ring-yellow-400 animate-gold-glow ${isOwner ? 'profile-pic-breathing' : ''}`}>
+                  <div className={`w-40 h-40 rounded-full overflow-hidden ring-[4px] ring-yellow-400 ${isOwner ? 'profile-pic-breathing' : ''}`}>
                     {model.profile_photo_url ? (
                       <img
                         src={model.profile_photo_url}
@@ -296,9 +296,9 @@ export default async function ModelProfilePage({ params }: Props) {
                       </div>
                     )}
                   </div>
-                  {/* Water drop badge icon */}
-                  <div className="absolute -top-1 -right-1 w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center shadow-lg border-2 border-[#1a0033] group-hover:scale-110 transition-transform">
-                    <span className="text-lg">💧</span>
+                  {/* Water drop emoji on the ring */}
+                  <div className="absolute top-0 right-2 text-xl">
+                    💧
                   </div>
                   {/* Hover tooltip */}
                   <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
