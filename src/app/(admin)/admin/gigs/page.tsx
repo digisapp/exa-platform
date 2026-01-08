@@ -606,14 +606,14 @@ export default function AdminGigsPage() {
                 <div className="space-y-2">
                   <Label htmlFor="event">Link to Event <span className="text-muted-foreground text-xs">(optional - for badges)</span></Label>
                   <Select
-                    value={formData.event_id}
-                    onValueChange={(v) => setFormData({ ...formData, event_id: v })}
+                    value={formData.event_id || "none"}
+                    onValueChange={(v) => setFormData({ ...formData, event_id: v === "none" ? "" : v })}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select an event (models get badge when accepted)" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">No event</SelectItem>
+                      <SelectItem value="none">No event</SelectItem>
                       {events.map((event) => (
                         <SelectItem key={event.id} value={event.id}>
                           {event.short_name} {event.year} - {event.name}
