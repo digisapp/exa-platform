@@ -254,8 +254,6 @@ export default async function ModelProfilePage({ params }: Props) {
                 isLoggedIn={!!user}
                 isOwner={isOwner}
                 initialFavorited={isFavorited}
-                count={favoriteCount}
-                showCount={true}
               />
               {isBrand && !isOwner && (
                 <>
