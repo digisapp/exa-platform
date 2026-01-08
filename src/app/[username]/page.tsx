@@ -283,7 +283,7 @@ export default async function ModelProfilePage({ params }: Props) {
                   className="block relative"
                   title={`Confirmed ${eventBadges[0].badges.events.name} Model`}
                 >
-                  <div className={`w-40 h-40 rounded-full overflow-hidden ring-[3px] ring-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.4),0_0_40px_rgba(250,204,21,0.2)] ${isOwner ? 'profile-pic-breathing' : ''}`}>
+                  <div className={`w-40 h-40 rounded-full overflow-hidden ring-[3px] ring-yellow-400 animate-gold-glow ${isOwner ? 'profile-pic-breathing' : ''}`}>
                     {model.profile_photo_url ? (
                       <img
                         src={model.profile_photo_url}
