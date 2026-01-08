@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { Navbar } from "@/components/layout/navbar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,7 +16,6 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -318,7 +316,7 @@ export default async function EventPage({ params, searchParams }: Props) {
                   <Ticket className="h-12 w-12 mx-auto mb-3" />
                   <h3 className="text-xl font-bold mb-1">Get Tickets</h3>
                   <p className="text-white/80 text-sm">
-                    Don't miss this amazing event
+                    Don&apos;t miss this amazing event
                   </p>
                 </div>
                 <CardContent className="p-6 space-y-4">
