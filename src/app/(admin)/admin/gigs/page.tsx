@@ -28,6 +28,7 @@ import {
   ImageIcon,
 } from "lucide-react";
 import Link from "next/link";
+import { sendGigApplicationAcceptedEmail, sendGigApplicationRejectedEmail } from "@/lib/email";
 
 interface Gig {
   id: string;
@@ -443,12 +444,12 @@ export default function AdminGigsPage() {
             .eq("user_id", user.id)
             .single() as { data: { id: string } | null };
 
-          // Get model's actor id - use user_id from model record
+          // Get model's actor id and email - use user_id from model record
           const { data: modelRecord } = await supabase
             .from("models")
-            .select("user_id")
+            .select("user_id, email, first_name, username")
             .eq("id", app.model.id)
-            .single() as { data: { user_id: string } | null };
+            .single() as { data: { user_id: string; email: string | null; first_name: string | null; username: string } | null };
 
           const { data: modelActor } = modelRecord ? await supabase
             .from("actors")
@@ -509,6 +510,47 @@ export default function AdminGigsPage() {
                 content: message,
                 is_system: false,
               });
+            }
+          }
+
+          // Send email notification
+          if (modelRecord?.email) {
+            const modelName = modelRecord.first_name || modelRecord.username || "Model";
+            const gigTitle = gig?.title || "a gig";
+
+            try {
+              if (action === "accepted") {
+                // Get event info if linked
+                let eventName: string | undefined;
+                if (gig?.event_id) {
+                  const { data: eventData } = await supabase
+                    .from("events")
+                    .select("name, short_name, year")
+                    .eq("id", gig.event_id)
+                    .single() as { data: { name: string; short_name: string; year: number } | null };
+                  if (eventData) {
+                    eventName = `${eventData.short_name} ${eventData.year}`;
+                  }
+                }
+
+                await sendGigApplicationAcceptedEmail({
+                  to: modelRecord.email,
+                  modelName,
+                  gigTitle,
+                  gigDate: gig?.start_at ? new Date(gig.start_at).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" }) : undefined,
+                  gigLocation: gig?.location_city && gig?.location_state ? `${gig.location_city}, ${gig.location_state}` : undefined,
+                  eventName,
+                });
+              } else if (action === "rejected") {
+                await sendGigApplicationRejectedEmail({
+                  to: modelRecord.email,
+                  modelName,
+                  gigTitle,
+                });
+              }
+            } catch (emailError) {
+              console.error("Failed to send email notification:", emailError);
+              // Don't fail the whole operation if email fails
             }
           }
         }
