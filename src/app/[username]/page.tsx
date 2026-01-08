@@ -297,7 +297,7 @@ export default async function ModelProfilePage({ params }: Props) {
                     )}
                   </div>
                   {/* Event badge on the ring */}
-                  <div className="absolute -top-2 right-0 bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a0033] text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-lg">
+                  <div className="absolute -top-2 right-0 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-lg">
                     <span>💧</span>
                     <span>{eventBadges[0].badges.events.short_name}</span>
                   </div>
