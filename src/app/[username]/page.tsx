@@ -12,7 +12,6 @@ import { TikTokIcon } from "@/components/ui/tiktok-icon";
 import { SnapchatIcon } from "@/components/ui/snapchat-icon";
 import type { Metadata } from "next";
 import { ShareButton } from "@/components/ui/share-button";
-import { FavoriteButton } from "@/components/ui/favorite-button";
 import { AddToCampaignButton } from "@/components/ui/add-to-campaign-button";
 import { ModelNotesDialog } from "@/components/brands/ModelNotesDialog";
 import { ProfileActionButtons } from "@/components/profile/ProfileActionButtons";
@@ -192,30 +191,6 @@ export default async function ModelProfilePage({ params }: Props) {
 
   const modelActorId = modelActor?.id || null;
 
-  // Check if current user has favorited this model
-  let isFavorited = false;
-  let favoriteCount = 0;
-
-  if (modelActorId) {
-    // Get favorite count
-    const { count } = await (supabase
-      .from("follows") as any)
-      .select("*", { count: "exact", head: true })
-      .eq("following_id", modelActorId);
-    favoriteCount = count || 0;
-
-    // Check if current user favorited
-    if (currentActorId) {
-      const { data: favorite } = await (supabase
-        .from("follows") as any)
-        .select("follower_id")
-        .eq("follower_id", currentActorId)
-        .eq("following_id", modelActorId)
-        .single();
-      isFavorited = !!favorite;
-    }
-  }
-
   // Display name - show first_name + last_name, or fallback to username
   const displayName = model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username;
 
@@ -248,13 +223,6 @@ export default async function ModelProfilePage({ params }: Props) {
               />
             </Link>
             <div className="flex items-center gap-2">
-              <FavoriteButton
-                modelId={model.id}
-                modelUsername={model.username}
-                isLoggedIn={!!user}
-                isOwner={isOwner}
-                initialFavorited={isFavorited}
-              />
               {isBrand && !isOwner && (
                 <>
                   <ModelNotesDialog
