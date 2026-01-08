@@ -386,26 +386,6 @@ export default async function EventPage({ params, searchParams }: Props) {
                         </span>
                       </div>
                     )}
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground flex items-center gap-2">
-                        <Trophy className="h-4 w-4" />
-                        Points
-                      </span>
-                      <span className="font-medium text-pink-500">
-                        +{event.points_awarded} for walking
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground flex items-center gap-2">
-                        <Users className="h-4 w-4" />
-                        Confirmed
-                      </span>
-                      <span className="font-medium">
-                        {uniqueModels.length} models
-                      </span>
-                    </div>
                   </div>
                 </CardContent>
               </Card>
