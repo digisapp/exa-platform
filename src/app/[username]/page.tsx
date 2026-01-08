@@ -267,8 +267,8 @@ export default async function ModelProfilePage({ params }: Props) {
                     <span>💧</span>
                     <span>{eventBadges[0].badges.events.short_name}</span>
                   </div>
-                  {/* Hover tooltip */}
-                  <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                  {/* Hover tooltip - above the badge */}
+                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
                     <div className="bg-black/90 text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg">
                       Confirmed {eventBadges[0].badges.events.short_name} {eventBadges[0].badges.events.year} Model
                     </div>
