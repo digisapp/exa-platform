@@ -61,17 +61,29 @@ export async function PATCH(
       .eq("id", id);
 
     if (updateError) {
-      throw updateError;
+      console.error("Update error:", updateError);
+      return NextResponse.json(
+        { error: `Failed to update: ${updateError.message}` },
+        { status: 500 }
+      );
     }
 
     // If accepted, increment spots_filled on the gig
     if (status === "accepted" && application.status !== "accepted") {
-      await adminClient.rpc("increment_gig_spots_filled", { gig_id: application.gig_id });
+      const { error: rpcError } = await adminClient.rpc("increment_gig_spots_filled", { gig_id: application.gig_id });
+      if (rpcError) {
+        console.error("RPC increment error:", rpcError);
+        // Non-fatal - application was already updated
+      }
     }
 
     // If cancelling an accepted application, decrement spots_filled
     if ((status === "cancelled" || status === "rejected") && application.status === "accepted") {
-      await adminClient.rpc("decrement_gig_spots_filled", { gig_id: application.gig_id });
+      const { error: rpcError } = await adminClient.rpc("decrement_gig_spots_filled", { gig_id: application.gig_id });
+      if (rpcError) {
+        console.error("RPC decrement error:", rpcError);
+        // Non-fatal - application was already updated
+      }
     }
 
     return NextResponse.json({
@@ -83,10 +95,11 @@ export async function PATCH(
         gig_title: application.gig?.title,
       },
     });
-  } catch (error) {
-    console.error("Gig application update error:", error);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("Gig application update error:", errorMessage, error);
     return NextResponse.json(
-      { error: "Failed to update application" },
+      { error: `Failed to update application: ${errorMessage}` },
       { status: 500 }
     );
   }

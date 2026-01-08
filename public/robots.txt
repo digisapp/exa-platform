@@ -1,0 +1,42 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+
+# Public pages
+Allow: /models
+Allow: /rates
+Allow: /leaderboard
+Allow: /apply
+
+# Disallow gigs (internal only)
+Disallow: /gigs
+
+# Disallow private/authenticated pages
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /profile
+Disallow: /wallet
+Disallow: /earnings
+Disallow: /content
+Disallow: /coins
+Disallow: /chats
+Disallow: /bookings
+Disallow: /offers
+Disallow: /campaigns
+Disallow: /followers
+Disallow: /following
+Disallow: /analytics
+Disallow: /brands
+
+# Disallow auth pages
+Disallow: /signin
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /auth
+Disallow: /claim
+
+# Disallow API routes
+Disallow: /api/
+
+# Sitemap
+Sitemap: https://examodels.com/sitemap.xml
