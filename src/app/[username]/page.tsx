@@ -296,9 +296,10 @@ export default async function ModelProfilePage({ params }: Props) {
                       </div>
                     )}
                   </div>
-                  {/* Water drop emoji on the ring */}
-                  <div className="absolute top-0 right-2 text-xl">
-                    💧
+                  {/* Event badge on the ring */}
+                  <div className="absolute -top-2 right-0 bg-gradient-to-r from-yellow-400 to-yellow-500 text-[#1a0033] text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-lg">
+                    <span>💧</span>
+                    <span>{eventBadges[0].badges.events.short_name}</span>
                   </div>
                   {/* Hover tooltip */}
                   <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
