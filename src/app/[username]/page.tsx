@@ -275,20 +275,53 @@ export default async function ModelProfilePage({ params }: Props) {
 
           {/* Profile Image */}
           <div className="flex justify-center mb-4">
-            <div className="relative">
-              <div className={`w-40 h-40 rounded-full overflow-hidden ${isOwner ? 'profile-pic-breathing' : 'ring-2 ring-white/30 shadow-[0_0_30px_rgba(255,105,180,0.3),0_0_60px_rgba(0,191,255,0.2)]'}`}>
-                {model.profile_photo_url ? (
-                  <img
-                    src={model.profile_photo_url}
-                    alt={displayName}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-[#1a0033] to-[#2d1b69] flex items-center justify-center">
-                    <span className="text-5xl">👤</span>
+            <div className="relative group">
+              {/* Event badge wrapper - makes profile pic clickable if has event badge */}
+              {eventBadges && eventBadges.length > 0 ? (
+                <Link
+                  href={`/events/${eventBadges[0].badges.events.slug}?ref=${model.affiliate_code}`}
+                  className="block relative"
+                  title={`Confirmed ${eventBadges[0].badges.events.name} Model`}
+                >
+                  <div className={`w-40 h-40 rounded-full overflow-hidden ring-[3px] ring-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.4),0_0_40px_rgba(250,204,21,0.2)] ${isOwner ? 'profile-pic-breathing' : ''}`}>
+                    {model.profile_photo_url ? (
+                      <img
+                        src={model.profile_photo_url}
+                        alt={displayName}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-[#1a0033] to-[#2d1b69] flex items-center justify-center">
+                        <span className="text-5xl">👤</span>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+                  {/* Water drop badge icon */}
+                  <div className="absolute -bottom-1 -right-1 w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center shadow-lg border-2 border-[#1a0033] group-hover:scale-110 transition-transform">
+                    <span className="text-lg">💧</span>
+                  </div>
+                  {/* Hover tooltip */}
+                  <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    <div className="bg-black/90 text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg">
+                      Confirmed {eventBadges[0].badges.events.short_name} {eventBadges[0].badges.events.year} Model
+                    </div>
+                  </div>
+                </Link>
+              ) : (
+                <div className={`w-40 h-40 rounded-full overflow-hidden ${isOwner ? 'profile-pic-breathing' : 'ring-2 ring-white/30 shadow-[0_0_30px_rgba(255,105,180,0.3),0_0_60px_rgba(0,191,255,0.2)]'}`}>
+                  {model.profile_photo_url ? (
+                    <img
+                      src={model.profile_photo_url}
+                      alt={displayName}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-[#1a0033] to-[#2d1b69] flex items-center justify-center">
+                      <span className="text-5xl">👤</span>
+                    </div>
+                  )}
+                </div>
+              )}
               {/* Online Indicator */}
               {model.availability_status === 'available' && (
                 <div className="absolute bottom-1 right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-[#1a0033]" />
@@ -301,28 +334,6 @@ export default async function ModelProfilePage({ params }: Props) {
             {displayName}
           </h1>
 
-          {/* Event Badges */}
-          {eventBadges && eventBadges.length > 0 && (
-            <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
-              {eventBadges.map((mb: any) => {
-                const badge = mb.badges;
-                const event = badge.events;
-                return (
-                  <Link
-                    key={badge.id}
-                    href={`/events/${event.slug}?ref=${model.affiliate_code}`}
-                    className="group relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-pink-500/20 to-violet-500/20 border border-pink-500/30 hover:border-pink-500/50 hover:from-pink-500/30 hover:to-violet-500/30 transition-all hover:scale-105"
-                    title={`Confirmed for ${event.name}`}
-                  >
-                    <span className="text-sm">{badge.icon || '🏆'}</span>
-                    <span className="text-xs font-semibold text-white">
-                      {event.short_name} {event.year}
-                    </span>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
 
           {/* Bio - under name */}
           {model.bio && (
