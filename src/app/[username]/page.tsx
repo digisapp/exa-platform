@@ -301,7 +301,7 @@ export default async function ModelProfilePage({ params }: Props) {
           {model.availability_status === 'available' && (
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-500/20 border border-green-500/50 mb-3">
               <span className="w-2 h-2 bg-green-500 rounded-full" />
-              <span className="text-green-400 text-sm font-medium">Available</span>
+              <span className="text-green-400 text-sm font-medium">Online</span>
             </div>
           )}
 
