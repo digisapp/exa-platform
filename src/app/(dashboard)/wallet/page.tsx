@@ -45,6 +45,11 @@ import {
   ExternalLink,
   Download,
   Crown,
+  BarChart3,
+  Phone,
+  Gift,
+  Briefcase,
+  Eye,
 } from "lucide-react";
 import { COIN_PACKAGES } from "@/lib/stripe-config";
 import { cn } from "@/lib/utils";
@@ -96,6 +101,15 @@ interface BrandSubscription {
   coins_granted_at: string | null;
 }
 
+const EARNING_TYPE_LABELS: Record<string, { label: string; icon: any; color: string }> = {
+  tip_received: { label: "Tips", icon: Gift, color: "text-pink-500" },
+  video_call: { label: "Video Calls", icon: Phone, color: "text-blue-500" },
+  voice_call: { label: "Voice Calls", icon: Phone, color: "text-green-500" },
+  message_received: { label: "Messages", icon: MessageCircle, color: "text-purple-500" },
+  content_sale: { label: "Content Sales", icon: Eye, color: "text-orange-500" },
+  booking_payment: { label: "Bookings", icon: Briefcase, color: "text-cyan-500" },
+};
+
 export default function WalletPage() {
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState<number | null>(null);
@@ -104,6 +118,8 @@ export default function WalletPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [totalEarnings, setTotalEarnings] = useState(0);
   const [thisMonthEarnings, setThisMonthEarnings] = useState(0);
+  const [earningsByMonth, setEarningsByMonth] = useState<Record<string, number>>({});
+  const [earningsByType, setEarningsByType] = useState<Record<string, number>>({});
   const [modelId, setModelId] = useState<string | null>(null);
   const [actorType, setActorType] = useState<string | null>(null);
 
@@ -208,15 +224,17 @@ export default function WalletPage() {
         }
       }
 
-      // Get transactions
+      // Get transactions - fetch more for models to show analytics
+      const txLimit = actor.type === "model" ? 500 : 20;
       const { data: txs } = await supabase
         .from("coin_transactions")
         .select("*")
         .eq("actor_id", actor.id)
         .order("created_at", { ascending: false })
-        .limit(20) as { data: Transaction[] | null };
+        .limit(txLimit) as { data: Transaction[] | null };
 
-      setTransactions(txs || []);
+      // For display, only show recent 20
+      setTransactions((txs || []).slice(0, 20));
 
       // Calculate earnings (positive amounts)
       const earnings = (txs || []).filter(t => t.amount > 0);
@@ -230,6 +248,25 @@ export default function WalletPage() {
         .filter(t => new Date(t.created_at) >= oneMonthAgo)
         .reduce((sum, t) => sum + t.amount, 0);
       setThisMonthEarnings(thisMonth);
+
+      // For models: calculate earnings by month and type for analytics
+      if (actor.type === "model") {
+        // Group earnings by month
+        const byMonth: Record<string, number> = {};
+        earnings.forEach((t) => {
+          const month = new Date(t.created_at).toISOString().slice(0, 7); // YYYY-MM
+          byMonth[month] = (byMonth[month] || 0) + t.amount;
+        });
+        setEarningsByMonth(byMonth);
+
+        // Group earnings by type
+        const byType: Record<string, number> = {};
+        earnings.forEach((t) => {
+          const type = t.action || "other";
+          byType[type] = (byType[type] || 0) + t.amount;
+        });
+        setEarningsByType(byType);
+      }
 
       setLoading(false);
     }
@@ -483,6 +520,106 @@ export default function WalletPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Earnings Analytics - Models Only */}
+      {actorType === "model" && (
+        <>
+          {/* Monthly Earnings Chart */}
+          {Object.keys(earningsByMonth).length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  Monthly Earnings
+                </CardTitle>
+                <CardDescription>Coins earned over the last 6 months</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {(() => {
+                  const months = Object.keys(earningsByMonth).sort().slice(-6);
+                  const maxEarning = Math.max(...months.map(m => earningsByMonth[m] || 0), 1);
+
+                  return (
+                    <div className="flex items-end gap-2 h-40">
+                      {months.map((month) => {
+                        const earning = earningsByMonth[month] || 0;
+                        const height = (earning / maxEarning) * 100;
+                        const [year, m] = month.split("-");
+                        const monthLabel = new Date(parseInt(year), parseInt(m) - 1).toLocaleDateString("en-US", { month: "short" });
+
+                        return (
+                          <div key={month} className="flex-1 flex flex-col items-center gap-2">
+                            <div className="w-full bg-muted rounded-t relative" style={{ height: `${Math.max(height, 5)}%` }}>
+                              <div
+                                className="absolute inset-0 bg-gradient-to-t from-pink-500 to-violet-500 rounded-t"
+                                style={{ height: "100%" }}
+                              />
+                            </div>
+                            <span className="text-xs text-muted-foreground">{monthLabel}</span>
+                            <span className="text-xs font-medium">{earning.toLocaleString()}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Earnings Breakdown */}
+          {Object.keys(earningsByType).length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Earnings Breakdown
+                </CardTitle>
+                <CardDescription>Where your coins come from</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {(() => {
+                  const earningTypes = Object.entries(earningsByType)
+                    .sort(([, a], [, b]) => b - a)
+                    .slice(0, 5);
+                  const totalFromTypes = earningTypes.reduce((sum, [, amount]) => sum + amount, 0);
+
+                  return (
+                    <div className="space-y-4">
+                      {earningTypes.map(([type, amount]) => {
+                        const typeInfo = EARNING_TYPE_LABELS[type] || { label: type.replace(/_/g, " "), icon: Coins, color: "text-gray-500" };
+                        const Icon = typeInfo.icon;
+                        const percentage = totalFromTypes > 0 ? Math.round((amount / totalFromTypes) * 100) : 0;
+
+                        return (
+                          <div key={type} className="flex items-center gap-4">
+                            <div className={`p-2 rounded-full bg-muted ${typeInfo.color}`}>
+                              <Icon className="h-4 w-4" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-sm font-medium capitalize">{typeInfo.label}</span>
+                                <span className="text-sm text-muted-foreground">{amount.toLocaleString()} coins</span>
+                              </div>
+                              <div className="h-2 bg-muted rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-gradient-to-r from-pink-500 to-violet-500 rounded-full"
+                                  style={{ width: `${percentage}%` }}
+                                />
+                              </div>
+                            </div>
+                            <span className="text-sm font-medium w-12 text-right">{percentage}%</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+          )}
+        </>
+      )}
 
       {/* Transactions */}
       <Card>
