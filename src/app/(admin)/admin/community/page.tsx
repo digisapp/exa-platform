@@ -48,39 +48,19 @@ import {
   UserCheck,
   Mail,
   Send,
-  MessageCircle,
-  Images,
   DollarSign,
-  Activity,
   KeyRound,
   UserPlus,
   Sparkles,
   Building2,
   Globe,
-  Instagram,
   ExternalLink,
+  Instagram,
 } from "lucide-react";
-import { TikTokIcon } from "@/components/ui/tiktok-icon";
 import { Badge } from "@/components/ui/badge";
 import { ApproveRejectButtons } from "@/components/admin/AdminActions";
 import { toast } from "sonner";
 import { ModelActionsDropdown, FanActionsDropdown } from "@/components/admin/AdminActions";
-
-function formatRelativeTime(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
-
-  if (diffMins < 1) return "Just now";
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) return `${diffDays}d ago`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
-  return date.toLocaleDateString();
-}
 
 function SortIndicator({ active, direction }: { active: boolean; direction: "asc" | "desc" }) {
   if (!active) return <ArrowUpDown className="h-4 w-4 ml-1 opacity-50" />;
@@ -242,7 +222,7 @@ function CopyInviteButton({ token }: { token: string }) {
   );
 }
 
-function CreateLoginButton({ modelId, modelEmail, onSuccess }: { modelId: string; modelEmail: string; onSuccess: () => void }) {
+function CreateLoginButton({ modelId, onSuccess }: { modelId: string; onSuccess: () => void }) {
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [credentials, setCredentials] = useState<{ email: string; password: string } | null>(null);
@@ -1113,7 +1093,9 @@ export default function AdminCommunityPage() {
                 <div>
                   <CardTitle>Models</CardTitle>
                   <CardDescription>
-                    Showing {((modelsPage - 1) * pageSize) + 1} - {Math.min(modelsPage * pageSize, modelsTotalCount)} of {modelsTotalCount.toLocaleString()}
+                    {modelsTotalCount > 0
+                      ? `Showing ${((modelsPage - 1) * pageSize) + 1} - ${Math.min(modelsPage * pageSize, modelsTotalCount)} of ${modelsTotalCount.toLocaleString()}`
+                      : "No models found"}
                   </CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
@@ -1202,11 +1184,11 @@ export default function AdminCommunityPage() {
                                 </span>
                                 <CopyInviteButton token={model.invite_token} />
                                 {model.email && (
-                                  <CreateLoginButton modelId={model.id} modelEmail={model.email} onSuccess={loadModels} />
+                                  <CreateLoginButton modelId={model.id} onSuccess={loadModels} />
                                 )}
                               </div>
                             ) : model.email ? (
-                              <CreateLoginButton modelId={model.id} modelEmail={model.email} onSuccess={loadModels} />
+                              <CreateLoginButton modelId={model.id} onSuccess={loadModels} />
                             ) : (
                               <span className="text-muted-foreground text-sm">No email</span>
                             )}
@@ -1280,7 +1262,9 @@ export default function AdminCommunityPage() {
                 <div>
                   <CardTitle>Fans</CardTitle>
                   <CardDescription>
-                    Showing {((fansPage - 1) * pageSize) + 1} - {Math.min(fansPage * pageSize, fansTotalCount)} of {fansTotalCount.toLocaleString()}
+                    {fansTotalCount > 0
+                      ? `Showing ${((fansPage - 1) * pageSize) + 1} - ${Math.min(fansPage * pageSize, fansTotalCount)} of ${fansTotalCount.toLocaleString()}`
+                      : "No fans found"}
                   </CardDescription>
                 </div>
                 <div className="flex items-center gap-2">

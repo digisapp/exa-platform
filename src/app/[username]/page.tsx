@@ -249,7 +249,7 @@ export default async function ModelProfilePage({ params }: Props) {
                   className="block relative"
                   title={`Confirmed ${eventBadges[0].badges.events.name} Model`}
                 >
-                  <div className={`w-40 h-40 rounded-full overflow-hidden ring-[4px] ring-yellow-400 ${isOwner ? 'profile-pic-breathing' : ''}`}>
+                  <div className={`w-40 h-40 rounded-full overflow-hidden ring-[4px] ring-amber-400 ${isOwner ? 'profile-pic-breathing' : ''}`}>
                     {model.profile_photo_url ? (
                       <img
                         src={model.profile_photo_url}
@@ -263,7 +263,7 @@ export default async function ModelProfilePage({ params }: Props) {
                     )}
                   </div>
                   {/* Event badge on the ring */}
-                  <div className="absolute -top-2 right-0 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-lg">
+                  <div className="absolute -top-2 right-0 bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-600 text-amber-950 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-lg border border-amber-500/50">
                     <span>💧</span>
                     <span>{eventBadges[0].badges.events.short_name}</span>
                   </div>

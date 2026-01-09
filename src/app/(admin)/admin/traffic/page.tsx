@@ -126,8 +126,8 @@ export default function TrafficPage() {
       }
       const analytics = await res.json();
       setData(analytics);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
     }
