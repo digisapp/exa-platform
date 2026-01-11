@@ -808,16 +808,24 @@ export default function AdminCommunityPage() {
   return (
     <div className="container px-8 md:px-16 py-8 space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/admin"><ArrowLeft className="h-5 w-5" /></Link>
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold">Community</h1>
-          <p className="text-muted-foreground">
-            Manage {stats.totalModels.toLocaleString()} models and {stats.totalFans.toLocaleString()} fans
-          </p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" asChild>
+            <Link href="/admin"><ArrowLeft className="h-5 w-5" /></Link>
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold">Community</h1>
+            <p className="text-muted-foreground">
+              Manage {stats.totalModels.toLocaleString()} models and {stats.totalFans.toLocaleString()} fans
+            </p>
+          </div>
         </div>
+        <Button asChild className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600">
+          <Link href="/admin/rate">
+            <Star className="h-4 w-4 mr-2" />
+            Quick Rate Models
+          </Link>
+        </Button>
       </div>
 
       {/* Stats Cards */}

@@ -7,6 +7,7 @@ import {
   MapPin,
   Instagram,
   Calendar,
+  EyeOff,
 } from "lucide-react";
 import { TikTokIcon } from "@/components/ui/tiktok-icon";
 import { SnapchatIcon } from "@/components/ui/snapchat-icon";
@@ -41,15 +42,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const supabase = await createClient();
 
+  // Get model without is_approved filter (the page handles access control)
   const { data: model } = await supabase
     .from("models")
-    .select("first_name, last_name, username, bio, profile_photo_url")
+    .select("first_name, last_name, username, bio, profile_photo_url, is_approved")
     .eq("username", username)
-    .eq("is_approved", true)
     .single() as { data: any };
 
   if (!model) {
     return { title: "Model Not Found | EXA" };
+  }
+
+  // For unapproved models, return generic metadata (only owner can see the page)
+  if (!model.is_approved) {
+    return { title: "Profile Preview | EXA Models" };
   }
 
   const displayName = model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username;
@@ -75,15 +81,36 @@ export default async function ModelProfilePage({ params }: Props) {
 
   const supabase = await createClient();
 
-  // Get model
+  // Get current user first to check ownership
+  const { data: { user } } = await supabase.auth.getUser();
+
+  // Get model (without is_approved filter - we check ownership below)
   const { data: model } = await supabase
     .from("models")
     .select("*")
     .eq("username", username)
-    .eq("is_approved", true)
     .single() as { data: any };
 
   if (!model) {
+    notFound();
+  }
+
+  // Check if current user is the owner of this profile
+  const isOwner = Boolean(user && model.user_id === user.id);
+
+  // Check if current user is an admin
+  let isAdmin = false;
+  if (user && !isOwner) {
+    const { data: actor } = await supabase
+      .from("actors")
+      .select("type")
+      .eq("user_id", user.id)
+      .single() as { data: { type: string } | null };
+    isAdmin = actor?.type === "admin";
+  }
+
+  // Only show 404 if model is not approved AND viewer is not the owner or admin
+  if (!model.is_approved && !isOwner && !isAdmin) {
     notFound();
   }
 
@@ -138,8 +165,7 @@ export default async function ModelProfilePage({ params }: Props) {
     .eq("is_active", true)
     .gt("coin_price", 0);
 
-  // Get current user info
-  const { data: { user } } = await supabase.auth.getUser();
+  // Get current user's actor info
   let currentActorId: string | null = null;
   let coinBalance = 0;
   let isBrand = false;
@@ -180,8 +206,6 @@ export default async function ModelProfilePage({ params }: Props) {
     }
   }
 
-  const isOwner = Boolean(user && model.user_id === user.id);
-
   // Get model's actor ID
   const { data: modelActor } = await supabase
     .from("actors")
@@ -207,6 +231,16 @@ export default async function ModelProfilePage({ params }: Props) {
   return (
     <div className="min-h-screen relative">
       <FloatingOrbs />
+
+      {/* Preview Banner for unapproved profiles (owner or admin viewing) */}
+      {!model.is_approved && (isOwner || isAdmin) && (
+        <div className="relative z-20 bg-amber-500/90 text-amber-950 py-3 px-4">
+          <div className="container max-w-lg mx-auto flex items-center justify-center gap-2 text-sm font-medium">
+            <EyeOff className="h-4 w-4" />
+            <span>{isAdmin ? "Admin View - This profile is hidden (not approved)" : "Profile Preview - Your profile is hidden until approved"}</span>
+          </div>
+        </div>
+      )}
 
       <div className="relative z-10 container max-w-lg mx-auto py-6 px-4">
         {/* Main Profile Card */}
