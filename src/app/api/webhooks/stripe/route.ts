@@ -41,6 +41,12 @@ export async function POST(request: NextRequest) {
           break;
         }
 
+        // Check if this is a trip application payment
+        if (session.metadata?.type === "trip_application") {
+          await handleTripPayment(session);
+          break;
+        }
+
         // Handle regular coin purchase
         const actorId = session.metadata?.actor_id;
         const coinsStr = session.metadata?.coins;
@@ -271,6 +277,52 @@ async function grantMonthlyCoins(invoice: Stripe.Invoice) {
     .from("brands")
     .update({ coins_granted_at: new Date().toISOString() })
     .eq("id", brandId);
+}
+
+async function handleTripPayment(session: Stripe.Checkout.Session) {
+  const gigId = session.metadata?.gig_id;
+  const modelId = session.metadata?.model_id;
+  const tripNumber = session.metadata?.trip_number;
+
+  if (!gigId || !modelId || !tripNumber) {
+    console.error("Missing trip payment metadata:", session.id);
+    return;
+  }
+
+  // Update the gig application with payment success
+  const { error } = await supabaseAdmin
+    .from("gig_applications")
+    .update({
+      payment_status: "paid",
+      stripe_payment_intent_id: typeof session.payment_intent === "string"
+        ? session.payment_intent
+        : session.payment_intent?.id,
+      amount_paid: session.amount_total,
+      status: "approved", // Auto-approve paid spots
+    })
+    .eq("gig_id", gigId)
+    .eq("model_id", modelId);
+
+  if (error) {
+    console.error("Error updating trip payment:", error);
+    return;
+  }
+
+  // Update spots_filled count on the gig
+  const { data: gig } = await supabaseAdmin
+    .from("gigs")
+    .select("spots_filled")
+    .eq("id", gigId)
+    .single();
+
+  if (gig) {
+    await supabaseAdmin
+      .from("gigs")
+      .update({ spots_filled: (gig.spots_filled || 0) + 1 })
+      .eq("id", gigId);
+  }
+
+  console.log("Trip payment successful:", { gigId, modelId, tripNumber });
 }
 
 // Disable body parsing for webhook signature verification

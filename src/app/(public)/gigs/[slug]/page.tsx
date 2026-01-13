@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { ApplyButton } from "@/components/gigs/ApplyButton";
+import { TripApplicationForm } from "@/components/gigs/TripApplicationForm";
 import type { Metadata } from "next";
 
 interface Props {
@@ -94,7 +95,7 @@ export default async function GigDetailPage({ params }: Props) {
         modelId = model.id;
         const { data: app } = await supabase
           .from("gig_applications")
-          .select("*")
+          .select("*, trip_number, spot_type, payment_status")
           .eq("gig_id", gig.id)
           .eq("model_id", model.id)
           .single() as { data: any };
@@ -251,17 +252,37 @@ export default async function GigDetailPage({ params }: Props) {
                       <p className="font-medium mb-1">Application Status</p>
                       <Badge
                         variant={
-                          existingApplication.status === "accepted"
+                          existingApplication.status === "accepted" || existingApplication.status === "approved"
                             ? "default"
                             : existingApplication.status === "rejected"
                             ? "destructive"
                             : "secondary"
                         }
-                        className="capitalize"
+                        className={`capitalize ${
+                          existingApplication.status === "accepted" || existingApplication.status === "approved"
+                            ? "bg-green-500"
+                            : ""
+                        }`}
                       >
-                        {existingApplication.status}
+                        {existingApplication.status === "approved" ? "Confirmed" : existingApplication.status}
                       </Badge>
+                      {existingApplication.payment_status === "paid" && (
+                        <p className="text-xs text-green-500 mt-2">Payment received</p>
+                      )}
+                      {existingApplication.trip_number && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Trip {existingApplication.trip_number}
+                        </p>
+                      )}
                     </div>
+                  ) : gig.type === "travel" && canApply ? (
+                    // Use TripApplicationForm for travel gigs
+                    <TripApplicationForm
+                      gigId={gig.id}
+                      gigSlug={slug}
+                      modelId={modelId}
+                      isLoggedIn={!!user}
+                    />
                   ) : canApply ? (
                     <ApplyButton gigId={gig.id} modelId={modelId} />
                   ) : (

@@ -26,6 +26,8 @@ import {
   ToggleRight,
   X,
   ImageIcon,
+  Send,
+  FileEdit,
 } from "lucide-react";
 import Link from "next/link";
 import { sendGigApplicationAcceptedEmail, sendGigApplicationRejectedEmail } from "@/lib/email";
@@ -63,6 +65,13 @@ interface Application {
   model_id: string;
   status: string;
   applied_at: string;
+  // Trip-specific fields
+  trip_number?: number;
+  spot_type?: string;
+  payment_status?: string;
+  instagram_handle?: string;
+  instagram_followers?: number;
+  digis_username?: string;
   model: {
     id: string;
     username: string;
@@ -84,6 +93,9 @@ export default function AdminGigsPage() {
   const [processingApp, setProcessingApp] = useState<string | null>(null);
   const [processingGig, setProcessingGig] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [applicationFilter, setApplicationFilter] = useState<"all" | "pending" | "approved" | "declined">("all");
+  const [tripFilter, setTripFilter] = useState<"all" | "1" | "2">("all");
+  const [spotTypeFilter, setSpotTypeFilter] = useState<"all" | "paid" | "sponsored">("all");
   const supabase = createClient();
 
   // Form state
@@ -112,6 +124,10 @@ export default function AdminGigsPage() {
   useEffect(() => {
     if (selectedGig) {
       loadApplications(selectedGig);
+      // Reset all filters when switching gigs
+      setApplicationFilter("all");
+      setTripFilter("all");
+      setSpotTypeFilter("all");
     }
   }, [selectedGig]);
 
@@ -139,6 +155,12 @@ export default function AdminGigsPage() {
       .from("gig_applications") as any)
       .select(`
         *,
+        trip_number,
+        spot_type,
+        payment_status,
+        instagram_handle,
+        instagram_followers,
+        digis_username,
         model:models(id, username, first_name, last_name, profile_photo_url)
       `)
       .eq("gig_id", gigId)
@@ -338,13 +360,13 @@ export default function AdminGigsPage() {
             compensation_amount: formData.compensation_amount * 100,
             spots: formData.spots,
             slug,
-            status: "open",
+            status: "draft",
             visibility: "public",
             event_id: formData.event_id || null,
           });
 
         if (error) throw error;
-        toast.success("Gig created successfully!");
+        toast.success("Gig created as draft. Click 'Publish' when ready to go live!");
       }
 
       resetForm();
@@ -391,8 +413,19 @@ export default function AdminGigsPage() {
     }
   }
 
-  async function handleToggleStatus(gig: Gig) {
-    const newStatus = gig.status === "open" ? "closed" : "open";
+  async function handleToggleStatus(gig: Gig, targetStatus?: "draft" | "open" | "closed") {
+    // If no target specified, cycle: draft → open, open → closed, closed → open
+    let newStatus: string;
+    if (targetStatus) {
+      newStatus = targetStatus;
+    } else if (gig.status === "draft") {
+      newStatus = "open";
+    } else if (gig.status === "open") {
+      newStatus = "closed";
+    } else {
+      newStatus = "open";
+    }
+
     setProcessingGig(gig.id);
 
     try {
@@ -403,7 +436,12 @@ export default function AdminGigsPage() {
 
       if (error) throw error;
 
-      toast.success(`Gig ${newStatus === "open" ? "reopened" : "closed"}`);
+      const messages: Record<string, string> = {
+        draft: "Gig moved to draft",
+        open: "Gig published! Models can now apply.",
+        closed: "Gig closed",
+      };
+      toast.success(messages[newStatus] || "Status updated");
       loadGigs();
     } catch (error) {
       console.error("Error updating gig status:", error);
@@ -882,9 +920,13 @@ export default function AdminGigsPage() {
                           <Badge variant="outline" className="capitalize">{gig.type}</Badge>
                           <Badge
                             variant={gig.status === "open" ? "default" : "secondary"}
-                            className={gig.status === "open" ? "bg-green-500" : ""}
+                            className={
+                              gig.status === "open" ? "bg-green-500" :
+                              gig.status === "draft" ? "bg-amber-500/10 text-amber-500 border-amber-500/30" :
+                              ""
+                            }
                           >
-                            {gig.status}
+                            {gig.status === "draft" ? "Draft" : gig.status}
                           </Badge>
                           {gig.event_id && (
                             <Badge variant="outline" className="bg-pink-500/10 text-pink-500 border-pink-500/30">
@@ -920,26 +962,62 @@ export default function AdminGigsPage() {
                       <Pencil className="h-3 w-3 mr-1" />
                       Edit
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={(e) => { e.stopPropagation(); handleToggleStatus(gig); }}
-                      disabled={processingGig === gig.id}
-                    >
-                      {processingGig === gig.id ? (
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                      ) : gig.status === "open" ? (
-                        <>
-                          <ToggleRight className="h-3 w-3 mr-1" />
-                          Close
-                        </>
-                      ) : (
-                        <>
-                          <ToggleLeft className="h-3 w-3 mr-1" />
-                          Reopen
-                        </>
-                      )}
-                    </Button>
+                    {gig.status === "draft" ? (
+                      <Button
+                        size="sm"
+                        onClick={(e) => { e.stopPropagation(); handleToggleStatus(gig, "open"); }}
+                        disabled={processingGig === gig.id}
+                        className="bg-green-500 hover:bg-green-600 text-white"
+                      >
+                        {processingGig === gig.id ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <>
+                            <Send className="h-3 w-3 mr-1" />
+                            Publish
+                          </>
+                        )}
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => { e.stopPropagation(); handleToggleStatus(gig); }}
+                        disabled={processingGig === gig.id}
+                      >
+                        {processingGig === gig.id ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : gig.status === "open" ? (
+                          <>
+                            <ToggleRight className="h-3 w-3 mr-1" />
+                            Close
+                          </>
+                        ) : (
+                          <>
+                            <ToggleLeft className="h-3 w-3 mr-1" />
+                            Reopen
+                          </>
+                        )}
+                      </Button>
+                    )}
+                    {gig.status !== "draft" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => { e.stopPropagation(); handleToggleStatus(gig, "draft"); }}
+                        disabled={processingGig === gig.id}
+                        className="text-amber-500 hover:text-amber-600 hover:bg-amber-500/10"
+                      >
+                        {processingGig === gig.id ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <>
+                            <FileEdit className="h-3 w-3 mr-1" />
+                            Unpublish
+                          </>
+                        )}
+                      </Button>
+                    )}
                     <Button
                       size="sm"
                       variant="outline"
@@ -972,6 +1050,128 @@ export default function AdminGigsPage() {
                 ? `Showing applications for: ${gigs.find(g => g.id === selectedGig)?.title}`
                 : "Select a gig to view applications"}
             </CardDescription>
+            {/* Filter Tabs */}
+            {selectedGig && applications.length > 0 && (
+              <div className="flex gap-1 mt-3 p-1 bg-muted rounded-lg">
+                <button
+                  onClick={() => setApplicationFilter("all")}
+                  className={`flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                    applicationFilter === "all"
+                      ? "bg-background shadow-sm"
+                      : "hover:bg-background/50 text-muted-foreground"
+                  }`}
+                >
+                  All ({applications.length})
+                </button>
+                <button
+                  onClick={() => setApplicationFilter("pending")}
+                  className={`flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                    applicationFilter === "pending"
+                      ? "bg-background shadow-sm"
+                      : "hover:bg-background/50 text-muted-foreground"
+                  }`}
+                >
+                  Pending ({applications.filter(a => a.status === "pending").length})
+                </button>
+                <button
+                  onClick={() => setApplicationFilter("approved")}
+                  className={`flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                    applicationFilter === "approved"
+                      ? "bg-background shadow-sm"
+                      : "hover:bg-background/50 text-muted-foreground"
+                  }`}
+                >
+                  Approved ({applications.filter(a => a.status === "accepted" || a.status === "approved").length})
+                </button>
+                <button
+                  onClick={() => setApplicationFilter("declined")}
+                  className={`flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                    applicationFilter === "declined"
+                      ? "bg-background shadow-sm"
+                      : "hover:bg-background/50 text-muted-foreground"
+                  }`}
+                >
+                  Declined ({applications.filter(a => a.status === "rejected" || a.status === "cancelled").length})
+                </button>
+              </div>
+            )}
+            {/* Trip-specific filters - only show for travel gigs with trip data */}
+            {selectedGig && applications.some(a => a.trip_number) && (
+              <div className="flex gap-4 mt-2">
+                {/* Trip Number Filter */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Trip:</span>
+                  <div className="flex gap-1 p-0.5 bg-muted rounded-md">
+                    <button
+                      onClick={() => setTripFilter("all")}
+                      className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
+                        tripFilter === "all"
+                          ? "bg-background shadow-sm"
+                          : "hover:bg-background/50 text-muted-foreground"
+                      }`}
+                    >
+                      All
+                    </button>
+                    <button
+                      onClick={() => setTripFilter("1")}
+                      className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
+                        tripFilter === "1"
+                          ? "bg-background shadow-sm"
+                          : "hover:bg-background/50 text-muted-foreground"
+                      }`}
+                    >
+                      Trip 1
+                    </button>
+                    <button
+                      onClick={() => setTripFilter("2")}
+                      className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
+                        tripFilter === "2"
+                          ? "bg-background shadow-sm"
+                          : "hover:bg-background/50 text-muted-foreground"
+                      }`}
+                    >
+                      Trip 2
+                    </button>
+                  </div>
+                </div>
+                {/* Spot Type Filter */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Type:</span>
+                  <div className="flex gap-1 p-0.5 bg-muted rounded-md">
+                    <button
+                      onClick={() => setSpotTypeFilter("all")}
+                      className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
+                        spotTypeFilter === "all"
+                          ? "bg-background shadow-sm"
+                          : "hover:bg-background/50 text-muted-foreground"
+                      }`}
+                    >
+                      All
+                    </button>
+                    <button
+                      onClick={() => setSpotTypeFilter("paid")}
+                      className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
+                        spotTypeFilter === "paid"
+                          ? "bg-green-500/20 text-green-500 shadow-sm"
+                          : "hover:bg-background/50 text-muted-foreground"
+                      }`}
+                    >
+                      Paid
+                    </button>
+                    <button
+                      onClick={() => setSpotTypeFilter("sponsored")}
+                      className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
+                        spotTypeFilter === "sponsored"
+                          ? "bg-violet-500/20 text-violet-500 shadow-sm"
+                          : "hover:bg-background/50 text-muted-foreground"
+                      }`}
+                    >
+                      Sponsored
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </CardHeader>
           <CardContent className="space-y-3 max-h-[600px] overflow-y-auto">
             {!selectedGig ? (
@@ -985,7 +1185,36 @@ export default function AdminGigsPage() {
                 <p>No applications yet</p>
               </div>
             ) : (
-              applications.map((app) => (
+              applications
+                .filter((app) => {
+                  // Status filter
+                  if (applicationFilter === "pending" && app.status !== "pending") return false;
+                  if (applicationFilter === "approved" && app.status !== "accepted" && app.status !== "approved") return false;
+                  if (applicationFilter === "declined" && app.status !== "rejected" && app.status !== "cancelled") return false;
+                  // Trip filter
+                  if (tripFilter !== "all" && app.trip_number !== parseInt(tripFilter)) return false;
+                  // Spot type filter
+                  if (spotTypeFilter !== "all" && app.spot_type !== spotTypeFilter) return false;
+                  return true;
+                })
+                .length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No matching applications</p>
+                </div>
+              ) : applications
+                .filter((app) => {
+                  // Status filter
+                  if (applicationFilter === "pending" && app.status !== "pending") return false;
+                  if (applicationFilter === "approved" && app.status !== "accepted" && app.status !== "approved") return false;
+                  if (applicationFilter === "declined" && app.status !== "rejected" && app.status !== "cancelled") return false;
+                  // Trip filter
+                  if (tripFilter !== "all" && app.trip_number !== parseInt(tripFilter)) return false;
+                  // Spot type filter
+                  if (spotTypeFilter !== "all" && app.spot_type !== spotTypeFilter) return false;
+                  return true;
+                })
+                .map((app) => (
                 <div
                   key={app.id}
                   className="p-4 rounded-lg border flex items-center justify-between"
@@ -1017,6 +1246,39 @@ export default function AdminGigsPage() {
                       <p className="text-xs text-muted-foreground">
                         Applied {new Date(app.applied_at).toLocaleDateString()}
                       </p>
+                      {/* Trip-specific info */}
+                      {app.trip_number && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          <Badge variant="outline" className="text-xs">
+                            Trip {app.trip_number}
+                          </Badge>
+                          <Badge
+                            variant="outline"
+                            className={`text-xs ${
+                              app.spot_type === "paid"
+                                ? "bg-green-500/10 text-green-500 border-green-500/30"
+                                : "bg-violet-500/10 text-violet-500 border-violet-500/30"
+                            }`}
+                          >
+                            {app.spot_type === "paid" ? "Paid $1,400" : "Sponsored"}
+                          </Badge>
+                          {app.payment_status === "paid" && (
+                            <Badge variant="outline" className="text-xs bg-green-500/10 text-green-500 border-green-500/30">
+                              Paid ✓
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+                      {app.instagram_handle && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          IG: @{app.instagram_handle} ({app.instagram_followers?.toLocaleString()} followers)
+                        </p>
+                      )}
+                      {app.digis_username && (
+                        <p className="text-xs text-muted-foreground">
+                          Digis: {app.digis_username}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -1049,7 +1311,7 @@ export default function AdminGigsPage() {
                           )}
                         </Button>
                       </>
-                    ) : app.status === "accepted" ? (
+                    ) : app.status === "accepted" || app.status === "approved" ? (
                       <div className="flex items-center gap-2">
                         <Badge variant="default" className="bg-green-500">
                           <CheckCircle className="h-3 w-3 mr-1" />
