@@ -40,10 +40,10 @@ export async function PATCH(
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // Get the application first
+    // Get the application with gig and event info
     const { data: application, error: fetchError } = await adminClient
       .from("gig_applications")
-      .select("*, gig:gigs(id, title)")
+      .select("*, gig:gigs(id, title, event_id)")
       .eq("id", id)
       .single();
 
@@ -68,21 +68,90 @@ export async function PATCH(
       );
     }
 
-    // If accepted, increment spots_filled on the gig
+    // If accepted, increment spots_filled and award event badge
     if (status === "accepted" && application.status !== "accepted") {
       const { error: rpcError } = await adminClient.rpc("increment_gig_spots_filled", { gig_id: application.gig_id });
       if (rpcError) {
         console.error("RPC increment error:", rpcError);
         // Non-fatal - application was already updated
       }
+
+      // Award event badge if gig is linked to an event
+      if (application.gig?.event_id) {
+        // Find the badge for this event
+        const { data: badge } = await adminClient
+          .from("badges")
+          .select("id")
+          .eq("event_id", application.gig.event_id)
+          .eq("badge_type", "event")
+          .eq("is_active", true)
+          .single();
+
+        if (badge) {
+          // Award the badge (upsert to avoid duplicates)
+          const { error: badgeError } = await adminClient
+            .from("model_badges")
+            .upsert(
+              {
+                model_id: application.model_id,
+                badge_id: badge.id,
+                earned_at: new Date().toISOString(),
+              },
+              { onConflict: "model_id,badge_id" }
+            );
+
+          if (badgeError) {
+            console.error("Badge award error:", badgeError);
+            // Non-fatal - application was already updated
+          } else {
+            console.log(`Awarded event badge ${badge.id} to model ${application.model_id}`);
+          }
+        }
+      }
     }
 
-    // If cancelling an accepted application, decrement spots_filled
+    // If cancelling an accepted application, decrement spots_filled and remove badge
     if ((status === "cancelled" || status === "rejected") && application.status === "accepted") {
       const { error: rpcError } = await adminClient.rpc("decrement_gig_spots_filled", { gig_id: application.gig_id });
       if (rpcError) {
         console.error("RPC decrement error:", rpcError);
         // Non-fatal - application was already updated
+      }
+
+      // Remove event badge if no other accepted applications for this event
+      if (application.gig?.event_id) {
+        // Check if model has other accepted applications for gigs linked to this event
+        const { data: otherApps } = await adminClient
+          .from("gig_applications")
+          .select("id, gig:gigs!inner(event_id)")
+          .eq("model_id", application.model_id)
+          .eq("status", "accepted")
+          .eq("gig.event_id", application.gig.event_id)
+          .neq("id", id);
+
+        // Only remove badge if no other accepted applications for this event
+        if (!otherApps || otherApps.length === 0) {
+          const { data: badge } = await adminClient
+            .from("badges")
+            .select("id")
+            .eq("event_id", application.gig.event_id)
+            .eq("badge_type", "event")
+            .single();
+
+          if (badge) {
+            const { error: badgeError } = await adminClient
+              .from("model_badges")
+              .delete()
+              .eq("model_id", application.model_id)
+              .eq("badge_id", badge.id);
+
+            if (badgeError) {
+              console.error("Badge removal error:", badgeError);
+            } else {
+              console.log(`Removed event badge ${badge.id} from model ${application.model_id}`);
+            }
+          }
+        }
       }
     }
 
