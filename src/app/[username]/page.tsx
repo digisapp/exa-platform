@@ -114,30 +114,45 @@ export default async function ModelProfilePage({ params }: Props) {
     notFound();
   }
 
-  // Get model's event badges
-  const { data: eventBadges } = await supabase
+  // Get model's event badges (using separate queries due to FK relationship issue)
+  const { data: modelBadgesRaw } = await supabase
     .from("model_badges")
     .select(`
       earned_at,
+      badge_id,
       badges!inner (
         id,
         slug,
         name,
         icon,
         badge_type,
-        events!inner (
-          id,
-          slug,
-          name,
-          short_name,
-          year,
-          badge_image_url
-        )
+        is_active,
+        event_id
       )
     `)
     .eq("model_id", model.id)
     .eq("badges.badge_type", "event")
     .eq("badges.is_active", true) as { data: any[] | null };
+
+  // Fetch event details for each badge
+  let eventBadges: any[] | null = null;
+  if (modelBadgesRaw && modelBadgesRaw.length > 0) {
+    const eventIds = modelBadgesRaw.map(mb => mb.badges?.event_id).filter(Boolean);
+    const { data: eventsData } = await supabase
+      .from("events")
+      .select("id, slug, name, short_name, year, badge_image_url")
+      .in("id", eventIds) as { data: any[] | null };
+
+    // Combine badge and event data
+    const eventsMap = new Map(eventsData?.map(e => [e.id, e]) || []);
+    eventBadges = modelBadgesRaw.map(mb => ({
+      earned_at: mb.earned_at,
+      badges: {
+        ...mb.badges,
+        events: eventsMap.get(mb.badges?.event_id) || null
+      }
+    })).filter(eb => eb.badges.events !== null);
+  }
 
   // Get portfolio photos
   const { data: photos } = await supabase
