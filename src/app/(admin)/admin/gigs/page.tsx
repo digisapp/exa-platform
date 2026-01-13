@@ -28,6 +28,9 @@ import {
   ImageIcon,
   Send,
   FileEdit,
+  Award,
+  RefreshCw,
+  AlertTriangle,
 } from "lucide-react";
 import Link from "next/link";
 import { sendGigApplicationAcceptedEmail, sendGigApplicationRejectedEmail } from "@/lib/email";
@@ -96,6 +99,8 @@ export default function AdminGigsPage() {
   const [applicationFilter, setApplicationFilter] = useState<"all" | "pending" | "approved" | "declined">("all");
   const [tripFilter, setTripFilter] = useState<"all" | "1" | "2">("all");
   const [spotTypeFilter, setSpotTypeFilter] = useState<"all" | "paid" | "sponsored">("all");
+  const [modelBadges, setModelBadges] = useState<Set<string>>(new Set()); // model_ids that have the event badge
+  const [syncingBadges, setSyncingBadges] = useState(false);
   const supabase = createClient();
 
   // Form state
@@ -166,6 +171,78 @@ export default function AdminGigsPage() {
       .eq("gig_id", gigId)
       .order("applied_at", { ascending: false });
     setApplications(data || []);
+
+    // Load badge status for this gig's event
+    const gig = gigs.find(g => g.id === gigId);
+    if (gig?.event_id) {
+      await loadBadgeStatus(gig.event_id, data || []);
+    } else {
+      setModelBadges(new Set());
+    }
+  }
+
+  async function loadBadgeStatus(eventId: string, apps: Application[]) {
+    // Get the badge for this event
+    const { data: badge } = await (supabase
+      .from("badges") as any)
+      .select("id")
+      .eq("event_id", eventId)
+      .eq("badge_type", "event")
+      .single();
+
+    if (!badge) {
+      setModelBadges(new Set());
+      return;
+    }
+
+    // Get all model_badges for this badge
+    const modelIds = apps.map(a => a.model_id);
+    if (modelIds.length === 0) {
+      setModelBadges(new Set());
+      return;
+    }
+
+    const { data: badges } = await (supabase
+      .from("model_badges") as any)
+      .select("model_id")
+      .eq("badge_id", badge.id)
+      .in("model_id", modelIds);
+
+    setModelBadges(new Set(badges?.map((b: any) => b.model_id) || []));
+  }
+
+  async function syncBadges() {
+    const gig = gigs.find(g => g.id === selectedGig);
+    if (!gig?.event_id) {
+      toast.error("This gig is not linked to an event");
+      return;
+    }
+
+    setSyncingBadges(true);
+    try {
+      const response = await fetch("/api/admin/sync-badges", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gigId: selectedGig }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data.error || "Failed to sync badges");
+        return;
+      }
+
+      toast.success(`Synced ${data.awarded} badges`);
+
+      // Reload badge status
+      await loadBadgeStatus(gig.event_id, applications);
+    } catch (error) {
+      console.error("Sync badges error:", error);
+      toast.error("Failed to sync badges");
+    } finally {
+      setSyncingBadges(false);
+    }
   }
 
   function resetForm() {
@@ -1041,15 +1118,49 @@ export default function AdminGigsPage() {
         {/* Applications Column */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-blue-500" />
-              Applications {selectedGig && `(${applications.length})`}
+            <CardTitle className="flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-blue-500" />
+                Applications {selectedGig && `(${applications.length})`}
+              </span>
+              {/* Badge Sync Button - only show for event-linked gigs */}
+              {selectedGig && gigs.find(g => g.id === selectedGig)?.event_id && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={syncBadges}
+                  disabled={syncingBadges}
+                  className="text-xs"
+                >
+                  {syncingBadges ? (
+                    <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                  ) : (
+                    <RefreshCw className="h-3 w-3 mr-1" />
+                  )}
+                  Sync Badges
+                </Button>
+              )}
             </CardTitle>
             <CardDescription>
               {selectedGig
                 ? `Showing applications for: ${gigs.find(g => g.id === selectedGig)?.title}`
                 : "Select a gig to view applications"}
             </CardDescription>
+            {/* Badge Warning - show if approved models are missing badges */}
+            {selectedGig && gigs.find(g => g.id === selectedGig)?.event_id && (() => {
+              const approvedWithoutBadge = applications.filter(
+                a => (a.status === "accepted" || a.status === "approved") && !modelBadges.has(a.model_id)
+              );
+              if (approvedWithoutBadge.length > 0) {
+                return (
+                  <div className="flex items-center gap-2 mt-2 p-2 bg-amber-500/10 border border-amber-500/30 rounded-lg text-amber-600 text-sm">
+                    <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                    <span>{approvedWithoutBadge.length} approved model(s) missing event badge</span>
+                  </div>
+                );
+              }
+              return null;
+            })()}
             {/* Filter Tabs */}
             {selectedGig && applications.length > 0 && (
               <div className="flex gap-1 mt-3 p-1 bg-muted rounded-lg">
@@ -1246,6 +1357,22 @@ export default function AdminGigsPage() {
                       <p className="text-xs text-muted-foreground">
                         Applied {new Date(app.applied_at).toLocaleDateString()}
                       </p>
+                      {/* Badge status for event-linked gigs */}
+                      {gigs.find(g => g.id === selectedGig)?.event_id && (
+                        <div className="flex items-center gap-1 mt-1">
+                          {modelBadges.has(app.model_id) ? (
+                            <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-600 border-amber-500/30">
+                              <Award className="h-3 w-3 mr-1" />
+                              Badge
+                            </Badge>
+                          ) : (app.status === "accepted" || app.status === "approved") ? (
+                            <Badge variant="outline" className="text-xs bg-red-500/10 text-red-500 border-red-500/30">
+                              <AlertTriangle className="h-3 w-3 mr-1" />
+                              No Badge
+                            </Badge>
+                          ) : null}
+                        </div>
+                      )}
                       {/* Trip-specific info */}
                       {app.trip_number && (
                         <div className="flex flex-wrap gap-1 mt-1">
