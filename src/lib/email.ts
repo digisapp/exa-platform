@@ -1833,3 +1833,144 @@ export async function sendOfferReminderEmail({
     return { success: false, error };
   }
 }
+
+// ============================================
+// COIN BALANCE REMINDER EMAIL
+// ============================================
+
+export async function sendCoinBalanceReminderEmail({
+  to,
+  modelName,
+  coinBalance,
+}: {
+  to: string;
+  modelName: string;
+  coinBalance: number;
+}) {
+  try {
+    const resend = getResendClient();
+    const walletUrl = "https://www.examodels.com/wallet";
+    const usdValue = (coinBalance * 0.10).toFixed(2);
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      subject: `You've earned $${usdValue}! Your coins are ready to cash out`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 40px 30px; text-align: center;">
+              <div style="font-size: 48px; margin-bottom: 10px;">💰</div>
+              <h1 style="margin: 0; color: white; font-size: 28px; font-weight: bold;">
+                Your Coins Are Piling Up!
+              </h1>
+              <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
+                Cash out or spread the love
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
+                Hey ${modelName}! 👋
+              </p>
+
+              <!-- Balance Box -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+                <tr>
+                  <td style="background: linear-gradient(135deg, rgba(236, 72, 153, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%); border: 1px solid rgba(236, 72, 153, 0.3); border-radius: 12px; padding: 25px; text-align: center;">
+                    <p style="margin: 0 0 5px; color: #a1a1aa; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">
+                      Your Balance
+                    </p>
+                    <p style="margin: 0 0 5px; color: #ffffff; font-size: 42px; font-weight: bold;">
+                      ${coinBalance.toLocaleString()} <span style="font-size: 24px;">coins</span>
+                    </p>
+                    <p style="margin: 0; color: #22c55e; font-size: 20px; font-weight: 600;">
+                      = $${usdValue} USD
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6; text-align: center;">
+                You've hit the $50 minimum! Withdraw your earnings or tip a model who inspires you.
+              </p>
+
+              <!-- CTA Buttons -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+                <tr>
+                  <td align="center">
+                    <table cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding-right: 10px;">
+                          <a href="${walletUrl}" style="display: inline-block; background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: white; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                            💵 Withdraw
+                          </a>
+                        </td>
+                        <td style="padding-left: 10px;">
+                          <a href="https://www.examodels.com/messages" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                            💕 Tip a Model
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Info -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="padding: 15px; background-color: #262626; border-radius: 8px;">
+                    <p style="margin: 0; color: #a1a1aa; font-size: 14px; text-align: center;">
+                      💡 <strong style="color: #ffffff;">Tip:</strong> Supporting other models helps build our community and keeps the good vibes flowing!
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 30px; border-top: 1px solid #262626; text-align: center;">
+              <p style="margin: 0; color: #71717a; font-size: 12px;">
+                EXA Models - Where Models Shine
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      console.error("Resend error:", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error("Email send error:", error);
+    return { success: false, error };
+  }
+}
