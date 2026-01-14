@@ -1468,7 +1468,7 @@ export default function ProfilePage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Physical Attributes</CardTitle>
+              <CardTitle>Measurements</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Row 1: Height and Measurements */}
