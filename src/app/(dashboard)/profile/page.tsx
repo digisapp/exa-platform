@@ -13,7 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2, User, Lock, DollarSign, Camera, BarChart3, Coins, Trash2, AlertTriangle, Building2, Globe, Users, Heart, MessageCircle } from "lucide-react";
+import { Loader2, User, Lock, DollarSign, Camera, BarChart3, Coins, Trash2, AlertTriangle, Building2, Globe, Users, Heart, MessageCircle, LogOut } from "lucide-react";
+import { LogoutButton } from "@/components/auth/logout-button";
 import Image from "next/image";
 import { formatDistanceToNow } from "date-fns";
 import type { Model, Fan, Actor, Brand } from "@/types/database";
@@ -756,6 +757,26 @@ export default function ProfilePage() {
             <p className="text-sm text-muted-foreground">
               Use coins to message models, unlock exclusive content, and more.
             </p>
+          </CardContent>
+        </Card>
+
+        {/* Sign Out */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <LogOut className="h-5 w-5" />
+              Sign Out
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">
+                  Sign out of your account on this device
+                </p>
+              </div>
+              <LogoutButton className="text-red-500 hover:text-red-600 hover:bg-red-500/10" />
+            </div>
           </CardContent>
         </Card>
 
@@ -2060,6 +2081,26 @@ export default function ProfilePage() {
                   <SelectItem value="not_available">Not Available</SelectItem>
                 </SelectContent>
               </Select>
+            </CardContent>
+          </Card>
+
+          {/* Sign Out */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <LogOut className="h-5 w-5" />
+                Sign Out
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    Sign out of your account on this device
+                  </p>
+                </div>
+                <LogoutButton className="text-red-500 hover:text-red-600 hover:bg-red-500/10" />
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

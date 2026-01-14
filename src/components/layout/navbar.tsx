@@ -126,22 +126,9 @@ export function Navbar({ user, actorType, coinBalance = 0 }: NavbarProps) {
                 <span className="text-sm font-semibold">{coinBalance.toLocaleString()}</span>
               </Link>
 
-              {/* Mobile: Direct link to profile */}
-              <Link
-                href="/profile"
-                className="md:hidden relative h-10 w-10 rounded-full ring-2 ring-pink-500/50 hover:ring-pink-500 transition-all"
-              >
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={user.avatar_url} alt={user.name || ""} />
-                  <AvatarFallback className="bg-gradient-to-br from-pink-500 to-violet-500 text-white">
-                    {user.name?.charAt(0) || user.email?.charAt(0) || "U"}
-                  </AvatarFallback>
-                </Avatar>
-              </Link>
-
-              {/* Desktop: User Menu Dropdown */}
+              {/* User Menu Dropdown - Both mobile and desktop */}
               <DropdownMenu>
-                <DropdownMenuTrigger asChild className="hidden md:flex">
+                <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0 ring-2 ring-pink-500/50 hover:ring-pink-500 transition-all">
                     <Avatar className="h-10 w-10">
                       <AvatarImage src={user.avatar_url} alt={user.name || ""} />
