@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Home, MessageCircle, Coins, Users, Images, Calendar } from "lucide-react";
+import { Home, MessageCircle, Coins, Users, Images, Megaphone } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface BottomNavProps {
@@ -46,8 +46,19 @@ export function BottomNav({ user, actorType, coinBalance, unreadCount = 0 }: Bot
           <span className="text-[10px] font-medium">Home</span>
         </Link>
 
-        {/* Explore (for fans/brands) or Bookings (for models) */}
-        {actorType === "fan" || actorType === "brand" ? (
+        {/* Content (for models) or Explore (for fans/brands) */}
+        {actorType === "model" ? (
+          <Link
+            href="/content"
+            className={cn(
+              "flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors",
+              isActive("/content") ? "text-pink-500" : "text-muted-foreground"
+            )}
+          >
+            <Images className="h-5 w-5" />
+            <span className="text-[10px] font-medium">Content</span>
+          </Link>
+        ) : actorType === "fan" || actorType === "brand" ? (
           <Link
             href="/models"
             className={cn(
@@ -57,17 +68,6 @@ export function BottomNav({ user, actorType, coinBalance, unreadCount = 0 }: Bot
           >
             <Users className="h-5 w-5" />
             <span className="text-[10px] font-medium">Explore</span>
-          </Link>
-        ) : actorType === "model" ? (
-          <Link
-            href="/bookings"
-            className={cn(
-              "flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors",
-              isActive("/bookings") ? "text-pink-500" : "text-muted-foreground"
-            )}
-          >
-            <Calendar className="h-5 w-5" />
-            <span className="text-[10px] font-medium">Bookings</span>
           </Link>
         ) : null}
 
@@ -90,21 +90,34 @@ export function BottomNav({ user, actorType, coinBalance, unreadCount = 0 }: Bot
           <span className="text-[10px] font-medium">Chats</span>
         </Link>
 
-        {/* Wallet */}
-        <Link
-          href="/wallet"
-          className={cn(
-            "flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors",
-            isActive("/wallet") ? "text-pink-500" : "text-muted-foreground"
-          )}
-        >
-          <div className="relative">
-            <Coins className="h-5 w-5" />
-          </div>
-          <span className="text-[10px] font-medium tabular-nums">
-            {coinBalance.toLocaleString()}
-          </span>
-        </Link>
+        {/* Wallet (for models/fans) or Campaigns (for brands) */}
+        {actorType === "brand" ? (
+          <Link
+            href="/campaigns"
+            className={cn(
+              "flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors",
+              isActive("/campaigns") ? "text-pink-500" : "text-muted-foreground"
+            )}
+          >
+            <Megaphone className="h-5 w-5" />
+            <span className="text-[10px] font-medium">Campaigns</span>
+          </Link>
+        ) : (
+          <Link
+            href="/wallet"
+            className={cn(
+              "flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors",
+              isActive("/wallet") ? "text-pink-500" : "text-muted-foreground"
+            )}
+          >
+            <div className="relative">
+              <Coins className="h-5 w-5" />
+            </div>
+            <span className="text-[10px] font-medium tabular-nums">
+              {coinBalance.toLocaleString()}
+            </span>
+          </Link>
+        )}
 
         {/* Profile */}
         <Link

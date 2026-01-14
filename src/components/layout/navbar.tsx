@@ -13,9 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
-  Menu,
   Home,
   Users,
   MessageCircle,
@@ -119,7 +117,7 @@ export function Navbar({ user, actorType, coinBalance = 0 }: NavbarProps) {
         <div className="flex items-center gap-3">
           {user ? (
             <>
-              {/* Coin Balance */}
+              {/* Coin Balance - Desktop only */}
               <Link
                 href="/wallet"
                 className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 hover:border-yellow-500/50 hover:from-yellow-500/30 hover:to-orange-500/30 transition-all shadow-sm"
@@ -128,9 +126,22 @@ export function Navbar({ user, actorType, coinBalance = 0 }: NavbarProps) {
                 <span className="text-sm font-semibold">{coinBalance.toLocaleString()}</span>
               </Link>
 
-              {/* User Menu */}
+              {/* Mobile: Direct link to profile */}
+              <Link
+                href="/profile"
+                className="md:hidden relative h-10 w-10 rounded-full ring-2 ring-pink-500/50 hover:ring-pink-500 transition-all"
+              >
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={user.avatar_url} alt={user.name || ""} />
+                  <AvatarFallback className="bg-gradient-to-br from-pink-500 to-violet-500 text-white">
+                    {user.name?.charAt(0) || user.email?.charAt(0) || "U"}
+                  </AvatarFallback>
+                </Avatar>
+              </Link>
+
+              {/* Desktop: User Menu Dropdown */}
               <DropdownMenu>
-                <DropdownMenuTrigger asChild>
+                <DropdownMenuTrigger asChild className="hidden md:flex">
                   <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0 ring-2 ring-pink-500/50 hover:ring-pink-500 transition-all">
                     <Avatar className="h-10 w-10">
                       <AvatarImage src={user.avatar_url} alt={user.name || ""} />
@@ -214,62 +225,6 @@ export function Navbar({ user, actorType, coinBalance = 0 }: NavbarProps) {
             </div>
           )}
 
-          {/* Mobile Menu */}
-          <Sheet>
-            <SheetTrigger asChild className="md:hidden">
-              <Button variant="ghost" size="icon">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[300px]">
-              {/* Mobile Coin Balance */}
-              {user && (
-                <Link
-                  href="/wallet"
-                  className="flex items-center gap-2 px-4 py-3 mt-4 rounded-lg bg-gradient-to-r from-pink-500/10 to-violet-500/10"
-                >
-                  <Coins className="h-5 w-5 text-pink-500" />
-                  <span className="font-medium">{coinBalance.toLocaleString()} Coins</span>
-                </Link>
-              )}
-              <nav className="flex flex-col gap-4 mt-8">
-                {links.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={cn(
-                      "flex items-center gap-3 text-lg font-medium transition-colors hover:text-primary p-2 rounded-lg",
-                      pathname === link.href
-                        ? "text-primary bg-primary/10"
-                        : "text-muted-foreground"
-                    )}
-                  >
-                    <link.icon className="h-5 w-5" />
-                    {link.label}
-                  </Link>
-                ))}
-
-                {/* Analytics for brands in mobile */}
-                {actorType === "brand" && (
-                  <>
-                    <div className="border-t border-border my-2" />
-                    <Link
-                      href="/brands/analytics"
-                      className={cn(
-                        "flex items-center gap-3 text-lg font-medium transition-colors hover:text-primary p-2 rounded-lg",
-                        pathname === "/brands/analytics"
-                          ? "text-primary bg-primary/10"
-                          : "text-muted-foreground"
-                      )}
-                    >
-                      <BarChart3 className="h-5 w-5" />
-                      Analytics
-                    </Link>
-                  </>
-                )}
-              </nav>
-            </SheetContent>
-          </Sheet>
         </div>
       </div>
     </header>

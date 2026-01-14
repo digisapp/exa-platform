@@ -6,6 +6,7 @@ DROP POLICY IF EXISTS "Users can view messages in their threads" ON public.messa
 DROP POLICY IF EXISTS "read_own_messages" ON public.messages;
 DROP POLICY IF EXISTS "Users can update own messages" ON public.messages;
 DROP POLICY IF EXISTS "mark_read" ON public.messages;
+DROP POLICY IF EXISTS "Users can view messages in their conversations" ON public.messages;
 
 -- Create correct policy: Users can view messages in conversations they participate in
 CREATE POLICY "Users can view messages in their conversations" ON public.messages
