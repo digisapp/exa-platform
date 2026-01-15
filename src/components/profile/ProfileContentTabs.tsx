@@ -390,7 +390,8 @@ export function ProfileContentTabs({
           {/* Main content area */}
           <div
             className={cn(
-              "relative max-w-[92vw] max-h-[92vh] flex flex-col items-center justify-center",
+              "relative max-w-[92vw] flex flex-col items-center justify-center",
+              "pt-16 pb-20 md:pt-8 md:pb-8", // Add padding for close button and swipe hint
               "transition-all duration-200 ease-out",
               slideDirection === "left" && "opacity-0 translate-x-8",
               slideDirection === "right" && "opacity-0 -translate-x-8",
@@ -408,7 +409,7 @@ export function ProfileContentTabs({
                 <img
                   src={currentItems[lightboxIndex]?.photo_url || currentItems[lightboxIndex]?.url}
                   alt={currentItems[lightboxIndex]?.title || ""}
-                  className="max-w-[90vw] max-h-[80vh] object-contain"
+                  className="max-w-[90vw] max-h-[70vh] md:max-h-[75vh] object-contain"
                   draggable={false}
                 />
               ) : (
@@ -418,7 +419,7 @@ export function ProfileContentTabs({
                   controls
                   autoPlay
                   playsInline
-                  className="max-w-[90vw] max-h-[80vh] object-contain"
+                  className="max-w-[90vw] max-h-[70vh] md:max-h-[75vh] object-contain"
                 />
               )}
             </div>
