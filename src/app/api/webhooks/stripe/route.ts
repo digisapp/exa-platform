@@ -420,28 +420,20 @@ async function processAffiliateCommission(
 
   if (commissionCents <= 0) return;
 
-  // Get model's actor ID for coin crediting
+  // Verify model exists (models.id = actors.id due to FK constraint)
   const { data: model } = await supabaseAdmin
     .from("models")
-    .select("user_id")
+    .select("id")
     .eq("id", modelId)
     .single();
 
-  if (!model?.user_id) {
+  if (!model?.id) {
     console.error("Model not found for commission:", modelId);
     return;
   }
 
-  const { data: actor } = await supabaseAdmin
-    .from("actors")
-    .select("id")
-    .eq("user_id", model.user_id)
-    .single();
-
-  if (!actor?.id) {
-    console.error("Actor not found for model:", modelId);
-    return;
-  }
+  // models.id references actors.id, so modelId IS the actor ID
+  const actorId = modelId;
 
   // Create commission record
   const { data: commission, error: commissionError } = await supabaseAdmin
@@ -468,7 +460,7 @@ async function processAffiliateCommission(
   const coinsToCredit = commissionCents;
 
   const { error: coinError } = await supabaseAdmin.rpc("add_coins", {
-    p_actor_id: actor.id,
+    p_actor_id: actorId,
     p_amount: coinsToCredit,
     p_action: "affiliate_commission",
     p_metadata: {

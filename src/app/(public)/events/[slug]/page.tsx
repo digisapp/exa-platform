@@ -446,6 +446,7 @@ export default async function EventPage({ params, searchParams }: Props) {
                 fetch('/api/affiliate/track', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
+                  credentials: 'same-origin',
                   body: JSON.stringify({
                     affiliateCode: '${ref}',
                     eventId: '${event.id}',
