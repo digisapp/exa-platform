@@ -176,38 +176,107 @@ export default function ContentPage() {
     setMediaPreview(URL.createObjectURL(file));
   };
 
+  // Helper to safely parse JSON response
+  const safeJsonParse = async (response: Response) => {
+    try {
+      return await response.json();
+    } catch {
+      if (response.status === 413) {
+        throw new Error("File too large for this upload method");
+      }
+      throw new Error("Server error - please try again");
+    }
+  };
+
+  // Direct upload to Supabase using signed URL (bypasses Vercel's 4.5MB limit)
+  const uploadViaSigned = async (file: File) => {
+    // Step 1: Get signed URL
+    const signedResponse = await fetch("/api/upload/signed-url", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size,
+        title: title || null,
+      }),
+    });
+
+    const signedData = await safeJsonParse(signedResponse);
+    if (!signedResponse.ok) throw new Error(signedData.error || "Failed to get upload URL");
+
+    // Step 2: Upload directly to Supabase Storage
+    const uploadResponse = await fetch(signedData.signedUrl, {
+      method: "PUT",
+      headers: { "Content-Type": file.type },
+      body: file,
+    });
+
+    if (!uploadResponse.ok) throw new Error("Upload to storage failed");
+
+    // Step 3: Complete the upload
+    const completeResponse = await fetch("/api/upload/complete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        storagePath: signedData.storagePath,
+        bucket: signedData.bucket,
+        uploadMeta: signedData.uploadMeta,
+      }),
+    });
+
+    const completeData = await safeJsonParse(completeResponse);
+    if (!completeResponse.ok) throw new Error(completeData.error || "Failed to complete upload");
+
+    return completeData;
+  };
+
   const handleUpload = async () => {
     if (!mediaFile || !modelId) return;
 
     setUploading(true);
+    const VERCEL_LIMIT = 4 * 1024 * 1024; // 4MB (conservative, Vercel is 4.5MB)
 
     try {
-      const formData = new FormData();
-      formData.append("file", mediaFile);
-
       if (isPaid) {
-        const uploadResponse = await fetch("/api/upload/premium", {
-          method: "POST",
-          body: formData,
-        });
+        // Premium content - use signed URL for large files
+        if (mediaFile.size > VERCEL_LIMIT) {
+          const data = await uploadViaSigned(mediaFile);
+          await createPaidContent(data.url);
+        } else {
+          const formData = new FormData();
+          formData.append("file", mediaFile);
 
-        const uploadData = await uploadResponse.json();
-        if (!uploadResponse.ok) throw new Error(uploadData.error || "Failed to upload file");
+          const uploadResponse = await fetch("/api/upload/premium", {
+            method: "POST",
+            body: formData,
+          });
 
-        await createPaidContent(uploadData.url);
-      } else {
-        formData.append("type", mediaType === "video" ? "video" : "portfolio");
-        if (title) {
-          formData.append("title", title);
+          const uploadData = await safeJsonParse(uploadResponse);
+          if (!uploadResponse.ok) throw new Error(uploadData.error || "Failed to upload file");
+
+          await createPaidContent(uploadData.url);
         }
+      } else {
+        // Free portfolio content - use signed URL for large files
+        if (mediaFile.size > VERCEL_LIMIT) {
+          await uploadViaSigned(mediaFile);
+        } else {
+          const formData = new FormData();
+          formData.append("file", mediaFile);
+          formData.append("type", mediaType === "video" ? "video" : "portfolio");
+          if (title) {
+            formData.append("title", title);
+          }
 
-        const uploadResponse = await fetch("/api/upload/media", {
-          method: "POST",
-          body: formData,
-        });
+          const uploadResponse = await fetch("/api/upload/media", {
+            method: "POST",
+            body: formData,
+          });
 
-        const uploadData = await uploadResponse.json();
-        if (!uploadResponse.ok) throw new Error(uploadData.error || "Failed to upload file");
+          const uploadData = await safeJsonParse(uploadResponse);
+          if (!uploadResponse.ok) throw new Error(uploadData.error || "Failed to upload file");
+        }
 
         toast.success("Added to your portfolio!");
         setDialogOpen(false);
