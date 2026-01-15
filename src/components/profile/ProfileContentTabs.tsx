@@ -40,6 +40,8 @@ export function ProfileContentTabs({
   // Touch handling refs
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
+  const touchStartY = useRef(0);
+  const touchEndY = useRef(0);
   const lightboxRef = useRef<HTMLDivElement>(null);
 
   const currentItems = lightboxType === "photos" ? photos : videos;
@@ -113,18 +115,28 @@ export function ProfileContentTabs({
   // Touch/swipe handling
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     touchEndX.current = e.touches[0].clientX;
+    touchEndY.current = e.touches[0].clientY;
   };
 
   const handleTouchEnd = () => {
     const swipeThreshold = 50;
-    const diff = touchStartX.current - touchEndX.current;
+    const diffX = touchStartX.current - touchEndX.current;
+    const diffY = touchStartY.current - touchEndY.current;
 
-    if (Math.abs(diff) > swipeThreshold) {
-      if (diff > 0) {
+    // Swipe down to close (if vertical swipe is dominant)
+    if (diffY < -80 && Math.abs(diffY) > Math.abs(diffX)) {
+      closeLightbox();
+      return;
+    }
+
+    // Horizontal swipe for navigation
+    if (Math.abs(diffX) > swipeThreshold && Math.abs(diffX) > Math.abs(diffY)) {
+      if (diffX > 0) {
         // Swiped left - go next
         goToNext();
       } else {
@@ -463,11 +475,14 @@ export function ProfileContentTabs({
             </div>
           </div>
 
-          {/* Swipe hint for mobile - shows briefly */}
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 md:hidden animate-pulse">
-            <p className="text-white/30 text-xs tracking-widest uppercase">
-              Swipe to navigate
-            </p>
+          {/* Swipe hint for mobile */}
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 md:hidden">
+            <div className="flex flex-col items-center gap-1">
+              <p className="text-white/40 text-xs tracking-wide">
+                Swipe down to close
+              </p>
+              <div className="w-10 h-1 bg-white/20 rounded-full" />
+            </div>
           </div>
         </div>
       )}
