@@ -38,6 +38,7 @@ import {
   Briefcase,
   Mail,
   DollarSign,
+  Library,
 } from "lucide-react";
 
 export default async function DashboardPage() {
@@ -522,7 +523,13 @@ async function FanDashboard({ actorId }: { actorId: string }) {
           <h1 className="text-2xl font-bold">Welcome back, {displayName}!</h1>
           <p className="text-muted-foreground">Discover and connect with amazing models</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 md:gap-3 flex-wrap">
+          <Button variant="outline" asChild>
+            <Link href="/library">
+              <Library className="mr-2 h-4 w-4" />
+              My Content
+            </Link>
+          </Button>
           <Button variant="outline" asChild>
             <Link href="/chats">
               <MessageCircle className="mr-2 h-4 w-4" />
