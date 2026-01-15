@@ -3,6 +3,7 @@ import { stripe } from "@/lib/stripe";
 import { createClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
 import { BRAND_SUBSCRIPTION_TIERS, BrandTier } from "@/lib/stripe-config";
+import { TICKET_CONFIG } from "@/lib/ticket-config";
 
 // Create admin client for webhook (no auth context)
 const supabaseAdmin = createClient(
@@ -44,6 +45,12 @@ export async function POST(request: NextRequest) {
         // Check if this is a trip application payment
         if (session.metadata?.type === "trip_application") {
           await handleTripPayment(session);
+          break;
+        }
+
+        // Check if this is a ticket purchase
+        if (session.metadata?.type === "ticket_purchase") {
+          await handleTicketPurchase(session);
           break;
         }
 
@@ -323,6 +330,174 @@ async function handleTripPayment(session: Stripe.Checkout.Session) {
   }
 
   console.log("Trip payment successful:", { gigId, modelId, tripNumber });
+}
+
+async function handleTicketPurchase(session: Stripe.Checkout.Session) {
+  const eventId = session.metadata?.event_id;
+  const tierId = session.metadata?.tier_id;
+  const quantity = parseInt(session.metadata?.quantity || "1", 10);
+  const buyerEmail = session.metadata?.buyer_email;
+  const affiliateModelId = session.metadata?.affiliate_model_id || null;
+  const affiliateClickId = session.metadata?.affiliate_click_id || null;
+
+  if (!eventId || !tierId || !buyerEmail) {
+    console.error("Missing ticket purchase metadata:", session.id);
+    return;
+  }
+
+  const paymentIntentId = typeof session.payment_intent === "string"
+    ? session.payment_intent
+    : session.payment_intent?.id;
+
+  // Update ticket purchase to completed
+  const { data: purchase, error: updateError } = await supabaseAdmin
+    .from("ticket_purchases")
+    .update({
+      status: "completed",
+      stripe_payment_intent_id: paymentIntentId,
+      completed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("stripe_checkout_session_id", session.id)
+    .select("id, total_price_cents, affiliate_model_id")
+    .single();
+
+  if (updateError) {
+    console.error("Error updating ticket purchase:", updateError);
+    // Try to create the purchase if it doesn't exist
+    const { error: insertError } = await supabaseAdmin
+      .from("ticket_purchases")
+      .insert({
+        ticket_tier_id: tierId,
+        event_id: eventId,
+        buyer_email: buyerEmail,
+        buyer_name: session.metadata?.buyer_name || null,
+        buyer_phone: session.metadata?.buyer_phone || null,
+        stripe_checkout_session_id: session.id,
+        stripe_payment_intent_id: paymentIntentId,
+        quantity: quantity,
+        unit_price_cents: Math.round((session.amount_total || 0) / quantity),
+        total_price_cents: session.amount_total || 0,
+        affiliate_model_id: affiliateModelId || null,
+        affiliate_click_id: affiliateClickId || null,
+        status: "completed",
+        completed_at: new Date().toISOString(),
+      });
+
+    if (insertError) {
+      console.error("Error creating ticket purchase:", insertError);
+      return;
+    }
+  }
+
+  const totalPriceCents = purchase?.total_price_cents || session.amount_total || 0;
+  const modelId = purchase?.affiliate_model_id || affiliateModelId;
+
+  // Handle affiliate commission if there's a referring model
+  if (modelId) {
+    await processAffiliateCommission(
+      modelId,
+      eventId,
+      affiliateClickId,
+      purchase?.id || session.id,
+      totalPriceCents
+    );
+  }
+
+  console.log("Ticket purchase successful:", { eventId, tierId, quantity, buyerEmail });
+}
+
+async function processAffiliateCommission(
+  modelId: string,
+  eventId: string,
+  clickId: string | null,
+  purchaseId: string,
+  saleCents: number
+) {
+  // Calculate commission (20%)
+  const commissionRate = TICKET_CONFIG.COMMISSION_RATE;
+  const commissionCents = Math.round(saleCents * commissionRate);
+
+  if (commissionCents <= 0) return;
+
+  // Get model's actor ID for coin crediting
+  const { data: model } = await supabaseAdmin
+    .from("models")
+    .select("user_id")
+    .eq("id", modelId)
+    .single();
+
+  if (!model?.user_id) {
+    console.error("Model not found for commission:", modelId);
+    return;
+  }
+
+  const { data: actor } = await supabaseAdmin
+    .from("actors")
+    .select("id")
+    .eq("user_id", model.user_id)
+    .single();
+
+  if (!actor?.id) {
+    console.error("Actor not found for model:", modelId);
+    return;
+  }
+
+  // Create commission record
+  const { data: commission, error: commissionError } = await supabaseAdmin
+    .from("affiliate_commissions")
+    .insert({
+      model_id: modelId,
+      event_id: eventId,
+      click_id: clickId,
+      order_id: purchaseId,
+      sale_amount_cents: saleCents,
+      commission_rate: commissionRate,
+      commission_amount_cents: commissionCents,
+      status: "confirmed", // Instant - no pending state
+    })
+    .select("id")
+    .single();
+
+  if (commissionError) {
+    console.error("Error creating commission record:", commissionError);
+    return;
+  }
+
+  // Credit coins to model (1 coin = 1 cent)
+  const coinsToCredit = commissionCents;
+
+  const { error: coinError } = await supabaseAdmin.rpc("add_coins", {
+    p_actor_id: actor.id,
+    p_amount: coinsToCredit,
+    p_action: "affiliate_commission",
+    p_metadata: {
+      event_id: eventId,
+      purchase_id: purchaseId,
+      sale_amount_cents: saleCents,
+      commission_rate: commissionRate,
+      commission_cents: commissionCents,
+      commission_id: commission?.id,
+    },
+  });
+
+  if (coinError) {
+    console.error("Error crediting affiliate coins:", coinError);
+    return;
+  }
+
+  // Update purchase with commission ID
+  await supabaseAdmin
+    .from("ticket_purchases")
+    .update({ affiliate_commission_id: commission?.id })
+    .eq("id", purchaseId);
+
+  console.log("Affiliate commission processed:", {
+    modelId,
+    coinsToCredit,
+    commissionCents,
+    saleCents,
+  });
 }
 
 // Disable body parsing for webhook signature verification
