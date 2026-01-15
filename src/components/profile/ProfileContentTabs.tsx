@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
-import { Camera, Video, Lock, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Camera, Video, Lock, X, Play } from "lucide-react";
 import { PremiumContentGrid } from "@/components/content/PremiumContentGrid";
 
 interface MediaAsset {
@@ -32,29 +32,32 @@ export function ProfileContentTabs({
 }: ProfileContentTabsProps) {
   const [activeTab, setActiveTab] = useState<"photos" | "videos" | "ppv">("photos");
   const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [lightboxIndex, setLightboxIndex] = useState(0);
-  const [lightboxType, setLightboxType] = useState<"photos" | "videos">("photos");
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [slideDirection, setSlideDirection] = useState<"left" | "right" | null>(null);
+  const [selectedItem, setSelectedItem] = useState<MediaAsset | null>(null);
+  const [selectedType, setSelectedType] = useState<"photo" | "video">("photo");
+  const [videoPlaying, setVideoPlaying] = useState(false);
 
-  // Touch handling refs
-  const touchStartX = useRef(0);
-  const touchEndX = useRef(0);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const touchStartY = useRef(0);
-  const touchEndY = useRef(0);
-  const lightboxRef = useRef<HTMLDivElement>(null);
 
-  const currentItems = lightboxType === "photos" ? photos : videos;
-
-  const openLightbox = (index: number, type: "photos" | "videos") => {
-    setLightboxIndex(index);
-    setLightboxType(type);
+  const openLightbox = (item: MediaAsset, type: "photo" | "video") => {
+    setSelectedItem(item);
+    setSelectedType(type);
     setLightboxOpen(true);
+    setVideoPlaying(false);
   };
 
   const closeLightbox = useCallback(() => {
     setLightboxOpen(false);
+    setSelectedItem(null);
+    setVideoPlaying(false);
   }, []);
+
+  const handlePlayVideo = () => {
+    if (videoRef.current) {
+      videoRef.current.play();
+      setVideoPlaying(true);
+    }
+  };
 
   // Handle body scroll lock when lightbox is open
   useEffect(() => {
@@ -68,98 +71,34 @@ export function ProfileContentTabs({
     };
   }, [lightboxOpen]);
 
-  const goToPrevious = useCallback(() => {
-    if (isAnimating) return;
-    setIsAnimating(true);
-    setSlideDirection("right");
-    setTimeout(() => {
-      setLightboxIndex((prev) => (prev > 0 ? prev - 1 : currentItems.length - 1));
-      setSlideDirection(null);
-      setIsAnimating(false);
-    }, 200);
-  }, [isAnimating, currentItems.length]);
-
-  const goToNext = useCallback(() => {
-    if (isAnimating) return;
-    setIsAnimating(true);
-    setSlideDirection("left");
-    setTimeout(() => {
-      setLightboxIndex((prev) => (prev < currentItems.length - 1 ? prev + 1 : 0));
-      setSlideDirection(null);
-      setIsAnimating(false);
-    }, 200);
-  }, [isAnimating, currentItems.length]);
-
-  // Keyboard navigation
+  // Keyboard - ESC to close
   useEffect(() => {
     if (!lightboxOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      switch (e.key) {
-        case "Escape":
-          closeLightbox();
-          break;
-        case "ArrowLeft":
-          goToPrevious();
-          break;
-        case "ArrowRight":
-          goToNext();
-          break;
+      if (e.key === "Escape") {
+        closeLightbox();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [lightboxOpen, closeLightbox, goToPrevious, goToNext]);
+  }, [lightboxOpen, closeLightbox]);
 
-  // Touch/swipe handling
+  // Swipe down to close
   const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
   };
 
-  const handleTouchMove = (e: React.TouchEvent) => {
-    touchEndX.current = e.touches[0].clientX;
-    touchEndY.current = e.touches[0].clientY;
-  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const touchEndY = e.changedTouches[0].clientY;
+    const diffY = touchStartY.current - touchEndY;
 
-  const handleTouchEnd = () => {
-    const swipeThreshold = 50;
-    const diffX = touchStartX.current - touchEndX.current;
-    const diffY = touchStartY.current - touchEndY.current;
-
-    // Swipe down to close (if vertical swipe is dominant)
-    if (diffY < -80 && Math.abs(diffY) > Math.abs(diffX)) {
+    // Swipe down to close
+    if (diffY < -80) {
       closeLightbox();
-      return;
-    }
-
-    // Horizontal swipe for navigation
-    if (Math.abs(diffX) > swipeThreshold && Math.abs(diffX) > Math.abs(diffY)) {
-      if (diffX > 0) {
-        // Swiped left - go next
-        goToNext();
-      } else {
-        // Swiped right - go previous
-        goToPrevious();
-      }
     }
   };
-
-  // Preload adjacent images
-  useEffect(() => {
-    if (!lightboxOpen || lightboxType !== "photos") return;
-
-    const preloadImage = (index: number) => {
-      if (index >= 0 && index < currentItems.length) {
-        const img = new Image();
-        img.src = currentItems[index]?.photo_url || currentItems[index]?.url || "";
-      }
-    };
-
-    preloadImage(lightboxIndex - 1);
-    preloadImage(lightboxIndex + 1);
-  }, [lightboxOpen, lightboxIndex, lightboxType, currentItems]);
 
   const hasPhotos = photos && photos.length > 0;
   const hasVideos = videos && videos.length > 0;
@@ -235,7 +174,7 @@ export function ProfileContentTabs({
                     "transition-all duration-300 ease-out",
                     "hover:scale-[1.02] hover:shadow-xl hover:shadow-pink-500/10"
                   )}
-                  onClick={() => openLightbox(index, "photos")}
+                  onClick={() => openLightbox(photo, "photo")}
                 >
                   <img
                     src={photo.photo_url || photo.url}
@@ -277,7 +216,7 @@ export function ProfileContentTabs({
                     "transition-all duration-300 ease-out",
                     "hover:scale-[1.02] hover:shadow-xl hover:shadow-violet-500/10"
                   )}
-                  onClick={() => openLightbox(index, "videos")}
+                  onClick={() => openLightbox(video, "video")}
                 >
                   <video
                     src={video.url}
@@ -328,10 +267,9 @@ export function ProfileContentTabs({
         </div>
       )}
 
-      {/* Luxury Lightbox Modal */}
-      {lightboxOpen && currentItems.length > 0 && (
+      {/* Lightbox Modal - Single Item View */}
+      {lightboxOpen && selectedItem && (
         <div
-          ref={lightboxRef}
           className={cn(
             "fixed inset-0 z-50 flex items-center justify-center",
             "bg-black/90 backdrop-blur-xl",
@@ -339,7 +277,6 @@ export function ProfileContentTabs({
           )}
           onClick={closeLightbox}
           onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
           {/* Ambient glow effect */}
@@ -361,118 +298,77 @@ export function ProfileContentTabs({
             <X className="h-5 w-5 text-white/70 group-hover:text-white transition-colors" />
           </button>
 
-          {/* Navigation arrows */}
-          {currentItems.length > 1 && (
-            <>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  goToPrevious();
-                }}
-                className={cn(
-                  "absolute left-4 md:left-8 p-3 md:p-4 rounded-full z-20",
-                  "bg-white/5 hover:bg-white/15 backdrop-blur-md",
-                  "border border-white/10 hover:border-white/20",
-                  "transition-all duration-300 ease-out",
-                  "hover:scale-110 active:scale-95",
-                  "group"
-                )}
-              >
-                <ChevronLeft className="h-6 w-6 md:h-8 md:w-8 text-white/70 group-hover:text-white transition-colors" />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  goToNext();
-                }}
-                className={cn(
-                  "absolute right-4 md:right-8 p-3 md:p-4 rounded-full z-20",
-                  "bg-white/5 hover:bg-white/15 backdrop-blur-md",
-                  "border border-white/10 hover:border-white/20",
-                  "transition-all duration-300 ease-out",
-                  "hover:scale-110 active:scale-95",
-                  "group"
-                )}
-              >
-                <ChevronRight className="h-6 w-6 md:h-8 md:w-8 text-white/70 group-hover:text-white transition-colors" />
-              </button>
-            </>
-          )}
-
           {/* Main content area */}
           <div
             className={cn(
               "relative max-w-[92vw] flex flex-col items-center justify-center",
-              "pt-16 pb-20 md:pt-8 md:pb-8", // Add padding for close button and swipe hint
-              "transition-all duration-200 ease-out",
-              slideDirection === "left" && "opacity-0 translate-x-8",
-              slideDirection === "right" && "opacity-0 -translate-x-8",
-              !slideDirection && "opacity-100 translate-x-0"
+              "pt-16 pb-20 md:pt-8 md:pb-8"
             )}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Media container with subtle border glow */}
+            {/* Media container */}
             <div className={cn(
               "relative rounded-2xl overflow-hidden",
               "shadow-2xl shadow-black/50",
               "ring-1 ring-white/10"
             )}>
-              {lightboxType === "photos" ? (
+              {selectedType === "photo" ? (
                 <img
-                  src={currentItems[lightboxIndex]?.photo_url || currentItems[lightboxIndex]?.url}
-                  alt={currentItems[lightboxIndex]?.title || ""}
-                  className="max-w-[90vw] max-h-[70vh] md:max-h-[75vh] object-contain"
+                  src={selectedItem.photo_url || selectedItem.url}
+                  alt={selectedItem.title || ""}
+                  className="max-w-[90vw] max-h-[70vh] md:max-h-[80vh] object-contain"
                   draggable={false}
                 />
               ) : (
-                <video
-                  key={currentItems[lightboxIndex]?.id}
-                  src={currentItems[lightboxIndex]?.url}
-                  controls
-                  autoPlay
-                  playsInline
-                  className="max-w-[90vw] max-h-[70vh] md:max-h-[75vh] object-contain"
-                />
-              )}
-            </div>
-
-            {/* Title and counter */}
-            <div className={cn(
-              "mt-6 text-center",
-              "animate-in fade-in slide-in-from-bottom-2 duration-500 delay-100"
-            )}>
-              {currentItems[lightboxIndex]?.title && (
-                <h3 className="text-white text-lg md:text-xl font-medium mb-2 tracking-wide">
-                  {currentItems[lightboxIndex].title}
-                </h3>
-              )}
-
-              {/* Elegant counter with dots */}
-              <div className="flex items-center justify-center gap-3">
-                <div className="flex items-center gap-1.5">
-                  {currentItems.map((_, idx) => (
+                <div className="relative">
+                  <video
+                    ref={videoRef}
+                    key={selectedItem.id}
+                    src={selectedItem.url}
+                    controls={videoPlaying}
+                    playsInline
+                    className="max-w-[90vw] max-h-[70vh] md:max-h-[80vh] object-contain"
+                    onEnded={() => setVideoPlaying(false)}
+                  />
+                  {/* Play button overlay */}
+                  {!videoPlaying && (
                     <button
-                      key={idx}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (!isAnimating) {
-                          setLightboxIndex(idx);
-                        }
-                      }}
+                      onClick={handlePlayVideo}
                       className={cn(
-                        "w-1.5 h-1.5 rounded-full transition-all duration-300",
-                        idx === lightboxIndex
-                          ? "bg-white w-6"
-                          : "bg-white/30 hover:bg-white/50"
+                        "absolute inset-0 flex items-center justify-center",
+                        "bg-black/30 backdrop-blur-sm",
+                        "transition-all duration-300",
+                        "group"
                       )}
-                    />
-                  ))}
+                    >
+                      <div className={cn(
+                        "w-20 h-20 md:w-24 md:h-24 rounded-full",
+                        "bg-white/10 backdrop-blur-md",
+                        "border border-white/30",
+                        "flex items-center justify-center",
+                        "transition-all duration-300",
+                        "group-hover:scale-110 group-hover:bg-white/20",
+                        "group-active:scale-95"
+                      )}>
+                        <Play className="h-8 w-8 md:h-10 md:w-10 text-white ml-1" fill="white" />
+                      </div>
+                    </button>
+                  )}
                 </div>
-                <span className="text-white/40 text-sm font-light ml-2">
-                  {lightboxIndex + 1} of {currentItems.length}
-                </span>
-              </div>
+              )}
             </div>
+
+            {/* Title */}
+            {selectedItem.title && (
+              <div className={cn(
+                "mt-6 text-center",
+                "animate-in fade-in slide-in-from-bottom-2 duration-500 delay-100"
+              )}>
+                <h3 className="text-white text-lg md:text-xl font-medium tracking-wide">
+                  {selectedItem.title}
+                </h3>
+              </div>
+            )}
           </div>
 
           {/* Swipe hint for mobile */}
