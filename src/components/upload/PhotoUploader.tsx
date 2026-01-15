@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import type { MediaAsset } from "@/types/database";
 import { ImageCropper } from "./ImageCropper";
+import { createClient } from "@/lib/supabase/client";
 
 interface PhotoUploaderProps {
   type: "portfolio" | "message" | "avatar";
@@ -15,6 +16,8 @@ interface PhotoUploaderProps {
   className?: string;
   compact?: boolean; // For message attachments
 }
+
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
 export function PhotoUploader({
   type,
@@ -28,17 +31,109 @@ export function PhotoUploader({
   const [dragActive, setDragActive] = useState(false);
   const [cropperOpen, setCropperOpen] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Actual upload function (used after validation and optional cropping)
-  const uploadFile = async (fileOrBlob: File | Blob, fileName?: string) => {
-    // Create preview
+  // Direct upload to Supabase using signed URL (bypasses Vercel's 4.5MB limit)
+  const uploadFileDirect = async (fileOrBlob: File | Blob, fileName?: string) => {
+    setUploading(true);
+    setUploadProgress(0);
+
+    try {
+      // Convert Blob to File if needed
+      let file: File;
+      if (fileOrBlob instanceof Blob && !(fileOrBlob instanceof File)) {
+        file = new File([fileOrBlob], fileName || "image.jpg", {
+          type: fileOrBlob.type || "image/jpeg",
+        });
+      } else {
+        file = fileOrBlob as File;
+      }
+
+      // Create preview
+      setPreview(URL.createObjectURL(file));
+
+      // Step 1: Get signed URL from our API
+      const signedUrlResponse = await fetch("/api/upload/signed-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileName: file.name,
+          fileType: file.type,
+          fileSize: file.size,
+          title: null,
+        }),
+      });
+
+      if (!signedUrlResponse.ok) {
+        const error = await signedUrlResponse.json();
+        throw new Error(error.error || "Failed to get upload URL");
+      }
+
+      const { signedUrl, storagePath, bucket, uploadMeta } = await signedUrlResponse.json();
+
+      setUploadProgress(20);
+
+      // Step 2: Upload directly to Supabase Storage
+      const uploadResponse = await fetch(signedUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": file.type,
+        },
+        body: file,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error("Direct upload to storage failed");
+      }
+
+      setUploadProgress(80);
+
+      // Step 3: Complete the upload by creating the media record
+      const completeResponse = await fetch("/api/upload/complete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          storagePath,
+          bucket,
+          uploadMeta,
+        }),
+      });
+
+      if (!completeResponse.ok) {
+        const error = await completeResponse.json();
+        throw new Error(error.error || "Failed to complete upload");
+      }
+
+      const data = await completeResponse.json();
+      setUploadProgress(100);
+
+      onUploadComplete(data.url, data.mediaAsset);
+      toast.success("Photo uploaded successfully!");
+
+      // Clear preview after successful upload
+      setPreview(null);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Upload failed";
+      onError?.(message);
+      toast.error(message);
+      setPreview(null);
+    } finally {
+      setUploading(false);
+      setUploadProgress(0);
+      if (inputRef.current) {
+        inputRef.current.value = "";
+      }
+    }
+  };
+
+  // Fallback upload through API (for small files or when direct fails)
+  const uploadFileViaApi = async (fileOrBlob: File | Blob, fileName?: string) => {
     setPreview(URL.createObjectURL(fileOrBlob));
     setUploading(true);
 
     try {
       const formData = new FormData();
-      // If it's a Blob (from cropper), convert to File with a name
       if (fileOrBlob instanceof Blob && !(fileOrBlob instanceof File)) {
         const file = new File([fileOrBlob], fileName || "cropped-image.jpg", {
           type: fileOrBlob.type || "image/jpeg",
@@ -68,7 +163,6 @@ export function PhotoUploader({
         toast.success("Photo uploaded successfully!");
       }
 
-      // Clear preview after successful upload
       setPreview(null);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Upload failed";
@@ -77,10 +171,22 @@ export function PhotoUploader({
       setPreview(null);
     } finally {
       setUploading(false);
-      // Reset file input
       if (inputRef.current) {
         inputRef.current.value = "";
       }
+    }
+  };
+
+  // Main upload function - chooses direct or API based on file size
+  const uploadFile = async (fileOrBlob: File | Blob, fileName?: string) => {
+    const fileSize = fileOrBlob.size;
+
+    // Use direct upload for files > 4MB (Vercel's limit is 4.5MB)
+    // For avatar uploads, always use API route since they need profile update
+    if (fileSize > 4 * 1024 * 1024 && type !== "avatar") {
+      await uploadFileDirect(fileOrBlob, fileName);
+    } else {
+      await uploadFileViaApi(fileOrBlob, fileName);
     }
   };
 
@@ -95,9 +201,9 @@ export function PhotoUploader({
       return;
     }
 
-    // Validate file size (5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      const error = "Image must be less than 5MB";
+    // Validate file size (50MB max)
+    if (file.size > MAX_FILE_SIZE) {
+      const error = "Image must be less than 50MB";
       onError?.(error);
       toast.error(error);
       return;
@@ -235,8 +341,11 @@ export function PhotoUploader({
               className="max-h-48 rounded-lg mx-auto"
             />
             {uploading ? (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-lg">
-                <Loader2 className="h-8 w-8 animate-spin text-white" />
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 rounded-lg">
+                <Loader2 className="h-8 w-8 animate-spin text-white mb-2" />
+                {uploadProgress > 0 && (
+                  <span className="text-white text-sm">{uploadProgress}%</span>
+                )}
               </div>
             ) : (
               <button
@@ -260,7 +369,7 @@ export function PhotoUploader({
                 Drag and drop a photo here, or click to browse
               </p>
               <p className="text-xs text-muted-foreground">
-                JPEG, PNG, WebP, or GIF (max 5MB)
+                JPEG, PNG, WebP, or GIF (max 50MB)
               </p>
             </div>
             <Button type="button" variant="outline" disabled={uploading}>

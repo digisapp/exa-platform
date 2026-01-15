@@ -6,6 +6,7 @@ const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif
 const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
+// POST - Handle small files directly OR create signed URL for large files
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -138,3 +139,12 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+// Route segment config to increase body size limit
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '50mb',
+    },
+  },
+};
