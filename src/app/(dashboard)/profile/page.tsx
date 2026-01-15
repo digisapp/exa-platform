@@ -55,6 +55,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [cropperOpen, setCropperOpen] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
@@ -796,7 +797,7 @@ export default function ProfilePage() {
                   Permanently delete your account and all data
                 </p>
               </div>
-              <AlertDialog>
+              <AlertDialog onOpenChange={(open) => !open && setDeleteConfirmation("")}>
                 <AlertDialogTrigger asChild>
                   <Button variant="destructive" disabled={deleting}>
                     <Trash2 className="h-4 w-4 mr-2" />
@@ -806,9 +807,20 @@ export default function ProfilePage() {
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete your
-                      account, all your data, coin balance, and remove your access to EXA.
+                    <AlertDialogDescription className="space-y-3">
+                      <span className="block">
+                        This action cannot be undone. This will permanently delete your
+                        account, all your data, coin balance, and remove your access to EXA.
+                      </span>
+                      <span className="block font-medium text-foreground">
+                        Type DELETE to confirm:
+                      </span>
+                      <Input
+                        value={deleteConfirmation}
+                        onChange={(e) => setDeleteConfirmation(e.target.value)}
+                        placeholder="Type DELETE"
+                        className="mt-2"
+                      />
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -816,7 +828,7 @@ export default function ProfilePage() {
                     <AlertDialogAction
                       onClick={handleDeleteAccount}
                       className="bg-red-500 hover:bg-red-600"
-                      disabled={deleting}
+                      disabled={deleting || deleteConfirmation !== "DELETE"}
                     >
                       {deleting ? (
                         <>
@@ -1010,7 +1022,7 @@ export default function ProfilePage() {
                   Permanently delete your brand account
                 </p>
               </div>
-              <AlertDialog>
+              <AlertDialog onOpenChange={(open) => !open && setDeleteConfirmation("")}>
                 <AlertDialogTrigger asChild>
                   <Button variant="destructive" disabled={deleting}>
                     <Trash2 className="h-4 w-4 mr-2" />
@@ -1020,9 +1032,20 @@ export default function ProfilePage() {
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete your
-                      brand account and remove your access to EXA.
+                    <AlertDialogDescription className="space-y-3">
+                      <span className="block">
+                        This action cannot be undone. This will permanently delete your
+                        brand account and remove your access to EXA.
+                      </span>
+                      <span className="block font-medium text-foreground">
+                        Type DELETE to confirm:
+                      </span>
+                      <Input
+                        value={deleteConfirmation}
+                        onChange={(e) => setDeleteConfirmation(e.target.value)}
+                        placeholder="Type DELETE"
+                        className="mt-2"
+                      />
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -1030,7 +1053,7 @@ export default function ProfilePage() {
                     <AlertDialogAction
                       onClick={handleDeleteAccount}
                       className="bg-red-500 hover:bg-red-600"
-                      disabled={deleting}
+                      disabled={deleting || deleteConfirmation !== "DELETE"}
                     >
                       {deleting ? (
                         <>
@@ -2100,6 +2123,71 @@ export default function ProfilePage() {
                   </p>
                 </div>
                 <LogoutButton className="text-red-500 hover:text-red-600 hover:bg-red-500/10" />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Danger Zone */}
+          <Card className="border-red-500/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-red-500">
+                <AlertTriangle className="h-5 w-5" />
+                Danger Zone
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Delete Account</p>
+                  <p className="text-sm text-muted-foreground">
+                    Permanently delete your account and all data
+                  </p>
+                </div>
+                <AlertDialog onOpenChange={(open) => !open && setDeleteConfirmation("")}>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" disabled={deleting}>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete Account
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription className="space-y-3">
+                        <span className="block">
+                          This action cannot be undone. This will permanently delete your
+                          account, all your data, content, coin balance, and remove your profile from EXA.
+                        </span>
+                        <span className="block font-medium text-foreground">
+                          Type DELETE to confirm:
+                        </span>
+                        <Input
+                          value={deleteConfirmation}
+                          onChange={(e) => setDeleteConfirmation(e.target.value)}
+                          placeholder="Type DELETE"
+                          className="mt-2"
+                        />
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleDeleteAccount}
+                        className="bg-red-500 hover:bg-red-600"
+                        disabled={deleting || deleteConfirmation !== "DELETE"}
+                      >
+                        {deleting ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Deleting...
+                          </>
+                        ) : (
+                          "Delete Account"
+                        )}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </CardContent>
           </Card>
