@@ -97,8 +97,9 @@ export function PremiumContentCard({
       {/* Card */}
       <div
         className={cn(
-          "relative aspect-square rounded-lg overflow-hidden cursor-pointer group",
-          "bg-gradient-to-br from-gray-900 to-gray-800"
+          "relative rounded-xl overflow-hidden cursor-pointer group",
+          "bg-gradient-to-br from-gray-900 to-gray-800",
+          isVideo ? "aspect-video" : "aspect-[3/4]"
         )}
         onClick={() => isUnlocked ? setShowFull(true) : setShowPreview(true)}
       >
@@ -111,14 +112,14 @@ export function PremiumContentCard({
               fill
               className={cn(
                 "object-cover transition-all duration-300",
-                // Only blur paid locked content
-                !isUnlocked && !isFree && !isOwner && "blur-lg scale-110 brightness-90",
+                // Only blur paid locked content - softer blur
+                !isUnlocked && !isFree && !isOwner && "blur-md scale-105 brightness-75",
                 isUnlocked && "group-hover:scale-105"
               )}
             />
-            {/* Gradient overlay for paid locked content */}
+            {/* Subtle gradient overlay for locked content */}
             {!isUnlocked && !isFree && !isOwner && (
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/10" />
             )}
           </>
         ) : (
@@ -127,24 +128,37 @@ export function PremiumContentCard({
           </div>
         )}
 
-        {/* Price badge - only for paid locked content */}
+        {/* Elegant floating price - only for paid locked content */}
         {!isUnlocked && !isOwner && !isFree && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-            <div className="flex items-center gap-1.5 bg-gradient-to-r from-pink-500 to-violet-500 px-4 py-2 rounded-full shadow-lg">
-              <Coins className="h-4 w-4 text-white" />
-              <span className="text-white font-bold text-lg">{content.coin_price}</span>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            {/* Floating coin price with glass effect */}
+            <div className={cn(
+              "flex items-center gap-2 px-4 py-2.5",
+              "bg-black/30 backdrop-blur-sm",
+              "border border-white/20 rounded-full",
+              "shadow-2xl shadow-black/50",
+              "transition-all duration-300 group-hover:scale-105 group-hover:bg-black/40"
+            )}>
+              <Coins className="h-5 w-5 text-amber-400 drop-shadow-lg" />
+              <span className="text-white font-semibold text-lg tracking-wide drop-shadow-lg">
+                {content.coin_price}
+              </span>
             </div>
+            {/* Video indicator below */}
             {isVideo && (
-              <span className="text-xs text-white/90 font-medium bg-black/40 px-2 py-1 rounded">Video</span>
+              <div className="mt-2 flex items-center gap-1.5 text-white/80">
+                <Play className="h-3.5 w-3.5" fill="currentColor" />
+                <span className="text-xs font-medium tracking-wide uppercase">Video</span>
+              </div>
             )}
           </div>
         )}
 
-        {/* Video Badge */}
+        {/* Video Badge for unlocked */}
         {isVideo && isUnlocked && (
-          <div className="absolute bottom-2 right-2 bg-black/70 px-2 py-1 rounded flex items-center gap-1">
-            <Play className="h-3 w-3 text-white" />
-            <span className="text-xs text-white">Video</span>
+          <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-md flex items-center gap-1">
+            <Play className="h-3 w-3 text-white" fill="white" />
+            <span className="text-xs text-white font-medium">Video</span>
           </div>
         )}
       </div>

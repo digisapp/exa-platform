@@ -75,17 +75,41 @@ export function PremiumContentGrid({
     );
   }
 
+  // Separate videos and photos for better layout
+  const videos = content.filter(item => item.media_type === "video");
+  const photos = content.filter(item => item.media_type !== "video");
+
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-      {content.map((item) => (
-        <PremiumContentCard
-          key={item.id}
-          content={item}
-          coinBalance={coinBalance}
-          onUnlock={handleUnlock}
-          isOwner={isOwner}
-        />
-      ))}
+    <div className="space-y-4">
+      {/* Videos - 2 columns for landscape aspect ratio */}
+      {videos.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {videos.map((item) => (
+            <PremiumContentCard
+              key={item.id}
+              content={item}
+              coinBalance={coinBalance}
+              onUnlock={handleUnlock}
+              isOwner={isOwner}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Photos - 3 columns for portrait aspect ratio */}
+      {photos.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {photos.map((item) => (
+            <PremiumContentCard
+              key={item.id}
+              content={item}
+              coinBalance={coinBalance}
+              onUnlock={handleUnlock}
+              isOwner={isOwner}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
