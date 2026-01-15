@@ -478,6 +478,8 @@ export default function TrafficPage() {
                       </span>
                       <Link
                         href={`/${model.model_username}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="font-medium hover:text-pink-500 transition-colors"
                       >
                         @{model.model_username}

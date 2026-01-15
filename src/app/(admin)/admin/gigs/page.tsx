@@ -1347,6 +1347,8 @@ export default function AdminGigsPage() {
                     <div>
                       <Link
                         href={`/${app.model?.username}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="font-medium hover:text-pink-500"
                       >
                         {app.model?.first_name} {app.model?.last_name}
