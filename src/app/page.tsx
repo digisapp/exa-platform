@@ -43,7 +43,7 @@ export default async function HomePage() {
     redirect("/dashboard");
   }
 
-  // Fetch top 50 models with 4-5 star admin rating
+  // Fetch top 50 models with 4-5 star admin rating (only with uploaded profile photos, not Instagram imports)
   const { data: topModelsData } = await (supabase
     .from("models") as any)
     .select(`
@@ -53,20 +53,20 @@ export default async function HomePage() {
       social_companion_hourly_rate, meet_greet_rate
     `)
     .eq("is_approved", true)
-    .not("profile_photo_url", "is", null)
+    .like("profile_photo_url", "%supabase.co/storage%")
     .gte("admin_rating", 4)
     .limit(50);
 
   // Randomize the order
   const topModels = shuffleArray(topModelsData || []) as any[];
 
-  // Fetch new faces (models marked as new_face)
+  // Fetch new faces (models marked as new_face, only with uploaded profile photos)
   const { data: newFaces } = await (supabase
     .from("models") as any)
     .select("id, username, first_name, profile_photo_url, state, profile_views")
     .eq("is_approved", true)
     .eq("new_face", true)
-    .not("profile_photo_url", "is", null)
+    .like("profile_photo_url", "%supabase.co/storage%")
     .order("created_at", { ascending: false })
     .limit(50);
 
