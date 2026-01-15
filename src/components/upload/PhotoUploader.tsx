@@ -65,22 +65,23 @@ export function PhotoUploader({
         }),
       });
 
-      if (!signedUrlResponse.ok) {
-        // Handle non-JSON error responses (e.g., Vercel's plain text 413 errors)
-        let errorMessage = "Failed to get upload URL";
-        try {
-          const error = await signedUrlResponse.json();
-          errorMessage = error.error || errorMessage;
-        } catch {
-          // Response wasn't JSON - check for common error status codes
-          if (signedUrlResponse.status === 413) {
-            throw new Error("FILE_TOO_LARGE");
-          }
+      // Parse signed URL response with error handling
+      let signedUrlData;
+      try {
+        signedUrlData = await signedUrlResponse.json();
+      } catch {
+        // Response wasn't valid JSON - likely a Vercel error page
+        if (signedUrlResponse.status === 413) {
+          throw new Error("FILE_TOO_LARGE");
         }
-        throw new Error(errorMessage);
+        throw new Error("Failed to get upload URL - server error");
       }
 
-      const { signedUrl, storagePath, bucket, uploadMeta } = await signedUrlResponse.json();
+      if (!signedUrlResponse.ok) {
+        throw new Error(signedUrlData.error || "Failed to get upload URL");
+      }
+
+      const { signedUrl, storagePath, bucket, uploadMeta } = signedUrlData;
 
       setUploadProgress(20);
 
@@ -110,21 +111,21 @@ export function PhotoUploader({
         }),
       });
 
-      if (!completeResponse.ok) {
-        // Handle non-JSON error responses
-        let errorMessage = "Failed to complete upload";
-        try {
-          const error = await completeResponse.json();
-          errorMessage = error.error || errorMessage;
-        } catch {
-          if (completeResponse.status === 413) {
-            throw new Error("FILE_TOO_LARGE");
-          }
+      // Parse complete response with error handling
+      let data;
+      try {
+        data = await completeResponse.json();
+      } catch {
+        // Response wasn't valid JSON
+        if (completeResponse.status === 413) {
+          throw new Error("FILE_TOO_LARGE");
         }
-        throw new Error(errorMessage);
+        throw new Error("Failed to complete upload - server error");
       }
 
-      const data = await completeResponse.json();
+      if (!completeResponse.ok) {
+        throw new Error(data.error || "Failed to complete upload");
+      }
       setUploadProgress(100);
 
       onUploadComplete(data.url, data.mediaAsset);
