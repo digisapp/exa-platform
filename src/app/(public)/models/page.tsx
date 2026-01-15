@@ -42,11 +42,12 @@ export default async function ModelsPage({
     redirect("/dashboard");
   }
 
-  // Build query
+  // Build query - only show models with profile pictures
   let query = supabase
     .from("models")
     .select("*")
-    .eq("is_approved", true);
+    .eq("is_approved", true)
+    .not("profile_photo_url", "is", null);
 
   // Search
   if (params.q) {
@@ -106,12 +107,13 @@ export default async function ModelsPage({
 
   const { data: models, error } = await query as { data: any[] | null; error: any };
 
-  // Get featured models
+  // Get featured models (only with profile pictures)
   const { data: featured } = await supabase
     .from("models")
     .select("*")
     .eq("is_featured", true)
     .eq("is_approved", true)
+    .not("profile_photo_url", "is", null)
     .limit(5) as { data: any[] | null };
 
   // Get current user info for favorites and navbar
