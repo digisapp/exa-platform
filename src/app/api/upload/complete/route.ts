@@ -1,5 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { getModelId } from "@/lib/ids";
 import { NextRequest, NextResponse } from "next/server";
+
+// Admin client for verifying uploads exist
+const adminClient = createSupabaseClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 // POST - Complete the upload by creating the media asset record
 export async function POST(request: NextRequest) {
@@ -14,6 +22,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Get model and actor IDs server-side - NEVER trust client-submitted IDs
+    const modelId = await getModelId(supabase, user.id);
+    if (!modelId) {
+      return NextResponse.json({ error: "Model not found" }, { status: 400 });
+    }
+
+    const { data: actor } = await supabase
+      .from("actors")
+      .select("id")
+      .eq("user_id", user.id)
+      .single() as { data: { id: string } | null };
+
+    if (!actor) {
+      return NextResponse.json({ error: "Actor not found" }, { status: 400 });
+    }
+
+    const actorId = actor.id;
+
     const { storagePath, bucket, uploadMeta } = await request.json();
 
     if (!storagePath || !bucket || !uploadMeta) {
@@ -23,7 +49,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { modelId, actorId, isVideo, title, fileType, fileSize } = uploadMeta;
+    // Security: Verify the storage path belongs to this user
+    if (!storagePath.startsWith(`${modelId}/`)) {
+      return NextResponse.json(
+        { error: "Storage path does not belong to this user" },
+        { status: 403 }
+      );
+    }
+
+    // Verify the file actually exists in storage
+    const { data: fileExists, error: listError } = await adminClient.storage
+      .from(bucket)
+      .list(modelId, {
+        search: storagePath.replace(`${modelId}/`, ""),
+      });
+
+    if (listError || !fileExists || fileExists.length === 0) {
+      return NextResponse.json(
+        { error: "File not found in storage. Please upload the file first." },
+        { status: 400 }
+      );
+    }
+
+    const { isVideo, title, fileType, fileSize } = uploadMeta;
 
     // Get public URL
     const {

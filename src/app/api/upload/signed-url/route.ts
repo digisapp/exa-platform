@@ -34,9 +34,9 @@ export async function POST(request: NextRequest) {
 
     const { fileName, fileType, fileSize, title } = await request.json();
 
-    if (!fileName || !fileType) {
+    if (!fileName || !fileType || !fileSize) {
       return NextResponse.json(
-        { error: "Missing fileName or fileType" },
+        { error: "Missing fileName, fileType, or fileSize" },
         { status: 400 }
       );
     }
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (fileSize && fileSize > MAX_FILE_SIZE) {
+    if (fileSize > MAX_FILE_SIZE) {
       return NextResponse.json(
         { error: "File too large. Maximum size is 50MB" },
         { status: 400 }
