@@ -71,7 +71,10 @@ CREATE INDEX IF NOT EXISTS idx_ticket_tiers_event ON public.ticket_tiers(event_i
 -- TICKET PURCHASES TABLE
 -- ============================================
 
-CREATE TABLE IF NOT EXISTS public.ticket_purchases (
+-- Drop the table if it exists (to handle partial creation from previous attempts)
+DROP TABLE IF EXISTS public.ticket_purchases CASCADE;
+
+CREATE TABLE public.ticket_purchases (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   ticket_tier_id uuid NOT NULL REFERENCES public.ticket_tiers(id) ON DELETE RESTRICT,
   event_id uuid NOT NULL REFERENCES public.events(id) ON DELETE RESTRICT,
@@ -85,7 +88,7 @@ CREATE TABLE IF NOT EXISTS public.ticket_purchases (
   stripe_checkout_session_id text UNIQUE,
   stripe_payment_intent_id text,
 
-  -- Affiliate tracking (optional - may not exist yet)
+  -- Affiliate tracking (nullable, FKs added conditionally below)
   affiliate_model_id uuid,
   affiliate_click_id uuid,
   affiliate_commission_id uuid,
@@ -109,47 +112,27 @@ DO $$
 BEGIN
   -- Add FK to models if table exists
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'models') THEN
-    IF NOT EXISTS (
-      SELECT 1 FROM information_schema.table_constraints
-      WHERE constraint_name = 'ticket_purchases_affiliate_model_id_fkey'
-    ) THEN
-      ALTER TABLE public.ticket_purchases
-        ADD CONSTRAINT ticket_purchases_affiliate_model_id_fkey
-        FOREIGN KEY (affiliate_model_id) REFERENCES public.models(id) ON DELETE SET NULL;
-    END IF;
+    ALTER TABLE public.ticket_purchases
+      ADD CONSTRAINT ticket_purchases_affiliate_model_id_fkey
+      FOREIGN KEY (affiliate_model_id) REFERENCES public.models(id) ON DELETE SET NULL;
   END IF;
 
   -- Add FK to affiliate_clicks if table exists
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'affiliate_clicks') THEN
-    IF NOT EXISTS (
-      SELECT 1 FROM information_schema.table_constraints
-      WHERE constraint_name = 'ticket_purchases_affiliate_click_id_fkey'
-    ) THEN
-      ALTER TABLE public.ticket_purchases
-        ADD CONSTRAINT ticket_purchases_affiliate_click_id_fkey
-        FOREIGN KEY (affiliate_click_id) REFERENCES public.affiliate_clicks(id) ON DELETE SET NULL;
-    END IF;
+    ALTER TABLE public.ticket_purchases
+      ADD CONSTRAINT ticket_purchases_affiliate_click_id_fkey
+      FOREIGN KEY (affiliate_click_id) REFERENCES public.affiliate_clicks(id) ON DELETE SET NULL;
   END IF;
 
   -- Add FK to affiliate_commissions if table exists
   IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'affiliate_commissions') THEN
-    IF NOT EXISTS (
-      SELECT 1 FROM information_schema.table_constraints
-      WHERE constraint_name = 'ticket_purchases_affiliate_commission_id_fkey'
-    ) THEN
-      ALTER TABLE public.ticket_purchases
-        ADD CONSTRAINT ticket_purchases_affiliate_commission_id_fkey
-        FOREIGN KEY (affiliate_commission_id) REFERENCES public.affiliate_commissions(id) ON DELETE SET NULL;
-    END IF;
+    ALTER TABLE public.ticket_purchases
+      ADD CONSTRAINT ticket_purchases_affiliate_commission_id_fkey
+      FOREIGN KEY (affiliate_commission_id) REFERENCES public.affiliate_commissions(id) ON DELETE SET NULL;
   END IF;
 END $$;
 
 ALTER TABLE public.ticket_purchases ENABLE ROW LEVEL SECURITY;
-
--- Drop existing policies if they exist (for idempotency)
-DROP POLICY IF EXISTS "Admins can view all ticket purchases" ON public.ticket_purchases;
-DROP POLICY IF EXISTS "Admins can insert ticket purchases" ON public.ticket_purchases;
-DROP POLICY IF EXISTS "Admins can update ticket purchases" ON public.ticket_purchases;
 
 -- Admins can manage ticket purchases
 CREATE POLICY "Admins can view all ticket purchases" ON public.ticket_purchases
