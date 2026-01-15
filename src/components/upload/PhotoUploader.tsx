@@ -114,7 +114,15 @@ export function PhotoUploader({
       // Clear preview after successful upload
       setPreview(null);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Upload failed";
+      let message = error instanceof Error ? error.message : "Upload failed";
+
+      // Show friendly messages for common errors
+      if (message.includes("too large") || message.includes("413") || message.includes("FILE_TOO_LARGE")) {
+        message = "Oops! This image is a bit too large. Try a smaller file or compress it first!";
+      } else if (message.includes("network") || message.includes("fetch")) {
+        message = "Connection issue! Check your internet and try again.";
+      }
+
       onError?.(message);
       toast.error(message);
       setPreview(null);
@@ -149,7 +157,22 @@ export function PhotoUploader({
         body: formData,
       });
 
-      const data = await response.json();
+      // Handle 413 (Request Entity Too Large) specifically
+      if (response.status === 413) {
+        throw new Error("FILE_TOO_LARGE");
+      }
+
+      // Try to parse JSON, but handle non-JSON responses gracefully
+      let data;
+      try {
+        data = await response.json();
+      } catch {
+        // If we can't parse JSON and response isn't ok, it's likely a server error
+        if (!response.ok) {
+          throw new Error("FILE_TOO_LARGE");
+        }
+        throw new Error("Something went wrong. Please try again!");
+      }
 
       if (!response.ok) {
         throw new Error(data.error || "Upload failed");
@@ -165,7 +188,13 @@ export function PhotoUploader({
 
       setPreview(null);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Upload failed";
+      let message = error instanceof Error ? error.message : "Upload failed";
+
+      // Show friendly message for file too large errors
+      if (message === "FILE_TOO_LARGE") {
+        message = "Oops! This image is a bit too large. Try a smaller file or compress it first!";
+      }
+
       onError?.(message);
       toast.error(message);
       setPreview(null);
