@@ -329,8 +329,6 @@ export default function ContentPage() {
   };
 
   const handleDeletePortfolio = async (mediaId: string) => {
-    if (!confirm("Delete this?")) return;
-
     const response = await fetch(`/api/upload?id=${mediaId}`, { method: "DELETE" });
     if (response.ok) {
       toast.success("Deleted");
