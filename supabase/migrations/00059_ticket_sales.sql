@@ -3,164 +3,223 @@
 -- Adds ticket tiers and purchases for events
 -- ============================================
 
+-- First, verify the events table exists
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'events') THEN
+    RAISE EXCEPTION 'ERROR: events table does not exist. Please run migration 00050_events_badges_complete.sql first.';
+  END IF;
+END $$;
+
 -- Add tickets_enabled flag to events
-alter table public.events
-  add column if not exists tickets_enabled boolean default false;
+ALTER TABLE public.events
+  ADD COLUMN IF NOT EXISTS tickets_enabled boolean DEFAULT false;
 
 -- ============================================
 -- TICKET TIERS TABLE
 -- ============================================
 
-create table if not exists public.ticket_tiers (
-  id uuid primary key default gen_random_uuid(),
-  event_id uuid not null references public.events(id) on delete cascade,
-  name text not null,                    -- 'General Admission', 'VIP', etc.
-  slug text not null,                    -- 'ga', 'vip'
+CREATE TABLE IF NOT EXISTS public.ticket_tiers (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  event_id uuid NOT NULL REFERENCES public.events(id) ON DELETE CASCADE,
+  name text NOT NULL,
+  slug text NOT NULL,
   description text,
-  price_cents int not null,              -- Price in cents
-  quantity_available int,                -- null = unlimited
-  quantity_sold int default 0,
-  sort_order int default 0,
-  is_active boolean default true,
+  price_cents int NOT NULL,
+  quantity_available int,
+  quantity_sold int DEFAULT 0,
+  sort_order int DEFAULT 0,
+  is_active boolean DEFAULT true,
   sale_starts_at timestamptz,
   sale_ends_at timestamptz,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now(),
-  unique(event_id, slug)
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+  UNIQUE(event_id, slug)
 );
 
-alter table public.ticket_tiers enable row level security;
+ALTER TABLE public.ticket_tiers ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies if they exist (for idempotency)
+DROP POLICY IF EXISTS "Ticket tiers viewable by everyone" ON public.ticket_tiers;
+DROP POLICY IF EXISTS "Admins can insert ticket tiers" ON public.ticket_tiers;
+DROP POLICY IF EXISTS "Admins can update ticket tiers" ON public.ticket_tiers;
+DROP POLICY IF EXISTS "Admins can delete ticket tiers" ON public.ticket_tiers;
 
 -- Everyone can view active ticket tiers
-create policy "Ticket tiers viewable by everyone" on public.ticket_tiers
-  for select using (true);
+CREATE POLICY "Ticket tiers viewable by everyone" ON public.ticket_tiers
+  FOR SELECT USING (true);
 
 -- Admins can manage ticket tiers
-create policy "Admins can insert ticket tiers" on public.ticket_tiers
-  for insert with check (
-    exists (select 1 from public.actors where user_id = auth.uid() and type = 'admin')
+CREATE POLICY "Admins can insert ticket tiers" ON public.ticket_tiers
+  FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM public.actors WHERE user_id = auth.uid() AND type = 'admin')
   );
 
-create policy "Admins can update ticket tiers" on public.ticket_tiers
-  for update using (
-    exists (select 1 from public.actors where user_id = auth.uid() and type = 'admin')
+CREATE POLICY "Admins can update ticket tiers" ON public.ticket_tiers
+  FOR UPDATE USING (
+    EXISTS (SELECT 1 FROM public.actors WHERE user_id = auth.uid() AND type = 'admin')
   );
 
-create policy "Admins can delete ticket tiers" on public.ticket_tiers
-  for delete using (
-    exists (select 1 from public.actors where user_id = auth.uid() and type = 'admin')
+CREATE POLICY "Admins can delete ticket tiers" ON public.ticket_tiers
+  FOR DELETE USING (
+    EXISTS (SELECT 1 FROM public.actors WHERE user_id = auth.uid() AND type = 'admin')
   );
 
-create index if not exists idx_ticket_tiers_event on public.ticket_tiers(event_id);
+CREATE INDEX IF NOT EXISTS idx_ticket_tiers_event ON public.ticket_tiers(event_id);
 
 -- ============================================
 -- TICKET PURCHASES TABLE
 -- ============================================
 
-create table if not exists public.ticket_purchases (
-  id uuid primary key default gen_random_uuid(),
-  ticket_tier_id uuid not null references public.ticket_tiers(id) on delete restrict,
-  event_id uuid not null references public.events(id) on delete restrict,
+CREATE TABLE IF NOT EXISTS public.ticket_purchases (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  ticket_tier_id uuid NOT NULL REFERENCES public.ticket_tiers(id) ON DELETE RESTRICT,
+  event_id uuid NOT NULL REFERENCES public.events(id) ON DELETE RESTRICT,
 
   -- Buyer info
-  buyer_email text not null,
+  buyer_email text NOT NULL,
   buyer_name text,
   buyer_phone text,
 
   -- Stripe info
-  stripe_checkout_session_id text unique,
+  stripe_checkout_session_id text UNIQUE,
   stripe_payment_intent_id text,
 
-  -- Affiliate tracking
-  affiliate_model_id uuid references public.models(id) on delete set null,
-  affiliate_click_id uuid references public.affiliate_clicks(id) on delete set null,
-  affiliate_commission_id uuid references public.affiliate_commissions(id) on delete set null,
+  -- Affiliate tracking (optional - may not exist yet)
+  affiliate_model_id uuid,
+  affiliate_click_id uuid,
+  affiliate_commission_id uuid,
 
   -- Pricing
-  quantity int not null default 1,
-  unit_price_cents int not null,
-  total_price_cents int not null,
+  quantity int NOT NULL DEFAULT 1,
+  unit_price_cents int NOT NULL,
+  total_price_cents int NOT NULL,
 
   -- Status
-  status text default 'pending' check (status in ('pending', 'completed', 'refunded', 'cancelled')),
+  status text DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'refunded', 'cancelled')),
 
   -- Timestamps
   completed_at timestamptz,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
 );
 
-alter table public.ticket_purchases enable row level security;
+-- Add foreign keys only if referenced tables exist
+DO $$
+BEGIN
+  -- Add FK to models if table exists
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'models') THEN
+    IF NOT EXISTS (
+      SELECT 1 FROM information_schema.table_constraints
+      WHERE constraint_name = 'ticket_purchases_affiliate_model_id_fkey'
+    ) THEN
+      ALTER TABLE public.ticket_purchases
+        ADD CONSTRAINT ticket_purchases_affiliate_model_id_fkey
+        FOREIGN KEY (affiliate_model_id) REFERENCES public.models(id) ON DELETE SET NULL;
+    END IF;
+  END IF;
+
+  -- Add FK to affiliate_clicks if table exists
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'affiliate_clicks') THEN
+    IF NOT EXISTS (
+      SELECT 1 FROM information_schema.table_constraints
+      WHERE constraint_name = 'ticket_purchases_affiliate_click_id_fkey'
+    ) THEN
+      ALTER TABLE public.ticket_purchases
+        ADD CONSTRAINT ticket_purchases_affiliate_click_id_fkey
+        FOREIGN KEY (affiliate_click_id) REFERENCES public.affiliate_clicks(id) ON DELETE SET NULL;
+    END IF;
+  END IF;
+
+  -- Add FK to affiliate_commissions if table exists
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'affiliate_commissions') THEN
+    IF NOT EXISTS (
+      SELECT 1 FROM information_schema.table_constraints
+      WHERE constraint_name = 'ticket_purchases_affiliate_commission_id_fkey'
+    ) THEN
+      ALTER TABLE public.ticket_purchases
+        ADD CONSTRAINT ticket_purchases_affiliate_commission_id_fkey
+        FOREIGN KEY (affiliate_commission_id) REFERENCES public.affiliate_commissions(id) ON DELETE SET NULL;
+    END IF;
+  END IF;
+END $$;
+
+ALTER TABLE public.ticket_purchases ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies if they exist (for idempotency)
+DROP POLICY IF EXISTS "Admins can view all ticket purchases" ON public.ticket_purchases;
+DROP POLICY IF EXISTS "Admins can insert ticket purchases" ON public.ticket_purchases;
+DROP POLICY IF EXISTS "Admins can update ticket purchases" ON public.ticket_purchases;
 
 -- Admins can manage ticket purchases
-create policy "Admins can view all ticket purchases" on public.ticket_purchases
-  for select using (
-    exists (select 1 from public.actors where user_id = auth.uid() and type = 'admin')
+CREATE POLICY "Admins can view all ticket purchases" ON public.ticket_purchases
+  FOR SELECT USING (
+    EXISTS (SELECT 1 FROM public.actors WHERE user_id = auth.uid() AND type = 'admin')
   );
 
-create policy "Admins can insert ticket purchases" on public.ticket_purchases
-  for insert with check (true);  -- Allow inserts from webhook (uses service role)
+CREATE POLICY "Admins can insert ticket purchases" ON public.ticket_purchases
+  FOR INSERT WITH CHECK (true);
 
-create policy "Admins can update ticket purchases" on public.ticket_purchases
-  for update using (
-    exists (select 1 from public.actors where user_id = auth.uid() and type = 'admin')
+CREATE POLICY "Admins can update ticket purchases" ON public.ticket_purchases
+  FOR UPDATE USING (
+    EXISTS (SELECT 1 FROM public.actors WHERE user_id = auth.uid() AND type = 'admin')
   );
 
-create index if not exists idx_ticket_purchases_event on public.ticket_purchases(event_id);
-create index if not exists idx_ticket_purchases_tier on public.ticket_purchases(ticket_tier_id);
-create index if not exists idx_ticket_purchases_stripe on public.ticket_purchases(stripe_checkout_session_id);
-create index if not exists idx_ticket_purchases_affiliate on public.ticket_purchases(affiliate_model_id);
-create index if not exists idx_ticket_purchases_status on public.ticket_purchases(status);
+CREATE INDEX IF NOT EXISTS idx_ticket_purchases_event ON public.ticket_purchases(event_id);
+CREATE INDEX IF NOT EXISTS idx_ticket_purchases_tier ON public.ticket_purchases(ticket_tier_id);
+CREATE INDEX IF NOT EXISTS idx_ticket_purchases_stripe ON public.ticket_purchases(stripe_checkout_session_id);
+CREATE INDEX IF NOT EXISTS idx_ticket_purchases_affiliate ON public.ticket_purchases(affiliate_model_id);
+CREATE INDEX IF NOT EXISTS idx_ticket_purchases_status ON public.ticket_purchases(status);
 
 -- ============================================
 -- UPDATE QUANTITY SOLD TRIGGER
 -- ============================================
 
-create or replace function public.update_ticket_quantity_sold()
-returns trigger as $$
-begin
+CREATE OR REPLACE FUNCTION public.update_ticket_quantity_sold()
+RETURNS trigger AS $$
+BEGIN
   -- When purchase status changes to completed, increment quantity_sold
-  if NEW.status = 'completed' and (OLD is null or OLD.status != 'completed') then
-    update public.ticket_tiers
-    set quantity_sold = quantity_sold + NEW.quantity,
+  IF NEW.status = 'completed' AND (OLD IS NULL OR OLD.status != 'completed') THEN
+    UPDATE public.ticket_tiers
+    SET quantity_sold = quantity_sold + NEW.quantity,
         updated_at = now()
-    where id = NEW.ticket_tier_id;
-  end if;
+    WHERE id = NEW.ticket_tier_id;
+  END IF;
 
   -- When purchase is refunded/cancelled after being completed, decrement quantity_sold
-  if OLD is not null and OLD.status = 'completed' and NEW.status in ('refunded', 'cancelled') then
-    update public.ticket_tiers
-    set quantity_sold = greatest(0, quantity_sold - NEW.quantity),
+  IF OLD IS NOT NULL AND OLD.status = 'completed' AND NEW.status IN ('refunded', 'cancelled') THEN
+    UPDATE public.ticket_tiers
+    SET quantity_sold = greatest(0, quantity_sold - NEW.quantity),
         updated_at = now()
-    where id = NEW.ticket_tier_id;
-  end if;
+    WHERE id = NEW.ticket_tier_id;
+  END IF;
 
-  return NEW;
-end;
-$$ language plpgsql security definer;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
-drop trigger if exists trigger_update_ticket_quantity on public.ticket_purchases;
-create trigger trigger_update_ticket_quantity
-after insert or update on public.ticket_purchases
-for each row execute function public.update_ticket_quantity_sold();
+DROP TRIGGER IF EXISTS trigger_update_ticket_quantity ON public.ticket_purchases;
+CREATE TRIGGER trigger_update_ticket_quantity
+AFTER INSERT OR UPDATE ON public.ticket_purchases
+FOR EACH ROW EXECUTE FUNCTION public.update_ticket_quantity_sold();
 
 -- ============================================
 -- HELPER FUNCTION: Get available quantity
 -- ============================================
 
-create or replace function public.get_ticket_availability(tier_id uuid)
-returns int as $$
-declare
+CREATE OR REPLACE FUNCTION public.get_ticket_availability(tier_id uuid)
+RETURNS int AS $$
+DECLARE
   tier_record record;
-begin
-  select quantity_available, quantity_sold into tier_record
-  from public.ticket_tiers
-  where id = tier_id;
+BEGIN
+  SELECT quantity_available, quantity_sold INTO tier_record
+  FROM public.ticket_tiers
+  WHERE id = tier_id;
 
-  if tier_record.quantity_available is null then
-    return 999999;  -- Unlimited
-  end if;
+  IF tier_record.quantity_available IS NULL THEN
+    RETURN 999999;  -- Unlimited
+  END IF;
 
-  return greatest(0, tier_record.quantity_available - tier_record.quantity_sold);
-end;
-$$ language plpgsql security definer;
+  RETURN greatest(0, tier_record.quantity_available - tier_record.quantity_sold);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
