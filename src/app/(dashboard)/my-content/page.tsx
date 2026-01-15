@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   Loader2,
-  Library,
+  FolderHeart,
   Image as ImageIcon,
   Video,
   Coins,
@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/dialog";
 import { format } from "date-fns";
 
-interface LibraryItem {
+interface ContentItem {
   id: string;
   purchasedAt: string;
   coinsSpent: number;
@@ -48,11 +48,11 @@ interface LibraryItem {
   } | null;
 }
 
-export default function LibraryPage() {
-  const [library, setLibrary] = useState<LibraryItem[]>([]);
+export default function MyContentPage() {
+  const [myContent, setMyContent] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "image" | "video">("all");
-  const [selectedItem, setSelectedItem] = useState<LibraryItem | null>(null);
+  const [selectedItem, setSelectedItem] = useState<ContentItem | null>(null);
   const [showViewer, setShowViewer] = useState(false);
   const router = useRouter();
   const supabase = createClient();
@@ -61,40 +61,40 @@ export default function LibraryPage() {
     async function checkAuth() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        router.push("/signin?redirect=/library");
+        router.push("/signin?redirect=/my-content");
         return;
       }
-      fetchLibrary();
+      fetchMyContent();
     }
     checkAuth();
   }, []);
 
   useEffect(() => {
-    fetchLibrary();
+    fetchMyContent();
   }, [filter]);
 
-  async function fetchLibrary() {
+  async function fetchMyContent() {
     try {
       const typeParam = filter !== "all" ? `?type=${filter}` : "";
-      const response = await fetch(`/api/content/library${typeParam}`);
+      const response = await fetch(`/api/content/my-content${typeParam}`);
       const data = await response.json();
 
       if (response.ok) {
-        setLibrary(data.library || []);
+        setMyContent(data.content || []);
       }
     } catch (error) {
-      console.error("Error fetching library:", error);
+      console.error("Error fetching content:", error);
     } finally {
       setLoading(false);
     }
   }
 
-  const openViewer = (item: LibraryItem) => {
+  const openViewer = (item: ContentItem) => {
     setSelectedItem(item);
     setShowViewer(true);
   };
 
-  const handleDownload = async (item: LibraryItem) => {
+  const handleDownload = async (item: ContentItem) => {
     try {
       const response = await fetch(item.content.mediaUrl);
       const blob = await response.blob();
@@ -113,10 +113,10 @@ export default function LibraryPage() {
   };
 
   const stats = {
-    total: library.length,
-    photos: library.filter((i) => i.content.mediaType === "image").length,
-    videos: library.filter((i) => i.content.mediaType === "video").length,
-    totalSpent: library.reduce((acc, i) => acc + i.coinsSpent, 0),
+    total: myContent.length,
+    photos: myContent.filter((i) => i.content.mediaType === "image").length,
+    videos: myContent.filter((i) => i.content.mediaType === "video").length,
+    totalSpent: myContent.reduce((acc, i) => acc + i.coinsSpent, 0),
   };
 
   if (loading) {
@@ -133,7 +133,7 @@ export default function LibraryPage() {
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
           <div className="p-2 rounded-xl bg-gradient-to-br from-pink-500/20 to-violet-500/20">
-            <Library className="h-6 w-6 text-pink-500" />
+            <FolderHeart className="h-6 w-6 text-pink-500" />
           </div>
           <h1 className="text-3xl font-bold">My Content</h1>
         </div>
@@ -202,9 +202,9 @@ export default function LibraryPage() {
       </div>
 
       {/* Content Grid */}
-      {library.length === 0 ? (
+      {myContent.length === 0 ? (
         <div className="text-center py-16">
-          <Library className="h-16 w-16 mx-auto mb-4 text-muted-foreground/30" />
+          <FolderHeart className="h-16 w-16 mx-auto mb-4 text-muted-foreground/30" />
           <h3 className="text-xl font-semibold mb-2">No content yet</h3>
           <p className="text-muted-foreground mb-6">
             Purchase exclusive content from models to build your collection
@@ -215,7 +215,7 @@ export default function LibraryPage() {
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {library.map((item) => (
+          {myContent.map((item) => (
             <div
               key={item.id}
               className={cn(

@@ -38,7 +38,7 @@ import {
   Briefcase,
   Mail,
   DollarSign,
-  Library,
+  FolderHeart,
 } from "lucide-react";
 
 export default async function DashboardPage() {
@@ -525,8 +525,8 @@ async function FanDashboard({ actorId }: { actorId: string }) {
         </div>
         <div className="flex items-center gap-2 md:gap-3 flex-wrap">
           <Button variant="outline" asChild>
-            <Link href="/library">
-              <Library className="mr-2 h-4 w-4" />
+            <Link href="/my-content">
+              <FolderHeart className="mr-2 h-4 w-4" />
               My Content
             </Link>
           </Button>

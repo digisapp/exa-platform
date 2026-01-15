@@ -59,9 +59,9 @@ export async function GET(request: NextRequest) {
     const { data: purchases, error } = await query as { data: any[] | null; error: any };
 
     if (error) {
-      console.error("Error fetching library:", error);
+      console.error("Error fetching content:", error);
       return NextResponse.json(
-        { error: "Failed to fetch library" },
+        { error: "Failed to fetch content" },
         { status: 500 }
       );
     }
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Transform data for frontend
-    const library = filteredPurchases
+    const content = filteredPurchases
       .filter((p) => p.content) // Filter out any with missing content
       .map((p) => ({
         id: p.id,
@@ -99,11 +99,11 @@ export async function GET(request: NextRequest) {
       }));
 
     return NextResponse.json({
-      library,
-      total: library.length,
+      content,
+      total: content.length,
     });
   } catch (error) {
-    console.error("Library fetch error:", error);
+    console.error("Content fetch error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
