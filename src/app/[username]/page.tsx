@@ -161,7 +161,7 @@ export default async function ModelProfilePage({ params }: Props) {
     .eq("model_id", model.id)
     .eq("asset_type", "portfolio")
     .order("created_at", { ascending: false })
-    .limit(12) as { data: any[] | null };
+    .limit(50) as { data: any[] | null };
 
   // Get videos
   const { data: videos } = await supabase
@@ -170,7 +170,7 @@ export default async function ModelProfilePage({ params }: Props) {
     .eq("model_id", model.id)
     .eq("asset_type", "video")
     .order("created_at", { ascending: false })
-    .limit(12) as { data: any[] | null };
+    .limit(24) as { data: any[] | null };
 
   // Get PPV content count (only paid content)
   const { count: premiumContentCount } = await supabase
