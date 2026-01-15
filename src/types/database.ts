@@ -303,6 +303,7 @@ export interface Database {
           source: string
           gig_id: string | null
           created_at: string
+          title: string | null
         }
         Insert: {
           id?: string
@@ -319,6 +320,7 @@ export interface Database {
           source?: string
           gig_id?: string | null
           created_at?: string
+          title?: string | null
         }
         Update: {
           id?: string
@@ -335,6 +337,7 @@ export interface Database {
           source?: string
           gig_id?: string | null
           created_at?: string
+          title?: string | null
         }
       }
       point_transactions: {

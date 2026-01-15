@@ -27,6 +27,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get("file") as File;
     const uploadType = (formData.get("type") as string) || "portfolio";
+    const title = (formData.get("title") as string) || null;
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -110,6 +111,7 @@ export async function POST(request: NextRequest) {
         storage_path: filename,
         mime_type: file.type,
         size_bytes: file.size,
+        title: title,
       })
       .select()
       .single();

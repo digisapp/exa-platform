@@ -49,6 +49,7 @@ interface MediaAsset {
   photo_url: string | null;
   url: string;
   created_at: string;
+  title: string | null;
 }
 
 interface PremiumContent {
@@ -118,7 +119,7 @@ export default function ContentPage() {
     // Get portfolio content
     const { data: portfolioData } = await supabase
       .from("media_assets")
-      .select("*")
+      .select("id, asset_type, photo_url, url, created_at, title")
       .eq("model_id", model.id)
       .in("asset_type", ["portfolio", "video"])
       .order("created_at", { ascending: false });
@@ -196,6 +197,9 @@ export default function ContentPage() {
         await createPaidContent(uploadData.url);
       } else {
         formData.append("type", mediaType === "video" ? "video" : "portfolio");
+        if (title) {
+          formData.append("title", title);
+        }
 
         const uploadResponse = await fetch("/api/upload/media", {
           method: "POST",
@@ -465,6 +469,13 @@ export default function ContentPage() {
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
+
+                    {/* Title overlay - show on hover */}
+                    {item.title && (
+                      <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                        <p className="text-white text-sm font-medium truncate">{item.title}</p>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -622,6 +633,20 @@ export default function ContentPage() {
               )}
             </div>
 
+            {/* Title Input - for all content */}
+            <div className="space-y-2">
+              <Label htmlFor="title">Title (optional)</Label>
+              <Input
+                id="title"
+                placeholder="Add a title..."
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Shows when viewers hover over your content
+              </p>
+            </div>
+
             {/* Content Type Toggle */}
             <div className={cn(
               "flex items-center justify-between p-4 rounded-xl border-2 transition-colors",
@@ -660,16 +685,6 @@ export default function ContentPage() {
                       coins
                     </span>
                   </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="title">Title (optional)</Label>
-                  <Input
-                    id="title"
-                    placeholder="Give it a catchy title..."
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                  />
                 </div>
 
                 <div className="space-y-2">
