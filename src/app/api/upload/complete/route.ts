@@ -57,14 +57,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify the file actually exists in storage
-    const { data: fileExists, error: listError } = await adminClient.storage
+    // Verify the file actually exists in storage by checking file metadata
+    const fileName = storagePath.replace(`${modelId}/`, "");
+    const { data: files, error: listError } = await adminClient.storage
       .from(bucket)
-      .list(modelId, {
-        search: storagePath.replace(`${modelId}/`, ""),
-      });
+      .list(modelId, { limit: 100 });
 
-    if (listError || !fileExists || fileExists.length === 0) {
+    const fileExists = files?.some((f) => f.name === fileName);
+
+    if (listError) {
+      console.error("Storage list error:", listError);
+      // Don't block upload on list errors - the ownership check is the critical security gate
+    } else if (!fileExists) {
       return NextResponse.json(
         { error: "File not found in storage. Please upload the file first." },
         { status: 400 }

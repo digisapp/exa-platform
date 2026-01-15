@@ -66,8 +66,18 @@ export function PhotoUploader({
       });
 
       if (!signedUrlResponse.ok) {
-        const error = await signedUrlResponse.json();
-        throw new Error(error.error || "Failed to get upload URL");
+        // Handle non-JSON error responses (e.g., Vercel's plain text 413 errors)
+        let errorMessage = "Failed to get upload URL";
+        try {
+          const error = await signedUrlResponse.json();
+          errorMessage = error.error || errorMessage;
+        } catch {
+          // Response wasn't JSON - check for common error status codes
+          if (signedUrlResponse.status === 413) {
+            throw new Error("FILE_TOO_LARGE");
+          }
+        }
+        throw new Error(errorMessage);
       }
 
       const { signedUrl, storagePath, bucket, uploadMeta } = await signedUrlResponse.json();
@@ -101,8 +111,17 @@ export function PhotoUploader({
       });
 
       if (!completeResponse.ok) {
-        const error = await completeResponse.json();
-        throw new Error(error.error || "Failed to complete upload");
+        // Handle non-JSON error responses
+        let errorMessage = "Failed to complete upload";
+        try {
+          const error = await completeResponse.json();
+          errorMessage = error.error || errorMessage;
+        } catch {
+          if (completeResponse.status === 413) {
+            throw new Error("FILE_TOO_LARGE");
+          }
+        }
+        throw new Error(errorMessage);
       }
 
       const data = await completeResponse.json();
