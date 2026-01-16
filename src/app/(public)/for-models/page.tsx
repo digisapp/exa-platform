@@ -95,6 +95,148 @@ export default async function ForModelsPage() {
       />
 
       <main className="container px-4 md:px-8 py-12 max-w-4xl mx-auto">
+        {/* Swipe Carousel */}
+        <div className="mb-12 -mx-4 md:mx-0">
+          <p className="text-center text-sm text-muted-foreground mb-4 px-4">
+            👆 Swipe through the slides
+          </p>
+          <div className="overflow-x-auto scrollbar-hide snap-x snap-mandatory flex gap-4 px-4 pb-4">
+            <CarouselSlide gradient="from-pink-500 to-violet-500">
+              <p className="text-3xl mb-4">💸</p>
+              <h3 className="text-2xl font-bold mb-2">How to Use EXA</h3>
+              <p className="text-white/80">Turn your influence into income</p>
+              <p className="text-sm text-white/60 mt-2">(real girl scenarios)</p>
+            </CarouselSlide>
+
+            <CarouselSlide gradient="from-violet-500 to-indigo-500">
+              <p className="text-sm text-white/60 mb-2">Instagram</p>
+              <p className="font-medium mb-4">= free highlight</p>
+              <p className="text-sm text-white/60 mb-2">EXA</p>
+              <p className="font-bold text-lg">= your VIP world that pays you</p>
+            </CarouselSlide>
+
+            <CarouselSlide gradient="from-orange-500 to-red-500">
+              <p className="text-xs text-white/60 mb-2">FITNESS GIRL</p>
+              <p className="mb-2">You finish gym →</p>
+              <p className="text-white/70 text-sm">IG: mirror selfie</p>
+              <p className="font-bold mt-2">EXA: full workout routine</p>
+              <p className="text-sm text-white/80">(50–100 coins)</p>
+              <p className="mt-4 font-medium">Get paid to train. 💪</p>
+            </CarouselSlide>
+
+            <CarouselSlide gradient="from-pink-500 to-rose-500">
+              <p className="text-white/70 mb-2">Fan:</p>
+              <p className="italic mb-4">&quot;send your ab routine?&quot;</p>
+              <p className="text-white/70 mb-2">You:</p>
+              <p className="font-bold">sends EXA link</p>
+              <p className="mt-4 text-lg">Paid. Not paragraphs. 💅</p>
+            </CarouselSlide>
+
+            <CarouselSlide gradient="from-teal-500 to-emerald-500">
+              <p className="text-xs text-white/60 mb-2">YOGA & WELLNESS</p>
+              <p className="font-bold text-lg mb-2">Sunrise yoga flow = premium</p>
+              <p className="text-white/80">Upload once →</p>
+              <p className="font-medium">earn forever 🌙</p>
+            </CarouselSlide>
+
+            <CarouselSlide gradient="from-purple-500 to-violet-500">
+              <p className="mb-2">Meditation audio</p>
+              <p className="mb-2">affirmations</p>
+              <p className="mb-4">mindset talks</p>
+              <p className="font-bold text-lg">= passive income 💜</p>
+            </CarouselSlide>
+
+            <CarouselSlide gradient="from-amber-500 to-orange-500">
+              <p className="text-xs text-white/60 mb-2">LIFESTYLE</p>
+              <p className="text-white/70 mb-1">IG = highlights</p>
+              <p className="font-bold mb-4">EXA = real life</p>
+              <p className="text-sm text-white/80">day in my life</p>
+              <p className="text-sm text-white/80">travel tea ☕️</p>
+              <p className="text-sm text-white/80">routines</p>
+            </CarouselSlide>
+
+            <CarouselSlide gradient="from-pink-400 to-pink-600">
+              <p className="mb-1">Apartment tour</p>
+              <p className="mb-1">closet tour</p>
+              <p className="mb-4">where it&apos;s from</p>
+              <p className="font-bold">= paid content energy ✨</p>
+            </CarouselSlide>
+
+            <CarouselSlide gradient="from-fuchsia-500 to-pink-500">
+              <p className="text-xs text-white/60 mb-2">FASHION</p>
+              <p className="mb-4">5 ways to style 1 blazer</p>
+              <p className="text-white/70">IG shows 1</p>
+              <p className="font-bold mt-2">EXA unlocks all 5 👗</p>
+            </CarouselSlide>
+
+            <CarouselSlide gradient="from-blue-500 to-cyan-500">
+              <p className="text-xs text-white/60 mb-2">BOOKINGS</p>
+              <p className="mb-2">Brands can:</p>
+              <p className="text-sm">• see your rates</p>
+              <p className="text-sm">• book you</p>
+              <p className="text-sm">• pay you</p>
+              <p className="mt-4 text-sm text-white/80">(no messy DMs)</p>
+            </CarouselSlide>
+
+            <CarouselSlide gradient="from-rose-500 to-pink-500">
+              <p className="text-xs text-white/60 mb-2">FANS</p>
+              <p className="font-bold text-lg mb-2">Paid messages &gt; free DMs</p>
+              <p className="text-white/80">Your time has value 💌</p>
+            </CarouselSlide>
+
+            <CarouselSlide gradient="from-red-400 to-pink-500">
+              <p className="mb-4">Tips from supporters 💖</p>
+              <p className="text-white/70 text-sm">No Venmo in bio vibes</p>
+            </CarouselSlide>
+
+            <CarouselSlide gradient="from-violet-600 to-purple-600">
+              <p className="text-white/70">Best 3 pics → IG</p>
+              <p className="font-bold mt-2">Other 20 → EXA only</p>
+              <p className="mt-4 text-sm text-white/80">Your real fans unlock them 🔒</p>
+            </CarouselSlide>
+
+            <CarouselSlide gradient="from-green-500 to-emerald-500">
+              <p className="font-bold mb-4">6 income streams:</p>
+              <div className="grid grid-cols-2 gap-1 text-sm">
+                <p>💝 tips</p>
+                <p>🔒 PPV</p>
+                <p>💬 messages</p>
+                <p>📸 shoots</p>
+                <p>🏷️ brands</p>
+                <p>🎉 events</p>
+              </div>
+            </CarouselSlide>
+
+            <CarouselSlide gradient="from-red-500 to-orange-500">
+              <p className="text-white/70 mb-2">IG views =</p>
+              <p className="text-2xl mb-4">$0</p>
+              <p className="text-white/70 mb-2">EXA fans =</p>
+              <p className="text-2xl">💸💸💸</p>
+            </CarouselSlide>
+
+            <CarouselSlide gradient="from-cyan-500 to-blue-500">
+              <p className="text-xs text-white/60 mb-4">HOW TO START</p>
+              <p className="text-sm mb-1">📸 Upload profile</p>
+              <p className="text-sm mb-1">🖼️ Add 5 photos</p>
+              <p className="text-sm mb-1">🔒 Post 1 PPV</p>
+              <p className="text-sm">🔗 Link in bio</p>
+            </CarouselSlide>
+
+            <CarouselSlide gradient="from-pink-500 to-violet-500">
+              <p className="text-white/70 mb-2">Likes don&apos;t pay rent</p>
+              <p className="text-2xl font-bold mb-4">YOU do 💅</p>
+              <Link href="/apply" className="inline-block mt-2 px-6 py-2 bg-white text-pink-500 rounded-full font-bold text-sm hover:bg-white/90 transition">
+                Join EXA
+              </Link>
+            </CarouselSlide>
+          </div>
+          <div className="flex justify-center gap-1 mt-4">
+            {Array.from({ length: 17 }).map((_, i) => (
+              <div key={i} className="w-1.5 h-1.5 rounded-full bg-pink-500/30" />
+            ))}
+          </div>
+        </div>
+
         {/* Hero */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
@@ -625,6 +767,14 @@ function QuickStartItem({ emoji, text }: { emoji: string; text: string }) {
     <div className="flex items-center gap-3 p-3 bg-background/50 rounded-lg">
       <span className="text-xl">{emoji}</span>
       <span className="font-medium">{text}</span>
+    </div>
+  );
+}
+
+function CarouselSlide({ gradient, children }: { gradient: string; children: React.ReactNode }) {
+  return (
+    <div className={`flex-shrink-0 w-[280px] h-[360px] rounded-2xl bg-gradient-to-br ${gradient} p-6 snap-center flex flex-col justify-center items-center text-center text-white shadow-xl`}>
+      {children}
     </div>
   );
 }

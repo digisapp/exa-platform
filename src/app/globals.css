@@ -404,6 +404,15 @@
   background: linear-gradient(135deg, #FF00FF, #00BFFF);
 }
 
+/* Hide scrollbar utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Selection Color */
 ::selection {
   background: rgba(255, 105, 180, 0.4);
