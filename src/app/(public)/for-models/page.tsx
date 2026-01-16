@@ -25,6 +25,22 @@ import {
   Globe,
   Briefcase,
   Shirt,
+  LayoutDashboard,
+  Image,
+  FileText,
+  Send,
+  CreditCard,
+  UserCircle,
+  Bell,
+  BadgeCheck,
+  Upload,
+  Eye,
+  Coins,
+  BanknoteIcon,
+  Clock,
+  MapPin,
+  ChevronRight,
+  Settings,
 } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -462,6 +478,534 @@ export default async function GuidePage() {
           </div>
         </section>
 
+        {/* ========== PLATFORM GUIDE SECTION ========== */}
+        <div className="border-t border-pink-500/20 pt-16 mb-16">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Platform Guide</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Step-by-step walkthrough of every feature. Learn exactly how to use each part of EXA.
+            </p>
+          </div>
+        </div>
+
+        {/* Dashboard Guide */}
+        <section className="mb-16">
+          <FeatureHeader
+            icon={<LayoutDashboard className="h-6 w-6 text-white" />}
+            title="Dashboard"
+            gradient="from-slate-500 to-zinc-600"
+            path="/dashboard"
+          />
+          <Card className="p-6">
+            <p className="text-muted-foreground mb-6">
+              Your command center. When you log in, this is the first thing you see.
+            </p>
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <FeatureItem
+                icon={<Bell />}
+                title="Pending Bookings"
+                description="See how many booking requests are waiting for your response"
+              />
+              <FeatureItem
+                icon={<Gift />}
+                title="Brand Offers"
+                description="New offers from brands wanting to work with you"
+              />
+              <FeatureItem
+                icon={<Briefcase />}
+                title="Open Gigs"
+                description="Available opportunities you can apply for"
+              />
+              <FeatureItem
+                icon={<TrendingUp />}
+                title="Recent Activity"
+                description="Tips received, coins earned, and milestone updates"
+              />
+            </div>
+          </Card>
+        </section>
+
+        {/* Content Guide */}
+        <section className="mb-16">
+          <FeatureHeader
+            icon={<Image className="h-6 w-6 text-white" />}
+            title="Content"
+            gradient="from-pink-500 to-rose-500"
+            path="/content"
+          />
+          <div className="grid md:grid-cols-2 gap-6">
+            <Card className="p-6">
+              <h4 className="font-bold text-lg mb-4 flex items-center gap-2">
+                <Camera className="h-5 w-5 text-pink-500" />
+                Portfolio (Free)
+              </h4>
+              <p className="text-muted-foreground text-sm mb-4">
+                Your public showcase. These photos appear on your profile for everyone to see.
+              </p>
+              <div className="space-y-3">
+                <Step number={1} text="Go to Content page" />
+                <Step number={2} text="Click the Portfolio tab" />
+                <Step number={3} text="Click Upload or drag photos/videos" />
+                <Step number={4} text="Add optional titles (shows on hover)" />
+                <Step number={5} text="Photos appear on your public profile" />
+              </div>
+              <div className="mt-4 p-3 bg-muted/50 rounded-lg text-sm">
+                <strong>Best for:</strong> Professional shots, headshots, lifestyle photos that showcase your look and brand
+              </div>
+            </Card>
+            <Card className="p-6">
+              <h4 className="font-bold text-lg mb-4 flex items-center gap-2">
+                <Lock className="h-5 w-5 text-violet-500" />
+                PPV Content (Paid)
+              </h4>
+              <p className="text-muted-foreground text-sm mb-4">
+                Exclusive content fans pay to unlock. This is where you monetize.
+              </p>
+              <div className="space-y-3">
+                <Step number={1} text="Go to Content page" />
+                <Step number={2} text="Click the PPV tab" />
+                <Step number={3} text="Click Upload and select your content" />
+                <Step number={4} text="Set your price in coins (e.g., 50 coins = $5)" />
+                <Step number={5} text="Add a title and description" />
+                <Step number={6} text="Fans pay to unlock, you earn coins" />
+              </div>
+              <div className="mt-4 p-3 bg-muted/50 rounded-lg text-sm">
+                <strong>Best for:</strong> Workout tutorials, behind-the-scenes, extended content, exclusive photos
+              </div>
+            </Card>
+          </div>
+        </section>
+
+        {/* Gigs Guide */}
+        <section className="mb-16">
+          <FeatureHeader
+            icon={<Briefcase className="h-6 w-6 text-white" />}
+            title="Gigs"
+            gradient="from-amber-500 to-orange-500"
+            path="/gigs"
+          />
+          <Card className="p-6">
+            <p className="text-muted-foreground mb-6">
+              Open opportunities posted by brands and event organizers. You apply, they select.
+            </p>
+            <div className="grid md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <h4 className="font-bold mb-3">How Gigs Work</h4>
+                <div className="space-y-3">
+                  <Step number={1} text="Browse available gigs on the Gigs page" />
+                  <Step number={2} text="Check details: date, location, compensation, requirements" />
+                  <Step number={3} text="Click Apply if interested" />
+                  <Step number={4} text="Brand reviews applications and selects models" />
+                  <Step number={5} text="If selected, gig appears in your Bookings" />
+                </div>
+              </div>
+              <div>
+                <h4 className="font-bold mb-3">What You&apos;ll See</h4>
+                <div className="space-y-2 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4" /> Location (city/venue or remote)
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" /> Date and time
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Coins className="h-4 w-4" /> Compensation amount
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4" /> Spots available / filled
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4" /> Requirements and description
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+              <p className="text-sm"><strong>Pro tip:</strong> Check the dashboard daily for new gigs. Popular ones fill up fast!</p>
+            </div>
+          </Card>
+        </section>
+
+        {/* Offers Guide */}
+        <section className="mb-16">
+          <FeatureHeader
+            icon={<Gift className="h-6 w-6 text-white" />}
+            title="Offers"
+            gradient="from-violet-500 to-purple-500"
+            path="/offers"
+          />
+          <Card className="p-6">
+            <p className="text-muted-foreground mb-6">
+              Direct invitations from brands. Unlike gigs where you apply, offers come to you.
+            </p>
+            <div className="grid md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <h4 className="font-bold mb-3">How Offers Work</h4>
+                <div className="space-y-3">
+                  <Step number={1} text="Brand discovers your profile" />
+                  <Step number={2} text="They send you a direct offer" />
+                  <Step number={3} text="You see it on your Offers page (and dashboard)" />
+                  <Step number={4} text="Review the details and compensation" />
+                  <Step number={5} text="Accept, Decline, or Counter with different terms" />
+                </div>
+              </div>
+              <div>
+                <h4 className="font-bold mb-3">Your Options</h4>
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3 p-3 bg-green-500/10 rounded-lg">
+                    <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+                    <div>
+                      <div className="font-medium text-sm">Accept</div>
+                      <div className="text-xs text-muted-foreground">Confirm participation as-is</div>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 p-3 bg-red-500/10 rounded-lg">
+                    <span className="h-5 w-5 text-red-500 mt-0.5">✕</span>
+                    <div>
+                      <div className="font-medium text-sm">Decline</div>
+                      <div className="text-xs text-muted-foreground">Pass on this opportunity</div>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 p-3 bg-amber-500/10 rounded-lg">
+                    <MessageCircle className="h-5 w-5 text-amber-500 mt-0.5" />
+                    <div>
+                      <div className="font-medium text-sm">Counter</div>
+                      <div className="text-xs text-muted-foreground">Suggest different rate or terms</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </section>
+
+        {/* Bookings Guide */}
+        <section className="mb-16">
+          <FeatureHeader
+            icon={<Calendar className="h-6 w-6 text-white" />}
+            title="Bookings"
+            gradient="from-blue-500 to-cyan-500"
+            path="/bookings"
+          />
+          <Card className="p-6">
+            <p className="text-muted-foreground mb-6">
+              Manage all your confirmed work - photoshoots, events, brand collaborations.
+            </p>
+            <div className="mb-6">
+              <h4 className="font-bold mb-4">Booking Lifecycle</h4>
+              <div className="flex flex-wrap items-center gap-2 text-sm">
+                <StatusBadge status="Pending" color="amber" />
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                <StatusBadge status="Accepted" color="blue" />
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                <StatusBadge status="Confirmed" color="violet" />
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                <StatusBadge status="Completed" color="green" />
+              </div>
+            </div>
+            <div className="grid md:grid-cols-3 gap-4 mb-6">
+              <div className="p-4 bg-muted/50 rounded-lg">
+                <h5 className="font-medium mb-2">Service Types</h5>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li>• Photoshoot (hourly/half-day/full-day)</li>
+                  <li>• Promo modeling</li>
+                  <li>• Brand ambassador</li>
+                  <li>• Private events</li>
+                  <li>• Meet & greets</li>
+                </ul>
+              </div>
+              <div className="p-4 bg-muted/50 rounded-lg">
+                <h5 className="font-medium mb-2">Actions You Can Take</h5>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li>• Accept or decline requests</li>
+                  <li>• Counter-offer with your rate</li>
+                  <li>• Confirm locked-in bookings</li>
+                  <li>• Mark as complete when done</li>
+                  <li>• Report no-shows</li>
+                </ul>
+              </div>
+              <div className="p-4 bg-muted/50 rounded-lg">
+                <h5 className="font-medium mb-2">Info You&apos;ll See</h5>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li>• Client name and contact</li>
+                  <li>• Date, time, and duration</li>
+                  <li>• Location or venue</li>
+                  <li>• Payment amount in coins</li>
+                  <li>• Special notes/requests</li>
+                </ul>
+              </div>
+            </div>
+          </Card>
+        </section>
+
+        {/* Wallet Guide */}
+        <section className="mb-16">
+          <FeatureHeader
+            icon={<Wallet className="h-6 w-6 text-white" />}
+            title="Wallet"
+            gradient="from-green-500 to-emerald-500"
+            path="/wallet"
+          />
+          <Card className="p-6">
+            <p className="text-muted-foreground mb-6">
+              Your money hub. Track earnings, view transactions, and withdraw to your bank.
+            </p>
+            <div className="grid md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <h4 className="font-bold mb-4">What&apos;s In Your Wallet</h4>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Coins className="h-5 w-5 text-amber-500" />
+                      <span className="font-medium">Coin Balance</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground">Your available coins</span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-5 w-5 text-blue-500" />
+                      <span className="font-medium">Withheld</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground">Pending withdrawal</span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5 text-green-500" />
+                      <span className="font-medium">Earnings Chart</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground">Last 6 months</span>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <h4 className="font-bold mb-4">How to Withdraw</h4>
+                <div className="space-y-3">
+                  <Step number={1} text="Add your bank account (checking or savings)" />
+                  <Step number={2} text="Accumulate at least 500 coins ($50 minimum)" />
+                  <Step number={3} text="Click Request Payout" />
+                  <Step number={4} text="Funds arrive in 2-5 business days" />
+                </div>
+                <div className="mt-4 p-3 bg-green-500/10 border border-green-500/20 rounded-lg text-sm">
+                  <strong>Coin Value:</strong> 1 coin = $0.10 USD
+                  <br />
+                  <span className="text-muted-foreground">500 coins = $50 | 1000 coins = $100</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h4 className="font-bold mb-3">Where Your Coins Come From</h4>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                <EarningSource icon={<Gift />} label="Tips" />
+                <EarningSource icon={<MessageCircle />} label="Messages" />
+                <EarningSource icon={<Lock />} label="PPV Unlocks" />
+                <EarningSource icon={<Calendar />} label="Bookings" />
+                <EarningSource icon={<Play />} label="Video Calls" />
+                <EarningSource icon={<Zap />} label="Voice Calls" />
+              </div>
+            </div>
+          </Card>
+        </section>
+
+        {/* Messages Guide */}
+        <section className="mb-16">
+          <FeatureHeader
+            icon={<MessageCircle className="h-6 w-6 text-white" />}
+            title="Messages"
+            gradient="from-cyan-500 to-teal-500"
+            path="/chats"
+          />
+          <Card className="p-6">
+            <p className="text-muted-foreground mb-6">
+              Chat with fans who pay to message you. Every message they send earns you coins.
+            </p>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <h4 className="font-bold mb-3">How It Works</h4>
+                <div className="space-y-3">
+                  <Step number={1} text="Fan finds your profile" />
+                  <Step number={2} text="They click Message and pay coins" />
+                  <Step number={3} text="You receive the message in your Chats" />
+                  <Step number={4} text="You earn coins for each message received" />
+                  <Step number={5} text="Reply when you want - no pressure" />
+                </div>
+              </div>
+              <div>
+                <h4 className="font-bold mb-3">Tips for Success</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-start gap-2 p-2 bg-muted/50 rounded">
+                    <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                    <span>Respond within 24-48 hours for best engagement</span>
+                  </div>
+                  <div className="flex items-start gap-2 p-2 bg-muted/50 rounded">
+                    <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                    <span>Be personable - fans appreciate real responses</span>
+                  </div>
+                  <div className="flex items-start gap-2 p-2 bg-muted/50 rounded">
+                    <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                    <span>Direct fans to your PPV content when relevant</span>
+                  </div>
+                  <div className="flex items-start gap-2 p-2 bg-muted/50 rounded">
+                    <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                    <span>Set boundaries - you control your availability</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </section>
+
+        {/* Profile Guide */}
+        <section className="mb-16">
+          <FeatureHeader
+            icon={<UserCircle className="h-6 w-6 text-white" />}
+            title="Profile"
+            gradient="from-indigo-500 to-blue-500"
+            path="/profile"
+          />
+          <Card className="p-6">
+            <p className="text-muted-foreground mb-6">
+              Your public face on EXA. This is what brands and fans see when they discover you.
+            </p>
+            <div className="grid md:grid-cols-3 gap-6">
+              <div>
+                <h4 className="font-bold mb-3">Basic Info</h4>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    Profile photo
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    Username (your URL)
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    First and last name
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    Bio / About section
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    Location (optional)
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-bold mb-3">Your Rates</h4>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li className="flex items-center gap-2">
+                    <DollarSign className="h-4 w-4 text-green-500" />
+                    Photoshoot hourly rate
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <DollarSign className="h-4 w-4 text-green-500" />
+                    Promo modeling rate
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <DollarSign className="h-4 w-4 text-green-500" />
+                    Brand ambassador rate
+                  </li>
+                </ul>
+                <p className="text-xs text-muted-foreground mt-3">
+                  Set these on the Rates page. Brands see these when booking.
+                </p>
+              </div>
+              <div>
+                <h4 className="font-bold mb-3">Pro Tips</h4>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li className="flex items-start gap-2">
+                    <Star className="h-4 w-4 text-amber-500 mt-0.5" />
+                    <span>Use a high-quality profile photo</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Star className="h-4 w-4 text-amber-500 mt-0.5" />
+                    <span>Write a bio that shows personality</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Star className="h-4 w-4 text-amber-500 mt-0.5" />
+                    <span>Upload 5-10 portfolio photos minimum</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Star className="h-4 w-4 text-amber-500 mt-0.5" />
+                    <span>Set competitive but fair rates</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </Card>
+        </section>
+
+        {/* Followers Guide */}
+        <section className="mb-16">
+          <FeatureHeader
+            icon={<Users className="h-6 w-6 text-white" />}
+            title="Followers"
+            gradient="from-rose-500 to-pink-500"
+            path="/followers"
+          />
+          <Card className="p-6">
+            <p className="text-muted-foreground mb-6">
+              See everyone who follows you - fans, other models, and brands.
+            </p>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <h4 className="font-bold mb-3">What You&apos;ll See</h4>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li className="flex items-center gap-2">
+                    <Eye className="h-4 w-4" />
+                    Follower name and avatar
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <BadgeCheck className="h-4 w-4" />
+                    Account type (Fan, Model, Brand)
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    When they followed you
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <MessageCircle className="h-4 w-4" />
+                    Quick message button
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-bold mb-3">Growing Your Following</h4>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li>• Share your EXA link on Instagram bio</li>
+                  <li>• Post stories directing fans to EXA</li>
+                  <li>• Mention exclusive content only on EXA</li>
+                  <li>• Engage with fans who message you</li>
+                  <li>• Post consistently to both platforms</li>
+                </ul>
+              </div>
+            </div>
+          </Card>
+        </section>
+
+        {/* Quick Start Checklist */}
+        <section className="mb-16">
+          <Card className="p-8 bg-gradient-to-br from-green-500/10 via-emerald-500/10 to-teal-500/10 border-green-500/20">
+            <h3 className="text-2xl font-bold mb-6 flex items-center gap-3">
+              <BadgeCheck className="h-7 w-7 text-green-500" />
+              Quick Start Checklist
+            </h3>
+            <p className="text-muted-foreground mb-6">Complete these steps to fully set up your EXA profile:</p>
+            <div className="grid md:grid-cols-2 gap-4">
+              <ChecklistItem text="Upload a professional profile photo" />
+              <ChecklistItem text="Write a compelling bio" />
+              <ChecklistItem text="Add 5-10 portfolio photos" />
+              <ChecklistItem text="Set your rates on the Rates page" />
+              <ChecklistItem text="Upload at least one PPV content piece" />
+              <ChecklistItem text="Add your bank account for payouts" />
+              <ChecklistItem text="Link EXA in your Instagram bio" />
+              <ChecklistItem text="Check dashboard daily for opportunities" />
+            </div>
+          </Card>
+        </section>
+
         {/* Bottom Line CTA */}
         <section className="text-center">
           <Card className="p-8 md:p-12 bg-gradient-to-br from-pink-500/20 via-violet-500/20 to-cyan-500/20 border-pink-500/30">
@@ -577,5 +1121,78 @@ function NicheCard({ niche, uses }: { niche: string; uses: string[] }) {
         ))}
       </ul>
     </Card>
+  );
+}
+
+function FeatureHeader({ icon, title, gradient, path }: { icon: React.ReactNode; title: string; gradient: string; path: string }) {
+  return (
+    <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center gap-3">
+        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center`}>
+          {icon}
+        </div>
+        <h3 className="text-2xl font-bold">{title}</h3>
+      </div>
+      <Link href={path} className="text-sm text-pink-500 hover:text-pink-400 flex items-center gap-1">
+        Go to {title} <ArrowRight className="h-4 w-4" />
+      </Link>
+    </div>
+  );
+}
+
+function Step({ number, text }: { number: number; text: string }) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="w-6 h-6 rounded-full bg-pink-500/20 text-pink-500 flex items-center justify-center text-xs font-bold flex-shrink-0">
+        {number}
+      </div>
+      <span className="text-sm text-muted-foreground">{text}</span>
+    </div>
+  );
+}
+
+function FeatureItem({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
+  return (
+    <div className="p-4 bg-muted/50 rounded-lg">
+      <div className="flex items-center gap-2 mb-2">
+        <div className="text-pink-500">{icon}</div>
+        <span className="font-medium text-sm">{title}</span>
+      </div>
+      <p className="text-xs text-muted-foreground">{description}</p>
+    </div>
+  );
+}
+
+function StatusBadge({ status, color }: { status: string; color: string }) {
+  const colorClasses: Record<string, string> = {
+    amber: "bg-amber-500/20 text-amber-500 border-amber-500/30",
+    blue: "bg-blue-500/20 text-blue-500 border-blue-500/30",
+    violet: "bg-violet-500/20 text-violet-500 border-violet-500/30",
+    green: "bg-green-500/20 text-green-500 border-green-500/30",
+  };
+  return (
+    <span className={`px-3 py-1 rounded-full text-xs font-medium border ${colorClasses[color]}`}>
+      {status}
+    </span>
+  );
+}
+
+function EarningSource({ icon, label }: { icon: React.ReactNode; label: string }) {
+  return (
+    <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+      <div className="text-green-500">{icon}</div>
+      <span className="text-sm font-medium">{label}</span>
+    </div>
+  );
+}
+
+function ChecklistItem({ text }: { text: string }) {
+  return (
+    <div className="flex items-center gap-3 p-3 bg-background/50 rounded-lg">
+      <div className="w-5 h-5 rounded border-2 border-green-500/50 flex items-center justify-center">
+        <CheckCircle className="h-3 w-3 text-green-500" />
+      </div>
+      <span className="text-sm">{text}</span>
+    </div>
   );
 }
