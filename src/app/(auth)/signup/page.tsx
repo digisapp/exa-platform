@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Loader2, ArrowLeft, Eye, EyeOff, Instagram, Sparkles, DollarSign, Users } from "lucide-react";
+import { Loader2, ArrowLeft, Eye, EyeOff, Instagram, DollarSign, Users, Sparkles } from "lucide-react";
 import { TikTokIcon } from "@/components/ui/tiktok-icon";
 
 export default function SignupPage() {
@@ -22,7 +22,6 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
   const supabase = createClient();
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -48,10 +47,19 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
-      // Step 1: Create the auth account
+      // Create the auth account with metadata for post-confirmation profile creation
       const { data, error } = await supabase.auth.signUp({
         email: email.toLowerCase().trim(),
         password,
+        options: {
+          data: {
+            signup_type: "model",
+            display_name: name,
+            instagram_username: instagram.replace("@", "").trim(),
+            tiktok_username: tiktok.replace("@", "").trim(),
+          },
+          emailRedirectTo: `${window.location.origin}/auth/callback?type=signup`,
+        },
       });
 
       if (error) {
@@ -74,40 +82,8 @@ export default function SignupPage() {
           throw new Error("This email is already registered. Please sign in or check your email for a confirmation link.");
         }
 
-        // Step 2: Create fan profile (actor + fan records)
-        const fanRes = await fetch("/api/auth/create-fan", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ displayName: name }),
-        });
-
-        const fanData = await fanRes.json();
-
-        if (!fanRes.ok) {
-          // If profile creation fails, show specific error
-          throw new Error(fanData.error || "Failed to create profile");
-        }
-
-        // Step 3: Submit model application
-        const appRes = await fetch("/api/apply", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            instagram_username: instagram.replace("@", "").trim(),
-            tiktok_username: tiktok.replace("@", "").trim(),
-          }),
-        });
-
-        const appData = await appRes.json();
-
-        if (!appRes.ok) {
-          // Application failed but account was created
-          console.error("Application error:", appData.error);
-          throw new Error(appData.error || "Failed to submit application");
-        }
-
-        setSubmitted(true);
-        toast.success("Application submitted! We'll review it soon.");
+        // Redirect to email confirmation page
+        window.location.href = `/confirm-email?email=${encodeURIComponent(email.toLowerCase().trim())}&type=model`;
       }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to create account";
@@ -116,46 +92,6 @@ export default function SignupPage() {
       setLoading(false);
     }
   };
-
-  // Success state
-  if (submitted) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <Link href="/" className="flex justify-center mb-4">
-              <Image
-                src="/exa-logo-white.png"
-                alt="EXA"
-                width={100}
-                height={40}
-                className="h-10 w-auto"
-              />
-            </Link>
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-pink-500/20 to-violet-500/20 flex items-center justify-center">
-              <Sparkles className="h-8 w-8 text-pink-500" />
-            </div>
-            <CardTitle>Application Submitted!</CardTitle>
-            <CardDescription>
-              We&apos;ll review your profile and get back to you within 24-48 hours.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center text-sm text-muted-foreground">
-            <p>Check your email for updates on your application status.</p>
-          </CardContent>
-          <CardFooter className="flex flex-col gap-3">
-            <Button asChild variant="outline" className="w-full">
-              <Link href="/models">Browse Models</Link>
-            </Button>
-            <Link href="/" className="flex items-center justify-center text-sm text-muted-foreground hover:text-primary transition-colors">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to home
-            </Link>
-          </CardFooter>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">

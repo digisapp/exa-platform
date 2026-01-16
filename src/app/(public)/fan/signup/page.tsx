@@ -92,26 +92,25 @@ export default function FanSignupPage() {
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            data: {
+              signup_type: "fan",
+              display_name: displayName.trim() || email.split("@")[0],
+            },
+            emailRedirectTo: `${window.location.origin}/auth/callback?type=signup`,
+          },
         });
 
         if (authError) throw authError;
 
         if (authData.user) {
-          // Create fan profile via API
-          const response = await fetch("/api/auth/create-fan", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ displayName: displayName.trim() || email.split("@")[0] }),
-          });
-
-          const data = await response.json();
-
-          if (!response.ok) {
-            throw new Error(data.error || "Failed to create profile");
+          // Check if user already exists (identities will be empty for existing unconfirmed users)
+          if (authData.user.identities && authData.user.identities.length === 0) {
+            throw new Error("This email is already registered. Please sign in or check your email for a confirmation link.");
           }
 
-          toast.success("Welcome to EXA! You got 10 free coins!");
-          window.location.href = "/models";
+          // Redirect to email confirmation page
+          window.location.href = `/confirm-email?email=${encodeURIComponent(email)}&type=fan`;
         }
       }
     } catch (error: unknown) {
