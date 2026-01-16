@@ -14,6 +14,27 @@ const PROTECTED_PATHS = [
   '/wallet',
   '/gigs',
   '/bookings',
+  '/offers',
+  '/followers',
+  '/following',
+  '/campaigns',
+  '/my-content',
+]
+
+// Routes that require model approval (subset of protected paths)
+const MODEL_APPROVED_PATHS = [
+  '/dashboard',
+  '/content',
+  '/earnings',
+  '/wallet',
+  '/gigs',
+  '/bookings',
+  '/offers',
+  '/followers',
+  '/following',
+  '/campaigns',
+  '/my-content',
+  '/chats',
 ]
 
 export async function updateSession(request: NextRequest) {
@@ -120,6 +141,38 @@ export async function updateSession(request: NextRequest) {
 
     if (actor?.type !== 'admin') {
       return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+  }
+
+  // Check if unapproved model is trying to access restricted pages
+  const isModelApprovedPath = MODEL_APPROVED_PATHS.some(path =>
+    request.nextUrl.pathname.startsWith(path)
+  )
+
+  if (user && isModelApprovedPath) {
+    // Don't redirect if already on pending-approval page
+    if (request.nextUrl.pathname === '/pending-approval') {
+      return response
+    }
+
+    const { data: actor } = await supabase
+      .from('actors')
+      .select('type')
+      .eq('user_id', user.id)
+      .single()
+
+    // Only check for models (fans and brands have different flows)
+    if (actor?.type === 'model') {
+      const { data: model } = await supabase
+        .from('models')
+        .select('is_approved')
+        .eq('user_id', user.id)
+        .single()
+
+      // Redirect unapproved models to pending page
+      if (model && !model.is_approved) {
+        return NextResponse.redirect(new URL('/pending-approval', request.url))
+      }
     }
   }
 
