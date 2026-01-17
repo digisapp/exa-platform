@@ -17,6 +17,7 @@ import { AddToCampaignButton } from "@/components/ui/add-to-campaign-button";
 import { ModelNotesDialog } from "@/components/brands/ModelNotesDialog";
 import { ProfileActionButtons } from "@/components/profile/ProfileActionButtons";
 import { ProfileContentTabs } from "@/components/profile/ProfileContentTabs";
+import { ViewTracker } from "@/components/profile/ViewTracker";
 
 // Reserved paths that should NOT be treated as usernames
 const RESERVED_PATHS = [
@@ -246,6 +247,9 @@ export default async function ModelProfilePage({ params }: Props) {
   return (
     <div className="min-h-screen relative">
       <FloatingOrbs />
+
+      {/* Track profile view */}
+      <ViewTracker modelId={model.id} />
 
       {/* Preview Banner for unapproved profiles (owner or admin viewing) */}
       {!model.is_approved && (isOwner || isAdmin) && (
