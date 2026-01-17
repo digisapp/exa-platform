@@ -14,6 +14,7 @@ import {
   BarChart3,
   Banknote,
   AtSign,
+  Send,
 } from "lucide-react";
 
 export default async function AdminPage() {
@@ -153,6 +154,13 @@ export default async function AdminPage() {
           <Link href="/admin/gigs">
             <Sparkles className="h-6 w-6 text-violet-500" />
             <span>Manage Gigs</span>
+          </Link>
+        </Button>
+
+        <Button variant="outline" asChild className="h-auto py-4 flex-col gap-2">
+          <Link href="/admin/offers">
+            <Send className="h-6 w-6 text-cyan-500" />
+            <span>Brand Offers</span>
           </Link>
         </Button>
       </div>

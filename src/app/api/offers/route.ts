@@ -160,22 +160,27 @@ export async function POST(request: NextRequest) {
       .eq("user_id", user.id)
       .single() as { data: { id: string; type: string } | null };
 
-    if (!actor || actor.type !== "brand") {
-      return NextResponse.json({ error: "Only brands can send offers" }, { status: 403 });
+    const isAdmin = actor?.type === "admin";
+    const isBrand = actor?.type === "brand";
+
+    if (!actor || (!isBrand && !isAdmin)) {
+      return NextResponse.json({ error: "Only brands and admins can send offers" }, { status: 403 });
     }
 
-    // Check subscription
-    const { data: brand } = await (supabase
-      .from("brands") as any)
-      .select("subscription_tier, subscription_status")
-      .eq("id", actor.id)
-      .single();
+    // Check subscription for brands (admins bypass this)
+    if (isBrand) {
+      const { data: brand } = await (supabase
+        .from("brands") as any)
+        .select("subscription_tier, subscription_status")
+        .eq("id", actor.id)
+        .single();
 
-    if (!brand || brand.subscription_tier === "free" || brand.subscription_status !== "active") {
-      return NextResponse.json({
-        error: "Active subscription required to send offers",
-        code: "SUBSCRIPTION_REQUIRED"
-      }, { status: 403 });
+      if (!brand || brand.subscription_tier === "free" || brand.subscription_status !== "active") {
+        return NextResponse.json({
+          error: "Active subscription required to send offers",
+          code: "SUBSCRIPTION_REQUIRED"
+        }, { status: 403 });
+      }
     }
 
     const body = await request.json();
@@ -202,22 +207,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Campaign and title are required" }, { status: 400 });
     }
 
-    // Verify the campaign belongs to this brand
-    const { data: campaign } = await (supabase
+    // Get the campaign
+    const { data: campaign } = await (adminClient
       .from("campaigns") as any)
       .select("id, name, brand_id")
       .eq("id", campaign_id)
       .single();
 
-    if (!campaign || campaign.brand_id !== actor.id) {
+    if (!campaign) {
       return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
     }
+
+    // For brands, verify the campaign belongs to them
+    if (isBrand && campaign.brand_id !== actor.id) {
+      return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
+    }
+
+    // Use the campaign's brand_id for the offer (so admins create on behalf of the brand)
+    const offerBrandId = campaign.brand_id;
 
     // Create the offer
     const { data: offer, error } = await (adminClient
       .from("offers") as any)
       .insert({
-        brand_id: actor.id,
+        brand_id: offerBrandId,
         campaign_id,
         title,
         description,
@@ -257,10 +270,10 @@ export async function POST(request: NextRequest) {
       await (adminClient.from("offer_responses") as any).insert(responses);
 
       // Get brand name for email
-      const { data: brandData } = await (supabase
+      const { data: brandData } = await (adminClient
         .from("brands") as any)
         .select("company_name")
-        .eq("id", actor.id)
+        .eq("id", offerBrandId)
         .single();
       const brandName = brandData?.company_name || "A brand";
 

@@ -19,6 +19,13 @@ import {
   Crown,
   DollarSign,
 } from "lucide-react";
+import { COIN_PACKAGES } from "@/lib/stripe-config";
+
+// Get the USD price for a coin amount (returns cents)
+function getCoinPackagePrice(coins: number): number {
+  const pkg = COIN_PACKAGES.find(p => p.coins === coins);
+  return pkg?.price || 0;
+}
 
 interface Transaction {
   id: string;
@@ -36,6 +43,7 @@ interface TopPurchaser {
   type: string;
   total_purchased: number;
   purchase_count: number;
+  total_usd_cents: number;
 }
 
 export default async function TransactionsPage() {
@@ -128,12 +136,14 @@ export default async function TransactionsPage() {
   const modelMap = new Map(models?.map(m => [m.user_id, m]) || []);
 
   // Calculate top purchasers
-  const purchaserStats = new Map<string, { total: number; count: number }>();
+  const purchaserStats = new Map<string, { total: number; count: number; usdCents: number }>();
   purchaseTransactions?.forEach(p => {
-    const current = purchaserStats.get(p.actor_id) || { total: 0, count: 0 };
+    const current = purchaserStats.get(p.actor_id) || { total: 0, count: 0, usdCents: 0 };
+    const priceCents = getCoinPackagePrice(p.amount);
     purchaserStats.set(p.actor_id, {
       total: current.total + p.amount,
       count: current.count + 1,
+      usdCents: current.usdCents + priceCents,
     });
   });
 
@@ -160,6 +170,7 @@ export default async function TransactionsPage() {
         type: actor?.type || "unknown",
         total_purchased: stats.total,
         purchase_count: stats.count,
+        total_usd_cents: stats.usdCents,
       };
     })
     .sort((a, b) => b.total_purchased - a.total_purchased)
@@ -189,8 +200,9 @@ export default async function TransactionsPage() {
     };
   });
 
-  // Calculate total revenue (coins * $0.01 per coin)
-  const totalRevenue = (purchaseTransactions || []).reduce((sum, p) => sum + p.amount, 0) * 0.01;
+  // Calculate total revenue from actual package prices
+  const totalRevenueCents = (purchaseTransactions || []).reduce((sum, p) => sum + getCoinPackagePrice(p.amount), 0);
+  const totalRevenue = totalRevenueCents / 100;
 
   const getActionIcon = (action: string) => {
     switch (action) {
@@ -405,7 +417,7 @@ export default async function TransactionsPage() {
                           {purchaser.total_purchased.toLocaleString()} coins
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {purchaser.purchase_count} purchase{purchaser.purchase_count !== 1 ? "s" : ""} · ${(purchaser.total_purchased * 0.01).toFixed(2)}
+                          {purchaser.purchase_count} purchase{purchaser.purchase_count !== 1 ? "s" : ""} · ${(purchaser.total_usd_cents / 100).toFixed(2)}
                         </p>
                       </div>
                     </div>
