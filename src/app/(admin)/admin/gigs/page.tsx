@@ -1340,7 +1340,7 @@ export default function AdminGigsPage() {
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-xl">
-                          {app.model?.first_name?.charAt(0) || "?"}
+                          {app.model?.first_name?.charAt(0) || app.model?.username?.charAt(0)?.toUpperCase() || "?"}
                         </div>
                       )}
                     </div>
@@ -1351,11 +1351,15 @@ export default function AdminGigsPage() {
                         rel="noopener noreferrer"
                         className="font-medium hover:text-pink-500"
                       >
-                        {app.model?.first_name} {app.model?.last_name}
+                        {app.model?.first_name || app.model?.last_name
+                          ? `${app.model?.first_name || ''} ${app.model?.last_name || ''}`.trim()
+                          : `@${app.model?.username}`}
                       </Link>
-                      <p className="text-sm text-muted-foreground">
-                        @{app.model?.username}
-                      </p>
+                      {(app.model?.first_name || app.model?.last_name) && (
+                        <p className="text-sm text-muted-foreground">
+                          @{app.model?.username}
+                        </p>
+                      )}
                       <p className="text-xs text-muted-foreground">
                         Applied {new Date(app.applied_at).toLocaleDateString()}
                       </p>
