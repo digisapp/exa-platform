@@ -249,12 +249,13 @@ export default function AdminModelDetailPage() {
             .select("*", { count: "exact", head: true })
             .eq("following_id", actor.id);
 
-          // Total earned (positive coin transactions)
+          // Total earned (exclude purchases - only actual earnings from fans)
           const { data: earnings } = await (supabase
             .from("coin_transactions") as any)
             .select("amount")
             .eq("actor_id", actor.id)
-            .gt("amount", 0);
+            .gt("amount", 0)
+            .neq("action", "purchase");
 
           const totalEarned = earnings?.reduce((sum: number, tx: any) => sum + tx.amount, 0) || 0;
 
@@ -623,7 +624,7 @@ export default function AdminModelDetailPage() {
               <StatCard label="Profile Views" value={model.profile_views || 0} icon={Eye} color="text-purple-500" />
               <StatCard label="Favorites" value={stats.followers_count} icon={Heart} color="text-pink-500" />
               <StatCard label="Coin Balance" value={model.coin_balance || 0} icon={Coins} color="text-yellow-500" />
-              <StatCard label="Coins Earned" value={stats.total_earned} icon={Coins} color="text-yellow-500" />
+              <StatCard label="Earned" value={stats.total_earned} icon={Coins} color="text-yellow-500" />
               <StatCard label="Content Items" value={stats.content_count} icon={Images} color="text-blue-500" />
               <StatCard label="Conversations" value={stats.message_count} icon={MessageCircle} color="text-violet-500" />
               {model.withheld_balance > 0 && (

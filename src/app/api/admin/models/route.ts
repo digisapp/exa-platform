@@ -123,12 +123,13 @@ export async function GET(request: NextRequest) {
       actorIds.length > 0
         ? (supabase.from("follows") as any).select("following_id").in("following_id", actorIds)
         : { data: [] },
-      // Get earnings
+      // Get earnings (exclude purchases - only count actual earnings from fans)
       actorIds.length > 0
         ? (supabase.from("coin_transactions") as any)
             .select("actor_id, amount")
             .in("actor_id", actorIds)
             .gt("amount", 0)
+            .neq("action", "purchase")
         : { data: [] },
       // Get conversation counts
       actorIds.length > 0
