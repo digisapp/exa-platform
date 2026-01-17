@@ -1,5 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+
+// Admin client for password reset
+const adminClient = createAdminClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 // Helper to create fan profile
 async function createFanProfile(supabase: any, userId: string, email: string, displayName: string) {
@@ -45,6 +52,23 @@ async function createFanProfile(supabase: any, userId: string, email: string, di
   });
 
   return actorId;
+}
+
+// Helper to send password reset email for imported models
+async function sendPasswordResetForImportedModel(email: string, origin: string) {
+  try {
+    const { error } = await adminClient.auth.resetPasswordForEmail(email, {
+      redirectTo: `${origin}/auth/callback?type=recovery`,
+    });
+    if (error) {
+      console.error("Password reset error:", error);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error("Password reset error:", error);
+    return false;
+  }
 }
 
 // Helper to create model application
@@ -135,10 +159,10 @@ export async function GET(request: Request) {
 
       // If this is a confirmed signup, create the profile
       if (type === "signup" || signupType) {
-        // First check for legacy model by email
+        // First check for legacy/imported model by email
         if (data.user.email) {
           const { data: modelByEmail } = await (supabase.from("models") as any)
-            .select("id, user_id, is_approved")
+            .select("id, user_id, is_approved, claimed_at")
             .eq("email", data.user.email)
             .is("user_id", null)
             .single();
@@ -146,7 +170,7 @@ export async function GET(request: Request) {
           if (modelByEmail) {
             // Link existing model to user
             await (supabase.from("models") as any)
-              .update({ user_id: data.user.id })
+              .update({ user_id: data.user.id, claimed_at: new Date().toISOString() })
               .eq("id", modelByEmail.id);
 
             await (supabase.from("actors") as any)
@@ -156,10 +180,11 @@ export async function GET(request: Request) {
                 type: "model"
               });
 
-            if (modelByEmail.is_approved) {
-              return NextResponse.redirect(`${origin}/dashboard`);
-            }
-            return NextResponse.redirect(`${origin}/pending-approval`);
+            // This is an imported model - send password reset so they can set their own password
+            await sendPasswordResetForImportedModel(data.user.email, origin);
+
+            // Redirect to set-password page
+            return NextResponse.redirect(`${origin}/auth/set-password`);
           }
         }
 
@@ -200,7 +225,7 @@ export async function GET(request: Request) {
           // Link model to user if not already linked
           if (!modelByEmail.user_id) {
             await (supabase.from("models") as any)
-              .update({ user_id: data.user.id })
+              .update({ user_id: data.user.id, claimed_at: new Date().toISOString() })
               .eq("id", modelByEmail.id);
 
             // Create actor record for this model
@@ -210,6 +235,10 @@ export async function GET(request: Request) {
                 user_id: data.user.id,
                 type: "model"
               });
+
+            // Send password reset for imported model
+            await sendPasswordResetForImportedModel(data.user.email, origin);
+            return NextResponse.redirect(`${origin}/auth/set-password`);
           }
 
           if (modelByEmail.is_approved) {
