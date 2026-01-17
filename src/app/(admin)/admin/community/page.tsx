@@ -1148,7 +1148,7 @@ export default function AdminCommunityPage() {
                           <div className="flex items-center"><Heart className="h-4 w-4 mr-1" />Favorites<SortIndicator active={modelsSortField === "followers_count"} direction={modelsSortDirection} /></div>
                         </TableHead>
                         <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("total_earned")}>
-                          <div className="flex items-center"><DollarSign className="h-4 w-4 mr-1" />Earned<SortIndicator active={modelsSortField === "total_earned"} direction={modelsSortDirection} /></div>
+                          <div className="flex items-center"><Coins className="h-4 w-4 mr-1" />Earned<SortIndicator active={modelsSortField === "total_earned"} direction={modelsSortDirection} /></div>
                         </TableHead>
                       </TableRow>
                     </TableHeader>
@@ -1209,7 +1209,7 @@ export default function AdminCommunityPage() {
                           <TableCell><NewFaceToggle modelId={model.id} isNewFace={model.new_face || false} onToggle={handleNewFaceToggle} /></TableCell>
                           <TableCell><span className={`font-medium ${model.profile_views > 100 ? "text-purple-500" : ""}`}>{(model.profile_views || 0).toLocaleString()}</span></TableCell>
                           <TableCell><span className={`font-medium ${(model.followers_count || 0) > 0 ? "text-pink-500" : ""}`}>{(model.followers_count || 0).toLocaleString()}</span></TableCell>
-                          <TableCell><span className={`font-medium ${(model.total_earned || 0) > 0 ? "text-green-500" : ""}`}>{(model.total_earned || 0).toLocaleString()}</span></TableCell>
+                          <TableCell><span className={`font-medium ${(model.total_earned || 0) > 0 ? "text-yellow-500" : ""}`}>{(model.total_earned || 0).toLocaleString()}</span></TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

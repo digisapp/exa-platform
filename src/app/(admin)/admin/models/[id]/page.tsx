@@ -21,7 +21,6 @@ import {
   Eye,
   Coins,
   Heart,
-  DollarSign,
   Images,
   MessageCircle,
   Star,
@@ -624,7 +623,7 @@ export default function AdminModelDetailPage() {
               <StatCard label="Profile Views" value={model.profile_views || 0} icon={Eye} color="text-purple-500" />
               <StatCard label="Favorites" value={stats.followers_count} icon={Heart} color="text-pink-500" />
               <StatCard label="Coin Balance" value={model.coin_balance || 0} icon={Coins} color="text-yellow-500" />
-              <StatCard label="Total Earned" value={stats.total_earned} icon={DollarSign} color="text-green-500" />
+              <StatCard label="Coins Earned" value={stats.total_earned} icon={Coins} color="text-yellow-500" />
               <StatCard label="Content Items" value={stats.content_count} icon={Images} color="text-blue-500" />
               <StatCard label="Conversations" value={stats.message_count} icon={MessageCircle} color="text-violet-500" />
               {model.withheld_balance > 0 && (
