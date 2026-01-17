@@ -55,6 +55,39 @@ export async function POST(request: NextRequest) {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
+    const normalizedInstagram = instagram_username?.replace("@", "").trim().toLowerCase();
+
+    // Check for Instagram duplicate in existing models (claimed accounts only)
+    if (normalizedInstagram) {
+      const { data: existingModelByInsta } = await (adminClient
+        .from("models") as any)
+        .select("id, email, user_id")
+        .ilike("instagram_name", normalizedInstagram)
+        .not("user_id", "is", null)  // Only check claimed models
+        .single();
+
+      if (existingModelByInsta && existingModelByInsta.email?.toLowerCase() !== normalizedEmail) {
+        return NextResponse.json(
+          { error: "This Instagram handle is already registered with a different email. Please use the email associated with your Instagram, or contact support." },
+          { status: 400 }
+        );
+      }
+
+      // Check for Instagram duplicate in pending applications
+      const { data: existingAppByInsta } = await (adminClient
+        .from("model_applications") as any)
+        .select("id, email")
+        .ilike("instagram_username", normalizedInstagram)
+        .eq("status", "pending")
+        .single();
+
+      if (existingAppByInsta && existingAppByInsta.email?.toLowerCase() !== normalizedEmail) {
+        return NextResponse.json(
+          { error: "This Instagram handle already has a pending application with a different email." },
+          { status: 400 }
+        );
+      }
+    }
 
     // Check if email already exists in auth
     const { data: existingUsers } = await adminClient.auth.admin.listUsers();

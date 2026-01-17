@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, CheckCircle, Clock } from "lucide-react";
+import { Loader2, CheckCircle, Clock, Mail, Search, Sparkles } from "lucide-react";
 import Image from "next/image";
 
 interface ModelSignupDialogProps {
@@ -31,6 +31,12 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [isImportedModel, setIsImportedModel] = useState(false);
+  const [checkingEmail, setCheckingEmail] = useState(false);
+  const [importedModelInfo, setImportedModelInfo] = useState<{
+    name: string;
+    instagram: string;
+  } | null>(null);
 
   const [name, setName] = useState("");
   const [instagram, setInstagram] = useState("");
@@ -46,6 +52,37 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
     "6'0\"", "6'1\"", "6'2\"", "6'3\"", "6'4\"", "6'5\"", "6'6\"", "6'7\"", "6'8\"", "6'9\"", "6'10\"", "6'11\"",
     "7'0\""
   ];
+
+  // Check if email belongs to an imported model
+  const checkImportedModel = async (emailToCheck: string) => {
+    if (!emailToCheck || !emailToCheck.includes("@")) return;
+
+    setCheckingEmail(true);
+    try {
+      const res = await fetch(`/api/auth/check-imported?email=${encodeURIComponent(emailToCheck.toLowerCase().trim())}`);
+      const data = await res.json();
+
+      if (data.isImported) {
+        setIsImportedModel(true);
+        setImportedModelInfo({
+          name: data.name || "",
+          instagram: data.instagram || "",
+        });
+        // Pre-fill name and instagram if available
+        if (data.name && !name) setName(data.name);
+        if (data.instagram && !instagram) setInstagram(data.instagram);
+      } else {
+        setIsImportedModel(false);
+        setImportedModelInfo(null);
+      }
+    } catch (error) {
+      // Silently fail - not critical
+      setIsImportedModel(false);
+      setImportedModelInfo(null);
+    } finally {
+      setCheckingEmail(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,6 +173,8 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
     // Reset form after close animation
     setTimeout(() => {
       setSubmitted(false);
+      setIsImportedModel(false);
+      setImportedModelInfo(null);
       setName("");
       setInstagram("");
       setEmail("");
@@ -158,15 +197,53 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
               <CheckCircle className="h-8 w-8 text-green-500" />
             </div>
             <DialogHeader className="text-center">
-              <DialogTitle className="text-xl">Application Submitted!</DialogTitle>
-              <DialogDescription className="text-base mt-2">
-                We&apos;ll review your profile and get back to you within 24 hours.
-                Check your email for updates!
-              </DialogDescription>
+              <DialogTitle className="text-xl">
+                {isImportedModel ? "Welcome Back!" : "Application Submitted!"}
+              </DialogTitle>
             </DialogHeader>
+
+            <div className="mt-4 space-y-3 text-left">
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                <Mail className="h-5 w-5 text-pink-500 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-medium text-sm">Check your email</p>
+                  <p className="text-xs text-muted-foreground">
+                    Confirm your account to continue
+                  </p>
+                </div>
+              </div>
+
+              {!isImportedModel && (
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                  <Search className="h-5 w-5 text-amber-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-sm">We&apos;ll review within 24 hours</p>
+                    <p className="text-xs text-muted-foreground">
+                      We check your Instagram to verify
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                <Sparkles className="h-5 w-5 text-violet-500 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-medium text-sm">
+                    {isImportedModel ? "Your profile is ready!" : "You'll receive an email when approved"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {isImportedModel
+                      ? "Sign in after confirming to access your dashboard"
+                      : "Then you'll get full model access"
+                    }
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <Button
               onClick={handleClose}
-              className="mt-6 bg-gradient-to-r from-pink-500 to-violet-500"
+              className="mt-6 w-full bg-gradient-to-r from-pink-500 to-violet-500"
             >
               Got it!
             </Button>
@@ -214,15 +291,39 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
 
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={loading}
-                  required
-                />
+                <div className="relative">
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      // Reset imported status when email changes
+                      if (isImportedModel) {
+                        setIsImportedModel(false);
+                        setImportedModelInfo(null);
+                      }
+                    }}
+                    onBlur={(e) => checkImportedModel(e.target.value)}
+                    disabled={loading}
+                    required
+                  />
+                  {checkingEmail && (
+                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                  )}
+                </div>
+                {isImportedModel && importedModelInfo && (
+                  <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30 text-sm">
+                    <p className="font-medium text-green-500 flex items-center gap-2">
+                      <Sparkles className="h-4 w-4" />
+                      Welcome back{importedModelInfo.name ? `, ${importedModelInfo.name.split(" ")[0]}` : ""}!
+                    </p>
+                    <p className="text-muted-foreground text-xs mt-1">
+                      We have your profile ready. Complete signup to claim your account.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
