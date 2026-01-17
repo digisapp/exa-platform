@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,8 +46,6 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
     "6'0\"", "6'1\"", "6'2\"", "6'3\"", "6'4\"", "6'5\"", "6'6\"", "6'7\"", "6'8\"", "6'9\"", "6'10\"", "6'11\"",
     "7'0\""
   ];
-
-  const supabase = createClient();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,63 +99,13 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
     setLoading(true);
 
     try {
-      // Generate a random password for the user (they can reset later)
-      const tempPassword = Math.random().toString(36).slice(-12) + "Aa1!";
-
-      // Step 1: Create auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: email.toLowerCase().trim(),
-        password: tempPassword,
-      });
-
-      if (authError) {
-        // Check if user already exists
-        if (authError.message.includes("already registered") || authError.message.includes("already been registered")) {
-          toast.error("This email is already registered. Please sign in instead.");
-          setLoading(false);
-          return;
-        }
-        if (authError.message.includes("Database error")) {
-          toast.error("This email may already be registered. Try signing in, or use a different email.");
-          setLoading(false);
-          return;
-        }
-        if (authError.message.includes("rate limit")) {
-          toast.error("Too many attempts. Please wait a moment and try again.");
-          setLoading(false);
-          return;
-        }
-        throw authError;
-      }
-
-      if (!authData.user) {
-        throw new Error("Failed to create account");
-      }
-
-      // Check if user already exists (identities will be empty for existing unconfirmed users)
-      if (authData.user.identities && authData.user.identities.length === 0) {
-        toast.error("This email is already registered. Please sign in or check your email.");
-        setLoading(false);
-        return;
-      }
-
-      // Step 2: Create fan profile via API (handles actor + fan + bonus)
-      const fanRes = await fetch("/api/auth/create-fan", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ displayName: name.trim() }),
-      });
-
-      if (!fanRes.ok) {
-        const fanData = await fanRes.json();
-        throw new Error(fanData.error || "Failed to create profile");
-      }
-
-      // Step 3: Create model application via API
-      const appRes = await fetch("/api/apply", {
+      // Use combined signup endpoint that handles everything
+      const res = await fetch("/api/auth/model-signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          name: name.trim(),
+          email: email.toLowerCase().trim(),
           instagram_username: instagram.trim().replace("@", ""),
           tiktok_username: "",
           phone: phone.trim() || null,
@@ -167,13 +114,14 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
         }),
       });
 
-      if (!appRes.ok) {
-        const appData = await appRes.json();
-        throw new Error(appData.error || "Failed to submit application");
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to submit application");
       }
 
       setSubmitted(true);
-      toast.success("Application submitted!");
+      toast.success(data.message || "Application submitted!");
 
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Something went wrong";
