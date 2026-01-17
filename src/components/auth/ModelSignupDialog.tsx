@@ -238,7 +238,7 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {isImportedModel
-                      ? "Sign in after confirming to access your dashboard"
+                      ? "After confirming, you'll set your password and access your dashboard"
                       : "Then you'll get full model access"
                     }
                   </p>
