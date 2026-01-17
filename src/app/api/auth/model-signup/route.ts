@@ -8,6 +8,21 @@ const adminClient = createAdminClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+// Helper to send password reset for imported models
+async function sendPasswordResetEmail(email: string) {
+  try {
+    // Get the origin from environment or default
+    const origin = process.env.NEXT_PUBLIC_SITE_URL || "https://www.examodels.com";
+    await adminClient.auth.resetPasswordForEmail(email, {
+      redirectTo: `${origin}/auth/callback?type=recovery`,
+    });
+    return true;
+  } catch (error) {
+    console.error("Password reset email error:", error);
+    return false;
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -127,7 +142,7 @@ export async function POST(request: NextRequest) {
       }
 
       // User exists but no application - create one
-      await createFanAndApplication(
+      const wasImported = await createFanAndApplication(
         existingUser.id,
         normalizedEmail,
         name.trim(),
@@ -140,7 +155,10 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        message: "Application submitted! Please check your email to confirm your account.",
+        message: wasImported
+          ? "Welcome back! Please check your email to confirm your account."
+          : "Application submitted! Please check your email to confirm your account.",
+        isImported: wasImported,
       });
     }
 
@@ -187,7 +205,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Step 2: Create fan profile and application using admin client
-    await createFanAndApplication(
+    const wasImported = await createFanAndApplication(
       authData.user.id,
       normalizedEmail,
       name.trim(),
@@ -200,7 +218,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "Application submitted! Please check your email to confirm your account.",
+      message: wasImported
+        ? "Welcome back! Please check your email to confirm your account."
+        : "Application submitted! Please check your email to confirm your account.",
+      isImported: wasImported,
     });
 
   } catch (error) {
@@ -221,7 +242,7 @@ async function createFanAndApplication(
   phone: string | null,
   dateOfBirth: string | null,
   height: string | null
-) {
+): Promise<boolean> {
   // Check for existing model record with this email (from imports)
   const { data: existingModel } = await (adminClient
     .from("models") as any)
@@ -252,7 +273,10 @@ async function createFanAndApplication(
         .eq("user_id", userId);
     }
 
-    return; // Model already exists, no need for application
+    // Send password reset email so they can set their own password after confirming
+    await sendPasswordResetEmail(email);
+
+    return true; // Was imported model
   }
 
   // Create actor record
@@ -296,7 +320,7 @@ async function createFanAndApplication(
     .single();
 
   if (existingApp) {
-    return; // Already has an application
+    return false; // Already has an application, not imported
   }
 
   // Create model application
@@ -313,4 +337,6 @@ async function createFanAndApplication(
       height: height || null,
       status: "pending",
     });
+
+  return false; // New application, not imported
 }

@@ -157,6 +157,11 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
         throw new Error(data.error || "Failed to submit application");
       }
 
+      // Update imported status from API response (in case email check was bypassed)
+      if (data.isImported) {
+        setIsImportedModel(true);
+      }
+
       setSubmitted(true);
       toast.success(data.message || "Application submitted!");
 

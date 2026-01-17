@@ -127,11 +127,25 @@ export async function GET(request: Request) {
           case "admin":
             return NextResponse.redirect(`${origin}/admin`);
           case "model":
-            // Check if model is approved
+            // Check if model is approved and if this is a fresh signup confirmation
             const { data: model } = await (supabase.from("models") as any)
-              .select("id, is_approved")
+              .select("id, is_approved, claimed_at")
               .eq("user_id", data.user.id)
               .single();
+
+            // If this is a signup confirmation and the model was just claimed (imported model),
+            // redirect to set-password page so they can set their password
+            if (type === "signup" && model?.claimed_at) {
+              const claimedAt = new Date(model.claimed_at);
+              const now = new Date();
+              const minutesSinceClaim = (now.getTime() - claimedAt.getTime()) / (1000 * 60);
+
+              // If claimed within the last 10 minutes, this is likely a fresh import claim
+              if (minutesSinceClaim < 10) {
+                return NextResponse.redirect(`${origin}/auth/set-password`);
+              }
+            }
+
             if (model?.is_approved) {
               return NextResponse.redirect(`${origin}/dashboard`);
             }
