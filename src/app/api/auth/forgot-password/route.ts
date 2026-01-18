@@ -1,13 +1,13 @@
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
-import { rateLimit, getClientIP } from "@/lib/rate-limit";
+import { rateLimitAsync, getClientIP } from "@/lib/rate-limit";
 import { sendPasswordResetEmail } from "@/lib/email";
 
 export async function POST(request: Request) {
   try {
     // Rate limit: 3 requests per 60 seconds per IP
     const clientIP = getClientIP(request);
-    const rateLimitResult = rateLimit(`forgot-password:${clientIP}`, {
+    const rateLimitResult = await rateLimitAsync(`forgot-password:${clientIP}`, {
       limit: 3,
       windowSeconds: 60,
     });

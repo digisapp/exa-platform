@@ -1,12 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
-import { rateLimit, getClientIP } from "@/lib/rate-limit";
+import { rateLimitAsync, getClientIP } from "@/lib/rate-limit";
 
 export async function DELETE(request: Request) {
   try {
     // Rate limit: 5 requests per 5 minutes per IP (account deletion is sensitive)
     const clientIP = getClientIP(request);
-    const rateLimitResult = rateLimit(`delete-account:${clientIP}`, {
+    const rateLimitResult = await rateLimitAsync(`delete-account:${clientIP}`, {
       limit: 5,
       windowSeconds: 300,
     });

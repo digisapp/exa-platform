@@ -1,7 +1,7 @@
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { sendEmailConfirmationEmail } from "@/lib/email";
-import { rateLimit, getClientIP } from "@/lib/rate-limit";
+import { rateLimitAsync, getClientIP } from "@/lib/rate-limit";
 
 // Admin client to generate links
 const adminClient = createAdminClient(
@@ -13,7 +13,7 @@ export async function POST(request: Request) {
   try {
     // Rate limit: 3 requests per 60 seconds per IP
     const clientIP = getClientIP(request);
-    const rateLimitResult = rateLimit(`send-confirmation:${clientIP}`, {
+    const rateLimitResult = await rateLimitAsync(`send-confirmation:${clientIP}`, {
       limit: 3,
       windowSeconds: 60,
     });
