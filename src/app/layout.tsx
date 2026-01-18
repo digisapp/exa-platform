@@ -17,7 +17,10 @@ export const metadata: Metadata = {
   description: "Join shows, travel experiences, and build your modeling career. The community platform where models grow.",
   keywords: ["models", "fashion", "runway", "modeling agency", "casting", "fashion shows"],
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", type: "image/x-icon" },
+    ],
     apple: "/apple-icon.png",
   },
   openGraph: {
