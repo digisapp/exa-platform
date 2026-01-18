@@ -186,6 +186,21 @@ export default function ClaimPage() {
         // Don't fail - actor might already exist
       }
 
+      // Send our custom confirmation email via Resend (more reliable than Supabase SMTP)
+      try {
+        await fetch("/api/auth/send-confirmation", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: model.email,
+            displayName: model.first_name || username,
+            signupType: "model",
+          }),
+        });
+      } catch {
+        // Non-blocking
+      }
+
       toast.success("Profile claimed! Welcome to EXA!");
 
       // Sign in the user

@@ -1838,6 +1838,258 @@ export async function sendOfferReminderEmail({
 // COIN BALANCE REMINDER EMAIL
 // ============================================
 
+// ============================================
+// EMAIL CONFIRMATION EMAIL
+// ============================================
+
+export async function sendEmailConfirmationEmail({
+  to,
+  confirmUrl,
+  displayName,
+  signupType = "fan",
+}: {
+  to: string;
+  confirmUrl: string;
+  displayName?: string;
+  signupType?: "fan" | "model" | "brand";
+}) {
+  try {
+    const resend = getResendClient();
+    const greeting = displayName ? `Hey ${displayName}!` : "Hey there!";
+    const typeLabel = signupType === "model" ? "model" : signupType === "brand" ? "brand" : "fan";
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      subject: "Confirm Your EXA Models Email",
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 40px 30px; text-align: center;">
+              <h1 style="margin: 0; color: white; font-size: 28px; font-weight: bold;">
+                Welcome to EXA Models!
+              </h1>
+              <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
+                Just one more step to get started
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
+                ${greeting} 👋
+              </p>
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                Thanks for signing up as a ${typeLabel} on EXA Models! Click the button below to confirm your email and activate your account:
+              </p>
+
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+                <tr>
+                  <td align="center">
+                    <a href="${confirmUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: 600; font-size: 18px;">
+                      Confirm Email
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- What's next -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
+                <tr>
+                  <td style="padding: 15px; background-color: #262626; border-radius: 8px; border-left: 3px solid #8b5cf6;">
+                    <p style="margin: 0 0 8px; color: #c4b5fd; font-size: 14px; font-weight: 600;">What's next?</p>
+                    <p style="margin: 0; color: #a1a1aa; font-size: 14px; line-height: 1.5;">
+                      ${signupType === "model"
+                        ? "After confirming, our team will review your application. You'll get an email once you're approved!"
+                        : "After confirming, you can start browsing models, sending messages, and supporting your favorites!"
+                      }
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Expiry Notice -->
+              <p style="margin: 0 0 20px; color: #71717a; font-size: 13px; line-height: 1.5;">
+                This link will expire in 24 hours. If you didn't create an account on EXA Models, you can safely ignore this email.
+              </p>
+
+              <!-- Fallback Link -->
+              <p style="margin: 0; color: #71717a; font-size: 13px; line-height: 1.5;">
+                If the button doesn't work, copy and paste this link into your browser:
+              </p>
+              <p style="margin: 10px 0 0; color: #a1a1aa; font-size: 12px; word-break: break-all;">
+                ${confirmUrl}
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 30px; border-top: 1px solid #262626; text-align: center;">
+              <p style="margin: 0 0 10px; color: #a1a1aa; font-size: 14px;">
+                Questions? Reply to this email or DM us on Instagram
+              </p>
+              <p style="margin: 0; color: #71717a; font-size: 12px;">
+                EXA Models - Where Models Shine
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      console.error("Resend error:", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error("Email send error:", error);
+    return { success: false, error };
+  }
+}
+
+// ============================================
+// PASSWORD RESET EMAIL
+// ============================================
+
+export async function sendPasswordResetEmail({
+  to,
+  resetUrl,
+}: {
+  to: string;
+  resetUrl: string;
+}) {
+  try {
+    const resend = getResendClient();
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      subject: "Reset Your EXA Models Password",
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 40px 30px; text-align: center;">
+              <h1 style="margin: 0; color: white; font-size: 28px; font-weight: bold;">
+                Reset Your Password
+              </h1>
+              <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
+                Let's get you back in
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
+                Hey there! 👋
+              </p>
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                We received a request to reset your password. Click the button below to create a new password:
+              </p>
+
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+                <tr>
+                  <td align="center">
+                    <a href="${resetUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: 600; font-size: 18px;">
+                      Reset Password
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Security Notice -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
+                <tr>
+                  <td style="padding: 15px; background-color: #262626; border-radius: 8px; border-left: 3px solid #f59e0b;">
+                    <p style="margin: 0 0 8px; color: #fcd34d; font-size: 14px; font-weight: 600;">Security Notice</p>
+                    <p style="margin: 0; color: #a1a1aa; font-size: 14px; line-height: 1.5;">
+                      This link will expire in 1 hour. If you didn't request a password reset, you can safely ignore this email.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Fallback Link -->
+              <p style="margin: 0; color: #71717a; font-size: 13px; line-height: 1.5;">
+                If the button doesn't work, copy and paste this link into your browser:
+              </p>
+              <p style="margin: 10px 0 0; color: #a1a1aa; font-size: 12px; word-break: break-all;">
+                ${resetUrl}
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 30px; border-top: 1px solid #262626; text-align: center;">
+              <p style="margin: 0 0 10px; color: #a1a1aa; font-size: 14px;">
+                Need help? Reply to this email or DM us on Instagram
+              </p>
+              <p style="margin: 0; color: #71717a; font-size: 12px;">
+                EXA Models - Where Models Shine
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      console.error("Resend error:", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error("Email send error:", error);
+    return { success: false, error };
+  }
+}
+
 export async function sendCoinBalanceReminderEmail({
   to,
   modelName,

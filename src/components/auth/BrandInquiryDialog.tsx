@@ -135,6 +135,21 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
         throw new Error(data.error || "Failed to create brand profile");
       }
 
+      // Send our custom confirmation email via Resend (more reliable than Supabase SMTP)
+      try {
+        await fetch("/api/auth/send-confirmation", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: email.toLowerCase().trim(),
+            displayName: contactName.trim(),
+            signupType: "brand",
+          }),
+        });
+      } catch {
+        // Non-blocking
+      }
+
       setSubmitted(true);
       toast.success("Application submitted!");
 

@@ -151,6 +151,21 @@ export function FanSignupDialog({ children }: FanSignupDialogProps) {
         metadata: { reason: "Welcome bonus for new fan signup" },
       });
 
+      // Send our custom confirmation email via Resend (more reliable than Supabase SMTP)
+      try {
+        await fetch("/api/auth/send-confirmation", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: email.toLowerCase().trim(),
+            displayName: cleanUsername,
+            signupType: "fan",
+          }),
+        });
+      } catch {
+        // Non-blocking
+      }
+
       setSubmitted(true);
       toast.success("Welcome to EXA! You got 10 free coins!");
 

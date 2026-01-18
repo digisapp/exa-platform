@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+import { sendPasswordResetEmail as sendCustomPasswordResetEmail } from "@/lib/email";
 
 // Admin client to bypass RLS
 const adminClient = createAdminClient(
@@ -8,14 +9,38 @@ const adminClient = createAdminClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// Helper to send password reset for imported models
-async function sendPasswordResetEmail(email: string) {
+// Helper to send password reset for imported models via Resend
+async function sendPasswordResetEmailForImportedModel(email: string) {
   try {
-    // Get the origin from environment or default
     const origin = process.env.NEXT_PUBLIC_SITE_URL || "https://www.examodels.com";
-    await adminClient.auth.resetPasswordForEmail(email, {
-      redirectTo: `${origin}/auth/callback?type=recovery`,
+
+    // Generate the reset link using admin API (doesn't send email)
+    const { data, error } = await adminClient.auth.admin.generateLink({
+      type: "recovery",
+      email: email,
+      options: {
+        redirectTo: `${origin}/auth/reset-password`,
+      },
     });
+
+    if (error) {
+      console.error("Generate link error:", error);
+      return false;
+    }
+
+    // Send our custom email via Resend
+    if (data?.properties?.action_link) {
+      const emailResult = await sendCustomPasswordResetEmail({
+        to: email,
+        resetUrl: data.properties.action_link,
+      });
+
+      if (!emailResult.success) {
+        console.error("Failed to send password reset email:", emailResult.error);
+        return false;
+      }
+    }
+
     return true;
   } catch (error) {
     console.error("Password reset email error:", error);
@@ -216,6 +241,37 @@ export async function POST(request: NextRequest) {
       height
     );
 
+    // Step 3: Send custom confirmation email via Resend (if not imported - imported models get password reset email)
+    if (!wasImported) {
+      try {
+        const origin = process.env.NEXT_PUBLIC_SITE_URL || "https://www.examodels.com";
+        const redirectUrl = `${origin}/auth/callback?type=signup`;
+
+        // Generate confirmation link
+        const { data: linkData } = await adminClient.auth.admin.generateLink({
+          type: "magiclink",
+          email: normalizedEmail,
+          options: {
+            redirectTo: redirectUrl,
+          },
+        });
+
+        // Send custom email via Resend
+        if (linkData?.properties?.action_link) {
+          const { sendEmailConfirmationEmail } = await import("@/lib/email");
+          await sendEmailConfirmationEmail({
+            to: normalizedEmail,
+            confirmUrl: linkData.properties.action_link,
+            displayName: name.trim(),
+            signupType: "model",
+          });
+        }
+      } catch (emailError) {
+        // Non-blocking - Supabase's email is a backup
+        console.error("Failed to send custom confirmation email:", emailError);
+      }
+    }
+
     return NextResponse.json({
       success: true,
       message: wasImported
@@ -274,7 +330,7 @@ async function createFanAndApplication(
     }
 
     // Send password reset email so they can set their own password after confirming
-    await sendPasswordResetEmail(email);
+    await sendPasswordResetEmailForImportedModel(email);
 
     return true; // Was imported model
   }

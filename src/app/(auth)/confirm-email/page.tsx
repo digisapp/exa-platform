@@ -7,7 +7,6 @@ import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mail, ArrowLeft, RefreshCw, Loader2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
 function ConfirmEmailContent() {
@@ -16,20 +15,26 @@ function ConfirmEmailContent() {
   const type = searchParams.get("type") || "fan"; // "model" or "fan"
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
-  const supabase = createClient();
 
   const handleResendEmail = async () => {
     if (!email || resending) return;
 
     setResending(true);
     try {
-      const { error } = await supabase.auth.resend({
-        type: "signup",
-        email: email,
+      // Use our custom Resend endpoint instead of Supabase's email
+      const response = await fetch("/api/auth/send-confirmation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          signupType: type,
+        }),
       });
 
-      if (error) {
-        toast.error(error.message);
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data.error || "Failed to send email");
       } else {
         setResent(true);
         toast.success("Confirmation email sent!");

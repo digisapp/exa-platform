@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { sendPasswordResetEmail } from "@/lib/email";
 
 // Admin client for password reset
 const adminClient = createAdminClient(
@@ -57,13 +58,33 @@ async function createFanProfile(supabase: any, userId: string, email: string, di
 // Helper to send password reset email for imported models
 async function sendPasswordResetForImportedModel(email: string, origin: string) {
   try {
-    const { error } = await adminClient.auth.resetPasswordForEmail(email, {
-      redirectTo: `${origin}/auth/callback?type=recovery`,
+    // Generate the reset link using admin API (doesn't send email)
+    const { data, error } = await adminClient.auth.admin.generateLink({
+      type: "recovery",
+      email: email,
+      options: {
+        redirectTo: `${origin}/auth/reset-password`,
+      },
     });
+
     if (error) {
-      console.error("Password reset error:", error);
+      console.error("Generate link error:", error);
       return false;
     }
+
+    // Send our custom email via Resend
+    if (data?.properties?.action_link) {
+      const emailResult = await sendPasswordResetEmail({
+        to: email,
+        resetUrl: data.properties.action_link,
+      });
+
+      if (!emailResult.success) {
+        console.error("Failed to send password reset email:", emailResult.error);
+        return false;
+      }
+    }
+
     return true;
   } catch (error) {
     console.error("Password reset error:", error);

@@ -82,6 +82,21 @@ export default function SignupPage() {
           throw new Error("This email is already registered. Please sign in or check your email for a confirmation link.");
         }
 
+        // Send our custom confirmation email via Resend (more reliable than Supabase SMTP)
+        try {
+          await fetch("/api/auth/send-confirmation", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: email.toLowerCase().trim(),
+              displayName: displayName.trim() || instagram.replace("@", "").trim() || tiktok.replace("@", "").trim() || email.split("@")[0],
+              signupType: "model",
+            }),
+          });
+        } catch {
+          // Non-blocking - Supabase's email is a backup
+        }
+
         // Redirect to email confirmation page
         window.location.href = `/confirm-email?email=${encodeURIComponent(email.toLowerCase().trim())}&type=model`;
       }
