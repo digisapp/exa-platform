@@ -434,27 +434,77 @@ export function ProfileActionButtons({
 
       {/* Auth Dialog */}
       <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
-        <DialogContent className="sm:max-w-md">
-          <div className="flex flex-col items-center text-center pt-4">
+        <DialogContent className="sm:max-w-md p-0 overflow-hidden">
+          {/* Gradient Header */}
+          <div className="bg-gradient-to-r from-pink-500 to-violet-500 px-6 py-8 text-white text-center">
             <img
               src="/exa-logo-white.png"
               alt="EXA"
-              className="h-10 w-auto mb-6"
+              className="h-8 w-auto mx-auto mb-4"
             />
-            <DialogHeader className="text-center">
-              <DialogTitle className="text-xl font-bold">
-                Sign in required
-              </DialogTitle>
-            </DialogHeader>
-            <div className="flex flex-col gap-3 pt-6 w-full">
-              <Link href="/signin" className="w-full">
-                <Button className="w-full exa-gradient-button">
-                  Sign In
+            <h2 className="text-2xl font-bold mb-2">Connect with {modelUsername}</h2>
+            <p className="text-white/80 text-sm">
+              Create a free account to unlock exclusive access
+            </p>
+          </div>
+
+          {/* Features */}
+          <div className="px-6 py-5 space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-pink-500/10 border border-pink-500/20">
+                <div className="p-2 rounded-full bg-pink-500/20">
+                  <Video className="h-4 w-4 text-pink-500" />
+                </div>
+                <div>
+                  <p className="font-semibold text-sm">Video Call</p>
+                  <p className="text-xs text-muted-foreground">Face-to-face</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-violet-500/10 border border-violet-500/20">
+                <div className="p-2 rounded-full bg-violet-500/20">
+                  <MessageCircle className="h-4 w-4 text-violet-500" />
+                </div>
+                <div>
+                  <p className="font-semibold text-sm">Direct Chat</p>
+                  <p className="text-xs text-muted-foreground">Private messages</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                <div className="p-2 rounded-full bg-blue-500/20">
+                  <Phone className="h-4 w-4 text-blue-500" />
+                </div>
+                <div>
+                  <p className="font-semibold text-sm">Voice Call</p>
+                  <p className="text-xs text-muted-foreground">Talk directly</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+                <div className="p-2 rounded-full bg-yellow-500/20">
+                  <Gift className="h-4 w-4 text-yellow-500" />
+                </div>
+                <div>
+                  <p className="font-semibold text-sm">Send Tips</p>
+                  <p className="text-xs text-muted-foreground">Show support</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="text-center py-2">
+              <p className="text-xs text-muted-foreground">
+                Join thousands of fans connecting with their favorite models
+              </p>
+            </div>
+
+            {/* Buttons */}
+            <div className="flex flex-col gap-3">
+              <Link href="/fan/signup" className="w-full">
+                <Button className="w-full h-12 text-base exa-gradient-button">
+                  Create Free Account
                 </Button>
               </Link>
-              <Link href="/fan/signup" className="w-full">
-                <Button variant="outline" className="w-full">
-                  Create Account
+              <Link href="/signin" className="w-full">
+                <Button variant="ghost" className="w-full text-muted-foreground">
+                  Already have an account? <span className="text-pink-500 ml-1">Sign In</span>
                 </Button>
               </Link>
             </div>
