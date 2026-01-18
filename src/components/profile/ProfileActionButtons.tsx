@@ -442,10 +442,7 @@ export function ProfileActionButtons({
               alt="EXA"
               className="h-8 w-auto mx-auto mb-4"
             />
-            <h2 className="text-2xl font-bold mb-2">Connect with {modelUsername}</h2>
-            <p className="text-white/80 text-sm">
-              Create a free account to unlock exclusive access
-            </p>
+            <h2 className="text-2xl font-bold">Connect with {modelUsername}</h2>
           </div>
 
           {/* Features */}
@@ -491,7 +488,7 @@ export function ProfileActionButtons({
 
             <div className="text-center py-2">
               <p className="text-xs text-muted-foreground">
-                Join thousands of fans connecting with their favorite models
+                Join Fans and Brands connecting with EXA Models
               </p>
             </div>
 
