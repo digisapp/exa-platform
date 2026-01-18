@@ -192,24 +192,24 @@ export async function POST(request: NextRequest) {
     }
 
     // Step 2: Transfer any content from delete to keep
-    const { count: mediaCount } = await adminClient
+    const { data: mediaData } = await adminClient
       .from("media_assets")
       .update({ model_id: keepModel.id })
       .eq("model_id", deleteModel.id)
-      .select("id", { count: "exact", head: true });
+      .select("id");
 
-    if (mediaCount && mediaCount > 0) {
-      actions.push(`Transferred ${mediaCount} media assets`);
+    if (mediaData && mediaData.length > 0) {
+      actions.push(`Transferred ${mediaData.length} media assets`);
     }
 
-    const { count: contentCount } = await adminClient
+    const { data: contentData } = await adminClient
       .from("premium_content")
       .update({ model_id: keepModel.id })
       .eq("model_id", deleteModel.id)
-      .select("id", { count: "exact", head: true });
+      .select("id");
 
-    if (contentCount && contentCount > 0) {
-      actions.push(`Transferred ${contentCount} premium content items`);
+    if (contentData && contentData.length > 0) {
+      actions.push(`Transferred ${contentData.length} premium content items`);
     }
 
     // Step 3: Combine coin balances
