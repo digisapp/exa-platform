@@ -205,6 +205,14 @@ export async function POST(request: NextRequest) {
           p_action: "message_sent",
           p_metadata: { conversation_id: conversation.id },
         });
+
+        // Credit coins to the model
+        await (supabase.rpc as any)("add_coins", {
+          p_actor_id: recipientId,
+          p_amount: coinsRequired,
+          p_action: "message_received",
+          p_metadata: { conversation_id: conversation.id, from_actor_id: sender.id },
+        });
       }
 
       // Send the message

@@ -155,6 +155,16 @@ export async function POST(request: NextRequest) {
           { status: 500 }
         );
       }
+
+      // Credit coins to the model
+      if (recipient?.actors?.id) {
+        await (supabase.rpc as any)("add_coins", {
+          p_actor_id: recipient.actors.id,
+          p_amount: coinsRequired,
+          p_action: "message_received",
+          p_metadata: { conversation_id: conversationId, from_actor_id: sender.id },
+        });
+      }
     }
 
     // Insert the message
