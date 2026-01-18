@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
-    const { displayName } = await request.json();
+    const { displayName, referrerModelId: requestReferrerId } = await request.json();
 
     if (!displayName?.trim()) {
       return NextResponse.json(
@@ -23,6 +23,9 @@ export async function POST(request: Request) {
         { status: 401 }
       );
     }
+
+    // Get referrer model ID from request or user metadata (set during signup)
+    const referrerModelId = requestReferrerId || user.user_metadata?.referrer_model_id || null;
 
     // FIRST: Check if there's an existing model record with this email (from imports)
     // This handles models who were imported before they had an auth account
@@ -94,6 +97,19 @@ export async function POST(request: Request) {
       }
 
       // Actor exists but no fan - create fan profile
+      // Validate referrer model exists if provided
+      let validReferrerId = null;
+      if (referrerModelId) {
+        const { data: referrerModel } = await (supabase
+          .from("models") as any)
+          .select("id")
+          .eq("id", referrerModelId)
+          .single();
+        if (referrerModel) {
+          validReferrerId = referrerModelId;
+        }
+      }
+
       const { error: fanError } = await (supabase
         .from("fans") as any)
         .upsert({
@@ -102,6 +118,7 @@ export async function POST(request: Request) {
           email: user.email,
           display_name: displayName.trim(),
           coin_balance: 10,
+          referred_by_model_id: validReferrerId,
         }, { onConflict: "user_id" });
 
       if (fanError) {
@@ -139,6 +156,19 @@ export async function POST(request: Request) {
 
     const actorId = (actor as { id: string }).id;
 
+    // Validate referrer model exists if provided
+    let validReferrerId = null;
+    if (referrerModelId) {
+      const { data: referrerModel } = await (supabase
+        .from("models") as any)
+        .select("id")
+        .eq("id", referrerModelId)
+        .single();
+      if (referrerModel) {
+        validReferrerId = referrerModelId;
+      }
+    }
+
     // Create fan profile with upsert
     const { error: fanError } = await (supabase
       .from("fans") as any)
@@ -148,6 +178,7 @@ export async function POST(request: Request) {
         email: user.email,
         display_name: displayName.trim(),
         coin_balance: 10, // Welcome bonus!
+        referred_by_model_id: validReferrerId,
       }, { onConflict: "user_id" });
 
     if (fanError) {

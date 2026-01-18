@@ -198,6 +198,7 @@ interface Model {
   last_active_at?: string | null;
   message_count?: number;
   joined_at?: string | null;
+  referral_count?: number;
 }
 
 function CopyInviteButton({ token }: { token: string }) {
@@ -395,7 +396,7 @@ interface ModelApplication {
   created_at: string;
 }
 
-type ModelSortField = "profile_views" | "coin_balance" | "followers_count" | "instagram_followers" | "admin_rating" | "created_at" | "joined_at" | "total_earned" | "content_count" | "last_post" | "last_seen" | "message_count";
+type ModelSortField = "profile_views" | "coin_balance" | "followers_count" | "instagram_followers" | "admin_rating" | "created_at" | "joined_at" | "total_earned" | "content_count" | "last_post" | "last_seen" | "message_count" | "referral_count";
 type FanSortField = "coins_spent" | "following_count" | "coin_balance" | "created_at" | "report_count";
 type SortDirection = "asc" | "desc";
 
@@ -1150,6 +1151,9 @@ export default function AdminCommunityPage() {
                         <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("total_earned")}>
                           <div className="flex items-center"><Coins className="h-4 w-4 mr-1" />Earned<SortIndicator active={modelsSortField === "total_earned"} direction={modelsSortDirection} /></div>
                         </TableHead>
+                        <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("referral_count")}>
+                          <div className="flex items-center"><Users className="h-4 w-4 mr-1" />Referrals<SortIndicator active={modelsSortField === "referral_count"} direction={modelsSortDirection} /></div>
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -1210,6 +1214,7 @@ export default function AdminCommunityPage() {
                           <TableCell><span className={`font-medium ${model.profile_views > 100 ? "text-purple-500" : ""}`}>{(model.profile_views || 0).toLocaleString()}</span></TableCell>
                           <TableCell><span className={`font-medium ${(model.followers_count || 0) > 0 ? "text-pink-500" : ""}`}>{(model.followers_count || 0).toLocaleString()}</span></TableCell>
                           <TableCell><span className={`font-medium ${(model.total_earned || 0) > 0 ? "text-yellow-500" : ""}`}>{(model.total_earned || 0).toLocaleString()}</span></TableCell>
+                          <TableCell><span className={`font-medium ${(model.referral_count || 0) > 0 ? "text-green-500" : ""}`}>{(model.referral_count || 0).toLocaleString()}</span></TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

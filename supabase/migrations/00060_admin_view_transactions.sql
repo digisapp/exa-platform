@@ -3,6 +3,7 @@
 -- ============================================
 
 -- Admins can view all coin transactions
+DROP POLICY IF EXISTS "Admins can view all coin transactions" ON public.coin_transactions;
 CREATE POLICY "Admins can view all coin transactions" ON public.coin_transactions
   FOR SELECT USING (
     EXISTS (

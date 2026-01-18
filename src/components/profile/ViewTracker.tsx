@@ -14,6 +14,14 @@ export function ViewTracker({ modelId }: ViewTrackerProps) {
     if (tracked.current) return;
     tracked.current = true;
 
+    // Save this model as the referrer for signup tracking
+    // This persists until they sign up or clear storage
+    try {
+      localStorage.setItem("signup_referrer_model_id", modelId);
+    } catch {
+      // localStorage might be unavailable
+    }
+
     // Check sessionStorage to avoid counting multiple views in the same session
     const viewedKey = `viewed_${modelId}`;
     const lastViewed = sessionStorage.getItem(viewedKey);

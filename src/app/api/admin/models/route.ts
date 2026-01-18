@@ -118,6 +118,7 @@ export async function GET(request: NextRequest) {
       followCountsResult,
       earningsResult,
       conversationsResult,
+      referralsResult,
     ] = await Promise.all([
       // Get follower counts
       actorIds.length > 0
@@ -136,6 +137,12 @@ export async function GET(request: NextRequest) {
         ? (supabase.from("conversation_participants") as any)
             .select("actor_id, conversation_id")
             .in("actor_id", actorIds)
+        : { data: [] },
+      // Get referral counts (fans who signed up from viewing this model's profile)
+      modelIds.length > 0
+        ? (supabase.from("fans") as any)
+            .select("referred_by_model_id")
+            .in("referred_by_model_id", modelIds)
         : { data: [] },
     ]);
 
@@ -175,6 +182,11 @@ export async function GET(request: NextRequest) {
       messageMap.set(c.actor_id, (messageMap.get(c.actor_id) || 0) + 1);
     });
 
+    const referralMap = new Map<string, number>();
+    (referralsResult.data || []).forEach((f: any) => {
+      referralMap.set(f.referred_by_model_id, (referralMap.get(f.referred_by_model_id) || 0) + 1);
+    });
+
     // Apply computed fields to models
     const enrichedModels = models.map((model: any) => {
       const actorId = actorToUser.get(model.user_id) || "";
@@ -185,13 +197,14 @@ export async function GET(request: NextRequest) {
         content_count: contentMap.get(model.id) || 0,
         last_post: lastPostMap.get(model.id) || null,
         message_count: actorId ? (messageMap.get(actorId as string) || 0) : 0,
+        referral_count: referralMap.get(model.id) || 0,
         last_seen: model.last_active_at || lastPostMap.get(model.id) || (model.user_id ? model.created_at : null),
         joined_at: model.claimed_at || model.created_at,
       };
     });
 
     // Sort by computed fields if needed
-    const computedFields = ["total_earned", "content_count", "last_post", "last_seen", "message_count", "followers_count", "joined_at"];
+    const computedFields = ["total_earned", "content_count", "last_post", "last_seen", "message_count", "followers_count", "joined_at", "referral_count"];
     if (computedFields.includes(sortField)) {
       enrichedModels.sort((a: any, b: any) => {
         let aVal = a[sortField];

@@ -64,13 +64,24 @@ export default function FanSignupPage() {
     e.preventDefault();
     setLoading(true);
 
+    // Get referrer model ID from localStorage (set when viewing a model profile)
+    let referrerModelId: string | null = null;
+    try {
+      referrerModelId = localStorage.getItem("signup_referrer_model_id");
+    } catch {
+      // localStorage might be unavailable
+    }
+
     try {
       if (isAuthenticated) {
         // Already authenticated - just create the profile
         const response = await fetch("/api/auth/create-fan", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ displayName: displayName.trim() }),
+          body: JSON.stringify({
+            displayName: displayName.trim(),
+            referrerModelId,
+          }),
         });
 
         const data = await response.json();
@@ -96,6 +107,7 @@ export default function FanSignupPage() {
             data: {
               signup_type: "fan",
               display_name: displayName.trim() || email.split("@")[0],
+              referrer_model_id: referrerModelId,
             },
             emailRedirectTo: `${window.location.origin}/auth/callback?type=signup`,
           },
