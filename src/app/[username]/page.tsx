@@ -8,9 +8,12 @@ import {
   Instagram,
   Calendar,
   EyeOff,
+  Youtube,
+  Twitch,
 } from "lucide-react";
 import { TikTokIcon } from "@/components/ui/tiktok-icon";
 import { SnapchatIcon } from "@/components/ui/snapchat-icon";
+import { XIcon } from "@/components/ui/x-icon";
 import type { Metadata } from "next";
 import { ShareButton } from "@/components/ui/share-button";
 import { AddToCampaignButton } from "@/components/ui/add-to-campaign-button";
@@ -389,9 +392,9 @@ export default async function ModelProfilePage({ params }: Props) {
                   {link.platform === "instagram" && <Instagram className="h-4 w-4 text-white" />}
                   {link.platform === "tiktok" && <TikTokIcon className="h-4 w-4 text-white" />}
                   {link.platform === "snapchat" && <SnapchatIcon className="h-4 w-4 text-white" />}
-                  {link.platform === "x" && <span className="text-white text-sm font-bold">𝕏</span>}
-                  {link.platform === "youtube" && <span className="text-white text-sm">▶</span>}
-                  {link.platform === "twitch" && <span className="text-white text-sm">📺</span>}
+                  {link.platform === "x" && <XIcon className="h-4 w-4 text-white" />}
+                  {link.platform === "youtube" && <Youtube className="h-4 w-4 text-white" />}
+                  {link.platform === "twitch" && <Twitch className="h-4 w-4 text-white" />}
                 </a>
               ))}
             </div>
