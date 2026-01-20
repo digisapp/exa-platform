@@ -44,6 +44,7 @@ export default async function HomePage() {
   }
 
   // Fetch top 50 models with 4-5 star admin rating (only with uploaded profile photos, not Instagram imports)
+  // Supabase storage URLs contain the project ID: nanftzomzluetblqgrvo.supabase.co/storage
   const { data: topModelsData } = await (supabase
     .from("models") as any)
     .select(`
@@ -53,7 +54,8 @@ export default async function HomePage() {
       social_companion_hourly_rate, meet_greet_rate
     `)
     .eq("is_approved", true)
-    .like("profile_photo_url", "%supabase.co/storage%")
+    .not("profile_photo_url", "is", null)
+    .ilike("profile_photo_url", "%supabase.co/storage%")
     .gte("admin_rating", 4)
     .limit(50);
 
@@ -66,7 +68,8 @@ export default async function HomePage() {
     .select("id, username, first_name, profile_photo_url, state, profile_views")
     .eq("is_approved", true)
     .eq("new_face", true)
-    .like("profile_photo_url", "%supabase.co/storage%")
+    .not("profile_photo_url", "is", null)
+    .ilike("profile_photo_url", "%supabase.co/storage%")
     .order("created_at", { ascending: false })
     .limit(50);
 
