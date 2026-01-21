@@ -43,8 +43,9 @@ export default async function HomePage() {
     redirect("/dashboard");
   }
 
-  // Fetch top 50 models with 4-5 star admin rating (only with uploaded profile photos, not Instagram imports)
-  // Supabase storage URLs contain the project ID: nanftzomzluetblqgrvo.supabase.co/storage
+  // Fetch top 50 models with 4-5 star admin rating (only with self-uploaded profile photos in avatars bucket)
+  // Models who sign up and upload their own photo use the /avatars/ bucket (high quality)
+  // Admin-imported models use /profile-pictures/ bucket (often blurry Instagram imports)
   const { data: topModelsData } = await (supabase
     .from("models") as any)
     .select(`
@@ -55,21 +56,21 @@ export default async function HomePage() {
     `)
     .eq("is_approved", true)
     .not("profile_photo_url", "is", null)
-    .ilike("profile_photo_url", "%supabase.co/storage%")
+    .ilike("profile_photo_url", "%/avatars/%")
     .gte("admin_rating", 4)
     .limit(50);
 
   // Randomize the order
   const topModels = shuffleArray(topModelsData || []) as any[];
 
-  // Fetch new faces (models marked as new_face, only with uploaded profile photos)
+  // Fetch new faces (models marked as new_face, only with self-uploaded profile photos in avatars bucket)
   const { data: newFaces } = await (supabase
     .from("models") as any)
     .select("id, username, first_name, profile_photo_url, state, profile_views")
     .eq("is_approved", true)
     .eq("new_face", true)
     .not("profile_photo_url", "is", null)
-    .ilike("profile_photo_url", "%supabase.co/storage%")
+    .ilike("profile_photo_url", "%/avatars/%")
     .order("created_at", { ascending: false })
     .limit(50);
 
