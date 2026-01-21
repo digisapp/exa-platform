@@ -43,8 +43,8 @@ export default async function HomePage() {
     redirect("/dashboard");
   }
 
-  // Fetch top 50 models with 4-5 star admin rating (only signed-in models with profile photos)
-  // Signed-in models (user_id not null) have claimed their account and uploaded quality photos
+  // Fetch top 50 models with 4-5 star admin rating (signed-in models with self-uploaded photos)
+  // Requires: user_id (signed in) AND avatars bucket (self-uploaded, not Instagram imports)
   const { data: topModelsData } = await (supabase
     .from("models") as any)
     .select(`
@@ -56,13 +56,14 @@ export default async function HomePage() {
     .eq("is_approved", true)
     .not("profile_photo_url", "is", null)
     .not("user_id", "is", null)
+    .ilike("profile_photo_url", "%/avatars/%")
     .gte("admin_rating", 4)
     .limit(50);
 
   // Randomize the order
   const topModels = shuffleArray(topModelsData || []) as any[];
 
-  // Fetch new faces (models marked as new_face, only signed-in models with profile photos)
+  // Fetch new faces (models marked as new_face, signed-in models with self-uploaded photos)
   const { data: newFaces } = await (supabase
     .from("models") as any)
     .select("id, username, first_name, profile_photo_url, state, profile_views")
@@ -70,6 +71,7 @@ export default async function HomePage() {
     .eq("new_face", true)
     .not("profile_photo_url", "is", null)
     .not("user_id", "is", null)
+    .ilike("profile_photo_url", "%/avatars/%")
     .order("created_at", { ascending: false })
     .limit(50);
 
