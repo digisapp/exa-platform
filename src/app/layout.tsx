@@ -11,7 +11,7 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   metadataBase: new URL("https://examodels.com"),
   title: {
-    default: "EXA Models - The Model Community Platform",
+    default: "EXA Models – Top Models Worldwide",
     template: "%s | EXA Models",
   },
   description: "Join shows, travel experiences, and build your modeling career. The community platform where models grow.",
@@ -28,12 +28,12 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "https://examodels.com",
     siteName: "EXA Models",
-    title: "EXA Models - The Model Community Platform",
+    title: "EXA Models – Top Models Worldwide",
     description: "Join shows, travel experiences, and build your modeling career. The community platform where models grow.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "EXA Models - The Model Community Platform",
+    title: "EXA Models – Top Models Worldwide",
     description: "Join shows, travel experiences, and build your modeling career. The community platform where models grow.",
   },
   robots: {
