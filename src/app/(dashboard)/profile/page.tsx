@@ -2058,7 +2058,7 @@ export default function ProfilePage() {
                   <p className="text-sm text-muted-foreground">Display your city and state</p>
                 </div>
                 <Switch
-                  checked={model.show_location}
+                  checked={model.show_location ?? true}
                   onCheckedChange={(v) => setModel({ ...model, show_location: v })}
                 />
               </div>
@@ -2068,7 +2068,7 @@ export default function ProfilePage() {
                   <p className="text-sm text-muted-foreground">Display height and body measurements</p>
                 </div>
                 <Switch
-                  checked={model.show_measurements}
+                  checked={model.show_measurements ?? true}
                   onCheckedChange={(v) => setModel({ ...model, show_measurements: v })}
                 />
               </div>
@@ -2078,7 +2078,7 @@ export default function ProfilePage() {
                   <p className="text-sm text-muted-foreground">Display Instagram and TikTok handles</p>
                 </div>
                 <Switch
-                  checked={model.show_social_media}
+                  checked={model.show_social_media ?? true}
                   onCheckedChange={(v) => setModel({ ...model, show_social_media: v })}
                 />
               </div>

@@ -29,19 +29,19 @@ import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-mo
 
 interface Model {
   id: string;
-  username: string;
+  username: string | null;
   first_name: string | null;
   last_name: string | null;
-  email: string;
+  email: string | null;
   city: string | null;
   state: string | null;
   profile_photo_url: string | null;
-  profile_views: number;
+  profile_views: number | null;
   instagram_name: string | null;
   instagram_followers: number | null;
   admin_rating: number | null;
-  created_at: string;
-  is_approved: boolean;
+  created_at: string | null;
+  is_approved: boolean | null;
   user_id: string | null;
   invite_token: string | null;
 }
@@ -380,7 +380,7 @@ export default function AdminRatePage() {
                     {currentModel.profile_photo_url ? (
                       <Image
                         src={currentModel.profile_photo_url}
-                        alt={currentModel.username}
+                        alt={currentModel.username || "Model"}
                         fill
                         className="object-cover"
                         unoptimized={currentModel.profile_photo_url.includes("cdninstagram.com")}

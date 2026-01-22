@@ -84,8 +84,8 @@ export async function GET(request: NextRequest) {
       media_type: string;
       preview_url: string | null;
       coin_price: number;
-      unlock_count: number;
-      created_at: string;
+      unlock_count: number | null;
+      created_at: string | null;
     }) => {
       const isFree = item.coin_price === 0;
       const isUnlocked = isFree || unlockedIds.includes(item.id) || isOwner;

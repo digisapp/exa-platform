@@ -126,8 +126,8 @@ export default async function GigsPage() {
       myApplications = applications || [];
 
       // Get lists the model is in
-      const { data: listItems } = await (supabase
-        .from("brand_list_items") as any)
+      const { data: listItems } = await (supabase as any)
+        .from("brand_list_items")
         .select("list_id")
         .eq("model_id", model.id);
 

@@ -60,8 +60,8 @@ interface PremiumContent {
   media_url: string;
   preview_url: string | null;
   coin_price: number;
-  unlock_count: number;
-  created_at: string;
+  unlock_count: number | null;
+  created_at: string | null;
 }
 
 export default function ContentPage() {
@@ -124,7 +124,7 @@ export default function ContentPage() {
       .in("asset_type", ["portfolio", "video"])
       .order("created_at", { ascending: false });
 
-    setPortfolio(portfolioData || []);
+    setPortfolio((portfolioData || []) as MediaAsset[]);
 
     // Get PPV content
     const { data: contentData } = await supabase
@@ -360,7 +360,7 @@ export default function ContentPage() {
     );
   }
 
-  const totalUnlocks = content.reduce((sum, c) => sum + c.unlock_count, 0);
+  const totalUnlocks = content.reduce((sum, c) => sum + (c.unlock_count || 0), 0);
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -620,11 +620,11 @@ export default function ContentPage() {
                     </div>
 
                     {/* Stats Badge */}
-                    {item.unlock_count > 0 && (
+                    {(item.unlock_count || 0) > 0 && (
                       <div className="absolute bottom-2 left-2">
                         <div className="bg-black/60 backdrop-blur-sm px-2 py-1 rounded-full flex items-center gap-1">
                           <Eye className="h-3 w-3 text-white" />
-                          <span className="text-white text-xs">{item.unlock_count}</span>
+                          <span className="text-white text-xs">{item.unlock_count || 0}</span>
                         </div>
                       </div>
                     )}

@@ -118,7 +118,7 @@ export function PortfolioGallery({
                   size="icon"
                   className="h-9 w-9"
                   onClick={() => handleSetPrimary(photo.id)}
-                  disabled={settingPrimary === photo.id || photo.is_primary}
+                  disabled={settingPrimary === photo.id || !!photo.is_primary}
                 >
                   {settingPrimary === photo.id ? (
                     <Loader2 className="h-4 w-4 animate-spin" />

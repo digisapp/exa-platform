@@ -48,7 +48,7 @@ export function MessageBubble({
 }: MessageBubbleProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isDeleted, setIsDeleted] = useState(!!message.deleted_at);
+  const [isDeleted, setIsDeleted] = useState(!!(message as any).deleted_at);
 
   const handleDelete = async () => {
     if (isDeleting) return;
@@ -111,7 +111,7 @@ export function MessageBubble({
               isOwn ? "text-right" : "text-left"
             )}
           >
-            {formatDistanceToNow(new Date(message.created_at), {
+            {message.created_at && formatDistanceToNow(new Date(message.created_at), {
               addSuffix: true,
             })}
           </p>
@@ -251,7 +251,7 @@ export function MessageBubble({
               isOwn ? "text-right" : "text-left"
             )}
           >
-            {formatDistanceToNow(new Date(message.created_at), {
+            {message.created_at && formatDistanceToNow(new Date(message.created_at), {
               addSuffix: true,
             })}
           </p>

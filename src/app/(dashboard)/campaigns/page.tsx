@@ -50,7 +50,7 @@ export default async function CampaignsPage() {
 
   const modelsMap = new Map();
   if (allModelIds.length > 0) {
-    const uniqueModelIds = [...new Set(allModelIds)];
+    const uniqueModelIds = [...new Set(allModelIds)] as string[];
     const { data: models } = await supabase
       .from("models")
       .select("id, username, first_name, last_name, profile_photo_url")
