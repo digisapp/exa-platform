@@ -47,7 +47,26 @@ export async function GET(request: NextRequest) {
     if (search) {
       // Escape special characters for safe pattern matching (prevents SQL injection)
       const escapedSearch = search.replace(/[%_\\]/g, "\\$&");
-      query = query.or(`username.ilike.%${escapedSearch}%,first_name.ilike.%${escapedSearch}%,last_name.ilike.%${escapedSearch}%,email.ilike.%${escapedSearch}%`);
+      const words = escapedSearch.trim().split(/\s+/).filter(w => w.length > 0);
+
+      if (words.length === 1) {
+        // Single word: search all fields
+        query = query.or(`username.ilike.%${words[0]}%,first_name.ilike.%${words[0]}%,last_name.ilike.%${words[0]}%,email.ilike.%${words[0]}%`);
+      } else {
+        // Multi-word search (e.g., "Nicole Kismet")
+        const first = words[0];
+        const last = words[words.length - 1];
+
+        // Match full string in username or email
+        // OR first word in first_name AND last word in last_name
+        // OR vice versa (handles "Kismet Nicole" matching "Nicole Kismet")
+        query = query.or(
+          `username.ilike.%${escapedSearch}%,` +
+          `email.ilike.%${escapedSearch}%,` +
+          `and(first_name.ilike.%${first}%,last_name.ilike.%${last}%),` +
+          `and(first_name.ilike.%${last}%,last_name.ilike.%${first}%)`
+        );
+      }
     }
     if (stateFilter !== "all") query = query.eq("state", stateFilter);
     if (approvalFilter !== "all") query = query.eq("is_approved", approvalFilter === "approved");
