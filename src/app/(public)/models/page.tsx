@@ -74,11 +74,10 @@ export default async function ModelsPage({
   // Filter by height range
   if (params.height) {
     const heightPatterns: Record<string, string[]> = {
-      petite: ["4'%", "5'0%", "5'1%", "5'2%"],
-      short: ["5'3%", "5'4%", "5'5%"],
-      average: ["5'6%", "5'7%", "5'8%"],
-      tall: ["5'9%", "5'10%", "5'11%"],
-      vtall: ["6'%"],
+      under54: ["4'%", "5'0%", "5'1%", "5'2%", "5'3%"],
+      "54up": ["5'4%", "5'5%", "5'6%", "5'7%", "5'8%", "5'9%", "5'10%", "5'11%", "6'%"],
+      "57up": ["5'7%", "5'8%", "5'9%", "5'10%", "5'11%", "6'%"],
+      "510up": ["5'10%", "5'11%", "6'%"],
     };
     const patterns = heightPatterns[params.height];
     if (patterns) {

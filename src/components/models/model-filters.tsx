@@ -68,11 +68,10 @@ const SORT_OPTIONS = [
 ];
 
 const HEIGHT_RANGES = [
-  { value: "petite", label: "5'2\" & under" },
-  { value: "short", label: "5'3\" - 5'5\"" },
-  { value: "average", label: "5'6\" - 5'8\"" },
-  { value: "tall", label: "5'9\" - 5'11\"" },
-  { value: "vtall", label: "6'0\" & above" },
+  { value: "under54", label: "5'3\" and under" },
+  { value: "54up", label: "5'4\" and up" },
+  { value: "57up", label: "5'7\" and up" },
+  { value: "510up", label: "5'10\" and up" },
 ];
 
 const FOCUS_OPTIONS = [
