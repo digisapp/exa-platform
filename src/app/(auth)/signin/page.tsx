@@ -9,13 +9,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Loader2, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { Loader2, ArrowLeft, Eye, EyeOff, Mail, Sparkles } from "lucide-react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [magicLinkSent, setMagicLinkSent] = useState(false);
+  const [magicLinkLoading, setMagicLinkLoading] = useState(false);
   const supabase = createClient();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -58,6 +60,96 @@ export default function LoginPage() {
     }
   };
 
+  const handleMagicLink = async () => {
+    if (!email.trim()) {
+      toast.error("Please enter your email address");
+      return;
+    }
+
+    setMagicLinkLoading(true);
+
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email.toLowerCase().trim(),
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (error) throw error;
+
+      setMagicLinkSent(true);
+      toast.success("Magic link sent! Check your email");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to send magic link";
+      toast.error(message);
+    } finally {
+      setMagicLinkLoading(false);
+    }
+  };
+
+  if (magicLinkSent) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <Link href="/" className="flex justify-center mb-4">
+              <Image
+                src="/exa-logo-white.png"
+                alt="EXA"
+                width={100}
+                height={40}
+                className="h-10 w-auto"
+              />
+            </Link>
+            <div className="mx-auto w-16 h-16 bg-gradient-to-r from-pink-500 to-violet-500 rounded-full flex items-center justify-center mb-4">
+              <Mail className="h-8 w-8 text-white" />
+            </div>
+            <CardTitle className="text-2xl">Check your email!</CardTitle>
+          </CardHeader>
+          <CardContent className="text-center space-y-4">
+            <p className="text-muted-foreground">
+              We sent a magic link to <span className="font-medium text-foreground">{email}</span>
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Click the link in your email to sign in instantly. No password needed!
+            </p>
+            <div className="pt-4 space-y-3">
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => setMagicLinkSent(false)}
+              >
+                Use a different email
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full text-muted-foreground"
+                onClick={handleMagicLink}
+                disabled={magicLinkLoading}
+              >
+                {magicLinkLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Resending...
+                  </>
+                ) : (
+                  "Resend magic link"
+                )}
+              </Button>
+            </div>
+          </CardContent>
+          <CardFooter className="justify-center">
+            <Link href="/" className="flex items-center text-sm text-muted-foreground hover:text-primary transition-colors">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to home
+            </Link>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
@@ -84,7 +176,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                disabled={loading}
+                disabled={loading || magicLinkLoading}
                 autoComplete="email"
               />
             </div>
@@ -106,7 +198,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  disabled={loading}
+                  disabled={loading || magicLinkLoading}
                   autoComplete="current-password"
                   className="pr-10"
                 />
@@ -120,11 +212,11 @@ export default function LoginPage() {
               </div>
             </div>
           </CardContent>
-          <CardFooter className="flex flex-col gap-6 pt-6">
+          <CardFooter className="flex flex-col gap-4 pt-6">
             <Button
               type="submit"
               className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 h-12 text-base"
-              disabled={loading}
+              disabled={loading || magicLinkLoading}
             >
               {loading ? (
                 <>
@@ -135,7 +227,37 @@ export default function LoginPage() {
                 "Sign In"
               )}
             </Button>
-            <div className="text-center text-sm text-muted-foreground">
+
+            <div className="relative w-full">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">or</span>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full h-12"
+              onClick={handleMagicLink}
+              disabled={loading || magicLinkLoading}
+            >
+              {magicLinkLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Send Magic Link
+                </>
+              )}
+            </Button>
+
+            <div className="text-center text-sm text-muted-foreground pt-2">
               Don&apos;t have an account?{" "}
               <Link href="/signup" className="text-primary hover:underline font-medium">
                 Sign Up
