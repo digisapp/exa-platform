@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { sendBookingRequestEmail } from "@/lib/email";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 // Admin client for bypassing RLS on specific queries
 const adminClient = createSupabaseClient(
@@ -48,8 +49,15 @@ export async function GET(request: NextRequest) {
       console.error("Auth error:", authError);
       return NextResponse.json({ error: "Auth error", details: authError.message }, { status: 401 });
     }
+
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Rate limit check
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) {
+      return rateLimitResponse;
     }
 
     // Get actor
@@ -121,36 +129,66 @@ export async function GET(request: NextRequest) {
       bookings = bookings.filter(b => b.status === status);
     }
 
-    // Enrich bookings with model and client info - use adminClient
-    for (const booking of bookings) {
-      // Get model info
-      if (booking.model_id) {
-        const { data: model } = await (adminClient.from("models") as any)
+    // Enrich bookings with model and client info using batch queries (avoiding N+1)
+    if (bookings.length > 0) {
+      // Collect unique IDs
+      const modelIds = [...new Set(bookings.map(b => b.model_id).filter(Boolean))];
+      const clientIds = [...new Set(bookings.map(b => b.client_id).filter(Boolean))];
+
+      // Batch fetch all models
+      const modelsMap = new Map<string, any>();
+      if (modelIds.length > 0) {
+        const { data: models } = await (adminClient.from("models") as any)
           .select("id, username, first_name, last_name, profile_photo_url, city, state")
-          .eq("id", booking.model_id)
-          .maybeSingle();
-        booking.model = model;
+          .in("id", modelIds);
+        (models || []).forEach((m: any) => modelsMap.set(m.id, m));
       }
 
-      // Get client info
-      if (booking.client_id) {
-        const { data: clientActor } = await (adminClient.from("actors") as any)
+      // Batch fetch all client actors
+      const actorsMap = new Map<string, any>();
+      if (clientIds.length > 0) {
+        const { data: actors } = await (adminClient.from("actors") as any)
           .select("id, type")
-          .eq("id", booking.client_id)
-          .maybeSingle();
+          .in("id", clientIds);
+        (actors || []).forEach((a: any) => actorsMap.set(a.id, a));
+      }
 
-        if (clientActor?.type === "fan") {
-          const { data: fan } = await (adminClient.from("fans") as any)
-            .select("display_name, email, avatar_url")
-            .eq("id", clientActor.id)
-            .maybeSingle();
-          booking.client = { ...fan, type: "fan" };
-        } else if (clientActor?.type === "brand") {
-          const { data: brand } = await (adminClient.from("brands") as any)
-            .select("company_name, contact_name, email, logo_url")
-            .eq("id", clientActor.id)
-            .maybeSingle();
-          booking.client = { ...brand, type: "brand" };
+      // Separate fan and brand IDs
+      const fanIds = clientIds.filter(id => actorsMap.get(id)?.type === "fan");
+      const brandIds = clientIds.filter(id => actorsMap.get(id)?.type === "brand");
+
+      // Batch fetch fans and brands
+      const fansMap = new Map<string, any>();
+      const brandsMap = new Map<string, any>();
+
+      if (fanIds.length > 0) {
+        const { data: fans } = await (adminClient.from("fans") as any)
+          .select("id, display_name, email, avatar_url")
+          .in("id", fanIds);
+        (fans || []).forEach((f: any) => fansMap.set(f.id, f));
+      }
+
+      if (brandIds.length > 0) {
+        const { data: brands } = await (adminClient.from("brands") as any)
+          .select("id, company_name, contact_name, email, logo_url")
+          .in("id", brandIds);
+        (brands || []).forEach((b: any) => brandsMap.set(b.id, b));
+      }
+
+      // Map data back to bookings
+      for (const booking of bookings) {
+        if (booking.model_id) {
+          booking.model = modelsMap.get(booking.model_id) || null;
+        }
+        if (booking.client_id) {
+          const clientActor = actorsMap.get(booking.client_id);
+          if (clientActor?.type === "fan") {
+            const fan = fansMap.get(booking.client_id);
+            booking.client = fan ? { ...fan, type: "fan" } : null;
+          } else if (clientActor?.type === "brand") {
+            const brand = brandsMap.get(booking.client_id);
+            booking.client = brand ? { ...brand, type: "brand" } : null;
+          }
         }
       }
     }
@@ -174,6 +212,12 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized. Please sign in first." }, { status: 401 });
+    }
+
+    // Rate limit check
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) {
+      return rateLimitResponse;
     }
 
     // Get actor

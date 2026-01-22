@@ -93,27 +93,49 @@ export default async function DashboardPage() {
   ).slice(0, 5);
 
 
-  // Enrich bookings with client info - use adminClient to bypass RLS
-  for (const booking of pendingBookings || []) {
-    if (booking.client_id) {
-      const { data: clientActor } = await (adminClient
-        .from("actors") as any)
-        .select("id, type")
-        .eq("id", booking.client_id)
-        .maybeSingle();
+  // Enrich bookings with client info using batch queries (avoiding N+1)
+  if (pendingBookings && pendingBookings.length > 0) {
+    const clientIds: string[] = pendingBookings
+      .map((b: any) => b.client_id as string | null)
+      .filter((id: string | null): id is string => id !== null && id !== undefined);
+    const uniqueClientIds = [...new Set(clientIds)];
 
-      if (clientActor?.type === "fan") {
-        const { data: fan } = await (adminClient.from("fans") as any)
-          .select("display_name, avatar_url")
-          .eq("id", clientActor.id)
-          .maybeSingle();
-        booking.client = { ...fan, type: "fan" };
-      } else if (clientActor?.type === "brand") {
-        const { data: brand } = await (adminClient.from("brands") as any)
-          .select("company_name, logo_url")
-          .eq("id", clientActor.id)
-          .maybeSingle();
-        booking.client = { ...brand, type: "brand" };
+    if (uniqueClientIds.length > 0) {
+      // Batch fetch all client actors
+      const { data: actors } = await (adminClient.from("actors") as any)
+        .select("id, type")
+        .in("id", uniqueClientIds);
+      const actorsMap = new Map<string, { id: string; type: string }>((actors || []).map((a: any) => [a.id, a]));
+
+      // Separate fan and brand IDs
+      const fanIds = uniqueClientIds.filter(id => actorsMap.get(id)?.type === "fan");
+      const brandIds = uniqueClientIds.filter(id => actorsMap.get(id)?.type === "brand");
+
+      // Batch fetch fans and brands
+      const [fansResult, brandsResult] = await Promise.all([
+        fanIds.length > 0
+          ? (adminClient.from("fans") as any).select("id, display_name, avatar_url").in("id", fanIds)
+          : { data: [] },
+        brandIds.length > 0
+          ? (adminClient.from("brands") as any).select("id, company_name, logo_url").in("id", brandIds)
+          : { data: [] },
+      ]);
+
+      const fansMap = new Map((fansResult.data || []).map((f: any) => [f.id, f]));
+      const brandsMap = new Map((brandsResult.data || []).map((b: any) => [b.id, b]));
+
+      // Map data back to bookings
+      for (const booking of pendingBookings) {
+        if (booking.client_id) {
+          const clientActor = actorsMap.get(booking.client_id);
+          if (clientActor?.type === "fan") {
+            const fan = fansMap.get(booking.client_id);
+            booking.client = fan ? { ...fan, type: "fan" } : null;
+          } else if (clientActor?.type === "brand") {
+            const brand = brandsMap.get(booking.client_id);
+            booking.client = brand ? { ...brand, type: "brand" } : null;
+          }
+        }
       }
     }
   }
@@ -145,16 +167,23 @@ export default async function DashboardPage() {
     .order("created_at", { ascending: false })
     .limit(5);
 
-  // Enrich with brand info
+  // Enrich with brand info using batch query (avoiding N+1)
   const pendingOffers: any[] = [];
-  for (const response of offerResponses || []) {
-    if (response.offers?.brand_id) {
-      const { data: brand } = await (adminClient.from("brands") as any)
-        .select("company_name, logo_url")
-        .eq("id", response.offers.brand_id)
-        .maybeSingle();
-      response.brand = brand;
-      pendingOffers.push(response);
+  if (offerResponses && offerResponses.length > 0) {
+    const brandIds = [...new Set(offerResponses.map((r: any) => r.offers?.brand_id).filter(Boolean))];
+
+    if (brandIds.length > 0) {
+      const { data: brands } = await (adminClient.from("brands") as any)
+        .select("id, company_name, logo_url")
+        .in("id", brandIds);
+      const brandsMap = new Map((brands || []).map((b: any) => [b.id, b]));
+
+      for (const response of offerResponses) {
+        if (response.offers?.brand_id) {
+          response.brand = brandsMap.get(response.offers.brand_id) || null;
+          pendingOffers.push(response);
+        }
+      }
     }
   }
 

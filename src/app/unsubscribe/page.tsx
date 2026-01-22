@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 import Link from "next/link";
 
-export default function UnsubscribePage() {
+function UnsubscribeContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   const [status, setStatus] = useState<"loading" | "success" | "error" | "invalid">("loading");
@@ -102,5 +102,32 @@ export default function UnsubscribePage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl">Email Preferences</CardTitle>
+          <CardDescription>Manage your email subscription</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center gap-4 py-8">
+            <Loader2 className="h-12 w-12 animate-spin text-muted-foreground" />
+            <p className="text-muted-foreground">Loading...</p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+export default function UnsubscribePage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <UnsubscribeContent />
+    </Suspense>
   );
 }

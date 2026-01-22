@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get sender's actor info and balance
+    // Get sender's actor info
     const { data: sender } = await supabase
       .from("actors")
       .select("id, type")
@@ -49,31 +49,6 @@ export async function POST(request: NextRequest) {
 
     if (!sender) {
       return NextResponse.json({ error: "Sender not found" }, { status: 400 });
-    }
-
-    // Get sender's coin balance
-    let senderBalance = 0;
-    if (sender.type === "fan") {
-      const { data: fan } = await supabase
-        .from("fans")
-        .select("coin_balance")
-        .eq("id", sender.id)
-        .single() as { data: { coin_balance: number } | null };
-      senderBalance = fan?.coin_balance || 0;
-    } else if (sender.type === "model") {
-      const { data: model } = await supabase
-        .from("models")
-        .select("coin_balance")
-        .eq("user_id", user.id)
-        .single() as { data: { coin_balance: number } | null };
-      senderBalance = model?.coin_balance || 0;
-    }
-
-    if (senderBalance < amount) {
-      return NextResponse.json(
-        { error: `Insufficient balance. You have ${senderBalance} coins.` },
-        { status: 402 }
-      );
     }
 
     // Get recipient model by username
@@ -90,73 +65,41 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get recipient's actor ID
-    const { data: recipientActor } = await supabase
-      .from("actors")
-      .select("id")
-      .eq("user_id", recipientModel.user_id)
-      .single() as { data: { id: string } | null };
+    // Use atomic RPC function for tip transfer (prevents race conditions)
+    const { data: result, error: rpcError } = await (supabase.rpc as any)(
+      "send_tip",
+      {
+        p_sender_id: sender.id,
+        p_recipient_model_id: recipientModel.id,
+        p_amount: amount,
+      }
+    );
 
-    if (!recipientActor) {
+    if (rpcError) {
+      console.error("Tip RPC error:", rpcError);
       return NextResponse.json(
-        { error: "Recipient actor not found" },
-        { status: 404 }
+        { error: "Failed to send tip" },
+        { status: 500 }
       );
     }
 
-    // Can't tip yourself
-    if (sender.id === recipientActor.id) {
+    if (!result.success) {
+      // Handle specific errors
+      if (result.error === "Insufficient coins") {
+        return NextResponse.json(
+          {
+            error: `Insufficient balance. You have ${result.balance} coins.`,
+            required: result.required,
+            balance: result.balance,
+          },
+          { status: 402 }
+        );
+      }
       return NextResponse.json(
-        { error: "Cannot tip yourself" },
+        { error: result.error || "Failed to send tip" },
         { status: 400 }
       );
     }
-
-    // Deduct from sender
-    if (sender.type === "fan") {
-      await (supabase
-        .from("fans") as any)
-        .update({ coin_balance: senderBalance - amount })
-        .eq("id", sender.id);
-    } else if (sender.type === "model") {
-      await (supabase
-        .from("models") as any)
-        .update({ coin_balance: senderBalance - amount })
-        .eq("user_id", user.id);
-    }
-
-    // Add to recipient model
-    const { data: currentRecipient } = await supabase
-      .from("models")
-      .select("coin_balance")
-      .eq("id", recipientModel.id)
-      .single() as { data: { coin_balance: number } | null };
-
-    await (supabase
-      .from("models") as any)
-      .update({ coin_balance: (currentRecipient?.coin_balance || 0) + amount })
-      .eq("id", recipientModel.id);
-
-    // Log transaction for sender (debit)
-    await (supabase.from("coin_transactions") as any).insert({
-      actor_id: sender.id,
-      amount: -amount,
-      action: "tip_sent",
-      metadata: {
-        recipient_username: recipientUsername,
-        recipient_model_id: recipientModel.id,
-      },
-    });
-
-    // Log transaction for recipient (credit)
-    await (supabase.from("coin_transactions") as any).insert({
-      actor_id: recipientActor.id,
-      amount: amount,
-      action: "tip_received",
-      metadata: {
-        sender_actor_id: sender.id,
-      },
-    });
 
     // Send email notification to model (non-blocking)
     if (recipientModel.email) {
@@ -176,6 +119,13 @@ export async function POST(request: NextRequest) {
           .eq("user_id", user.id)
           .single();
         senderName = senderModel?.first_name || senderModel?.username || "A model";
+      } else if (sender.type === "brand") {
+        const { data: brand } = await (supabase
+          .from("brands") as any)
+          .select("company_name")
+          .eq("id", sender.id)
+          .single();
+        senderName = brand?.company_name || "A brand";
       }
 
       sendTipReceivedEmail({
@@ -188,8 +138,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      amount,
-      newBalance: senderBalance - amount,
+      amount: result.amount,
+      newBalance: result.sender_new_balance,
       recipientName: recipientModel.first_name || recipientModel.username,
     });
   } catch (error) {

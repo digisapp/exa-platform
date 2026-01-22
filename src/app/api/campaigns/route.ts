@@ -1,15 +1,22 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { BRAND_SUBSCRIPTION_TIERS, BrandTier } from "@/lib/stripe-config";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 // GET /api/campaigns - Get all campaigns for current brand
-export async function GET() {
+export async function GET(request: NextRequest) {
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Rate limit check
+  const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+  if (rateLimitResponse) {
+    return rateLimitResponse;
   }
 
   // Get actor and verify it's a brand

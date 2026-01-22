@@ -45,7 +45,9 @@ export async function GET(request: NextRequest) {
 
     // Apply filters
     if (search) {
-      query = query.or(`username.ilike.%${search}%,first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%`);
+      // Escape special characters for safe pattern matching (prevents SQL injection)
+      const escapedSearch = search.replace(/[%_\\]/g, "\\$&");
+      query = query.or(`username.ilike.%${escapedSearch}%,first_name.ilike.%${escapedSearch}%,last_name.ilike.%${escapedSearch}%,email.ilike.%${escapedSearch}%`);
     }
     if (stateFilter !== "all") query = query.eq("state", stateFilter);
     if (approvalFilter !== "all") query = query.eq("is_approved", approvalFilter === "approved");
