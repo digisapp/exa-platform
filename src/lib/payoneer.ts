@@ -7,6 +7,8 @@
  * Documentation: https://developer.payoneer.com/docs/mass-payouts-and-services.html
  */
 
+import crypto from "crypto";
+
 // ==============================================
 // TYPES
 // ==============================================
@@ -358,7 +360,6 @@ export function verifyPayoneerWebhook(
   signature: string,
   secret: string
 ): boolean {
-  const crypto = require("crypto");
   const expectedSignature = crypto
     .createHmac("sha256", secret)
     .update(payload)
