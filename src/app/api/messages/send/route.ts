@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 const MESSAGE_COST = 10; // Coins required to message a model
 
@@ -13,6 +14,12 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Rate limit check
+    const rateLimitResponse = await checkEndpointRateLimit(request, "messages", user.id);
+    if (rateLimitResponse) {
+      return rateLimitResponse;
     }
 
     const body = await request.json();
@@ -90,6 +97,21 @@ export async function POST(request: NextRequest) {
 
     const recipient = participants?.[0];
 
+    // Check if either user has blocked the other
+    if (recipient?.actors?.id) {
+      const { data: isBlocked } = await (supabase.rpc as any)("is_blocked", {
+        p_actor_id_1: sender.id,
+        p_actor_id_2: recipient.actors.id,
+      });
+
+      if (isBlocked) {
+        return NextResponse.json(
+          { error: "Unable to send message", code: "BLOCKED" },
+          { status: 403 }
+        );
+      }
+    }
+
     // Determine if coins are required
     let coinsRequired = 0;
 
@@ -106,105 +128,57 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // If coins required, deduct them
-    if (coinsRequired > 0) {
-      // Get sender's coin balance based on actor type
-      let balance = 0;
-
-      if (sender.type === "fan") {
-        const { data: senderFan } = await supabase
-          .from("fans")
-          .select("coin_balance")
-          .eq("id", sender.id)
-          .single() as { data: { coin_balance: number } | null };
-        balance = senderFan?.coin_balance || 0;
-      } else {
-        const { data: senderModel } = await supabase
-          .from("models")
-          .select("coin_balance")
-          .eq("id", sender.id)
-          .single() as { data: { coin_balance: number } | null };
-        balance = senderModel?.coin_balance || 0;
+    // Use atomic function for message sending with coin transfer
+    const { data: result, error: rpcError } = await (supabase.rpc as any)(
+      "send_message_with_coins",
+      {
+        p_conversation_id: conversationId,
+        p_sender_id: sender.id,
+        p_recipient_id: recipient?.actors?.id || null,
+        p_content: content || null,
+        p_media_url: mediaUrl || null,
+        p_media_type: mediaType || null,
+        p_coin_amount: coinsRequired,
       }
+    );
 
-      if (balance < coinsRequired) {
-        return NextResponse.json(
-          {
-            error: "Insufficient coins",
-            required: coinsRequired,
-            balance: balance,
-          },
-          { status: 402 }
-        );
-      }
-
-      // Deduct coins using RPC (handles both fans and models)
-      const { data: deducted, error: deductError } = await (supabase.rpc as any)(
-        "deduct_coins",
-        {
-          p_actor_id: sender.id,
-          p_amount: coinsRequired,
-          p_action: "message_sent",
-          p_metadata: { conversation_id: conversationId },
-        }
-      );
-
-      if (deductError || !deducted) {
-        return NextResponse.json(
-          { error: "Failed to deduct coins" },
-          { status: 500 }
-        );
-      }
-
-      // Credit coins to the model
-      if (recipient?.actors?.id) {
-        await (supabase.rpc as any)("add_coins", {
-          p_actor_id: recipient.actors.id,
-          p_amount: coinsRequired,
-          p_action: "message_received",
-          p_metadata: { conversation_id: conversationId, from_actor_id: sender.id },
-        });
-      }
-    }
-
-    // Insert the message
-    const { data: message, error: messageError } = await (supabase
-      .from("messages") as any)
-      .insert({
-        conversation_id: conversationId,
-        sender_id: sender.id,
-        content: content || null,
-        media_url: mediaUrl || null,
-        media_type: mediaType || null,
-        is_system: false,
-      })
-      .select()
-      .single();
-
-    if (messageError) {
+    if (rpcError) {
+      console.error("RPC error:", rpcError);
       return NextResponse.json(
-        { error: `Failed to send message: ${messageError.message}` },
+        { error: "Failed to send message" },
         { status: 500 }
       );
     }
 
-    // Update conversation's updated_at
-    await (supabase
-      .from("conversations") as any)
-      .update({ updated_at: new Date().toISOString() })
-      .eq("id", conversationId);
+    if (!result.success) {
+      // Handle specific errors
+      if (result.error === "Insufficient coins") {
+        return NextResponse.json(
+          {
+            error: "Insufficient coins",
+            required: result.required,
+            balance: result.balance,
+          },
+          { status: 402 }
+        );
+      }
+      return NextResponse.json(
+        { error: result.error || "Failed to send message" },
+        { status: 500 }
+      );
+    }
 
-    // Update sender's last_read_at
-    await (supabase
-      .from("conversation_participants") as any)
-      .update({ last_read_at: new Date().toISOString() })
-      .eq("conversation_id", conversationId)
-      .eq("actor_id", sender.id);
+    // Fetch the created message for response
+    const { data: message } = await (supabase
+      .from("messages") as any)
+      .select("*")
+      .eq("id", result.message_id)
+      .single();
 
     return NextResponse.json({
       success: true,
       message,
-      coinsDeducted: coinsRequired,
+      coinsDeducted: result.coins_deducted || 0,
     });
   } catch (error) {
     console.error("Send message error:", error);

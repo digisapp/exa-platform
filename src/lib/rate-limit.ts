@@ -207,3 +207,75 @@ export function getClientIP(request: Request): string {
 
   return "unknown";
 }
+
+// ============================================
+// ENDPOINT-SPECIFIC RATE LIMITS
+// ============================================
+// Generous limits - only catch actual abuse
+
+export const EndpointLimits = {
+  // Messaging - 60 messages per minute
+  messages: { limit: 60, windowSeconds: 60 },
+
+  // Uploads - 30 uploads per minute
+  uploads: { limit: 30, windowSeconds: 60 },
+
+  // Auth attempts - 10 per minute (stricter for security)
+  auth: { limit: 10, windowSeconds: 60 },
+
+  // Search - 100 per minute
+  search: { limit: 100, windowSeconds: 60 },
+
+  // Tips - 30 per minute
+  tips: { limit: 30, windowSeconds: 60 },
+
+  // Video calls - 20 per minute
+  videoCalls: { limit: 20, windowSeconds: 60 },
+
+  // Blocking - 20 per minute
+  blocking: { limit: 20, windowSeconds: 60 },
+
+  // General API - 200 per minute (fallback)
+  general: { limit: 200, windowSeconds: 60 },
+} as const;
+
+export type EndpointType = keyof typeof EndpointLimits;
+
+/**
+ * Simple rate limit check for API routes
+ * Returns null if allowed, or a Response object if rate limited
+ */
+export async function checkEndpointRateLimit(
+  request: Request,
+  endpoint: EndpointType,
+  userId?: string | null
+): Promise<Response | null> {
+  const config = EndpointLimits[endpoint];
+  const ip = getClientIP(request);
+  const identifier = userId ? `user:${userId}:${endpoint}` : `ip:${ip}:${endpoint}`;
+
+  const result = await rateLimitAsync(identifier, config);
+
+  if (!result.success) {
+    const retryAfter = Math.ceil((result.resetAt - Date.now()) / 1000);
+    return new Response(
+      JSON.stringify({
+        error: "Too many requests",
+        message: "Please slow down and try again later",
+        retryAfter,
+      }),
+      {
+        status: 429,
+        headers: {
+          "Content-Type": "application/json",
+          "Retry-After": String(retryAfter),
+          "X-RateLimit-Limit": String(config.limit),
+          "X-RateLimit-Remaining": "0",
+          "X-RateLimit-Reset": String(result.resetAt),
+        },
+      }
+    );
+  }
+
+  return null; // Request allowed
+}

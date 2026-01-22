@@ -1,6 +1,8 @@
 import { Resend } from "resend";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 
 const FROM_EMAIL = "EXA Models <noreply@examodels.com>";
+const BASE_URL = "https://www.examodels.com";
 
 function getResendClient() {
   const apiKey = process.env.RESEND_API_KEY;
@@ -8,6 +10,74 @@ function getResendClient() {
     throw new Error("RESEND_API_KEY is not configured");
   }
   return new Resend(apiKey);
+}
+
+/**
+ * Get or create an unsubscribe token for an email address
+ */
+async function getUnsubscribeToken(email: string): Promise<string | null> {
+  try {
+    const supabase = createServiceRoleClient();
+    const { data, error } = await (supabase.rpc as any)("get_or_create_email_preferences", {
+      p_email: email,
+    });
+    if (error || !data?.[0]?.unsubscribe_token) {
+      console.error("Failed to get unsubscribe token:", error);
+      return null;
+    }
+    return data[0].unsubscribe_token;
+  } catch (error) {
+    console.error("Error getting unsubscribe token:", error);
+    return null;
+  }
+}
+
+/**
+ * Check if an email is unsubscribed
+ */
+async function isEmailUnsubscribed(email: string, emailType: "all" | "marketing" | "notification" = "all"): Promise<boolean> {
+  try {
+    const supabase = createServiceRoleClient();
+    const { data, error } = await (supabase.rpc as any)("is_email_unsubscribed", {
+      p_email: email,
+      p_email_type: emailType,
+    });
+    if (error) {
+      console.error("Failed to check unsubscribe status:", error);
+      return false;
+    }
+    return data === true;
+  } catch (error) {
+    console.error("Error checking unsubscribe status:", error);
+    return false;
+  }
+}
+
+/**
+ * Generate the email footer with unsubscribe link
+ */
+function generateEmailFooter(unsubscribeToken: string | null): string {
+  const unsubscribeUrl = unsubscribeToken
+    ? `${BASE_URL}/unsubscribe?token=${unsubscribeToken}`
+    : null;
+
+  return `
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 30px; border-top: 1px solid #262626; text-align: center;">
+              <p style="margin: 0 0 10px; color: #a1a1aa; font-size: 14px;">
+                Questions? Reply to this email or DM us on Instagram
+              </p>
+              <p style="margin: 0 0 10px; color: #71717a; font-size: 12px;">
+                EXA Models - Where Models Shine
+              </p>
+              ${unsubscribeUrl ? `
+              <p style="margin: 0; color: #52525b; font-size: 11px;">
+                <a href="${unsubscribeUrl}" style="color: #52525b; text-decoration: underline;">Unsubscribe</a> from these emails
+              </p>
+              ` : ""}
+            </td>
+          </tr>`;
 }
 
 export async function sendModelApprovalEmail({
@@ -20,9 +90,16 @@ export async function sendModelApprovalEmail({
   username: string;
 }) {
   try {
+    // Check if unsubscribed
+    if (await isEmailUnsubscribed(to, "notification")) {
+      console.log(`Email ${to} is unsubscribed, skipping`);
+      return { success: true, skipped: true };
+    }
+
     const resend = getResendClient();
-    const profileUrl = `https://www.examodels.com/${username}`;
-    const dashboardUrl = "https://www.examodels.com/dashboard";
+    const profileUrl = `${BASE_URL}/${username}`;
+    const dashboardUrl = `${BASE_URL}/dashboard`;
+    const unsubscribeToken = await getUnsubscribeToken(to);
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
@@ -165,17 +242,7 @@ export async function sendModelApprovalEmail({
             </td>
           </tr>
 
-          <!-- Footer -->
-          <tr>
-            <td style="padding: 30px; border-top: 1px solid #262626; text-align: center;">
-              <p style="margin: 0 0 10px; color: #a1a1aa; font-size: 14px;">
-                Questions? Reply to this email or DM us on Instagram
-              </p>
-              <p style="margin: 0; color: #71717a; font-size: 12px;">
-                EXA Models - Where Models Shine
-              </p>
-            </td>
-          </tr>
+          ${generateEmailFooter(unsubscribeToken)}
 
         </table>
       </td>
@@ -2202,6 +2269,426 @@ export async function sendCoinBalanceReminderEmail({
             <td style="padding: 20px 30px; border-top: 1px solid #262626; text-align: center;">
               <p style="margin: 0; color: #71717a; font-size: 12px;">
                 EXA Models - Where Models Shine
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      console.error("Resend error:", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error("Email send error:", error);
+    return { success: false, error };
+  }
+}
+
+export async function sendProfileCompletionReminderEmail({
+  to,
+  modelName,
+  username,
+  hasPhoto,
+}: {
+  to: string;
+  modelName: string;
+  username: string;
+  hasPhoto: boolean;
+}) {
+  try {
+    const resend = getResendClient();
+    const dashboardUrl = "https://www.examodels.com/dashboard";
+    const profileUrl = `https://www.examodels.com/${username}`;
+
+    const photoMessage = hasPhoto
+      ? "We noticed your profile photo could use an upgrade! A high-quality photo helps you stand out to brands and get more bookings."
+      : "We noticed you haven't uploaded a profile photo yet! Adding one is the #1 way to get noticed by brands and fans.";
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      subject: `${modelName}, let's make your EXA profile shine!`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 40px 30px; text-align: center;">
+              <h1 style="margin: 0; color: white; font-size: 28px; font-weight: bold;">
+                Complete Your Profile
+              </h1>
+              <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
+                A few quick updates to get more bookings!
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
+                Hey ${modelName}!
+              </p>
+              <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                ${photoMessage}
+              </p>
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                Models with complete profiles get <strong style="color: #ec4899;">5x more views</strong> and are more likely to be featured on our homepage and get booked for gigs!
+              </p>
+
+              <!-- Checklist -->
+              <h2 style="margin: 0 0 20px; color: #ffffff; font-size: 18px; font-weight: 600;">
+                Quick Profile Checklist:
+              </h2>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+                <!-- Item 1 -->
+                <tr>
+                  <td style="padding: 12px 15px; background-color: #262626; border-radius: 8px;">
+                    <table cellpadding="0" cellspacing="0" width="100%">
+                      <tr>
+                        <td style="width: 30px; vertical-align: middle;">
+                          <span style="color: #ec4899; font-size: 18px; font-weight: bold;">1.</span>
+                        </td>
+                        <td style="vertical-align: middle;">
+                          <p style="margin: 0; color: #ffffff; font-weight: 500;">Upload a stunning profile photo</p>
+                          <p style="margin: 5px 0 0; color: #71717a; font-size: 13px;">High-quality headshot or professional photo</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr><td style="height: 8px;"></td></tr>
+
+                <!-- Item 2 -->
+                <tr>
+                  <td style="padding: 12px 15px; background-color: #262626; border-radius: 8px;">
+                    <table cellpadding="0" cellspacing="0" width="100%">
+                      <tr>
+                        <td style="width: 30px; vertical-align: middle;">
+                          <span style="color: #ec4899; font-size: 18px; font-weight: bold;">2.</span>
+                        </td>
+                        <td style="vertical-align: middle;">
+                          <p style="margin: 0; color: #ffffff; font-weight: 500;">Add your measurements</p>
+                          <p style="margin: 5px 0 0; color: #71717a; font-size: 13px;">Height, bust, waist, hips - brands need these!</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr><td style="height: 8px;"></td></tr>
+
+                <!-- Item 3 -->
+                <tr>
+                  <td style="padding: 12px 15px; background-color: #262626; border-radius: 8px;">
+                    <table cellpadding="0" cellspacing="0" width="100%">
+                      <tr>
+                        <td style="width: 30px; vertical-align: middle;">
+                          <span style="color: #ec4899; font-size: 18px; font-weight: bold;">3.</span>
+                        </td>
+                        <td style="vertical-align: middle;">
+                          <p style="margin: 0; color: #ffffff; font-weight: 500;">Write a bio</p>
+                          <p style="margin: 5px 0 0; color: #71717a; font-size: 13px;">Tell brands about yourself and your experience</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr><td style="height: 8px;"></td></tr>
+
+                <!-- Item 4 -->
+                <tr>
+                  <td style="padding: 12px 15px; background-color: #262626; border-radius: 8px;">
+                    <table cellpadding="0" cellspacing="0" width="100%">
+                      <tr>
+                        <td style="width: 30px; vertical-align: middle;">
+                          <span style="color: #ec4899; font-size: 18px; font-weight: bold;">4.</span>
+                        </td>
+                        <td style="vertical-align: middle;">
+                          <p style="margin: 0; color: #ffffff; font-weight: 500;">Set your booking rates</p>
+                          <p style="margin: 5px 0 0; color: #71717a; font-size: 13px;">Let brands know your rates for photoshoots, events & more</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
+                <tr>
+                  <td align="center">
+                    <a href="${dashboardUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 16px 40px; border-radius: 30px; font-weight: 600; font-size: 16px;">
+                      Complete My Profile
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0; color: #71717a; font-size: 14px; text-align: center;">
+                It only takes 5 minutes!
+              </p>
+            </td>
+          </tr>
+
+          <!-- Motivation -->
+          <tr>
+            <td style="padding: 0 30px 30px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, rgba(236, 72, 153, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%); border-radius: 12px; padding: 20px;">
+                <tr>
+                  <td style="text-align: center;">
+                    <p style="margin: 0 0 10px; color: #ffffff; font-size: 16px; font-weight: 600;">
+                      Did you know?
+                    </p>
+                    <p style="margin: 0; color: #a1a1aa; font-size: 14px; line-height: 1.5;">
+                      Complete profiles are featured on our homepage carousel, seen by thousands of brands and fans every day!
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 30px; border-top: 1px solid #262626; text-align: center;">
+              <p style="margin: 0 0 10px; color: #a1a1aa; font-size: 14px;">
+                <a href="${profileUrl}" style="color: #ec4899; text-decoration: none;">View your profile</a> |
+                <a href="https://instagram.com/examodels" style="color: #ec4899; text-decoration: none;">Follow us on Instagram</a>
+              </p>
+              <p style="margin: 0; color: #71717a; font-size: 12px;">
+                EXA Models - Where Models Shine
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      console.error("Resend error:", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error("Email send error:", error);
+    return { success: false, error };
+  }
+}
+
+export async function sendMiamiSwimWeekInviteEmail({
+  to,
+  name,
+}: {
+  to: string;
+  name?: string;
+}) {
+  try {
+    const resend = getResendClient();
+    const signupUrl = "https://www.examodels.com";
+    const dashboardUrl = "https://www.examodels.com/dashboard";
+
+    const greeting = name ? `Hey ${name}!` : "Hey Beautiful!";
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      subject: "Miami Swim Week 2026 - Create Your EXA Profile & Apply Today!",
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header with Beach/Swim Vibes -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #06b6d4 0%, #ec4899 50%, #f97316 100%); padding: 50px 30px; text-align: center;">
+              <p style="margin: 0 0 10px; font-size: 40px;">🌴🌊👙</p>
+              <h1 style="margin: 0; color: white; font-size: 32px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">
+                Miami Swim Week 2026
+              </h1>
+              <p style="margin: 15px 0 0; color: rgba(255,255,255,0.95); font-size: 18px; font-weight: 500;">
+                Your runway moment is calling!
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 20px; font-weight: 500;">
+                ${greeting}
+              </p>
+              <p style="margin: 0 0 25px; color: #a1a1aa; font-size: 16px; line-height: 1.7;">
+                The sun, the sand, the runway... <strong style="color: #ec4899;">Miami Swim Week 2026</strong> is coming and we want YOU there! 
+                EXA Models is looking for fresh faces and seasoned pros to strut their stuff at one of the hottest fashion events of the year.
+              </p>
+
+              <!-- Event Highlights -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px; background: linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%); border-radius: 12px; padding: 20px;">
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 15px; color: #ffffff; font-size: 16px; font-weight: 600; text-align: center;">
+                      What's waiting for you:
+                    </p>
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding: 8px 0; color: #a1a1aa; font-size: 15px;">
+                          <span style="color: #06b6d4; margin-right: 10px;">&#10003;</span> Walk for top swimwear brands
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0; color: #a1a1aa; font-size: 15px;">
+                          <span style="color: #ec4899; margin-right: 10px;">&#10003;</span> Network with industry professionals
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0; color: #a1a1aa; font-size: 15px;">
+                          <span style="color: #f97316; margin-right: 10px;">&#10003;</span> Get paid to do what you love
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0; color: #a1a1aa; font-size: 15px;">
+                          <span style="color: #06b6d4; margin-right: 10px;">&#10003;</span> Build your portfolio with pro photos
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA for New Users -->
+              <h2 style="margin: 0 0 15px; color: #ffffff; font-size: 18px; font-weight: 600;">
+                Ready to make waves?
+              </h2>
+              <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 15px; line-height: 1.6;">
+                Create your free EXA Models profile and apply for Miami Swim Week 2026. It only takes a few minutes!
+              </p>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 35px;">
+                <tr>
+                  <td align="center">
+                    <a href="${signupUrl}" style="display: inline-block; background: linear-gradient(135deg, #06b6d4 0%, #ec4899 100%); color: white; text-decoration: none; padding: 16px 40px; border-radius: 30px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 15px rgba(236, 72, 153, 0.4);">
+                      Create My Profile
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Divider -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+                <tr>
+                  <td style="border-top: 1px solid #333; padding-top: 30px;">
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Section for Existing Users -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #262626; border-radius: 12px; padding: 25px;">
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 15px; color: #ffffff; font-size: 16px; font-weight: 600;">
+                      Already have an account? You're one step ahead!
+                    </p>
+                    <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 14px; line-height: 1.6;">
+                      Make sure your profile is runway-ready! Brands are looking for models with complete profiles. Here's your checklist:
+                    </p>
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding: 6px 0; color: #a1a1aa; font-size: 14px;">
+                          <span style="color: #ec4899; margin-right: 8px;">1.</span> <strong style="color: #fff;">Upload a stunning profile photo</strong> - First impressions matter!
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 6px 0; color: #a1a1aa; font-size: 14px;">
+                          <span style="color: #ec4899; margin-right: 8px;">2.</span> <strong style="color: #fff;">Add your measurements</strong> - Brands need these for castings
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 6px 0; color: #a1a1aa; font-size: 14px;">
+                          <span style="color: #ec4899; margin-right: 8px;">3.</span> <strong style="color: #fff;">Complete your bio</strong> - Let your personality shine
+                        </td>
+                      </tr>
+                    </table>
+                    <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 20px;">
+                      <tr>
+                        <td align="center">
+                          <a href="${dashboardUrl}" style="display: inline-block; background-color: transparent; color: #ec4899; text-decoration: none; padding: 12px 30px; border-radius: 30px; font-weight: 600; font-size: 14px; border: 2px solid #ec4899;">
+                            Update My Profile
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Urgency Banner -->
+          <tr>
+            <td style="padding: 0 30px 30px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, rgba(249, 115, 22, 0.2) 0%, rgba(236, 72, 153, 0.2) 100%); border: 1px solid rgba(249, 115, 22, 0.3); border-radius: 12px; padding: 20px;">
+                <tr>
+                  <td style="text-align: center;">
+                    <p style="margin: 0; color: #f97316; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">
+                      Spots are limited - Apply early!
+                    </p>
+                    <p style="margin: 8px 0 0; color: #a1a1aa; font-size: 13px;">
+                      Don't miss your chance to walk in Miami Swim Week 2026
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 25px 30px; border-top: 1px solid #262626; text-align: center;">
+              <p style="margin: 0 0 15px; color: #a1a1aa; font-size: 14px;">
+                <a href="https://www.examodels.com" style="color: #ec4899; text-decoration: none;">Visit EXA Models</a> |
+                <a href="https://instagram.com/examodels" style="color: #ec4899; text-decoration: none;">Follow us on Instagram</a>
+              </p>
+              <p style="margin: 0; color: #71717a; font-size: 12px;">
+                See you on the runway! &#x2728;
+              </p>
+              <p style="margin: 10px 0 0; color: #525252; font-size: 11px;">
+                EXA Models - Top Models Worldwide
               </p>
             </td>
           </tr>

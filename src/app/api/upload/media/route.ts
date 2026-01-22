@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getModelId } from "@/lib/ids";
 import { NextRequest, NextResponse } from "next/server";
+import { processImage, isProcessableImage } from "@/lib/image-processing";
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
@@ -52,23 +53,52 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate unique filename
-    const ext = file.name.split(".").pop() || (isVideo ? "mp4" : "jpg");
-    const timestamp = Date.now();
-    const filename = `${modelId}/${timestamp}.${ext}`;
-
     // Use portfolio bucket for both photos and videos
     const bucket = "portfolio";
 
-    // Convert File to ArrayBuffer for upload
+    // Convert File to ArrayBuffer for processing
     const arrayBuffer = await file.arrayBuffer();
-    const buffer = new Uint8Array(arrayBuffer);
+    const inputBuffer = Buffer.from(arrayBuffer);
+
+    // Process image to strip EXIF data (contains GPS, camera info, etc.)
+    let processedBuffer: Buffer | Uint8Array = inputBuffer;
+    let finalContentType = file.type;
+
+    if (isImage && isProcessableImage(file.type) && file.type !== "image/gif") {
+      // Don't process GIFs as they may lose animation
+      try {
+        const processed = await processImage(inputBuffer, {
+          maxWidth: 2048,
+          maxHeight: 2048,
+          quality: 85,
+        });
+        processedBuffer = processed.buffer;
+        finalContentType = processed.contentType;
+      } catch (processError) {
+        console.error("Image processing error, uploading original:", processError);
+        // Fall back to original if processing fails
+      }
+    }
+
+    // Determine file extension from content type
+    const extMap: Record<string, string> = {
+      "image/jpeg": "jpg",
+      "image/png": "png",
+      "image/webp": "webp",
+      "image/gif": "gif",
+      "video/mp4": "mp4",
+      "video/quicktime": "mov",
+      "video/webm": "webm",
+    };
+    const ext = extMap[finalContentType] || (isVideo ? "mp4" : "jpg");
+    const timestamp = Date.now();
+    const filename = `${modelId}/${timestamp}.${ext}`;
 
     // Upload to Supabase Storage
     const { error: uploadError } = await supabase.storage
       .from(bucket)
-      .upload(filename, buffer, {
-        contentType: file.type,
+      .upload(filename, processedBuffer, {
+        contentType: finalContentType,
         upsert: false,
       });
 
@@ -110,8 +140,8 @@ export async function POST(request: NextRequest) {
         photo_url: isImage ? publicUrl : null,
         url: publicUrl,
         storage_path: filename,
-        mime_type: file.type,
-        size_bytes: file.size,
+        mime_type: finalContentType,
+        size_bytes: processedBuffer.length,
         title: title,
       })
       .select()

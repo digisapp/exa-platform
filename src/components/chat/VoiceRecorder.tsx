@@ -4,6 +4,8 @@ import { useRef, useEffect, useReducer } from "react";
 import { Button } from "@/components/ui/button";
 import { Mic, Square, X, Send, Loader2 } from "lucide-react";
 
+const MAX_RECORDING_TIME = 180; // 3 minutes max
+
 interface VoiceRecorderProps {
   onRecordingComplete: (audioBlob: Blob) => void;
   onCancel: () => void;
@@ -60,6 +62,7 @@ export function VoiceRecorder({
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const mountedRef = useRef(true);
+  const recordingTimeRef = useRef(0);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -95,10 +98,23 @@ export function VoiceRecorder({
         mediaRecorder.start();
         if (mountedRef.current) {
           dispatch({ type: "START_RECORDING" });
+          recordingTimeRef.current = 0;
 
           timerRef.current = setInterval(() => {
             if (mountedRef.current) {
+              recordingTimeRef.current += 1;
               dispatch({ type: "TICK" });
+
+              // Auto-stop at max time
+              if (recordingTimeRef.current >= MAX_RECORDING_TIME) {
+                if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+                  mediaRecorderRef.current.stop();
+                  if (timerRef.current) {
+                    clearInterval(timerRef.current);
+                    timerRef.current = null;
+                  }
+                }
+              }
             }
           }, 1000);
         }
@@ -185,10 +201,21 @@ export function VoiceRecorder({
               <div className="absolute inset-0 rounded-full bg-red-500/30 animate-ping" />
             </div>
 
-            {/* Timer */}
+            {/* Timer with max time indicator */}
             <div className="flex-1">
               <p className="text-sm font-medium">Recording...</p>
-              <p className="text-xs text-muted-foreground">{formatTime(state.recordingTime)}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-xs text-muted-foreground">{formatTime(state.recordingTime)}</p>
+                <span className="text-xs text-muted-foreground">/</span>
+                <p className={`text-xs ${state.recordingTime >= MAX_RECORDING_TIME - 30 ? "text-amber-500" : "text-muted-foreground"}`}>
+                  {formatTime(MAX_RECORDING_TIME)}
+                </p>
+              </div>
+              {state.recordingTime >= MAX_RECORDING_TIME - 30 && state.recordingTime < MAX_RECORDING_TIME && (
+                <p className="text-xs text-amber-500 mt-0.5">
+                  {MAX_RECORDING_TIME - state.recordingTime}s remaining
+                </p>
+              )}
             </div>
           </>
         ) : isStopped && state.audioUrl ? (

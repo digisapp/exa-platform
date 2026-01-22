@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { getModelId } from "@/lib/ids";
 import { NextRequest, NextResponse } from "next/server";
+import { processImage, isProcessableImage } from "@/lib/image-processing";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -15,6 +17,12 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Rate limit check
+    const rateLimitResponse = await checkEndpointRateLimit(request, "uploads", user.id);
+    if (rateLimitResponse) {
+      return rateLimitResponse;
     }
 
     // Get actor
@@ -52,23 +60,49 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate unique filename
-    const ext = file.name.split(".").pop() || "jpg";
+    // Convert File to ArrayBuffer for processing
+    const arrayBuffer = await file.arrayBuffer();
+    const inputBuffer = Buffer.from(arrayBuffer);
+
+    // Process image to strip EXIF data (contains GPS, camera info, etc.)
+    let processedBuffer: Buffer | Uint8Array = inputBuffer;
+    let finalContentType = file.type;
+
+    if (isProcessableImage(file.type) && file.type !== "image/gif") {
+      // Don't process GIFs as they may lose animation
+      try {
+        const processed = await processImage(inputBuffer, {
+          maxWidth: uploadType === "avatar" ? 800 : 2048,
+          maxHeight: uploadType === "avatar" ? 800 : 2048,
+          quality: 85,
+        });
+        processedBuffer = processed.buffer;
+        finalContentType = processed.contentType;
+      } catch (processError) {
+        console.error("Image processing error, uploading original:", processError);
+        // Fall back to original if processing fails
+      }
+    }
+
+    // Determine file extension from content type
+    const extMap: Record<string, string> = {
+      "image/jpeg": "jpg",
+      "image/png": "png",
+      "image/webp": "webp",
+      "image/gif": "gif",
+    };
+    const ext = extMap[finalContentType] || "jpg";
     const timestamp = Date.now();
     const filename = `${actor.id}/${timestamp}.${ext}`;
 
     // Determine bucket based on upload type
     const bucket = uploadType === "avatar" ? "avatars" : "portfolio";
 
-    // Convert File to ArrayBuffer for upload
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = new Uint8Array(arrayBuffer);
-
     // Upload to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from(bucket)
-      .upload(filename, buffer, {
-        contentType: file.type,
+      .upload(filename, processedBuffer, {
+        contentType: finalContentType,
         upsert: false,
       });
 
@@ -93,8 +127,8 @@ export async function POST(request: NextRequest) {
         type: "photo",
         storage_path: filename,
         url: publicUrl,
-        mime_type: file.type,
-        size_bytes: file.size,
+        mime_type: finalContentType,
+        size_bytes: processedBuffer.length,
         source: uploadType,
         is_primary: false,
         display_order: 0,

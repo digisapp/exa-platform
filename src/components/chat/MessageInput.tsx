@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, KeyboardEvent } from "react";
+import { useState, useRef, useEffect, useCallback, KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Loader2, Coins, X, Video, Mic, Camera } from "lucide-react";
@@ -10,6 +10,8 @@ import { AttachmentMenu } from "./AttachmentMenu";
 import { VoiceRecorder } from "./VoiceRecorder";
 import { LibraryPicker } from "./LibraryPicker";
 
+const DRAFT_PREFIX = "chat_draft_";
+
 interface MessageInputProps {
   onSend: (content: string, mediaUrl?: string, mediaType?: string) => Promise<void>;
   disabled?: boolean;
@@ -18,6 +20,7 @@ interface MessageInputProps {
   placeholder?: string;
   isModel?: boolean;
   modelId?: string;
+  conversationId?: string;
 }
 
 export function MessageInput({
@@ -28,6 +31,7 @@ export function MessageInput({
   placeholder = "Type a message...",
   isModel = false,
   modelId,
+  conversationId,
 }: MessageInputProps) {
   const [content, setContent] = useState("");
   const [sending, setSending] = useState(false);
@@ -40,6 +44,49 @@ export function MessageInput({
     preview?: string;
   } | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const draftKey = conversationId ? `${DRAFT_PREFIX}${conversationId}` : null;
+
+  // Load draft from localStorage on mount
+  useEffect(() => {
+    if (!draftKey) return;
+    try {
+      const savedDraft = localStorage.getItem(draftKey);
+      if (savedDraft) {
+        setContent(savedDraft);
+      }
+    } catch (error) {
+      // localStorage might be unavailable
+    }
+  }, [draftKey]);
+
+  // Save draft to localStorage (debounced)
+  useEffect(() => {
+    if (!draftKey) return;
+
+    const timeoutId = setTimeout(() => {
+      try {
+        if (content.trim()) {
+          localStorage.setItem(draftKey, content);
+        } else {
+          localStorage.removeItem(draftKey);
+        }
+      } catch (error) {
+        // localStorage might be unavailable or full
+      }
+    }, 500); // Debounce 500ms
+
+    return () => clearTimeout(timeoutId);
+  }, [content, draftKey]);
+
+  // Clear draft helper
+  const clearDraft = useCallback(() => {
+    if (!draftKey) return;
+    try {
+      localStorage.removeItem(draftKey);
+    } catch (error) {
+      // Ignore
+    }
+  }, [draftKey]);
 
   const canSend = (content.trim() || attachedMedia) && !disabled && !sending && !uploading;
   const hasEnoughCoins = coinCost === 0 || coinBalance >= coinCost;
@@ -57,6 +104,7 @@ export function MessageInput({
 
     try {
       await onSend(messageContent, mediaUrl, mediaType);
+      clearDraft(); // Clear draft on successful send
     } catch (error) {
       setContent(messageContent);
       if (mediaUrl && mediaType) {

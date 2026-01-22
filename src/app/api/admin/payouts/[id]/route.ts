@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { logAdminAction, AdminActions } from "@/lib/admin-audit";
 
 export async function PATCH(
   request: Request,
@@ -88,6 +89,23 @@ export async function PATCH(
         console.error("Error updating withdrawal:", error);
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
+    }
+
+    // Log the admin action
+    const actionMap: Record<string, string> = {
+      completed: AdminActions.PAYOUT_APPROVED,
+      failed: AdminActions.PAYOUT_REJECTED,
+      processing: AdminActions.PAYOUT_PROCESSING,
+    };
+    if (actionMap[status]) {
+      await logAdminAction({
+        supabase,
+        adminUserId: user.id,
+        action: actionMap[status],
+        targetType: "withdrawal",
+        targetId: id,
+        newValues: { status, notes },
+      });
     }
 
     return NextResponse.json({ success: true });

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { sendModelApprovalEmail, sendModelRejectionEmail } from "@/lib/email";
+import { logAdminAction, AdminActions } from "@/lib/admin-audit";
 
 async function isAdmin(supabase: any, userId: string) {
   const { data: actor } = await supabase
@@ -95,6 +96,19 @@ export async function PATCH(
         // Log email error but don't fail the request
         console.error("Failed to send notification email:", emailError);
       }
+    }
+
+    // Log the admin action
+    if (statusChanged) {
+      await logAdminAction({
+        supabase,
+        adminUserId: user.id,
+        action: is_approved ? AdminActions.MODEL_APPROVED : AdminActions.MODEL_REJECTED,
+        targetType: "model",
+        targetId: id,
+        oldValues: { is_approved: model.is_approved },
+        newValues: { is_approved },
+      });
     }
 
     return NextResponse.json({ success: true, emailSent: statusChanged && !!model.email });

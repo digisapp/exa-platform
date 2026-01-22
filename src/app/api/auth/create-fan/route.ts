@@ -1,8 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    // Rate limit check
+    const rateLimitResponse = await checkEndpointRateLimit(request, "auth");
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+
     const { displayName, referrerModelId: requestReferrerId } = await request.json();
 
     if (!displayName?.trim()) {

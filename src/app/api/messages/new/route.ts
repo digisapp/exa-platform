@@ -76,6 +76,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if either user has blocked the other
+    const { data: isBlocked } = await (supabase.rpc as any)("is_blocked", {
+      p_actor_id_1: sender.id,
+      p_actor_id_2: recipientId,
+    });
+
+    if (isBlocked) {
+      return NextResponse.json(
+        { error: "Unable to message this user", code: "BLOCKED" },
+        { status: 403 }
+      );
+    }
+
     // Check if conversation already exists between these two users
     const { data: existingParticipations } = await supabase
       .from("conversation_participants")

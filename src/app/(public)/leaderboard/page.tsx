@@ -24,43 +24,25 @@ const levelColors: Record<string, string> = {
 export default async function LeaderboardPage() {
   const supabase = await createClient();
 
-  // Get top models by points
-  const { data: topModels } = await supabase
-    .from("models")
-    .select("*")
-    .eq("is_approved", true)
-    .order("points_cached", { ascending: false })
-    .limit(50) as { data: any[] | null };
-
-  // Get weekly top (models who earned most this week)
-  const oneWeekAgo = new Date();
-  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-
-  const { data: weeklyPoints } = await supabase
-    .from("point_transactions")
-    .select("model_id, points")
-    .gte("created_at", oneWeekAgo.toISOString()) as { data: { model_id: string; points: number }[] | null };
-
-  // Aggregate weekly points
-  const weeklyTotals: Record<string, number> = {};
-  weeklyPoints?.forEach((tx) => {
-    weeklyTotals[tx.model_id] = (weeklyTotals[tx.model_id] || 0) + tx.points;
+  // Get top models by points using optimized function
+  const { data: topModels } = await (supabase.rpc as any)("get_alltime_leaderboard", {
+    p_limit: 50,
   });
 
-  const weeklyTopIds = Object.entries(weeklyTotals)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 20)
-    .map(([id]) => id);
+  // Get weekly top using optimized function with aggregation at DB level
+  const { data: weeklyTopModels } = await (supabase.rpc as any)("get_weekly_leaderboard", {
+    p_limit: 20,
+  });
 
-  const { data: weeklyTopModels } = await supabase
-    .from("models")
-    .select("*")
-    .in("id", weeklyTopIds) as { data: any[] | null };
+  // Create weekly totals map for display
+  const weeklyTotals: Record<string, number> = {};
+  weeklyTopModels?.forEach((model: any) => {
+    weeklyTotals[model.model_id] = model.weekly_points;
+  });
 
-  // Sort by weekly points
-  const sortedWeeklyModels = weeklyTopModels?.sort(
-    (a, b) => (weeklyTotals[b.id] || 0) - (weeklyTotals[a.id] || 0)
-  );
+  // Transform data to match expected format (model_id -> id)
+  const transformedTopModels = topModels?.map((m: any) => ({ ...m, id: m.model_id })) || [];
+  const sortedWeeklyModels = weeklyTopModels?.map((m: any) => ({ ...m, id: m.model_id })) || [];
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -77,12 +59,12 @@ export default async function LeaderboardPage() {
         </TabsList>
 
         <TabsContent value="all-time">
-          <LeaderboardList models={topModels || []} />
+          <LeaderboardList models={transformedTopModels} />
         </TabsContent>
 
         <TabsContent value="weekly">
           <LeaderboardList
-            models={sortedWeeklyModels || []}
+            models={sortedWeeklyModels}
             weeklyTotals={weeklyTotals}
           />
         </TabsContent>

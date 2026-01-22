@@ -2,12 +2,51 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { sendPasswordResetEmail as sendCustomPasswordResetEmail } from "@/lib/email";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 // Admin client to bypass RLS
 const adminClient = createAdminClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
+
+// Helper to extract Instagram username from URL or handle
+function extractInstagramUsername(input: string | null | undefined): string | null {
+  if (!input?.trim()) return null;
+
+  let username = input.trim();
+
+  // Remove URL prefixes (handles various Instagram URL formats)
+  username = username
+    .replace(/^https?:\/\/(www\.)?instagram\.com\//i, "")
+    .replace(/^(www\.)?instagram\.com\//i, "")
+    .replace(/^@/, "")
+    .split("/")[0]  // Remove trailing paths like /reels, /posts, etc.
+    .split("?")[0]  // Remove query params
+    .toLowerCase()
+    .trim();
+
+  return username || null;
+}
+
+// Helper to extract TikTok username from URL or handle
+function extractTikTokUsername(input: string | null | undefined): string | null {
+  if (!input?.trim()) return null;
+
+  let username = input.trim();
+
+  // Remove URL prefixes (handles various TikTok URL formats)
+  username = username
+    .replace(/^https?:\/\/(www\.)?(tiktok\.com|vm\.tiktok\.com)\/@?/i, "")
+    .replace(/^(www\.)?(tiktok\.com|vm\.tiktok\.com)\/@?/i, "")
+    .replace(/^@/, "")
+    .split("/")[0]  // Remove trailing paths
+    .split("?")[0]  // Remove query params
+    .toLowerCase()
+    .trim();
+
+  return username || null;
+}
 
 // Helper to send password reset for imported models via Resend
 async function sendPasswordResetEmailForImportedModel(email: string) {
@@ -50,6 +89,12 @@ async function sendPasswordResetEmailForImportedModel(email: string) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit check (unauthenticated endpoint - use IP)
+    const rateLimitResponse = await checkEndpointRateLimit(request, "auth");
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+
     const body = await request.json();
     const {
       name,
@@ -95,7 +140,7 @@ export async function POST(request: NextRequest) {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
-    const normalizedInstagram = instagram_username?.replace("@", "").trim().toLowerCase();
+    const normalizedInstagram = extractInstagramUsername(instagram_username);
 
     // Check for Instagram duplicate in existing models (claimed accounts only)
     if (normalizedInstagram) {
@@ -386,8 +431,8 @@ async function createFanAndApplication(
       fan_id: actorId,
       display_name: displayName,
       email: email,
-      instagram_username: instagramUsername?.replace("@", "").trim() || null,
-      tiktok_username: tiktokUsername?.replace("@", "").trim() || null,
+      instagram_username: extractInstagramUsername(instagramUsername),
+      tiktok_username: extractTikTokUsername(tiktokUsername),
       phone: phone?.trim() || null,
       date_of_birth: dateOfBirth || null,
       height: height || null,

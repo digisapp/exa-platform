@@ -108,12 +108,19 @@ export default async function MessagesPage() {
     participantsMap.set(p.conversation_id, existing);
   });
 
-  // Combine data efficiently
-  const conversations = (participations || []).map((p: any) => ({
-    ...p,
-    lastMessage: lastMessageMap.get(p.conversation_id) || null,
-    otherParticipants: participantsMap.get(p.conversation_id) || [],
-  }));
+  // Combine data efficiently and sort by most recent activity
+  const conversations = (participations || [])
+    .map((p: any) => ({
+      ...p,
+      lastMessage: lastMessageMap.get(p.conversation_id) || null,
+      otherParticipants: participantsMap.get(p.conversation_id) || [],
+    }))
+    .sort((a: any, b: any) => {
+      // Sort by last message date, falling back to conversation updated_at
+      const aDate = a.lastMessage?.created_at || a.conversation?.updated_at || 0;
+      const bDate = b.lastMessage?.created_at || b.conversation?.updated_at || 0;
+      return new Date(bDate).getTime() - new Date(aDate).getTime();
+    });
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">

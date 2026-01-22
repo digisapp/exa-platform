@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -42,13 +42,7 @@ export function LibraryPicker({
   const [selectedItem, setSelectedItem] = useState<ContentItem | null>(null);
   const [activeTab, setActiveTab] = useState("photos");
 
-  useEffect(() => {
-    if (open) {
-      loadContent();
-    }
-  }, [open, modelId]);
-
-  const loadContent = async () => {
+  const loadContent = useCallback(async () => {
     setLoading(true);
     const supabase = createClient();
 
@@ -120,7 +114,13 @@ export function LibraryPicker({
     } finally {
       setLoading(false);
     }
-  };
+  }, [modelId]);
+
+  useEffect(() => {
+    if (open) {
+      loadContent();
+    }
+  }, [open, loadContent]);
 
   const handleSelect = () => {
     if (selectedItem) {

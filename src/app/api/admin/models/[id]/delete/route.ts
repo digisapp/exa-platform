@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { logAdminAction, AdminActions } from "@/lib/admin-audit";
 
 async function isAdmin(supabase: any, userId: string) {
   const { data: actor } = await supabase
@@ -27,10 +28,10 @@ export async function DELETE(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Get the model's user_id first
+    // Get the model's data first (for audit logging)
     const { data: model, error: modelError } = await (supabase
       .from("models") as any)
-      .select("id, user_id")
+      .select("id, user_id, email, username, first_name, last_name")
       .eq("id", modelId)
       .single();
 
@@ -57,6 +58,21 @@ export async function DELETE(
         .eq("user_id", model.user_id)
         .eq("type", "model");
     }
+
+    // Log the admin action
+    await logAdminAction({
+      supabase,
+      adminUserId: user.id,
+      action: AdminActions.MODEL_DELETED,
+      targetType: "model",
+      targetId: modelId,
+      oldValues: {
+        email: model.email,
+        username: model.username,
+        first_name: model.first_name,
+        last_name: model.last_name,
+      },
+    });
 
     return NextResponse.json({
       success: true,

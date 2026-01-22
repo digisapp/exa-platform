@@ -70,13 +70,19 @@ export default async function ChatPage({ params }: PageProps) {
     redirect("/chats");
   }
 
-  // Get messages
-  const { data: messages } = (await supabase
+  // Get messages (fetch 101 to check if there are more)
+  const { data: allMessages } = (await supabase
     .from("messages")
     .select("*")
     .eq("conversation_id", conversationId)
-    .order("created_at", { ascending: true })
-    .limit(100)) as { data: Message[] | null };
+    .order("created_at", { ascending: false })
+    .limit(101)) as { data: Message[] | null };
+
+  // Check if there are more messages and prepare the list
+  const hasMoreMessages = (allMessages?.length || 0) > 100;
+  const messages = allMessages
+    ? (hasMoreMessages ? allMessages.slice(0, 100) : allMessages).reverse()
+    : [];
 
   // Get other participant(s)
   const { data: participants } = await supabase
@@ -123,11 +129,12 @@ export default async function ChatPage({ params }: PageProps) {
   return (
     <ChatView
       conversation={conversation}
-      initialMessages={messages || []}
+      initialMessages={messages}
       currentActor={actor}
       currentModel={currentModel}
       currentFan={currentFan}
       otherParticipant={otherParticipant}
+      hasMoreMessages={hasMoreMessages}
     />
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { MessageBubble } from "./MessageBubble";
 import { MessageInput } from "./MessageInput";
@@ -8,7 +8,23 @@ import { TipDialog } from "./TipDialog";
 import { VideoCallButton, IncomingCallDialog } from "@/components/video";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { ArrowLeft, Loader2, MoreVertical, Ban } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 import type { Message, Actor, Model, Conversation, Fan } from "@/types/database";
@@ -26,6 +42,7 @@ interface ChatViewProps {
   currentModel?: Model | null;
   currentFan?: Fan | null;
   otherParticipant: Participant;
+  hasMoreMessages?: boolean;
 }
 
 export function ChatView({
@@ -35,9 +52,12 @@ export function ChatView({
   currentModel,
   currentFan,
   otherParticipant,
+  hasMoreMessages = false,
 }: ChatViewProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(hasMoreMessages);
   const [localCoinBalance, setLocalCoinBalance] = useState(
     currentFan?.coin_balance || currentModel?.coin_balance || 0
   );
@@ -47,8 +67,88 @@ export function ChatView({
     callerAvatar?: string;
     callType?: "video" | "voice";
   } | null>(null);
+  const [showBlockDialog, setShowBlockDialog] = useState(false);
+  const [isBlocking, setIsBlocking] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
+
+  // Handle blocking a user
+  const handleBlockUser = async () => {
+    if (isBlocking) return;
+
+    setIsBlocking(true);
+    try {
+      const response = await fetch("/api/users/block", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          actorId: otherParticipant.actor_id,
+        }),
+      });
+
+      if (response.ok) {
+        toast.success(`${otherName} has been blocked`);
+        setShowBlockDialog(false);
+        // Redirect to chats list
+        window.location.href = "/chats";
+      } else {
+        const data = await response.json();
+        toast.error(data.error || "Failed to block user");
+      }
+    } catch {
+      toast.error("Failed to block user");
+    } finally {
+      setIsBlocking(false);
+    }
+  };
+
+  // Load older messages
+  const loadMoreMessages = useCallback(async () => {
+    if (loadingMore || !hasMore || messages.length === 0) return;
+
+    const oldestMessage = messages[0];
+    setLoadingMore(true);
+
+    try {
+      const response = await fetch(
+        `/api/messages/list?conversationId=${conversation.id}&before=${oldestMessage.id}`
+      );
+      const data = await response.json();
+
+      if (response.ok && data.messages) {
+        // Preserve scroll position
+        const container = messagesContainerRef.current;
+        const previousScrollHeight = container?.scrollHeight || 0;
+
+        setMessages((prev) => [...data.messages, ...prev]);
+        setHasMore(data.hasMore);
+
+        // Restore scroll position after messages are prepended
+        requestAnimationFrame(() => {
+          if (container) {
+            const newScrollHeight = container.scrollHeight;
+            container.scrollTop = newScrollHeight - previousScrollHeight;
+          }
+        });
+      }
+    } catch (error) {
+      console.error("Failed to load more messages:", error);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [conversation.id, hasMore, loadingMore, messages]);
+
+  // Handle scroll to detect when user scrolls to top
+  const handleScroll = useCallback(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    // Load more when scrolled near the top (within 100px)
+    if (container.scrollTop < 100 && hasMore && !loadingMore) {
+      loadMoreMessages();
+    }
+  }, [hasMore, loadingMore, loadMoreMessages]);
 
   // Get other participant's display info
   const otherName =
@@ -199,7 +299,7 @@ export function ChatView({
       }
 
       if (data.coinsDeducted > 0) {
-        // Could update local coin balance here if needed
+        setLocalCoinBalance((prev) => Math.max(0, prev - data.coinsDeducted));
       }
     } finally {
       setLoading(false);
@@ -256,7 +356,48 @@ export function ChatView({
             }}
           />
         )}
+
+        {/* More options menu */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <MoreVertical className="h-5 w-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={() => setShowBlockDialog(true)}
+              className="text-destructive focus:text-destructive"
+            >
+              <Ban className="h-4 w-4 mr-2" />
+              Block {otherName}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
+
+      {/* Block Confirmation Dialog */}
+      <AlertDialog open={showBlockDialog} onOpenChange={setShowBlockDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Block {otherName}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              They won&apos;t be able to message you or see your profile. You can
+              unblock them later from your settings.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isBlocking}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBlockUser}
+              disabled={isBlocking}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isBlocking ? "Blocking..." : "Block"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Incoming Call Dialog */}
       {incomingCall && (
@@ -270,7 +411,30 @@ export function ChatView({
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div
+        ref={messagesContainerRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto p-4 space-y-4"
+      >
+        {/* Load more indicator */}
+        {loadingMore && (
+          <div className="flex justify-center py-2">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
+        )}
+        {hasMore && !loadingMore && messages.length > 0 && (
+          <div className="flex justify-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={loadMoreMessages}
+              className="text-muted-foreground"
+            >
+              Load earlier messages
+            </Button>
+          </div>
+        )}
+
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
             <p>No messages yet</p>
@@ -299,6 +463,7 @@ export function ChatView({
                   isOwn ? currentModel?.profile_photo_url : otherAvatar
                 }
                 showAvatar={showAvatar}
+                currentActorId={currentActor.id}
               />
             );
           })
@@ -319,6 +484,7 @@ export function ChatView({
         }
         isModel={currentActor.type === "model"}
         modelId={currentModel?.id}
+        conversationId={conversation.id}
       />
     </div>
   );

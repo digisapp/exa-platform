@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { sendTipReceivedEmail } from "@/lib/email";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,6 +14,12 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Rate limit check
+    const rateLimitResponse = await checkEndpointRateLimit(request, "tips", user.id);
+    if (rateLimitResponse) {
+      return rateLimitResponse;
     }
 
     const body = await request.json();
