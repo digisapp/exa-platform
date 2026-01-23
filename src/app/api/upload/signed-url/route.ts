@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
+const ALLOWED_AUDIO_TYPES = ["audio/webm", "audio/mp4", "audio/mpeg", "audio/ogg", "audio/wav"];
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
 // Admin client for creating signed URLs
@@ -41,13 +42,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Determine if it's an image or video
+    // Determine file type category
     const isImage = ALLOWED_IMAGE_TYPES.includes(fileType);
     const isVideo = ALLOWED_VIDEO_TYPES.includes(fileType);
+    const isAudio = ALLOWED_AUDIO_TYPES.includes(fileType);
 
-    if (!isImage && !isVideo) {
+    if (!isImage && !isVideo && !isAudio) {
       return NextResponse.json(
-        { error: "Invalid file type. Allowed: JPEG, PNG, WebP, GIF, MP4, MOV, WebM" },
+        { error: "Invalid file type. Allowed: JPEG, PNG, WebP, GIF, MP4, MOV, WebM, audio files" },
         { status: 400 }
       );
     }
@@ -59,8 +61,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate unique filename
-    const ext = fileName.split(".").pop() || (isVideo ? "mp4" : "jpg");
+    // Generate unique filename with proper extension fallback
+    const defaultExt = isVideo ? "mp4" : isAudio ? "webm" : "jpg";
+    const ext = fileName.split(".").pop() || defaultExt;
     const timestamp = Date.now();
     const storagePath = `${modelId}/${timestamp}.${ext}`;
     const bucket = "portfolio";
@@ -101,6 +104,7 @@ export async function POST(request: NextRequest) {
         modelId,
         actorId: actor.id,
         isVideo,
+        isAudio,
         title: title || null,
         fileType,
         fileSize,

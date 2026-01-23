@@ -170,11 +170,5 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Route segment config to increase body size limit
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '50mb',
-    },
-  },
-};
+// Note: For large files (>4MB), use the signed URL approach via /api/upload/signed-url
+// This bypasses Vercel's body size limit by uploading directly to Supabase Storage

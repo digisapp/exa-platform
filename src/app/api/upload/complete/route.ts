@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { isVideo, title, fileType, fileSize } = uploadMeta;
+    const { isVideo, isAudio, title, fileType, fileSize } = uploadMeta;
 
     // Get public URL
     const {
@@ -83,7 +83,10 @@ export async function POST(request: NextRequest) {
     } = supabase.storage.from(bucket).getPublicUrl(storagePath);
 
     // Determine asset_type based on file type
-    const assetType = isVideo ? "video" : "portfolio";
+    const assetType = isVideo ? "video" : isAudio ? "audio" : "portfolio";
+
+    // Determine the media type
+    const mediaTypeValue = isVideo ? "video" : isAudio ? "audio" : "photo";
 
     // Create media_asset record
     const { data: mediaAsset, error: mediaError } = await (supabase
@@ -91,9 +94,9 @@ export async function POST(request: NextRequest) {
       .insert({
         owner_id: actorId,
         model_id: modelId,
-        type: isVideo ? "video" : "photo",
+        type: mediaTypeValue,
         asset_type: assetType,
-        photo_url: !isVideo ? publicUrl : null,
+        photo_url: !isVideo && !isAudio ? publicUrl : null,
         url: publicUrl,
         storage_path: storagePath,
         mime_type: fileType,

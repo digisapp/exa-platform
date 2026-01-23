@@ -123,11 +123,79 @@ export function MessageInput({
     }
   };
 
+  // Helper to safely parse JSON response
+  const safeJsonParse = async (response: Response) => {
+    try {
+      return await response.json();
+    } catch {
+      if (response.status === 413) {
+        throw new Error("File too large for upload");
+      }
+      throw new Error("Server error - please try again");
+    }
+  };
+
+  // Upload via signed URL for large files (bypasses Vercel's 4.5MB limit)
+  const uploadViaSigned = async (file: File): Promise<string> => {
+    // Step 1: Get signed URL
+    const signedResponse = await fetch("/api/upload/signed-url", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size,
+      }),
+    });
+
+    const signedData = await safeJsonParse(signedResponse);
+    if (!signedResponse.ok) throw new Error(signedData.error || "Failed to get upload URL");
+
+    // Step 2: Upload directly to Supabase Storage
+    const uploadResponse = await fetch(signedData.signedUrl, {
+      method: "PUT",
+      headers: { "Content-Type": file.type },
+      body: file,
+    });
+
+    if (!uploadResponse.ok) throw new Error("Upload to storage failed");
+
+    // Step 3: Complete the upload
+    const completeResponse = await fetch("/api/upload/complete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        storagePath: signedData.storagePath,
+        bucket: signedData.bucket,
+        uploadMeta: signedData.uploadMeta,
+      }),
+    });
+
+    const completeData = await safeJsonParse(completeResponse);
+    if (!completeResponse.ok) throw new Error(completeData.error || "Failed to complete upload");
+
+    return completeData.url;
+  };
+
+  // Format file size for display
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
   const uploadFile = async (file: File, type: "photo" | "video" | "audio") => {
     // Validate file size (50MB for video, 10MB for audio, 5MB for photos)
     const maxSize = type === "video" ? 50 : type === "audio" ? 10 : 5;
     if (file.size > maxSize * 1024 * 1024) {
-      toast.error(`File must be less than ${maxSize}MB`);
+      const typeLabel = type === "video" ? "Video" : type === "audio" ? "Voice message" : "Photo";
+      toast.error(
+        `${typeLabel} too large`,
+        {
+          description: `Your file is ${formatFileSize(file.size)}. Maximum size is ${maxSize}MB.`,
+          duration: 5000,
+        }
+      );
       return;
     }
 
@@ -135,31 +203,70 @@ export function MessageInput({
     const preview = type !== "audio" ? URL.createObjectURL(file) : undefined;
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("type", "message");
+      let uploadedUrl: string;
+      const VERCEL_LIMIT = 4 * 1024 * 1024; // 4MB (conservative)
+      const isVideo = type === "video";
+      const isAudio = type === "audio";
+      const isLargeFile = file.size > VERCEL_LIMIT;
 
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
+      // Videos, audio, and large files use signed URL approach
+      // (signed URL bypasses Vercel's body size limit by uploading direct to Supabase)
+      if (isVideo || isAudio || isLargeFile) {
+        uploadedUrl = await uploadViaSigned(file);
+      } else {
+        // Small images/audio can use direct upload
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("type", "message");
 
-      const data = await response.json();
+        const response = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
 
-      if (!response.ok) {
-        throw new Error(data.error || "Upload failed");
+        const data = await safeJsonParse(response);
+
+        if (!response.ok) {
+          throw new Error(data.error || "Upload failed");
+        }
+
+        uploadedUrl = data.url;
       }
 
       setAttachedMedia({
-        url: data.url,
+        url: uploadedUrl,
         type: file.type,
         preview,
       });
 
-      toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} attached`);
+      const typeLabel = type === "video" ? "Video" : type === "audio" ? "Voice message" : "Photo";
+      toast.success(`${typeLabel} attached`);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Upload failed";
-      toast.error(message);
+      const typeLabel = type === "video" ? "video" : type === "audio" ? "voice message" : "photo";
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+
+      // Provide user-friendly error messages
+      if (errorMessage.includes("too large") || errorMessage.includes("413")) {
+        toast.error("File too large", {
+          description: `Your ${typeLabel} exceeds the size limit. Please try a smaller file.`,
+          duration: 5000,
+        });
+      } else if (errorMessage.includes("Invalid file type")) {
+        toast.error("Unsupported format", {
+          description: `This ${typeLabel} format isn't supported. Try MP4 for videos or JPG/PNG for photos.`,
+          duration: 5000,
+        });
+      } else if (errorMessage.includes("storage failed")) {
+        toast.error("Upload failed", {
+          description: "We couldn't save your file. Please check your connection and try again.",
+          duration: 5000,
+        });
+      } else {
+        toast.error("Upload failed", {
+          description: errorMessage,
+          duration: 5000,
+        });
+      }
       if (preview) URL.revokeObjectURL(preview);
     } finally {
       setUploading(false);

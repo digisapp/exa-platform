@@ -52,9 +52,12 @@ import {
   Eye,
 } from "lucide-react";
 import { COIN_PACKAGES } from "@/lib/stripe-config";
+import { COIN_USD_RATE, MIN_WITHDRAWAL_COINS, coinsToUsd, formatUsd } from "@/lib/coin-config";
+import { PAYONEER_PREFERRED_COUNTRIES, DUAL_PAYOUT_COUNTRIES, shouldUsePayoneer, supportsBothPayoutMethods } from "@/lib/payoneer";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import Link from "next/link";
+import { Globe } from "lucide-react";
 
 interface Transaction {
   id: string;
@@ -80,6 +83,16 @@ interface WithdrawalRequest {
   status: string;
   requested_at: string;
   failure_reason: string | null;
+  payout_method: string | null;
+}
+
+interface PayoneerAccount {
+  id: string;
+  payee_id: string;
+  status: string;
+  can_receive_payments: boolean;
+  registration_link: string | null;
+  country: string;
 }
 
 interface BrandPayment {
@@ -135,6 +148,14 @@ export default function WalletPage() {
   const [savingBank, setSavingBank] = useState(false);
   const [requestingWithdraw, setRequestingWithdraw] = useState(false);
 
+  // Payoneer state
+  const [payoneerAccount, setPayoneerAccount] = useState<PayoneerAccount | null>(null);
+  const [modelCountryCode, setModelCountryCode] = useState<string | null>(null);
+  const [showPayoneerDialog, setShowPayoneerDialog] = useState(false);
+  const [registeringPayoneer, setRegisteringPayoneer] = useState(false);
+  const [selectedPayoutMethod, setSelectedPayoutMethod] = useState<'bank' | 'payoneer'>('bank');
+  const [payoneerCountry, setPayoneerCountry] = useState('');
+
   // Bank form
   const [bankForm, setBankForm] = useState({
     accountHolderName: "",
@@ -170,11 +191,12 @@ export default function WalletPage() {
         // Models are linked via user_id, not actor.id
         const { data: model } = await supabase
           .from("models")
-          .select("id, coin_balance, withheld_balance")
+          .select("id, coin_balance, withheld_balance, country_code")
           .eq("user_id", user.id)
-          .single() as { data: { id: string; coin_balance: number; withheld_balance: number } | null };
+          .single() as { data: { id: string; coin_balance: number; withheld_balance: number; country_code: string | null } | null };
         setCoinBalance(model?.coin_balance || 0);
         setWithheldBalance(model?.withheld_balance || 0);
+        setModelCountryCode(model?.country_code || null);
         if (model) {
           setModelId(model.id);
 
@@ -184,6 +206,14 @@ export default function WalletPage() {
             .select("*")
             .eq("model_id", model.id) as { data: BankAccount[] | null };
           setBankAccounts(banks || []);
+
+          // Load Payoneer account
+          const { data: payoneer } = await supabase
+            .from("payoneer_accounts")
+            .select("id, payee_id, status, can_receive_payments, registration_link, country")
+            .eq("model_id", model.id)
+            .single() as { data: PayoneerAccount | null };
+          setPayoneerAccount(payoneer);
 
           // Load withdrawal requests
           const { data: withdrawalData } = await supabase
@@ -796,6 +826,159 @@ export default function WalletPage() {
             </CardContent>
           </Card>
 
+          {/* Payoneer Account - For International Models */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Globe className="h-5 w-5" />
+                    Payoneer (International)
+                  </CardTitle>
+                  <CardDescription>For models outside the US</CardDescription>
+                </div>
+                {!payoneerAccount && (
+                  <Dialog open={showPayoneerDialog} onOpenChange={setShowPayoneerDialog}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <Plus className="h-4 w-4 mr-1" />
+                        Set Up Payoneer
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Set Up Payoneer</DialogTitle>
+                        <DialogDescription>
+                          Connect your Payoneer account to receive international payouts
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="payoneerCountry">Your Country</Label>
+                          <Select
+                            value={payoneerCountry}
+                            onValueChange={setPayoneerCountry}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select your country" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {[...PAYONEER_PREFERRED_COUNTRIES, ...DUAL_PAYOUT_COUNTRIES].sort().map((code) => (
+                                <SelectItem key={code} value={code}>
+                                  {code === 'AR' ? 'Argentina' :
+                                   code === 'BR' ? 'Brazil' :
+                                   code === 'TH' ? 'Thailand' :
+                                   code === 'GH' ? 'Ghana' :
+                                   code === 'NG' ? 'Nigeria' :
+                                   code === 'KE' ? 'Kenya' :
+                                   code === 'ZA' ? 'South Africa' :
+                                   code === 'PH' ? 'Philippines' :
+                                   code === 'VN' ? 'Vietnam' :
+                                   code === 'BD' ? 'Bangladesh' :
+                                   code === 'PK' ? 'Pakistan' :
+                                   code === 'EG' ? 'Egypt' :
+                                   code === 'MA' ? 'Morocco' :
+                                   code === 'TN' ? 'Tunisia' :
+                                   code === 'CO' ? 'Colombia' :
+                                   code === 'PE' ? 'Peru' :
+                                   code === 'CL' ? 'Chile' :
+                                   code === 'UA' ? 'Ukraine' :
+                                   code === 'MY' ? 'Malaysia' :
+                                   code === 'ID' ? 'Indonesia' :
+                                   code === 'MX' ? 'Mexico' :
+                                   code === 'IN' ? 'India' :
+                                   code}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                          <Globe className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+                          <p className="text-sm text-blue-500">
+                            You&apos;ll be redirected to Payoneer to complete your account setup
+                          </p>
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowPayoneerDialog(false)}>
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={handleRegisterPayoneer}
+                          disabled={registeringPayoneer || !payoneerCountry}
+                          className="bg-gradient-to-r from-orange-500 to-red-500"
+                        >
+                          {registeringPayoneer ? <Loader2 className="h-4 w-4 animate-spin" /> : "Continue to Payoneer"}
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                )}
+                {payoneerAccount?.status === 'pending' && (
+                  <Button variant="outline" size="sm" onClick={refreshPayoneerStatus}>
+                    <Loader2 className="h-4 w-4 mr-1" />
+                    Refresh Status
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {!payoneerAccount ? (
+                <div className="text-center py-6 text-muted-foreground">
+                  <Globe className="h-10 w-10 mx-auto mb-3 opacity-50" />
+                  <p className="text-sm">No Payoneer account connected</p>
+                  <p className="text-xs mt-1">Set up Payoneer to receive international payouts</p>
+                </div>
+              ) : payoneerAccount.status === 'pending' ? (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+                    <div className="flex items-center gap-3">
+                      <Clock className="h-5 w-5 text-yellow-500" />
+                      <div>
+                        <p className="font-medium text-yellow-500">Registration Pending</p>
+                        <p className="text-xs text-muted-foreground">Complete your Payoneer account setup</p>
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="text-yellow-500 border-yellow-500">Pending</Badge>
+                  </div>
+                  {payoneerAccount.registration_link && (
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => window.open(payoneerAccount.registration_link!, '_blank')}
+                    >
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Complete Setup on Payoneer
+                    </Button>
+                  )}
+                </div>
+              ) : payoneerAccount.can_receive_payments ? (
+                <div className="flex items-center justify-between p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    <div>
+                      <p className="font-medium text-green-500">Payoneer Connected</p>
+                      <p className="text-xs text-muted-foreground">Country: {payoneerAccount.country}</p>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="text-green-500 border-green-500">Active</Badge>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                  <div className="flex items-center gap-3">
+                    <XCircle className="h-5 w-5 text-red-500" />
+                    <div>
+                      <p className="font-medium text-red-500">Account Inactive</p>
+                      <p className="text-xs text-muted-foreground">Please contact support</p>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="text-red-500 border-red-500">{payoneerAccount.status}</Badge>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Request Payout */}
           <Card>
             <CardHeader>
@@ -806,13 +989,13 @@ export default function WalletPage() {
                     Request Payout
                   </CardTitle>
                   <CardDescription>
-                    Minimum $50 (500 coins) · 1 coin = $0.10
+                    Minimum ${MIN_WITHDRAWAL_COINS * COIN_USD_RATE} ({MIN_WITHDRAWAL_COINS} coins) · 1 coin = ${COIN_USD_RATE.toFixed(2)}
                   </CardDescription>
                 </div>
                 <Dialog open={showWithdrawDialog} onOpenChange={setShowWithdrawDialog}>
                   <DialogTrigger asChild>
                     <Button
-                      disabled={coinBalance < 500 || bankAccounts.length === 0}
+                      disabled={coinBalance < MIN_WITHDRAWAL_COINS || (bankAccounts.length === 0 && (!payoneerAccount || !payoneerAccount.can_receive_payments))}
                       className="bg-gradient-to-r from-green-500 to-emerald-500"
                     >
                       <Banknote className="h-4 w-4 mr-1" />
@@ -834,23 +1017,57 @@ export default function WalletPage() {
                         </div>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">USD Value</span>
-                          <span className="font-bold text-green-500">${(coinBalance * 0.10).toFixed(2)}</span>
+                          <span className="font-bold text-green-500">{formatUsd(coinsToUsd(coinBalance))}</span>
                         </div>
                       </div>
+
+                      {/* Payout Method Selection */}
+                      {(bankAccounts.length > 0 || (payoneerAccount && payoneerAccount.can_receive_payments)) && (
+                        <div className="space-y-2">
+                          <Label>Payout Method</Label>
+                          <Select
+                            value={selectedPayoutMethod}
+                            onValueChange={(v) => setSelectedPayoutMethod(v as 'bank' | 'payoneer')}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {bankAccounts.length > 0 && (
+                                <SelectItem value="bank">
+                                  <div className="flex items-center gap-2">
+                                    <Building className="h-4 w-4" />
+                                    <span>Bank Transfer ({bankAccounts[0]?.bank_name} •••• {bankAccounts[0]?.account_number_last4})</span>
+                                  </div>
+                                </SelectItem>
+                              )}
+                              {payoneerAccount && payoneerAccount.can_receive_payments && (
+                                <SelectItem value="payoneer">
+                                  <div className="flex items-center gap-2">
+                                    <Globe className="h-4 w-4" />
+                                    <span>Payoneer ({payoneerAccount.country})</span>
+                                  </div>
+                                </SelectItem>
+                              )}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+
                       <div className="space-y-2">
                         <Label htmlFor="withdrawAmount">Amount (coins)</Label>
                         <Input
                           id="withdrawAmount"
                           type="number"
-                          min={500}
+                          min={MIN_WITHDRAWAL_COINS}
                           max={coinBalance}
-                          placeholder="Minimum 500 coins"
+                          placeholder={`Minimum ${MIN_WITHDRAWAL_COINS} coins`}
                           value={withdrawAmount}
                           onChange={(e) => setWithdrawAmount(e.target.value)}
                         />
                         {withdrawAmount && (
                           <p className="text-sm text-green-500">
-                            You&apos;ll receive: ${(parseInt(withdrawAmount) * 0.10).toFixed(2)} USD
+                            You&apos;ll receive: {formatUsd(coinsToUsd(parseInt(withdrawAmount) || 0))} USD
                           </p>
                         )}
                       </div>
@@ -867,7 +1084,7 @@ export default function WalletPage() {
                       </Button>
                       <Button
                         onClick={handleRequestWithdraw}
-                        disabled={requestingWithdraw || !withdrawAmount || parseInt(withdrawAmount) < 500}
+                        disabled={requestingWithdraw || !withdrawAmount || parseInt(withdrawAmount) < MIN_WITHDRAWAL_COINS}
                         className="bg-gradient-to-r from-green-500 to-emerald-500"
                       >
                         {requestingWithdraw ? <Loader2 className="h-4 w-4 animate-spin" /> : "Request Payout"}
@@ -878,21 +1095,21 @@ export default function WalletPage() {
               </div>
             </CardHeader>
             <CardContent>
-              {coinBalance < 500 ? (
+              {coinBalance < MIN_WITHDRAWAL_COINS ? (
                 <div className="text-center py-6 text-muted-foreground">
                   <Coins className="h-10 w-10 mx-auto mb-3 opacity-50" />
-                  <p className="text-sm">You need at least 500 coins ($50) to request a payout</p>
-                  <p className="text-xs mt-1">Current balance: {coinBalance} coins (${(coinBalance * 0.10).toFixed(2)})</p>
+                  <p className="text-sm">You need at least {MIN_WITHDRAWAL_COINS} coins ({formatUsd(coinsToUsd(MIN_WITHDRAWAL_COINS))}) to request a payout</p>
+                  <p className="text-xs mt-1">Current balance: {coinBalance} coins ({formatUsd(coinsToUsd(coinBalance))})</p>
                 </div>
-              ) : bankAccounts.length === 0 ? (
+              ) : bankAccounts.length === 0 && (!payoneerAccount || !payoneerAccount.can_receive_payments) ? (
                 <div className="text-center py-6 text-muted-foreground">
                   <Building className="h-10 w-10 mx-auto mb-3 opacity-50" />
-                  <p className="text-sm">Add a bank account first to request payouts</p>
+                  <p className="text-sm">Add a bank account or set up Payoneer to request payouts</p>
                 </div>
               ) : (
                 <div className="text-center py-6">
                   <p className="text-2xl font-bold text-green-500 mb-1">
-                    ${(coinBalance * 0.10).toFixed(2)}
+                    {formatUsd(coinsToUsd(coinBalance))}
                   </p>
                   <p className="text-muted-foreground text-sm">Available for withdrawal</p>
                 </div>
@@ -1150,12 +1367,75 @@ export default function WalletPage() {
     }
   }
 
+  async function handleRegisterPayoneer() {
+    if (!payoneerCountry) {
+      toast.error("Please select your country");
+      return;
+    }
+
+    setRegisteringPayoneer(true);
+    try {
+      const response = await fetch("/api/payoneer/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ country_code: payoneerCountry }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to register with Payoneer");
+      }
+
+      toast.success("Payoneer registration started!");
+      setShowPayoneerDialog(false);
+      setPayoneerCountry('');
+
+      // Update Payoneer account state
+      if (data.registration_link) {
+        setPayoneerAccount({
+          id: data.id || '',
+          payee_id: data.payee_id || '',
+          status: 'pending',
+          can_receive_payments: false,
+          registration_link: data.registration_link,
+          country: payoneerCountry,
+        });
+        // Open registration link in new tab
+        window.open(data.registration_link, '_blank');
+      }
+    } catch (error) {
+      console.error("Error registering Payoneer:", error);
+      const message = error instanceof Error ? error.message : "Failed to register with Payoneer";
+      toast.error(message);
+    } finally {
+      setRegisteringPayoneer(false);
+    }
+  }
+
+  async function refreshPayoneerStatus() {
+    try {
+      const response = await fetch("/api/payoneer/register", {
+        method: "GET",
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.payoneer_account) {
+          setPayoneerAccount(data.payoneer_account);
+        }
+      }
+    } catch (error) {
+      console.error("Error refreshing Payoneer status:", error);
+    }
+  }
+
   async function handleRequestWithdraw() {
     if (!modelId || !withdrawAmount) return;
 
     const coins = parseInt(withdrawAmount);
-    if (coins < 500) {
-      toast.error("Minimum withdrawal is 500 coins ($50)");
+    if (coins < MIN_WITHDRAWAL_COINS) {
+      toast.error(`Minimum withdrawal is ${MIN_WITHDRAWAL_COINS} coins (${formatUsd(coinsToUsd(MIN_WITHDRAWAL_COINS))})`);
       return;
     }
 
@@ -1164,14 +1444,34 @@ export default function WalletPage() {
       return;
     }
 
+    // Validate payout method
+    if (selectedPayoutMethod === 'bank' && bankAccounts.length === 0) {
+      toast.error("Please add a bank account first");
+      return;
+    }
+
+    if (selectedPayoutMethod === 'payoneer' && (!payoneerAccount || !payoneerAccount.can_receive_payments)) {
+      toast.error("Please complete Payoneer registration first");
+      return;
+    }
+
     setRequestingWithdraw(true);
     try {
-      const { error } = await (supabase.rpc as any)("create_withdrawal_request", {
-        p_model_id: modelId,
-        p_coins: coins,
-      });
-
-      if (error) throw error;
+      // Use different RPC based on payout method
+      if (selectedPayoutMethod === 'payoneer') {
+        const { error } = await (supabase.rpc as any)("create_payoneer_withdrawal_request", {
+          p_model_id: modelId,
+          p_coins: coins,
+          p_payoneer_account_id: payoneerAccount?.id,
+        });
+        if (error) throw error;
+      } else {
+        const { error } = await (supabase.rpc as any)("create_withdrawal_request", {
+          p_model_id: modelId,
+          p_coins: coins,
+        });
+        if (error) throw error;
+      }
 
       toast.success("Withdrawal requested!");
       setShowWithdrawDialog(false);

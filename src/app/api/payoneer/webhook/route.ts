@@ -8,6 +8,21 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+// In-memory cache for processed event IDs (for idempotency)
+// In production, you might want to use Redis or a database table
+const processedEvents = new Map<string, number>();
+const EVENT_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+
+// Clean up old event IDs periodically
+function cleanupProcessedEvents() {
+  const now = Date.now();
+  for (const [eventId, timestamp] of processedEvents.entries()) {
+    if (now - timestamp > EVENT_CACHE_TTL) {
+      processedEvents.delete(eventId);
+    }
+  }
+}
+
 /**
  * POST /api/payoneer/webhook
  * Handle Payoneer webhook events
@@ -17,9 +32,27 @@ export async function POST(request: NextRequest) {
     const payload = await request.text();
     const signature = request.headers.get("x-payoneer-signature") || "";
     const webhookSecret = process.env.PAYONEER_WEBHOOK_SECRET;
+    const isProduction = process.env.NODE_ENV === "production";
 
-    // Verify webhook signature if secret is configured
+    // SECURITY: Verify webhook signature
+    // In production, signature verification is REQUIRED
+    if (isProduction && !webhookSecret) {
+      console.error("PAYONEER_WEBHOOK_SECRET not configured in production");
+      return NextResponse.json(
+        { error: "Webhook not configured" },
+        { status: 500 }
+      );
+    }
+
     if (webhookSecret) {
+      if (!signature) {
+        console.error("Missing Payoneer webhook signature");
+        return NextResponse.json(
+          { error: "Missing signature" },
+          { status: 401 }
+        );
+      }
+
       const isValid = verifyPayoneerWebhook(payload, signature, webhookSecret);
       if (!isValid) {
         console.error("Invalid Payoneer webhook signature");
@@ -32,7 +65,22 @@ export async function POST(request: NextRequest) {
 
     const event: PayoneerWebhookPayload = JSON.parse(payload);
 
+    // IDEMPOTENCY: Check if we've already processed this event
+    if (event.event_id && processedEvents.has(event.event_id)) {
+      console.log("Duplicate Payoneer webhook event ignored:", event.event_id);
+      return NextResponse.json({ received: true, duplicate: true });
+    }
+
     console.log("Payoneer webhook received:", event.event_type, event.event_id);
+
+    // Mark event as processed
+    if (event.event_id) {
+      processedEvents.set(event.event_id, Date.now());
+      // Cleanup old events periodically
+      if (processedEvents.size > 1000) {
+        cleanupProcessedEvents();
+      }
+    }
 
     switch (event.event_type) {
       case "payee.status.changed":

@@ -154,6 +154,13 @@ export default function ContentPage() {
     fetchContent();
   }, [fetchContent]);
 
+  // Format file size for display
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -163,12 +170,20 @@ export default function ContentPage() {
     } else if (file.type.startsWith("video/")) {
       setMediaType("video");
     } else {
-      toast.error("Please select an image or video file");
+      toast.error("Unsupported format", {
+        description: "Please select a JPG, PNG, WebP, GIF image or MP4, MOV, WebM video.",
+        duration: 5000,
+      });
       return;
     }
 
-    if (file.size > 50 * 1024 * 1024) {
-      toast.error("File size must be less than 50MB");
+    const maxSize = 50 * 1024 * 1024;
+    if (file.size > maxSize) {
+      const fileType = file.type.startsWith("video/") ? "Video" : "Photo";
+      toast.error(`${fileType} too large`, {
+        description: `Your file is ${formatFileSize(file.size)}. Maximum size is 50MB.`,
+        duration: 5000,
+      });
       return;
     }
 
@@ -285,7 +300,31 @@ export default function ContentPage() {
       }
     } catch (error) {
       console.error("Upload error:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to upload");
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      const fileType = mediaType === "video" ? "video" : "photo";
+
+      // Provide user-friendly error messages
+      if (errorMessage.includes("too large") || errorMessage.includes("413")) {
+        toast.error("File too large", {
+          description: `Your ${fileType} exceeds the 50MB limit. Please compress it or try a smaller file.`,
+          duration: 5000,
+        });
+      } else if (errorMessage.includes("Invalid file type")) {
+        toast.error("Unsupported format", {
+          description: `This ${fileType} format isn't supported. Try MP4 for videos or JPG/PNG for photos.`,
+          duration: 5000,
+        });
+      } else if (errorMessage.includes("storage failed")) {
+        toast.error("Upload failed", {
+          description: "We couldn't save your file. Please check your connection and try again.",
+          duration: 5000,
+        });
+      } else {
+        toast.error("Upload failed", {
+          description: errorMessage,
+          duration: 5000,
+        });
+      }
     } finally {
       setUploading(false);
     }
