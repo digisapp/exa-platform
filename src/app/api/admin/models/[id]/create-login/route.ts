@@ -132,14 +132,15 @@ export async function POST(
       actorId = newActor.id;
     }
 
-    // Update model with user_id
+    // Update model with user_id and approve them
     const { error: modelError } = await serviceSupabase
       .from("models")
       .update({
         user_id: userId,
         id: actorId, // Update model id to match actor id
         invite_token: null,
-        claimed_at: new Date().toISOString()
+        claimed_at: new Date().toISOString(),
+        is_approved: true, // Auto-approve when admin creates login
       })
       .eq("id", id);
 
