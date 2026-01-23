@@ -353,9 +353,13 @@ async function createFanAndApplication(
     .single();
 
   if (existingModel) {
-    // Link the existing model to this user
+    // Link the existing model to this user and approve them
     await (adminClient.from("models") as any)
-      .update({ user_id: userId, claimed_at: new Date().toISOString() })
+      .update({
+        user_id: userId,
+        claimed_at: new Date().toISOString(),
+        is_approved: true, // Auto-approve when imported model claims account
+      })
       .eq("id", existingModel.id);
 
     // Check/create actor record

@@ -65,7 +65,7 @@ export async function POST(
         username: username,
         first_name: fan.display_name || "New",
         last_name: "Model",
-        is_approved: false, // Start as hidden, admin can approve later
+        is_approved: true, // Auto-approve since admin initiated conversion
         coin_balance: fan.coin_balance || 0,
       });
 

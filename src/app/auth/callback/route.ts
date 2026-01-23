@@ -203,9 +203,13 @@ export async function GET(request: Request) {
             .single();
 
           if (modelByEmail) {
-            // Link existing model to user
+            // Link existing model to user and approve them
             await (supabase.from("models") as any)
-              .update({ user_id: data.user.id, claimed_at: new Date().toISOString() })
+              .update({
+                user_id: data.user.id,
+                claimed_at: new Date().toISOString(),
+                is_approved: true, // Auto-approve when imported model claims account
+              })
               .eq("id", modelByEmail.id);
 
             await (supabase.from("actors") as any)
@@ -260,7 +264,11 @@ export async function GET(request: Request) {
           // Link model to user if not already linked
           if (!modelByEmail.user_id) {
             await (supabase.from("models") as any)
-              .update({ user_id: data.user.id, claimed_at: new Date().toISOString() })
+              .update({
+                user_id: data.user.id,
+                claimed_at: new Date().toISOString(),
+                is_approved: true, // Auto-approve when imported model claims account
+              })
               .eq("id", modelByEmail.id);
 
             // Create actor record for this model
