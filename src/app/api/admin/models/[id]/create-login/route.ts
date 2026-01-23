@@ -102,42 +102,43 @@ export async function POST(
       userId = authData.user.id;
     }
 
-    // Create or update actor record
+    // The model already has an id that references the actors table.
+    // We need to update the existing actor record with the user_id, not create a new one.
     const { data: existingActor } = await serviceSupabase
       .from("actors")
-      .select("id")
-      .eq("user_id", userId)
+      .select("id, user_id")
+      .eq("id", id) // Use model's id which is also the actor's id
       .single();
 
-    let actorId: string;
-
     if (existingActor) {
-      actorId = existingActor.id;
-      // Update actor type to model if needed
-      await serviceSupabase
+      // Update existing actor with user_id
+      const { error: actorUpdateError } = await serviceSupabase
         .from("actors")
-        .update({ type: "model" })
-        .eq("id", actorId);
+        .update({ user_id: userId, type: "model" })
+        .eq("id", id);
+
+      if (actorUpdateError) {
+        console.error("Failed to update actor:", actorUpdateError);
+        return NextResponse.json({ error: "Failed to update actor record" }, { status: 500 });
+      }
     } else {
-      const { data: newActor, error: actorError } = await serviceSupabase
+      // Actor doesn't exist - this shouldn't happen for a valid model, but handle it
+      // Create actor with the same id as the model
+      const { error: actorError } = await serviceSupabase
         .from("actors")
-        .insert({ user_id: userId, type: "model" })
-        .select()
-        .single();
+        .insert({ id: id, user_id: userId, type: "model" });
 
       if (actorError) {
         console.error("Failed to create actor:", actorError);
         return NextResponse.json({ error: "Failed to create actor record" }, { status: 500 });
       }
-      actorId = newActor.id;
     }
 
-    // Update model with user_id and approve them
+    // Update model with user_id and approve them (don't change the id!)
     const { error: modelError } = await serviceSupabase
       .from("models")
       .update({
         user_id: userId,
-        id: actorId, // Update model id to match actor id
         invite_token: null,
         claimed_at: new Date().toISOString(),
         is_approved: true, // Auto-approve when admin creates login
@@ -160,7 +161,7 @@ export async function POST(
       await serviceSupabase
         .from("fans")
         .insert({
-          id: actorId,
+          id: id, // Use model's id (same as actor id)
           user_id: userId,
           email: model.email,
           display_name: model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username,
