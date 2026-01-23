@@ -68,90 +68,36 @@ export function FanSignupDialog({ children }: FanSignupDialogProps) {
 
     setLoading(true);
 
-    // Check if username is taken (across models, fans, brands)
-    const { data: existingModel } = await (supabase.from("models") as any)
-      .select("id")
-      .eq("username", cleanUsername)
-      .single();
-
-    const { data: existingFan } = await (supabase.from("fans") as any)
-      .select("id")
-      .eq("username", cleanUsername)
-      .single();
-
-    const { data: existingBrand } = await (supabase.from("brands") as any)
-      .select("id")
-      .eq("username", cleanUsername)
-      .single();
-
-    if (existingModel || existingFan || existingBrand) {
-      toast.error("This username is already taken");
-      setLoading(false);
-      return;
-    }
-
     try {
-      // Create auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      // Use server-side API to create fan account (bypasses RLS)
+      const response = await fetch("/api/auth/fan-signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.toLowerCase().trim(),
+          password,
+          username: cleanUsername,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to create account");
+      }
+
+      // Sign in the user after successful signup
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email: email.toLowerCase().trim(),
         password,
       });
 
-      if (authError) {
-        if (authError.message.includes("already registered")) {
-          toast.error("This email is already registered. Please sign in instead.");
-          setLoading(false);
-          return;
-        }
-        throw authError;
+      if (signInError) {
+        console.error("Sign in error:", signInError);
+        // Account was created, just couldn't auto-sign in
       }
 
-      if (!authData.user) {
-        throw new Error("Failed to create account");
-      }
-
-      // Create actor record
-      const { data: actor, error: actorError } = await (supabase
-        .from("actors") as any)
-        .insert({
-          user_id: authData.user.id,
-          type: "fan",
-        })
-        .select()
-        .single();
-
-      if (actorError) {
-        console.error("Actor error:", actorError);
-        throw actorError;
-      }
-
-      // Create fan profile
-      const cleanUsername = username.trim().toLowerCase().replace(/[^a-z0-9_]/g, "");
-      const { error: fanError } = await (supabase
-        .from("fans") as any)
-        .insert({
-          id: actor.id,
-          user_id: authData.user.id,
-          email: email.toLowerCase().trim(),
-          username: cleanUsername,
-          display_name: cleanUsername,
-          coin_balance: 10, // Welcome bonus
-        });
-
-      if (fanError) {
-        console.error("Fan error:", fanError);
-        throw fanError;
-      }
-
-      // Record the welcome bonus transaction
-      await (supabase.from("coin_transactions") as any).insert({
-        actor_id: actor.id,
-        amount: 10,
-        action: "signup_bonus",
-        metadata: { reason: "Welcome bonus for new fan signup" },
-      });
-
-      // Send our custom confirmation email via Resend (more reliable than Supabase SMTP)
+      // Send our custom confirmation email via Resend
       try {
         await fetch("/api/auth/send-confirmation", {
           method: "POST",
