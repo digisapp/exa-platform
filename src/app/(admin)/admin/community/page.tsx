@@ -56,6 +56,9 @@ import {
   Globe,
   ExternalLink,
   Instagram,
+  Image as ImageIcon,
+  Video,
+  Lock,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ApproveRejectButtons } from "@/components/admin/AdminActions";
@@ -193,6 +196,9 @@ interface Model {
   // New tracking fields
   total_earned?: number;
   content_count?: number;
+  image_count?: number;
+  video_count?: number;
+  ppv_count?: number;
   last_post?: string | null;
   last_seen?: string | null;
   last_active_at?: string | null;
@@ -1142,6 +1148,15 @@ export default function AdminCommunityPage() {
                         <TableHead>
                           <div className="flex items-center"><Sparkles className="h-4 w-4 mr-1" />New Face</div>
                         </TableHead>
+                        <TableHead>
+                          <div className="flex items-center"><ImageIcon className="h-4 w-4 mr-1" />Pics</div>
+                        </TableHead>
+                        <TableHead>
+                          <div className="flex items-center"><Video className="h-4 w-4 mr-1" />Vids</div>
+                        </TableHead>
+                        <TableHead>
+                          <div className="flex items-center"><Lock className="h-4 w-4 mr-1" />PPV</div>
+                        </TableHead>
                         <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("profile_views")}>
                           <div className="flex items-center"><Eye className="h-4 w-4 mr-1" />Views<SortIndicator active={modelsSortField === "profile_views"} direction={modelsSortDirection} /></div>
                         </TableHead>
@@ -1211,6 +1226,9 @@ export default function AdminCommunityPage() {
                             </span>
                           </TableCell>
                           <TableCell><NewFaceToggle modelId={model.id} isNewFace={model.new_face || false} onToggle={handleNewFaceToggle} /></TableCell>
+                          <TableCell><span className={`font-medium ${(model.image_count || 0) > 0 ? "text-blue-500" : "text-muted-foreground"}`}>{(model.image_count || 0).toLocaleString()}</span></TableCell>
+                          <TableCell><span className={`font-medium ${(model.video_count || 0) > 0 ? "text-purple-500" : "text-muted-foreground"}`}>{(model.video_count || 0).toLocaleString()}</span></TableCell>
+                          <TableCell><span className={`font-medium ${(model.ppv_count || 0) > 0 ? "text-amber-500" : "text-muted-foreground"}`}>{(model.ppv_count || 0).toLocaleString()}</span></TableCell>
                           <TableCell><span className={`font-medium ${model.profile_views > 100 ? "text-purple-500" : ""}`}>{(model.profile_views || 0).toLocaleString()}</span></TableCell>
                           <TableCell><span className={`font-medium ${(model.followers_count || 0) > 0 ? "text-pink-500" : ""}`}>{(model.followers_count || 0).toLocaleString()}</span></TableCell>
                           <TableCell><span className={`font-medium ${(model.total_earned || 0) > 0 ? "text-yellow-500" : ""}`}>{(model.total_earned || 0).toLocaleString()}</span></TableCell>

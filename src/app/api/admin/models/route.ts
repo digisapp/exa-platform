@@ -106,7 +106,8 @@ export async function GET(request: NextRequest) {
     const [
       actorsResult,
       premiumCountsResult,
-      mediaCountsResult,
+      imageCountsResult,
+      videoCountsResult,
       lastPremiumResult,
       lastMediaResult,
     ] = await Promise.all([
@@ -114,10 +115,12 @@ export async function GET(request: NextRequest) {
       userIds.length > 0
         ? (supabase.from("actors") as any).select("id, user_id").in("user_id", userIds)
         : { data: [] },
-      // Get premium content counts
+      // Get premium content (PPV) counts
       (supabase.from("premium_content") as any).select("model_id").in("model_id", modelIds),
-      // Get media asset counts
-      (supabase.from("media_assets") as any).select("model_id").in("model_id", modelIds),
+      // Get image counts from media_assets
+      (supabase.from("media_assets") as any).select("model_id").in("model_id", modelIds).eq("media_type", "image"),
+      // Get video counts from media_assets
+      (supabase.from("media_assets") as any).select("model_id").in("model_id", modelIds).eq("media_type", "video"),
       // Get last premium content dates
       (supabase.from("premium_content") as any)
         .select("model_id, created_at")
@@ -178,12 +181,19 @@ export async function GET(request: NextRequest) {
       earningsMap.set(tx.actor_id, (earningsMap.get(tx.actor_id) || 0) + tx.amount);
     });
 
-    const contentMap = new Map<string, number>();
+    const ppvMap = new Map<string, number>();
     (premiumCountsResult.data || []).forEach((c: any) => {
-      contentMap.set(c.model_id, (contentMap.get(c.model_id) || 0) + 1);
+      ppvMap.set(c.model_id, (ppvMap.get(c.model_id) || 0) + 1);
     });
-    (mediaCountsResult.data || []).forEach((c: any) => {
-      contentMap.set(c.model_id, (contentMap.get(c.model_id) || 0) + 1);
+
+    const imageMap = new Map<string, number>();
+    (imageCountsResult.data || []).forEach((c: any) => {
+      imageMap.set(c.model_id, (imageMap.get(c.model_id) || 0) + 1);
+    });
+
+    const videoMap = new Map<string, number>();
+    (videoCountsResult.data || []).forEach((c: any) => {
+      videoMap.set(c.model_id, (videoMap.get(c.model_id) || 0) + 1);
     });
 
     const lastPostMap = new Map<string, string>();
@@ -211,11 +221,17 @@ export async function GET(request: NextRequest) {
     // Apply computed fields to models
     const enrichedModels = models.map((model: any) => {
       const actorId = actorToUser.get(model.user_id) || "";
+      const imageCount = imageMap.get(model.id) || 0;
+      const videoCount = videoMap.get(model.id) || 0;
+      const ppvCount = ppvMap.get(model.id) || 0;
       return {
         ...model,
         followers_count: actorId ? (followerMap.get(actorId as string) || 0) : 0,
         total_earned: actorId ? (earningsMap.get(actorId as string) || 0) : 0,
-        content_count: contentMap.get(model.id) || 0,
+        content_count: imageCount + videoCount + ppvCount,
+        image_count: imageCount,
+        video_count: videoCount,
+        ppv_count: ppvCount,
         last_post: lastPostMap.get(model.id) || null,
         message_count: actorId ? (messageMap.get(actorId as string) || 0) : 0,
         referral_count: referralMap.get(model.id) || 0,
