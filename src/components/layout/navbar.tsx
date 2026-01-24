@@ -159,7 +159,7 @@ export function Navbar({ user, actorType, coinBalance = 0 }: NavbarProps) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end" forceMount>
-                  {user.username ? (
+                  {user.username && actorType === "model" ? (
                     <Link href={`/${user.username}`} className="block">
                       <DropdownMenuLabel className="font-normal cursor-pointer hover:bg-accent rounded-sm">
                         <div className="flex flex-col space-y-1">
@@ -174,6 +174,11 @@ export function Navbar({ user, actorType, coinBalance = 0 }: NavbarProps) {
                     <DropdownMenuLabel className="font-normal">
                       <div className="flex flex-col space-y-1">
                         <p className="text-sm font-medium leading-none">{user.name || "User"}</p>
+                        {user.username && (
+                          <p className="text-xs leading-none text-muted-foreground">
+                            @{user.username}
+                          </p>
+                        )}
                       </div>
                     </DropdownMenuLabel>
                   )}
