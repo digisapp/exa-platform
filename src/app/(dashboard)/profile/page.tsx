@@ -726,7 +726,7 @@ export default function ProfilePage() {
               </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number (optional)</Label>
+              <Label htmlFor="phone">Phone Number</Label>
               <Input
                 id="phone"
                 type="tel"
@@ -734,49 +734,6 @@ export default function ProfilePage() {
                 onChange={(e) => setFan({ ...fan, phone: e.target.value })}
                 placeholder="+1 (555) 000-0000"
               />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Coins className="h-5 w-5 text-yellow-500" />
-              Wallet
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between p-4 rounded-lg bg-gradient-to-r from-yellow-500/10 to-orange-500/10">
-              <div>
-                <p className="text-3xl font-bold">{fan.coin_balance?.toLocaleString() || 0}</p>
-                <p className="text-sm text-muted-foreground">Available coins</p>
-              </div>
-              <Button asChild className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600">
-                <Link href="/coins">Buy Coins</Link>
-              </Button>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Use coins to message models, unlock exclusive content, and more.
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Sign Out */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <LogOut className="h-5 w-5" />
-              Sign Out
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">
-                  Sign out of your account on this device
-                </p>
-              </div>
-              <LogoutButton className="text-red-500 hover:text-red-600 hover:bg-red-500/10" />
             </div>
           </CardContent>
         </Card>
@@ -984,7 +941,7 @@ export default function ProfilePage() {
               </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="brand_phone">Phone (optional)</Label>
+              <Label htmlFor="brand_phone">Phone</Label>
               <Input
                 id="brand_phone"
                 type="tel"
