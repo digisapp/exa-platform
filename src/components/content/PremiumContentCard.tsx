@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Coins, Play, Loader2 } from "lucide-react";
+import { Coins, Play, Loader2, ImageOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -42,6 +42,7 @@ export function PremiumContentCard({
   const [loading, setLoading] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [showFull, setShowFull] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   const isFree = content.coin_price === 0;
   const canAfford = isFree || coinBalance >= content.coin_price;
@@ -104,7 +105,7 @@ export function PremiumContentCard({
         onClick={() => isUnlocked ? setShowFull(true) : setShowPreview(true)}
       >
         {/* Preview or Full Image */}
-        {(isUnlocked && mediaUrl) || content.preview_url ? (
+        {((isUnlocked && mediaUrl) || content.preview_url) && !imageError ? (
           <>
             <Image
               src={isUnlocked && mediaUrl ? mediaUrl : content.preview_url!}
@@ -116,6 +117,7 @@ export function PremiumContentCard({
                 !isUnlocked && !isFree && !isOwner && "blur-md scale-105 brightness-75",
                 isUnlocked && "group-hover:scale-105"
               )}
+              onError={() => setImageError(true)}
             />
             {/* Subtle gradient overlay for locked content */}
             {!isUnlocked && !isFree && !isOwner && (
@@ -124,7 +126,13 @@ export function PremiumContentCard({
           </>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-pink-500/30 to-violet-500/30">
-            <Play className="h-12 w-12 text-white/50" />
+            {imageError ? (
+              <ImageOff className="h-12 w-12 text-white/40" />
+            ) : isVideo ? (
+              <Play className="h-12 w-12 text-white/50" />
+            ) : (
+              <Coins className="h-12 w-12 text-white/30" />
+            )}
           </div>
         )}
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
-import { Camera, Video, Lock, X, Play } from "lucide-react";
+import { Camera, Video, Lock, X, Play, ImageOff } from "lucide-react";
 import { PremiumContentGrid } from "@/components/content/PremiumContentGrid";
 
 interface MediaAsset {
@@ -11,6 +11,93 @@ interface MediaAsset {
   url?: string;
   asset_type: string;
   title?: string | null;
+}
+
+// Component for handling broken images
+function ImageWithFallback({
+  src,
+  alt,
+  className,
+  onClick
+}: {
+  src?: string;
+  alt: string;
+  className?: string;
+  onClick?: () => void;
+}) {
+  const [error, setError] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  if (!src || error) {
+    return (
+      <div className={cn("w-full h-full flex items-center justify-center bg-white/5", className)}>
+        <ImageOff className="h-8 w-8 text-white/30" />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {!loaded && (
+        <div className="absolute inset-0 flex items-center justify-center bg-white/5 animate-pulse">
+          <Camera className="h-8 w-8 text-white/20" />
+        </div>
+      )}
+      <img
+        src={src}
+        alt={alt}
+        className={cn(className, !loaded && "opacity-0")}
+        onError={() => setError(true)}
+        onLoad={() => setLoaded(true)}
+        onClick={onClick}
+      />
+    </>
+  );
+}
+
+// Component for handling broken videos
+function VideoWithFallback({
+  src,
+  className,
+  onClick
+}: {
+  src?: string;
+  className?: string;
+  onClick?: () => void;
+}) {
+  const [error, setError] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  if (!src || error) {
+    return (
+      <div
+        className={cn("w-full h-full flex items-center justify-center bg-gradient-to-br from-violet-500/20 to-pink-500/20", className)}
+        onClick={onClick}
+      >
+        <Video className="h-10 w-10 text-white/40" />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {!loaded && (
+        <div className="absolute inset-0 flex items-center justify-center bg-white/5 animate-pulse">
+          <Video className="h-8 w-8 text-white/20" />
+        </div>
+      )}
+      <video
+        src={src}
+        className={cn(className, !loaded && "opacity-0")}
+        muted
+        playsInline
+        preload="metadata"
+        onError={() => setError(true)}
+        onLoadedData={() => setLoaded(true)}
+        onClick={onClick}
+      />
+    </>
+  );
 }
 
 interface ProfileContentTabsProps {
@@ -165,7 +252,7 @@ export function ProfileContentTabs({
         <div>
           {hasPhotos ? (
             <div className="grid grid-cols-3 gap-2">
-              {photos.map((photo, index) => (
+              {photos.map((photo) => (
                 <div
                   key={photo.id}
                   className={cn(
@@ -176,7 +263,7 @@ export function ProfileContentTabs({
                   )}
                   onClick={() => openLightbox(photo, "photo")}
                 >
-                  <img
+                  <ImageWithFallback
                     src={photo.photo_url || photo.url}
                     alt={photo.title || ""}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
@@ -207,7 +294,7 @@ export function ProfileContentTabs({
         <div>
           {hasVideos ? (
             <div className="grid grid-cols-2 gap-3">
-              {videos.map((video, index) => (
+              {videos.map((video) => (
                 <div
                   key={video.id}
                   className={cn(
@@ -218,25 +305,23 @@ export function ProfileContentTabs({
                   )}
                   onClick={() => openLightbox(video, "video")}
                 >
-                  <video
+                  <VideoWithFallback
                     src={video.url}
                     className="w-full h-full object-cover"
-                    muted
-                    playsInline
                   />
                   {/* Gradient overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   {/* Play button */}
-                  <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <div className={cn(
                       "w-14 h-14 rounded-full flex items-center justify-center",
                       "bg-white/10 backdrop-blur-sm",
                       "border border-white/20",
-                      "opacity-0 group-hover:opacity-100",
-                      "scale-75 group-hover:scale-100",
+                      "opacity-70 group-hover:opacity-100",
+                      "scale-90 group-hover:scale-100",
                       "transition-all duration-300 ease-out"
                     )}>
-                      <Video className="h-6 w-6 text-white ml-0.5" />
+                      <Play className="h-6 w-6 text-white ml-0.5" fill="white" />
                     </div>
                   </div>
                   {/* Title overlay on hover */}
