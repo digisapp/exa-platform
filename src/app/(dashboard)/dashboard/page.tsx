@@ -575,52 +575,6 @@ async function FanDashboard({ actorId }: { actorId: string }) {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <Card className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 border-amber-500/20">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-full bg-amber-500/20">
-                  <Coins className="h-5 w-5 text-amber-500" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{coinBalance}</p>
-                  <p className="text-xs text-muted-foreground">Coin Balance</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-pink-500/10 to-rose-500/10 border-pink-500/20">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-full bg-pink-500/20">
-                  <Heart className="h-5 w-5 text-pink-500" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{favoriteModels.length}</p>
-                  <p className="text-xs text-muted-foreground">Following</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-violet-500/10 to-purple-500/10 border-violet-500/20 col-span-2 md:col-span-1">
-            <CardContent className="pt-6">
-              <Link href="/coins" className="flex items-center gap-3 group">
-                <div className="p-2 rounded-full bg-violet-500/20 group-hover:bg-violet-500/30 transition-colors">
-                  <TrendingUp className="h-5 w-5 text-violet-500" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold group-hover:text-violet-500 transition-colors">Get More Coins</p>
-                  <p className="text-xs text-muted-foreground">Unlock exclusive content</p>
-                </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground ml-auto group-hover:text-violet-500 transition-colors" />
-              </Link>
-            </CardContent>
-          </Card>
-        </div>
-
       {/* Following Section */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
