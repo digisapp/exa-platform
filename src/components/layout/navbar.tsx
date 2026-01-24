@@ -218,7 +218,7 @@ export function Navbar({ user, actorType, coinBalance = 0 }: NavbarProps) {
                   )}
                   {actorType !== "admin" && (
                     <DropdownMenuItem asChild>
-                      <Link href="/profile" className="cursor-pointer">
+                      <Link href="/settings" className="cursor-pointer">
                         <Settings className="mr-2 h-4 w-4" />
                         Settings
                       </Link>

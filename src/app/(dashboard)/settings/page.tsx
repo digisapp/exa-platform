@@ -721,9 +721,6 @@ export default function ProfilePage() {
                 disabled
                 className="bg-muted"
               />
-              <p className="text-xs text-muted-foreground">
-                Contact support to change your email
-              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="phone">Phone Number</Label>
@@ -737,6 +734,21 @@ export default function ProfilePage() {
             </div>
           </CardContent>
         </Card>
+
+        <Button
+          onClick={handleFanSave}
+          disabled={saving}
+          className="w-full bg-gradient-to-r from-pink-500 to-violet-500"
+        >
+          {saving ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            "Save Changes"
+          )}
+        </Button>
 
         {/* Danger Zone */}
         <Card className="border-red-500/20">
@@ -802,26 +814,6 @@ export default function ProfilePage() {
             </div>
           </CardContent>
         </Card>
-
-        <div className="flex justify-end gap-4">
-          <Button variant="outline" onClick={() => router.push("/models")}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleFanSave}
-            disabled={saving}
-            className="bg-gradient-to-r from-pink-500 to-violet-500"
-          >
-            {saving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              "Save Changes"
-            )}
-          </Button>
-        </div>
       </div>
     );
   }
@@ -936,9 +928,6 @@ export default function ProfilePage() {
                 disabled
                 className="bg-muted"
               />
-              <p className="text-xs text-muted-foreground">
-                Contact support to change your email
-              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="brand_phone">Phone</Label>
@@ -962,6 +951,21 @@ export default function ProfilePage() {
             </div>
           </CardContent>
         </Card>
+
+        <Button
+          onClick={handleBrandSave}
+          disabled={saving}
+          className="w-full bg-gradient-to-r from-pink-500 to-violet-500"
+        >
+          {saving ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            "Save Changes"
+          )}
+        </Button>
 
         {/* Danger Zone */}
         <Card className="border-red-500/20">
@@ -1027,26 +1031,6 @@ export default function ProfilePage() {
             </div>
           </CardContent>
         </Card>
-
-        <div className="flex justify-end gap-4">
-          <Button variant="outline" onClick={() => router.push("/models")}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleBrandSave}
-            disabled={saving}
-            className="bg-gradient-to-r from-pink-500 to-violet-500"
-          >
-            {saving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              "Save Changes"
-            )}
-          </Button>
-        </div>
       </div>
     );
   }

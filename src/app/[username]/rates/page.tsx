@@ -253,7 +253,7 @@ export default async function ModelRatesPage({ params }: Props) {
             </p>
             {isOwner && (
               <Link
-                href="/profile?tab=rates"
+                href="/settings?tab=rates"
                 className="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-xl bg-pink-500 hover:bg-pink-600 text-white font-medium transition-colors"
               >
                 Set Your Rates

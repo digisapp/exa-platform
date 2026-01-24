@@ -133,24 +133,24 @@ export function BottomNav({ user, actorType, coinBalance, unreadCount = 0 }: Bot
           </Link>
         )}
 
-        {/* Profile */}
+        {/* Settings */}
         <Link
-          href="/profile"
+          href="/settings"
           className={cn(
             "flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors",
-            isActive("/profile") ? "text-pink-500" : "text-muted-foreground"
+            isActive("/settings") ? "text-pink-500" : "text-muted-foreground"
           )}
         >
           <Avatar className={cn(
             "h-6 w-6 ring-2 transition-all",
-            isActive("/profile") ? "ring-pink-500" : "ring-transparent"
+            isActive("/settings") ? "ring-pink-500" : "ring-transparent"
           )}>
             <AvatarImage src={user.avatar_url} alt={user.name || ""} />
             <AvatarFallback className="bg-gradient-to-br from-pink-500 to-violet-500 text-white text-xs">
               {user.name?.charAt(0) || user.email?.charAt(0) || "U"}
             </AvatarFallback>
           </Avatar>
-          <span className="text-[10px] font-medium">Profile</span>
+          <span className="text-[10px] font-medium">Settings</span>
         </Link>
       </div>
     </nav>
