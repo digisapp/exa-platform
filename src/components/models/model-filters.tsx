@@ -92,8 +92,11 @@ export function ModelFilters() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [search, setSearch] = useState(searchParams.get("q") || "");
-  const [isSearching, setIsSearching] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Derive isSearching from comparing input to URL (no setState needed)
+  const currentQuery = searchParams.get("q") || "";
+  const isSearching = search !== currentQuery;
 
   const updateParams = useCallback((key: string, value: string | null) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -112,17 +115,11 @@ export function ModelFilters() {
       clearTimeout(debounceRef.current);
     }
 
-    const currentQuery = searchParams.get("q") || "";
-
     // Only trigger if search value differs from URL
     if (search !== currentQuery) {
-      setIsSearching(true);
       debounceRef.current = setTimeout(() => {
         updateParams("q", search || null);
-        setIsSearching(false);
       }, 300);
-    } else {
-      setIsSearching(false);
     }
 
     return () => {
@@ -130,7 +127,7 @@ export function ModelFilters() {
         clearTimeout(debounceRef.current);
       }
     };
-  }, [search, searchParams, updateParams]);
+  }, [search, currentQuery, updateParams]);
 
   const clearFilters = () => {
     setSearch("");
