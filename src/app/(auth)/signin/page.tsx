@@ -44,7 +44,7 @@ export default function LoginPage() {
         } else if (actor?.type === "model") {
           window.location.href = "/dashboard";
         } else if (actor?.type === "fan") {
-          window.location.href = "/models";
+          window.location.href = "/dashboard";
         } else if (actor?.type === "brand") {
           window.location.href = "/dashboard";
         } else {

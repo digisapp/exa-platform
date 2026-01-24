@@ -172,11 +172,11 @@ export async function GET(request: Request) {
             }
             return NextResponse.redirect(`${origin}/pending-approval`);
           case "fan":
-            return NextResponse.redirect(`${origin}/models`);
+            return NextResponse.redirect(`${origin}/dashboard`);
           case "brand":
-            return NextResponse.redirect(`${origin}/models`);
+            return NextResponse.redirect(`${origin}/dashboard`);
           default:
-            return NextResponse.redirect(`${origin}/models`);
+            return NextResponse.redirect(`${origin}/dashboard`);
         }
       }
 
@@ -249,8 +249,8 @@ export async function GET(request: Request) {
           return NextResponse.redirect(`${origin}/pending-approval`);
         }
 
-        // Fan signup - redirect to models page
-        return NextResponse.redirect(`${origin}/models`);
+        // Fan signup - redirect to dashboard
+        return NextResponse.redirect(`${origin}/dashboard`);
       }
 
       // Legacy: Check if model exists by email (for invited models)

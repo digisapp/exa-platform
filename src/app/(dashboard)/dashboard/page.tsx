@@ -509,13 +509,31 @@ async function FanDashboard({ actorId }: { actorId: string }) {
     .filter((c: any) => c.model !== null);
 
   // Get featured models for the models section (only those with profile photos)
-  const { data: featuredModels } = await (supabase
+  // Fetch more models and rotate selection every 3 days
+  const { data: allFeaturedModels } = await (supabase
     .from("models") as any)
     .select("id, username, first_name, last_name, profile_photo_url, city, state, show_location")
     .eq("is_approved", true)
     .not("profile_photo_url", "is", null)
-    .order("created_at", { ascending: false })
-    .limit(8);
+    .limit(100);
+
+  // Seeded shuffle to rotate featured models every 3 days
+  const daysSinceEpoch = Math.floor(Date.now() / (1000 * 60 * 60 * 24));
+  const rotationPeriod = Math.floor(daysSinceEpoch / 3); // Changes every 3 days
+
+  function seededShuffle<T>(array: T[], seed: number): T[] {
+    const result = [...array];
+    let currentSeed = seed;
+    for (let i = result.length - 1; i > 0; i--) {
+      // Simple seeded random using linear congruential generator
+      currentSeed = (currentSeed * 1103515245 + 12345) & 0x7fffffff;
+      const j = currentSeed % (i + 1);
+      [result[i], result[j]] = [result[j], result[i]];
+    }
+    return result;
+  }
+
+  const featuredModels = seededShuffle(allFeaturedModels || [], rotationPeriod).slice(0, 8);
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">

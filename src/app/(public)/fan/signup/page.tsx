@@ -37,10 +37,8 @@ export default function FanSignupPage() {
             // Already has profile - redirect based on type
             if (data.type === "admin") {
               window.location.href = "/admin";
-            } else if (data.type === "model") {
-              window.location.href = "/dashboard";
             } else {
-              window.location.href = "/models";
+              window.location.href = "/dashboard";
             }
             return;
           }
@@ -91,7 +89,7 @@ export default function FanSignupPage() {
         }
 
         toast.success("Welcome to EXA! You got 10 free coins!");
-        window.location.href = "/models";
+        window.location.href = "/dashboard";
       } else {
         // New user - create auth account first
         if (password.length < 6) {

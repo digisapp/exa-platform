@@ -133,8 +133,8 @@ export function FanSignupDialog({ children }: FanSignupDialogProps) {
     }, 300);
   };
 
-  const handleGoToModels = () => {
-    window.location.href = "/models";
+  const handleGoToDashboard = () => {
+    window.location.href = "/dashboard";
   };
 
   return (
@@ -155,10 +155,10 @@ export function FanSignupDialog({ children }: FanSignupDialogProps) {
               </p>
             </DialogHeader>
             <Button
-              onClick={handleGoToModels}
+              onClick={handleGoToDashboard}
               className="mt-6 bg-gradient-to-r from-pink-500 to-violet-500"
             >
-              Browse Models
+              Get Started
             </Button>
           </div>
         ) : (
