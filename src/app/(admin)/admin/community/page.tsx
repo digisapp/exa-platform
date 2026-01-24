@@ -402,7 +402,7 @@ interface ModelApplication {
   created_at: string;
 }
 
-type ModelSortField = "profile_views" | "coin_balance" | "followers_count" | "instagram_followers" | "admin_rating" | "created_at" | "joined_at" | "total_earned" | "content_count" | "last_post" | "last_seen" | "message_count" | "referral_count";
+type ModelSortField = "profile_views" | "coin_balance" | "followers_count" | "instagram_followers" | "admin_rating" | "created_at" | "joined_at" | "total_earned" | "content_count" | "image_count" | "video_count" | "ppv_count" | "last_post" | "last_seen" | "message_count" | "referral_count";
 type FanSortField = "coins_spent" | "following_count" | "coin_balance" | "created_at" | "report_count";
 type SortDirection = "asc" | "desc";
 
@@ -1148,14 +1148,14 @@ export default function AdminCommunityPage() {
                         <TableHead>
                           <div className="flex items-center"><Sparkles className="h-4 w-4 mr-1" />New Face</div>
                         </TableHead>
-                        <TableHead>
-                          <div className="flex items-center"><ImageIcon className="h-4 w-4 mr-1" />Pics</div>
+                        <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("image_count")}>
+                          <div className="flex items-center"><ImageIcon className="h-4 w-4 mr-1" />Pics<SortIndicator active={modelsSortField === "image_count"} direction={modelsSortDirection} /></div>
                         </TableHead>
-                        <TableHead>
-                          <div className="flex items-center"><Video className="h-4 w-4 mr-1" />Vids</div>
+                        <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("video_count")}>
+                          <div className="flex items-center"><Video className="h-4 w-4 mr-1" />Vids<SortIndicator active={modelsSortField === "video_count"} direction={modelsSortDirection} /></div>
                         </TableHead>
-                        <TableHead>
-                          <div className="flex items-center"><Lock className="h-4 w-4 mr-1" />PPV</div>
+                        <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("ppv_count")}>
+                          <div className="flex items-center"><Lock className="h-4 w-4 mr-1" />PPV<SortIndicator active={modelsSortField === "ppv_count"} direction={modelsSortDirection} /></div>
                         </TableHead>
                         <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("profile_views")}>
                           <div className="flex items-center"><Eye className="h-4 w-4 mr-1" />Views<SortIndicator active={modelsSortField === "profile_views"} direction={modelsSortDirection} /></div>

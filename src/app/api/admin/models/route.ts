@@ -241,7 +241,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Sort by computed fields if needed
-    const computedFields = ["total_earned", "content_count", "last_post", "last_seen", "message_count", "followers_count", "joined_at", "referral_count"];
+    const computedFields = ["total_earned", "content_count", "image_count", "video_count", "ppv_count", "last_post", "last_seen", "message_count", "followers_count", "joined_at", "referral_count"];
     if (computedFields.includes(sortField)) {
       enrichedModels.sort((a: any, b: any) => {
         let aVal = a[sortField];
