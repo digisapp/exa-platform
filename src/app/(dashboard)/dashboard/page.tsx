@@ -746,12 +746,12 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
         </CardContent>
       </Card>
 
-      {/* Discover Top Models */}
+      {/* Discover Models */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-cyan-500" />
-            Top Rated Models
+            Models
           </CardTitle>
           <Button variant="ghost" size="sm" asChild>
             <Link href="/models" className="text-cyan-500">
@@ -796,16 +796,7 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium truncate">{displayName}</p>
-                        {model.admin_rating >= 4 && (
-                          <div className="flex items-center gap-0.5">
-                            {[...Array(model.admin_rating)].map((_, i) => (
-                              <Star key={i} className="h-3 w-3 text-amber-500 fill-amber-500" />
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                      <p className="font-medium truncate">{displayName}</p>
                       <p className="text-sm text-cyan-500">@{model.username}</p>
                       {model.show_location && (model.city || model.state) && (
                         <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
