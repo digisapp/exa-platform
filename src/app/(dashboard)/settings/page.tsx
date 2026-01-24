@@ -443,7 +443,6 @@ export default function ProfilePage() {
         .update({
           display_name: fan.display_name,
           username: fan.username || null,
-          bio: fan.bio || null,
           phone: fan.phone || null,
           updated_at: new Date().toISOString(),
         })
@@ -698,16 +697,6 @@ export default function ProfilePage() {
                   Letters, numbers, and underscores only
                 </p>
               )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="bio">Bio</Label>
-              <Textarea
-                id="bio"
-                value={fan.bio || ""}
-                onChange={(e) => setFan({ ...fan, bio: e.target.value })}
-                placeholder="Tell us about yourself..."
-                rows={3}
-              />
             </div>
           </CardContent>
         </Card>
