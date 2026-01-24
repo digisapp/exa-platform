@@ -24,6 +24,7 @@ import {
   Heart,
   Megaphone,
   BarChart3,
+  FolderHeart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/auth/logout-button";
@@ -52,7 +53,6 @@ const fanLinks = [
   { href: "/dashboard", label: "Home", icon: Home },
   { href: "/models", label: "Explore", icon: Users },
   { href: "/chats", label: "Chats", icon: MessageCircle },
-  { href: "/following", label: "Following", icon: Heart },
 ];
 
 const brandLinks = [
@@ -170,6 +170,14 @@ export function Navbar({ user, actorType, coinBalance = 0 }: NavbarProps) {
                       </span>
                     </Link>
                   </DropdownMenuItem>
+                  {actorType === "fan" && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/my-content" className="cursor-pointer">
+                        <FolderHeart className="mr-2 h-4 w-4" />
+                        My Content
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   {actorType === "brand" && (
                     <>
                       <DropdownMenuItem asChild>
