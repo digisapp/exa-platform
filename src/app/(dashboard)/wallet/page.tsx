@@ -710,6 +710,17 @@ export default function WalletPage() {
       {/* Payout Section - Only for Models */}
       {(actorType === "model" || actorType === "admin") && (
         <>
+          {/* Payouts Section Header */}
+          <div className="flex items-center gap-3 pt-4">
+            <div className="p-2 rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20">
+              <Banknote className="h-5 w-5 text-green-500" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold">Payouts</h2>
+              <p className="text-sm text-muted-foreground">Manage your payout methods and request withdrawals</p>
+            </div>
+          </div>
+
           {/* Bank Account */}
           <Card>
             <CardHeader>
