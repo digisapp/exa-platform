@@ -483,99 +483,118 @@ export default async function DashboardPage() {
 async function FanDashboard({ actorId }: { actorId: string }) {
   const supabase = await createClient();
 
-  // Get user's favorite models
-  const { data: favorites } = await (supabase
-    .from("follows") as any)
-    .select("following_id, created_at")
-    .eq("follower_id", actorId)
+  // Get approved models for enriching content
+  const { data: allModels } = await (supabase
+    .from("models") as any)
+    .select("id, username, first_name, last_name, profile_photo_url")
+    .eq("is_approved", true);
+
+  const modelsMap = new Map((allModels || []).map((m: any) => [m.id, m]));
+
+  // Get portfolio content from all approved models for discovery feed
+  const { data: portfolioContent } = await (supabase
+    .from("media_assets") as any)
+    .select("id, url, media_type, title, created_at, model_id")
+    .eq("visibility", "public")
+    .eq("media_type", "image")
     .order("created_at", { ascending: false })
-    .limit(10);
+    .limit(12);
 
-  const favoriteIds = favorites?.map((f: any) => f.following_id) || [];
+  // Enrich content with model info, filter to only models that are approved
+  const discoveryContent = (portfolioContent || [])
+    .map((c: any) => ({
+      ...c,
+      model: modelsMap.get(c.model_id) || null
+    }))
+    .filter((c: any) => c.model !== null);
 
-  // Get the model profiles for favorited users
-  let favoriteModels: any[] = [];
-  let followedModelIds: string[] = [];
-  if (favoriteIds.length > 0) {
-    const { data: actorData } = await (supabase
-      .from("actors") as any)
-      .select("id, user_id")
-      .in("id", favoriteIds)
-      .eq("type", "model");
-
-    if (actorData && actorData.length > 0) {
-      const userIds = actorData.map((a: any) => a.user_id);
-      const { data: models } = await (supabase
-        .from("models") as any)
-        .select("id, username, first_name, last_name, profile_photo_url, city, state, show_location, user_id")
-        .in("user_id", userIds)
-        .eq("is_approved", true);
-      favoriteModels = models || [];
-      followedModelIds = favoriteModels.map(m => m.id);
-    }
-  }
-
-  // Get recent content from followed models
-  let recentContent: any[] = [];
-  if (followedModelIds.length > 0) {
-    const { data: content } = await (supabase
-      .from("media_assets") as any)
-      .select("id, url, media_type, title, created_at, model_id, is_premium")
-      .in("model_id", followedModelIds)
-      .eq("visibility", "public")
-      .order("created_at", { ascending: false })
-      .limit(6);
-
-    // Enrich with model info
-    if (content && content.length > 0) {
-      const modelMap = new Map(favoriteModels.map(m => [m.id, m]));
-      recentContent = content.map((c: any) => ({
-        ...c,
-        model: modelMap.get(c.model_id) || null
-      }));
-    }
-  }
-
-  // Get featured/trending models for discovery (only those with profile photos)
+  // Get featured models for the models section (only those with profile photos)
   const { data: featuredModels } = await (supabase
     .from("models") as any)
-    .select("id, username, first_name, last_name, profile_photo_url, city, state, show_location, user_id")
+    .select("id, username, first_name, last_name, profile_photo_url, city, state, show_location")
     .eq("is_approved", true)
     .not("profile_photo_url", "is", null)
     .order("created_at", { ascending: false })
     .limit(8);
 
-  // Filter out models already favorited
-  const favoritedUserIds = favoriteModels.map(m => m.user_id);
-  const discoverModels = (featuredModels || []).filter(
-    (m: any) => !favoritedUserIds.includes(m.user_id)
-  );
-
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      {/* Following Section */}
+      {/* Visual Discovery Feed */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
-            <Heart className="h-5 w-5 text-pink-500 fill-current" />
-            Following
-            {favoriteModels.length > 0 && (
-              <Badge variant="secondary" className="ml-1">{favoriteModels.length}</Badge>
-            )}
+            <ImageIcon className="h-5 w-5 text-violet-500" />
+            Discover
           </CardTitle>
-          {favoriteModels.length > 0 && (
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/models" className="text-pink-500">
-                Find More
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
-            </Button>
-          )}
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/models" className="text-pink-500">
+              View All Models
+              <ArrowRight className="ml-1 h-4 w-4" />
+            </Link>
+          </Button>
         </CardHeader>
         <CardContent>
-          {favoriteModels.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {favoriteModels.slice(0, 5).map((model: any) => {
+          {discoveryContent.length > 0 ? (
+            <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
+              {discoveryContent.map((content: any) => (
+                <Link
+                  key={content.id}
+                  href={`/${content.model?.username}`}
+                  className="group relative aspect-square rounded-lg overflow-hidden bg-gradient-to-br from-violet-500/20 to-pink-500/20"
+                >
+                  {content.url && (
+                    <Image
+                      src={content.url}
+                      alt={content.title || "Content"}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform"
+                    />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="absolute inset-x-0 bottom-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <p className="text-white text-xs font-medium truncate">
+                      {content.model?.first_name || content.model?.username}
+                    </p>
+                    <p className="text-white/70 text-xs truncate">@{content.model?.username}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="p-4 rounded-full bg-muted inline-block mb-4">
+                <ImageIcon className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <p className="text-muted-foreground text-sm">No content yet</p>
+              <Button asChild size="sm" className="mt-3 bg-gradient-to-r from-pink-500 to-violet-500">
+                <Link href="/models">
+                  <Sparkles className="mr-1 h-3 w-3" />
+                  Browse Models
+                </Link>
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Featured Models */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-pink-500" />
+            Featured Models
+          </CardTitle>
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/models" className="text-pink-500">
+              View All
+              <ArrowRight className="ml-1 h-4 w-4" />
+            </Link>
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {(featuredModels || []).length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {(featuredModels || []).slice(0, 8).map((model: any) => {
                 const modelDisplayName = model.first_name
                   ? `${model.first_name} ${model.last_name || ''}`.trim()
                   : model.username;
@@ -609,148 +628,15 @@ async function FanDashboard({ actorId }: { actorId: string }) {
               })}
             </div>
           ) : (
-            <div className="text-center py-12">
-              <div className="p-4 rounded-full bg-gradient-to-br from-pink-500/20 to-violet-500/20 inline-block mb-4">
-                <Heart className="h-8 w-8 text-pink-500" />
+            <div className="text-center py-8">
+              <div className="p-4 rounded-full bg-muted inline-block mb-4">
+                <Users className="h-8 w-8 text-muted-foreground" />
               </div>
-              <h3 className="font-semibold mb-2">Not following anyone yet</h3>
-              <p className="text-muted-foreground text-sm mb-4">Discover amazing models and follow them</p>
-              <Button asChild className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600">
-                <Link href="/models">
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  Discover Models
-                </Link>
-              </Button>
+              <p className="text-muted-foreground">No models yet</p>
             </div>
           )}
         </CardContent>
       </Card>
-
-      {/* New Content & Discover */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* New Content from Following */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <ImageIcon className="h-5 w-5 text-violet-500" />
-              New Content
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {recentContent.length > 0 ? (
-              <div className="grid grid-cols-3 gap-2">
-                {recentContent.slice(0, 6).map((content: any) => (
-                  <Link
-                    key={content.id}
-                    href={`/${content.model?.username}`}
-                    className="group relative aspect-square rounded-lg overflow-hidden bg-gradient-to-br from-violet-500/20 to-pink-500/20"
-                  >
-                    {content.url && (
-                      <Image
-                        src={content.url}
-                        alt={content.title || "Content"}
-                        fill
-                        className="object-cover group-hover:scale-110 transition-transform"
-                      />
-                    )}
-                    {content.is_premium && (
-                      <div className="absolute top-1 right-1">
-                        <Lock className="h-3 w-3 text-white drop-shadow-lg" />
-                      </div>
-                    )}
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-2">
-                      <p className="text-white text-xs truncate">@{content.model?.username}</p>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            ) : favoriteModels.length > 0 ? (
-              <div className="text-center py-8">
-                <div className="p-4 rounded-full bg-muted inline-block mb-4">
-                  <ImageIcon className="h-8 w-8 text-muted-foreground" />
-                </div>
-                <p className="text-muted-foreground text-sm">No new content yet</p>
-                <p className="text-xs text-muted-foreground mt-1">Check back later for updates</p>
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <div className="p-4 rounded-full bg-muted inline-block mb-4">
-                  <Heart className="h-8 w-8 text-muted-foreground" />
-                </div>
-                <p className="text-muted-foreground text-sm">Follow models to see their content</p>
-                <Button asChild size="sm" className="mt-3 bg-gradient-to-r from-pink-500 to-violet-500">
-                  <Link href="/models">
-                    <Sparkles className="mr-1 h-3 w-3" />
-                    Find Models
-                  </Link>
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Discover Models */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-pink-500" />
-              Discover
-            </CardTitle>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/models" className="text-pink-500">
-                View All
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {discoverModels.length > 0 ? (
-              <div className="space-y-2">
-                {discoverModels.slice(0, 4).map((model: any) => {
-                  const modelDisplayName = model.first_name
-                    ? `${model.first_name} ${model.last_name || ''}`.trim()
-                    : model.username;
-                  return (
-                    <Link
-                      key={model.id}
-                      href={`/${model.username}`}
-                      className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors border border-transparent hover:border-pink-500/30"
-                    >
-                      <div className="relative w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-pink-500/20 to-violet-500/20 flex-shrink-0">
-                        {model.profile_photo_url ? (
-                          <Image
-                            src={model.profile_photo_url}
-                            alt={modelDisplayName}
-                            fill
-                            className="object-cover"
-                            unoptimized={model.profile_photo_url.includes('cdninstagram.com')}
-                          />
-                        ) : (
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-xl">👤</span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{modelDisplayName}</p>
-                        <p className="text-xs text-pink-500">@{model.username}</p>
-                      </div>
-                      <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                    </Link>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <div className="p-4 rounded-full bg-muted inline-block mb-4">
-                  <Users className="h-8 w-8 text-muted-foreground" />
-                </div>
-                <p className="text-muted-foreground">No new models to discover</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 }
