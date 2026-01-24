@@ -4,8 +4,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Search, X } from "lucide-react";
-import { useCallback, useState } from "react";
+import { Search, X, Loader2 } from "lucide-react";
+import { useCallback, useState, useEffect, useRef } from "react";
 
 const US_STATES = [
   { value: "AL", label: "Alabama" },
@@ -92,6 +92,8 @@ export function ModelFilters() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [search, setSearch] = useState(searchParams.get("q") || "");
+  const [isSearching, setIsSearching] = useState(false);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   const updateParams = useCallback((key: string, value: string | null) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -103,10 +105,32 @@ export function ModelFilters() {
     router.push(`/models?${params.toString()}`);
   }, [router, searchParams]);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    updateParams("q", search || null);
-  };
+  // Debounced live search
+  useEffect(() => {
+    // Clear previous timeout
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    const currentQuery = searchParams.get("q") || "";
+
+    // Only trigger if search value differs from URL
+    if (search !== currentQuery) {
+      setIsSearching(true);
+      debounceRef.current = setTimeout(() => {
+        updateParams("q", search || null);
+        setIsSearching(false);
+      }, 300);
+    } else {
+      setIsSearching(false);
+    }
+
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, [search, searchParams, updateParams]);
 
   const clearFilters = () => {
     setSearch("");
@@ -117,18 +141,19 @@ export function ModelFilters() {
 
   return (
     <div className="space-y-4">
-      <form onSubmit={handleSearch} className="flex gap-2">
-        <div className="relative flex-1">
+      <div className="relative flex-1">
+        {isSearching ? (
+          <Loader2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground animate-spin" />
+        ) : (
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by name or username..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <Button type="submit">Search</Button>
-      </form>
+        )}
+        <Input
+          placeholder="Search by name or username..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-10"
+        />
+      </div>
 
       <div className="flex flex-wrap gap-3">
         <Select
