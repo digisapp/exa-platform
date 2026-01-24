@@ -51,6 +51,7 @@ import {
   Briefcase,
   Eye,
 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { COIN_PACKAGES } from "@/lib/stripe-config";
 import { COIN_USD_RATE, MIN_WITHDRAWAL_COINS, coinsToUsd, formatUsd } from "@/lib/coin-config";
 import { PAYONEER_PREFERRED_COUNTRIES, DUAL_PAYOUT_COUNTRIES, shouldUsePayoneer, supportsBothPayoutMethods } from "@/lib/payoneer";
@@ -501,9 +502,23 @@ export default function WalletPage() {
         );
       })()}
 
-      {/* Earnings Stats - Models Only */}
+      {/* Model Tabs - Earnings & Payouts */}
       {(actorType === "model" || actorType === "admin") && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Tabs defaultValue="earnings" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="earnings" className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Earnings
+            </TabsTrigger>
+            <TabsTrigger value="payouts" className="flex items-center gap-2">
+              <Banknote className="h-4 w-4" />
+              Payouts
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="earnings" className="space-y-6">
+            {/* Earnings Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
@@ -556,12 +571,8 @@ export default function WalletPage() {
             </CardContent>
           </Card>
         </div>
-      )}
 
-      {/* Earnings Analytics - Models Only */}
-      {actorType === "model" && (
-        <>
-          {/* Monthly Earnings Chart */}
+            {/* Monthly Earnings Chart */}
           {Object.keys(earningsByMonth).length > 0 && (
             <Card>
               <CardHeader>
@@ -655,10 +666,8 @@ export default function WalletPage() {
               </CardContent>
             </Card>
           )}
-        </>
-      )}
 
-      {/* Transactions */}
+            {/* Transactions */}
       <Card>
         <CardHeader>
           <CardTitle>Recent Transactions</CardTitle>
@@ -706,12 +715,11 @@ export default function WalletPage() {
           )}
         </CardContent>
       </Card>
+          </TabsContent>
 
-      {/* Payout Section - Only for Models */}
-      {(actorType === "model" || actorType === "admin") && (
-        <>
-          {/* Payouts Section Header */}
-          <div className="flex items-center gap-3 pt-4">
+          <TabsContent value="payouts" className="space-y-6">
+            {/* Payouts Section Header */}
+            <div className="flex items-center gap-3">
             <div className="p-2 rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20">
               <Banknote className="h-5 w-5 text-green-500" />
             </div>
@@ -1184,7 +1192,8 @@ export default function WalletPage() {
               </CardContent>
             </Card>
           )}
-        </>
+          </TabsContent>
+        </Tabs>
       )}
 
       {/* Brand Subscription & Payment History */}
