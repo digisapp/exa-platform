@@ -90,7 +90,7 @@ export function BottomNav({ user, actorType, coinBalance, unreadCount = 0 }: Bot
           <span className="text-[10px] font-medium">Chats</span>
         </Link>
 
-        {/* Wallet (for models/fans) or Campaigns (for brands) */}
+        {/* Wallet (for models) or Buy Coins (for fans) or Campaigns (for brands) */}
         {actorType === "brand" ? (
           <Link
             href="/campaigns"
@@ -101,6 +101,20 @@ export function BottomNav({ user, actorType, coinBalance, unreadCount = 0 }: Bot
           >
             <Megaphone className="h-5 w-5" />
             <span className="text-[10px] font-medium">Campaigns</span>
+          </Link>
+        ) : actorType === "fan" ? (
+          <Link
+            href="/wallet"
+            className={cn(
+              "flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors",
+              isActive("/wallet") ? "text-pink-500" : "text-muted-foreground"
+            )}
+          >
+            <div className="relative flex items-center gap-1">
+              <Coins className="h-5 w-5" />
+              <span className="text-xs font-semibold tabular-nums">{coinBalance.toLocaleString()}</span>
+            </div>
+            <span className="text-[10px] font-medium">Buy</span>
           </Link>
         ) : (
           <Link

@@ -25,6 +25,7 @@ import {
   Megaphone,
   BarChart3,
   FolderHeart,
+  Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/auth/logout-button";
@@ -118,13 +119,32 @@ export function Navbar({ user, actorType, coinBalance = 0 }: NavbarProps) {
           {user ? (
             <>
               {/* Coin Balance - Desktop only */}
-              <Link
-                href="/wallet"
-                className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 hover:border-yellow-500/50 hover:from-yellow-500/30 hover:to-orange-500/30 transition-all shadow-sm"
-              >
-                <Coins className="h-4 w-4 text-yellow-500" />
-                <span className="text-sm font-semibold">{coinBalance.toLocaleString()}</span>
-              </Link>
+              {actorType === "fan" ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 hover:border-yellow-500/50 hover:from-yellow-500/30 hover:to-orange-500/30 transition-all shadow-sm cursor-pointer">
+                      <Coins className="h-4 w-4 text-yellow-500" />
+                      <span className="text-sm font-semibold">{coinBalance.toLocaleString()}</span>
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                      <Link href="/wallet" className="cursor-pointer">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Buy Coins
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Link
+                  href="/wallet"
+                  className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 hover:border-yellow-500/50 hover:from-yellow-500/30 hover:to-orange-500/30 transition-all shadow-sm"
+                >
+                  <Coins className="h-4 w-4 text-yellow-500" />
+                  <span className="text-sm font-semibold">{coinBalance.toLocaleString()}</span>
+                </Link>
+              )}
 
               {/* User Menu Dropdown - Both mobile and desktop */}
               <DropdownMenu>
@@ -163,11 +183,20 @@ export function Navbar({ user, actorType, coinBalance = 0 }: NavbarProps) {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <Link href="/wallet" className="cursor-pointer">
-                      <Coins className="mr-2 h-4 w-4" />
-                      Wallet
-                      <span className="ml-auto text-xs text-muted-foreground">
-                        {coinBalance.toLocaleString()}
-                      </span>
+                      {actorType === "fan" ? (
+                        <>
+                          <Plus className="mr-2 h-4 w-4" />
+                          Buy Coins
+                        </>
+                      ) : (
+                        <>
+                          <Coins className="mr-2 h-4 w-4" />
+                          Wallet
+                          <span className="ml-auto text-xs text-muted-foreground">
+                            {coinBalance.toLocaleString()}
+                          </span>
+                        </>
+                      )}
                     </Link>
                   </DropdownMenuItem>
                   {actorType === "fan" && (
