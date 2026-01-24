@@ -181,24 +181,17 @@ export function Navbar({ user, actorType, coinBalance = 0 }: NavbarProps) {
                     </DropdownMenuLabel>
                   )}
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/wallet" className="cursor-pointer">
-                      {actorType === "fan" ? (
-                        <>
-                          <Plus className="mr-2 h-4 w-4" />
-                          Buy Coins
-                        </>
-                      ) : (
-                        <>
-                          <Coins className="mr-2 h-4 w-4" />
-                          Wallet
-                          <span className="ml-auto text-xs text-muted-foreground">
-                            {coinBalance.toLocaleString()}
-                          </span>
-                        </>
-                      )}
-                    </Link>
-                  </DropdownMenuItem>
+                  {actorType !== "fan" && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/wallet" className="cursor-pointer">
+                        <Coins className="mr-2 h-4 w-4" />
+                        Wallet
+                        <span className="ml-auto text-xs text-muted-foreground">
+                          {coinBalance.toLocaleString()}
+                        </span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   {actorType === "fan" && (
                     <DropdownMenuItem asChild>
                       <Link href="/my-content" className="cursor-pointer">
