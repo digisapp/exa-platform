@@ -45,7 +45,7 @@ export default async function DashboardLayout({
     // Fans use actor.id as their id
     const { data } = await supabase
       .from("fans")
-      .select("display_name, avatar_url, coin_balance")
+      .select("display_name, username, avatar_url, coin_balance")
       .eq("id", actor.id)
       .single() as { data: any };
     profileData = data;
@@ -83,7 +83,7 @@ export default async function DashboardLayout({
   }
 
   const displayName = actor?.type === "fan"
-    ? profileData?.display_name
+    ? profileData?.display_name || profileData?.username
     : actor?.type === "brand"
       ? profileData?.company_name
       : profileData?.first_name
