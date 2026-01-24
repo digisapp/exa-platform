@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { ConversationList } from "@/components/chat/ConversationList";
+import { NewMessageDialog } from "@/components/chat/NewMessageDialog";
 
 export default async function MessagesPage() {
   const supabase = await createClient();
@@ -16,6 +17,24 @@ export default async function MessagesPage() {
     .single() as { data: { id: string; type: string } | null };
 
   if (!actor) redirect("/fan/signup");
+
+  // Get coin balance based on actor type
+  let coinBalance = 0;
+  if (actor.type === "fan") {
+    const { data: fan } = await supabase
+      .from("fans")
+      .select("coin_balance")
+      .eq("id", actor.id)
+      .single() as { data: { coin_balance: number } | null };
+    coinBalance = fan?.coin_balance || 0;
+  } else if (actor.type === "brand") {
+    const { data: brand } = await (supabase
+      .from("brands") as any)
+      .select("coin_balance")
+      .eq("id", actor.id)
+      .single() as { data: { coin_balance: number } | null };
+    coinBalance = brand?.coin_balance || 0;
+  }
 
   // Get conversations with participants in a single query
   const { data: participations } = await supabase
@@ -124,8 +143,12 @@ export default async function MessagesPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <div>
+      <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Chats</h1>
+        <NewMessageDialog
+          currentActorType={actor.type}
+          coinBalance={coinBalance}
+        />
       </div>
 
       <ConversationList conversations={conversations} actorType={actor.type} />

@@ -38,8 +38,8 @@ export function NewMessageDialog({
   const router = useRouter();
   const supabase = createClient();
 
-  // Determine if coins are required
-  const coinCost = currentActorType === "model" ? 0 : 10;
+  // Determine if coins are required (use model's rate or default to 10)
+  const coinCost = currentActorType === "model" ? 0 : ((selectedModel as any)?.message_rate || 10);
   const hasEnoughCoins = coinCost === 0 || coinBalance >= coinCost;
 
   // Search for models
@@ -199,7 +199,7 @@ export function NewMessageDialog({
                             {model.first_name?.charAt(0) || model.username?.charAt(0)?.toUpperCase() || "?"}
                           </AvatarFallback>
                         </Avatar>
-                        <div className="text-left">
+                        <div className="text-left flex-1">
                           <p className="font-medium text-sm">
                             {model.first_name ? `${model.first_name} ${model.last_name || ""}`.trim() : model.username}
                           </p>
@@ -207,6 +207,12 @@ export function NewMessageDialog({
                             @{model.username}
                           </p>
                         </div>
+                        {currentActorType !== "model" && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Coins className="h-3 w-3" />
+                            <span>{(model as any).message_rate || 10}/msg</span>
+                          </div>
+                        )}
                       </button>
                     ))
                   )}
