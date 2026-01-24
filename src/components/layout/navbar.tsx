@@ -173,12 +173,7 @@ export function Navbar({ user, actorType, coinBalance = 0 }: NavbarProps) {
                   ) : (
                     <DropdownMenuLabel className="font-normal">
                       <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">{user.name || user.email?.split("@")[0] || "User"}</p>
-                        {user.name ? (
-                          <p className="text-xs leading-none text-muted-foreground">
-                            {user.email}
-                          </p>
-                        ) : null}
+                        <p className="text-sm font-medium leading-none">{user.name || "User"}</p>
                       </div>
                     </DropdownMenuLabel>
                   )}
