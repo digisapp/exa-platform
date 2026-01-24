@@ -39,7 +39,6 @@ import {
   Mail,
   DollarSign,
   FolderHeart,
-  Plus,
 } from "lucide-react";
 
 export default async function DashboardPage() {
@@ -484,21 +483,6 @@ export default async function DashboardPage() {
 async function FanDashboard({ actorId }: { actorId: string }) {
   const supabase = await createClient();
 
-  // Get fan data
-  const { data: fan } = await supabase
-    .from("fans")
-    .select("coin_balance, display_name, username")
-    .eq("id", actorId)
-    .single() as { data: { coin_balance: number; display_name: string | null; username: string | null } | null };
-  const coinBalance = fan?.coin_balance || 0;
-
-  // Get unread message count
-  const { count: unreadCount } = await (supabase
-    .from("messages") as any)
-    .select("id", { count: "exact", head: true })
-    .eq("recipient_id", actorId)
-    .eq("is_read", false);
-
   // Get user's favorite models
   const { data: favorites } = await (supabase
     .from("follows") as any)
@@ -569,30 +553,6 @@ async function FanDashboard({ actorId }: { actorId: string }) {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      {/* Quick Actions Bar */}
-      <div className="flex flex-wrap items-center gap-3">
-        <Link href="/wallet" className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-pink-500/10 to-violet-500/10 border border-pink-500/20 hover:border-pink-500/40 transition-colors">
-          <Coins className="h-4 w-4 text-pink-500" />
-          <span className="font-semibold">{coinBalance.toLocaleString()}</span>
-          <span className="text-muted-foreground text-sm">coins</span>
-        </Link>
-
-        <Link href="/messages" className="flex items-center gap-2 px-4 py-2 rounded-full bg-muted hover:bg-muted/80 transition-colors relative">
-          <MessageCircle className="h-4 w-4" />
-          <span className="font-medium">Messages</span>
-          {(unreadCount || 0) > 0 && (
-            <Badge className="absolute -top-1 -right-1 bg-pink-500 text-white text-xs px-1.5 py-0.5 min-w-[20px] flex items-center justify-center">
-              {unreadCount}
-            </Badge>
-          )}
-        </Link>
-
-        <Link href="/wallet" className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 text-white hover:from-pink-600 hover:to-violet-600 transition-colors ml-auto">
-          <Plus className="h-4 w-4" />
-          <span className="font-medium">Buy Coins</span>
-        </Link>
-      </div>
-
       {/* Following Section */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
