@@ -145,8 +145,8 @@ export default async function MessagesPage() {
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Chats</h1>
-        {/* New Chat button only for fans and brands, not models */}
-        {(actor.type === "fan" || actor.type === "brand") && (
+        {/* New Chat button only for brands */}
+        {actor.type === "brand" && (
           <NewMessageDialog
             currentActorType={actor.type}
             coinBalance={coinBalance}
