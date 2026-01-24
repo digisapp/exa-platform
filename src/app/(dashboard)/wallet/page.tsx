@@ -393,12 +393,17 @@ export default function WalletPage() {
                       <span className="text-4xl font-bold">{coinBalance.toLocaleString()}</span>
                       <span className="text-muted-foreground">coins</span>
                     </div>
-                    <p className="text-sm text-green-500 mt-1">${(coinBalance * 0.10).toFixed(2)} USD</p>
-                    {withheldBalance > 0 && (
-                      <p className="text-xs text-yellow-500 mt-2 flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {withheldBalance.toLocaleString()} coins pending payout (${(withheldBalance * 0.10).toFixed(2)})
-                      </p>
+                    {/* Only show USD value to models - fans/brands should not see the payout rate */}
+                    {(actorType === "model" || actorType === "admin") && (
+                      <>
+                        <p className="text-sm text-green-500 mt-1">${(coinBalance * 0.10).toFixed(2)} USD</p>
+                        {withheldBalance > 0 && (
+                          <p className="text-xs text-yellow-500 mt-2 flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {withheldBalance.toLocaleString()} coins pending payout (${(withheldBalance * 0.10).toFixed(2)})
+                          </p>
+                        )}
+                      </>
                     )}
                   </div>
                   {canBuyCoins ? (
@@ -496,60 +501,62 @@ export default function WalletPage() {
         );
       })()}
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <TrendingUp className="h-5 w-5 text-green-500" />
-              <div>
-                <p className="text-2xl font-bold">{totalEarnings.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Total Earned</p>
+      {/* Earnings Stats - Models Only */}
+      {(actorType === "model" || actorType === "admin") && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <TrendingUp className="h-5 w-5 text-green-500" />
+                <div>
+                  <p className="text-2xl font-bold">{totalEarnings.toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground">Total Earned</p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <TrendingUp className="h-5 w-5 text-blue-500" />
-              <div>
-                <p className="text-2xl font-bold">{thisMonthEarnings.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">This Month</p>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <TrendingUp className="h-5 w-5 text-blue-500" />
+                <div>
+                  <p className="text-2xl font-bold">{thisMonthEarnings.toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground">This Month</p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <Heart className="h-5 w-5 text-pink-500" />
-              <div>
-                <p className="text-2xl font-bold">
-                  {transactions.filter(t => t.action === "tip_received").reduce((sum, t) => sum + t.amount, 0).toLocaleString()}
-                </p>
-                <p className="text-xs text-muted-foreground">From Tips</p>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <Heart className="h-5 w-5 text-pink-500" />
+                <div>
+                  <p className="text-2xl font-bold">
+                    {transactions.filter(t => t.action === "tip_received").reduce((sum, t) => sum + t.amount, 0).toLocaleString()}
+                  </p>
+                  <p className="text-xs text-muted-foreground">From Tips</p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <Lock className="h-5 w-5 text-violet-500" />
-              <div>
-                <p className="text-2xl font-bold">
-                  {transactions.filter(t => t.action === "content_sale").reduce((sum, t) => sum + t.amount, 0).toLocaleString()}
-                </p>
-                <p className="text-xs text-muted-foreground">Content Sales</p>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <Lock className="h-5 w-5 text-violet-500" />
+                <div>
+                  <p className="text-2xl font-bold">
+                    {transactions.filter(t => t.action === "content_sale").reduce((sum, t) => sum + t.amount, 0).toLocaleString()}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Content Sales</p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Earnings Analytics - Models Only */}
       {actorType === "model" && (

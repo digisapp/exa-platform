@@ -60,6 +60,7 @@ ALTER TABLE payoneer_payouts ENABLE ROW LEVEL SECURITY;
 
 -- 7. RLS policies for payoneer_accounts
 -- Models can view their own Payoneer account
+DROP POLICY IF EXISTS "Models can view own payoneer account" ON payoneer_accounts;
 CREATE POLICY "Models can view own payoneer account" ON payoneer_accounts
   FOR SELECT
   USING (
@@ -69,6 +70,7 @@ CREATE POLICY "Models can view own payoneer account" ON payoneer_accounts
   );
 
 -- Models can insert their own Payoneer account
+DROP POLICY IF EXISTS "Models can create own payoneer account" ON payoneer_accounts;
 CREATE POLICY "Models can create own payoneer account" ON payoneer_accounts
   FOR INSERT
   WITH CHECK (
@@ -78,6 +80,7 @@ CREATE POLICY "Models can create own payoneer account" ON payoneer_accounts
   );
 
 -- Models can update their own Payoneer account
+DROP POLICY IF EXISTS "Models can update own payoneer account" ON payoneer_accounts;
 CREATE POLICY "Models can update own payoneer account" ON payoneer_accounts
   FOR UPDATE
   USING (
@@ -87,6 +90,7 @@ CREATE POLICY "Models can update own payoneer account" ON payoneer_accounts
   );
 
 -- Admins can do everything
+DROP POLICY IF EXISTS "Admins full access to payoneer_accounts" ON payoneer_accounts;
 CREATE POLICY "Admins full access to payoneer_accounts" ON payoneer_accounts
   FOR ALL
   USING (
@@ -96,6 +100,7 @@ CREATE POLICY "Admins full access to payoneer_accounts" ON payoneer_accounts
   );
 
 -- 8. RLS policies for payoneer_payouts (admin only)
+DROP POLICY IF EXISTS "Admins full access to payoneer_payouts" ON payoneer_payouts;
 CREATE POLICY "Admins full access to payoneer_payouts" ON payoneer_payouts
   FOR ALL
   USING (
@@ -105,6 +110,7 @@ CREATE POLICY "Admins full access to payoneer_payouts" ON payoneer_payouts
   );
 
 -- Models can view their own payouts
+DROP POLICY IF EXISTS "Models can view own payoneer payouts" ON payoneer_payouts;
 CREATE POLICY "Models can view own payoneer payouts" ON payoneer_payouts
   FOR SELECT
   USING (
