@@ -202,40 +202,6 @@ export default async function DashboardPage() {
     .select("gig_id, status")
     .eq("model_id", model.id);
 
-  // Get recent activity
-  const { data: pointHistory } = await (supabase
-    .from("point_transactions") as any)
-    .select("id, action, points, created_at")
-    .eq("model_id", model.id)
-    .order("created_at", { ascending: false })
-    .limit(5);
-
-  const { data: coinHistory } = await (supabase
-    .from("coin_transactions") as any)
-    .select("id, action, amount, created_at")
-    .eq("actor_id", actor.id)
-    .order("created_at", { ascending: false })
-    .limit(5);
-
-  const recentActivity = [
-    ...(pointHistory || []).map((tx: any) => ({
-      id: tx.id,
-      type: "points" as const,
-      action: tx.action,
-      value: tx.points,
-      created_at: tx.created_at,
-    })),
-    ...(coinHistory || []).map((tx: any) => ({
-      id: tx.id,
-      type: "coins" as const,
-      action: tx.action,
-      value: tx.amount,
-      created_at: tx.created_at,
-    })),
-  ]
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    .slice(0, 6);
-
   const displayName = model.first_name
     ? `${model.first_name} ${model.last_name || ''}`.trim()
     : model.username;
@@ -403,78 +369,6 @@ export default async function DashboardPage() {
         />
       </div>
 
-      {/* Recent Activity */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5" />
-            Recent Activity
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {recentActivity.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {recentActivity.map((item) => (
-                <div key={`${item.type}-${item.id}`} className="flex items-center justify-between p-3 rounded-xl bg-muted/50 hover:bg-muted/80 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-full ${
-                      item.type === "coins"
-                        ? item.action === "tip_received" ? "bg-pink-500/20" :
-                          item.action === "content_sale" ? "bg-violet-500/20" : "bg-amber-500/20"
-                        : "bg-green-500/20"
-                    }`}>
-                      {item.type === "coins" ? (
-                        item.action === "tip_received" ? (
-                          <Heart className="h-4 w-4 text-pink-500" />
-                        ) : item.action === "content_sale" ? (
-                          <Lock className="h-4 w-4 text-violet-500" />
-                        ) : (
-                          <Coins className="h-4 w-4 text-amber-500" />
-                        )
-                      ) : (
-                        item.action === "photo_upload" || item.action === "portfolio_photo" ? (
-                          <ImageIcon className="h-4 w-4 text-green-500" />
-                        ) : (
-                          <Trophy className="h-4 w-4 text-green-500" />
-                        )
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-medium capitalize text-sm">{item.action.replace(/_/g, " ")}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(item.created_at).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                  <span className={`font-bold text-sm ${
-                    item.value >= 0 ? "text-green-500" : "text-red-500"
-                  }`}>
-                    {item.type === "coins" ? (
-                      <span className="flex items-center gap-1">
-                        {item.value >= 0 ? "+" : ""}{item.value}
-                        <Coins className="h-3 w-3" />
-                      </span>
-                    ) : (
-                      `+${item.value} pts`
-                    )}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <div className="p-4 rounded-full bg-muted inline-block mb-4">
-                <Activity className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <p className="text-muted-foreground">No recent activity</p>
-              <p className="text-sm text-muted-foreground mt-1">Upload content to get started</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
 }
