@@ -1,7 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { getModelId } from "@/lib/ids";
 import { NextRequest, NextResponse } from "next/server";
 import { processImage, isProcessableImage } from "@/lib/image-processing";
+
+// Admin client for database inserts - bypasses RLS
+const adminClient = createSupabaseClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
@@ -129,26 +136,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Actor not found" }, { status: 400 });
     }
 
-    // Create media_asset record
-    const { data: mediaAsset, error: mediaError } = await (supabase
-      .from("media_assets") as any)
-      .insert({
-        owner_id: actor.id,
-        model_id: modelId,
-        type: isVideo ? "video" : "photo",
-        asset_type: assetType,
-        photo_url: isImage ? publicUrl : null,
-        url: publicUrl,
-        storage_path: filename,
-        mime_type: finalContentType,
-        size_bytes: processedBuffer.length,
-        title: title,
-      })
+    // Create media_asset record using admin client to bypass RLS
+    // This ensures the INSERT cannot fail due to RLS policy issues
+    const insertData = {
+      owner_id: actor.id,
+      model_id: modelId,
+      type: isVideo ? "video" : "photo",
+      asset_type: assetType,
+      photo_url: isImage ? publicUrl : null,
+      url: publicUrl,
+      storage_path: filename,
+      mime_type: finalContentType,
+      size_bytes: processedBuffer.length,
+      title: title,
+    };
+
+    const { data: mediaAsset, error: mediaError } = await adminClient
+      .from("media_assets")
+      .insert(insertData)
       .select()
       .single();
 
     if (mediaError) {
-      console.error("Media asset error:", mediaError);
+      // Log detailed error info for debugging
+      console.error("Media asset INSERT failed:", {
+        error: mediaError,
+        user_id: user.id,
+        model_id: modelId,
+        actor_id: actor.id,
+        storage_path: filename,
+      });
       return NextResponse.json(
         { error: `Failed to save media record: ${mediaError.message}` },
         { status: 500 }

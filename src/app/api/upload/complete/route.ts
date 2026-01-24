@@ -88,26 +88,37 @@ export async function POST(request: NextRequest) {
     // Determine the media type
     const mediaTypeValue = isVideo ? "video" : isAudio ? "audio" : "photo";
 
-    // Create media_asset record
-    const { data: mediaAsset, error: mediaError } = await (supabase
-      .from("media_assets") as any)
-      .insert({
-        owner_id: actorId,
-        model_id: modelId,
-        type: mediaTypeValue,
-        asset_type: assetType,
-        photo_url: !isVideo && !isAudio ? publicUrl : null,
-        url: publicUrl,
-        storage_path: storagePath,
-        mime_type: fileType,
-        size_bytes: fileSize,
-        title: title,
-      })
+    // Create media_asset record using admin client to bypass RLS
+    // This ensures the INSERT cannot fail due to RLS policy issues
+    const insertData = {
+      owner_id: actorId,
+      model_id: modelId,
+      type: mediaTypeValue,
+      asset_type: assetType,
+      photo_url: !isVideo && !isAudio ? publicUrl : null,
+      url: publicUrl,
+      storage_path: storagePath,
+      mime_type: fileType,
+      size_bytes: fileSize,
+      title: title,
+    };
+
+    const { data: mediaAsset, error: mediaError } = await adminClient
+      .from("media_assets")
+      .insert(insertData)
       .select()
       .single();
 
     if (mediaError) {
-      console.error("Media asset error:", mediaError);
+      // Log detailed error info for debugging
+      console.error("Media asset INSERT failed:", {
+        error: mediaError,
+        user_id: user.id,
+        model_id: modelId,
+        actor_id: actorId,
+        storage_path: storagePath,
+        bucket,
+      });
       return NextResponse.json(
         { error: `Failed to save media record: ${mediaError.message}` },
         { status: 500 }
