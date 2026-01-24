@@ -39,6 +39,7 @@ import {
   Mail,
   DollarSign,
   FolderHeart,
+  Plus,
 } from "lucide-react";
 
 export default async function DashboardPage() {
@@ -490,7 +491,13 @@ async function FanDashboard({ actorId }: { actorId: string }) {
     .eq("id", actorId)
     .single() as { data: { coin_balance: number; display_name: string | null; username: string | null } | null };
   const coinBalance = fan?.coin_balance || 0;
-  const displayName = fan?.display_name || fan?.username || "Fan";
+
+  // Get unread message count
+  const { count: unreadCount } = await (supabase
+    .from("messages") as any)
+    .select("id", { count: "exact", head: true })
+    .eq("recipient_id", actorId)
+    .eq("is_read", false);
 
   // Get user's favorite models
   const { data: favorites } = await (supabase
@@ -504,6 +511,7 @@ async function FanDashboard({ actorId }: { actorId: string }) {
 
   // Get the model profiles for favorited users
   let favoriteModels: any[] = [];
+  let followedModelIds: string[] = [];
   if (favoriteIds.length > 0) {
     const { data: actorData } = await (supabase
       .from("actors") as any)
@@ -519,6 +527,28 @@ async function FanDashboard({ actorId }: { actorId: string }) {
         .in("user_id", userIds)
         .eq("is_approved", true);
       favoriteModels = models || [];
+      followedModelIds = favoriteModels.map(m => m.id);
+    }
+  }
+
+  // Get recent content from followed models
+  let recentContent: any[] = [];
+  if (followedModelIds.length > 0) {
+    const { data: content } = await (supabase
+      .from("media_assets") as any)
+      .select("id, url, media_type, title, created_at, model_id, is_premium")
+      .in("model_id", followedModelIds)
+      .eq("visibility", "public")
+      .order("created_at", { ascending: false })
+      .limit(6);
+
+    // Enrich with model info
+    if (content && content.length > 0) {
+      const modelMap = new Map(favoriteModels.map(m => [m.id, m]));
+      recentContent = content.map((c: any) => ({
+        ...c,
+        model: modelMap.get(c.model_id) || null
+      }));
     }
   }
 
@@ -537,22 +567,41 @@ async function FanDashboard({ actorId }: { actorId: string }) {
     (m: any) => !favoritedUserIds.includes(m.user_id)
   );
 
-  // Get recent coin transactions
-  const { data: coinHistory } = await (supabase
-    .from("coin_transactions") as any)
-    .select("id, action, amount, created_at")
-    .eq("actor_id", actorId)
-    .order("created_at", { ascending: false })
-    .limit(5);
-
   return (
     <div className="max-w-5xl mx-auto space-y-6">
+      {/* Quick Actions Bar */}
+      <div className="flex flex-wrap items-center gap-3">
+        <Link href="/wallet" className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-pink-500/10 to-violet-500/10 border border-pink-500/20 hover:border-pink-500/40 transition-colors">
+          <Coins className="h-4 w-4 text-pink-500" />
+          <span className="font-semibold">{coinBalance.toLocaleString()}</span>
+          <span className="text-muted-foreground text-sm">coins</span>
+        </Link>
+
+        <Link href="/messages" className="flex items-center gap-2 px-4 py-2 rounded-full bg-muted hover:bg-muted/80 transition-colors relative">
+          <MessageCircle className="h-4 w-4" />
+          <span className="font-medium">Messages</span>
+          {(unreadCount || 0) > 0 && (
+            <Badge className="absolute -top-1 -right-1 bg-pink-500 text-white text-xs px-1.5 py-0.5 min-w-[20px] flex items-center justify-center">
+              {unreadCount}
+            </Badge>
+          )}
+        </Link>
+
+        <Link href="/wallet" className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 text-white hover:from-pink-600 hover:to-violet-600 transition-colors ml-auto">
+          <Plus className="h-4 w-4" />
+          <span className="font-medium">Buy Coins</span>
+        </Link>
+      </div>
+
       {/* Following Section */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Heart className="h-5 w-5 text-pink-500 fill-current" />
             Following
+            {favoriteModels.length > 0 && (
+              <Badge variant="secondary" className="ml-1">{favoriteModels.length}</Badge>
+            )}
           </CardTitle>
           {favoriteModels.length > 0 && (
             <Button variant="ghost" size="sm" asChild>
@@ -566,8 +615,8 @@ async function FanDashboard({ actorId }: { actorId: string }) {
         <CardContent>
           {favoriteModels.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {favoriteModels.map((model: any) => {
-                const displayName = model.first_name
+              {favoriteModels.slice(0, 5).map((model: any) => {
+                const modelDisplayName = model.first_name
                   ? `${model.first_name} ${model.last_name || ''}`.trim()
                   : model.username;
                 return (
@@ -581,7 +630,7 @@ async function FanDashboard({ actorId }: { actorId: string }) {
                         {model.profile_photo_url ? (
                           <Image
                             src={model.profile_photo_url}
-                            alt={displayName}
+                            alt={modelDisplayName}
                             fill
                             className="object-cover group-hover:scale-110 transition-transform"
                             unoptimized={model.profile_photo_url.includes('cdninstagram.com')}
@@ -592,14 +641,8 @@ async function FanDashboard({ actorId }: { actorId: string }) {
                           </div>
                         )}
                       </div>
-                      <p className="font-medium text-sm truncate">{displayName}</p>
+                      <p className="font-medium text-sm truncate">{modelDisplayName}</p>
                       <p className="text-xs text-pink-500">@{model.username}</p>
-                      {model.show_location && (model.city || model.state) && (
-                        <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                          <MapPin className="h-3 w-3" />
-                          {model.city && model.state ? `${model.city}, ${model.state}` : model.city || model.state}
-                        </p>
-                      )}
                     </div>
                   </Link>
                 );
@@ -623,8 +666,69 @@ async function FanDashboard({ actorId }: { actorId: string }) {
         </CardContent>
       </Card>
 
-      {/* Discover & Activity */}
+      {/* New Content & Discover */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* New Content from Following */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <ImageIcon className="h-5 w-5 text-violet-500" />
+              New Content
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {recentContent.length > 0 ? (
+              <div className="grid grid-cols-3 gap-2">
+                {recentContent.slice(0, 6).map((content: any) => (
+                  <Link
+                    key={content.id}
+                    href={`/${content.model?.username}`}
+                    className="group relative aspect-square rounded-lg overflow-hidden bg-gradient-to-br from-violet-500/20 to-pink-500/20"
+                  >
+                    {content.url && (
+                      <Image
+                        src={content.url}
+                        alt={content.title || "Content"}
+                        fill
+                        className="object-cover group-hover:scale-110 transition-transform"
+                      />
+                    )}
+                    {content.is_premium && (
+                      <div className="absolute top-1 right-1">
+                        <Lock className="h-3 w-3 text-white drop-shadow-lg" />
+                      </div>
+                    )}
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-2">
+                      <p className="text-white text-xs truncate">@{content.model?.username}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : favoriteModels.length > 0 ? (
+              <div className="text-center py-8">
+                <div className="p-4 rounded-full bg-muted inline-block mb-4">
+                  <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <p className="text-muted-foreground text-sm">No new content yet</p>
+                <p className="text-xs text-muted-foreground mt-1">Check back later for updates</p>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <div className="p-4 rounded-full bg-muted inline-block mb-4">
+                  <Heart className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <p className="text-muted-foreground text-sm">Follow models to see their content</p>
+                <Button asChild size="sm" className="mt-3 bg-gradient-to-r from-pink-500 to-violet-500">
+                  <Link href="/models">
+                    <Sparkles className="mr-1 h-3 w-3" />
+                    Find Models
+                  </Link>
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Discover Models */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -643,7 +747,7 @@ async function FanDashboard({ actorId }: { actorId: string }) {
             {discoverModels.length > 0 ? (
               <div className="space-y-2">
                 {discoverModels.slice(0, 4).map((model: any) => {
-                  const displayName = model.first_name
+                  const modelDisplayName = model.first_name
                     ? `${model.first_name} ${model.last_name || ''}`.trim()
                     : model.username;
                   return (
@@ -656,7 +760,7 @@ async function FanDashboard({ actorId }: { actorId: string }) {
                         {model.profile_photo_url ? (
                           <Image
                             src={model.profile_photo_url}
-                            alt={displayName}
+                            alt={modelDisplayName}
                             fill
                             className="object-cover"
                             unoptimized={model.profile_photo_url.includes('cdninstagram.com')}
@@ -668,7 +772,7 @@ async function FanDashboard({ actorId }: { actorId: string }) {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{displayName}</p>
+                        <p className="font-medium text-sm truncate">{modelDisplayName}</p>
                         <p className="text-xs text-pink-500">@{model.username}</p>
                       </div>
                       <ArrowRight className="h-4 w-4 text-muted-foreground" />
@@ -677,70 +781,11 @@ async function FanDashboard({ actorId }: { actorId: string }) {
                 })}
               </div>
             ) : (
-              <div className="text-center py-12">
+              <div className="text-center py-8">
                 <div className="p-4 rounded-full bg-muted inline-block mb-4">
                   <Users className="h-8 w-8 text-muted-foreground" />
                 </div>
                 <p className="text-muted-foreground">No new models to discover</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Recent Activity */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5" />
-              Activity
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {coinHistory && coinHistory.length > 0 ? (
-              <div className="space-y-2">
-                {coinHistory.map((tx: any) => (
-                  <div key={tx.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/50">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-full ${
-                        tx.action === "tip_sent" ? "bg-pink-500/20" :
-                        tx.action === "content_purchase" ? "bg-violet-500/20" :
-                        tx.action === "coin_purchase" ? "bg-green-500/20" : "bg-amber-500/20"
-                      }`}>
-                        {tx.action === "tip_sent" ? (
-                          <Heart className="h-4 w-4 text-pink-500" />
-                        ) : tx.action === "content_purchase" ? (
-                          <Lock className="h-4 w-4 text-violet-500" />
-                        ) : tx.action === "coin_purchase" ? (
-                          <Coins className="h-4 w-4 text-green-500" />
-                        ) : (
-                          <Coins className="h-4 w-4 text-amber-500" />
-                        )}
-                      </div>
-                      <div>
-                        <p className="font-medium capitalize text-sm">{tx.action.replace(/_/g, " ")}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(tx.created_at).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                    <span className={`font-bold text-sm ${tx.amount >= 0 ? "text-green-500" : "text-red-500"}`}>
-                      <span className="flex items-center gap-1">
-                        {tx.amount >= 0 ? "+" : ""}{tx.amount}
-                        <Coins className="h-3 w-3" />
-                      </span>
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <div className="p-4 rounded-full bg-muted inline-block mb-4">
-                  <Activity className="h-8 w-8 text-muted-foreground" />
-                </div>
-                <p className="text-muted-foreground">No recent activity</p>
               </div>
             )}
           </CardContent>
