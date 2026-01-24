@@ -508,13 +508,16 @@ async function FanDashboard({ actorId }: { actorId: string }) {
     }))
     .filter((c: any) => c.model !== null);
 
-  // Get featured models for the models section (only those with profile photos)
+  // Get featured models for the models section (only those with uploaded profile photos)
+  // Exclude Instagram CDN URLs which are low quality
   // Fetch more models and rotate selection every 3 days
   const { data: allFeaturedModels } = await (supabase
     .from("models") as any)
     .select("id, username, first_name, last_name, profile_photo_url, city, state, show_location")
     .eq("is_approved", true)
     .not("profile_photo_url", "is", null)
+    .not("profile_photo_url", "ilike", "%cdninstagram.com%")
+    .not("profile_photo_url", "ilike", "%instagram%")
     .limit(100);
 
   // Seeded shuffle to rotate featured models every 3 days
@@ -706,7 +709,8 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
     }
   }
 
-  // Get top rated models for discovery (only those with profile photos)
+  // Get top rated models for discovery (only those with uploaded profile photos)
+  // Exclude Instagram CDN URLs which are low quality
   const { data: topModels } = await (supabase
     .from("models") as any)
     .select(`
@@ -715,6 +719,8 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
     `)
     .eq("is_approved", true)
     .not("profile_photo_url", "is", null)
+    .not("profile_photo_url", "ilike", "%cdninstagram.com%")
+    .not("profile_photo_url", "ilike", "%instagram%")
     .gte("admin_rating", 4)
     .order("admin_rating", { ascending: false })
     .limit(8);
