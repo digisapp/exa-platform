@@ -573,7 +573,7 @@ export default function ProfilePage() {
         availability_status: model.availability_status,
         video_call_rate: model.video_call_rate || 5,
         voice_call_rate: model.voice_call_rate || 5,
-        message_rate: model.message_rate || 0,
+        message_rate: Math.max(10, model.message_rate || 10),
         // Booking rates
         photoshoot_hourly_rate: model.photoshoot_hourly_rate || 0,
         photoshoot_half_day_rate: model.photoshoot_half_day_rate || 0,
@@ -1661,14 +1661,18 @@ export default function ProfilePage() {
                     <div className="flex items-center gap-2">
                       <Input
                         type="number"
-                        min="0"
+                        min="10"
                         max="100"
-                        value={model.message_rate || 0}
-                        onChange={(e) => setModel({ ...model, message_rate: parseInt(e.target.value) || 0 })}
+                        value={model.message_rate || 10}
+                        onChange={(e) => {
+                          const value = parseInt(e.target.value) || 10;
+                          setModel({ ...model, message_rate: Math.max(10, value) });
+                        }}
                         className="w-24 text-right"
                       />
                       <span className="text-sm text-muted-foreground">coins/msg</span>
                     </div>
+                    <span className="text-xs text-muted-foreground">Minimum 10 coins</span>
                   </div>
                 </div>
               </div>

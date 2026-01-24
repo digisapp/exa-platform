@@ -164,9 +164,11 @@ export function ChatView({
     .slice(0, 2);
 
   // Determine if messages cost coins
+  // Models chat free with each other, fans/brands pay the model's rate (minimum 10)
   const isModelToModel =
     currentActor.type === "model" && otherParticipant.actor.type === "model";
-  const coinCost = isModelToModel || currentActor.type === "model" ? 0 : 10;
+  const modelMessageRate = otherParticipant.model?.message_rate || 10;
+  const coinCost = isModelToModel || currentActor.type === "model" ? 0 : Math.max(10, modelMessageRate);
 
   // Can tip if the other participant is a model and we're not a model
   const canTip = otherParticipant.actor.type === "model" && currentActor.type !== "model";
