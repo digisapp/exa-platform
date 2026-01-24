@@ -547,34 +547,6 @@ async function FanDashboard({ actorId }: { actorId: string }) {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      {/* Welcome Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Welcome back, {displayName}!</h1>
-          <p className="text-muted-foreground">Discover and connect with amazing models</p>
-        </div>
-        <div className="flex items-center gap-2 md:gap-3 flex-wrap">
-          <Button variant="outline" asChild>
-            <Link href="/my-content">
-              <FolderHeart className="mr-2 h-4 w-4" />
-              My Content
-            </Link>
-          </Button>
-          <Button variant="outline" asChild>
-            <Link href="/chats">
-              <MessageCircle className="mr-2 h-4 w-4" />
-              Chats
-            </Link>
-          </Button>
-          <Button asChild className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600">
-            <Link href="/models">
-              <Users className="mr-2 h-4 w-4" />
-              Browse Models
-            </Link>
-          </Button>
-        </div>
-      </div>
-
       {/* Following Section */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
