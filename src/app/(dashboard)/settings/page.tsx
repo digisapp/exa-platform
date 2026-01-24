@@ -635,8 +635,8 @@ export default function ProfilePage() {
             <h1 className="text-3xl font-bold">Settings</h1>
             <p className="text-muted-foreground mt-1">Manage your account settings</p>
           </div>
-          <div className="px-3 py-1.5 rounded-full bg-pink-500/10 border border-pink-500/30">
-            <span className="text-sm font-medium text-pink-500">Fan Account</span>
+          <div className="px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30">
+            <span className="text-sm font-medium text-cyan-500">Fan Account</span>
           </div>
         </div>
 
@@ -832,8 +832,8 @@ export default function ProfilePage() {
             <h1 className="text-3xl font-bold">Settings</h1>
             <p className="text-muted-foreground mt-1">Manage your brand profile</p>
           </div>
-          <div className="px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30">
-            <span className="text-sm font-medium text-cyan-500">Brand Account</span>
+          <div className="px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/30">
+            <span className="text-sm font-medium text-violet-500">Brand Account</span>
           </div>
         </div>
 
@@ -1071,8 +1071,8 @@ export default function ProfilePage() {
         </div>
         {/* Account type and stats */}
         <div className="flex items-center gap-3">
-          <div className="px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/30">
-            <span className="text-sm font-medium text-violet-500">Model Account</span>
+          <div className="px-3 py-1.5 rounded-full bg-pink-500/10 border border-pink-500/30">
+            <span className="text-sm font-medium text-pink-500">Model Account</span>
           </div>
           <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-pink-500/10 border border-pink-500/20">
             <Heart className="h-4 w-4 text-pink-500" />
