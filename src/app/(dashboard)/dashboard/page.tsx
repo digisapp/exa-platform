@@ -522,11 +522,12 @@ async function FanDashboard({ actorId }: { actorId: string }) {
     }
   }
 
-  // Get featured/trending models for discovery
+  // Get featured/trending models for discovery (only those with profile photos)
   const { data: featuredModels } = await (supabase
     .from("models") as any)
     .select("id, username, first_name, last_name, profile_photo_url, city, state, show_location, user_id")
     .eq("is_approved", true)
+    .not("profile_photo_url", "is", null)
     .order("created_at", { ascending: false })
     .limit(8);
 
@@ -870,7 +871,7 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
     }
   }
 
-  // Get top rated models for discovery
+  // Get top rated models for discovery (only those with profile photos)
   const { data: topModels } = await (supabase
     .from("models") as any)
     .select(`
@@ -878,6 +879,7 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
       photoshoot_hourly_rate, promo_hourly_rate, brand_ambassador_daily_rate
     `)
     .eq("is_approved", true)
+    .not("profile_photo_url", "is", null)
     .gte("admin_rating", 4)
     .order("admin_rating", { ascending: false })
     .limit(8);
