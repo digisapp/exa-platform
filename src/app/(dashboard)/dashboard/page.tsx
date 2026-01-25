@@ -40,6 +40,7 @@ import {
   DollarSign,
   FolderHeart,
 } from "lucide-react";
+import { ModelCard } from "@/components/models/model-card";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -509,38 +510,9 @@ async function FanDashboard({ actorId }: { actorId: string }) {
         <CardContent>
           {(featuredModels || []).length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {(featuredModels || []).slice(0, 8).map((model: any) => {
-                const modelDisplayName = model.first_name
-                  ? `${model.first_name} ${model.last_name || ''}`.trim()
-                  : model.username;
-                return (
-                  <Link
-                    key={model.id}
-                    href={`/${model.username}`}
-                    className="group"
-                  >
-                    <div className="rounded-xl p-3 border bg-card hover:shadow-lg transition-all hover:border-pink-500/50">
-                      <div className="relative aspect-square rounded-lg overflow-hidden mb-2 bg-gradient-to-br from-pink-500/20 to-violet-500/20">
-                        {model.profile_photo_url ? (
-                          <Image
-                            src={model.profile_photo_url}
-                            alt={modelDisplayName}
-                            fill
-                            className="object-cover group-hover:scale-110 transition-transform"
-                            unoptimized={model.profile_photo_url.includes('cdninstagram.com')}
-                          />
-                        ) : (
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-3xl">👤</span>
-                          </div>
-                        )}
-                      </div>
-                      <p className="font-medium text-sm truncate">{modelDisplayName}</p>
-                      <p className="text-xs text-pink-500">@{model.username}</p>
-                    </div>
-                  </Link>
-                );
-              })}
+              {(featuredModels || []).slice(0, 8).map((model: any) => (
+                <ModelCard key={model.id} model={model} />
+              ))}
             </div>
           ) : (
             <div className="text-center py-8">
