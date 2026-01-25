@@ -636,7 +636,7 @@ export async function sendTipReceivedEmail({
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
       to: [to],
-      subject: `💜 ${tipperName} sent you ${amount} coins!`,
+      subject: `🎁 ${tipperName} sent you ${amount} coins!`,
       html: `
 <!DOCTYPE html>
 <html>
@@ -653,7 +653,7 @@ export async function sendTipReceivedEmail({
           <!-- Header -->
           <tr>
             <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 30px; text-align: center;">
-              <p style="margin: 0; font-size: 48px;">💜</p>
+              <p style="margin: 0; font-size: 48px;">🎁</p>
               <h1 style="margin: 10px 0 0; color: white; font-size: 24px; font-weight: bold;">
                 You Got a Tip!
               </h1>
@@ -664,7 +664,7 @@ export async function sendTipReceivedEmail({
           <tr>
             <td style="padding: 40px 30px;">
               <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
-                Hey ${modelName}! 🎉
+                Hey ${modelName}!
               </p>
               <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
                 <strong style="color: #ffffff;">${tipperName}</strong> just sent you a tip!
@@ -700,7 +700,7 @@ export async function sendTipReceivedEmail({
           <tr>
             <td style="padding: 20px 30px; border-top: 1px solid #262626; text-align: center;">
               <p style="margin: 0; color: #71717a; font-size: 12px;">
-                EXA Models - Where Models Shine
+                EXA Models Worldwide
               </p>
             </td>
           </tr>
