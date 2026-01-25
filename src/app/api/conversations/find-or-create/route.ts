@@ -16,7 +16,11 @@ export async function POST(request: NextRequest) {
     const {
       data: { user },
     } = await supabase.auth.getUser();
+
+    console.log("[API find-or-create] Auth check - user:", user?.id ?? "null");
+
     if (!user) {
+      console.error("[API find-or-create] No user found - cookie forwarding may have failed");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -38,11 +42,14 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (!actor) {
+      console.error("[API find-or-create] Actor not found for user:", user.id);
       return NextResponse.json(
         { error: "Actor not found" },
         { status: 400 }
       );
     }
+
+    console.log("[API find-or-create] Current actor:", actor.id, "type:", actor.type);
 
     // Look up model by username (case-insensitive)
     const { data: targetModel, error: modelError } = await supabase
@@ -52,7 +59,7 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     if (modelError) {
-      console.error("[API] Model lookup error:", modelError);
+      console.error("[API find-or-create] Model lookup error:", modelError);
       return NextResponse.json(
         { error: "Failed to lookup model" },
         { status: 500 }
@@ -60,13 +67,17 @@ export async function POST(request: NextRequest) {
     }
 
     if (!targetModel) {
+      console.error("[API find-or-create] Model not found:", modelUsername);
       return NextResponse.json(
         { error: "Model not found" },
         { status: 404 }
       );
     }
 
+    console.log("[API find-or-create] Found model:", targetModel.username, "user_id:", targetModel.user_id);
+
     if (!targetModel.user_id) {
+      console.error("[API find-or-create] Model has no user_id:", targetModel.username);
       return NextResponse.json(
         { error: "Model has no associated user" },
         { status: 400 }
