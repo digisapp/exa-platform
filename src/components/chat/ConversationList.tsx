@@ -14,9 +14,12 @@ interface Conversation {
   conversation_id: string;
   last_read_at: string | null;
   lastMessage: {
-    content: string;
+    content: string | null;
     created_at: string;
     sender_id: string;
+    media_url?: string | null;
+    media_type?: string | null;
+    is_system?: boolean;
   } | null;
   otherParticipants: Array<{
     id?: string;
@@ -41,6 +44,37 @@ interface ConversationListProps {
 
 export function ConversationList({ conversations, actorType }: ConversationListProps) {
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Helper to get message preview text
+  const getMessagePreview = (message: Conversation["lastMessage"]) => {
+    if (!message) return "No messages yet";
+
+    // System messages (tips, etc.)
+    if (message.is_system && message.content) {
+      return message.content;
+    }
+
+    // Text message
+    if (message.content) {
+      return message.content;
+    }
+
+    // Media-only message
+    if (message.media_url) {
+      if (message.media_type?.startsWith("image/")) {
+        return "Sent a photo";
+      }
+      if (message.media_type?.startsWith("video/")) {
+        return "Sent a video";
+      }
+      if (message.media_type?.startsWith("audio/")) {
+        return "Sent a voice message";
+      }
+      return "Sent an attachment";
+    }
+
+    return "No messages yet";
+  };
 
   // Helper to get display name and avatar for a participant
   const getParticipantInfo = (participant: Conversation["otherParticipants"][0]) => {
@@ -196,7 +230,7 @@ export function ConversationList({ conversations, actorType }: ConversationListP
                       isUnread ? "text-foreground" : "text-muted-foreground"
                     )}
                   >
-                    {conv.lastMessage?.content || "No messages yet"}
+                    {getMessagePreview(conv.lastMessage)}
                   </p>
                 </div>
               </Link>

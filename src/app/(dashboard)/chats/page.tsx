@@ -102,8 +102,9 @@ export default async function MessagesPage({ searchParams }: PageProps) {
   const { data: allMessages } = conversationIds.length > 0
     ? await supabase
         .from("messages")
-        .select("conversation_id, content, created_at, sender_id")
+        .select("conversation_id, content, created_at, sender_id, media_url, media_type, is_system, deleted_at")
         .in("conversation_id", conversationIds)
+        .is("deleted_at", null)
         .order("created_at", { ascending: false }) as { data: any[] | null }
     : { data: [] };
 
