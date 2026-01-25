@@ -24,7 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Loader2, MoreVertical, Ban } from "lucide-react";
+import { ArrowLeft, Loader2, MoreVertical, Ban, Coins, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 import type { Message, Actor, Model, Conversation, Fan } from "@/types/database";
@@ -69,6 +69,8 @@ export function ChatView({
   } | null>(null);
   const [showBlockDialog, setShowBlockDialog] = useState(false);
   const [isBlocking, setIsBlocking] = useState(false);
+  const [showScrollButton, setShowScrollButton] = useState(false);
+  const [isNearBottom, setIsNearBottom] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
@@ -139,7 +141,12 @@ export function ChatView({
     }
   }, [conversation.id, hasMore, loadingMore, messages]);
 
-  // Handle scroll to detect when user scrolls to top
+  // Helper to scroll to bottom
+  const scrollToBottom = useCallback((smooth = true) => {
+    messagesEndRef.current?.scrollIntoView({ behavior: smooth ? "smooth" : "auto" });
+  }, []);
+
+  // Handle scroll to detect position
   const handleScroll = useCallback(() => {
     const container = messagesContainerRef.current;
     if (!container) return;
@@ -148,7 +155,13 @@ export function ChatView({
     if (container.scrollTop < 100 && hasMore && !loadingMore) {
       loadMoreMessages();
     }
-  }, [hasMore, loadingMore, loadMoreMessages]);
+
+    // Check if near bottom (within 150px)
+    const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+    const nearBottom = distanceFromBottom < 150;
+    setIsNearBottom(nearBottom);
+    setShowScrollButton(!nearBottom && messages.length > 5);
+  }, [hasMore, loadingMore, loadMoreMessages, messages.length]);
 
   // Get other participant's display info
   const otherName =
@@ -173,10 +186,18 @@ export function ChatView({
   // Can tip if the other participant is a model and we're not a model
   const canTip = otherParticipant.actor.type === "model" && currentActor.type !== "model";
 
-  // Scroll to bottom when messages change
+  // Initial scroll to bottom on mount
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+  }, []); // Only run once on mount
+
+  // Scroll to bottom only for new messages (not when loading older)
+  useEffect(() => {
+    // Only auto-scroll if user is near the bottom
+    if (isNearBottom) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages.length]); // Only trigger on message count change, not content
 
   // Subscribe to real-time messages
   useEffect(() => {
@@ -309,7 +330,7 @@ export function ChatView({
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-120px)]">
+    <div className="flex flex-col h-[calc(100vh-120px)] relative">
       {/* Header */}
       <div className="flex items-center gap-4 p-4 border-b">
         <Link href="/chats">
@@ -334,6 +355,17 @@ export function ChatView({
             </Link>
           )}
         </div>
+
+        {/* Coin balance for fans/brands paying for messages */}
+        {coinCost > 0 && (
+          <Link
+            href="/coins"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/20 hover:border-yellow-500/40 transition-colors"
+          >
+            <Coins className="h-4 w-4 text-yellow-500" />
+            <span className="text-sm font-medium">{localCoinBalance}</span>
+          </Link>
+        )}
 
         {/* Video Call button */}
         <VideoCallButton
@@ -438,9 +470,25 @@ export function ChatView({
         )}
 
         {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
-            <p>No messages yet</p>
-            <p className="text-sm">Send a message to start the conversation</p>
+          <div className="flex flex-col items-center justify-center h-full text-center">
+            <div className="p-4 rounded-full bg-gradient-to-br from-pink-500/20 to-violet-500/20 mb-4">
+              <Avatar className="h-16 w-16">
+                <AvatarImage src={otherAvatar || undefined} />
+                <AvatarFallback className="text-xl bg-gradient-to-br from-pink-500 to-violet-500 text-white">
+                  {otherInitials}
+                </AvatarFallback>
+              </Avatar>
+            </div>
+            <h3 className="font-semibold text-lg">{otherName}</h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              Start your conversation
+            </p>
+            {coinCost > 0 && (
+              <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                <Coins className="h-3 w-3 text-yellow-500" />
+                {coinCost} coins per message
+              </p>
+            )}
           </div>
         ) : (
           messages.map((message, index) => {
@@ -472,6 +520,19 @@ export function ChatView({
         )}
         <div ref={messagesEndRef} />
       </div>
+
+      {/* Scroll to bottom button */}
+      {showScrollButton && (
+        <div className="absolute bottom-24 right-6">
+          <Button
+            onClick={() => scrollToBottom()}
+            size="icon"
+            className="h-10 w-10 rounded-full shadow-lg bg-background border hover:bg-muted"
+          >
+            <ChevronDown className="h-5 w-5" />
+          </Button>
+        </div>
+      )}
 
       {/* Input */}
       <MessageInput

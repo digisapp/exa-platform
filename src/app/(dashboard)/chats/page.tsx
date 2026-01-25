@@ -3,7 +3,12 @@ import { redirect } from "next/navigation";
 import { ConversationList } from "@/components/chat/ConversationList";
 import { NewMessageDialog } from "@/components/chat/NewMessageDialog";
 
-export default async function MessagesPage() {
+interface PageProps {
+  searchParams: Promise<{ new?: string }>;
+}
+
+export default async function MessagesPage({ searchParams }: PageProps) {
+  const params = await searchParams;
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
@@ -17,6 +22,82 @@ export default async function MessagesPage() {
     .single() as { data: { id: string; type: string } | null };
 
   if (!actor) redirect("/fan/signup");
+
+  // Handle ?new=username parameter - find or create conversation with model
+  if (params.new) {
+    const modelUsername = params.new;
+
+    // Look up model by username
+    const { data: targetModel } = await supabase
+      .from("models")
+      .select("id, user_id")
+      .eq("username", modelUsername)
+      .single() as { data: { id: string; user_id: string } | null };
+
+    if (targetModel) {
+      // Get the model's actor ID
+      const { data: targetActor } = await supabase
+        .from("actors")
+        .select("id")
+        .eq("user_id", targetModel.user_id)
+        .single() as { data: { id: string } | null };
+
+      if (targetActor && targetActor.id !== actor.id) {
+        // Check if conversation already exists between these two users
+        const { data: senderParticipations } = await supabase
+          .from("conversation_participants")
+          .select("conversation_id")
+          .eq("actor_id", actor.id) as { data: { conversation_id: string }[] | null };
+
+        let existingConversationId: string | null = null;
+
+        if (senderParticipations && senderParticipations.length > 0) {
+          const conversationIds = senderParticipations.map(p => p.conversation_id);
+
+          const { data: recipientParticipation } = await supabase
+            .from("conversation_participants")
+            .select("conversation_id")
+            .eq("actor_id", targetActor.id)
+            .in("conversation_id", conversationIds)
+            .limit(1)
+            .single() as { data: { conversation_id: string } | null };
+
+          if (recipientParticipation) {
+            existingConversationId = recipientParticipation.conversation_id;
+          }
+        }
+
+        if (existingConversationId) {
+          // Redirect to existing conversation
+          redirect(`/chats/${existingConversationId}`);
+        }
+
+        // Create new conversation
+        const { data: conversation, error: convError } = await (supabase
+          .from("conversations") as any)
+          .insert({
+            type: "direct",
+            title: null,
+          })
+          .select()
+          .single() as { data: { id: string } | null; error: any };
+
+        if (conversation && !convError) {
+          // Add both participants
+          await (supabase.from("conversation_participants") as any)
+            .insert([
+              { conversation_id: conversation.id, actor_id: actor.id },
+              { conversation_id: conversation.id, actor_id: targetActor.id },
+            ]);
+
+          // Redirect to new conversation
+          redirect(`/chats/${conversation.id}`);
+        }
+      }
+    }
+
+    // If we couldn't find the model or create conversation, just show the inbox
+  }
 
   // Get coin balance based on actor type
   let coinBalance = 0;

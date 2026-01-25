@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
+const DEFAULT_MESSAGE_COST = 10; // Default coins if model hasn't set a rate
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -170,7 +172,16 @@ export async function POST(request: NextRequest) {
       // Determine coin cost
       let coinsRequired = 0;
       if (sender.type !== "model" && recipient.type === "model") {
-        coinsRequired = 10;
+        // Look up the model's actual message rate
+        const { data: recipientModel } = await supabase
+          .from("models")
+          .select("message_rate")
+          .eq("id", recipientId)
+          .single() as { data: { message_rate: number | null } | null };
+
+        // Use model's rate or default, with minimum of DEFAULT_MESSAGE_COST
+        const modelRate = recipientModel?.message_rate ?? DEFAULT_MESSAGE_COST;
+        coinsRequired = Math.max(DEFAULT_MESSAGE_COST, modelRate);
       }
 
       // Check balance if coins required
