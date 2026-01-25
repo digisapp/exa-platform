@@ -51,7 +51,7 @@ export default async function MessagesPage({ searchParams }: PageProps) {
       console.error("[Chat] Model not found for username:", modelUsername);
     }
 
-    if (targetModel) {
+    if (targetModel && targetModel.user_id) {
       console.log("[Chat] Found model:", targetModel.username, "user_id:", targetModel.user_id);
 
       // Get the model's actor ID
