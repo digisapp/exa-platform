@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { headers, cookies } from "next/headers";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import { ConversationList } from "@/components/chat/ConversationList";
 import { NewMessageDialog } from "@/components/chat/NewMessageDialog";
@@ -11,6 +11,12 @@ interface PageProps {
 export default async function MessagesPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const supabase = await createClient();
+
+  // Admin client for conversation CREATION only (not for reading sensitive data)
+  const adminClient = createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/signin");
@@ -26,43 +32,67 @@ export default async function MessagesPage({ searchParams }: PageProps) {
 
   // Handle ?new=username parameter - find or create conversation with model
   if (params.new) {
-    const modelUsername = params.new;
-    console.log("[Chat] Starting new conversation with:", modelUsername);
+    const modelUsername = params.new.toLowerCase();
+    console.log("[Chat] Starting conversation with:", modelUsername);
 
-    // Call API route to find or create conversation (uses service role internally)
-    const h = await headers();
-    const c = await cookies();
-    const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
-    const proto = h.get("x-forwarded-proto") ?? (process.env.NODE_ENV === "production" ? "https" : "http");
-    const cookie = c.toString();
+    // Look up model by username
+    const { data: targetModel } = await supabase
+      .from("models")
+      .select("id, user_id, username")
+      .ilike("username", modelUsername)
+      .maybeSingle();
 
-    try {
-      const response = await fetch(`${proto}://${host}/api/conversations/find-or-create`, {
-        method: "POST",
-        cache: "no-store", // Prevent caching during auth flows
-        headers: {
-          "Content-Type": "application/json",
-          Cookie: cookie,
-        },
-        body: JSON.stringify({ modelUsername }),
-      });
+    if (targetModel?.user_id) {
+      // Get model's actor ID using admin client
+      const { data: targetActor } = await adminClient
+        .from("actors")
+        .select("id")
+        .eq("user_id", targetModel.user_id)
+        .single();
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.conversationId) {
-          console.log("[Chat] Got conversation:", data.conversationId, "isNew:", data.isNew);
-          redirect(`/chats/${data.conversationId}`);
+      if (targetActor && targetActor.id !== actor.id) {
+        // Check if conversation already exists
+        const { data: myConversations } = await supabase
+          .from("conversation_participants")
+          .select("conversation_id")
+          .eq("actor_id", actor.id);
+
+        let existingConvId: string | null = null;
+        if (myConversations?.length) {
+          const convIds = myConversations.map(c => c.conversation_id);
+          const { data: shared } = await adminClient
+            .from("conversation_participants")
+            .select("conversation_id")
+            .eq("actor_id", targetActor.id)
+            .in("conversation_id", convIds)
+            .limit(1)
+            .maybeSingle();
+          existingConvId = shared?.conversation_id || null;
         }
-      } else {
-        const error = await response.json().catch(() => ({}));
-        console.error("[Chat] API error:", response.status, error);
-      }
-    } catch (error) {
-      console.error("[Chat] Failed to call conversation API:", error);
-    }
 
-    // If we couldn't find the model or create conversation, just show the inbox
-    console.log("[Chat] Falling through to inbox for:", params.new);
+        if (existingConvId) {
+          redirect(`/chats/${existingConvId}`);
+        }
+
+        // Create new conversation
+        const { data: newConv } = await adminClient
+          .from("conversations")
+          .insert({ type: "direct" })
+          .select()
+          .single();
+
+        if (newConv) {
+          await adminClient
+            .from("conversation_participants")
+            .insert([
+              { conversation_id: newConv.id, actor_id: actor.id },
+              { conversation_id: newConv.id, actor_id: targetActor.id },
+            ]);
+          redirect(`/chats/${newConv.id}`);
+        }
+      }
+    }
+    // Fall through to show inbox if model not found
   }
 
   // Get coin balance based on actor type
