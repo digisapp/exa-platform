@@ -84,6 +84,24 @@ export function MessageBubble({
     .toUpperCase()
     .slice(0, 2);
 
+  // Show system message (tips, notifications, etc.) centered
+  if ((message as any).is_system) {
+    return (
+      <div className="flex justify-center my-4">
+        <div className="px-4 py-2 rounded-full bg-gradient-to-r from-pink-500/10 to-violet-500/10 border border-pink-500/20">
+          <p className="text-sm text-center">
+            {message.content}
+          </p>
+          <p className="text-xs text-muted-foreground text-center mt-1">
+            {message.created_at && formatDistanceToNow(new Date(message.created_at), {
+              addSuffix: true,
+            })}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // Show deleted message placeholder
   if (isDeleted) {
     return (

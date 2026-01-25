@@ -115,6 +115,30 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Create a tip message in the conversation if conversationId provided
+    if (conversationId) {
+      const tipMessage = `💝 Sent a ${amount} coin tip!`;
+      const { error: msgError } = await supabase
+        .from("messages")
+        .insert({
+          conversation_id: conversationId,
+          sender_id: sender.id,
+          content: tipMessage,
+          is_system: true,
+        });
+
+      if (msgError) {
+        console.error("Failed to create tip message:", msgError);
+        // Non-critical error, tip was still successful
+      }
+
+      // Update conversation timestamp
+      await supabase
+        .from("conversations")
+        .update({ updated_at: new Date().toISOString() })
+        .eq("id", conversationId);
+    }
+
     // Get recipient display name for response and send email
     let recipientName = "Model";
     if (recipient.type === "model") {
