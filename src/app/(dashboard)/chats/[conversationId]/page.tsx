@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { redirect, notFound } from "next/navigation";
 import { ChatView } from "@/components/chat/ChatView";
 import type { Message, Actor, Model, Conversation, Fan } from "@/types/database";
@@ -11,14 +10,6 @@ interface PageProps {
 export default async function ChatPage({ params }: PageProps) {
   const { conversationId } = await params;
   const supabase = await createClient();
-
-  // Admin client to bypass RLS for participant lookups
-  const adminClient = createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-
-  console.log("[ChatPage] Loading conversation:", conversationId);
 
   // Auth check
   const {
@@ -57,38 +48,36 @@ export default async function ChatPage({ params }: PageProps) {
     currentFan = data;
   }
 
-  // Get conversation using admin client to bypass RLS
-  const { data: conversation, error: convError } = await adminClient
+  // Get conversation - use maybeSingle to handle not found gracefully
+  const { data: conversation, error: convError } = await supabase
     .from("conversations")
     .select("*")
     .eq("id", conversationId)
-    .single();
+    .maybeSingle();
 
   if (convError) {
     console.error("[ChatPage] Conversation lookup error:", convError);
+    notFound();
   }
 
-  console.log("[ChatPage] Conversation found:", !!conversation);
+  if (!conversation) {
+    notFound();
+  }
 
-  if (!conversation) notFound();
-
-  // Verify user is a participant using admin client
-  const { data: participation, error: participationError } = await adminClient
+  // Verify user is a participant - use maybeSingle to avoid throwing on 0 rows
+  const { data: participation, error: participationError } = await supabase
     .from("conversation_participants")
     .select("*")
     .eq("conversation_id", conversationId)
     .eq("actor_id", actor.id)
-    .single();
+    .maybeSingle();
 
   if (participationError) {
     console.error("[ChatPage] Participation check error:", participationError);
   }
 
-  console.log("[ChatPage] User is participant:", !!participation);
-
   if (!participation) {
     // Not a participant - redirect to messages
-    console.log("[ChatPage] User not a participant, redirecting to /chats");
     redirect("/chats");
   }
 
@@ -106,9 +95,9 @@ export default async function ChatPage({ params }: PageProps) {
     ? (hasMoreMessages ? allMessages.slice(0, 100) : allMessages).reverse()
     : [];
 
-  // Get other participant(s) using admin client to bypass RLS
+  // Get other participant(s)
   console.log("[ChatPage] Looking up other participants for actor:", actor.id);
-  const { data: participants, error: partError } = await adminClient
+  const { data: participants, error: partError } = await supabase
     .from("conversation_participants")
     .select("actor_id")
     .eq("conversation_id", conversationId)
@@ -127,11 +116,11 @@ export default async function ChatPage({ params }: PageProps) {
     console.log("[ChatPage] Other actor ID:", otherActorId);
 
     // Get the other actor's details
-    const { data: otherActor } = await adminClient
+    const { data: otherActor } = await supabase
       .from("actors")
       .select("id, type, user_id")
       .eq("id", otherActorId)
-      .single();
+      .maybeSingle();
 
     console.log("[ChatPage] Other actor:", otherActor);
 
@@ -139,11 +128,11 @@ export default async function ChatPage({ params }: PageProps) {
       // Get model data if they're a model - use user_id to lookup
       let otherModel: Model | null = null;
       if (otherActor.type === "model" && otherActor.user_id) {
-        const { data } = await adminClient
+        const { data } = await supabase
           .from("models")
           .select("*")
           .eq("user_id", otherActor.user_id)
-          .single();
+          .maybeSingle();
         otherModel = data;
         console.log("[ChatPage] Other model:", otherModel?.username);
       }
