@@ -4,6 +4,7 @@ import { Navbar } from "@/components/layout/navbar";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { DashboardClientWrapper } from "@/components/layout/DashboardClientWrapper";
 import { ActivityTracker } from "@/components/ActivityTracker";
+import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 
 // Prevent caching to ensure fresh auth state on every request
 export const dynamic = 'force-dynamic';
@@ -91,31 +92,31 @@ export default async function DashboardLayout({
         : profileData?.username || undefined;
 
   return (
-    <div className="min-h-screen bg-background">
-      <ActivityTracker />
-      <Navbar
-        user={{
-          id: user.id,
-          email: user.email || "",
-          avatar_url: profileData?.profile_photo_url || profileData?.avatar_url || profileData?.logo_url || undefined,
-          name: displayName,
-          username: profileData?.username || undefined,
-        }}
-        actorType={actor?.type || null}
-        coinBalance={coinBalance}
-      />
-      <DashboardClientWrapper actorId={actor?.id || null}>
-        <main className="container px-4 md:px-8 py-8 pb-24 md:pb-8">{children}</main>
-      </DashboardClientWrapper>
-      <BottomNav
-        user={{
-          avatar_url: profileData?.profile_photo_url || profileData?.avatar_url || profileData?.logo_url || undefined,
-          name: displayName,
-          email: user.email || "",
-        }}
-        actorType={actor?.type || null}
-        coinBalance={coinBalance}
-      />
-    </div>
+    <CoinBalanceProvider initialBalance={coinBalance}>
+      <div className="min-h-screen bg-background">
+        <ActivityTracker />
+        <Navbar
+          user={{
+            id: user.id,
+            email: user.email || "",
+            avatar_url: profileData?.profile_photo_url || profileData?.avatar_url || profileData?.logo_url || undefined,
+            name: displayName,
+            username: profileData?.username || undefined,
+          }}
+          actorType={actor?.type || null}
+        />
+        <DashboardClientWrapper actorId={actor?.id || null}>
+          <main className="container px-4 md:px-8 py-8 pb-24 md:pb-8">{children}</main>
+        </DashboardClientWrapper>
+        <BottomNav
+          user={{
+            avatar_url: profileData?.profile_photo_url || profileData?.avatar_url || profileData?.logo_url || undefined,
+            name: displayName,
+            email: user.email || "",
+          }}
+          actorType={actor?.type || null}
+        />
+      </div>
+    </CoinBalanceProvider>
   );
 }

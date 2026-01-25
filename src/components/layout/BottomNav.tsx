@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Home, MessageCircle, Coins, Users, Images, Megaphone } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useCoinBalanceOptional } from "@/contexts/CoinBalanceContext";
 
 interface BottomNavProps {
   user: {
@@ -13,12 +14,13 @@ interface BottomNavProps {
     email?: string;
   };
   actorType: "model" | "brand" | "admin" | "fan" | null;
-  coinBalance: number;
   unreadCount?: number;
 }
 
-export function BottomNav({ user, actorType, coinBalance, unreadCount = 0 }: BottomNavProps) {
+export function BottomNav({ user, actorType, unreadCount = 0 }: BottomNavProps) {
   const pathname = usePathname();
+  const coinBalanceContext = useCoinBalanceOptional();
+  const coinBalance = coinBalanceContext?.balance ?? 0;
 
   // Determine home path based on actor type
   const homePath = actorType === "admin" ? "/admin" : "/dashboard";

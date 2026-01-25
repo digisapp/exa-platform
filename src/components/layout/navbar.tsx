@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/auth/logout-button";
+import { useCoinBalanceOptional } from "@/contexts/CoinBalanceContext";
 
 interface NavbarProps {
   user?: {
@@ -39,7 +40,6 @@ interface NavbarProps {
     username?: string;
   } | null;
   actorType?: "model" | "brand" | "admin" | "fan" | null;
-  coinBalance?: number;
 }
 
 const publicLinks: { href: string; label: string; icon: any }[] = [];
@@ -68,8 +68,10 @@ const adminLinks = [
   { href: "/chats", label: "Chats", icon: MessageCircle },
 ];
 
-export function Navbar({ user, actorType, coinBalance = 0 }: NavbarProps) {
+export function Navbar({ user, actorType }: NavbarProps) {
   const pathname = usePathname();
+  const coinBalanceContext = useCoinBalanceOptional();
+  const coinBalance = coinBalanceContext?.balance ?? 0;
   const links = actorType === "admin"
     ? adminLinks
     : actorType === "model"

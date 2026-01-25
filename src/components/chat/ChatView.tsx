@@ -28,6 +28,7 @@ import { ArrowLeft, Loader2, MoreVertical, Ban, Coins, ChevronDown } from "lucid
 import { toast } from "sonner";
 import Link from "next/link";
 import type { Message, Actor, Model, Conversation, Fan } from "@/types/database";
+import { useCoinBalanceOptional } from "@/contexts/CoinBalanceContext";
 
 interface Participant {
   actor_id: string;
@@ -58,8 +59,9 @@ export function ChatView({
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(hasMoreMessages);
+  const coinBalanceContext = useCoinBalanceOptional();
   const [localCoinBalance, setLocalCoinBalance] = useState(
-    currentFan?.coin_balance || currentModel?.coin_balance || 0
+    coinBalanceContext?.balance ?? currentFan?.coin_balance ?? currentModel?.coin_balance ?? 0
   );
   const [incomingCall, setIncomingCall] = useState<{
     sessionId: string;
@@ -323,6 +325,8 @@ export function ChatView({
 
       if (data.coinsDeducted > 0) {
         setLocalCoinBalance((prev) => Math.max(0, prev - data.coinsDeducted));
+        // Also update the global context so navbar updates
+        coinBalanceContext?.deductCoins(data.coinsDeducted);
       }
     } finally {
       setLoading(false);
@@ -375,7 +379,10 @@ export function ChatView({
           recipientIsModel={otherParticipant.actor.type === "model"}
           recipientActorId={otherParticipant.actor_id}
           recipientName={otherName}
-          onBalanceChange={(newBalance) => setLocalCoinBalance(newBalance)}
+          onBalanceChange={(newBalance) => {
+            setLocalCoinBalance(newBalance);
+            coinBalanceContext?.setBalance(newBalance);
+          }}
         />
 
         {/* Tip button */}
@@ -387,6 +394,8 @@ export function ChatView({
             coinBalance={localCoinBalance}
             onTipSuccess={(amount, newBalance) => {
               setLocalCoinBalance(newBalance);
+              // Also update the global context so navbar updates
+              coinBalanceContext?.setBalance(newBalance);
             }}
           />
         )}
