@@ -57,7 +57,11 @@ export default async function MessagesPage({ searchParams }: PageProps) {
       } else {
         console.error("[Chat] API returned error:", response.status, data.error || "unknown");
       }
-    } catch (error) {
+    } catch (error: any) {
+      // Re-throw redirect errors - Next.js uses thrown errors for redirects
+      if (error?.digest?.startsWith("NEXT_REDIRECT")) {
+        throw error;
+      }
       console.error("[Chat] API call failed:", error instanceof Error ? error.message : error);
     }
     // Fall through to show inbox if failed - user will see their inbox
