@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { redirect, notFound } from "next/navigation";
 import { ChatView } from "@/components/chat/ChatView";
 import type { Message, Actor, Model, Conversation, Fan } from "@/types/database";
@@ -10,6 +11,14 @@ interface PageProps {
 export default async function ChatPage({ params }: PageProps) {
   const { conversationId } = await params;
   const supabase = await createClient();
+
+  // Admin client to bypass RLS for participant lookups
+  const adminClient = createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
+  console.log("[ChatPage] Loading conversation:", conversationId);
 
   // Auth check
   const {
@@ -48,25 +57,38 @@ export default async function ChatPage({ params }: PageProps) {
     currentFan = data;
   }
 
-  // Get conversation
-  const { data: conversation } = (await supabase
+  // Get conversation using admin client to bypass RLS
+  const { data: conversation, error: convError } = await adminClient
     .from("conversations")
     .select("*")
     .eq("id", conversationId)
-    .single()) as { data: Conversation | null };
+    .single();
+
+  if (convError) {
+    console.error("[ChatPage] Conversation lookup error:", convError);
+  }
+
+  console.log("[ChatPage] Conversation found:", !!conversation);
 
   if (!conversation) notFound();
 
-  // Verify user is a participant
-  const { data: participation } = await supabase
+  // Verify user is a participant using admin client
+  const { data: participation, error: participationError } = await adminClient
     .from("conversation_participants")
     .select("*")
     .eq("conversation_id", conversationId)
     .eq("actor_id", actor.id)
     .single();
 
+  if (participationError) {
+    console.error("[ChatPage] Participation check error:", participationError);
+  }
+
+  console.log("[ChatPage] User is participant:", !!participation);
+
   if (!participation) {
     // Not a participant - redirect to messages
+    console.log("[ChatPage] User not a participant, redirecting to /chats");
     redirect("/chats");
   }
 
@@ -84,50 +106,58 @@ export default async function ChatPage({ params }: PageProps) {
     ? (hasMoreMessages ? allMessages.slice(0, 100) : allMessages).reverse()
     : [];
 
-  // Get other participant(s)
-  const { data: participants } = await supabase
+  // Get other participant(s) using admin client to bypass RLS
+  console.log("[ChatPage] Looking up other participants for actor:", actor.id);
+  const { data: participants, error: partError } = await adminClient
     .from("conversation_participants")
-    .select(
-      `
-      actor_id,
-      actors:actor_id (
-        id,
-        type,
-        user_id
-      )
-    `
-    )
+    .select("actor_id")
     .eq("conversation_id", conversationId)
     .neq("actor_id", actor.id);
+
+  if (partError) {
+    console.error("[ChatPage] Error fetching participants:", partError);
+  }
+
+  console.log("[ChatPage] Found participants:", participants?.length || 0);
 
   // Get model info for other participant
   let otherParticipant = null;
   if (participants && participants.length > 0) {
-    const participant = participants[0] as {
-      actor_id: string;
-      actors: Actor;
-    };
+    const otherActorId = participants[0].actor_id;
+    console.log("[ChatPage] Other actor ID:", otherActorId);
 
-    // Get model data if they're a model - use user_id to lookup
-    let otherModel: Model | null = null;
-    if (participant.actors?.type === "model" && participant.actors?.user_id) {
-      const { data } = (await supabase
-        .from("models")
-        .select("*")
-        .eq("user_id", participant.actors.user_id)
-        .single()) as { data: Model | null };
-      otherModel = data;
+    // Get the other actor's details
+    const { data: otherActor } = await adminClient
+      .from("actors")
+      .select("id, type, user_id")
+      .eq("id", otherActorId)
+      .single();
+
+    console.log("[ChatPage] Other actor:", otherActor);
+
+    if (otherActor) {
+      // Get model data if they're a model - use user_id to lookup
+      let otherModel: Model | null = null;
+      if (otherActor.type === "model" && otherActor.user_id) {
+        const { data } = await adminClient
+          .from("models")
+          .select("*")
+          .eq("user_id", otherActor.user_id)
+          .single();
+        otherModel = data;
+        console.log("[ChatPage] Other model:", otherModel?.username);
+      }
+
+      otherParticipant = {
+        actor_id: otherActorId,
+        actor: otherActor as Actor,
+        model: otherModel,
+      };
     }
-
-    otherParticipant = {
-      actor_id: participant.actor_id,
-      actor: participant.actors,
-      model: otherModel,
-    };
   }
 
   if (!otherParticipant) {
-    console.error("No other participant found for conversation:", conversationId);
+    console.error("[ChatPage] No other participant found for conversation:", conversationId);
     redirect("/chats");
   }
 
