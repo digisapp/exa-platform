@@ -4,12 +4,6 @@ import { redirect } from "next/navigation";
 import { ConversationList } from "@/components/chat/ConversationList";
 import { NewMessageDialog } from "@/components/chat/NewMessageDialog";
 
-// Admin client for conversation creation - bypasses RLS
-const adminClient = createSupabaseClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 interface PageProps {
   searchParams: Promise<{ new?: string }>;
 }
@@ -17,6 +11,13 @@ interface PageProps {
 export default async function MessagesPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const supabase = await createClient();
+
+  // Admin client for conversation creation - bypasses RLS
+  // Created inside function to ensure env vars are available
+  const adminClient = createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/signin");
@@ -33,37 +34,55 @@ export default async function MessagesPage({ searchParams }: PageProps) {
   // Handle ?new=username parameter - find or create conversation with model
   if (params.new) {
     const modelUsername = params.new.toLowerCase();
+    console.log("[Chat] Starting new conversation with:", modelUsername);
 
     // Look up model by username (case-insensitive)
     const { data: targetModel, error: modelError } = await supabase
       .from("models")
       .select("id, user_id, username")
       .ilike("username", modelUsername)
-      .single() as { data: { id: string; user_id: string; username: string } | null; error: any };
+      .maybeSingle();
 
     if (modelError) {
-      console.error("Model lookup error:", modelError, "username:", modelUsername);
+      console.error("[Chat] Model lookup error:", modelError, "username:", modelUsername);
+    }
+
+    if (!targetModel) {
+      console.error("[Chat] Model not found for username:", modelUsername);
     }
 
     if (targetModel) {
+      console.log("[Chat] Found model:", targetModel.username, "user_id:", targetModel.user_id);
+
       // Get the model's actor ID
-      const { data: targetActor } = await supabase
+      const { data: targetActor, error: actorError } = await supabase
         .from("actors")
         .select("id")
         .eq("user_id", targetModel.user_id)
-        .single() as { data: { id: string } | null };
+        .maybeSingle();
+
+      if (actorError) {
+        console.error("[Chat] Actor lookup error:", actorError);
+      }
+
+      if (!targetActor) {
+        console.error("[Chat] Actor not found for user_id:", targetModel.user_id);
+      }
 
       if (targetActor && targetActor.id !== actor.id) {
+        console.log("[Chat] Target actor found:", targetActor.id, "Current actor:", actor.id);
+
         // Check if conversation already exists between these two users
         const { data: senderParticipations } = await supabase
           .from("conversation_participants")
           .select("conversation_id")
-          .eq("actor_id", actor.id) as { data: { conversation_id: string }[] | null };
+          .eq("actor_id", actor.id);
 
         let existingConversationId: string | null = null;
 
         if (senderParticipations && senderParticipations.length > 0) {
           const conversationIds = senderParticipations.map(p => p.conversation_id);
+          console.log("[Chat] Found", conversationIds.length, "existing conversations for current user");
 
           const { data: recipientParticipation } = await supabase
             .from("conversation_participants")
@@ -71,19 +90,22 @@ export default async function MessagesPage({ searchParams }: PageProps) {
             .eq("actor_id", targetActor.id)
             .in("conversation_id", conversationIds)
             .limit(1)
-            .single() as { data: { conversation_id: string } | null };
+            .maybeSingle();
 
           if (recipientParticipation) {
             existingConversationId = recipientParticipation.conversation_id;
+            console.log("[Chat] Found existing conversation:", existingConversationId);
           }
         }
 
         if (existingConversationId) {
           // Redirect to existing conversation
+          console.log("[Chat] Redirecting to existing conversation:", existingConversationId);
           redirect(`/chats/${existingConversationId}`);
         }
 
         // Create new conversation using admin client to bypass RLS
+        console.log("[Chat] Creating new conversation...");
         const { data: conversation, error: convError } = await adminClient
           .from("conversations")
           .insert({
@@ -94,10 +116,12 @@ export default async function MessagesPage({ searchParams }: PageProps) {
           .single();
 
         if (convError) {
-          console.error("Failed to create conversation:", convError);
+          console.error("[Chat] Failed to create conversation:", convError);
         }
 
         if (conversation && !convError) {
+          console.log("[Chat] Conversation created:", conversation.id);
+
           // Add both participants using admin client
           const { error: partError } = await adminClient
             .from("conversation_participants")
@@ -107,19 +131,22 @@ export default async function MessagesPage({ searchParams }: PageProps) {
             ]);
 
           if (partError) {
-            console.error("Failed to add participants:", partError);
+            console.error("[Chat] Failed to add participants:", partError);
             // Delete the orphaned conversation
             await adminClient.from("conversations").delete().eq("id", conversation.id);
           } else {
             // Only redirect if participants were added successfully
+            console.log("[Chat] Participants added, redirecting to:", conversation.id);
             redirect(`/chats/${conversation.id}`);
           }
         }
+      } else if (targetActor?.id === actor.id) {
+        console.log("[Chat] Cannot message yourself");
       }
     }
 
     // If we couldn't find the model or create conversation, just show the inbox
-    console.log("Could not find model or create conversation for:", params.new);
+    console.log("[Chat] Falling through to inbox for:", params.new);
   }
 
   // Get coin balance based on actor type
