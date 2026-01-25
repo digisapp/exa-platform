@@ -39,6 +39,7 @@ export default async function MessagesPage({ searchParams }: PageProps) {
     try {
       const response = await fetch(`${proto}://${host}/api/conversations/find-or-create`, {
         method: "POST",
+        cache: "no-store", // Prevent caching during auth flows
         headers: {
           "Content-Type": "application/json",
           Cookie: cookie,

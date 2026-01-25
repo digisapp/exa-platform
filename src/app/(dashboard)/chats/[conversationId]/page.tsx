@@ -77,7 +77,7 @@ export default async function ChatPage({ params }: PageProps) {
   }
 
   if (!participation) {
-    // Not a participant - redirect to messages
+    console.error("[ChatPage] User not a participant:", { conversationId, actorId: actor.id });
     redirect("/chats");
   }
 
