@@ -49,14 +49,11 @@ export default async function ChatPage({ params }: PageProps) {
   }
 
   // Get conversation - use maybeSingle to handle not found gracefully
-  console.log("[ChatPage] Looking up conversation:", conversationId, "for actor:", actor.id, "user:", user.id);
   const { data: conversation, error: convError } = await supabase
     .from("conversations")
     .select("*")
     .eq("id", conversationId)
     .maybeSingle();
-
-  console.log("[ChatPage] Conversation result:", conversation ? "found" : "null", "error:", convError?.message || "none");
 
   if (convError) {
     console.error("[ChatPage] Conversation lookup error:", convError);
@@ -64,7 +61,6 @@ export default async function ChatPage({ params }: PageProps) {
   }
 
   if (!conversation) {
-    console.error("[ChatPage] Conversation not found (RLS blocking?):", conversationId);
     notFound();
   }
 
@@ -100,7 +96,6 @@ export default async function ChatPage({ params }: PageProps) {
     : [];
 
   // Get other participant(s)
-  console.log("[ChatPage] Looking up other participants for actor:", actor.id);
   const { data: participants, error: partError } = await supabase
     .from("conversation_participants")
     .select("actor_id")
@@ -110,8 +105,6 @@ export default async function ChatPage({ params }: PageProps) {
   if (partError) {
     console.error("[ChatPage] Error fetching participants:", partError);
   }
-
-  console.log("[ChatPage] Found participants:", participants?.length || 0);
 
   // Guard: must have other participants
   if (!participants?.length) {
@@ -123,7 +116,6 @@ export default async function ChatPage({ params }: PageProps) {
   let otherParticipant = null;
   if (participants.length > 0) {
     const otherActorId = participants[0].actor_id;
-    console.log("[ChatPage] Other actor ID:", otherActorId);
 
     // Get the other actor's details
     const { data: otherActor } = await supabase
@@ -133,7 +125,6 @@ export default async function ChatPage({ params }: PageProps) {
       .maybeSingle();
 
     if (!otherActor) {
-      console.error("[ChatPage] otherActor not found / not visible via RLS:", otherActorId);
       redirect("/chats");
     }
 
@@ -147,7 +138,6 @@ export default async function ChatPage({ params }: PageProps) {
           .eq("user_id", otherActor.user_id)
           .maybeSingle();
         otherModel = data;
-        console.log("[ChatPage] Other model:", otherModel?.username);
       }
 
       otherParticipant = {
