@@ -122,7 +122,10 @@ export default async function ChatPage({ params }: PageProps) {
       .eq("id", otherActorId)
       .maybeSingle();
 
-    console.log("[ChatPage] Other actor:", otherActor);
+    if (!otherActor) {
+      console.error("[ChatPage] otherActor not found / not visible via RLS:", otherActorId);
+      redirect("/chats");
+    }
 
     if (otherActor) {
       // Get model data if they're a model - use user_id to lookup

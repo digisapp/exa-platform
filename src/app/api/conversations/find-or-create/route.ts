@@ -1,0 +1,186 @@
+import { createClient } from "@/lib/supabase/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { NextRequest, NextResponse } from "next/server";
+
+// Service role client for privileged operations (server-side only)
+const adminClient = createSupabaseClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+export async function POST(request: NextRequest) {
+  try {
+    const supabase = await createClient();
+
+    // Auth check
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { modelUsername } = body;
+
+    if (!modelUsername) {
+      return NextResponse.json(
+        { error: "Model username required" },
+        { status: 400 }
+      );
+    }
+
+    // Get current user's actor
+    const { data: actor } = await supabase
+      .from("actors")
+      .select("id, type")
+      .eq("user_id", user.id)
+      .single();
+
+    if (!actor) {
+      return NextResponse.json(
+        { error: "Actor not found" },
+        { status: 400 }
+      );
+    }
+
+    // Look up model by username (case-insensitive)
+    const { data: targetModel, error: modelError } = await supabase
+      .from("models")
+      .select("id, user_id, username")
+      .ilike("username", modelUsername.toLowerCase())
+      .maybeSingle();
+
+    if (modelError) {
+      console.error("[API] Model lookup error:", modelError);
+      return NextResponse.json(
+        { error: "Failed to lookup model" },
+        { status: 500 }
+      );
+    }
+
+    if (!targetModel) {
+      return NextResponse.json(
+        { error: "Model not found" },
+        { status: 404 }
+      );
+    }
+
+    if (!targetModel.user_id) {
+      return NextResponse.json(
+        { error: "Model has no associated user" },
+        { status: 400 }
+      );
+    }
+
+    // Get the model's actor ID using admin client (bypasses RLS)
+    const { data: targetActor, error: actorError } = await adminClient
+      .from("actors")
+      .select("id")
+      .eq("user_id", targetModel.user_id)
+      .maybeSingle();
+
+    if (actorError) {
+      console.error("[API] Actor lookup error:", actorError);
+      return NextResponse.json(
+        { error: "Failed to lookup model actor" },
+        { status: 500 }
+      );
+    }
+
+    if (!targetActor) {
+      return NextResponse.json(
+        { error: "Model actor not found" },
+        { status: 404 }
+      );
+    }
+
+    if (targetActor.id === actor.id) {
+      return NextResponse.json(
+        { error: "Cannot message yourself" },
+        { status: 400 }
+      );
+    }
+
+    // Check if conversation already exists between these two users
+    const { data: senderParticipations } = await supabase
+      .from("conversation_participants")
+      .select("conversation_id")
+      .eq("actor_id", actor.id);
+
+    let existingConversationId: string | null = null;
+
+    if (senderParticipations && senderParticipations.length > 0) {
+      const conversationIds = senderParticipations.map(p => p.conversation_id);
+
+      // Use admin client to check if model is in any of these conversations
+      const { data: recipientParticipation } = await adminClient
+        .from("conversation_participants")
+        .select("conversation_id")
+        .eq("actor_id", targetActor.id)
+        .in("conversation_id", conversationIds)
+        .limit(1)
+        .maybeSingle();
+
+      if (recipientParticipation) {
+        existingConversationId = recipientParticipation.conversation_id;
+      }
+    }
+
+    if (existingConversationId) {
+      return NextResponse.json({
+        success: true,
+        conversationId: existingConversationId,
+        isNew: false,
+      });
+    }
+
+    // Create new conversation using admin client
+    const { data: conversation, error: convError } = await adminClient
+      .from("conversations")
+      .insert({
+        type: "direct",
+        title: null,
+      })
+      .select()
+      .single();
+
+    if (convError || !conversation) {
+      console.error("[API] Failed to create conversation:", convError);
+      return NextResponse.json(
+        { error: "Failed to create conversation" },
+        { status: 500 }
+      );
+    }
+
+    // Add both participants using admin client
+    const { error: partError } = await adminClient
+      .from("conversation_participants")
+      .insert([
+        { conversation_id: conversation.id, actor_id: actor.id },
+        { conversation_id: conversation.id, actor_id: targetActor.id },
+      ]);
+
+    if (partError) {
+      console.error("[API] Failed to add participants:", partError);
+      // Cleanup orphaned conversation
+      await adminClient.from("conversations").delete().eq("id", conversation.id);
+      return NextResponse.json(
+        { error: "Failed to add participants" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      conversationId: conversation.id,
+      isNew: true,
+    });
+  } catch (error) {
+    console.error("[API] Find or create conversation error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
