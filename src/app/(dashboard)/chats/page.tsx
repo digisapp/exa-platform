@@ -27,15 +27,18 @@ export default async function MessagesPage({ searchParams }: PageProps) {
   // Handle ?new=username parameter - call API route to find/create conversation
   if (params.new) {
     const modelUsername = params.new;
-    console.log("[Chat] Starting conversation with:", modelUsername);
+    console.log("[Chat] Starting conversation with:", modelUsername, "for user:", user.id);
 
     const h = await headers();
     const c = await cookies();
     const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
     const proto = h.get("x-forwarded-proto") ?? (process.env.NODE_ENV === "production" ? "https" : "http");
+    const apiUrl = `${proto}://${host}/api/conversations/find-or-create`;
+
+    console.log("[Chat] Calling API:", apiUrl);
 
     try {
-      const response = await fetch(`${proto}://${host}/api/conversations/find-or-create`, {
+      const response = await fetch(apiUrl, {
         method: "POST",
         cache: "no-store",
         headers: {
@@ -46,15 +49,19 @@ export default async function MessagesPage({ searchParams }: PageProps) {
       });
 
       const data = await response.json();
-      console.log("[Chat] API response:", response.status, data);
+      console.log("[Chat] API response:", response.status, JSON.stringify(data));
 
       if (response.ok && data.success && data.conversationId) {
+        console.log("[Chat] Redirecting to conversation:", data.conversationId);
         redirect(`/chats/${data.conversationId}`);
+      } else {
+        console.error("[Chat] API returned error:", response.status, data.error || "unknown");
       }
     } catch (error) {
-      console.error("[Chat] API call failed:", error);
+      console.error("[Chat] API call failed:", error instanceof Error ? error.message : error);
     }
-    // Fall through to show inbox if failed
+    // Fall through to show inbox if failed - user will see their inbox
+    console.log("[Chat] Falling through to inbox");
   }
 
   // Get coin balance based on actor type
