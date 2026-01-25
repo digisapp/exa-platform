@@ -74,12 +74,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify sender is part of conversation
-    const { data: participation } = await supabase
+    const { data: participation, error: partError } = await supabase
       .from("conversation_participants")
       .select("*")
       .eq("conversation_id", conversationId)
       .eq("actor_id", sender.id)
-      .single() as { data: any };
+      .maybeSingle();
+
+    if (partError) {
+      console.error("Participation check error:", partError);
+      return NextResponse.json(
+        { error: "Failed to verify conversation access" },
+        { status: 500 }
+      );
+    }
 
     if (!participation) {
       return NextResponse.json(
@@ -88,10 +96,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get all participants to find the recipient
+    // Get all participants to find the recipient (include user_id for model lookup)
     const { data: participants } = await supabase
       .from("conversation_participants")
-      .select("actor_id, actors(id, type)")
+      .select("actor_id, actors(id, type, user_id)")
       .eq("conversation_id", conversationId)
       .neq("actor_id", sender.id) as { data: any[] | null };
 
@@ -112,8 +120,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Determine if coins are required
+    // Determine if coins are required and get model ID for coin transfer
     let coinsRequired = 0;
+    let recipientModelId: string | null = null;
 
     if (sender.type === "model" && recipient?.actors?.type === "model") {
       // Model-to-model: FREE
@@ -123,27 +132,31 @@ export async function POST(request: NextRequest) {
       coinsRequired = 0;
     } else {
       // Fan/Brand messaging model: COSTS COINS
-      if (recipient?.actors?.type === "model") {
-        // Look up the model's actual message rate
+      if (recipient?.actors?.type === "model" && recipient?.actors?.user_id) {
+        // Look up the model's actual ID and message rate using user_id
         const { data: recipientModel } = await supabase
           .from("models")
-          .select("message_rate")
-          .eq("id", recipient.actor_id)
-          .single() as { data: { message_rate: number | null } | null };
+          .select("id, message_rate")
+          .eq("user_id", recipient.actors.user_id)
+          .maybeSingle() as { data: { id: string; message_rate: number | null } | null };
 
-        // Use model's rate or default, with minimum of DEFAULT_MESSAGE_COST
-        const modelRate = recipientModel?.message_rate ?? DEFAULT_MESSAGE_COST;
-        coinsRequired = Math.max(DEFAULT_MESSAGE_COST, modelRate);
+        if (recipientModel) {
+          recipientModelId = recipientModel.id;
+          // Use model's rate or default, with minimum of DEFAULT_MESSAGE_COST
+          const modelRate = recipientModel.message_rate ?? DEFAULT_MESSAGE_COST;
+          coinsRequired = Math.max(DEFAULT_MESSAGE_COST, modelRate);
+        }
       }
     }
 
     // Use atomic function for message sending with coin transfer
+    // Pass the actual model ID (not actor ID) for coin crediting
     const { data: result, error: rpcError } = await (supabase.rpc as any)(
       "send_message_with_coins",
       {
         p_conversation_id: conversationId,
         p_sender_id: sender.id,
-        p_recipient_id: recipient?.actors?.id || null,
+        p_recipient_id: recipientModelId,  // This is the model's table ID, not actor ID
         p_content: content || null,
         p_media_url: mediaUrl || null,
         p_media_type: mediaType || null,
