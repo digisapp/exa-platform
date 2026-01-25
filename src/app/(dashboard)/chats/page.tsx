@@ -108,10 +108,12 @@ export default async function MessagesPage({ searchParams }: PageProps) {
 
           if (partError) {
             console.error("Failed to add participants:", partError);
+            // Delete the orphaned conversation
+            await adminClient.from("conversations").delete().eq("id", conversation.id);
+          } else {
+            // Only redirect if participants were added successfully
+            redirect(`/chats/${conversation.id}`);
           }
-
-          // Redirect to new conversation
-          redirect(`/chats/${conversation.id}`);
         }
       }
     }

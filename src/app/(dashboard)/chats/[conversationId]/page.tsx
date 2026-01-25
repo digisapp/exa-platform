@@ -108,12 +108,16 @@ export default async function ChatPage({ params }: PageProps) {
       actors: Actor;
     };
 
-    // Get model data if they're a model
-    const { data: otherModel } = (await supabase
-      .from("models")
-      .select("*")
-      .eq("id", participant.actor_id)
-      .single()) as { data: Model | null };
+    // Get model data if they're a model - use user_id to lookup
+    let otherModel: Model | null = null;
+    if (participant.actors?.type === "model" && participant.actors?.user_id) {
+      const { data } = (await supabase
+        .from("models")
+        .select("*")
+        .eq("user_id", participant.actors.user_id)
+        .single()) as { data: Model | null };
+      otherModel = data;
+    }
 
     otherParticipant = {
       actor_id: participant.actor_id,
@@ -123,6 +127,7 @@ export default async function ChatPage({ params }: PageProps) {
   }
 
   if (!otherParticipant) {
+    console.error("No other participant found for conversation:", conversationId);
     redirect("/chats");
   }
 
