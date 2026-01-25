@@ -205,7 +205,6 @@ export default async function GigsPage() {
           username: profileData?.username || undefined,
         } : undefined}
         actorType={actorType}
-        coinBalance={coinBalance}
       />
 
       <main className="container px-8 md:px-16 py-8">

@@ -214,7 +214,6 @@ export default async function ModelsPage({
           username: profileData?.username || undefined,
         } : undefined}
         actorType={actorType}
-        coinBalance={coinBalance}
       />
 
       {/* Paywall for free brands */}

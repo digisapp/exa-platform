@@ -91,7 +91,6 @@ export default async function ForModelsPage() {
           username: profileData?.username || undefined,
         } : undefined}
         actorType={actorType}
-        coinBalance={coinBalance}
       />
 
       <main className="container px-4 md:px-8 py-12 max-w-4xl mx-auto">

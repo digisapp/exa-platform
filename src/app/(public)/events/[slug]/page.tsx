@@ -203,7 +203,6 @@ export default async function EventPage({ params, searchParams }: Props) {
           username: profileData?.username || undefined,
         } : undefined}
         actorType={actorType}
-        coinBalance={coinBalance}
       />
 
       <main className="container px-4 md:px-8 py-8">
