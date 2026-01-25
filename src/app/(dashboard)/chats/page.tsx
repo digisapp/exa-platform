@@ -1,7 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import { ConversationList } from "@/components/chat/ConversationList";
 import { NewMessageDialog } from "@/components/chat/NewMessageDialog";
+
+// Admin client for conversation creation - bypasses RLS
+const adminClient = createSupabaseClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 interface PageProps {
   searchParams: Promise<{ new?: string }>;
@@ -25,14 +32,18 @@ export default async function MessagesPage({ searchParams }: PageProps) {
 
   // Handle ?new=username parameter - find or create conversation with model
   if (params.new) {
-    const modelUsername = params.new;
+    const modelUsername = params.new.toLowerCase();
 
-    // Look up model by username
-    const { data: targetModel } = await supabase
+    // Look up model by username (case-insensitive)
+    const { data: targetModel, error: modelError } = await supabase
       .from("models")
-      .select("id, user_id")
-      .eq("username", modelUsername)
-      .single() as { data: { id: string; user_id: string } | null };
+      .select("id, user_id, username")
+      .ilike("username", modelUsername)
+      .single() as { data: { id: string; user_id: string; username: string } | null; error: any };
+
+    if (modelError) {
+      console.error("Model lookup error:", modelError, "username:", modelUsername);
+    }
 
     if (targetModel) {
       // Get the model's actor ID
@@ -72,23 +83,32 @@ export default async function MessagesPage({ searchParams }: PageProps) {
           redirect(`/chats/${existingConversationId}`);
         }
 
-        // Create new conversation
-        const { data: conversation, error: convError } = await (supabase
-          .from("conversations") as any)
+        // Create new conversation using admin client to bypass RLS
+        const { data: conversation, error: convError } = await adminClient
+          .from("conversations")
           .insert({
             type: "direct",
             title: null,
           })
           .select()
-          .single() as { data: { id: string } | null; error: any };
+          .single();
+
+        if (convError) {
+          console.error("Failed to create conversation:", convError);
+        }
 
         if (conversation && !convError) {
-          // Add both participants
-          await (supabase.from("conversation_participants") as any)
+          // Add both participants using admin client
+          const { error: partError } = await adminClient
+            .from("conversation_participants")
             .insert([
               { conversation_id: conversation.id, actor_id: actor.id },
               { conversation_id: conversation.id, actor_id: targetActor.id },
             ]);
+
+          if (partError) {
+            console.error("Failed to add participants:", partError);
+          }
 
           // Redirect to new conversation
           redirect(`/chats/${conversation.id}`);
@@ -97,6 +117,7 @@ export default async function MessagesPage({ searchParams }: PageProps) {
     }
 
     // If we couldn't find the model or create conversation, just show the inbox
+    console.log("Could not find model or create conversation for:", params.new);
   }
 
   // Get coin balance based on actor type
