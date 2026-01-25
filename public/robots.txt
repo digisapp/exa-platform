@@ -39,4 +39,4 @@ Disallow: /claim
 Disallow: /api/
 
 # Sitemap
-Sitemap: https://examodels.com/sitemap.xml
+Sitemap: https://www.examodels.com/sitemap.xml

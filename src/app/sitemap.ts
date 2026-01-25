@@ -7,7 +7,7 @@ const supabase = createClient(
 );
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = "https://examodels.com";
+  const baseUrl = "https://www.examodels.com";
 
   // Static pages
   const staticPages: MetadataRoute.Sitemap = [

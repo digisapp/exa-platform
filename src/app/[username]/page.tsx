@@ -67,15 +67,28 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const displayName = model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username;
+  const profileUrl = `https://www.examodels.com/${model.username}`;
+  const description = model.bio || `Book ${displayName} for photoshoots, events, and brand collaborations on EXA Models - the premier model booking platform.`;
 
   return {
-    title: `${displayName} | EXA Models`,
-    description: model.bio || `View ${displayName}'s profile on EXA Models`,
+    title: `${displayName} (@${model.username}) | EXA Models`,
+    description,
+    alternates: {
+      canonical: profileUrl,
+    },
     openGraph: {
       title: `${displayName} | EXA Models`,
-      description: model.bio || `View ${displayName}'s profile on EXA Models`,
+      description,
+      images: model.profile_photo_url ? [{ url: model.profile_photo_url, width: 800, height: 800, alt: displayName }] : [],
+      url: profileUrl,
+      type: "profile",
+      siteName: "EXA Models",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${displayName} | EXA Models`,
+      description,
       images: model.profile_photo_url ? [model.profile_photo_url] : [],
-      url: `https://examodels.com/${model.username}`,
     },
   };
 }
@@ -251,12 +264,36 @@ export default async function ModelProfilePage({ params }: Props) {
     { platform: "twitch", username: model.twitch_username, url: `https://twitch.tv/${model.twitch_username}` },
   ].filter(link => link.username);
 
-  return (
-    <div className="min-h-screen relative">
-      <FloatingOrbs />
+  // JSON-LD structured data for SEO
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: displayName,
+    url: `https://www.examodels.com/${model.username}`,
+    image: model.profile_photo_url || undefined,
+    description: model.bio || `Professional model available for bookings on EXA Models`,
+    jobTitle: "Model",
+    ...(model.show_location && model.city && model.state && {
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: model.city,
+        addressRegion: model.state,
+      },
+    }),
+    sameAs: socialLinks.map(link => link.url),
+  };
 
-      {/* Track profile view */}
-      <ViewTracker modelId={model.id} />
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <div className="min-h-screen relative">
+        <FloatingOrbs />
+
+        {/* Track profile view */}
+        <ViewTracker modelId={model.id} />
 
       {/* Preview Banner for unapproved profiles (owner or admin viewing) */}
       {!model.is_approved && (isOwner || isAdmin) && (
@@ -488,6 +525,7 @@ export default async function ModelProfilePage({ params }: Props) {
           />
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
