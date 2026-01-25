@@ -45,7 +45,7 @@ export default async function HomePage() {
 
   // Fetch top 50 models with 4-5 star admin rating (signed-in models with self-uploaded photos)
   // Requires: user_id (signed in) AND avatars bucket (self-uploaded, not Instagram imports)
-  const { data: topModelsData } = await (supabase
+  const { data: topModelsData, error: modelsError } = await (supabase
     .from("models") as any)
     .select(`
       id, username, first_name, profile_photo_url, state, profile_views, admin_rating,
@@ -59,6 +59,8 @@ export default async function HomePage() {
     .ilike("profile_photo_url", "%/avatars/%")
     .gte("admin_rating", 4)
     .limit(50);
+
+  console.log("[Homepage] Models query - count:", topModelsData?.length ?? 0, "error:", modelsError?.message ?? "none");
 
   // Randomize the order
   const topModels = shuffleArray(topModelsData || []) as any[];
@@ -76,13 +78,15 @@ export default async function HomePage() {
     .limit(50);
 
   // Fetch upcoming events/gigs
-  const { data: upcomingEvents } = await (supabase
+  const { data: upcomingEvents, error: eventsError } = await (supabase
     .from("gigs") as any)
     .select("id, slug, title, type, location_city, location_state, start_at, end_at, cover_image_url, spots, spots_filled")
     .eq("status", "open")
     .gte("start_at", new Date().toISOString())
     .order("start_at", { ascending: true })
     .limit(20);
+
+  console.log("[Homepage] Events query - count:", upcomingEvents?.length ?? 0, "error:", eventsError?.message ?? "none");
 
   return (
     <div className="min-h-screen relative">
