@@ -9,13 +9,13 @@ import { PageViewTracker } from "@/components/analytics/PageViewTracker";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://examodels.com"),
+  metadataBase: new URL("https://www.examodels.com"),
   title: {
-    default: "EXA Models – Top Models Worldwide",
+    default: "EXA Models – Book Professional Models for Photoshoots & Events",
     template: "%s | EXA Models",
   },
-  description: "Join shows, travel experiences, and build your modeling career. The community platform where models grow.",
-  keywords: ["models", "fashion", "runway", "modeling agency", "casting", "fashion shows"],
+  description: "Book professional models for photoshoots, events, and brand collaborations. Connect directly with verified models worldwide. The premier model booking platform.",
+  keywords: ["book models", "hire models", "model booking", "photoshoot models", "event models", "fashion models", "commercial models", "brand ambassadors", "Miami models", "professional models"],
   icons: {
     icon: [
       { url: "/icon.svg", type: "image/svg+xml" },
@@ -26,15 +26,15 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://examodels.com",
+    url: "https://www.examodels.com",
     siteName: "EXA Models",
-    title: "EXA Models – Top Models Worldwide",
-    description: "Join shows, travel experiences, and build your modeling career. The community platform where models grow.",
+    title: "EXA Models – Book Professional Models for Photoshoots & Events",
+    description: "Book professional models for photoshoots, events, and brand collaborations. Connect directly with verified models worldwide. The premier model booking platform.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "EXA Models – Top Models Worldwide",
-    description: "Join shows, travel experiences, and build your modeling career. The community platform where models grow.",
+    title: "EXA Models – Book Professional Models",
+    description: "Book professional models for photoshoots, events, and brand collaborations. Connect directly with verified models worldwide.",
   },
   robots: {
     index: true,
@@ -58,10 +58,17 @@ export default function RootLayout({
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "EXA Models",
-    url: "https://examodels.com",
-    logo: "https://examodels.com/exa-logo-white.png",
-    description: "Join shows, travel experiences, and build your modeling career. The community platform where models grow.",
-    sameAs: [],
+    url: "https://www.examodels.com",
+    logo: "https://www.examodels.com/exa-logo-white.png",
+    description: "Book professional models for photoshoots, events, and brand collaborations. Connect directly with verified models worldwide.",
+    sameAs: [
+      "https://www.instagram.com/examodels"
+    ],
+    contactPoint: {
+      "@type": "ContactPoint",
+      contactType: "customer service",
+      url: "https://www.examodels.com"
+    }
   };
 
   return (

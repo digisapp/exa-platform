@@ -18,9 +18,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 1,
     },
     {
-      url: `${baseUrl}/models`,
+      url: `${baseUrl}/for-models`,
       lastModified: new Date(),
-      changeFrequency: "daily",
+      changeFrequency: "weekly",
       priority: 0.9,
     },
     {
@@ -40,6 +40,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.6,
+    },
+    {
+      url: `${baseUrl}/signup`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.5,
+    },
+    {
+      url: `${baseUrl}/signin`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.4,
     },
   ];
 
@@ -65,5 +77,29 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  return [...staticPages, ...modelPages, ...modelRatesPages];
+  // Fetch published events
+  const { data: events } = await supabase
+    .from("events")
+    .select("slug, updated_at")
+    .eq("is_published", true)
+    .not("slug", "is", null);
+
+  const eventPages: MetadataRoute.Sitemap = (events || []).map((event) => ({
+    url: `${baseUrl}/events/${event.slug}`,
+    lastModified: event.updated_at ? new Date(event.updated_at) : new Date(),
+    changeFrequency: "weekly" as const,
+    priority: 0.7,
+  }));
+
+  // Add events listing page
+  const eventsListingPage: MetadataRoute.Sitemap = events && events.length > 0 ? [
+    {
+      url: `${baseUrl}/events`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.8,
+    },
+  ] : [];
+
+  return [...staticPages, ...modelPages, ...modelRatesPages, ...eventsListingPage, ...eventPages];
 }
