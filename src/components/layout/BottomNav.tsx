@@ -112,11 +112,8 @@ export function BottomNav({ user, actorType, unreadCount = 0 }: BottomNavProps) 
               isActive("/wallet") ? "text-pink-500" : "text-muted-foreground"
             )}
           >
-            <div className="relative flex items-center gap-1">
-              <Coins className="h-5 w-5" />
-              <span className="text-xs font-semibold tabular-nums">{coinBalance.toLocaleString()}</span>
-            </div>
-            <span className="text-[10px] font-medium">Buy</span>
+            <Coins className="h-5 w-5" />
+            <span className="text-[10px] font-medium">Wallet</span>
           </Link>
         ) : (
           <Link
