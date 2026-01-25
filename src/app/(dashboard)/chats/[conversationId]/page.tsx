@@ -49,11 +49,14 @@ export default async function ChatPage({ params }: PageProps) {
   }
 
   // Get conversation - use maybeSingle to handle not found gracefully
+  console.log("[ChatPage] Looking up conversation:", conversationId, "for actor:", actor.id, "user:", user.id);
   const { data: conversation, error: convError } = await supabase
     .from("conversations")
     .select("*")
     .eq("id", conversationId)
     .maybeSingle();
+
+  console.log("[ChatPage] Conversation result:", conversation ? "found" : "null", "error:", convError?.message || "none");
 
   if (convError) {
     console.error("[ChatPage] Conversation lookup error:", convError);
@@ -61,6 +64,7 @@ export default async function ChatPage({ params }: PageProps) {
   }
 
   if (!conversation) {
+    console.error("[ChatPage] Conversation not found (RLS blocking?):", conversationId);
     notFound();
   }
 
