@@ -406,9 +406,17 @@ async function FanDashboard({ actorId }: { actorId: string }) {
   // Get featured models for the models section (only those with uploaded profile photos)
   // Exclude Instagram CDN URLs which are low quality
   // Fetch more models and rotate selection every 3 days
+  // Include all fields needed for ModelCard hover overlay
   const { data: allFeaturedModels } = await (supabase
     .from("models") as any)
-    .select("id, username, first_name, last_name, profile_photo_url, city, state, show_location")
+    .select(`
+      id, username, first_name, last_name, profile_photo_url,
+      city, state, show_location,
+      instagram_name, show_social_media,
+      height, show_measurements,
+      focus_tags, reliability_score,
+      is_verified, is_featured, availability_status
+    `)
     .eq("is_approved", true)
     .not("profile_photo_url", "is", null)
     .not("profile_photo_url", "ilike", "%cdninstagram.com%")
