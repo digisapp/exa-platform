@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { headers } from "next/headers";
+import { headers, cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { ConversationList } from "@/components/chat/ConversationList";
 import { NewMessageDialog } from "@/components/chat/NewMessageDialog";
@@ -30,17 +30,18 @@ export default async function MessagesPage({ searchParams }: PageProps) {
     console.log("[Chat] Starting new conversation with:", modelUsername);
 
     // Call API route to find or create conversation (uses service role internally)
-    const headersList = await headers();
-    const host = headersList.get("host") || "localhost:3000";
-    const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
-    const cookie = headersList.get("cookie") || "";
+    const h = await headers();
+    const c = await cookies();
+    const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
+    const proto = h.get("x-forwarded-proto") ?? (process.env.NODE_ENV === "production" ? "https" : "http");
+    const cookie = c.toString();
 
     try {
-      const response = await fetch(`${protocol}://${host}/api/conversations/find-or-create`, {
+      const response = await fetch(`${proto}://${host}/api/conversations/find-or-create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Cookie": cookie, // Forward auth cookies
+          Cookie: cookie,
         },
         body: JSON.stringify({ modelUsername }),
       });

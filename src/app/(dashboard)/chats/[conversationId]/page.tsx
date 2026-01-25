@@ -109,9 +109,15 @@ export default async function ChatPage({ params }: PageProps) {
 
   console.log("[ChatPage] Found participants:", participants?.length || 0);
 
+  // Guard: must have other participants
+  if (!participants?.length) {
+    console.error("[ChatPage] No other participants found:", conversationId);
+    redirect("/chats");
+  }
+
   // Get model info for other participant
   let otherParticipant = null;
-  if (participants && participants.length > 0) {
+  if (participants.length > 0) {
     const otherActorId = participants[0].actor_id;
     console.log("[ChatPage] Other actor ID:", otherActorId);
 
