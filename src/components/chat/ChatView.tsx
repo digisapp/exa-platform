@@ -360,17 +360,6 @@ export function ChatView({
           )}
         </div>
 
-        {/* Coin balance for fans/brands paying for messages */}
-        {coinCost > 0 && (
-          <Link
-            href="/coins"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/20 hover:border-yellow-500/40 transition-colors"
-          >
-            <Coins className="h-4 w-4 text-yellow-500" />
-            <span className="text-sm font-medium">{localCoinBalance}</span>
-          </Link>
-        )}
-
         {/* Video Call button */}
         <VideoCallButton
           conversationId={conversation.id}
