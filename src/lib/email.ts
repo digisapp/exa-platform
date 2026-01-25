@@ -1235,7 +1235,7 @@ export async function sendVideoCallRequestEmail({
     const resend = getResendClient();
     const dashboardUrl = "https://www.examodels.com/chats";
     const callTypeLabel = callType === "voice" ? "voice" : "video";
-    const emoji = callType === "voice" ? "🎙️" : "📹";
+    const emoji = callType === "voice" ? "🎙️" : "📱";
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
