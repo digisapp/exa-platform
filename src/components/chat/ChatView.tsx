@@ -26,16 +26,21 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Loader2, MoreVertical, Ban, Coins, ChevronDown } from "lucide-react";
+import { ArrowLeft, Loader2, MoreVertical, Ban, Coins, ChevronDown, Users, Building2, Circle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import Link from "next/link";
-import type { Message, Actor, Model, Conversation, Fan } from "@/types/database";
+import type { Message, Actor, Model, Conversation, Fan, Brand } from "@/types/database";
 import { useCoinBalanceOptional } from "@/contexts/CoinBalanceContext";
+import { formatDistanceToNow } from "date-fns";
 
 interface Participant {
   actor_id: string;
   actor: Actor;
   model?: Model | null;
+  fan?: Fan | null;
+  brand?: Brand | null;
 }
 
 interface ChatViewProps {
@@ -179,18 +184,61 @@ export function ChatView({
     setShowScrollButton(!nearBottom && messages.length > 5);
   }, [hasMore, loadingMore, loadMoreMessages, messages.length]);
 
-  // Get other participant's display info
-  const otherName =
-    otherParticipant.model?.first_name
-      ? `${otherParticipant.model.first_name} ${otherParticipant.model.last_name || ""}`.trim()
-      : otherParticipant.model?.username || "User";
-  const otherAvatar = otherParticipant.model?.profile_photo_url;
+  // Get other participant's display info based on their type
+  const getOtherParticipantInfo = () => {
+    const { actor, model, fan, brand } = otherParticipant;
+
+    if (actor.type === "model" && model) {
+      return {
+        name: model.first_name
+          ? `${model.first_name} ${model.last_name || ""}`.trim()
+          : model.username || "Model",
+        avatar: model.profile_photo_url,
+        username: model.username,
+        type: "model" as const,
+        lastActive: model.last_active_at,
+      };
+    }
+
+    if (actor.type === "fan" && fan) {
+      return {
+        name: fan.display_name || "Fan",
+        avatar: fan.avatar_url,
+        username: null,
+        type: "fan" as const,
+        lastActive: null,
+      };
+    }
+
+    if (actor.type === "brand" && brand) {
+      return {
+        name: brand.company_name || "Brand",
+        avatar: brand.logo_url,
+        username: null,
+        type: "brand" as const,
+        lastActive: null,
+      };
+    }
+
+    // Fallback - shouldn't happen but provides safety
+    return {
+      name: "User",
+      avatar: null,
+      username: null,
+      type: actor.type as "fan" | "brand" | "model",
+      lastActive: null,
+    };
+  };
+
+  const otherInfo = getOtherParticipantInfo();
+  const otherName = otherInfo.name;
+  const otherAvatar = otherInfo.avatar;
   const otherInitials = otherName
     .split(" ")
     .map((n) => n[0])
     .join("")
     .toUpperCase()
-    .slice(0, 2);
+    .slice(0, 2) || "U";
 
   // Determine if messages cost coins
   // Models chat free with each other, fans/brands pay the model's rate (minimum 10)
@@ -369,20 +417,64 @@ export function ChatView({
           </Button>
         </Link>
 
-        <Avatar className="h-10 w-10">
-          <AvatarImage src={otherAvatar || undefined} />
-          <AvatarFallback>{otherInitials}</AvatarFallback>
-        </Avatar>
+        <div className="relative">
+          <Avatar className={cn(
+            "h-10 w-10 ring-2 ring-background",
+            otherInfo.type === "brand" && "ring-amber-500/30",
+            otherInfo.type === "fan" && "ring-blue-500/30",
+            otherInfo.type === "model" && "ring-pink-500/30"
+          )}>
+            <AvatarImage src={otherAvatar || undefined} />
+            <AvatarFallback className={cn(
+              "text-white font-semibold",
+              otherInfo.type === "brand" && "bg-gradient-to-br from-amber-500 to-orange-600",
+              otherInfo.type === "fan" && "bg-gradient-to-br from-blue-500 to-cyan-600",
+              otherInfo.type === "model" && "bg-gradient-to-br from-pink-500 to-rose-600"
+            )}>
+              {otherInitials}
+            </AvatarFallback>
+          </Avatar>
+          {/* Online indicator - show green dot if active within last 5 mins */}
+          {otherInfo.lastActive && (
+            new Date().getTime() - new Date(otherInfo.lastActive).getTime() < 5 * 60 * 1000
+          ) && (
+            <Circle className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 fill-green-500 text-green-500 stroke-background stroke-2" />
+          )}
+        </div>
 
         <div className="flex-1 min-w-0">
-          <h2 className="font-semibold truncate">{otherName}</h2>
-          {otherParticipant.model?.username && (
+          <div className="flex items-center gap-2">
+            <h2 className="font-semibold truncate">{otherName}</h2>
+            {/* Type badge for fans/brands - helps models identify who they're talking to */}
+            {otherInfo.type === "fan" && (
+              <Badge variant="secondary" className="text-xs px-1.5 py-0 h-5 bg-blue-500/10 text-blue-500 border-blue-500/20">
+                <Users className="h-3 w-3 mr-1" />
+                Fan
+              </Badge>
+            )}
+            {otherInfo.type === "brand" && (
+              <Badge variant="secondary" className="text-xs px-1.5 py-0 h-5 bg-amber-500/10 text-amber-500 border-amber-500/20">
+                <Building2 className="h-3 w-3 mr-1" />
+                Brand
+              </Badge>
+            )}
+          </div>
+          {/* Show username link for models */}
+          {otherInfo.username && (
             <Link
-              href={`/${otherParticipant.model.username}`}
+              href={`/${otherInfo.username}`}
               className="text-sm text-muted-foreground hover:text-primary"
             >
-              @{otherParticipant.model.username}
+              @{otherInfo.username}
             </Link>
+          )}
+          {/* Show last active for other types if not online */}
+          {!otherInfo.username && otherInfo.lastActive && (
+            new Date().getTime() - new Date(otherInfo.lastActive).getTime() >= 5 * 60 * 1000
+          ) && (
+            <p className="text-xs text-muted-foreground">
+              Active {formatDistanceToNow(new Date(otherInfo.lastActive), { addSuffix: true })}
+            </p>
           )}
         </div>
 
@@ -495,16 +587,38 @@ export function ChatView({
 
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="p-4 rounded-full bg-gradient-to-br from-pink-500/20 to-violet-500/20 mb-4">
+            <div className={cn(
+              "p-4 rounded-full mb-4",
+              otherInfo.type === "brand" && "bg-gradient-to-br from-amber-500/20 to-orange-500/20",
+              otherInfo.type === "fan" && "bg-gradient-to-br from-blue-500/20 to-cyan-500/20",
+              otherInfo.type === "model" && "bg-gradient-to-br from-pink-500/20 to-violet-500/20"
+            )}>
               <Avatar className="h-16 w-16">
                 <AvatarImage src={otherAvatar || undefined} />
-                <AvatarFallback className="text-xl bg-gradient-to-br from-pink-500 to-violet-500 text-white">
+                <AvatarFallback className={cn(
+                  "text-xl text-white",
+                  otherInfo.type === "brand" && "bg-gradient-to-br from-amber-500 to-orange-600",
+                  otherInfo.type === "fan" && "bg-gradient-to-br from-blue-500 to-cyan-600",
+                  otherInfo.type === "model" && "bg-gradient-to-br from-pink-500 to-violet-500"
+                )}>
                   {otherInitials}
                 </AvatarFallback>
               </Avatar>
             </div>
-            <h3 className="font-semibold text-lg">{otherName}</h3>
-            <p className="text-sm text-muted-foreground mt-1">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-semibold text-lg">{otherName}</h3>
+              {otherInfo.type === "fan" && (
+                <Badge variant="secondary" className="text-xs px-1.5 py-0 h-5 bg-blue-500/10 text-blue-500 border-blue-500/20">
+                  Fan
+                </Badge>
+              )}
+              {otherInfo.type === "brand" && (
+                <Badge variant="secondary" className="text-xs px-1.5 py-0 h-5 bg-amber-500/10 text-amber-500 border-amber-500/20">
+                  Brand
+                </Badge>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground">
               Start your conversation
             </p>
             {coinCost > 0 && (

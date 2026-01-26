@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import { ChatView } from "@/components/chat/ChatView";
-import type { Message, Actor, Model, Conversation, Fan } from "@/types/database";
+import type { Message, Actor, Model, Conversation, Fan, Brand } from "@/types/database";
 
 interface PageProps {
   params: Promise<{ conversationId: string }>;
@@ -129,21 +129,43 @@ export default async function ChatPage({ params }: PageProps) {
     }
 
     if (otherActor) {
-      // Get model data if they're a model - use user_id to lookup
+      // Get model/fan/brand data based on actor type
       let otherModel: Model | null = null;
+      let otherFan: Fan | null = null;
+      let otherBrand: Brand | null = null;
+
       if (otherActor.type === "model" && otherActor.user_id) {
+        // Models use user_id to lookup
         const { data } = await supabase
           .from("models")
           .select("*")
           .eq("user_id", otherActor.user_id)
           .maybeSingle();
         otherModel = data;
+      } else if (otherActor.type === "fan") {
+        // Fans use actor.id as their id
+        const { data } = await supabase
+          .from("fans")
+          .select("*")
+          .eq("id", otherActorId)
+          .maybeSingle() as { data: Fan | null };
+        otherFan = data;
+      } else if (otherActor.type === "brand") {
+        // Brands use actor.id as their id
+        const { data } = await (supabase
+          .from("brands") as any)
+          .select("*")
+          .eq("id", otherActorId)
+          .maybeSingle() as { data: Brand | null };
+        otherBrand = data;
       }
 
       otherParticipant = {
         actor_id: otherActorId,
         actor: otherActor as Actor,
         model: otherModel,
+        fan: otherFan,
+        brand: otherBrand,
       };
     }
   }
