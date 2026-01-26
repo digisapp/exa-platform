@@ -2713,3 +2713,180 @@ export async function sendMiamiSwimWeekInviteEmail({
     return { success: false, error };
   }
 }
+
+export async function sendMiamiSwimWeekProfileReminderEmail({
+  to,
+  modelName,
+}: {
+  to: string;
+  modelName: string;
+}) {
+  try {
+    // Check if unsubscribed
+    if (await isEmailUnsubscribed(to, "marketing")) {
+      console.log(`Email ${to} is unsubscribed, skipping`);
+      return { success: true, skipped: true };
+    }
+
+    const resend = getResendClient();
+    const dashboardUrl = `${BASE_URL}/dashboard`;
+    const unsubscribeToken = await getUnsubscribeToken(to);
+
+    const greeting = modelName ? `Hey ${modelName}!` : "Hey!";
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      subject: "Miami Swim Week 2026 - Complete Your Profile for Designers!",
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header with Beach/Swim Vibes -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #06b6d4 0%, #ec4899 50%, #f97316 100%); padding: 50px 30px; text-align: center;">
+              <p style="margin: 0 0 10px; font-size: 40px;">🌴👙✨</p>
+              <h1 style="margin: 0; color: white; font-size: 28px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">
+                Miami Swim Week 2026
+              </h1>
+              <p style="margin: 15px 0 0; color: rgba(255,255,255,0.95); font-size: 16px; font-weight: 500;">
+                Designers need your complete profile!
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 20px; font-weight: 500;">
+                ${greeting}
+              </p>
+              <p style="margin: 0 0 25px; color: #a1a1aa; font-size: 16px; line-height: 1.7;">
+                <strong style="color: #ec4899;">Miami Swim Week 2026</strong> is approaching and designers are reviewing model profiles for their shows.
+                We noticed your profile is missing some key information that brands need for casting decisions.
+              </p>
+
+              <!-- What's Missing -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px; background: linear-gradient(135deg, rgba(249, 115, 22, 0.15) 0%, rgba(236, 72, 153, 0.15) 100%); border-radius: 12px; border: 1px solid rgba(236, 72, 153, 0.3);">
+                <tr>
+                  <td style="padding: 25px;">
+                    <p style="margin: 0 0 15px; color: #f97316; font-size: 16px; font-weight: 600;">
+                      Action Required
+                    </p>
+                    <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 15px; line-height: 1.6;">
+                      To be considered for Miami Swim Week shows, designers need:
+                    </p>
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding: 10px 0; color: #a1a1aa; font-size: 15px;">
+                          <span style="color: #ec4899; margin-right: 10px;">1.</span>
+                          <strong style="color: #fff;">Profile Photo</strong> - A clear, professional headshot or full body shot
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 10px 0; color: #a1a1aa; font-size: 15px;">
+                          <span style="color: #06b6d4; margin-right: 10px;">2.</span>
+                          <strong style="color: #fff;">Measurements</strong> - Height, bust, waist, hips for swimwear fittings
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Why It Matters -->
+              <p style="margin: 0 0 25px; color: #a1a1aa; font-size: 15px; line-height: 1.7;">
+                Swimwear brands specifically need accurate measurements to select models for their runway shows.
+                Without a profile photo and measurements, your profile won't appear in designer searches for Miami Swim Week castings.
+              </p>
+
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+                <tr>
+                  <td align="center">
+                    <a href="${dashboardUrl}" style="display: inline-block; background: linear-gradient(135deg, #06b6d4 0%, #ec4899 100%); color: white; text-decoration: none; padding: 16px 40px; border-radius: 30px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 15px rgba(236, 72, 153, 0.4);">
+                      Complete My Profile Now
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Quick Tips -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #262626; border-radius: 12px; padding: 20px;">
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 15px; color: #ffffff; font-size: 15px; font-weight: 600;">
+                      Quick tips for your profile:
+                    </p>
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding: 6px 0; color: #a1a1aa; font-size: 14px;">
+                          <span style="color: #10b981; margin-right: 8px;">&#10003;</span> Use a well-lit photo with a clean background
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 6px 0; color: #a1a1aa; font-size: 14px;">
+                          <span style="color: #10b981; margin-right: 8px;">&#10003;</span> Take measurements in form-fitting clothes or swimwear
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 6px 0; color: #a1a1aa; font-size: 14px;">
+                          <span style="color: #10b981; margin-right: 8px;">&#10003;</span> Double-check your measurements for accuracy
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Urgency Banner -->
+          <tr>
+            <td style="padding: 0 30px 30px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, rgba(249, 115, 22, 0.2) 0%, rgba(236, 72, 153, 0.2) 100%); border: 1px solid rgba(249, 115, 22, 0.3); border-radius: 12px; padding: 20px;">
+                <tr>
+                  <td style="text-align: center;">
+                    <p style="margin: 0; color: #f97316; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">
+                      Designers are selecting models now!
+                    </p>
+                    <p style="margin: 8px 0 0; color: #a1a1aa; font-size: 13px;">
+                      Complete your profile today to be considered for Miami Swim Week 2026
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          ${generateEmailFooter(unsubscribeToken)}
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      console.error("Resend error:", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error("Email send error:", error);
+    return { success: false, error };
+  }
+}

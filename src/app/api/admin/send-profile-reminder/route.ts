@@ -1,0 +1,122 @@
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { NextRequest, NextResponse } from "next/server";
+import { sendMiamiSwimWeekProfileReminderEmail } from "@/lib/email";
+
+const adminClient = createSupabaseClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+// POST /api/admin/send-profile-reminder - Send Miami Swim Week profile reminder emails
+// to models without profile photos
+export async function POST(request: NextRequest) {
+  try {
+    // Verify cron secret or admin auth
+    const authHeader = request.headers.get("authorization");
+    const cronSecret = process.env.CRON_SECRET;
+
+    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Get optional parameters from body
+    let dryRun = false;
+    let limit = 1000;
+    try {
+      const body = await request.json();
+      dryRun = body.dryRun === true;
+      if (body.limit && typeof body.limit === "number") {
+        limit = Math.min(body.limit, 1000);
+      }
+    } catch {
+      // No body or invalid JSON, use defaults
+    }
+
+    // Find models without profile photos who are approved and have claimed their profile
+    const { data: models, error } = await adminClient
+      .from("models")
+      .select("id, first_name, last_name, username, user_id")
+      .is("profile_photo_url", null)
+      .eq("is_approved", true)
+      .not("user_id", "is", null)
+      .not("claimed_at", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+
+    if (!models || models.length === 0) {
+      return NextResponse.json({
+        message: "No models without profile photos found",
+        sent: 0,
+        total: 0,
+      });
+    }
+
+    // Get user emails from auth
+    const userIds = models.map((m) => m.user_id).filter(Boolean);
+    const { data: users } = await adminClient.auth.admin.listUsers();
+    const userEmails = new Map(
+      users?.users
+        ?.filter((u: any) => userIds.includes(u.id))
+        .map((u: any) => [u.id, u.email]) || []
+    );
+
+    let sentCount = 0;
+    let skippedCount = 0;
+    const errors: string[] = [];
+    const sentTo: string[] = [];
+
+    // Send emails
+    for (const model of models) {
+      const email = model.user_id ? userEmails.get(model.user_id) : null;
+
+      if (!email) {
+        skippedCount++;
+        continue;
+      }
+
+      const modelName = model.first_name || model.username || "Model";
+
+      if (dryRun) {
+        sentTo.push(`${modelName} <${email}>`);
+        sentCount++;
+        continue;
+      }
+
+      try {
+        const result = await sendMiamiSwimWeekProfileReminderEmail({
+          to: email,
+          modelName,
+        });
+
+        if (result.success && !result.skipped) {
+          sentCount++;
+          sentTo.push(`${modelName} <${email}>`);
+        } else if (result.skipped) {
+          skippedCount++;
+        }
+      } catch (err) {
+        console.error(`Failed to send email to ${email}:`, err);
+        errors.push(`Failed for ${model.id}: ${email}`);
+      }
+    }
+
+    return NextResponse.json({
+      message: dryRun
+        ? `Dry run complete - would send ${sentCount} emails`
+        : `Sent ${sentCount} emails`,
+      sent: sentCount,
+      skipped: skippedCount,
+      total: models.length,
+      errors: errors.length > 0 ? errors : undefined,
+      sentTo: dryRun ? sentTo : undefined,
+    });
+  } catch (error) {
+    console.error("Send profile reminder error:", error);
+    return NextResponse.json(
+      { error: "Failed to send profile reminders" },
+      { status: 500 }
+    );
+  }
+}
