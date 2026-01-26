@@ -456,7 +456,15 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return NextResponse.json({ models: enrichedModels, total: totalCount });
+    return NextResponse.json(
+      { models: enrichedModels, total: totalCount },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+          'Pragma': 'no-cache',
+        },
+      }
+    );
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Failed to fetch models";
     console.error("Admin models error:", error);
