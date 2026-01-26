@@ -29,6 +29,7 @@ interface MessageBubbleProps {
   senderName?: string;
   senderAvatar?: string | null;
   showAvatar?: boolean;
+  showTimestamp?: boolean;
   onDelete?: (messageId: string) => void;
   reactions?: Reaction[];
   currentActorId?: string;
@@ -41,6 +42,7 @@ export function MessageBubble({
   senderName = "User",
   senderAvatar,
   showAvatar = true,
+  showTimestamp = true,
   onDelete,
   reactions = [],
   currentActorId,
@@ -141,18 +143,20 @@ export function MessageBubble({
   return (
     <div
       className={cn(
-        "flex gap-3 max-w-[80%] group",
+        "flex items-end gap-2 max-w-[85%] group",
         isOwn ? "ml-auto flex-row-reverse" : ""
       )}
     >
-      {showAvatar && (
+      {showAvatar ? (
         <Avatar className="h-8 w-8 shrink-0">
           <AvatarImage src={senderAvatar || undefined} />
           <AvatarFallback className="text-xs">{initials}</AvatarFallback>
         </Avatar>
+      ) : (
+        <div className="w-8 shrink-0" />
       )}
 
-      <div className={cn("space-y-1 relative", isOwn ? "items-end" : "items-start")}>
+      <div className={cn("relative", isOwn ? "items-end" : "items-start")}>
         {/* Delete menu for own messages */}
         {isOwn && (
           <div className={cn(
@@ -257,35 +261,30 @@ export function MessageBubble({
               )}
             </div>
           )}
-        </div>
 
-        <div className={cn(
-          "flex items-center gap-2",
-          isOwn ? "flex-row-reverse" : "flex-row"
-        )}>
-          <p
-            className={cn(
-              "text-xs text-muted-foreground px-1",
-              isOwn ? "text-right" : "text-left"
-            )}
-          >
-            {message.created_at && formatDistanceToNow(new Date(message.created_at), {
-              addSuffix: true,
-            })}
-          </p>
-
-          {/* Reactions */}
-          {currentActorId && (
-            <MessageReactions
-              messageId={message.id}
-              reactions={reactions}
-              currentActorId={currentActorId}
-              onReactionChange={onReactionChange}
-              isOwn={isOwn}
-            />
+          {/* Reactions inline at bottom of bubble */}
+          {currentActorId && reactions.length > 0 && (
+            <div className={cn("mt-1", isOwn ? "text-right" : "text-left")}>
+              <MessageReactions
+                messageId={message.id}
+                reactions={reactions}
+                currentActorId={currentActorId}
+                onReactionChange={onReactionChange}
+                isOwn={isOwn}
+              />
+            </div>
           )}
         </div>
       </div>
+
+      {/* Timestamp to the right/left of the bubble */}
+      {showTimestamp && (
+        <span className="text-[10px] text-muted-foreground whitespace-nowrap self-end mb-1">
+          {message.created_at && formatDistanceToNow(new Date(message.created_at), {
+            addSuffix: true,
+          })}
+        </span>
+      )}
     </div>
   );
 }

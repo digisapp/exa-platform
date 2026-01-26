@@ -635,6 +635,17 @@ export function ChatView({
               index === 0 ||
               messages[index - 1].sender_id !== message.sender_id;
 
+            // Show timestamp if:
+            // - This is the last message
+            // - OR next message is from different sender
+            // - OR there's a time gap > 5 minutes to next message
+            const isLastMessage = index === messages.length - 1;
+            const nextMessage = messages[index + 1];
+            const isDifferentSender = nextMessage && nextMessage.sender_id !== message.sender_id;
+            const hasTimeGap = nextMessage && message.created_at && nextMessage.created_at &&
+              (new Date(nextMessage.created_at).getTime() - new Date(message.created_at).getTime() > 5 * 60 * 1000);
+            const showTimestamp = isLastMessage || isDifferentSender || hasTimeGap;
+
             return (
               <MessageBubble
                 key={message.id}
@@ -651,6 +662,7 @@ export function ChatView({
                   isOwn ? currentModel?.profile_photo_url : otherAvatar
                 }
                 showAvatar={showAvatar}
+                showTimestamp={showTimestamp}
                 currentActorId={currentActor.id}
               />
             );
