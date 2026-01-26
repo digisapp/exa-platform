@@ -132,10 +132,11 @@ export default async function MessagesPage({ searchParams }: PageProps) {
         .neq("actor_id", actor.id) as { data: any[] | null }
     : { data: [] };
 
-  // Get user IDs to fetch model and fan data
+  // Get user IDs for models and actor IDs for fans
   const userIds = [...new Set((allParticipants || []).map((p: any) => p.actor?.user_id).filter(Boolean))];
+  const fanActorIds = [...new Set((allParticipants || []).filter((p: any) => p.actor?.type === "fan").map((p: any) => p.actor?.id).filter(Boolean))];
 
-  // Fetch all models for these users
+  // Fetch all models for these users (models use user_id)
   const { data: models } = userIds.length > 0
     ? await supabase
         .from("models")
@@ -143,17 +144,17 @@ export default async function MessagesPage({ searchParams }: PageProps) {
         .in("user_id", userIds) as { data: any[] | null }
     : { data: [] };
 
-  // Fetch all fans for these users
-  const { data: fans } = userIds.length > 0
+  // Fetch all fans by their actor ID (fans.id = actors.id)
+  const { data: fans } = fanActorIds.length > 0
     ? await supabase
         .from("fans")
-        .select("user_id, display_name, avatar_url")
-        .in("user_id", userIds) as { data: any[] | null }
+        .select("id, display_name, avatar_url")
+        .in("id", fanActorIds) as { data: any[] | null }
     : { data: [] };
 
   // Create lookup maps
   const modelsByUserId = new Map((models || []).map((m: any) => [m.user_id, m]));
-  const fansByUserId = new Map((fans || []).map((f: any) => [f.user_id, f]));
+  const fansById = new Map((fans || []).map((f: any) => [f.id, f]));
 
   // Group participants by conversation with enriched data
   const participantsMap = new Map<string, any[]>();
@@ -161,8 +162,9 @@ export default async function MessagesPage({ searchParams }: PageProps) {
     const existing = participantsMap.get(p.conversation_id) || [];
     const actorData = p.actor;
     if (actorData) {
+      // Models lookup by user_id, fans lookup by actor id
       const model = modelsByUserId.get(actorData.user_id);
-      const fan = fansByUserId.get(actorData.user_id);
+      const fan = fansById.get(actorData.id);
       existing.push({
         ...actorData,
         model: model || null,
