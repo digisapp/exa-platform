@@ -3,6 +3,7 @@ import { headers, cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { ConversationList } from "@/components/chat/ConversationList";
 import { NewMessageDialog } from "@/components/chat/NewMessageDialog";
+import { BlastDialog } from "@/components/chat/BlastDialog";
 
 interface PageProps {
   searchParams: Promise<{ new?: string }>;
@@ -206,17 +207,27 @@ export default async function MessagesPage({ searchParams }: PageProps) {
       return new Date(bDate).getTime() - new Date(aDate).getTime();
     });
 
+  // Count fans and brands for blast dialog
+  const fanCount = fanActorIds.length;
+  const brandCount = brandActorIds.length;
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Chats</h1>
-        {/* New Chat button only for brands */}
-        {actor.type === "brand" && (
-          <NewMessageDialog
-            currentActorType={actor.type}
-            coinBalance={coinBalance}
-          />
-        )}
+        <div className="flex items-center gap-2">
+          {/* Blast button only for models */}
+          {actor.type === "model" && (
+            <BlastDialog fanCount={fanCount} brandCount={brandCount} />
+          )}
+          {/* New Chat button only for brands */}
+          {actor.type === "brand" && (
+            <NewMessageDialog
+              currentActorType={actor.type}
+              coinBalance={coinBalance}
+            />
+          )}
+        </div>
       </div>
 
       <ConversationList conversations={conversations} actorType={actor.type} />
