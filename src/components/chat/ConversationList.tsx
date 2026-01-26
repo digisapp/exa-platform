@@ -104,7 +104,7 @@ export function ConversationList({ conversations, actorType }: ConversationListP
 
   // Helper to get display name and avatar for a participant
   const getParticipantInfo = (participant: Conversation["otherParticipants"][0]) => {
-    if (participant?.model) {
+    if (participant?.type === "model" && participant?.model) {
       return {
         displayName: participant.model.first_name
           ? `${participant.model.first_name} ${participant.model.last_name || ""}`.trim()
@@ -114,18 +114,18 @@ export function ConversationList({ conversations, actorType }: ConversationListP
         type: "model",
       };
     }
-    if (participant?.fan) {
+    if (participant?.type === "fan") {
       return {
-        displayName: participant.fan.display_name || "Fan",
-        avatarUrl: participant.fan.avatar_url,
+        displayName: participant.fan?.display_name || "Fan",
+        avatarUrl: participant.fan?.avatar_url || null,
         username: null,
         type: "fan",
       };
     }
-    if (participant?.brand) {
+    if (participant?.type === "brand") {
       return {
-        displayName: participant.brand.company_name || "Brand",
-        avatarUrl: participant.brand.logo_url,
+        displayName: participant.brand?.company_name || "Brand",
+        avatarUrl: participant.brand?.logo_url || null,
         username: null,
         type: "brand",
       };
