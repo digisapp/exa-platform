@@ -78,12 +78,15 @@ export async function GET(request: NextRequest) {
       // For computed field sorting: fetch ALL model IDs first, compute values, sort, then paginate
       // Note: Supabase has a default limit of 1000 rows, so we need to explicitly set a higher limit
       let allModelsQuery = (supabase.from("models") as any)
-        .select("id, user_id, created_at, claimed_at, last_active_at", { count: "exact" })
-        .range(0, 9999); // Fetch up to 10000 models
+        .select("id, user_id, created_at, claimed_at, last_active_at", { count: "exact" });
       allModelsQuery = applyFilters(allModelsQuery);
+      allModelsQuery = allModelsQuery.range(0, 9999); // Fetch up to 10000 models - apply range AFTER filters
 
       const { data: allModels, count, error: allError } = await allModelsQuery;
-      if (allError) throw allError;
+      if (allError) {
+        console.error("Error fetching all models for computed sort:", allError);
+        throw allError;
+      }
 
       if (!allModels || allModels.length === 0) {
         return NextResponse.json({ models: [], total: 0 });
@@ -92,6 +95,8 @@ export async function GET(request: NextRequest) {
       totalCount = count || 0;
       const allModelIds = allModels.map((m: any) => m.id);
       const allUserIds = allModels.map((m: any) => m.user_id).filter(Boolean);
+
+      console.log(`[Admin Models] Sorting by ${sortField}, fetched ${allModels.length} models, ${allUserIds.length} with user_ids`);
 
       // Get computed data for ALL models
       // Note: Add range to ensure we get all rows (Supabase default limit is 1000)
@@ -105,13 +110,21 @@ export async function GET(request: NextRequest) {
       ] = await Promise.all([
         allUserIds.length > 0
           ? (supabase.from("actors") as any).select("id, user_id").in("user_id", allUserIds).range(0, 9999)
-          : { data: [] },
+          : Promise.resolve({ data: [], error: null }),
         (supabase.from("media_assets") as any).select("model_id").in("model_id", allModelIds).eq("type", "photo").range(0, 49999),
         (supabase.from("media_assets") as any).select("model_id").in("model_id", allModelIds).eq("type", "video").range(0, 49999),
         (supabase.from("premium_content") as any).select("model_id").in("model_id", allModelIds).range(0, 49999),
         (supabase.from("premium_content") as any).select("model_id, created_at").in("model_id", allModelIds).range(0, 49999),
         (supabase.from("media_assets") as any).select("model_id, created_at").in("model_id", allModelIds).range(0, 49999),
       ]);
+
+      // Log any errors from the queries
+      if (allActorsResult.error) console.error("Actors query error:", allActorsResult.error);
+      if (allImageCountsResult.error) console.error("Image counts query error:", allImageCountsResult.error);
+      if (allVideoCountsResult.error) console.error("Video counts query error:", allVideoCountsResult.error);
+      if (allPpvCountsResult.error) console.error("PPV counts query error:", allPpvCountsResult.error);
+
+      console.log(`[Admin Models] Fetched ${(allImageCountsResult.data || []).length} image records, ${(allVideoCountsResult.data || []).length} video records`);
 
       const allActors = allActorsResult.data || [];
       const allActorToUser = new Map(allActors.map((a: any) => [a.user_id, a.id]));
@@ -233,6 +246,11 @@ export async function GET(request: NextRequest) {
 
         return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
       });
+
+      // Log top 5 results for debugging
+      const top5 = modelsWithComputedValues.slice(0, 5);
+      console.log(`[Admin Models] Top 5 after sorting by ${sortField} ${sortDirection}:`,
+        top5.map(m => ({ id: m.id.slice(0, 8), [sortField]: m[sortField] })));
 
       // Paginate
       const from = (page - 1) * pageSize;
