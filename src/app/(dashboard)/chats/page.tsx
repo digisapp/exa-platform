@@ -98,23 +98,29 @@ export default async function MessagesPage({ searchParams }: PageProps) {
 
   const conversationIds = participations?.map(p => p.conversation_id) || [];
 
-  // Batch fetch: Get all last messages for all conversations in ONE query
-  // Note: Not filtering by deleted_at to match chat view behavior
-  const { data: allMessages } = conversationIds.length > 0
-    ? await supabase
+  // Fetch last message for each conversation individually
+  // Using individual queries works better with RLS than batch .in() queries
+  const lastMessageMap = new Map<string, any>();
+
+  if (conversationIds.length > 0) {
+    const messagePromises = conversationIds.map(async (convId) => {
+      const { data } = await supabase
         .from("messages")
         .select("conversation_id, content, created_at, sender_id, media_url, media_type, is_system")
-        .in("conversation_id", conversationIds)
-        .order("created_at", { ascending: false }) as { data: any[] | null }
-    : { data: [] };
+        .eq("conversation_id", convId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return { convId, message: data };
+    });
 
-  // Group messages by conversation and get the latest one
-  const lastMessageMap = new Map<string, any>();
-  (allMessages || []).forEach((msg: any) => {
-    if (!lastMessageMap.has(msg.conversation_id)) {
-      lastMessageMap.set(msg.conversation_id, msg);
-    }
-  });
+    const results = await Promise.all(messagePromises);
+    results.forEach(({ convId, message }) => {
+      if (message) {
+        lastMessageMap.set(convId, message);
+      }
+    });
+  }
 
   // Batch fetch: Get all other participants for all conversations in ONE query
   const { data: allParticipants } = conversationIds.length > 0
