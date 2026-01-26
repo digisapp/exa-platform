@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
@@ -12,7 +12,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { toast } from "sonner";
 import { Loader2, ArrowLeft, Eye, EyeOff, Mail, Sparkles } from "lucide-react";
 
-export default function LoginPage() {
+function LoginForm() {
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect");
   const [email, setEmail] = useState("");
@@ -283,5 +283,38 @@ export default function LoginPage() {
         </form>
       </Card>
     </div>
+  );
+}
+
+// Loading fallback for Suspense
+function LoginLoading() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <Link href="/" className="flex justify-center mb-4">
+            <Image
+              src="/exa-logo-white.png"
+              alt="EXA"
+              width={100}
+              height={40}
+              className="h-10 w-auto"
+            />
+          </Link>
+          <CardTitle>Sign In</CardTitle>
+        </CardHeader>
+        <CardContent className="flex justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginLoading />}>
+      <LoginForm />
+    </Suspense>
   );
 }
