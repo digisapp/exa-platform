@@ -11,7 +11,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Heart, Loader2, Coins } from "lucide-react";
+import { Gift, Loader2, Coins } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -85,14 +85,14 @@ export function TipDialog({
           size="sm"
           className="text-pink-500 hover:text-pink-600 hover:bg-pink-500/10"
         >
-          <Heart className="h-4 w-4 mr-1" />
+          <Gift className="h-4 w-4 mr-1" />
           Tip
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Heart className="h-5 w-5 text-pink-500" />
+            <Gift className="h-5 w-5 text-pink-500" />
             Send a Tip
           </DialogTitle>
           <DialogDescription>
@@ -150,7 +150,7 @@ export function TipDialog({
               </>
             ) : selectedAmount ? (
               <>
-                <Heart className="mr-2 h-4 w-4" />
+                <Gift className="mr-2 h-4 w-4" />
                 Send {selectedAmount} Coins
               </>
             ) : (

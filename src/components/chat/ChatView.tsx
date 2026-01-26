@@ -292,7 +292,7 @@ export function ChatView({
             newMessage.sender_id !== currentActor.id
           ) {
             toast.success(`${otherName} sent you a tip!`, {
-              icon: "💝",
+              icon: "🎁",
               duration: 5000,
             });
           }
