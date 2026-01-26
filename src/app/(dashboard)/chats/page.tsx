@@ -138,9 +138,10 @@ export default async function MessagesPage({ searchParams }: PageProps) {
         .neq("actor_id", actor.id) as { data: any[] | null }
     : { data: [] };
 
-  // Get user IDs for models and actor IDs for fans
+  // Get user IDs for models and actor IDs for fans/brands
   const userIds = [...new Set((allParticipants || []).map((p: any) => p.actor?.user_id).filter(Boolean))];
   const fanActorIds = [...new Set((allParticipants || []).filter((p: any) => p.actor?.type === "fan").map((p: any) => p.actor?.id).filter(Boolean))];
+  const brandActorIds = [...new Set((allParticipants || []).filter((p: any) => p.actor?.type === "brand").map((p: any) => p.actor?.id).filter(Boolean))];
 
   // Fetch all models for these users (models use user_id)
   const { data: models } = userIds.length > 0
@@ -158,9 +159,18 @@ export default async function MessagesPage({ searchParams }: PageProps) {
         .in("id", fanActorIds) as { data: any[] | null }
     : { data: [] };
 
+  // Fetch all brands by their actor ID (brands.id = actors.id)
+  const { data: brands } = brandActorIds.length > 0
+    ? await (supabase
+        .from("brands") as any)
+        .select("id, company_name, logo_url")
+        .in("id", brandActorIds) as { data: any[] | null }
+    : { data: [] };
+
   // Create lookup maps
   const modelsByUserId = new Map((models || []).map((m: any) => [m.user_id, m]));
   const fansById = new Map((fans || []).map((f: any) => [f.id, f]));
+  const brandsById = new Map((brands || []).map((b: any) => [b.id, b]));
 
   // Group participants by conversation with enriched data
   const participantsMap = new Map<string, any[]>();
@@ -168,13 +178,15 @@ export default async function MessagesPage({ searchParams }: PageProps) {
     const existing = participantsMap.get(p.conversation_id) || [];
     const actorData = p.actor;
     if (actorData) {
-      // Models lookup by user_id, fans lookup by actor id
+      // Models lookup by user_id, fans/brands lookup by actor id
       const model = modelsByUserId.get(actorData.user_id);
       const fan = fansById.get(actorData.id);
+      const brand = brandsById.get(actorData.id);
       existing.push({
         ...actorData,
         model: model || null,
         fan: fan || null,
+        brand: brand || null,
       });
     }
     participantsMap.set(p.conversation_id, existing);

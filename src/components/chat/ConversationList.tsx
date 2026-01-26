@@ -6,8 +6,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { MessageCircle, Search, MessageSquare, Sparkles } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MessageCircle, Search, MessageSquare, Sparkles, Users, Building2 } from "lucide-react";
+import { format, isToday, isYesterday, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
 
 interface Conversation {
@@ -34,6 +35,10 @@ interface Conversation {
       display_name: string | null;
       avatar_url: string | null;
     } | null;
+    brand: {
+      company_name: string | null;
+      logo_url: string | null;
+    } | null;
   }>;
 }
 
@@ -42,8 +47,29 @@ interface ConversationListProps {
   actorType?: string;
 }
 
+type FilterType = "all" | "fans" | "brands";
+
+// Helper to format time nicely (Yesterday, Tuesday, etc.)
+function formatMessageTime(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+
+  if (isToday(date)) {
+    return format(date, "h:mm a");
+  }
+  if (isYesterday(date)) {
+    return "Yesterday";
+  }
+  const daysDiff = differenceInDays(now, date);
+  if (daysDiff < 7) {
+    return format(date, "EEEE"); // Day name like "Tuesday"
+  }
+  return format(date, "MMM d"); // "Jan 15"
+}
+
 export function ConversationList({ conversations, actorType }: ConversationListProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [filter, setFilter] = useState<FilterType>("all");
 
   // Helper to get message preview text
   const getMessagePreview = (message: Conversation["lastMessage"]) => {
@@ -96,6 +122,14 @@ export function ConversationList({ conversations, actorType }: ConversationListP
         type: "fan",
       };
     }
+    if (participant?.brand) {
+      return {
+        displayName: participant.brand.company_name || "Brand",
+        avatarUrl: participant.brand.logo_url,
+        username: null,
+        type: "brand",
+      };
+    }
     if (participant?.type === "admin") {
       return {
         displayName: "EXA Team",
@@ -113,19 +147,34 @@ export function ConversationList({ conversations, actorType }: ConversationListP
   };
 
   const filteredConversations = useMemo(() => {
-    if (!searchQuery.trim()) return conversations;
+    let filtered = conversations;
 
-    const query = searchQuery.toLowerCase();
-    return conversations.filter((conv) => {
-      const participant = conv.otherParticipants[0];
-      const info = getParticipantInfo(participant);
+    // Apply type filter (only for models)
+    if (filter !== "all" && actorType === "model") {
+      filtered = filtered.filter((conv) => {
+        const participant = conv.otherParticipants[0];
+        const info = getParticipantInfo(participant);
+        if (filter === "fans") return info.type === "fan";
+        if (filter === "brands") return info.type === "brand";
+        return true;
+      });
+    }
 
-      return (
-        info.displayName.toLowerCase().includes(query) ||
-        (info.username && info.username.toLowerCase().includes(query))
-      );
-    });
-  }, [conversations, searchQuery]);
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((conv) => {
+        const participant = conv.otherParticipants[0];
+        const info = getParticipantInfo(participant);
+        return (
+          info.displayName.toLowerCase().includes(query) ||
+          (info.username && info.username.toLowerCase().includes(query))
+        );
+      });
+    }
+
+    return filtered;
+  }, [conversations, searchQuery, filter, actorType]);
 
   // Count unread messages
   const unreadCount = useMemo(() => {
@@ -136,6 +185,18 @@ export function ConversationList({ conversations, actorType }: ConversationListP
           new Date(conv.lastMessage.created_at) > new Date(conv.last_read_at))
       );
     }).length;
+  }, [conversations]);
+
+  // Count by participant type (for model tabs)
+  const typeCounts = useMemo(() => {
+    const counts = { fans: 0, brands: 0 };
+    conversations.forEach((conv) => {
+      const participant = conv.otherParticipants[0];
+      const info = getParticipantInfo(participant);
+      if (info.type === "fan") counts.fans++;
+      else if (info.type === "brand") counts.brands++;
+    });
+    return counts;
   }, [conversations]);
 
   return (
@@ -163,6 +224,32 @@ export function ConversationList({ conversations, actorType }: ConversationListP
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
+
+      {/* Filter Tabs (only for models) */}
+      {actorType === "model" && (
+        <Tabs value={filter} onValueChange={(v) => setFilter(v as FilterType)}>
+          <TabsList className="w-full grid grid-cols-3">
+            <TabsTrigger value="all" className="gap-2">
+              <MessageSquare className="h-4 w-4" />
+              All
+            </TabsTrigger>
+            <TabsTrigger value="fans" className="gap-2">
+              <Users className="h-4 w-4" />
+              Fans
+              {typeCounts.fans > 0 && (
+                <span className="ml-1 text-xs text-muted-foreground">({typeCounts.fans})</span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="brands" className="gap-2">
+              <Building2 className="h-4 w-4" />
+              Brands
+              {typeCounts.brands > 0 && (
+                <span className="ml-1 text-xs text-muted-foreground">({typeCounts.brands})</span>
+              )}
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      )}
 
       {/* Conversations List */}
       {filteredConversations.length > 0 ? (
@@ -193,6 +280,7 @@ export function ConversationList({ conversations, actorType }: ConversationListP
                       "text-white font-semibold",
                       type === "admin" ? "bg-gradient-to-br from-violet-500 to-purple-600" :
                       type === "model" ? "bg-gradient-to-br from-pink-500 to-rose-600" :
+                      type === "brand" ? "bg-gradient-to-br from-amber-500 to-orange-600" :
                       "bg-gradient-to-br from-blue-500 to-cyan-600"
                     )}>
                       {type === "admin" ? "EXA" : displayName.charAt(0).toUpperCase()}
@@ -215,12 +303,13 @@ export function ConversationList({ conversations, actorType }: ConversationListP
                       {type === "admin" && (
                         <Sparkles className="h-3.5 w-3.5 text-violet-500 flex-shrink-0" />
                       )}
+                      {type === "brand" && (
+                        <Building2 className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
+                      )}
                     </div>
                     {conv.lastMessage && (
                       <span className="text-xs text-muted-foreground flex-shrink-0">
-                        {formatDistanceToNow(new Date(conv.lastMessage.created_at), {
-                          addSuffix: false,
-                        })}
+                        {formatMessageTime(conv.lastMessage.created_at)}
                       </span>
                     )}
                   </div>
