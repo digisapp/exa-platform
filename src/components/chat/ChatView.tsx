@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/client";
 import { MessageBubble } from "./MessageBubble";
 import { MessageInput } from "./MessageInput";
 import { TipDialog } from "./TipDialog";
+import { TypingIndicator } from "./TypingIndicator";
+import { useTypingIndicator } from "@/hooks/useTypingIndicator";
 import { VideoCallButton, IncomingCallDialog } from "@/components/video";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -76,6 +78,18 @@ export function ChatView({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
+
+  // Get current user's display name for typing indicator
+  const currentUserName = currentModel?.first_name
+    ? `${currentModel.first_name} ${currentModel.last_name || ""}`.trim()
+    : currentFan?.display_name || "User";
+
+  // Typing indicator
+  const { typingUsers, broadcastTyping, stopTyping } = useTypingIndicator({
+    conversationId: conversation.id,
+    currentActorId: currentActor.id,
+    currentActorName: currentUserName,
+  });
 
   // Handle blocking a user
   const handleBlockUser = async () => {
@@ -214,7 +228,7 @@ export function ChatView({
           filter: `conversation_id=eq.${conversation.id}`,
         },
         (payload) => {
-          const newMessage = payload.new as Message;
+          const newMessage = payload.new as Message & { is_system?: boolean };
           // Only add if not already in the list (avoid duplicates from optimistic updates)
           setMessages((prev) => {
             if (prev.some((m) => m.id === newMessage.id)) {
@@ -222,6 +236,18 @@ export function ChatView({
             }
             return [...prev, newMessage];
           });
+
+          // Show toast notification for incoming tips (when someone tips you)
+          if (
+            newMessage.is_system &&
+            newMessage.content?.includes("tip") &&
+            newMessage.sender_id !== currentActor.id
+          ) {
+            toast.success(`${otherName} sent you a tip!`, {
+              icon: "💝",
+              duration: 5000,
+            });
+          }
         }
       )
       .subscribe();
@@ -229,7 +255,7 @@ export function ChatView({
     return () => {
       channel.unsubscribe();
     };
-  }, [conversation.id, supabase]);
+  }, [conversation.id, supabase, currentActor.id, otherName]);
 
   // Mark messages as read
   useEffect(() => {
@@ -516,6 +542,12 @@ export function ChatView({
             );
           })
         )}
+
+        {/* Typing indicator */}
+        {typingUsers.length > 0 && (
+          <TypingIndicator name={typingUsers[0].name} />
+        )}
+
         <div ref={messagesEndRef} />
       </div>
 
@@ -546,6 +578,8 @@ export function ChatView({
         isModel={currentActor.type === "model"}
         modelId={currentModel?.id}
         conversationId={conversation.id}
+        onTyping={broadcastTyping}
+        onStopTyping={stopTyping}
       />
     </div>
   );

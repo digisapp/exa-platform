@@ -70,6 +70,20 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: "Invalid coins value" }, { status: 400 });
         }
 
+        // IDEMPOTENCY CHECK: Prevent duplicate coin credits from webhook retries
+        const { data: existingTransaction } = await supabaseAdmin
+          .from("coin_transactions")
+          .select("id")
+          .eq("actor_id", actorId)
+          .eq("action", "purchase")
+          .contains("metadata", { stripe_session_id: session.id })
+          .maybeSingle();
+
+        if (existingTransaction) {
+          console.log("Duplicate webhook ignored - coins already credited for session:", session.id);
+          return NextResponse.json({ received: true, duplicate: true });
+        }
+
         const { error: creditError } = await supabaseAdmin.rpc("add_coins", {
           p_actor_id: actorId,
           p_amount: coins,

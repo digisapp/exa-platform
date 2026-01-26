@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -21,7 +21,7 @@ interface Reaction {
 
 interface MessageReactionsProps {
   messageId: string;
-  reactions: Reaction[];
+  reactions?: Reaction[];
   currentActorId: string;
   onReactionChange?: () => void;
   isOwn?: boolean;
@@ -29,7 +29,7 @@ interface MessageReactionsProps {
 
 export function MessageReactions({
   messageId,
-  reactions,
+  reactions = [],
   currentActorId,
   onReactionChange,
   isOwn = false,
@@ -37,6 +37,31 @@ export function MessageReactions({
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [localReactions, setLocalReactions] = useState<Reaction[]>(reactions);
+
+  // Fetch reactions on mount
+  useEffect(() => {
+    async function fetchReactions() {
+      try {
+        const response = await fetch(`/api/messages/react?messageId=${messageId}`);
+        if (response.ok) {
+          const data = await response.json();
+          // Convert API response to Reaction[] format
+          const reactionsArray: Reaction[] = Object.entries(data.reactions || {}).map(
+            ([emoji, info]: [string, any]) => ({
+              emoji,
+              count: info.count,
+              hasReacted: info.actorIds.includes(currentActorId),
+            })
+          );
+          setLocalReactions(reactionsArray);
+        }
+      } catch (error) {
+        console.error("Failed to fetch reactions:", error);
+      }
+    }
+
+    fetchReactions();
+  }, [messageId, currentActorId]);
 
   const handleReact = async (emoji: string) => {
     if (isLoading) return;
@@ -90,8 +115,23 @@ export function MessageReactions({
 
       onReactionChange?.();
     } catch (error) {
-      // Revert optimistic update
-      setLocalReactions(reactions);
+      // Refetch reactions on error to get accurate state
+      try {
+        const response = await fetch(`/api/messages/react?messageId=${messageId}`);
+        if (response.ok) {
+          const data = await response.json();
+          const reactionsArray: Reaction[] = Object.entries(data.reactions || {}).map(
+            ([emoji, info]: [string, any]) => ({
+              emoji,
+              count: info.count,
+              hasReacted: info.actorIds.includes(currentActorId),
+            })
+          );
+          setLocalReactions(reactionsArray);
+        }
+      } catch {
+        // If refetch fails, just keep the optimistic state
+      }
       toast.error("Failed to add reaction");
     } finally {
       setIsLoading(false);

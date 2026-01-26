@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { stripe } from "@/lib/stripe";
 import { COIN_PACKAGES } from "@/lib/stripe-config";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -14,6 +15,12 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Rate limit check for financial operations
+    const rateLimitResponse = await checkEndpointRateLimit(request, "financial", user.id);
+    if (rateLimitResponse) {
+      return rateLimitResponse;
     }
 
     // Get actor

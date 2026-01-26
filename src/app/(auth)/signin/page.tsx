@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +13,8 @@ import { toast } from "sonner";
 import { Loader2, ArrowLeft, Eye, EyeOff, Mail, Sparkles } from "lucide-react";
 
 export default function LoginPage() {
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -38,6 +41,15 @@ export default function LoginPage() {
           .select("type")
           .eq("user_id", data.user.id)
           .single();
+
+        // If there's a redirect parameter, use it (for returning users)
+        if (redirectTo && actor) {
+          // Validate redirect is a safe internal path
+          if (redirectTo.startsWith("/") && !redirectTo.startsWith("//")) {
+            window.location.href = redirectTo;
+            return;
+          }
+        }
 
         if (actor?.type === "admin") {
           window.location.href = "/admin";

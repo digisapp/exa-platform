@@ -21,6 +21,8 @@ interface MessageInputProps {
   isModel?: boolean;
   modelId?: string;
   conversationId?: string;
+  onTyping?: () => void;
+  onStopTyping?: () => void;
 }
 
 export function MessageInput({
@@ -32,6 +34,8 @@ export function MessageInput({
   isModel = false,
   modelId,
   conversationId,
+  onTyping,
+  onStopTyping,
 }: MessageInputProps) {
   const [content, setContent] = useState("");
   const [sending, setSending] = useState(false);
@@ -102,6 +106,9 @@ export function MessageInput({
     setAttachedMedia(null);
     setSending(true);
 
+    // Stop typing indicator when sending
+    onStopTyping?.();
+
     try {
       await onSend(messageContent, mediaUrl, mediaType);
       clearDraft(); // Clear draft on successful send
@@ -113,6 +120,15 @@ export function MessageInput({
     } finally {
       setSending(false);
       textareaRef.current?.focus();
+    }
+  };
+
+  // Handle content change with typing indicator
+  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setContent(e.target.value);
+    // Broadcast typing when user types
+    if (e.target.value.trim()) {
+      onTyping?.();
     }
   };
 
@@ -396,7 +412,7 @@ export function MessageInput({
         <Textarea
           ref={textareaRef}
           value={content}
-          onChange={(e) => setContent(e.target.value)}
+          onChange={handleContentChange}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           disabled={disabled || sending || uploading}

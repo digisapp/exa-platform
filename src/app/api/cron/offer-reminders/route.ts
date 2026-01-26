@@ -11,11 +11,12 @@ const adminClient = createSupabaseClient(
 // Runs twice daily (8 AM and 6 PM) via Vercel cron
 export async function GET(request: NextRequest) {
   try {
-    // Verify cron secret (for Vercel cron jobs)
+    // Verify cron secret (for Vercel cron jobs) - REQUIRED
     const authHeader = request.headers.get("authorization");
     const cronSecret = process.env.CRON_SECRET;
 
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+      console.error("Cron authentication failed - CRON_SECRET missing or invalid");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

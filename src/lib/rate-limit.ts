@@ -235,6 +235,9 @@ export const EndpointLimits = {
   // Blocking - 20 per minute
   blocking: { limit: 20, windowSeconds: 60 },
 
+  // Financial operations (checkout, purchases) - 10 per minute (stricter)
+  financial: { limit: 10, windowSeconds: 60 },
+
   // General API - 200 per minute (fallback)
   general: { limit: 200, windowSeconds: 60 },
 } as const;
