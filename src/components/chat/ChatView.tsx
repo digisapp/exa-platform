@@ -641,9 +641,9 @@ export function ChatView({
             // - OR there's a time gap > 5 minutes to next message
             const isLastMessage = index === messages.length - 1;
             const nextMessage = messages[index + 1];
-            const isDifferentSender = nextMessage && nextMessage.sender_id !== message.sender_id;
-            const hasTimeGap = nextMessage && message.created_at && nextMessage.created_at &&
-              (new Date(nextMessage.created_at).getTime() - new Date(message.created_at).getTime() > 5 * 60 * 1000);
+            const isDifferentSender = !!(nextMessage && nextMessage.sender_id !== message.sender_id);
+            const hasTimeGap = !!(nextMessage && message.created_at && nextMessage.created_at &&
+              (new Date(nextMessage.created_at).getTime() - new Date(message.created_at).getTime() > 5 * 60 * 1000));
             const showTimestamp = isLastMessage || isDifferentSender || hasTimeGap;
 
             return (
