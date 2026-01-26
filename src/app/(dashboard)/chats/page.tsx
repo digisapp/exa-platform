@@ -99,12 +99,12 @@ export default async function MessagesPage({ searchParams }: PageProps) {
   const conversationIds = participations?.map(p => p.conversation_id) || [];
 
   // Batch fetch: Get all last messages for all conversations in ONE query
+  // Note: Not filtering by deleted_at to match chat view behavior
   const { data: allMessages } = conversationIds.length > 0
     ? await supabase
         .from("messages")
-        .select("conversation_id, content, created_at, sender_id, media_url, media_type, is_system, deleted_at")
+        .select("conversation_id, content, created_at, sender_id, media_url, media_type, is_system")
         .in("conversation_id", conversationIds)
-        .is("deleted_at", null)
         .order("created_at", { ascending: false }) as { data: any[] | null }
     : { data: [] };
 
