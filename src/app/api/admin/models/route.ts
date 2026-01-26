@@ -117,10 +117,10 @@ export async function GET(request: NextRequest) {
         : { data: [] },
       // Get premium content (PPV) counts
       (supabase.from("premium_content") as any).select("model_id").in("model_id", modelIds),
-      // Get image counts from media_assets
-      (supabase.from("media_assets") as any).select("model_id").in("model_id", modelIds).eq("media_type", "image"),
+      // Get image counts from media_assets (type = "photo" for images)
+      (supabase.from("media_assets") as any).select("model_id").in("model_id", modelIds).eq("type", "photo"),
       // Get video counts from media_assets
-      (supabase.from("media_assets") as any).select("model_id").in("model_id", modelIds).eq("media_type", "video"),
+      (supabase.from("media_assets") as any).select("model_id").in("model_id", modelIds).eq("type", "video"),
       // Get last premium content dates
       (supabase.from("premium_content") as any)
         .select("model_id, created_at")

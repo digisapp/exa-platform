@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
-import { sendModelApprovalEmail, sendModelRejectionEmail } from "@/lib/email";
+import { sendModelApprovalEmail } from "@/lib/email";
 
 // Update model application status (approve/reject)
 export async function PATCH(
@@ -316,17 +316,8 @@ Here's how to get started:
         console.error("Failed to send welcome chat message:", chatError);
         // Don't fail the request, just log the error
       }
-    } else if (status === "rejected") {
-      // Send rejection email
-      const emailResult = await sendModelRejectionEmail({
-        to: application.email,
-        modelName: application.display_name || "Model",
-      });
-
-      if (!emailResult.success) {
-        console.error("Failed to send rejection email:", emailResult.error);
-      }
     }
+    // Note: No email is sent on rejection
 
     return NextResponse.json({
       success: true,
