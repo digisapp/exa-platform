@@ -76,8 +76,10 @@ export async function GET(request: NextRequest) {
 
     if (isSortingByComputedField) {
       // For computed field sorting: fetch ALL model IDs first, compute values, sort, then paginate
+      // Note: Supabase has a default limit of 1000 rows, so we need to explicitly set a higher limit
       let allModelsQuery = (supabase.from("models") as any)
-        .select("id, user_id, created_at, claimed_at, last_active_at", { count: "exact" });
+        .select("id, user_id, created_at, claimed_at, last_active_at", { count: "exact" })
+        .range(0, 9999); // Fetch up to 10000 models
       allModelsQuery = applyFilters(allModelsQuery);
 
       const { data: allModels, count, error: allError } = await allModelsQuery;
@@ -92,6 +94,7 @@ export async function GET(request: NextRequest) {
       const allUserIds = allModels.map((m: any) => m.user_id).filter(Boolean);
 
       // Get computed data for ALL models
+      // Note: Add range to ensure we get all rows (Supabase default limit is 1000)
       const [
         allActorsResult,
         allImageCountsResult,
@@ -101,13 +104,13 @@ export async function GET(request: NextRequest) {
         allLastMediaResult,
       ] = await Promise.all([
         allUserIds.length > 0
-          ? (supabase.from("actors") as any).select("id, user_id").in("user_id", allUserIds)
+          ? (supabase.from("actors") as any).select("id, user_id").in("user_id", allUserIds).range(0, 9999)
           : { data: [] },
-        (supabase.from("media_assets") as any).select("model_id").in("model_id", allModelIds).eq("type", "photo"),
-        (supabase.from("media_assets") as any).select("model_id").in("model_id", allModelIds).eq("type", "video"),
-        (supabase.from("premium_content") as any).select("model_id").in("model_id", allModelIds),
-        (supabase.from("premium_content") as any).select("model_id, created_at").in("model_id", allModelIds),
-        (supabase.from("media_assets") as any).select("model_id, created_at").in("model_id", allModelIds),
+        (supabase.from("media_assets") as any).select("model_id").in("model_id", allModelIds).eq("type", "photo").range(0, 49999),
+        (supabase.from("media_assets") as any).select("model_id").in("model_id", allModelIds).eq("type", "video").range(0, 49999),
+        (supabase.from("premium_content") as any).select("model_id").in("model_id", allModelIds).range(0, 49999),
+        (supabase.from("premium_content") as any).select("model_id, created_at").in("model_id", allModelIds).range(0, 49999),
+        (supabase.from("media_assets") as any).select("model_id, created_at").in("model_id", allModelIds).range(0, 49999),
       ]);
 
       const allActors = allActorsResult.data || [];
@@ -122,7 +125,7 @@ export async function GET(request: NextRequest) {
         allReferralsResult,
       ] = await Promise.all([
         allActorIds.length > 0
-          ? (supabase.from("follows") as any).select("following_id").in("following_id", allActorIds)
+          ? (supabase.from("follows") as any).select("following_id").in("following_id", allActorIds).range(0, 49999)
           : { data: [] },
         allActorIds.length > 0
           ? (supabase.from("coin_transactions") as any)
@@ -130,15 +133,18 @@ export async function GET(request: NextRequest) {
               .in("actor_id", allActorIds)
               .gt("amount", 0)
               .neq("action", "purchase")
+              .range(0, 99999)
           : { data: [] },
         allActorIds.length > 0
           ? (supabase.from("conversation_participants") as any)
               .select("actor_id, conversation_id")
               .in("actor_id", allActorIds)
+              .range(0, 49999)
           : { data: [] },
         (supabase.from("fans") as any)
           .select("referred_by_model_id")
-          .in("referred_by_model_id", allModelIds),
+          .in("referred_by_model_id", allModelIds)
+          .range(0, 49999),
       ]);
 
       // Build maps for computed values
