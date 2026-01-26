@@ -486,6 +486,8 @@ export function ChatView({
           recipientIsModel={otherParticipant.actor.type === "model"}
           recipientActorId={otherParticipant.actor_id}
           recipientName={otherName}
+          recipientAvatar={otherAvatar}
+          videoCallRate={otherParticipant.model?.video_call_rate || 5}
           onBalanceChange={(newBalance) => {
             setLocalCoinBalance(newBalance);
             coinBalanceContext?.setBalance(newBalance);
