@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
+import Image from "next/image";
 
 export const metadata: Metadata = {
   title: "Gigs",
   robots: { index: false, follow: false },
 };
+
+// Cache page for 2 minutes - gig availability changes more frequently
+export const revalidate = 120;
+
 import Link from "next/link";
 import { Navbar } from "@/components/layout/navbar";
 import { Badge } from "@/components/ui/badge";
@@ -311,10 +316,12 @@ function GigCard({ gig }: { gig: any }) {
         {/* Portrait Image with Overlay */}
         <div className="aspect-[3/4] relative bg-gradient-to-br from-pink-500/20 to-violet-500/20 overflow-hidden">
           {gig.cover_image_url ? (
-            <img
+            <Image
               src={gig.cover_image_url}
               alt={gig.title}
-              className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-300"
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+              className="object-cover group-hover:scale-110 transition-transform duration-300"
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center">

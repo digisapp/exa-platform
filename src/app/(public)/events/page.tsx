@@ -1,6 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
+import Image from "next/image";
 import { Navbar } from "@/components/layout/navbar";
+
+// Cache page for 5 minutes - events don't change frequently
+export const revalidate = 300;
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -27,17 +31,23 @@ export default async function EventsPage() {
     .in("status", ["upcoming", "active"])
     .order("start_date", { ascending: true }) as { data: any[] | null };
 
-  // Get confirmed model counts for each event
+  // Get confirmed model counts for all events in ONE query (fixes N+1 problem)
   const eventCounts: Record<string, number> = {};
   if (events && events.length > 0) {
-    for (const event of events) {
-      const { count } = await supabase
-        .from("gig_applications")
-        .select("model_id, gigs!inner(event_id)", { count: "exact", head: true })
-        .eq("status", "accepted")
-        .eq("gigs.event_id", event.id);
-      eventCounts[event.id] = count || 0;
-    }
+    const eventIds = events.map(e => e.id);
+    const { data: applications } = await supabase
+      .from("gig_applications")
+      .select("gigs!inner(event_id)")
+      .eq("status", "accepted")
+      .in("gigs.event_id", eventIds) as { data: { gigs: { event_id: string } }[] | null };
+
+    // Count applications per event
+    (applications || []).forEach(app => {
+      const eventId = app.gigs?.event_id;
+      if (eventId) {
+        eventCounts[eventId] = (eventCounts[eventId] || 0) + 1;
+      }
+    });
   }
 
   // Get current user info for navbar
@@ -120,10 +130,12 @@ export default async function EventsPage() {
                     {/* Cover Image */}
                     <div className="aspect-video relative bg-gradient-to-br from-pink-500/30 via-violet-500/30 to-cyan-500/30">
                       {event.cover_image_url ? (
-                        <img
+                        <Image
                           src={event.cover_image_url}
                           alt={event.name}
-                          className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                          fill
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          className="object-cover transition-transform group-hover:scale-105"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">

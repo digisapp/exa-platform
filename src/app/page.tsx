@@ -14,6 +14,9 @@ import {
 import { TopModelsCarousel } from "@/components/home/TopModelsCarousel";
 import { UpcomingEventsCarousel } from "@/components/home/UpcomingEventsCarousel";
 
+// Cache homepage for 5 minutes - model list changes infrequently
+export const revalidate = 300;
+
 // Shuffle array helper
 function shuffleArray<T>(array: T[]): T[] {
   const shuffled = [...array];

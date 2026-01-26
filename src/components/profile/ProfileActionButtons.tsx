@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Video, Coins, Loader2, Phone, Gift } from "lucide-react";
 import {
@@ -12,9 +13,18 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { VideoRoom } from "@/components/video";
 import Link from "next/link";
 import { toast } from "sonner";
+
+// Dynamic import for VideoRoom - only loads when call starts (saves ~200KB)
+const VideoRoom = dynamic(() => import("@/components/video").then(mod => mod.VideoRoom), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center min-h-[400px]">
+      <Loader2 className="h-8 w-8 animate-spin text-pink-500" />
+    </div>
+  ),
+});
 
 interface ProfileActionButtonsProps {
   isLoggedIn: boolean;

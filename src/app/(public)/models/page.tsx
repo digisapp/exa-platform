@@ -8,6 +8,9 @@ import { ModelsGrid } from "@/components/models/models-grid";
 import { BrandPaywallWrapper } from "@/components/brands/BrandPaywallWrapper";
 import { FanCoinGateWrapper } from "@/components/fans/FanCoinGate";
 
+// Cache model list for 2 minutes - balance between freshness and performance
+export const revalidate = 120;
+
 interface SearchParams {
   q?: string;
   state?: string;
@@ -160,22 +163,18 @@ export default async function ModelsPage({
       coinBalance = data?.coin_balance ?? 0;
     }
 
-    // Get favorites
+    // Get favorites with actor info in single query (optimized from 3 queries to 2)
     const { data: favorites } = await (supabase
       .from("follows") as any)
-      .select("following_id")
-      .eq("follower_id", actor.id);
+      .select("following_id, actor:actors!follows_following_id_fkey(user_id)")
+      .eq("follower_id", actor.id) as { data: { following_id: string; actor: { user_id: string } | null }[] | null };
 
-    if (favorites) {
-      // Get model IDs from actor IDs
-      const actorIds = favorites.map((f: any) => f.following_id);
-      const { data: modelActors } = await supabase
-        .from("actors")
-        .select("id, user_id")
-        .in("id", actorIds);
+    if (favorites && favorites.length > 0) {
+      const userIds = favorites
+        .map((f) => f.actor?.user_id)
+        .filter(Boolean) as string[];
 
-      if (modelActors) {
-        const userIds = modelActors.map((a: any) => a.user_id);
+      if (userIds.length > 0) {
         const { data: favModels } = await supabase
           .from("models")
           .select("id")

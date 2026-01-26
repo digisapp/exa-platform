@@ -22,9 +22,9 @@ import { ProfileActionButtons } from "@/components/profile/ProfileActionButtons"
 import { ProfileContentTabs } from "@/components/profile/ProfileContentTabs";
 import { ViewTracker } from "@/components/profile/ViewTracker";
 
-// Force dynamic rendering - profile data changes frequently (new uploads, availability, etc)
-// Without this, Next.js may cache the page and show stale portfolio content
-export const dynamic = "force-dynamic";
+// Use ISR - revalidate every 60 seconds for fresh content without regenerating on every request
+// This dramatically improves performance while keeping data reasonably fresh
+export const revalidate = 60;
 
 // Reserved paths that should NOT be treated as usernames
 const RESERVED_PATHS = [
