@@ -33,6 +33,7 @@ interface Conversation {
     } | null;
     fan: {
       display_name: string | null;
+      username: string | null;
       avatar_url: string | null;
     } | null;
     brand: {
@@ -116,9 +117,9 @@ export function ConversationList({ conversations, actorType }: ConversationListP
     }
     if (participant?.type === "fan") {
       return {
-        displayName: participant.fan?.display_name || "Fan",
+        displayName: participant.fan?.display_name || participant.fan?.username || "Fan",
         avatarUrl: participant.fan?.avatar_url || null,
-        username: null,
+        username: participant.fan?.username || null,
         type: "fan",
       };
     }

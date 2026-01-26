@@ -156,7 +156,7 @@ export default async function MessagesPage({ searchParams }: PageProps) {
   const { data: fans } = fanActorIds.length > 0
     ? await supabase
         .from("fans")
-        .select("id, display_name, avatar_url")
+        .select("id, display_name, username, avatar_url")
         .in("id", fanActorIds) as { data: any[] | null }
     : { data: [] };
 
