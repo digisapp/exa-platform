@@ -250,7 +250,7 @@ export async function GET(request: NextRequest) {
       // Log top 5 results for debugging
       const top5 = modelsWithComputedValues.slice(0, 5);
       console.log(`[Admin Models] Top 5 after sorting by ${sortField} ${sortDirection}:`,
-        top5.map(m => ({ id: m.id.slice(0, 8), [sortField]: m[sortField] })));
+        top5.map((m: any) => ({ id: m.id.slice(0, 8), [sortField]: m[sortField] })));
 
       // Paginate
       const from = (page - 1) * pageSize;
