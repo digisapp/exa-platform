@@ -202,9 +202,9 @@ export function ChatView({
 
     if (actor.type === "fan" && fan) {
       return {
-        name: fan.display_name || "Fan",
+        name: fan.display_name || fan.username || "Fan",
         avatar: fan.avatar_url,
-        username: null,
+        username: fan.username || null,
         type: "fan" as const,
         lastActive: null,
       };
