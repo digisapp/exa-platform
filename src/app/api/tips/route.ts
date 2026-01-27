@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
 
     // Create a tip message in the conversation if conversationId provided
     if (conversationId) {
-      const tipMessage = `🪙 Sent a ${amount} coin tip!`;
+      const tipMessage = `🪙 Tip Sent — ${amount} Coins!`;
       // Use admin client to bypass RLS and ensure message is created
       const { error: msgError } = await adminClient
         .from("messages")
