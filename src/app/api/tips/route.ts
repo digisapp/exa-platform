@@ -1,7 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { getModelIdFromActorId } from "@/lib/ids";
 import { NextRequest, NextResponse } from "next/server";
 import { sendTipReceivedEmail } from "@/lib/email";
+
+// Admin client for inserting tip messages (bypasses RLS)
+const adminClient = createSupabaseClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function POST(request: NextRequest) {
   try {
@@ -117,8 +124,9 @@ export async function POST(request: NextRequest) {
 
     // Create a tip message in the conversation if conversationId provided
     if (conversationId) {
-      const tipMessage = `💝 Sent a ${amount} coin tip!`;
-      const { error: msgError } = await supabase
+      const tipMessage = `🪙 Sent a ${amount} coin tip!`;
+      // Use admin client to bypass RLS and ensure message is created
+      const { error: msgError } = await adminClient
         .from("messages")
         .insert({
           conversation_id: conversationId,
@@ -133,7 +141,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Update conversation timestamp
-      await supabase
+      await adminClient
         .from("conversations")
         .update({ updated_at: new Date().toISOString() })
         .eq("id", conversationId);
