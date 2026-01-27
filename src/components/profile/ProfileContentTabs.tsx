@@ -55,15 +55,27 @@ function ImageWithFallback({
   );
 }
 
+// Format seconds into MM:SS or H:MM:SS
+function formatDuration(seconds: number): string {
+  if (!seconds || isNaN(seconds) || !isFinite(seconds)) return "";
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+  if (h > 0) return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
 // Component for handling broken videos
 function VideoWithFallback({
   src,
   className,
-  onClick
+  onClick,
+  onDurationLoaded,
 }: {
   src?: string;
   className?: string;
   onClick?: () => void;
+  onDurationLoaded?: (duration: number) => void;
 }) {
   const [error, setError] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -93,12 +105,24 @@ function VideoWithFallback({
         playsInline
         preload="metadata"
         onError={() => setError(true)}
+        onLoadedMetadata={(e) => {
+          setLoaded(true);
+          const vid = e.currentTarget;
+          if (vid.duration && onDurationLoaded) {
+            onDurationLoaded(vid.duration);
+          }
+        }}
         onLoadedData={() => setLoaded(true)}
         onClick={onClick}
       />
     </>
   );
 }
+
+const INITIAL_PHOTOS = 12;
+const INITIAL_VIDEOS = 6;
+const LOAD_MORE_PHOTOS = 12;
+const LOAD_MORE_VIDEOS = 6;
 
 interface ProfileContentTabsProps {
   photos: MediaAsset[];
@@ -122,9 +146,16 @@ export function ProfileContentTabs({
   const [selectedItem, setSelectedItem] = useState<MediaAsset | null>(null);
   const [selectedType, setSelectedType] = useState<"photo" | "video">("photo");
   const [videoPlaying, setVideoPlaying] = useState(false);
+  const [photosShown, setPhotosShown] = useState(INITIAL_PHOTOS);
+  const [videosShown, setVideosShown] = useState(INITIAL_VIDEOS);
+  const [videoDurations, setVideoDurations] = useState<Record<string, number>>({});
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const touchStartY = useRef(0);
+
+  const handleDurationLoaded = useCallback((videoId: string, duration: number) => {
+    setVideoDurations(prev => ({ ...prev, [videoId]: duration }));
+  }, []);
 
   const openLightbox = (item: MediaAsset, type: "photo" | "video") => {
     setSelectedItem(item);
@@ -251,36 +282,51 @@ export function ProfileContentTabs({
       {activeTab === "photos" && (
         <div>
           {hasPhotos ? (
-            <div className="grid grid-cols-3 gap-2">
-              {photos.map((photo) => (
-                <div
-                  key={photo.id}
-                  className={cn(
-                    "aspect-square relative group rounded-xl overflow-hidden cursor-pointer",
-                    "ring-1 ring-white/5 hover:ring-white/20",
-                    "transition-all duration-300 ease-out",
-                    "hover:scale-[1.02] hover:shadow-xl hover:shadow-pink-500/10"
-                  )}
-                  onClick={() => openLightbox(photo, "photo")}
-                >
-                  <ImageWithFallback
-                    src={photo.photo_url || photo.url}
-                    alt={photo.title || ""}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                  {/* Gradient overlay on hover */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  {/* Title overlay on hover */}
-                  {photo.title && (
-                    <div className="absolute bottom-0 left-0 right-0 p-2.5 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
-                      <p className="text-white text-xs font-medium truncate drop-shadow-lg">{photo.title}</p>
+            <>
+              <div className="grid grid-cols-3 auto-rows-[minmax(0,1fr)] gap-2" style={{ gridAutoFlow: "dense" }}>
+                {photos.slice(0, photosShown).map((photo, index) => {
+                  // Every 7th photo (0, 7, 14...) is featured - spans 2 cols + 2 rows
+                  const isFeatured = index % 7 === 0 && photos.length > 3;
+                  return (
+                    <div
+                      key={photo.id}
+                      className={cn(
+                        "relative group rounded-xl overflow-hidden cursor-pointer",
+                        "ring-1 ring-white/5 hover:ring-white/20",
+                        "transition-all duration-300 ease-out",
+                        "hover:scale-[1.02] hover:shadow-xl hover:shadow-pink-500/10",
+                        isFeatured ? "col-span-2 row-span-2 aspect-square" : "aspect-square"
+                      )}
+                      onClick={() => openLightbox(photo, "photo")}
+                    >
+                      <ImageWithFallback
+                        src={photo.photo_url || photo.url}
+                        alt={photo.title || ""}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                      {/* Gradient overlay on hover */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      {/* Title overlay on hover */}
+                      {photo.title && (
+                        <div className="absolute bottom-0 left-0 right-0 p-2.5 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
+                          <p className="text-white text-xs font-medium truncate drop-shadow-lg">{photo.title}</p>
+                        </div>
+                      )}
+                      {/* Subtle shine effect */}
+                      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                     </div>
-                  )}
-                  {/* Subtle shine effect */}
-                  <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                </div>
-              ))}
-            </div>
+                  );
+                })}
+              </div>
+              {photos.length > photosShown && (
+                <button
+                  onClick={() => setPhotosShown(prev => prev + LOAD_MORE_PHOTOS)}
+                  className="w-full mt-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-sm font-medium transition-all active:scale-[0.98]"
+                >
+                  Load more photos ({photos.length - photosShown} remaining)
+                </button>
+              )}
+            </>
           ) : (
             <div className="text-center py-12 text-white/50">
               <Camera className="h-12 w-12 mx-auto mb-3 opacity-50" />
@@ -293,46 +339,63 @@ export function ProfileContentTabs({
       {activeTab === "videos" && (
         <div>
           {hasVideos ? (
-            <div className="grid grid-cols-2 gap-3">
-              {videos.map((video) => (
-                <div
-                  key={video.id}
-                  className={cn(
-                    "aspect-video relative group rounded-xl overflow-hidden cursor-pointer",
-                    "ring-1 ring-white/5 hover:ring-white/20",
-                    "transition-all duration-300 ease-out",
-                    "hover:scale-[1.02] hover:shadow-xl hover:shadow-violet-500/10"
-                  )}
-                  onClick={() => openLightbox(video, "video")}
-                >
-                  <VideoWithFallback
-                    src={video.url}
-                    className="w-full h-full object-cover"
-                  />
-                  {/* Gradient overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  {/* Play button */}
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className={cn(
-                      "w-14 h-14 rounded-full flex items-center justify-center",
-                      "bg-white/10 backdrop-blur-sm",
-                      "border border-white/20",
-                      "opacity-70 group-hover:opacity-100",
-                      "scale-90 group-hover:scale-100",
-                      "transition-all duration-300 ease-out"
-                    )}>
-                      <Play className="h-6 w-6 text-white ml-0.5" fill="white" />
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                {videos.slice(0, videosShown).map((video) => (
+                  <div
+                    key={video.id}
+                    className={cn(
+                      "aspect-video relative group rounded-xl overflow-hidden cursor-pointer",
+                      "ring-1 ring-white/5 hover:ring-white/20",
+                      "transition-all duration-300 ease-out",
+                      "hover:scale-[1.02] hover:shadow-xl hover:shadow-violet-500/10"
+                    )}
+                    onClick={() => openLightbox(video, "video")}
+                  >
+                    <VideoWithFallback
+                      src={video.url}
+                      className="w-full h-full object-cover"
+                      onDurationLoaded={(dur) => handleDurationLoaded(video.id, dur)}
+                    />
+                    {/* Gradient overlay - always show on bottom for duration badge */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 opacity-60 group-hover:opacity-100 transition-opacity duration-300" />
+                    {/* Play button */}
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className={cn(
+                        "w-14 h-14 rounded-full flex items-center justify-center",
+                        "bg-white/10 backdrop-blur-sm",
+                        "border border-white/20",
+                        "opacity-70 group-hover:opacity-100",
+                        "scale-90 group-hover:scale-100",
+                        "transition-all duration-300 ease-out"
+                      )}>
+                        <Play className="h-6 w-6 text-white ml-0.5" fill="white" />
+                      </div>
                     </div>
+                    {/* Duration badge */}
+                    {videoDurations[video.id] && (
+                      <div className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded bg-black/70 text-white text-xs font-medium tabular-nums">
+                        {formatDuration(videoDurations[video.id])}
+                      </div>
+                    )}
+                    {/* Title overlay on hover */}
+                    {video.title && (
+                      <div className="absolute bottom-0 left-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
+                        <p className="text-white text-sm font-medium truncate drop-shadow-lg">{video.title}</p>
+                      </div>
+                    )}
                   </div>
-                  {/* Title overlay on hover */}
-                  {video.title && (
-                    <div className="absolute bottom-0 left-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
-                      <p className="text-white text-sm font-medium truncate drop-shadow-lg">{video.title}</p>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+              {videos.length > videosShown && (
+                <button
+                  onClick={() => setVideosShown(prev => prev + LOAD_MORE_VIDEOS)}
+                  className="w-full mt-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-sm font-medium transition-all active:scale-[0.98]"
+                >
+                  Load more videos ({videos.length - videosShown} remaining)
+                </button>
+              )}
+            </>
           ) : (
             <div className="text-center py-12 text-white/50">
               <Video className="h-12 w-12 mx-auto mb-3 opacity-50" />

@@ -305,7 +305,7 @@ export default async function ModelProfilePage({ params }: Props) {
         </div>
       )}
 
-      <div className="relative z-10 container max-w-lg mx-auto py-6 px-4">
+      <div className="relative z-10 container max-w-lg md:max-w-2xl mx-auto py-6 px-4">
         {/* Main Profile Card */}
         <div className="profile-card rounded-3xl p-6 text-center relative">
           {/* Header Row: Logo and Share */}
@@ -348,40 +348,56 @@ export default async function ModelProfilePage({ params }: Props) {
                 >
                   <div className={`w-40 h-40 rounded-full overflow-hidden ring-[4px] ring-amber-400 ${isOwner ? 'profile-pic-breathing' : ''}`}>
                     {model.profile_photo_url ? (
-                      <img
+                      <Image
                         src={model.profile_photo_url}
                         alt={displayName}
+                        width={160}
+                        height={160}
                         className="w-full h-full object-cover"
+                        priority
+                        unoptimized={model.profile_photo_url.includes("cdninstagram.com")}
                       />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-[#1a0033] to-[#2d1b69] flex items-center justify-center">
-                        <span className="text-5xl">👤</span>
+                        <span className="text-4xl font-bold text-white/60">
+                          {displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
+                        </span>
                       </div>
                     )}
                   </div>
-                  {/* Event badge on the ring */}
-                  <div className="absolute -top-2 right-0 bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-600 text-amber-950 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-lg border border-amber-500/50">
-                    <span>💧</span>
-                    <span>{eventBadges[0].badges.events.short_name}</span>
+                  {/* Event badges on the ring - show all */}
+                  <div className="absolute -top-2 right-0 flex flex-col gap-1 items-end">
+                    {eventBadges.map((eb: any, idx: number) => (
+                      <div key={idx} className="bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-600 text-amber-950 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-lg border border-amber-500/50">
+                        <span>{eb.badges.events.badge_image_url ? '' : '💧'}</span>
+                        <span>{eb.badges.events.short_name}</span>
+                      </div>
+                    ))}
                   </div>
                   {/* Hover tooltip - above the badge */}
                   <div className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
                     <div className="bg-black/90 text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg">
-                      Confirmed {eventBadges[0].badges.events.short_name} {eventBadges[0].badges.events.year} Model
+                      {eventBadges.map((eb: any) => eb.badges.events.short_name).join(', ')} {eventBadges[0].badges.events.year} Model
                     </div>
                   </div>
                 </Link>
               ) : (
                 <div className={`w-40 h-40 rounded-full overflow-hidden ${isOwner ? 'profile-pic-breathing' : 'ring-2 ring-white/30 shadow-[0_0_30px_rgba(255,105,180,0.3),0_0_60px_rgba(0,191,255,0.2)]'}`}>
                   {model.profile_photo_url ? (
-                    <img
+                    <Image
                       src={model.profile_photo_url}
                       alt={displayName}
+                      width={160}
+                      height={160}
                       className="w-full h-full object-cover"
+                      priority
+                      unoptimized={model.profile_photo_url.includes("cdninstagram.com")}
                     />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-[#1a0033] to-[#2d1b69] flex items-center justify-center">
-                      <span className="text-5xl">👤</span>
+                      <span className="text-4xl font-bold text-white/60">
+                        {displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -427,7 +443,7 @@ export default async function ModelProfilePage({ params }: Props) {
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all hover:scale-110"
+                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all hover:scale-110 active:scale-95"
                   title={`@${link.username}`}
                 >
                   {link.platform === "instagram" && <Instagram className="h-4 w-4 text-white" />}
@@ -447,6 +463,8 @@ export default async function ModelProfilePage({ params }: Props) {
             isOwner={isOwner}
             modelUsername={model.username}
             modelActorId={modelActorId}
+            modelName={displayName}
+            coinBalance={coinBalance}
             messageRate={model.message_rate || 0}
             videoCallRate={model.video_call_rate || 0}
             voiceCallRate={model.voice_call_rate || 0}
@@ -469,7 +487,7 @@ export default async function ModelProfilePage({ params }: Props) {
                     href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group relative flex items-center justify-center w-full px-5 py-4 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 hover:border-white/20 transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-pink-500/10"
+                    className="group relative flex items-center justify-center w-full px-5 py-4 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 hover:border-white/20 transition-all hover:scale-[1.02] active:scale-[0.97] active:opacity-90 hover:shadow-lg hover:shadow-pink-500/10"
                   >
                     {domain && (
                       <img

@@ -11,10 +11,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { hapticFeedback } from "@/hooks/useHapticFeedback";
 
 // Dynamic import for VideoRoom - only loads when call starts (saves ~200KB)
 const VideoRoom = dynamic(() => import("@/components/video").then(mod => mod.VideoRoom), {
@@ -26,11 +26,15 @@ const VideoRoom = dynamic(() => import("@/components/video").then(mod => mod.Vid
   ),
 });
 
+const TIP_AMOUNTS = [1, 5, 10, 25, 50, 100];
+
 interface ProfileActionButtonsProps {
   isLoggedIn: boolean;
   isOwner: boolean;
   modelUsername: string;
   modelActorId: string | null;
+  modelName?: string;
+  coinBalance?: number;
   messageRate?: number;
   videoCallRate?: number;
   voiceCallRate?: number;
@@ -40,6 +44,9 @@ export function ProfileActionButtons({
   isLoggedIn,
   isOwner,
   modelUsername,
+  modelActorId,
+  modelName,
+  coinBalance = 0,
   messageRate = 0,
   videoCallRate = 0,
   voiceCallRate = 0,
@@ -49,7 +56,7 @@ export function ProfileActionButtons({
   const [showChatConfirm, setShowChatConfirm] = useState(false);
   const [showVideoConfirm, setShowVideoConfirm] = useState(false);
   const [showVoiceConfirm, setShowVoiceConfirm] = useState(false);
-  const [tipAmount, setTipAmount] = useState<number>(10);
+  const [selectedTipAmount, setSelectedTipAmount] = useState<number | null>(null);
   const [sending, setSending] = useState(false);
   const [startingCall, setStartingCall] = useState(false);
   const [startingVoiceCall, setStartingVoiceCall] = useState(false);
@@ -188,25 +195,33 @@ export function ProfileActionButtons({
   };
 
   const sendTip = async () => {
-    if (tipAmount < 1) {
-      toast.error("Minimum tip is 1 coin");
-      return;
-    }
+    if (!selectedTipAmount || !modelActorId) return;
+
     setSending(true);
     try {
-      const res = await fetch("/api/tips/send", {
+      const res = await fetch("/api/tips", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          recipientUsername: modelUsername,
-          amount: tipAmount
+          recipientId: modelActorId,
+          amount: selectedTipAmount,
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to send tip");
-      toast.success(`Sent ${tipAmount} coins to ${modelUsername}!`);
+
+      if (!res.ok) {
+        if (res.status === 402) {
+          toast.error(`Insufficient coins. Need ${data.required}, have ${data.balance}`);
+        } else {
+          toast.error(data.error || "Failed to send tip");
+        }
+        return;
+      }
+
+      hapticFeedback("success");
+      toast.success(`Sent ${selectedTipAmount} coins to ${data.recipientName}!`);
       setShowTipDialog(false);
-      setTipAmount(10);
+      setSelectedTipAmount(null);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to send tip");
     } finally {
@@ -395,49 +410,93 @@ export function ProfileActionButtons({
         </DialogContent>
       </Dialog>
 
-      {/* Tip Dialog */}
-      <Dialog open={showTipDialog} onOpenChange={setShowTipDialog}>
+      {/* Tip Dialog - preset amounts */}
+      <Dialog open={showTipDialog} onOpenChange={(open) => {
+        setShowTipDialog(open);
+        if (!open) setSelectedTipAmount(null);
+      }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Coins className="h-5 w-5 text-yellow-500" />
+              <Gift className="h-5 w-5 text-pink-500" />
               Send a Tip
             </DialogTitle>
             <DialogDescription>
-              Send coins to {modelUsername} to show your appreciation
+              Show your appreciation for {modelName || modelUsername}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 pt-4">
-            <div className="space-y-2">
-              <Label>Amount (coins)</Label>
-              <Input
-                type="number"
-                min={1}
-                value={tipAmount}
-                onChange={(e) => setTipAmount(parseInt(e.target.value) || 0)}
-                className="text-center text-lg font-semibold"
-              />
+          <div className="space-y-4 py-4">
+            {/* Current balance */}
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Your balance:</span>
+              <span className="flex items-center gap-1 font-medium">
+                <Coins className="h-4 w-4 text-pink-500" />
+                {coinBalance} coins
+              </span>
             </div>
-            <div className="flex gap-2">
-              {[5, 10, 25, 50, 100].map((amount) => (
-                <Button
-                  key={amount}
-                  variant="outline"
-                  size="sm"
-                  className={tipAmount === amount ? "border-yellow-500 bg-yellow-500/10" : ""}
-                  onClick={() => setTipAmount(amount)}
-                >
-                  {amount}
-                </Button>
-              ))}
+
+            {/* Tip amounts grid */}
+            <div className="grid grid-cols-3 gap-2">
+              {TIP_AMOUNTS.map((amount) => {
+                const canAfford = coinBalance >= amount;
+                const isSelected = selectedTipAmount === amount;
+
+                return (
+                  <button
+                    key={amount}
+                    onClick={() => {
+                      if (canAfford) {
+                        hapticFeedback("light");
+                        setSelectedTipAmount(amount);
+                      }
+                    }}
+                    disabled={!canAfford || sending}
+                    className={cn(
+                      "py-3 px-4 rounded-lg border text-center transition-all active:scale-95",
+                      isSelected
+                        ? "border-pink-500 bg-pink-500/10 text-pink-500"
+                        : canAfford
+                          ? "border-border hover:border-pink-500/50 hover:bg-pink-500/5"
+                          : "border-border/50 text-muted-foreground opacity-50 cursor-not-allowed"
+                    )}
+                  >
+                    <div className="text-lg font-semibold">{amount}</div>
+                    <div className="text-xs text-muted-foreground">coins</div>
+                  </button>
+                );
+              })}
             </div>
+
+            {/* Send button */}
             <Button
-              className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600"
               onClick={sendTip}
-              disabled={sending || tipAmount < 1}
+              disabled={!selectedTipAmount || sending}
+              className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
             >
-              {sending ? "Sending..." : `Send ${tipAmount} Coins`}
+              {sending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Sending...
+                </>
+              ) : selectedTipAmount ? (
+                <>
+                  <Gift className="mr-2 h-4 w-4" />
+                  Send {selectedTipAmount} Coins
+                </>
+              ) : (
+                "Select an amount"
+              )}
             </Button>
+
+            {/* Need more coins? */}
+            {coinBalance < 100 && (
+              <p className="text-center text-sm text-muted-foreground">
+                Need more coins?{" "}
+                <Link href="/coins" className="text-pink-500 hover:underline">
+                  Buy coins
+                </Link>
+              </p>
+            )}
           </div>
         </DialogContent>
       </Dialog>
