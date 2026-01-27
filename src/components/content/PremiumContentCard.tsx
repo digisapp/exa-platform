@@ -104,21 +104,35 @@ export function PremiumContentCard({
         )}
         onClick={() => isUnlocked ? setShowFull(true) : setShowPreview(true)}
       >
-        {/* Preview or Full Image */}
+        {/* Preview or Full Image/Video */}
         {((isUnlocked && mediaUrl) || content.preview_url) && !imageError ? (
           <>
-            <Image
-              src={isUnlocked && mediaUrl ? mediaUrl : content.preview_url!}
-              alt={content.title || "PPV content"}
-              fill
-              className={cn(
-                "object-cover transition-all duration-300",
-                // Only blur paid locked content - softer blur
-                !isUnlocked && !isFree && !isOwner && "blur-md scale-105 brightness-75",
-                isUnlocked && "group-hover:scale-105"
-              )}
-              onError={() => setImageError(true)}
-            />
+            {isVideo ? (
+              <video
+                src={isUnlocked && mediaUrl ? mediaUrl : content.preview_url!}
+                muted
+                playsInline
+                preload="metadata"
+                className={cn(
+                  "absolute inset-0 w-full h-full object-cover transition-all duration-300",
+                  !isUnlocked && !isFree && !isOwner && "blur-md scale-105 brightness-75",
+                  isUnlocked && "group-hover:scale-105"
+                )}
+                onError={() => setImageError(true)}
+              />
+            ) : (
+              <Image
+                src={isUnlocked && mediaUrl ? mediaUrl : content.preview_url!}
+                alt={content.title || "PPV content"}
+                fill
+                className={cn(
+                  "object-cover transition-all duration-300",
+                  !isUnlocked && !isFree && !isOwner && "blur-md scale-105 brightness-75",
+                  isUnlocked && "group-hover:scale-105"
+                )}
+                onError={() => setImageError(true)}
+              />
+            )}
             {/* Subtle gradient overlay for locked content */}
             {!isUnlocked && !isFree && !isOwner && (
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/10" />
