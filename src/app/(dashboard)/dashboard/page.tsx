@@ -18,29 +18,28 @@ import { Button } from "@/components/ui/button";
 import { GigsFeed } from "@/components/gigs/GigsFeed";
 import { Badge } from "@/components/ui/badge";
 import {
-  Trophy,
   ArrowRight,
-  Lock,
   Coins,
   Heart,
   Image as ImageIcon,
-  Activity,
   Sparkles,
   Users,
-  MessageCircle,
-  MapPin,
-  TrendingUp,
   Building2,
   Clock,
   Calendar,
   Star,
   Search,
-  Briefcase,
   Mail,
   DollarSign,
-  FolderHeart,
+  Crown,
+  CheckCircle2,
+  Megaphone,
+  BarChart3,
+  Circle,
 } from "lucide-react";
 import { ModelCard } from "@/components/models/model-card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { BRAND_SUBSCRIPTION_TIERS } from "@/lib/stripe-config";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -536,6 +535,19 @@ async function FanDashboard({ actorId }: { actorId: string }) {
   );
 }
 
+// Service type labels for bookings
+const BRAND_SERVICE_LABELS: Record<string, string> = {
+  photoshoot_hourly: "Photoshoot",
+  photoshoot_half_day: "Photoshoot (Half-Day)",
+  photoshoot_full_day: "Photoshoot (Full-Day)",
+  promo: "Promo",
+  brand_ambassador: "Brand Ambassador",
+  private_event: "Private Event",
+  social_companion: "Social Companion",
+  meet_greet: "Meet & Greet",
+  other: "Other",
+};
+
 // Brand Dashboard Component
 async function BrandDashboard({ actorId }: { actorId: string }) {
   const supabase = await createClient();
@@ -550,17 +562,64 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
   const isApproved = brand?.is_verified === true;
   const isPending = brand?.is_verified !== true;
 
-  // Get user's saved/favorited models
-  const { data: favorites } = await (supabase
-    .from("follows") as any)
-    .select("following_id, created_at")
-    .eq("follower_id", actorId)
-    .order("created_at", { ascending: false })
-    .limit(10);
+  // Parallel queries for dashboard data
+  const [
+    { data: favorites },
+    { data: campaignsList },
+    { count: campaignCount },
+    { data: offersData },
+    { data: upcomingBookings },
+    { data: topModels },
+  ] = await Promise.all([
+    // Saved/favorited models
+    (supabase.from("follows") as any)
+      .select("following_id, created_at")
+      .eq("follower_id", actorId)
+      .order("created_at", { ascending: false })
+      .limit(10),
+    // Active campaigns with model counts
+    (supabase.from("campaigns") as any)
+      .select(`*, campaign_models(id)`)
+      .eq("brand_id", actorId)
+      .order("created_at", { ascending: false })
+      .limit(3),
+    // Campaign count for stats
+    (supabase.from("campaigns") as any)
+      .select("*", { count: "exact", head: true })
+      .eq("brand_id", actorId),
+    // Offers with responses
+    (supabase.from("offers") as any)
+      .select(`*, offer_responses(id, status, model_id, responded_at)`)
+      .eq("brand_id", actorId)
+      .order("created_at", { ascending: false }),
+    // Upcoming bookings
+    (supabase.from("bookings") as any)
+      .select("id, event_date, service_type, status, model_id")
+      .eq("client_id", actorId)
+      .gte("event_date", new Date().toISOString().split("T")[0])
+      .order("event_date", { ascending: true })
+      .limit(5),
+    // Top models for discovery (full ModelCard fields)
+    (supabase.from("models") as any)
+      .select(`
+        id, username, first_name, last_name, profile_photo_url,
+        city, state, show_location,
+        instagram_name, show_social_media,
+        height, show_measurements,
+        focus_tags, reliability_score,
+        is_verified, is_featured, availability_status
+      `)
+      .eq("is_approved", true)
+      .not("profile_photo_url", "is", null)
+      .not("profile_photo_url", "ilike", "%cdninstagram.com%")
+      .not("profile_photo_url", "ilike", "%instagram%")
+      .gte("admin_rating", 4)
+      .order("admin_rating", { ascending: false })
+      .limit(8),
+  ]);
 
+  // Get model details for favorites
   const favoriteIds = favorites?.map((f: any) => f.following_id) || [];
-
-  // Get the model profiles for favorited users
   let savedModels: any[] = [];
   if (favoriteIds.length > 0) {
     const { data: actorData } = await (supabase
@@ -583,23 +642,67 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
     }
   }
 
-  // Get top rated models for discovery (only those with uploaded profile photos)
-  // Exclude Instagram CDN URLs which are low quality
-  const { data: topModels } = await (supabase
-    .from("models") as any)
-    .select(`
-      id, username, first_name, last_name, profile_photo_url, city, state, show_location, user_id, admin_rating,
-      photoshoot_hourly_rate, promo_hourly_rate, brand_ambassador_daily_rate
-    `)
-    .eq("is_approved", true)
-    .not("profile_photo_url", "is", null)
-    .not("profile_photo_url", "ilike", "%cdninstagram.com%")
-    .not("profile_photo_url", "ilike", "%instagram%")
-    .gte("admin_rating", 4)
-    .order("admin_rating", { ascending: false })
-    .limit(8);
+  // Compute derived values
+  const coinBalance = brand?.coin_balance || 0;
+  const activeCampaignCount = campaignCount || 0;
 
-  // Filter out already saved models
+  // Aggregate offer responses
+  const allResponses = (offersData || []).flatMap((offer: any) =>
+    (offer.offer_responses || []).map((r: any) => ({
+      ...r,
+      offer_title: offer.title,
+      offer_id: offer.id,
+    }))
+  );
+  const pendingResponseCount = allResponses.filter((r: any) => r.status === "pending").length;
+  const upcomingEventCount = (upcomingBookings || []).length;
+
+  // Recent responses (accepted/declined/confirmed, sorted by responded_at)
+  const recentResponses = allResponses
+    .filter((r: any) => r.status === "accepted" || r.status === "declined" || r.status === "confirmed")
+    .sort((a: any, b: any) =>
+      new Date(b.responded_at || b.created_at).getTime() - new Date(a.responded_at || a.created_at).getTime()
+    )
+    .slice(0, 5);
+
+  // Campaign offer summary map
+  const campaignOfferMap = new Map<string, { accepted: number; pending: number }>();
+  (offersData || []).forEach((offer: any) => {
+    if (!offer.campaign_id) return;
+    const existing = campaignOfferMap.get(offer.campaign_id) || { accepted: 0, pending: 0 };
+    (offer.offer_responses || []).forEach((r: any) => {
+      if (r.status === "accepted" || r.status === "confirmed") existing.accepted++;
+      else if (r.status === "pending") existing.pending++;
+    });
+    campaignOfferMap.set(offer.campaign_id, existing);
+  });
+
+  // Batch fetch model info for bookings + responses
+  const bookingModelIds = (upcomingBookings || []).map((b: any) => b.model_id).filter(Boolean);
+  const responseModelIds = recentResponses.map((r: any) => r.model_id).filter(Boolean);
+  const allEnrichIds = [...new Set([...bookingModelIds, ...responseModelIds])];
+  let enrichModels: any[] = [];
+  if (allEnrichIds.length > 0) {
+    const { data } = await (supabase.from("models") as any)
+      .select("id, username, first_name, last_name, profile_photo_url")
+      .in("id", allEnrichIds);
+    enrichModels = data || [];
+  }
+  const enrichMap = new Map(enrichModels.map((m: any) => [m.id, m]));
+
+  // Subscription tier info
+  const currentTier = (brand?.subscription_tier || "free") as keyof typeof BRAND_SUBSCRIPTION_TIERS;
+  const tierConfig = BRAND_SUBSCRIPTION_TIERS[currentTier] || BRAND_SUBSCRIPTION_TIERS.free;
+  const monthlyCoins = tierConfig.monthlyCoins;
+
+  // Getting Started checks
+  const hasProfile = !!brand?.logo_url;
+  const hasFollowed = favoriteIds.length > 0;
+  const hasCampaign = activeCampaignCount > 0;
+  const hasSentOffer = (offersData || []).length > 0;
+  const completedSteps = [hasProfile, hasFollowed, hasCampaign, hasSentOffer].filter(Boolean).length;
+
+  // Filter discover models (exclude already saved)
   const savedUserIds = savedModels.map(m => m.user_id);
   const discoverModels = (topModels || []).filter(
     (m: any) => !savedUserIds.includes(m.user_id)
@@ -607,6 +710,70 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
+      {/* Welcome Header */}
+      <div>
+        <h1 className="text-2xl font-bold">
+          Welcome back{brand?.company_name ? `, ${brand.company_name}` : ""}
+        </h1>
+        <p className="text-muted-foreground">Here&apos;s what&apos;s happening with your account</p>
+      </div>
+
+      {/* Stats Bar */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-full bg-yellow-500/10">
+                <Coins className="h-5 w-5 text-yellow-500" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Coin Balance</p>
+                <p className="text-2xl font-bold">{coinBalance.toLocaleString()}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-full bg-violet-500/10">
+                <Megaphone className="h-5 w-5 text-violet-500" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Campaigns</p>
+                <p className="text-2xl font-bold">{activeCampaignCount}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-full bg-amber-500/10">
+                <Mail className="h-5 w-5 text-amber-500" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Pending Responses</p>
+                <p className="text-2xl font-bold">{pendingResponseCount}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-full bg-green-500/10">
+                <Calendar className="h-5 w-5 text-green-500" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Upcoming Events</p>
+                <p className="text-2xl font-bold">{upcomingEventCount}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Pending Approval Notice */}
       {isPending && (
         <Card className="border-amber-500/50 bg-amber-500/5">
@@ -627,20 +794,384 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
         </Card>
       )}
 
-      {/* Quick Actions */}
-      <Card className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20 hover:border-green-500/40 transition-colors max-w-sm">
-        <CardContent className="py-3 px-4">
-          <Link href="/bookings" className="flex items-center gap-3 group">
-            <div className="p-2 rounded-full bg-green-500/20 group-hover:bg-green-500/30 transition-colors">
-              <Briefcase className="h-5 w-5 text-green-500" />
+      {/* Getting Started Checklist */}
+      {completedSteps < 4 && (
+        <Card className="border-cyan-500/30 bg-gradient-to-br from-cyan-500/5 to-blue-500/5">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-cyan-500" />
+                Getting Started
+              </CardTitle>
+              <Badge variant="secondary" className="bg-cyan-500/10 text-cyan-600">
+                {completedSteps}/4
+              </Badge>
             </div>
-            <p className="font-semibold group-hover:text-green-500 transition-colors flex-1">Bookings</p>
-            <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-green-500 transition-colors" />
-          </Link>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Link
+                href="/settings"
+                className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+              >
+                {hasProfile ? (
+                  <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
+                ) : (
+                  <Circle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                )}
+                <div>
+                  <p className={`font-medium text-sm ${hasProfile ? "line-through text-muted-foreground" : ""}`}>
+                    Complete your profile
+                  </p>
+                  <p className="text-xs text-muted-foreground">Add your logo and company details</p>
+                </div>
+              </Link>
+              <Link
+                href="/models"
+                className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+              >
+                {hasFollowed ? (
+                  <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
+                ) : (
+                  <Circle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                )}
+                <div>
+                  <p className={`font-medium text-sm ${hasFollowed ? "line-through text-muted-foreground" : ""}`}>
+                    Follow a model
+                  </p>
+                  <p className="text-xs text-muted-foreground">Save models you&apos;re interested in</p>
+                </div>
+              </Link>
+              <Link
+                href="/campaigns"
+                className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+              >
+                {hasCampaign ? (
+                  <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
+                ) : (
+                  <Circle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                )}
+                <div>
+                  <p className={`font-medium text-sm ${hasCampaign ? "line-through text-muted-foreground" : ""}`}>
+                    Create a campaign
+                  </p>
+                  <p className="text-xs text-muted-foreground">Organize models into campaigns</p>
+                </div>
+              </Link>
+              <Link
+                href="/campaigns"
+                className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+              >
+                {hasSentOffer ? (
+                  <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
+                ) : (
+                  <Circle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                )}
+                <div>
+                  <p className={`font-medium text-sm ${hasSentOffer ? "line-through text-muted-foreground" : ""}`}>
+                    Send your first offer
+                  </p>
+                  <p className="text-xs text-muted-foreground">Reach out to models with an offer</p>
+                </div>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Subscription Widget + Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Subscription Widget */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2.5 rounded-full bg-violet-500/10">
+                <Crown className="h-5 w-5 text-violet-500" />
+              </div>
+              <div>
+                <p className="font-semibold">{tierConfig.name} Plan</p>
+                <Badge variant="outline" className="text-xs mt-0.5">
+                  {isApproved ? "Active" : "Pending"}
+                </Badge>
+              </div>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <div className="flex items-center justify-between text-sm mb-1">
+                  <span className="text-muted-foreground">Coin Balance</span>
+                  <span className="font-medium">
+                    {coinBalance.toLocaleString()}{monthlyCoins > 0 ? ` / ${monthlyCoins.toLocaleString()}` : ""}
+                  </span>
+                </div>
+                {monthlyCoins > 0 && (
+                  <div className="w-full bg-muted rounded-full h-2">
+                    <div
+                      className="bg-gradient-to-r from-violet-500 to-purple-500 h-2 rounded-full transition-all"
+                      style={{ width: `${Math.min((coinBalance / monthlyCoins) * 100, 100)}%` }}
+                    />
+                  </div>
+                )}
+              </div>
+              {currentTier !== "enterprise" && (
+                <Button asChild size="sm" variant="outline" className="w-full">
+                  <Link href="/brands/subscription">Upgrade Plan</Link>
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Quick Actions */}
+        <Card className="md:col-span-2">
+          <CardContent className="pt-6">
+            <p className="font-semibold mb-4">Quick Actions</p>
+            <div className="grid grid-cols-2 gap-3">
+              <Link
+                href="/models"
+                className="flex items-center gap-3 p-3 rounded-lg bg-pink-500/5 border border-pink-500/20 hover:border-pink-500/40 transition-colors group"
+              >
+                <div className="p-2 rounded-full bg-pink-500/10 group-hover:bg-pink-500/20 transition-colors">
+                  <Search className="h-4 w-4 text-pink-500" />
+                </div>
+                <span className="font-medium text-sm">Browse Models</span>
+              </Link>
+              <Link
+                href="/campaigns"
+                className="flex items-center gap-3 p-3 rounded-lg bg-violet-500/5 border border-violet-500/20 hover:border-violet-500/40 transition-colors group"
+              >
+                <div className="p-2 rounded-full bg-violet-500/10 group-hover:bg-violet-500/20 transition-colors">
+                  <Megaphone className="h-4 w-4 text-violet-500" />
+                </div>
+                <span className="font-medium text-sm">Campaigns</span>
+              </Link>
+              <Link
+                href="/brands/offers"
+                className="flex items-center gap-3 p-3 rounded-lg bg-blue-500/5 border border-blue-500/20 hover:border-blue-500/40 transition-colors group"
+              >
+                <div className="p-2 rounded-full bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">
+                  <Mail className="h-4 w-4 text-blue-500" />
+                </div>
+                <span className="font-medium text-sm">View Offers</span>
+              </Link>
+              <Link
+                href="/brands/analytics"
+                className="flex items-center gap-3 p-3 rounded-lg bg-green-500/5 border border-green-500/20 hover:border-green-500/40 transition-colors group"
+              >
+                <div className="p-2 rounded-full bg-green-500/10 group-hover:bg-green-500/20 transition-colors">
+                  <BarChart3 className="h-4 w-4 text-green-500" />
+                </div>
+                <span className="font-medium text-sm">Analytics</span>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Active Campaigns + Recent Responses */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Active Campaigns */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Megaphone className="h-5 w-5 text-violet-500" />
+              Active Campaigns
+            </CardTitle>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/campaigns" className="text-violet-500">
+                View All
+                <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {(campaignsList || []).length > 0 ? (
+              <div className="space-y-3">
+                {(campaignsList || []).map((campaign: any) => {
+                  const modelCount = campaign.campaign_models?.length || 0;
+                  const offerSummary = campaignOfferMap.get(campaign.id);
+                  return (
+                    <Link
+                      key={campaign.id}
+                      href={`/campaigns/${campaign.id}`}
+                      className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                    >
+                      <div
+                        className="w-3 h-3 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: campaign.color || "#ec4899" }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">{campaign.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {modelCount} {modelCount === 1 ? "model" : "models"}
+                          {offerSummary && (offerSummary.accepted > 0 || offerSummary.pending > 0) && (
+                            <>
+                              {" · "}
+                              {offerSummary.accepted > 0 && (
+                                <span className="text-green-500">{offerSummary.accepted} accepted</span>
+                              )}
+                              {offerSummary.accepted > 0 && offerSummary.pending > 0 && ", "}
+                              {offerSummary.pending > 0 && (
+                                <span className="text-amber-500">{offerSummary.pending} pending</span>
+                              )}
+                            </>
+                          )}
+                        </p>
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    </Link>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <div className="p-3 rounded-full bg-violet-500/10 inline-block mb-3">
+                  <Megaphone className="h-6 w-6 text-violet-500" />
+                </div>
+                <p className="text-sm text-muted-foreground mb-3">No campaigns yet</p>
+                <Button asChild size="sm">
+                  <Link href="/campaigns">Create Campaign</Link>
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Recent Responses */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5 text-blue-500" />
+              Recent Responses
+            </CardTitle>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/brands/offers" className="text-blue-500">
+                View All
+                <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {recentResponses.length > 0 ? (
+              <div className="space-y-3">
+                {recentResponses.map((response: any) => {
+                  const model = enrichMap.get(response.model_id);
+                  const displayName = model?.first_name
+                    ? `${model.first_name} ${model.last_name || ""}`.trim()
+                    : model?.username || "Model";
+                  return (
+                    <div key={response.id} className="flex items-center gap-3">
+                      <Avatar className="h-9 w-9">
+                        <AvatarImage src={model?.profile_photo_url || undefined} />
+                        <AvatarFallback className="text-xs">
+                          {displayName.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">{displayName}</p>
+                        <p className="text-xs text-muted-foreground truncate">{response.offer_title}</p>
+                      </div>
+                      <Badge
+                        variant="outline"
+                        className={
+                          response.status === "accepted" || response.status === "confirmed"
+                            ? "text-green-500 border-green-500/30 bg-green-500/5"
+                            : "text-red-500 border-red-500/30 bg-red-500/5"
+                        }
+                      >
+                        {response.status}
+                      </Badge>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <div className="p-3 rounded-full bg-blue-500/10 inline-block mb-3">
+                  <Mail className="h-6 w-6 text-blue-500" />
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Responses to your offers will appear here
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Upcoming Events */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-green-500" />
+            Upcoming Events
+          </CardTitle>
+          {upcomingEventCount > 0 && (
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/bookings" className="text-green-500">
+                View All
+                <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent>
+          {(upcomingBookings || []).length > 0 ? (
+            <div className="space-y-3">
+              {(upcomingBookings || []).map((booking: any) => {
+                const model = enrichMap.get(booking.model_id);
+                const displayName = model?.first_name
+                  ? `${model.first_name} ${model.last_name || ""}`.trim()
+                  : model?.username || "Model";
+                return (
+                  <div key={booking.id} className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={model?.profile_photo_url || undefined} />
+                      <AvatarFallback>
+                        {displayName.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      {model?.username ? (
+                        <Link
+                          href={`/${model.username}`}
+                          className="font-medium text-sm hover:text-cyan-500 truncate block"
+                        >
+                          {displayName}
+                        </Link>
+                      ) : (
+                        <p className="font-medium text-sm truncate">{displayName}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        {BRAND_SERVICE_LABELS[booking.service_type] || booking.service_type}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium">
+                        {new Date(booking.event_date).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </p>
+                      <Badge variant="outline" className="text-xs">
+                        {booking.status}
+                      </Badge>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <div className="p-3 rounded-full bg-green-500/10 inline-block mb-3">
+                <Calendar className="h-6 w-6 text-green-500" />
+              </div>
+              <p className="text-sm text-muted-foreground">No upcoming events</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Favorite Models */}
+      {/* Following */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
@@ -663,7 +1194,6 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
                 const displayName = model.first_name
                   ? `${model.first_name} ${model.last_name || ''}`.trim()
                   : model.username;
-                // Get rate display - prefer hourly, fallback to daily
                 const hourlyRates = [
                   model.photoshoot_hourly_rate,
                   model.promo_hourly_rate,
@@ -731,7 +1261,7 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-cyan-500" />
-            Models
+            Discover Models
           </CardTitle>
           <Button variant="ghost" size="sm" asChild>
             <Link href="/models" className="text-cyan-500">
@@ -742,60 +1272,10 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
         </CardHeader>
         <CardContent>
           {discoverModels.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {discoverModels.slice(0, 4).map((model: any) => {
-                const displayName = model.first_name
-                  ? `${model.first_name} ${model.last_name || ''}`.trim()
-                  : model.username;
-                // Get rate display - prefer hourly, fallback to daily
-                const hourlyRates = [
-                  model.photoshoot_hourly_rate,
-                  model.promo_hourly_rate,
-                ].filter((r): r is number => r != null && r > 0);
-                const lowestHourly = hourlyRates.length > 0 ? Math.min(...hourlyRates) : null;
-                const dailyRate = model.brand_ambassador_daily_rate > 0 ? model.brand_ambassador_daily_rate : null;
-                return (
-                  <Link
-                    key={model.id}
-                    href={`/${model.username}`}
-                    className="flex items-center gap-4 p-4 rounded-xl bg-muted/50 hover:bg-muted transition-colors border border-transparent hover:border-cyan-500/30"
-                  >
-                    <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex-shrink-0">
-                      {model.profile_photo_url ? (
-                        <Image
-                          src={model.profile_photo_url}
-                          alt={displayName}
-                          fill
-                          className="object-cover"
-                          unoptimized={model.profile_photo_url.includes('cdninstagram.com')}
-                        />
-                      ) : (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="text-2xl">👤</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{displayName}</p>
-                      <p className="text-sm text-cyan-500">@{model.username}</p>
-                      {model.show_location && (model.city || model.state) && (
-                        <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                          <MapPin className="h-3 w-3" />
-                          {model.city && model.state ? `${model.city}, ${model.state}` : model.city || model.state}
-                        </p>
-                      )}
-                    </div>
-                    <div className="text-right">
-                      {lowestHourly !== null ? (
-                        <p className="text-sm font-medium text-cyan-500 flex items-center gap-1">{lowestHourly} <Coins className="h-3 w-3" />/hr</p>
-                      ) : dailyRate !== null ? (
-                        <p className="text-sm font-medium text-cyan-500 flex items-center gap-1">{dailyRate} <Coins className="h-3 w-3" />/day</p>
-                      ) : null}
-                      <ArrowRight className="h-4 w-4 text-muted-foreground ml-auto mt-1" />
-                    </div>
-                  </Link>
-                );
-              })}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {discoverModels.slice(0, 8).map((model: any) => (
+                <ModelCard key={model.id} model={model} />
+              ))}
             </div>
           ) : (
             <div className="text-center py-12">
