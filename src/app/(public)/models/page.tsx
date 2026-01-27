@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Navbar } from "@/components/layout/navbar";
+import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 import { ModelFilters } from "@/components/models/model-filters";
 import { ModelCard } from "@/components/models/model-card";
 import { ModelsGrid } from "@/components/models/models-grid";
@@ -203,6 +204,7 @@ export default async function ModelsPage({
   const isFanWithoutCoins = actorType === "fan" && coinBalance < MIN_FAN_COINS;
 
   return (
+    <CoinBalanceProvider initialBalance={coinBalance}>
     <div className="min-h-screen bg-background">
       <Navbar
         user={user ? {
@@ -263,5 +265,6 @@ export default async function ModelsPage({
         </div>
       </main>
     </div>
+    </CoinBalanceProvider>
   );
 }

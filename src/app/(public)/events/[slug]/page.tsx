@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Navbar } from "@/components/layout/navbar";
+import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -193,6 +194,7 @@ export default async function EventPage({ params, searchParams }: Props) {
     : [];
 
   return (
+    <CoinBalanceProvider initialBalance={coinBalance}>
     <div className="min-h-screen bg-background">
       <Navbar
         user={user ? {
@@ -458,5 +460,6 @@ export default async function EventPage({ params, searchParams }: Props) {
         />
       )}
     </div>
+    </CoinBalanceProvider>
   );
 }

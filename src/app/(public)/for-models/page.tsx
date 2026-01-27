@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { Navbar } from "@/components/layout/navbar";
+import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -81,6 +82,7 @@ export default async function ForModelsPage() {
       : profileData?.username || undefined;
 
   return (
+    <CoinBalanceProvider initialBalance={coinBalance}>
     <div className="min-h-screen bg-background">
       <Navbar
         user={user ? {
@@ -698,6 +700,7 @@ export default async function ForModelsPage() {
         <p>&copy; {new Date().getFullYear()} EXA Models. All rights reserved.</p>
       </footer>
     </div>
+    </CoinBalanceProvider>
   );
 }
 

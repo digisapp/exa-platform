@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { Navbar } from "@/components/layout/navbar";
+import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -130,6 +131,7 @@ export default async function GigDetailPage({ params }: Props) {
   const requirements = gig.requirements as Record<string, any> | null;
 
   return (
+    <CoinBalanceProvider initialBalance={coinBalance}>
     <div className="min-h-screen bg-background">
       <Navbar
         user={user ? {
@@ -374,5 +376,6 @@ export default async function GigDetailPage({ params }: Props) {
         </div>
       </main>
     </div>
+    </CoinBalanceProvider>
   );
 }

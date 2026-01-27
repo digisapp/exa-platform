@@ -12,6 +12,7 @@ export const revalidate = 120;
 
 import Link from "next/link";
 import { Navbar } from "@/components/layout/navbar";
+import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -200,6 +201,7 @@ export default async function GigsPage() {
       : profileData?.username || undefined;
 
   return (
+    <CoinBalanceProvider initialBalance={coinBalance}>
     <div className="min-h-screen bg-background">
       <Navbar
         user={user ? {
@@ -282,6 +284,7 @@ export default async function GigsPage() {
         </Tabs>
       </main>
     </div>
+    </CoinBalanceProvider>
   );
 }
 

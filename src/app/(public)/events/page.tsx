@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import Image from "next/image";
 import { Navbar } from "@/components/layout/navbar";
+import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 
 // Cache page for 5 minutes - events don't change frequently
 export const revalidate = 300;
@@ -91,6 +92,7 @@ export default async function EventsPage() {
       : profileData?.username || undefined;
 
   return (
+    <CoinBalanceProvider initialBalance={coinBalance}>
     <div className="min-h-screen bg-background">
       <Navbar
         user={user ? {
@@ -207,5 +209,6 @@ export default async function EventsPage() {
         )}
       </main>
     </div>
+    </CoinBalanceProvider>
   );
 }
