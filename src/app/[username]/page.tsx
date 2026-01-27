@@ -18,6 +18,7 @@ import type { Metadata } from "next";
 import { ShareButton } from "@/components/ui/share-button";
 import { AddToCampaignButton } from "@/components/ui/add-to-campaign-button";
 import { ModelNotesDialog } from "@/components/brands/ModelNotesDialog";
+import { BackButton } from "@/components/ui/back-button";
 import { ProfileActionButtons } from "@/components/profile/ProfileActionButtons";
 import { ProfileContentTabs } from "@/components/profile/ProfileContentTabs";
 import { ViewTracker } from "@/components/profile/ViewTracker";
@@ -308,17 +309,20 @@ export default async function ModelProfilePage({ params }: Props) {
       <div className="relative z-10 container max-w-lg md:max-w-2xl mx-auto py-6 px-4">
         {/* Main Profile Card */}
         <div className="profile-card rounded-3xl p-6 text-center relative">
-          {/* Header Row: Logo and Share */}
+          {/* Header Row: Back/Logo and Share */}
           <div className="flex items-center justify-between mb-6">
-            <Link href="/">
-              <Image
-                src="/exa-logo-white.png"
-                alt="EXA"
-                width={60}
-                height={24}
-                className="h-6 w-auto opacity-80 hover:opacity-100 transition-opacity"
-              />
-            </Link>
+            <div className="flex items-center gap-2">
+              {user && <BackButton />}
+              <Link href={user ? "/dashboard" : "/"}>
+                <Image
+                  src="/exa-logo-white.png"
+                  alt="EXA"
+                  width={60}
+                  height={24}
+                  className="h-6 w-auto opacity-80 hover:opacity-100 transition-opacity"
+                />
+              </Link>
+            </div>
             <div className="flex items-center gap-2">
               {isBrand && !isOwner && (
                 <>
