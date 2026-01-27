@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Gift, Loader2, Coins } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { hapticFeedback } from "@/hooks/useHapticFeedback";
 
 const TIP_AMOUNTS = [1, 5, 10, 25, 50, 100];
 
@@ -63,6 +64,7 @@ export function TipDialog({
         return;
       }
 
+      hapticFeedback("success");
       toast.success(`Sent ${selectedAmount} coins to ${data.recipientName}!`);
       setOpen(false);
       setSelectedAmount(null);
@@ -119,10 +121,15 @@ export function TipDialog({
               return (
                 <button
                   key={amount}
-                  onClick={() => canAfford && setSelectedAmount(amount)}
+                  onClick={() => {
+                    if (canAfford) {
+                      hapticFeedback("light");
+                      setSelectedAmount(amount);
+                    }
+                  }}
                   disabled={!canAfford || loading}
                   className={cn(
-                    "py-3 px-4 rounded-lg border text-center transition-all",
+                    "py-3 px-4 rounded-lg border text-center transition-all active:scale-95",
                     isSelected
                       ? "border-pink-500 bg-pink-500/10 text-pink-500"
                       : canAfford

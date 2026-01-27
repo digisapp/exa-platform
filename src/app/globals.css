@@ -179,6 +179,11 @@
   background: linear-gradient(90deg, #FF69B4, #FF00FF);
 }
 
+.exa-gradient-button:active {
+  transform: translateY(0) scale(0.97);
+  box-shadow: 0 0 15px rgba(255, 105, 180, 0.4), 0 0 20px rgba(0, 191, 255, 0.2);
+}
+
 /* Glassmorphic Card */
 .glass-card {
   background: rgba(30, 10, 50, 0.6);
@@ -579,4 +584,132 @@ input:focus, textarea:focus, select:focus {
 
 .animate-gold-glow {
   animation: gold-glow 2s ease-in-out infinite;
+}
+
+/* Mobile Touch Feedback */
+.touch-feedback {
+  transition: transform 0.1s ease, opacity 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.touch-feedback:active {
+  transform: scale(0.97);
+  opacity: 0.9;
+}
+
+/* Interactive Cards - touch optimized */
+.interactive-card {
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.interactive-card:active {
+  transform: scale(0.98);
+  opacity: 0.95;
+}
+
+/* Prevent text selection on interactive elements */
+.no-select {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Smooth touch scrolling */
+.scroll-smooth-touch {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Pull-to-refresh container styling */
+.pull-refresh-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 0;
+  overflow: hidden;
+  transition: height 0.2s ease;
+}
+
+.pull-refresh-indicator.pulling {
+  height: 60px;
+}
+
+/* Bottom sheet style for mobile modals */
+@media (max-width: 640px) {
+  .mobile-bottom-sheet {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    transform: none !important;
+    border-radius: 1.5rem 1.5rem 0 0 !important;
+    max-height: 90vh !important;
+  }
+
+  .mobile-bottom-sheet::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+    margin: 8px auto 0;
+  }
+}
+
+/* Sticky header support */
+.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: var(--background);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.dark .sticky-header {
+  background: rgba(13, 0, 21, 0.9);
+}
+
+/* Loading skeleton animation */
+@keyframes skeleton-pulse {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 105, 180, 0.1) 0%,
+    rgba(148, 0, 211, 0.15) 50%,
+    rgba(255, 105, 180, 0.1) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Improved focus states for accessibility */
+@media (prefers-reduced-motion: no-preference) {
+  .focus-ring {
+    transition: box-shadow 0.2s ease;
+  }
+}
+
+.focus-ring:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 105, 180, 0.5);
 }

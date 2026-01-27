@@ -268,7 +268,7 @@ export function ConversationList({ conversations, actorType }: ConversationListP
                 key={conv.conversation_id}
                 href={`/chats/${conv.conversation_id}`}
                 className={cn(
-                  "flex items-center gap-4 p-4 rounded-xl border transition-all hover:shadow-md",
+                  "flex items-center gap-4 p-4 rounded-xl border transition-all hover:shadow-md active:scale-[0.98] active:opacity-90",
                   isUnread
                     ? "bg-pink-500/5 border-pink-500/20 hover:border-pink-500/30"
                     : "bg-card hover:bg-muted/50 border-border"

@@ -408,7 +408,7 @@ export function ChatView({
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-120px)] relative">
+    <div className="flex flex-col h-[calc(100vh-120px)] md:h-[calc(100vh-120px)] max-md:h-[calc(100vh-180px)] relative">
       {/* Header */}
       <div className="flex items-center gap-4 p-4 border-b">
         <Link href="/chats">

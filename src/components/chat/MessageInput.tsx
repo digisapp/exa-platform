@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { AttachmentMenu } from "./AttachmentMenu";
 import { VoiceRecorder } from "./VoiceRecorder";
 import { LibraryPicker } from "./LibraryPicker";
+import { hapticFeedback } from "@/hooks/useHapticFeedback";
 
 const DRAFT_PREFIX = "chat_draft_";
 
@@ -98,6 +99,9 @@ export function MessageInput({
   const handleSend = async () => {
     if (!canSend || !hasEnoughCoins) return;
 
+    // Haptic feedback on send
+    hapticFeedback("light");
+
     const messageContent = content.trim();
     const mediaUrl = attachedMedia?.url;
     const mediaType = attachedMedia?.type;
@@ -113,6 +117,7 @@ export function MessageInput({
       await onSend(messageContent, mediaUrl, mediaType);
       clearDraft(); // Clear draft on successful send
     } catch (error) {
+      hapticFeedback("error");
       setContent(messageContent);
       if (mediaUrl && mediaType) {
         setAttachedMedia({ url: mediaUrl, type: mediaType });

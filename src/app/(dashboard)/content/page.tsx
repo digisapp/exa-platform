@@ -486,9 +486,10 @@ export default function ContentPage() {
         </Card>
       </div>
 
-      {/* Tabs */}
+      {/* Tabs - sticky on scroll */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 h-12">
+        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-md -mx-4 px-4 py-2 md:-mx-8 md:px-8">
+          <TabsList className="grid w-full grid-cols-2 h-12">
           <TabsTrigger value="portfolio" className="flex items-center gap-2 text-base">
             <Camera className="h-4 w-4" />
             Portfolio
@@ -497,7 +498,8 @@ export default function ContentPage() {
             <Sparkles className="h-4 w-4" />
             PPV Content
           </TabsTrigger>
-        </TabsList>
+          </TabsList>
+        </div>
 
         {/* Portfolio Tab */}
         <TabsContent value="portfolio" className="space-y-4">
@@ -566,12 +568,15 @@ export default function ContentPage() {
                       </div>
                     </div>
 
-                    {/* Delete Button - show on hover */}
+                    {/* Delete Button - visible on mobile, hover on desktop */}
                     <Button
                       variant="destructive"
                       size="icon"
-                      className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => handleDeletePortfolio(item.id)}
+                      className="absolute top-2 right-2 h-8 w-8 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeletePortfolio(item.id);
+                      }}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -668,12 +673,15 @@ export default function ContentPage() {
                       </div>
                     )}
 
-                    {/* Delete Button - show on hover */}
+                    {/* Delete Button - visible on mobile, hover on desktop */}
                     <Button
                       variant="destructive"
                       size="icon"
-                      className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => handleDelete(item.id)}
+                      className="absolute top-2 right-2 h-8 w-8 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(item.id);
+                      }}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
