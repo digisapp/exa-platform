@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
 
 interface CoinBalanceContextType {
   balance: number;
@@ -39,6 +39,30 @@ export function CoinBalanceProvider({ children, initialBalance }: CoinBalancePro
       console.error("Failed to refresh balance:", error);
     }
   }, []);
+
+  // Refresh balance when page is restored from bfcache (browser back/forward)
+  // or when the tab regains visibility (e.g. switching tabs)
+  useEffect(() => {
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        refreshBalance();
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        refreshBalance();
+      }
+    };
+
+    window.addEventListener("pageshow", handlePageShow);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("pageshow", handlePageShow);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [refreshBalance]);
 
   return (
     <CoinBalanceContext.Provider
