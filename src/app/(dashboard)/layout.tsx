@@ -91,6 +91,17 @@ export default async function DashboardLayout({
         ? `${profileData.first_name} ${profileData.last_name || ""}`.trim()
         : profileData?.username || undefined;
 
+  // Fetch unread message count for nav badges
+  let unreadCount = 0;
+  try {
+    const { data: count } = await supabase.rpc('get_unread_message_count', {
+      p_user_id: user.id,
+    });
+    unreadCount = count || 0;
+  } catch {
+    // Non-critical, default to 0
+  }
+
   return (
     <CoinBalanceProvider initialBalance={coinBalance}>
       <div className="min-h-screen bg-background">
@@ -104,6 +115,7 @@ export default async function DashboardLayout({
             username: profileData?.username || undefined,
           }}
           actorType={actor?.type || null}
+          unreadCount={unreadCount}
         />
         <DashboardClientWrapper actorId={actor?.id || null}>
           <main className="container px-4 md:px-8 py-8 pb-24 md:pb-8">{children}</main>
@@ -115,6 +127,7 @@ export default async function DashboardLayout({
             email: user.email || "",
           }}
           actorType={actor?.type || null}
+          unreadCount={unreadCount}
         />
       </div>
     </CoinBalanceProvider>

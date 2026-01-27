@@ -128,7 +128,7 @@ export default function MyContentPage() {
   }
 
   return (
-    <div className="container px-4 md:px-8 py-8 max-w-6xl mx-auto">
+    <div className="container px-4 md:px-8 py-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">

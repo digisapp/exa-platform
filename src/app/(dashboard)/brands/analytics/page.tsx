@@ -93,7 +93,7 @@ export default function BrandAnalyticsPage() {
   const maxSpend = Math.max(...Object.values(data.spendByMonth), 1);
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold">Analytics</h1>

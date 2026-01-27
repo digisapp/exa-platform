@@ -365,7 +365,7 @@ export default function WalletPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="p-3 rounded-full bg-gradient-to-r from-pink-500/20 to-violet-500/20">

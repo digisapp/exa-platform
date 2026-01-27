@@ -402,7 +402,7 @@ export default function ContentPage() {
   const totalUnlocks = content.reduce((sum, c) => sum + (c.unlock_count || 0), 0);
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>

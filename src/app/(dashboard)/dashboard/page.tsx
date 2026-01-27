@@ -208,7 +208,7 @@ export default async function DashboardPage() {
     : model.username;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6">
       {/* Offers */}
       {pendingOffers.length > 0 && (
         <Card className="border-blue-500/30 bg-gradient-to-br from-blue-500/5 to-cyan-500/5">
@@ -442,7 +442,7 @@ async function FanDashboard({ actorId }: { actorId: string }) {
   const featuredModels = seededShuffle(allFeaturedModels || [], rotationPeriod).slice(0, 8);
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6">
       {/* Visual Discovery Feed */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
@@ -606,7 +606,7 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
   );
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6">
       {/* Pending Approval Notice */}
       {isPending && (
         <Card className="border-amber-500/50 bg-amber-500/5">

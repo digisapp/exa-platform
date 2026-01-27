@@ -40,6 +40,7 @@ interface NavbarProps {
     username?: string;
   } | null;
   actorType?: "model" | "brand" | "admin" | "fan" | null;
+  unreadCount?: number;
 }
 
 const publicLinks: { href: string; label: string; icon: any }[] = [];
@@ -68,7 +69,7 @@ const adminLinks = [
   { href: "/chats", label: "Chats", icon: MessageCircle },
 ];
 
-export function Navbar({ user, actorType }: NavbarProps) {
+export function Navbar({ user, actorType, unreadCount = 0 }: NavbarProps) {
   const pathname = usePathname();
   const coinBalanceContext = useCoinBalanceOptional();
   const coinBalance = coinBalanceContext?.balance ?? 0;
@@ -81,6 +82,13 @@ export function Navbar({ user, actorType }: NavbarProps) {
         : actorType === "brand"
           ? brandLinks
           : publicLinks;
+
+  const isLinkActive = (href: string) => {
+    if (href === "/dashboard" || href === "/admin") {
+      return pathname === href;
+    }
+    return pathname === href || pathname.startsWith(href + "/");
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -104,16 +112,22 @@ export function Navbar({ user, actorType }: NavbarProps) {
               href={link.href}
               className={cn(
                 "flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary",
-                pathname === link.href
+                isLinkActive(link.href)
                   ? "text-primary"
                   : "text-muted-foreground"
               )}
             >
-              <link.icon className="h-4 w-4" />
+              <div className="relative">
+                <link.icon className="h-4 w-4" />
+                {link.href === "/chats" && unreadCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 flex items-center justify-center text-[10px] font-bold bg-pink-500 text-white rounded-full">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                )}
+              </div>
               {link.label}
             </Link>
           ))}
-
         </nav>
 
         {/* Right side */}

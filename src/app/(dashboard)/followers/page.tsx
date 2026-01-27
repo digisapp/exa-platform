@@ -138,7 +138,7 @@ export default async function FollowersPage() {
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      <main className="container px-8 md:px-16 py-8 max-w-4xl mx-auto">
+      <main className="container px-8 md:px-16 py-8 max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3">

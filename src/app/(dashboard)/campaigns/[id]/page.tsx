@@ -1,9 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
-import { ArrowLeft, Users } from "lucide-react";
+import { Users } from "lucide-react";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
 import { ModelCard } from "@/components/models/model-card";
 import { RemoveFromCampaignButton } from "@/components/campaigns/RemoveFromCampaignButton";
 import { BulkAddModelsDialog } from "@/components/campaigns/BulkAddModelsDialog";
@@ -87,46 +88,40 @@ export default async function CampaignDetailPage({
 
   return (
     <>
-      {/* Back Link */}
-      <Link
-        href="/campaigns"
-        className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back to Campaigns
-      </Link>
-
-      {/* Header */}
-      <div className="flex items-start justify-between mb-8">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <div
-              className="w-4 h-4 rounded-full"
-              style={{ backgroundColor: campaign.color }}
-            />
-            <h1 className="text-3xl font-bold">{campaign.name}</h1>
-          </div>
-          {campaign.description && (
-            <p className="text-muted-foreground">{campaign.description}</p>
-          )}
-          <p className="text-sm text-muted-foreground mt-2">
-            {orderedModels.length} {orderedModels.length === 1 ? "model" : "models"}
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <BulkAddModelsDialog
-            campaignId={id}
-            campaignName={campaign.name}
-            existingModelIds={modelIds}
-          />
-          {orderedModels.length > 0 && (
-            <SendOfferDialog
+      <PageHeader
+        backHref="/campaigns"
+        backLabel="Back to Campaigns"
+        title={campaign.name}
+        actions={
+          <div className="flex items-center gap-3">
+            <BulkAddModelsDialog
               campaignId={id}
               campaignName={campaign.name}
-              modelCount={orderedModels.length}
+              existingModelIds={modelIds}
             />
-          )}
+            {orderedModels.length > 0 && (
+              <SendOfferDialog
+                campaignId={id}
+                campaignName={campaign.name}
+                modelCount={orderedModels.length}
+              />
+            )}
+          </div>
+        }
+      />
+
+      {/* Campaign Details */}
+      <div className="mb-8 -mt-2">
+        <div className="flex items-center gap-3 mb-2">
+          <div
+            className="w-4 h-4 rounded-full"
+            style={{ backgroundColor: campaign.color }}
+          />
+          <span className="text-muted-foreground">{campaign.description}</span>
         </div>
+        <p className="text-sm text-muted-foreground">
+          {orderedModels.length} {orderedModels.length === 1 ? "model" : "models"}
+        </p>
       </div>
 
       {/* Offers Section */}

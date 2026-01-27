@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -46,6 +47,7 @@ interface Conversation {
 interface ConversationListProps {
   conversations: Conversation[];
   actorType?: string;
+  compact?: boolean;
 }
 
 type FilterType = "all" | "fans" | "brands";
@@ -68,7 +70,9 @@ function formatMessageTime(dateStr: string): string {
   return format(date, "MMM d"); // "Jan 15"
 }
 
-export function ConversationList({ conversations, actorType }: ConversationListProps) {
+export function ConversationList({ conversations, actorType, compact }: ConversationListProps) {
+  const pathname = usePathname();
+  const selectedId = pathname.startsWith("/chats/") ? pathname.split("/chats/")[1] : null;
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
 
@@ -201,26 +205,28 @@ export function ConversationList({ conversations, actorType }: ConversationListP
   }, [conversations]);
 
   return (
-    <div className="space-y-4">
-      {/* Stats Bar */}
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <MessageSquare className="h-4 w-4" />
-          <span>{conversations.length} conversation{conversations.length !== 1 ? 's' : ''}</span>
+    <div className={cn("space-y-4", compact && "space-y-3")}>
+      {/* Stats Bar - hidden in compact mode */}
+      {!compact && (
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <MessageSquare className="h-4 w-4" />
+            <span>{conversations.length} conversation{conversations.length !== 1 ? 's' : ''}</span>
+          </div>
+          {unreadCount > 0 && (
+            <Badge variant="secondary" className="bg-pink-500/10 text-pink-500 hover:bg-pink-500/20">
+              {unreadCount} unread
+            </Badge>
+          )}
         </div>
-        {unreadCount > 0 && (
-          <Badge variant="secondary" className="bg-pink-500/10 text-pink-500 hover:bg-pink-500/20">
-            {unreadCount} unread
-          </Badge>
-        )}
-      </div>
+      )}
 
       {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <div className={cn("relative", compact && "px-3")}>
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" style={compact ? { left: '1.5rem' } : undefined} />
         <Input
           placeholder="Search conversations..."
-          className="pl-10 h-11"
+          className={cn("pl-10 h-11", compact && "h-9 text-sm")}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
@@ -229,7 +235,7 @@ export function ConversationList({ conversations, actorType }: ConversationListP
       {/* Filter Tabs (only for models) */}
       {actorType === "model" && (
         <Tabs value={filter} onValueChange={(v) => setFilter(v as FilterType)}>
-          <TabsList className="w-full grid grid-cols-3">
+          <TabsList className={cn("w-full grid grid-cols-3", compact && "mx-3 w-[calc(100%-1.5rem)]")}>
             <TabsTrigger value="all" className="gap-2">
               <MessageSquare className="h-4 w-4" />
               All
@@ -254,7 +260,7 @@ export function ConversationList({ conversations, actorType }: ConversationListP
 
       {/* Conversations List */}
       {filteredConversations.length > 0 ? (
-        <div className="space-y-2">
+        <div className={cn("space-y-2", compact && "space-y-1 px-2")}>
           {filteredConversations.map((conv) => {
             const participant = conv.otherParticipants[0];
             const { displayName, avatarUrl, type } = getParticipantInfo(participant);
@@ -262,6 +268,7 @@ export function ConversationList({ conversations, actorType }: ConversationListP
               conv.lastMessage &&
               (!conv.last_read_at ||
                 new Date(conv.lastMessage.created_at) > new Date(conv.last_read_at));
+            const isSelected = conv.conversation_id === selectedId;
 
             return (
               <Link
@@ -269,13 +276,16 @@ export function ConversationList({ conversations, actorType }: ConversationListP
                 href={`/chats/${conv.conversation_id}`}
                 className={cn(
                   "flex items-center gap-4 p-4 rounded-xl border transition-all hover:shadow-md active:scale-[0.98] active:opacity-90",
-                  isUnread
-                    ? "bg-pink-500/5 border-pink-500/20 hover:border-pink-500/30"
-                    : "bg-card hover:bg-muted/50 border-border"
+                  isSelected
+                    ? "bg-pink-500/10 border-pink-500/30 ring-1 ring-pink-500/20"
+                    : isUnread
+                      ? "bg-pink-500/5 border-pink-500/20 hover:border-pink-500/30"
+                      : "bg-card hover:bg-muted/50 border-border",
+                  compact && "p-3 rounded-lg gap-3"
                 )}
               >
                 <div className="relative">
-                  <Avatar className="h-12 w-12 ring-2 ring-background">
+                  <Avatar className={cn("h-12 w-12 ring-2 ring-background", compact && "h-10 w-10")}>
                     <AvatarImage src={avatarUrl || undefined} />
                     <AvatarFallback className={cn(
                       "text-white font-semibold",
@@ -287,7 +297,7 @@ export function ConversationList({ conversations, actorType }: ConversationListP
                       {type === "admin" ? "EXA" : displayName.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  {isUnread && (
+                  {isUnread && !isSelected && (
                     <div className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-pink-500 border-2 border-background" />
                   )}
                 </div>

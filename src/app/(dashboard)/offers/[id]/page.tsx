@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, use } from "react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +12,6 @@ import {
   MapPin,
   DollarSign,
   Building2,
-  ArrowLeft,
   Clock,
   CheckCircle2,
   XCircle,
@@ -21,6 +19,7 @@ import {
   FileText,
   MessageCircle,
 } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
 
 interface Offer {
   id: string;
@@ -61,7 +60,6 @@ export default function OfferDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const router = useRouter();
   const [offer, setOffer] = useState<Offer | null>(null);
   const [myResponse, setMyResponse] = useState<MyResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -162,13 +160,11 @@ export default function OfferDetailPage({
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => router.back()}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <h1 className="text-xl font-bold">Offer Details</h1>
-      </div>
+      <PageHeader
+        backHref="/offers"
+        backLabel="Back to Offers"
+        title="Offer Details"
+      />
 
       {/* Main Card */}
       <Card>

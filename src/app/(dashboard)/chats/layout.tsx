@@ -1,17 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
-import { headers, cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { ConversationList } from "@/components/chat/ConversationList";
-import { NewMessageDialog } from "@/components/chat/NewMessageDialog";
 import { BlastDialog } from "@/components/chat/BlastDialog";
-import { MessageCircle } from "lucide-react";
+import { NewMessageDialog } from "@/components/chat/NewMessageDialog";
 
-interface PageProps {
-  searchParams: Promise<{ new?: string }>;
+interface LayoutProps {
+  children: React.ReactNode;
 }
 
-export default async function MessagesPage({ searchParams }: PageProps) {
-  const params = await searchParams;
+export default async function ChatsLayout({ children }: LayoutProps) {
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
@@ -26,45 +23,7 @@ export default async function MessagesPage({ searchParams }: PageProps) {
 
   if (!actor) redirect("/fan/signup");
 
-  // Handle ?new=username parameter - call API route to find/create conversation
-  if (params.new) {
-    const modelUsername = params.new;
-
-    const h = await headers();
-    const c = await cookies();
-    const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
-    const proto = h.get("x-forwarded-proto") ?? (process.env.NODE_ENV === "production" ? "https" : "http");
-    const apiUrl = `${proto}://${host}/api/conversations/find-or-create`;
-
-    try {
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        cache: "no-store",
-        headers: {
-          "Content-Type": "application/json",
-          Cookie: c.toString(),
-        },
-        body: JSON.stringify({ modelUsername }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.success && data.conversationId) {
-        redirect(`/chats/${data.conversationId}`);
-      } else {
-        console.error("[Chat] API error:", response.status, data.error);
-      }
-    } catch (error: any) {
-      // Re-throw redirect errors - Next.js uses thrown errors for redirects
-      if (error?.digest?.startsWith("NEXT_REDIRECT")) {
-        throw error;
-      }
-      console.error("[Chat] API call failed:", error instanceof Error ? error.message : error);
-    }
-    // Fall through to show inbox if failed
-  }
-
-  // Get coin balance based on actor type
+  // Get coin balance for brands (needed for NewMessageDialog)
   let coinBalance = 0;
   if (actor.type === "fan") {
     const { data: fan } = await supabase
@@ -82,7 +41,7 @@ export default async function MessagesPage({ searchParams }: PageProps) {
     coinBalance = brand?.coin_balance || 0;
   }
 
-  // Get conversations for mobile view
+  // Get conversations with participants in a single query
   const { data: participations } = await supabase
     .from("conversation_participants")
     .select(`
@@ -123,7 +82,7 @@ export default async function MessagesPage({ searchParams }: PageProps) {
     });
   }
 
-  // Batch fetch: Get all other participants
+  // Batch fetch: Get all other participants for all conversations in ONE query
   const { data: allParticipants } = conversationIds.length > 0
     ? await supabase
         .from("conversation_participants")
@@ -144,7 +103,7 @@ export default async function MessagesPage({ searchParams }: PageProps) {
   const fanActorIds = [...new Set((allParticipants || []).filter((p: any) => p.actor?.type === "fan").map((p: any) => p.actor?.id).filter(Boolean))];
   const brandActorIds = [...new Set((allParticipants || []).filter((p: any) => p.actor?.type === "brand").map((p: any) => p.actor?.id).filter(Boolean))];
 
-  // Fetch all models
+  // Fetch all models for these users
   const { data: models } = userIds.length > 0
     ? await supabase
         .from("models")
@@ -192,7 +151,7 @@ export default async function MessagesPage({ searchParams }: PageProps) {
     participantsMap.set(p.conversation_id, existing);
   });
 
-  // Combine data and sort
+  // Combine data and sort by most recent activity
   const conversations = (participations || [])
     .map((p: any) => ({
       ...p,
@@ -205,40 +164,44 @@ export default async function MessagesPage({ searchParams }: PageProps) {
       return new Date(bDate).getTime() - new Date(aDate).getTime();
     });
 
+  // Count fans and brands for blast dialog
   const fanCount = fanActorIds.length;
   const brandCount = brandActorIds.length;
 
   return (
-    <>
-      {/* Mobile: show full list with header */}
-      <div className="lg:hidden max-w-4xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Chats</h1>
-          <div className="flex items-center gap-2">
-            {actor.type === "model" && (
-              <BlastDialog fanCount={fanCount} brandCount={brandCount} />
-            )}
-            {actor.type === "brand" && (
-              <NewMessageDialog
-                currentActorType={actor.type}
-                coinBalance={coinBalance}
-              />
-            )}
+    <div className="mx-auto max-w-7xl">
+      {/* Desktop: two-panel layout */}
+      <div className="lg:grid lg:grid-cols-[380px_1fr] lg:h-[calc(100vh-120px)] lg:-my-8">
+        {/* Left panel: conversation list (desktop only) */}
+        <div className="hidden lg:flex lg:flex-col lg:border-r lg:overflow-hidden">
+          <div className="flex items-center justify-between p-4 border-b">
+            <h1 className="text-xl font-bold">Chats</h1>
+            <div className="flex items-center gap-2">
+              {actor.type === "model" && (
+                <BlastDialog fanCount={fanCount} brandCount={brandCount} />
+              )}
+              {actor.type === "brand" && (
+                <NewMessageDialog
+                  currentActorType={actor.type}
+                  coinBalance={coinBalance}
+                />
+              )}
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto py-3">
+            <ConversationList
+              conversations={conversations}
+              actorType={actor.type}
+              compact
+            />
           </div>
         </div>
-        <ConversationList conversations={conversations} actorType={actor.type} />
-      </div>
 
-      {/* Desktop: empty state (sidebar is in layout) */}
-      <div className="hidden lg:flex flex-col items-center justify-center h-full text-center">
-        <div className="p-6 rounded-full bg-gradient-to-br from-pink-500/20 to-violet-500/20 mb-4">
-          <MessageCircle className="h-12 w-12 text-pink-500" />
+        {/* Right panel: children (page.tsx or [conversationId]/page.tsx) */}
+        <div className="lg:flex lg:flex-col lg:overflow-hidden">
+          {children}
         </div>
-        <h2 className="text-xl font-semibold mb-2">Select a conversation</h2>
-        <p className="text-sm text-muted-foreground max-w-xs">
-          Choose from your conversations on the left to start chatting
-        </p>
       </div>
-    </>
+    </div>
   );
 }
