@@ -19,15 +19,12 @@ import { GigsFeed } from "@/components/gigs/GigsFeed";
 import { Badge } from "@/components/ui/badge";
 import {
   ArrowRight,
-  Coins,
-  Heart,
   Image as ImageIcon,
   Sparkles,
   Users,
   Building2,
   Clock,
   Calendar,
-  Star,
   Search,
   Mail,
   DollarSign,
@@ -564,19 +561,12 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
 
   // Parallel queries for dashboard data
   const [
-    { data: favorites },
     { data: campaignsList },
     { count: campaignCount },
     { data: offersData },
     { data: upcomingBookings },
     { data: topModels },
   ] = await Promise.all([
-    // Saved/favorited models
-    (supabase.from("follows") as any)
-      .select("following_id, created_at")
-      .eq("follower_id", actorId)
-      .order("created_at", { ascending: false })
-      .limit(10),
     // Active campaigns with model counts
     (supabase.from("campaigns") as any)
       .select(`*, campaign_models(id)`)
@@ -592,11 +582,12 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
       .select(`*, offer_responses(id, status, model_id, responded_at)`)
       .eq("brand_id", actorId)
       .order("created_at", { ascending: false }),
-    // Upcoming bookings
+    // Upcoming bookings (exclude cancelled)
     (supabase.from("bookings") as any)
       .select("id, event_date, service_type, status, model_id")
       .eq("client_id", actorId)
       .gte("event_date", new Date().toISOString().split("T")[0])
+      .neq("status", "cancelled")
       .order("event_date", { ascending: true })
       .limit(5),
     // Top models for discovery (full ModelCard fields)
@@ -617,30 +608,6 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
       .order("admin_rating", { ascending: false })
       .limit(8),
   ]);
-
-  // Get model details for favorites
-  const favoriteIds = favorites?.map((f: any) => f.following_id) || [];
-  let savedModels: any[] = [];
-  if (favoriteIds.length > 0) {
-    const { data: actorData } = await (supabase
-      .from("actors") as any)
-      .select("id, user_id")
-      .in("id", favoriteIds)
-      .eq("type", "model");
-
-    if (actorData && actorData.length > 0) {
-      const userIds = actorData.map((a: any) => a.user_id);
-      const { data: models } = await (supabase
-        .from("models") as any)
-        .select(`
-          id, username, first_name, last_name, profile_photo_url, city, state, show_location, user_id,
-          photoshoot_hourly_rate, promo_hourly_rate, brand_ambassador_daily_rate
-        `)
-        .in("user_id", userIds)
-        .eq("is_approved", true);
-      savedModels = models || [];
-    }
-  }
 
   // Compute derived values
   const coinBalance = brand?.coin_balance || 0;
@@ -697,16 +664,11 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
 
   // Getting Started checks
   const hasProfile = !!brand?.logo_url;
-  const hasFollowed = favoriteIds.length > 0;
   const hasCampaign = activeCampaignCount > 0;
   const hasSentOffer = (offersData || []).length > 0;
-  const completedSteps = [hasProfile, hasFollowed, hasCampaign, hasSentOffer].filter(Boolean).length;
+  const completedSteps = [hasProfile, hasCampaign, hasSentOffer].filter(Boolean).length;
 
-  // Filter discover models (exclude already saved)
-  const savedUserIds = savedModels.map(m => m.user_id);
-  const discoverModels = (topModels || []).filter(
-    (m: any) => !savedUserIds.includes(m.user_id)
-  );
+  const discoverModels = topModels || [];
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -719,20 +681,7 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
       </div>
 
       {/* Stats Bar */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-full bg-yellow-500/10">
-                <Coins className="h-5 w-5 text-yellow-500" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Coin Balance</p>
-                <p className="text-2xl font-bold">{coinBalance.toLocaleString()}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-3 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
@@ -795,7 +744,7 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
       )}
 
       {/* Getting Started Checklist */}
-      {completedSteps < 4 && (
+      {completedSteps < 3 && (
         <Card className="border-cyan-500/30 bg-gradient-to-br from-cyan-500/5 to-blue-500/5">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -804,12 +753,12 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
                 Getting Started
               </CardTitle>
               <Badge variant="secondary" className="bg-cyan-500/10 text-cyan-600">
-                {completedSteps}/4
+                {completedSteps}/3
               </Badge>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <Link
                 href="/settings"
                 className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
@@ -824,22 +773,6 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
                     Complete your profile
                   </p>
                   <p className="text-xs text-muted-foreground">Add your logo and company details</p>
-                </div>
-              </Link>
-              <Link
-                href="/models"
-                className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
-              >
-                {hasFollowed ? (
-                  <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
-                ) : (
-                  <Circle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                )}
-                <div>
-                  <p className={`font-medium text-sm ${hasFollowed ? "line-through text-muted-foreground" : ""}`}>
-                    Follow a model
-                  </p>
-                  <p className="text-xs text-muted-foreground">Save models you&apos;re interested in</p>
                 </div>
               </Link>
               <Link
@@ -1166,91 +1099,6 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
                 <Calendar className="h-6 w-6 text-green-500" />
               </div>
               <p className="text-sm text-muted-foreground">No upcoming events</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Following */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Heart className="h-5 w-5 text-pink-500 fill-pink-500" />
-            Following
-          </CardTitle>
-          {savedModels.length > 0 && (
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/following" className="text-pink-500">
-                View All
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
-            </Button>
-          )}
-        </CardHeader>
-        <CardContent>
-          {savedModels.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {savedModels.map((model: any) => {
-                const displayName = model.first_name
-                  ? `${model.first_name} ${model.last_name || ''}`.trim()
-                  : model.username;
-                const hourlyRates = [
-                  model.photoshoot_hourly_rate,
-                  model.promo_hourly_rate,
-                ].filter((r): r is number => r != null && r > 0);
-                const lowestHourly = hourlyRates.length > 0 ? Math.min(...hourlyRates) : null;
-                const dailyRate = model.brand_ambassador_daily_rate > 0 ? model.brand_ambassador_daily_rate : null;
-                return (
-                  <Link
-                    key={model.id}
-                    href={`/${model.username}`}
-                    className="group"
-                  >
-                    <div className="rounded-xl p-3 border bg-card hover:shadow-lg transition-all hover:border-cyan-500/50">
-                      <div className="relative aspect-square rounded-lg overflow-hidden mb-2 bg-gradient-to-br from-cyan-500/20 to-blue-500/20">
-                        {model.profile_photo_url ? (
-                          <Image
-                            src={model.profile_photo_url}
-                            alt={displayName}
-                            fill
-                            className="object-cover group-hover:scale-110 transition-transform"
-                            unoptimized={model.profile_photo_url.includes('cdninstagram.com')}
-                          />
-                        ) : (
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-3xl">👤</span>
-                          </div>
-                        )}
-                      </div>
-                      <p className="font-medium text-sm truncate">{displayName}</p>
-                      <p className="text-xs text-cyan-500">@{model.username}</p>
-                      {lowestHourly !== null ? (
-                        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                          From {lowestHourly} <Coins className="h-3 w-3" />/hr
-                        </p>
-                      ) : dailyRate !== null ? (
-                        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                          From {dailyRate} <Coins className="h-3 w-3" />/day
-                        </p>
-                      ) : null}
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <div className="p-4 rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-500/20 inline-block mb-4">
-                <Star className="h-8 w-8 text-cyan-500" />
-              </div>
-              <h3 className="font-semibold mb-2">No saved models yet</h3>
-              <p className="text-muted-foreground text-sm mb-4">Save models you&apos;re interested in booking</p>
-              <Button asChild className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700">
-                <Link href="/models">
-                  <Search className="mr-2 h-4 w-4" />
-                  Find Models
-                </Link>
-              </Button>
             </div>
           )}
         </CardContent>
