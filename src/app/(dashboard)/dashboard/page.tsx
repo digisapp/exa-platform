@@ -383,20 +383,28 @@ async function FanDashboard({ actorId }: { actorId: string }) {
   const modelsMap = new Map((allModels || []).map((m: any) => [m.id, m]));
 
   // Get portfolio content from all approved models for discovery feed
+  // Fetch more to allow deduplication (1 photo per model)
   const { data: portfolioContent } = await (supabase
     .from("media_assets") as any)
     .select("id, url, type, title, created_at, model_id")
     .eq("type", "photo")
     .order("created_at", { ascending: false })
-    .limit(12);
+    .limit(50);
 
-  // Enrich content with model info, filter to only models that are approved
+  // Enrich with model info, filter to approved models, deduplicate to 1 photo per model
+  const seenModelIds = new Set<string>();
   const discoveryContent = (portfolioContent || [])
     .map((c: any) => ({
       ...c,
       model: modelsMap.get(c.model_id) || null
     }))
-    .filter((c: any) => c.model !== null);
+    .filter((c: any) => {
+      if (!c.model || !c.model_id) return false;
+      if (seenModelIds.has(c.model_id)) return false;
+      seenModelIds.add(c.model_id);
+      return true;
+    })
+    .slice(0, 12);
 
   // Get featured models for the models section (only those with uploaded profile photos)
   // Exclude Instagram CDN URLs which are low quality
