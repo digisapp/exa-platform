@@ -453,7 +453,7 @@ async function FanDashboard({ actorId }: { actorId: string }) {
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Favorites */}
-      {favoriteModels.length > 0 && (
+      {favoriteModels.length > 0 ? (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
@@ -461,7 +461,7 @@ async function FanDashboard({ actorId }: { actorId: string }) {
               Favorites
             </CardTitle>
             <Button variant="ghost" size="sm" asChild>
-              <Link href="/following" className="text-pink-500">
+              <Link href="/favorites" className="text-pink-500">
                 View All
                 <ArrowRight className="ml-1 h-4 w-4" />
               </Link>
@@ -472,6 +472,27 @@ async function FanDashboard({ actorId }: { actorId: string }) {
               {favoriteModels.slice(0, 4).map((model: any) => (
                 <ModelCard key={model.id} model={model} showFavorite={true} isFavorited={true} />
               ))}
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="border-pink-500/20 bg-gradient-to-br from-pink-500/5 to-violet-500/5">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-full bg-pink-500/10">
+                <Heart className="h-6 w-6 text-pink-500" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold">Start building your favorites</h3>
+                <p className="text-sm text-muted-foreground">
+                  Click the heart icon on any model to add them to your favorites for quick access.
+                </p>
+              </div>
+              <Button asChild size="sm" className="bg-gradient-to-r from-pink-500 to-violet-500">
+                <Link href="/models">
+                  Browse Models
+                </Link>
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -702,7 +723,7 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
       </div>
 
       {/* Stats Bar */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
@@ -712,6 +733,19 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
               <div>
                 <p className="text-sm text-muted-foreground">Campaigns</p>
                 <p className="text-2xl font-bold">{activeCampaignCount}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-full bg-pink-500/10">
+                <Heart className="h-5 w-5 text-pink-500" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Favorites</p>
+                <p className="text-2xl font-bold">{favoriteModels.length}</p>
               </div>
             </div>
           </CardContent>
@@ -1126,7 +1160,7 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
       </Card>
 
       {/* Favorites */}
-      {favoriteModels.length > 0 && (
+      {favoriteModels.length > 0 ? (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
@@ -1134,7 +1168,7 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
               Favorites
             </CardTitle>
             <Button variant="ghost" size="sm" asChild>
-              <Link href="/following" className="text-pink-500">
+              <Link href="/favorites" className="text-pink-500">
                 View All
                 <ArrowRight className="ml-1 h-4 w-4" />
               </Link>
@@ -1145,6 +1179,27 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
               {favoriteModels.slice(0, 4).map((model: any) => (
                 <ModelCard key={model.id} model={model} showFavorite={true} isFavorited={true} />
               ))}
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="border-pink-500/20 bg-gradient-to-br from-pink-500/5 to-violet-500/5">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-full bg-pink-500/10">
+                <Heart className="h-6 w-6 text-pink-500" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold">Save your favorite models</h3>
+                <p className="text-sm text-muted-foreground">
+                  Click the heart icon on models you work with frequently for quick access.
+                </p>
+              </div>
+              <Button asChild size="sm" className="bg-gradient-to-r from-pink-500 to-violet-500">
+                <Link href="/models">
+                  Browse Models
+                </Link>
+              </Button>
             </div>
           </CardContent>
         </Card>

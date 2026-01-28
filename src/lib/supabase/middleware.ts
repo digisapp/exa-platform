@@ -16,7 +16,7 @@ const PROTECTED_PATHS = [
   '/bookings',
   '/offers',
   '/followers',
-  '/following',
+  '/favorites',
   '/campaigns',
   '/my-content',
 ]
@@ -31,7 +31,7 @@ const MODEL_APPROVED_PATHS = [
   '/bookings',
   '/offers',
   '/followers',
-  '/following',
+  '/favorites',
   '/campaigns',
   '/my-content',
   '/chats',

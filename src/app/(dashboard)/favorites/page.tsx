@@ -11,12 +11,12 @@ export const metadata: Metadata = {
   description: "Your favorite models on EXA",
 };
 
-export default async function FollowingPage() {
+export default async function FavoritesPage() {
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
-    redirect("/signin?redirect=/following");
+    redirect("/signin?redirect=/favorites");
   }
 
   // Get actor ID
@@ -30,8 +30,8 @@ export default async function FollowingPage() {
     redirect("/signin");
   }
 
-  // Get followed models
-  const { data: follows } = await (supabase
+  // Get favorite models
+  const { data: favorites } = await (supabase
     .from("follows") as any)
     .select(`
       created_at,
@@ -43,11 +43,11 @@ export default async function FollowingPage() {
     .eq("follower_id", actor.id)
     .order("created_at", { ascending: false });
 
-  // Get the user_ids from the followed actors
-  const userIds = follows?.map((f: any) => f.actors?.user_id).filter(Boolean) || [];
+  // Get the user_ids from the favorited actors
+  const userIds = favorites?.map((f: any) => f.actors?.user_id).filter(Boolean) || [];
 
   // Get the model profiles
-  const { data: followedModels } = userIds.length > 0
+  const { data: favoritedModels } = userIds.length > 0
     ? await supabase
         .from("models")
         .select("*")
@@ -57,7 +57,7 @@ export default async function FollowingPage() {
 
   // Create a map of user_id to model for ordering
   const modelsByUserId = new Map(
-    (followedModels || []).map((m: any) => [m.user_id, m])
+    (favoritedModels || []).map((m: any) => [m.user_id, m])
   );
 
   // Order models by the original follow order

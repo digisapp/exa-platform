@@ -1066,10 +1066,12 @@ export default function ProfilePage() {
           <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-pink-500/10 border border-pink-500/20">
             <Heart className="h-4 w-4 text-pink-500" />
             <span className="text-sm font-medium">{followerCount}</span>
+            <span className="text-xs text-muted-foreground">favorites</span>
           </div>
           <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20">
             <BarChart3 className="h-4 w-4 text-blue-500" />
             <span className="text-sm font-medium">{pageViews}</span>
+            <span className="text-xs text-muted-foreground">views</span>
           </div>
         </div>
       </div>
@@ -1897,7 +1899,7 @@ export default function ProfilePage() {
                 Your Followers
               </CardTitle>
               <CardDescription>
-                {followerCount} {followerCount === 1 ? "person" : "people"} following you
+                {followerCount} {followerCount === 1 ? "person has" : "people have"} added you to their favorites
               </CardDescription>
             </CardHeader>
             <CardContent>

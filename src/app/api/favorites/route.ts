@@ -126,6 +126,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if already favorited
+    const { data: existingFavorite } = await (supabase
+      .from("follows") as any)
+      .select("id")
+      .eq("follower_id", actor.id)
+      .eq("following_id", modelActor.id)
+      .single();
+
+    const isNewFavorite = !existingFavorite;
+
     // Insert favorite (using follows table)
     const { error: insertError } = await (supabase
       .from("follows") as any)
@@ -137,6 +147,43 @@ export async function POST(request: NextRequest) {
     if (insertError) {
       console.error("Favorite insert error:", insertError);
       throw insertError;
+    }
+
+    // Send notification to model if this is a new favorite
+    if (isNewFavorite) {
+      // Get follower info for notification
+      const { data: followerActor } = await supabase
+        .from("actors")
+        .select("type")
+        .eq("id", actor.id)
+        .single() as { data: { type: string } | null };
+
+      let followerName = "Someone";
+      if (followerActor?.type === "fan") {
+        const { data: fan } = await supabase
+          .from("fans")
+          .select("display_name, username")
+          .eq("id", actor.id)
+          .single() as { data: { display_name: string | null; username: string | null } | null };
+        followerName = fan?.display_name || fan?.username || "A fan";
+      } else if (followerActor?.type === "brand") {
+        const { data: brand } = await supabase
+          .from("brands")
+          .select("company_name")
+          .eq("id", actor.id)
+          .single() as { data: { company_name: string | null } | null };
+        followerName = brand?.company_name || "A brand";
+      }
+
+      // Create notification for the model
+      await (supabase.from("notifications") as any).insert({
+        user_id: model.user_id,
+        type: "new_follower",
+        title: "New Favorite",
+        message: `${followerName} added you to their favorites!`,
+        action_url: "/followers",
+        related_user_id: user.id,
+      });
     }
 
     // Get updated favorite count for this model
