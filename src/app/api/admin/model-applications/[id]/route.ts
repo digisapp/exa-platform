@@ -242,10 +242,10 @@ export async function PATCH(
         // Don't fail the request, just log the error
       }
 
-      // Send welcome chat message from admin
+      // Send welcome chat message from admin (using adminClient to bypass RLS)
       try {
         // Get model's actor ID
-        const { data: modelActor } = await supabase
+        const { data: modelActor } = await adminClient
           .from("actors")
           .select("id")
           .eq("user_id", application.user_id)
@@ -256,14 +256,14 @@ export async function PATCH(
           let conversationId: string | null = null;
 
           // Check for existing conversation between admin and model
-          const { data: existingConv } = await supabase
+          const { data: existingConv } = await adminClient
             .from("conversation_participants")
             .select("conversation_id")
             .eq("actor_id", actor.id) as { data: { conversation_id: string }[] | null };
 
           if (existingConv) {
             for (const cp of existingConv) {
-              const { data: hasModel } = await supabase
+              const { data: hasModel } = await adminClient
                 .from("conversation_participants")
                 .select("actor_id")
                 .eq("conversation_id", cp.conversation_id)
@@ -278,7 +278,7 @@ export async function PATCH(
 
           // Create new conversation if none exists
           if (!conversationId) {
-            const { data: newConv } = await (supabase
+            const { data: newConv } = await (adminClient
               .from("conversations") as any)
               .insert({ type: "direct" })
               .select()
@@ -286,7 +286,7 @@ export async function PATCH(
 
             if (newConv) {
               conversationId = newConv.id;
-              await (supabase.from("conversation_participants") as any).insert([
+              await (adminClient.from("conversation_participants") as any).insert([
                 { conversation_id: conversationId, actor_id: actor.id },
                 { conversation_id: conversationId, actor_id: modelActor.id },
               ]);
@@ -304,7 +304,7 @@ Here's how to get started:
 • Share your examodels.com/${application.instagram_username || application.tiktok_username || application.email.split("@")[0]} on Instagram Bio + Story
 • Engage with the community 😊`;
 
-            await (supabase.from("messages") as any).insert({
+            await (adminClient.from("messages") as any).insert({
               conversation_id: conversationId,
               sender_id: actor.id,
               content: welcomeMessage,
