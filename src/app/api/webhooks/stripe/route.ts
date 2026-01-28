@@ -54,6 +54,12 @@ export async function POST(request: NextRequest) {
           break;
         }
 
+        // Check if this is a workshop registration
+        if (session.metadata?.type === "workshop_registration") {
+          await handleWorkshopRegistration(session);
+          break;
+        }
+
         // Handle regular coin purchase
         const actorId = session.metadata?.actor_id;
         const coinsStr = session.metadata?.coins;
@@ -504,6 +510,60 @@ async function processAffiliateCommission(
     commissionCents,
     saleCents,
   });
+}
+
+async function handleWorkshopRegistration(session: Stripe.Checkout.Session) {
+  const workshopId = session.metadata?.workshop_id;
+  const quantity = parseInt(session.metadata?.quantity || "1", 10);
+  const buyerEmail = session.metadata?.buyer_email;
+  const buyerName = session.metadata?.buyer_name;
+
+  if (!workshopId || !buyerEmail) {
+    console.error("Missing workshop registration metadata:", session.id);
+    return;
+  }
+
+  const paymentIntentId = typeof session.payment_intent === "string"
+    ? session.payment_intent
+    : session.payment_intent?.id;
+
+  // Update workshop registration to completed
+  const { error: updateError } = await supabaseAdmin
+    .from("workshop_registrations")
+    .update({
+      status: "completed",
+      stripe_payment_intent_id: paymentIntentId,
+      completed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("stripe_checkout_session_id", session.id);
+
+  if (updateError) {
+    console.error("Error updating workshop registration:", updateError);
+    // Try to create the registration if it doesn't exist
+    const { error: insertError } = await supabaseAdmin
+      .from("workshop_registrations")
+      .insert({
+        workshop_id: workshopId,
+        buyer_email: buyerEmail,
+        buyer_name: buyerName || null,
+        buyer_phone: session.metadata?.buyer_phone || null,
+        stripe_checkout_session_id: session.id,
+        stripe_payment_intent_id: paymentIntentId,
+        quantity: quantity,
+        unit_price_cents: Math.round((session.amount_total || 0) / quantity),
+        total_price_cents: session.amount_total || 0,
+        status: "completed",
+        completed_at: new Date().toISOString(),
+      });
+
+    if (insertError) {
+      console.error("Error creating workshop registration:", insertError);
+      return;
+    }
+  }
+
+  console.log("Workshop registration successful:", { workshopId, quantity, buyerEmail });
 }
 
 // Disable body parsing for webhook signature verification

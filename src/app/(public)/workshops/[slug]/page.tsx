@@ -1,0 +1,308 @@
+import { createClient } from "@/lib/supabase/server";
+import { notFound } from "next/navigation";
+import Link from "next/link";
+import Image from "next/image";
+import { Navbar } from "@/components/layout/navbar";
+import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  MapPin,
+  Calendar,
+  Clock,
+  Users,
+  ArrowLeft,
+  CheckCircle,
+  Briefcase,
+} from "lucide-react";
+import { format } from "date-fns";
+import type { Metadata } from "next";
+import { WorkshopCheckout } from "./workshop-checkout";
+
+interface Props {
+  params: Promise<{ slug: string }>;
+}
+
+interface Workshop {
+  id: string;
+  slug: string;
+  title: string;
+  subtitle: string | null;
+  description: string | null;
+  cover_image_url: string | null;
+  location_name: string | null;
+  location_city: string | null;
+  location_state: string | null;
+  location_address: string | null;
+  date: string;
+  start_time: string | null;
+  end_time: string | null;
+  price_cents: number;
+  original_price_cents: number | null;
+  spots_available: number | null;
+  spots_sold: number;
+  highlights: string[] | null;
+  what_to_bring: string[] | null;
+  instructors: string[] | null;
+  status: string;
+  meta_title: string | null;
+  meta_description: string | null;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const supabase = await createClient();
+
+  const { data } = await (supabase as any)
+    .from("workshops")
+    .select("title, description, meta_title, meta_description, cover_image_url")
+    .eq("slug", slug)
+    .single() as { data: Workshop | null };
+
+  if (!data) {
+    return { title: "Workshop Not Found | EXA" };
+  }
+
+  return {
+    title: data.meta_title || `${data.title} | EXA Models`,
+    description: data.meta_description || data.description || `Join us for ${data.title}`,
+    openGraph: {
+      title: data.meta_title || `${data.title} | EXA Models`,
+      description: data.meta_description || data.description || `Join us for ${data.title}`,
+      images: data.cover_image_url ? [data.cover_image_url] : [],
+    },
+  };
+}
+
+export default async function WorkshopPage({ params }: Props) {
+  const { slug } = await params;
+  const supabase = await createClient();
+
+  // Get workshop
+  const { data: workshop } = await (supabase as any)
+    .from("workshops")
+    .select("*")
+    .eq("slug", slug)
+    .single() as { data: Workshop | null };
+
+  if (!workshop) {
+    notFound();
+  }
+
+  // Get current user info for navbar
+  const { data: { user } } = await supabase.auth.getUser();
+  let actorType: "model" | "fan" | "brand" | "admin" | null = null;
+  let profileData: any = null;
+  let coinBalance = 0;
+
+  if (user) {
+    const { data: actor } = await supabase
+      .from("actors")
+      .select("id, type")
+      .eq("user_id", user.id)
+      .single() as { data: { id: string; type: "admin" | "model" | "brand" | "fan" } | null };
+
+    actorType = actor?.type || null;
+
+    if (actor?.type === "model" || actor?.type === "admin") {
+      const { data: model } = await supabase
+        .from("models")
+        .select("id, username, first_name, last_name, profile_photo_url, coin_balance")
+        .eq("user_id", user.id)
+        .single() as { data: any };
+      profileData = model;
+      coinBalance = model?.coin_balance ?? 0;
+    } else if (actor?.type === "fan") {
+      const { data } = await supabase
+        .from("fans")
+        .select("display_name, avatar_url, coin_balance")
+        .eq("id", actor.id)
+        .single() as { data: any };
+      profileData = data;
+      coinBalance = data?.coin_balance ?? 0;
+    }
+  }
+
+  const displayName = actorType === "fan"
+    ? profileData?.display_name
+    : profileData?.first_name
+      ? `${profileData.first_name} ${profileData.last_name || ""}`.trim()
+      : profileData?.username || undefined;
+
+  // Calculate availability
+  const spotsLeft = workshop.spots_available
+    ? workshop.spots_available - workshop.spots_sold
+    : null;
+  const isSoldOut = spotsLeft !== null && spotsLeft <= 0;
+  const workshopDate = new Date(workshop.date);
+
+  return (
+    <CoinBalanceProvider initialBalance={coinBalance}>
+      <div className="min-h-screen bg-background">
+        <Navbar
+          user={user ? {
+            id: user.id,
+            email: user.email || "",
+            avatar_url: profileData?.profile_photo_url || profileData?.avatar_url || undefined,
+            name: displayName,
+            username: profileData?.username || undefined,
+          } : undefined}
+          actorType={actorType}
+        />
+
+        <main className="container px-4 md:px-8 py-8">
+          {/* Back Link */}
+          <Link
+            href="/workshops"
+            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Workshops
+          </Link>
+
+          <div className="grid lg:grid-cols-3 gap-8">
+            {/* Main Content */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Cover Image */}
+              <div className="aspect-video relative rounded-xl overflow-hidden bg-gradient-to-br from-pink-500/30 via-violet-500/30 to-cyan-500/30">
+                {workshop.cover_image_url ? (
+                  <Image
+                    src={workshop.cover_image_url}
+                    alt={workshop.title}
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 66vw"
+                    className="object-cover"
+                    priority
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <span className="text-8xl">👠</span>
+                  </div>
+                )}
+                {isSoldOut && (
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                    <Badge className="bg-red-500 text-white text-xl px-6 py-2 border-0">
+                      Sold Out
+                    </Badge>
+                  </div>
+                )}
+              </div>
+
+              {/* Title & Details */}
+              <div>
+                <h1 className="text-3xl md:text-4xl font-bold mb-2">{workshop.title}</h1>
+                {workshop.subtitle && (
+                  <p className="text-xl text-muted-foreground">{workshop.subtitle}</p>
+                )}
+
+                {/* Quick Info */}
+                <div className="flex flex-wrap gap-4 mt-4 text-sm">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Calendar className="h-4 w-4" />
+                    <span>{format(workshopDate, "EEEE, MMMM d, yyyy")}</span>
+                  </div>
+                  {workshop.start_time && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Clock className="h-4 w-4" />
+                      <span>
+                        {format(new Date(`2000-01-01T${workshop.start_time}`), "h:mm a")}
+                        {workshop.end_time && ` - ${format(new Date(`2000-01-01T${workshop.end_time}`), "h:mm a")}`}
+                      </span>
+                    </div>
+                  )}
+                  {(workshop.location_city || workshop.location_state) && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <MapPin className="h-4 w-4" />
+                      <span>
+                        {workshop.location_city && workshop.location_state
+                          ? `${workshop.location_city}, ${workshop.location_state}`
+                          : workshop.location_city || workshop.location_state}
+                      </span>
+                    </div>
+                  )}
+                  {spotsLeft !== null && spotsLeft > 0 && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Users className="h-4 w-4" />
+                      <span>{spotsLeft} spots remaining</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Description */}
+              {workshop.description && (
+                <Card>
+                  <CardContent className="pt-6">
+                    <h2 className="text-lg font-semibold mb-3">About This Workshop</h2>
+                    <div className="prose prose-sm prose-invert max-w-none">
+                      {workshop.description.split("\n").map((paragraph, i) => (
+                        <p key={i} className="text-muted-foreground mb-3 last:mb-0">
+                          {paragraph.startsWith("**") && paragraph.endsWith("**")
+                            ? <strong className="text-pink-500">{paragraph.slice(2, -2)}</strong>
+                            : paragraph}
+                        </p>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Highlights */}
+              {workshop.highlights && workshop.highlights.length > 0 && (
+                <Card>
+                  <CardContent className="pt-6">
+                    <h2 className="text-lg font-semibold mb-4">What You&apos;ll Learn</h2>
+                    <ul className="space-y-3">
+                      {workshop.highlights.map((highlight, i) => (
+                        <li key={i} className="flex items-start gap-3">
+                          <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                          <span className="text-muted-foreground">{highlight}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* What to Bring */}
+              {workshop.what_to_bring && workshop.what_to_bring.length > 0 && (
+                <Card>
+                  <CardContent className="pt-6">
+                    <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <Briefcase className="h-5 w-5" />
+                      What to Bring
+                    </h2>
+                    <ul className="space-y-2">
+                      {workshop.what_to_bring.map((item, i) => (
+                        <li key={i} className="flex items-center gap-3 text-muted-foreground">
+                          <span className="h-1.5 w-1.5 rounded-full bg-pink-500" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+
+            {/* Sidebar - Checkout */}
+            <div className="lg:col-span-1">
+              <div className="sticky top-24">
+                <WorkshopCheckout
+                  workshop={{
+                    id: workshop.id,
+                    title: workshop.title,
+                    priceCents: workshop.price_cents,
+                    originalPriceCents: workshop.original_price_cents,
+                    spotsLeft: spotsLeft,
+                    isSoldOut: isSoldOut,
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </CoinBalanceProvider>
+  );
+}
