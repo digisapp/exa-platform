@@ -385,9 +385,8 @@ async function FanDashboard({ actorId }: { actorId: string }) {
   // Get portfolio content from all approved models for discovery feed
   const { data: portfolioContent } = await (supabase
     .from("media_assets") as any)
-    .select("id, url, media_type, title, created_at, model_id")
-    .eq("visibility", "public")
-    .eq("media_type", "image")
+    .select("id, url, type, title, created_at, model_id")
+    .eq("type", "photo")
     .order("created_at", { ascending: false })
     .limit(12);
 
