@@ -38,6 +38,10 @@ interface ProfileActionButtonsProps {
   messageRate?: number;
   videoCallRate?: number;
   voiceCallRate?: number;
+  allowChat?: boolean;
+  allowVideoCall?: boolean;
+  allowVoiceCall?: boolean;
+  allowTips?: boolean;
 }
 
 export function ProfileActionButtons({
@@ -50,6 +54,10 @@ export function ProfileActionButtons({
   messageRate = 0,
   videoCallRate = 0,
   voiceCallRate = 0,
+  allowChat = true,
+  allowVideoCall = true,
+  allowVoiceCall = true,
+  allowTips = true,
 }: ProfileActionButtonsProps) {
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [showTipDialog, setShowTipDialog] = useState(false);
@@ -247,47 +255,68 @@ export function ProfileActionButtons({
     );
   }
 
+  // Count how many buttons are visible
+  const visibleButtons = [allowChat, allowVideoCall, allowVoiceCall, allowTips].filter(Boolean).length;
+
+  // Don't render anything if no buttons are enabled
+  if (visibleButtons === 0) {
+    return null;
+  }
+
+  // Dynamic grid columns based on number of visible buttons
+  const gridCols = visibleButtons === 1 ? "grid-cols-1" :
+                   visibleButtons === 2 ? "grid-cols-2" :
+                   visibleButtons === 3 ? "grid-cols-3" : "grid-cols-4";
+
   return (
     <>
-      <div className={`grid grid-cols-4 gap-2 mb-6 ${isPreview ? "pointer-events-none" : ""}`}>
-        <Button
-          className="exa-gradient-button h-11 text-sm font-semibold rounded-full px-2"
-          onClick={handleChat}
-        >
-          <MessageCircle className="h-4 w-4 mr-1" />
-          Chat
-        </Button>
-        <Button
-          className="exa-gradient-button h-11 text-sm font-semibold rounded-full px-2"
-          onClick={handleVideoCall}
-          disabled={startingCall}
-        >
-          {startingCall ? (
-            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-          ) : (
-            <Video className="h-4 w-4 mr-1" />
-          )}
-          {startingCall ? "..." : "Video"}
-        </Button>
-        <Button
-          className="h-11 text-sm font-semibold rounded-full px-2 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white"
-          onClick={handleVoiceCall}
-          disabled={startingVoiceCall}
-        >
-          {startingVoiceCall ? (
-            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-          ) : (
-            <Phone className="h-4 w-4 mr-1" />
-          )}
-          {startingVoiceCall ? "..." : "Voice"}
-        </Button>
-        <Button
-          className="h-11 text-sm font-semibold rounded-full px-2 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white"
-          onClick={handleTip}
-        >
-          <Gift className="h-4 w-4 mr-1" />
-          Tip
-        </Button>
+      <div className={`grid ${gridCols} gap-2 mb-6 ${isPreview ? "pointer-events-none" : ""}`}>
+        {allowChat && (
+          <Button
+            className="exa-gradient-button h-11 text-sm font-semibold rounded-full px-2"
+            onClick={handleChat}
+          >
+            <MessageCircle className="h-4 w-4 mr-1" />
+            Chat
+          </Button>
+        )}
+        {allowVideoCall && (
+          <Button
+            className="exa-gradient-button h-11 text-sm font-semibold rounded-full px-2"
+            onClick={handleVideoCall}
+            disabled={startingCall}
+          >
+            {startingCall ? (
+              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+            ) : (
+              <Video className="h-4 w-4 mr-1" />
+            )}
+            {startingCall ? "..." : "Video"}
+          </Button>
+        )}
+        {allowVoiceCall && (
+          <Button
+            className="h-11 text-sm font-semibold rounded-full px-2 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white"
+            onClick={handleVoiceCall}
+            disabled={startingVoiceCall}
+          >
+            {startingVoiceCall ? (
+              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+            ) : (
+              <Phone className="h-4 w-4 mr-1" />
+            )}
+            {startingVoiceCall ? "..." : "Voice"}
+          </Button>
+        )}
+        {allowTips && (
+          <Button
+            className="h-11 text-sm font-semibold rounded-full px-2 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white"
+            onClick={handleTip}
+          >
+            <Gift className="h-4 w-4 mr-1" />
+            Tip
+          </Button>
+        )}
       </div>
 
       {/* Chat Confirmation Dialog */}

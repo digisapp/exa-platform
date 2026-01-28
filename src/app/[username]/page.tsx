@@ -472,6 +472,10 @@ export default async function ModelProfilePage({ params }: Props) {
             messageRate={model.message_rate || 0}
             videoCallRate={model.video_call_rate || 0}
             voiceCallRate={model.voice_call_rate || 0}
+            allowChat={model.allow_chat ?? true}
+            allowVideoCall={model.allow_video_call ?? true}
+            allowVoiceCall={model.allow_voice_call ?? true}
+            allowTips={model.allow_tips ?? true}
           />
 
           {/* Affiliate Links - Linktree Style */}

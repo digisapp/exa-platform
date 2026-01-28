@@ -586,6 +586,11 @@ export default function ProfilePage() {
         show_booking_rates: model.show_booking_rates ?? true,
         show_on_rates_page: model.show_on_rates_page ?? false,
         focus_tags: model.focus_tags || [],
+        // Profile interaction toggles
+        allow_chat: (model as any).allow_chat ?? true,
+        allow_video_call: (model as any).allow_video_call ?? true,
+        allow_voice_call: (model as any).allow_voice_call ?? true,
+        allow_tips: (model as any).allow_tips ?? true,
         updated_at: new Date().toISOString(),
       };
 
@@ -2032,6 +2037,55 @@ export default function ProfilePage() {
                 <Switch
                   checked={model.show_social_media ?? true}
                   onCheckedChange={(v) => setModel({ ...model, show_social_media: v })}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Profile Interactions</CardTitle>
+              <CardDescription>Control which interaction buttons appear on your public profile</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label>Allow Chat</Label>
+                  <p className="text-sm text-muted-foreground">Let fans and brands message you</p>
+                </div>
+                <Switch
+                  checked={(model as any).allow_chat ?? true}
+                  onCheckedChange={(v) => setModel({ ...model, allow_chat: v } as any)}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label>Allow Video Calls</Label>
+                  <p className="text-sm text-muted-foreground">Let fans and brands video call you</p>
+                </div>
+                <Switch
+                  checked={(model as any).allow_video_call ?? true}
+                  onCheckedChange={(v) => setModel({ ...model, allow_video_call: v } as any)}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label>Allow Voice Calls</Label>
+                  <p className="text-sm text-muted-foreground">Let fans and brands voice call you</p>
+                </div>
+                <Switch
+                  checked={(model as any).allow_voice_call ?? true}
+                  onCheckedChange={(v) => setModel({ ...model, allow_voice_call: v } as any)}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label>Allow Tips</Label>
+                  <p className="text-sm text-muted-foreground">Let fans and brands send you tips</p>
+                </div>
+                <Switch
+                  checked={(model as any).allow_tips ?? true}
+                  onCheckedChange={(v) => setModel({ ...model, allow_tips: v } as any)}
                 />
               </div>
             </CardContent>
