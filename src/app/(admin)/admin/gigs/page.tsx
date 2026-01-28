@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
   Loader2,
@@ -31,8 +39,12 @@ import {
   Award,
   RefreshCw,
   AlertTriangle,
+  GraduationCap,
+  Calendar,
+  DollarSign,
 } from "lucide-react";
 import Link from "next/link";
+import { format } from "date-fns";
 // Email sending is done via API route to keep server-only code out of client bundle
 
 interface Gig {
@@ -84,7 +96,50 @@ interface Application {
   };
 }
 
+interface Workshop {
+  id: string;
+  slug: string;
+  title: string;
+  subtitle: string | null;
+  description: string | null;
+  cover_image_url: string | null;
+  location_name: string | null;
+  location_city: string | null;
+  location_state: string | null;
+  location_address: string | null;
+  date: string;
+  start_time: string | null;
+  end_time: string | null;
+  price_cents: number;
+  original_price_cents: number | null;
+  spots_available: number | null;
+  spots_sold: number;
+  highlights: string[] | null;
+  what_to_bring: string[] | null;
+  status: string;
+  is_featured: boolean;
+  meta_title: string | null;
+  meta_description: string | null;
+  created_at: string;
+}
+
+interface WorkshopRegistration {
+  id: string;
+  buyer_email: string;
+  buyer_name: string | null;
+  buyer_phone: string | null;
+  quantity: number;
+  total_price_cents: number;
+  status: string;
+  completed_at: string | null;
+  created_at: string;
+}
+
 export default function AdminGigsPage() {
+  // Tab state
+  const [activeTab, setActiveTab] = useState<"gigs" | "workshops">("gigs");
+
+  // Gig state
   const [gigs, setGigs] = useState<Gig[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
@@ -101,6 +156,38 @@ export default function AdminGigsPage() {
   const [spotTypeFilter, setSpotTypeFilter] = useState<"all" | "paid" | "sponsored">("all");
   const [modelBadges, setModelBadges] = useState<Set<string>>(new Set()); // model_ids that have the event badge
   const [syncingBadges, setSyncingBadges] = useState(false);
+
+  // Workshop state
+  const [workshops, setWorkshops] = useState<Workshop[]>([]);
+  const [workshopRegistrations, setWorkshopRegistrations] = useState<WorkshopRegistration[]>([]);
+  const [workshopsLoading, setWorkshopsLoading] = useState(false);
+  const [showWorkshopForm, setShowWorkshopForm] = useState(false);
+  const [showRegistrations, setShowRegistrations] = useState(false);
+  const [editingWorkshop, setEditingWorkshop] = useState<Workshop | null>(null);
+  const [selectedWorkshop, setSelectedWorkshop] = useState<Workshop | null>(null);
+  const [workshopSaving, setWorkshopSaving] = useState(false);
+  const [workshopFormData, setWorkshopFormData] = useState({
+    title: "",
+    subtitle: "",
+    slug: "",
+    description: "",
+    location_city: "",
+    location_state: "",
+    location_address: "",
+    date: "",
+    start_time: "",
+    end_time: "",
+    price: "",
+    original_price: "",
+    spots_available: "",
+    highlights: "",
+    what_to_bring: "",
+    status: "upcoming",
+    is_featured: false,
+    meta_title: "",
+    meta_description: "",
+  });
+
   const supabase = createClient();
 
   // Form state
@@ -597,6 +684,210 @@ export default function AdminGigsPage() {
     }
   }
 
+  // Workshop functions
+  const loadWorkshops = useCallback(async () => {
+    setWorkshopsLoading(true);
+    const { data, error } = await (supabase as any)
+      .from("workshops")
+      .select("*")
+      .order("date", { ascending: true });
+
+    if (error) {
+      console.error("Error loading workshops:", error);
+      toast.error("Failed to load workshops");
+    } else {
+      setWorkshops(data || []);
+    }
+    setWorkshopsLoading(false);
+  }, [supabase]);
+
+  const loadWorkshopRegistrations = async (workshopId: string) => {
+    const { data, error } = await (supabase as any)
+      .from("workshop_registrations")
+      .select("*")
+      .eq("workshop_id", workshopId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error loading registrations:", error);
+      toast.error("Failed to load registrations");
+    } else {
+      setWorkshopRegistrations(data || []);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "workshops" && workshops.length === 0) {
+      loadWorkshops();
+    }
+  }, [activeTab, workshops.length, loadWorkshops]);
+
+  const generateSlug = (title: string) => {
+    return title
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .trim();
+  };
+
+  const handleWorkshopTitleChange = (title: string) => {
+    setWorkshopFormData(prev => ({
+      ...prev,
+      title,
+      slug: editingWorkshop ? prev.slug : generateSlug(title),
+    }));
+  };
+
+  const resetWorkshopForm = () => {
+    setWorkshopFormData({
+      title: "",
+      subtitle: "",
+      slug: "",
+      description: "",
+      location_city: "",
+      location_state: "",
+      location_address: "",
+      date: "",
+      start_time: "",
+      end_time: "",
+      price: "",
+      original_price: "",
+      spots_available: "",
+      highlights: "",
+      what_to_bring: "",
+      status: "upcoming",
+      is_featured: false,
+      meta_title: "",
+      meta_description: "",
+    });
+    setEditingWorkshop(null);
+  };
+
+  const openWorkshopEditForm = (workshop: Workshop) => {
+    setEditingWorkshop(workshop);
+    setWorkshopFormData({
+      title: workshop.title,
+      subtitle: workshop.subtitle || "",
+      slug: workshop.slug,
+      description: workshop.description || "",
+      location_city: workshop.location_city || "",
+      location_state: workshop.location_state || "",
+      location_address: workshop.location_address || "",
+      date: workshop.date,
+      start_time: workshop.start_time || "",
+      end_time: workshop.end_time || "",
+      price: (workshop.price_cents / 100).toString(),
+      original_price: workshop.original_price_cents ? (workshop.original_price_cents / 100).toString() : "",
+      spots_available: workshop.spots_available?.toString() || "",
+      highlights: workshop.highlights?.join("\n") || "",
+      what_to_bring: workshop.what_to_bring?.join("\n") || "",
+      status: workshop.status,
+      is_featured: workshop.is_featured,
+      meta_title: workshop.meta_title || "",
+      meta_description: workshop.meta_description || "",
+    });
+    setShowWorkshopForm(true);
+  };
+
+  const handleWorkshopSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setWorkshopSaving(true);
+
+    const workshopData = {
+      title: workshopFormData.title,
+      subtitle: workshopFormData.subtitle || null,
+      slug: workshopFormData.slug,
+      description: workshopFormData.description || null,
+      location_city: workshopFormData.location_city || null,
+      location_state: workshopFormData.location_state || null,
+      location_address: workshopFormData.location_address || null,
+      date: workshopFormData.date,
+      start_time: workshopFormData.start_time || null,
+      end_time: workshopFormData.end_time || null,
+      price_cents: Math.round(parseFloat(workshopFormData.price) * 100),
+      original_price_cents: workshopFormData.original_price ? Math.round(parseFloat(workshopFormData.original_price) * 100) : null,
+      spots_available: workshopFormData.spots_available ? parseInt(workshopFormData.spots_available) : null,
+      highlights: workshopFormData.highlights ? workshopFormData.highlights.split("\n").filter(h => h.trim()) : null,
+      what_to_bring: workshopFormData.what_to_bring ? workshopFormData.what_to_bring.split("\n").filter(h => h.trim()) : null,
+      status: workshopFormData.status,
+      is_featured: workshopFormData.is_featured,
+      meta_title: workshopFormData.meta_title || null,
+      meta_description: workshopFormData.meta_description || null,
+    };
+
+    try {
+      if (editingWorkshop) {
+        const { error } = await (supabase as any)
+          .from("workshops")
+          .update(workshopData)
+          .eq("id", editingWorkshop.id);
+
+        if (error) throw error;
+        toast.success("Workshop updated successfully");
+      } else {
+        const { error } = await (supabase as any)
+          .from("workshops")
+          .insert(workshopData);
+
+        if (error) throw error;
+        toast.success("Workshop created successfully");
+      }
+
+      setShowWorkshopForm(false);
+      resetWorkshopForm();
+      loadWorkshops();
+    } catch (error: any) {
+      console.error("Error saving workshop:", error);
+      toast.error(error.message || "Failed to save workshop");
+    } finally {
+      setWorkshopSaving(false);
+    }
+  };
+
+  const handleDeleteWorkshop = async (workshop: Workshop) => {
+    if (!confirm(`Are you sure you want to delete "${workshop.title}"? This cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const { error } = await (supabase as any)
+        .from("workshops")
+        .delete()
+        .eq("id", workshop.id);
+
+      if (error) throw error;
+      toast.success("Workshop deleted");
+      loadWorkshops();
+    } catch (error: any) {
+      console.error("Error deleting workshop:", error);
+      toast.error(error.message || "Failed to delete workshop");
+    }
+  };
+
+  const viewWorkshopRegistrations = async (workshop: Workshop) => {
+    setSelectedWorkshop(workshop);
+    await loadWorkshopRegistrations(workshop.id);
+    setShowRegistrations(true);
+  };
+
+  const getWorkshopStatusBadge = (status: string) => {
+    switch (status) {
+      case "upcoming":
+        return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">Upcoming</Badge>;
+      case "active":
+        return <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Active</Badge>;
+      case "completed":
+        return <Badge className="bg-gray-500/20 text-gray-400 border-gray-500/30">Completed</Badge>;
+      case "cancelled":
+        return <Badge className="bg-red-500/20 text-red-400 border-red-500/30">Cancelled</Badge>;
+      case "draft":
+        return <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">Draft</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
@@ -615,17 +906,55 @@ export default function AdminGigsPage() {
             </Link>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold">Manage Gigs</h1>
+            <h1 className="text-3xl font-bold">
+              {activeTab === "gigs" ? "Manage Gigs" : "Manage Workshops"}
+            </h1>
           </div>
         </div>
-        <Button onClick={() => { resetForm(); setShowForm(true); }}>
-          <Plus className="h-4 w-4 mr-2" />
-          Create Gig
-        </Button>
+        {activeTab === "gigs" ? (
+          <Button onClick={() => { resetForm(); setShowForm(true); }}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Gig
+          </Button>
+        ) : (
+          <Button onClick={() => { resetWorkshopForm(); setShowWorkshopForm(true); }}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Workshop
+          </Button>
+        )}
       </div>
 
-      {/* Create/Edit Form */}
-      {showForm && (
+      {/* Tabs */}
+      <div className="flex gap-1 p-1 bg-muted rounded-lg w-fit">
+        <button
+          onClick={() => setActiveTab("gigs")}
+          className={`px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2 ${
+            activeTab === "gigs"
+              ? "bg-background shadow-sm"
+              : "hover:bg-background/50 text-muted-foreground"
+          }`}
+        >
+          <Sparkles className="h-4 w-4" />
+          Gigs
+        </button>
+        <button
+          onClick={() => setActiveTab("workshops")}
+          className={`px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2 ${
+            activeTab === "workshops"
+              ? "bg-background shadow-sm"
+              : "hover:bg-background/50 text-muted-foreground"
+          }`}
+        >
+          <GraduationCap className="h-4 w-4" />
+          Workshops
+        </button>
+      </div>
+
+      {/* Gigs Tab Content */}
+      {activeTab === "gigs" && (
+        <>
+          {/* Create/Edit Form */}
+          {showForm && (
         <Card>
           <CardHeader>
             <CardTitle>{editingGig ? "Edit Gig" : "Create New Gig"}</CardTitle>
@@ -1391,6 +1720,376 @@ export default function AdminGigsPage() {
           </CardContent>
         </Card>
       </div>
+        </>
+      )}
+
+      {/* Workshops Tab Content */}
+      {activeTab === "workshops" && (
+        <>
+          {workshopsLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {workshops.length === 0 ? (
+                <Card className="p-8 text-center">
+                  <GraduationCap className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <h3 className="font-semibold mb-2">No Workshops</h3>
+                  <p className="text-muted-foreground mb-4">Create your first workshop to get started.</p>
+                  <Button onClick={() => { resetWorkshopForm(); setShowWorkshopForm(true); }}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Workshop
+                  </Button>
+                </Card>
+              ) : (
+                workshops.map((workshop) => (
+                  <Card key={workshop.id}>
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="font-semibold truncate">{workshop.title}</h3>
+                            {getWorkshopStatusBadge(workshop.status)}
+                            {workshop.is_featured && (
+                              <Badge className="bg-pink-500/20 text-pink-400 border-pink-500/30">Featured</Badge>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-4 w-4" />
+                              {format(new Date(workshop.date), "MMM d, yyyy")}
+                              {workshop.start_time && ` at ${format(new Date(`2000-01-01T${workshop.start_time}`), "h:mm a")}`}
+                            </span>
+                            {workshop.location_city && (
+                              <span className="flex items-center gap-1">
+                                <MapPin className="h-4 w-4" />
+                                {workshop.location_city}, {workshop.location_state}
+                              </span>
+                            )}
+                            <span className="flex items-center gap-1">
+                              <DollarSign className="h-4 w-4" />
+                              ${(workshop.price_cents / 100).toFixed(0)}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Users className="h-4 w-4" />
+                              {workshop.spots_sold}/{workshop.spots_available || "∞"} registered
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button variant="outline" size="sm" asChild>
+                            <Link href={`/workshops/${workshop.slug}`} target="_blank">
+                              <Eye className="h-4 w-4 mr-1" />
+                              View
+                            </Link>
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => viewWorkshopRegistrations(workshop)}>
+                            <Users className="h-4 w-4 mr-1" />
+                            Registrations
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => openWorkshopEditForm(workshop)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => handleDeleteWorkshop(workshop)} className="text-red-500 hover:text-red-600">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Workshop Form Dialog */}
+      <Dialog open={showWorkshopForm} onOpenChange={(open) => { if (!open) { setShowWorkshopForm(false); resetWorkshopForm(); } }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingWorkshop ? "Edit Workshop" : "Create Workshop"}</DialogTitle>
+            <DialogDescription>
+              {editingWorkshop ? "Update the workshop details below." : "Fill in the details to create a new workshop."}
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleWorkshopSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2">
+                <Label htmlFor="ws-title">Title *</Label>
+                <Input
+                  id="ws-title"
+                  value={workshopFormData.title}
+                  onChange={(e) => handleWorkshopTitleChange(e.target.value)}
+                  placeholder="Miami Swim Week Runway Workshop"
+                  required
+                />
+              </div>
+
+              <div className="col-span-2">
+                <Label htmlFor="ws-subtitle">Subtitle</Label>
+                <Input
+                  id="ws-subtitle"
+                  value={workshopFormData.subtitle}
+                  onChange={(e) => setWorkshopFormData(prev => ({ ...prev, subtitle: e.target.value }))}
+                  placeholder="Perfect your Catwalk & Camera Ready Skills"
+                />
+              </div>
+
+              <div className="col-span-2">
+                <Label htmlFor="ws-slug">URL Slug *</Label>
+                <Input
+                  id="ws-slug"
+                  value={workshopFormData.slug}
+                  onChange={(e) => setWorkshopFormData(prev => ({ ...prev, slug: e.target.value }))}
+                  placeholder="miami-swim-week-runway-workshop"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="ws-date">Date *</Label>
+                <Input
+                  id="ws-date"
+                  type="date"
+                  value={workshopFormData.date}
+                  onChange={(e) => setWorkshopFormData(prev => ({ ...prev, date: e.target.value }))}
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label htmlFor="ws-start_time">Start Time</Label>
+                  <Input
+                    id="ws-start_time"
+                    type="time"
+                    value={workshopFormData.start_time}
+                    onChange={(e) => setWorkshopFormData(prev => ({ ...prev, start_time: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="ws-end_time">End Time</Label>
+                  <Input
+                    id="ws-end_time"
+                    type="time"
+                    value={workshopFormData.end_time}
+                    onChange={(e) => setWorkshopFormData(prev => ({ ...prev, end_time: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="ws-location_city">City</Label>
+                <Input
+                  id="ws-location_city"
+                  value={workshopFormData.location_city}
+                  onChange={(e) => setWorkshopFormData(prev => ({ ...prev, location_city: e.target.value }))}
+                  placeholder="Miami Beach"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="ws-location_state">State</Label>
+                <Input
+                  id="ws-location_state"
+                  value={workshopFormData.location_state}
+                  onChange={(e) => setWorkshopFormData(prev => ({ ...prev, location_state: e.target.value }))}
+                  placeholder="FL"
+                />
+              </div>
+
+              <div className="col-span-2">
+                <Label htmlFor="ws-location_address">Address</Label>
+                <Input
+                  id="ws-location_address"
+                  value={workshopFormData.location_address}
+                  onChange={(e) => setWorkshopFormData(prev => ({ ...prev, location_address: e.target.value }))}
+                  placeholder="123 Ocean Dr"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="ws-price">Price ($) *</Label>
+                <Input
+                  id="ws-price"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={workshopFormData.price}
+                  onChange={(e) => setWorkshopFormData(prev => ({ ...prev, price: e.target.value }))}
+                  placeholder="350"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="ws-original_price">Original Price ($)</Label>
+                <Input
+                  id="ws-original_price"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={workshopFormData.original_price}
+                  onChange={(e) => setWorkshopFormData(prev => ({ ...prev, original_price: e.target.value }))}
+                  placeholder="For showing discount"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="ws-spots_available">Spots Available</Label>
+                <Input
+                  id="ws-spots_available"
+                  type="number"
+                  min="1"
+                  value={workshopFormData.spots_available}
+                  onChange={(e) => setWorkshopFormData(prev => ({ ...prev, spots_available: e.target.value }))}
+                  placeholder="30 (leave empty for unlimited)"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="ws-status">Status</Label>
+                <Select value={workshopFormData.status} onValueChange={(v) => setWorkshopFormData(prev => ({ ...prev, status: v }))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="upcoming">Upcoming</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="col-span-2">
+                <Label htmlFor="ws-description">Description</Label>
+                <Textarea
+                  id="ws-description"
+                  value={workshopFormData.description}
+                  onChange={(e) => setWorkshopFormData(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Describe the workshop..."
+                  rows={4}
+                />
+              </div>
+
+              <div className="col-span-2">
+                <Label htmlFor="ws-highlights">Highlights (one per line)</Label>
+                <Textarea
+                  id="ws-highlights"
+                  value={workshopFormData.highlights}
+                  onChange={(e) => setWorkshopFormData(prev => ({ ...prev, highlights: e.target.value }))}
+                  placeholder="Learn professional runway techniques&#10;Master swimwear presentation&#10;Networking opportunities"
+                  rows={4}
+                />
+              </div>
+
+              <div className="col-span-2">
+                <Label htmlFor="ws-what_to_bring">What to Bring (one per line)</Label>
+                <Textarea
+                  id="ws-what_to_bring"
+                  value={workshopFormData.what_to_bring}
+                  onChange={(e) => setWorkshopFormData(prev => ({ ...prev, what_to_bring: e.target.value }))}
+                  placeholder="Comfortable heels&#10;Form-fitting workout attire&#10;Water bottle"
+                  rows={3}
+                />
+              </div>
+
+              <div className="col-span-2 flex items-center gap-2">
+                <Switch
+                  id="ws-is_featured"
+                  checked={workshopFormData.is_featured}
+                  onCheckedChange={(checked) => setWorkshopFormData(prev => ({ ...prev, is_featured: checked }))}
+                />
+                <Label htmlFor="ws-is_featured">Featured Workshop</Label>
+              </div>
+
+              <div className="col-span-2">
+                <Label htmlFor="ws-meta_title">SEO Title</Label>
+                <Input
+                  id="ws-meta_title"
+                  value={workshopFormData.meta_title}
+                  onChange={(e) => setWorkshopFormData(prev => ({ ...prev, meta_title: e.target.value }))}
+                  placeholder="Workshop Title | EXA Models"
+                />
+              </div>
+
+              <div className="col-span-2">
+                <Label htmlFor="ws-meta_description">SEO Description</Label>
+                <Textarea
+                  id="ws-meta_description"
+                  value={workshopFormData.meta_description}
+                  onChange={(e) => setWorkshopFormData(prev => ({ ...prev, meta_description: e.target.value }))}
+                  placeholder="Meta description for search engines"
+                  rows={2}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button type="button" variant="outline" onClick={() => { setShowWorkshopForm(false); resetWorkshopForm(); }}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={workshopSaving}>
+                {workshopSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                {editingWorkshop ? "Update Workshop" : "Create Workshop"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Workshop Registrations Dialog */}
+      <Dialog open={showRegistrations} onOpenChange={setShowRegistrations}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Registrations - {selectedWorkshop?.title}</DialogTitle>
+            <DialogDescription>
+              {workshopRegistrations.filter(r => r.status === "completed").length} confirmed registrations
+            </DialogDescription>
+          </DialogHeader>
+
+          {workshopRegistrations.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No registrations yet.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {workshopRegistrations.map((reg) => (
+                <Card key={reg.id}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium">{reg.buyer_name || reg.buyer_email}</div>
+                        <div className="text-sm text-muted-foreground">{reg.buyer_email}</div>
+                        {reg.buyer_phone && (
+                          <div className="text-sm text-muted-foreground">{reg.buyer_phone}</div>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <div className="font-medium">${(reg.total_price_cents / 100).toFixed(2)}</div>
+                        <div className="text-sm text-muted-foreground">{reg.quantity} spot{reg.quantity > 1 ? "s" : ""}</div>
+                        <Badge className={reg.status === "completed" ? "bg-green-500/20 text-green-400" : "bg-yellow-500/20 text-yellow-400"}>
+                          {reg.status}
+                        </Badge>
+                      </div>
+                    </div>
+                    {reg.completed_at && (
+                      <div className="text-xs text-muted-foreground mt-2">
+                        Registered: {format(new Date(reg.completed_at), "MMM d, yyyy h:mm a")}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
