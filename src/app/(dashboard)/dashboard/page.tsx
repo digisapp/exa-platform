@@ -374,42 +374,9 @@ export default async function DashboardPage() {
 async function FanDashboard({ actorId }: { actorId: string }) {
   const supabase = await createClient();
 
-  // Get approved models for enriching content
-  const { data: allModels } = await (supabase
-    .from("models") as any)
-    .select("id, username, first_name, last_name, profile_photo_url")
-    .eq("is_approved", true);
-
-  const modelsMap = new Map((allModels || []).map((m: any) => [m.id, m]));
-
-  // Get portfolio content from all approved models for discovery feed
-  // Fetch more to allow deduplication (1 photo per model)
-  const { data: portfolioContent } = await (supabase
-    .from("media_assets") as any)
-    .select("id, url, type, title, created_at, model_id")
-    .eq("type", "photo")
-    .order("created_at", { ascending: false })
-    .limit(50);
-
-  // Enrich with model info, filter to approved models, deduplicate to 1 photo per model
-  const seenModelIds = new Set<string>();
-  const discoveryContent = (portfolioContent || [])
-    .map((c: any) => ({
-      ...c,
-      model: modelsMap.get(c.model_id) || null
-    }))
-    .filter((c: any) => {
-      if (!c.model || !c.model_id) return false;
-      if (seenModelIds.has(c.model_id)) return false;
-      seenModelIds.add(c.model_id);
-      return true;
-    })
-    .slice(0, 12);
-
-  // Get featured models for the models section (only those with uploaded profile photos)
+  // Get featured models (only those with uploaded profile photos)
   // Exclude Instagram CDN URLs which are low quality
   // Fetch more models and rotate selection every 3 days
-  // Include all fields needed for ModelCard hover overlay
   const { data: allFeaturedModels } = await (supabase
     .from("models") as any)
     .select(`
@@ -428,13 +395,12 @@ async function FanDashboard({ actorId }: { actorId: string }) {
 
   // Seeded shuffle to rotate featured models every 3 days
   const daysSinceEpoch = Math.floor(Date.now() / (1000 * 60 * 60 * 24));
-  const rotationPeriod = Math.floor(daysSinceEpoch / 3); // Changes every 3 days
+  const rotationPeriod = Math.floor(daysSinceEpoch / 3);
 
   function seededShuffle<T>(array: T[], seed: number): T[] {
     const result = [...array];
     let currentSeed = seed;
     for (let i = result.length - 1; i > 0; i--) {
-      // Simple seeded random using linear congruential generator
       currentSeed = (currentSeed * 1103515245 + 12345) & 0x7fffffff;
       const j = currentSeed % (i + 1);
       [result[i], result[j]] = [result[j], result[i]];
@@ -446,70 +412,12 @@ async function FanDashboard({ actorId }: { actorId: string }) {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* Visual Discovery Feed */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <ImageIcon className="h-5 w-5 text-violet-500" />
-            Discover
-          </CardTitle>
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/models" className="text-pink-500">
-              View All Models
-              <ArrowRight className="ml-1 h-4 w-4" />
-            </Link>
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {discoveryContent.length > 0 ? (
-            <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
-              {discoveryContent.map((content: any) => (
-                <Link
-                  key={content.id}
-                  href={`/${content.model?.username}`}
-                  className="group relative aspect-square rounded-lg overflow-hidden bg-gradient-to-br from-violet-500/20 to-pink-500/20"
-                >
-                  {content.url && (
-                    <Image
-                      src={content.url}
-                      alt={content.title || "Content"}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform"
-                    />
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <div className="absolute inset-x-0 bottom-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <p className="text-white text-xs font-medium truncate">
-                      {content.model?.first_name || content.model?.username}
-                    </p>
-                    <p className="text-white/70 text-xs truncate">@{content.model?.username}</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <div className="p-4 rounded-full bg-muted inline-block mb-4">
-                <ImageIcon className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <p className="text-muted-foreground text-sm">No content yet</p>
-              <Button asChild size="sm" className="mt-3 bg-gradient-to-r from-pink-500 to-violet-500">
-                <Link href="/models">
-                  <Sparkles className="mr-1 h-3 w-3" />
-                  Browse Models
-                </Link>
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
       {/* Featured Models */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-pink-500" />
-            Featured Models
+            Models
           </CardTitle>
           <Button variant="ghost" size="sm" asChild>
             <Link href="/models" className="text-pink-500">
@@ -519,18 +427,23 @@ async function FanDashboard({ actorId }: { actorId: string }) {
           </Button>
         </CardHeader>
         <CardContent>
-          {(featuredModels || []).length > 0 ? (
+          {featuredModels.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {(featuredModels || []).slice(0, 8).map((model: any) => (
+              {featuredModels.map((model: any) => (
                 <ModelCard key={model.id} model={model} />
               ))}
             </div>
           ) : (
-            <div className="text-center py-8">
+            <div className="text-center py-12">
               <div className="p-4 rounded-full bg-muted inline-block mb-4">
                 <Users className="h-8 w-8 text-muted-foreground" />
               </div>
               <p className="text-muted-foreground">No models yet</p>
+              <Button asChild size="sm" className="mt-3 bg-gradient-to-r from-pink-500 to-violet-500">
+                <Link href="/models">
+                  Browse Models
+                </Link>
+              </Button>
             </div>
           )}
         </CardContent>
