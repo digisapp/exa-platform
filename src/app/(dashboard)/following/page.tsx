@@ -7,8 +7,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Following | EXA",
-  description: "Models you follow on EXA",
+  title: "Favorites | EXA",
+  description: "Your favorite models on EXA",
 };
 
 export default async function FollowingPage() {
@@ -74,10 +74,10 @@ export default async function FollowingPage() {
         <div className="mb-8">
           <div className="flex items-center gap-3">
             <Users className="h-8 w-8 text-pink-500" />
-            <h1 className="text-3xl font-bold">Following</h1>
+            <h1 className="text-3xl font-bold">Favorites</h1>
           </div>
           <p className="text-muted-foreground mt-2">
-            {orderedModels.length} {orderedModels.length === 1 ? "model" : "models"} you follow
+            {orderedModels.length} favorite {orderedModels.length === 1 ? "model" : "models"}
           </p>
         </div>
 
@@ -97,9 +97,9 @@ export default async function FollowingPage() {
         ) : (
           <div className="text-center py-16">
             <Users className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Not following anyone yet</h2>
+            <h2 className="text-xl font-semibold mb-2">No favorites yet</h2>
             <p className="text-muted-foreground mb-6">
-              Discover models and click the heart icon to follow them.
+              Discover models and click the heart icon to add them to your favorites.
             </p>
             <Link
               href="/models"

@@ -29,7 +29,7 @@ export function ModelsGrid({ models, isLoggedIn, favoriteModelIds, actorType }: 
           <ModelCard
             key={model.id}
             model={model}
-            showFavorite={actorType !== "brand"}
+            showFavorite={true}
             showListButton={actorType === "brand"}
             isLoggedIn={isLoggedIn}
             isFavorited={favoriteSet.has(model.id)}

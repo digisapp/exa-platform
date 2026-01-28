@@ -33,6 +33,7 @@ import {
   Megaphone,
   BarChart3,
   Circle,
+  Heart,
 } from "lucide-react";
 import { ModelCard } from "@/components/models/model-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -374,24 +375,63 @@ export default async function DashboardPage() {
 async function FanDashboard({ actorId }: { actorId: string }) {
   const supabase = await createClient();
 
-  // Get featured models (only those with uploaded profile photos)
-  // Exclude Instagram CDN URLs which are low quality
-  // Fetch more models and rotate selection every 3 days
-  const { data: allFeaturedModels } = await (supabase
-    .from("models") as any)
-    .select(`
-      id, username, first_name, last_name, profile_photo_url,
-      city, state, show_location,
-      instagram_name, show_social_media,
-      height, show_measurements,
-      focus_tags, reliability_score,
-      is_verified, is_featured, availability_status
-    `)
-    .eq("is_approved", true)
-    .not("profile_photo_url", "is", null)
-    .not("profile_photo_url", "ilike", "%cdninstagram.com%")
-    .not("profile_photo_url", "ilike", "%instagram%")
-    .limit(100);
+  // Query favorites and featured models in parallel
+  const [{ data: follows }, { data: allFeaturedModels }] = await Promise.all([
+    // Get followed models
+    (supabase.from("follows") as any)
+      .select(`
+        created_at,
+        following_id,
+        actors!follows_following_id_fkey (
+          user_id
+        )
+      `)
+      .eq("follower_id", actorId)
+      .order("created_at", { ascending: false })
+      .limit(8),
+    // Get featured models (only those with uploaded profile photos)
+    // Exclude Instagram CDN URLs which are low quality
+    // Fetch more models and rotate selection every 3 days
+    (supabase.from("models") as any)
+      .select(`
+        id, username, first_name, last_name, profile_photo_url,
+        city, state, show_location,
+        instagram_name, show_social_media,
+        height, show_measurements,
+        focus_tags, reliability_score,
+        is_verified, is_featured, availability_status
+      `)
+      .eq("is_approved", true)
+      .not("profile_photo_url", "is", null)
+      .not("profile_photo_url", "ilike", "%cdninstagram.com%")
+      .not("profile_photo_url", "ilike", "%instagram%")
+      .limit(100),
+  ]);
+
+  // Get the user_ids from the followed actors
+  const followedUserIds = follows?.map((f: any) => f.actors?.user_id).filter(Boolean) || [];
+
+  // Get the favorite model profiles
+  let favoriteModels: any[] = [];
+  if (followedUserIds.length > 0) {
+    const { data: followedModels } = await (supabase.from("models") as any)
+      .select(`
+        id, username, first_name, last_name, profile_photo_url,
+        city, state, show_location,
+        instagram_name, show_social_media,
+        height, show_measurements,
+        focus_tags, reliability_score,
+        is_verified, is_featured, availability_status
+      `)
+      .in("user_id", followedUserIds)
+      .eq("is_approved", true);
+
+    // Order models by the original follow order
+    const modelsByUserId = new Map((followedModels || []).map((m: any) => [m.user_id, m]));
+    favoriteModels = followedUserIds
+      .map((userId: string) => modelsByUserId.get(userId))
+      .filter(Boolean);
+  }
 
   // Seeded shuffle to rotate featured models every 3 days
   const daysSinceEpoch = Math.floor(Date.now() / (1000 * 60 * 60 * 24));
@@ -412,6 +452,31 @@ async function FanDashboard({ actorId }: { actorId: string }) {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
+      {/* Favorites */}
+      {favoriteModels.length > 0 && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Heart className="h-5 w-5 text-pink-500 fill-pink-500" />
+              Favorites
+            </CardTitle>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/following" className="text-pink-500">
+                View All
+                <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {favoriteModels.slice(0, 4).map((model: any) => (
+                <ModelCard key={model.id} model={model} showFavorite={true} isFavorited={true} />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Featured Models */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
@@ -486,6 +551,7 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
     { data: offersData },
     { data: upcomingBookings },
     { data: topModels },
+    { data: follows },
   ] = await Promise.all([
     // Active campaigns with model counts
     (supabase.from("campaigns") as any)
@@ -526,6 +592,18 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
       .not("profile_photo_url", "ilike", "%instagram%")
       .gte("admin_rating", 4)
       .order("admin_rating", { ascending: false })
+      .limit(8),
+    // Favorite models
+    (supabase.from("follows") as any)
+      .select(`
+        created_at,
+        following_id,
+        actors!follows_following_id_fkey (
+          user_id
+        )
+      `)
+      .eq("follower_id", actorId)
+      .order("created_at", { ascending: false })
       .limit(8),
   ]);
 
@@ -589,6 +667,29 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
   const completedSteps = [hasProfile, hasCampaign, hasSentOffer].filter(Boolean).length;
 
   const discoverModels = topModels || [];
+
+  // Get favorite model details
+  const followedUserIds = follows?.map((f: any) => f.actors?.user_id).filter(Boolean) || [];
+  let favoriteModels: any[] = [];
+  if (followedUserIds.length > 0) {
+    const { data: followedModels } = await (supabase.from("models") as any)
+      .select(`
+        id, username, first_name, last_name, profile_photo_url,
+        city, state, show_location,
+        instagram_name, show_social_media,
+        height, show_measurements,
+        focus_tags, reliability_score,
+        is_verified, is_featured, availability_status
+      `)
+      .in("user_id", followedUserIds)
+      .eq("is_approved", true);
+
+    // Order models by the original follow order
+    const modelsByUserId = new Map((followedModels || []).map((m: any) => [m.user_id, m]));
+    favoriteModels = followedUserIds
+      .map((userId: string) => modelsByUserId.get(userId))
+      .filter(Boolean);
+  }
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -1023,6 +1124,31 @@ async function BrandDashboard({ actorId }: { actorId: string }) {
           )}
         </CardContent>
       </Card>
+
+      {/* Favorites */}
+      {favoriteModels.length > 0 && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Heart className="h-5 w-5 text-pink-500 fill-pink-500" />
+              Favorites
+            </CardTitle>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/following" className="text-pink-500">
+                View All
+                <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {favoriteModels.slice(0, 4).map((model: any) => (
+                <ModelCard key={model.id} model={model} showFavorite={true} isFavorited={true} />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Discover Models */}
       <Card>
