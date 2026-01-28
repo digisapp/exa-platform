@@ -15,6 +15,7 @@ import {
   Banknote,
   AtSign,
   Send,
+  Calendar,
 } from "lucide-react";
 
 export default async function AdminPage() {
@@ -161,6 +162,13 @@ export default async function AdminPage() {
           <Link href="/admin/offers">
             <Send className="h-6 w-6 text-cyan-500" />
             <span>Brand Offers</span>
+          </Link>
+        </Button>
+
+        <Button variant="outline" asChild className="h-auto py-4 flex-col gap-2">
+          <Link href="/admin/calendar">
+            <Calendar className="h-6 w-6 text-orange-500" />
+            <span>Calendar</span>
           </Link>
         </Button>
       </div>
