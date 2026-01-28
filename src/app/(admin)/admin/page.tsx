@@ -16,6 +16,7 @@ import {
   AtSign,
   Send,
   Calendar,
+  GraduationCap,
 } from "lucide-react";
 
 export default async function AdminPage() {
@@ -169,6 +170,13 @@ export default async function AdminPage() {
           <Link href="/admin/calendar">
             <Calendar className="h-6 w-6 text-orange-500" />
             <span>Calendar</span>
+          </Link>
+        </Button>
+
+        <Button variant="outline" asChild className="h-auto py-4 flex-col gap-2">
+          <Link href="/admin/workshops">
+            <GraduationCap className="h-6 w-6 text-rose-500" />
+            <span>Workshops</span>
           </Link>
         </Button>
       </div>
