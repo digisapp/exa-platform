@@ -546,124 +546,39 @@ export default function AdminGigsPage() {
         throw new Error(data.error || "Failed to update application");
       }
 
-      // Send notification via chat for both accept and decline
+      // Send notification (chat message + email) via API route to bypass RLS
       if (app.model) {
         const gig = gigs.find(g => g.id === app.gig_id);
 
-        // Get admin's actor id
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const { data: adminActor } = await supabase
-            .from("actors")
-            .select("id")
-            .eq("user_id", user.id)
-            .single() as { data: { id: string } | null };
-
-          // Get model's actor id and email - use user_id from model record
-          const { data: modelRecord } = await supabase
-            .from("models")
-            .select("user_id, email, first_name, username")
-            .eq("id", app.model.id)
-            .single() as { data: { user_id: string; email: string | null; first_name: string | null; username: string } | null };
-
-          const { data: modelActor } = modelRecord ? await supabase
-            .from("actors")
-            .select("id")
-            .eq("user_id", modelRecord.user_id)
-            .eq("type", "model")
-            .single() as { data: { id: string } | null } : { data: null };
-
-          if (adminActor && modelActor) {
-            // Create or get conversation
-            const { data: existingConv } = await supabase
-              .from("conversation_participants")
-              .select("conversation_id")
-              .eq("actor_id", adminActor.id) as { data: { conversation_id: string }[] | null };
-
-            let conversationId: string | null = null;
-
-            if (existingConv) {
-              for (const cp of existingConv) {
-                const { data: hasModel } = await supabase
-                  .from("conversation_participants")
-                  .select("actor_id")
-                  .eq("conversation_id", cp.conversation_id)
-                  .eq("actor_id", modelActor.id)
-                  .single();
-                if (hasModel) {
-                  conversationId = cp.conversation_id;
-                  break;
-                }
-              }
-            }
-
-            if (!conversationId) {
-              const { data: newConv } = await (supabase
-                .from("conversations") as any)
-                .insert({ type: "direct" })
-                .select()
-                .single();
-              if (newConv) {
-                conversationId = newConv.id;
-                await (supabase.from("conversation_participants") as any).insert([
-                  { conversation_id: conversationId, actor_id: adminActor.id },
-                  { conversation_id: conversationId, actor_id: modelActor.id },
-                ]);
-              }
-            }
-
-            if (conversationId) {
-              const message = action === "accepted"
-                ? `Congratulations! You've been accepted for "${gig?.title || "a gig"}". We'll be in touch with more details soon!`
-                : action === "cancelled"
-                ? `Your spot for "${gig?.title || "a gig"}" has been cancelled. If you have questions, please reach out to us.`
-                : `Thank you for your interest in "${gig?.title || "a gig"}". Unfortunately, we weren't able to accept your application at this time. We encourage you to apply for future opportunities!`;
-
-              await (supabase.from("messages") as any).insert({
-                conversation_id: conversationId,
-                sender_id: adminActor.id,
-                content: message,
-                is_system: false,
-              });
+        try {
+          // Get event name for accepted gigs
+          let eventName: string | undefined;
+          if (action === "accepted" && gig?.event_id) {
+            const { data: eventData } = await supabase
+              .from("events")
+              .select("name, short_name, year")
+              .eq("id", gig.event_id)
+              .single() as { data: { name: string; short_name: string; year: number } | null };
+            if (eventData) {
+              eventName = `${eventData.short_name} ${eventData.year}`;
             }
           }
 
-          // Send email notification via API route (server-side only)
-          if (modelRecord?.email) {
-            const modelName = modelRecord.first_name || modelRecord.username || "Model";
-            const gigTitle = gig?.title || "a gig";
-
-            try {
-              let eventName: string | undefined;
-              if (action === "accepted" && gig?.event_id) {
-                const { data: eventData } = await supabase
-                  .from("events")
-                  .select("name, short_name, year")
-                  .eq("id", gig.event_id)
-                  .single() as { data: { name: string; short_name: string; year: number } | null };
-                if (eventData) {
-                  eventName = `${eventData.short_name} ${eventData.year}`;
-                }
-              }
-
-              await fetch("/api/admin/send-gig-email", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  type: action === "accepted" ? "accepted" : "rejected",
-                  to: modelRecord.email,
-                  modelName,
-                  gigTitle,
-                  gigDate: gig?.start_at ? new Date(gig.start_at).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" }) : undefined,
-                  gigLocation: gig?.location_city && gig?.location_state ? `${gig.location_city}, ${gig.location_state}` : undefined,
-                  eventName,
-                }),
-              });
-            } catch (emailError) {
-              console.error("Failed to send email notification:", emailError);
-              // Don't fail the whole operation if email fails
-            }
-          }
+          await fetch("/api/admin/send-gig-notification", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action,
+              modelId: app.model.id,
+              gigTitle: gig?.title,
+              gigDate: gig?.start_at ? new Date(gig.start_at).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" }) : undefined,
+              gigLocation: gig?.location_city && gig?.location_state ? `${gig.location_city}, ${gig.location_state}` : undefined,
+              eventName,
+            }),
+          });
+        } catch (notifyError) {
+          console.error("Failed to send notification:", notifyError);
+          // Don't fail the whole operation if notification fails
         }
       }
 
