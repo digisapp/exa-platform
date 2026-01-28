@@ -33,7 +33,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import Link from "next/link";
-import { sendGigApplicationAcceptedEmail, sendGigApplicationRejectedEmail } from "@/lib/email";
+// Email sending is done via API route to keep server-only code out of client bundle
 
 interface Gig {
   id: string;
@@ -628,41 +628,37 @@ export default function AdminGigsPage() {
             }
           }
 
-          // Send email notification
+          // Send email notification via API route (server-side only)
           if (modelRecord?.email) {
             const modelName = modelRecord.first_name || modelRecord.username || "Model";
             const gigTitle = gig?.title || "a gig";
 
             try {
-              if (action === "accepted") {
-                // Get event info if linked
-                let eventName: string | undefined;
-                if (gig?.event_id) {
-                  const { data: eventData } = await supabase
-                    .from("events")
-                    .select("name, short_name, year")
-                    .eq("id", gig.event_id)
-                    .single() as { data: { name: string; short_name: string; year: number } | null };
-                  if (eventData) {
-                    eventName = `${eventData.short_name} ${eventData.year}`;
-                  }
+              let eventName: string | undefined;
+              if (action === "accepted" && gig?.event_id) {
+                const { data: eventData } = await supabase
+                  .from("events")
+                  .select("name, short_name, year")
+                  .eq("id", gig.event_id)
+                  .single() as { data: { name: string; short_name: string; year: number } | null };
+                if (eventData) {
+                  eventName = `${eventData.short_name} ${eventData.year}`;
                 }
+              }
 
-                await sendGigApplicationAcceptedEmail({
+              await fetch("/api/admin/send-gig-email", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  type: action === "accepted" ? "accepted" : "rejected",
                   to: modelRecord.email,
                   modelName,
                   gigTitle,
                   gigDate: gig?.start_at ? new Date(gig.start_at).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" }) : undefined,
                   gigLocation: gig?.location_city && gig?.location_state ? `${gig.location_city}, ${gig.location_state}` : undefined,
                   eventName,
-                });
-              } else if (action === "rejected") {
-                await sendGigApplicationRejectedEmail({
-                  to: modelRecord.email,
-                  modelName,
-                  gigTitle,
-                });
-              }
+                }),
+              });
             } catch (emailError) {
               console.error("Failed to send email notification:", emailError);
               // Don't fail the whole operation if email fails
