@@ -6,6 +6,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -23,8 +25,10 @@ import {
   MapPin,
   Clock,
   DollarSign,
-  User,
-  Building2,
+  GraduationCap,
+  Eye,
+  EyeOff,
+  FileEdit,
 } from "lucide-react";
 import {
   format,
@@ -39,19 +43,6 @@ import {
   endOfWeek,
   isToday,
 } from "date-fns";
-
-// Service type labels (matching bookings route)
-const SERVICE_LABELS: Record<string, string> = {
-  photoshoot_hourly: "Photoshoot (Hourly)",
-  photoshoot_half_day: "Photoshoot (Half-Day)",
-  photoshoot_full_day: "Photoshoot (Full-Day)",
-  promo: "Promo Modeling",
-  brand_ambassador: "Brand Ambassador",
-  private_event: "Private Event",
-  social_companion: "Social Companion",
-  meet_greet: "Meet & Greet",
-  other: "Other",
-};
 
 // Gig type labels
 const GIG_TYPE_LABELS: Record<string, string> = {
@@ -80,125 +71,65 @@ interface Gig {
   compensation_amount: number;
 }
 
-interface Booking {
+interface Workshop {
   id: string;
-  booking_number: string;
-  service_type: string;
-  event_date: string;
+  title: string;
+  subtitle: string | null;
+  slug: string;
+  date: string;
   start_time: string | null;
-  duration_hours: number | null;
-  status: string;
-  total_amount: number;
+  end_time: string | null;
   location_city: string | null;
   location_state: string | null;
-  model: {
-    id: string;
-    username: string;
-    first_name: string | null;
-    last_name: string | null;
-  } | null;
-  client: {
-    type: "fan" | "brand";
-    display_name?: string;
-    company_name?: string;
-  } | null;
+  location_address: string | null;
+  price_cents: number;
+  original_price_cents: number | null;
+  max_attendees: number | null;
+  status: string;
 }
 
 interface CalendarEvent {
   id: string;
-  type: "gig" | "booking";
+  type: "gig" | "workshop";
   title: string;
   date: Date;
   endDate?: Date;
   status: string;
   location?: string;
-  details: Gig | Booking;
+  details: Gig | Workshop;
 }
 
 export default function AdminCalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [gigs, setGigs] = useState<Gig[]>([]);
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [workshops, setWorkshops] = useState<Workshop[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  // Filter state
+  const [showGigs, setShowGigs] = useState(true);
+  const [showWorkshops, setShowWorkshops] = useState(true);
+  const [showDrafts, setShowDrafts] = useState(true);
+  const [showOpen, setShowOpen] = useState(true);
+  const [showClosed, setShowClosed] = useState(true);
 
   const loadData = useCallback(async () => {
     const supabase = createClient();
     setLoading(true);
 
-    // Fetch gigs and bookings in parallel
-    const [gigsResult, bookingsResult] = await Promise.all([
+    // Fetch gigs and workshops in parallel
+    const [gigsResult, workshopsResult] = await Promise.all([
       (supabase.from("gigs") as any)
         .select("id, title, type, start_at, end_at, location_city, location_state, status, spots, spots_filled, compensation_type, compensation_amount")
         .order("start_at", { ascending: true }),
-      (supabase.from("bookings") as any)
-        .select("id, booking_number, service_type, event_date, start_time, duration_hours, status, total_amount, location_city, location_state, model_id, client_id")
-        .order("event_date", { ascending: true }),
+      (supabase as any).from("workshops")
+        .select("id, title, subtitle, slug, date, start_time, end_time, location_city, location_state, location_address, price_cents, original_price_cents, max_attendees, status")
+        .order("date", { ascending: true }),
     ]);
 
     setGigs(gigsResult.data || []);
-
-    // Enrich bookings with model and client info
-    const bookingsData = bookingsResult.data || [];
-    if (bookingsData.length > 0) {
-      const modelIds = [...new Set(bookingsData.map((b: any) => b.model_id).filter(Boolean))] as string[];
-      const clientIds = [...new Set(bookingsData.map((b: any) => b.client_id).filter(Boolean))] as string[];
-
-      // Batch fetch models
-      const modelsMap = new Map<string, any>();
-      if (modelIds.length > 0) {
-        const { data: models } = await (supabase.from("models") as any)
-          .select("id, username, first_name, last_name")
-          .in("id", modelIds);
-        (models || []).forEach((m: any) => modelsMap.set(m.id, m));
-      }
-
-      // Batch fetch actors for clients
-      const actorsMap = new Map<string, any>();
-      if (clientIds.length > 0) {
-        const { data: actors } = await (supabase.from("actors") as any)
-          .select("id, type")
-          .in("id", clientIds);
-        (actors || []).forEach((a: any) => actorsMap.set(a.id, a));
-      }
-
-      // Fetch fan and brand info
-      const fanIds = clientIds.filter((id: string) => actorsMap.get(id)?.type === "fan");
-      const brandIds = clientIds.filter((id: string) => actorsMap.get(id)?.type === "brand");
-
-      const fansMap = new Map<string, any>();
-      const brandsMap = new Map<string, any>();
-
-      if (fanIds.length > 0) {
-        const { data: fans } = await (supabase.from("fans") as any)
-          .select("id, display_name")
-          .in("id", fanIds);
-        (fans || []).forEach((f: any) => fansMap.set(f.id, f));
-      }
-
-      if (brandIds.length > 0) {
-        const { data: brands } = await (supabase.from("brands") as any)
-          .select("id, company_name")
-          .in("id", brandIds);
-        (brands || []).forEach((b: any) => brandsMap.set(b.id, b));
-      }
-
-      // Map back to bookings
-      for (const booking of bookingsData) {
-        booking.model = modelsMap.get(booking.model_id) || null;
-        const clientActor = actorsMap.get(booking.client_id);
-        if (clientActor?.type === "fan") {
-          const fan = fansMap.get(booking.client_id);
-          booking.client = fan ? { ...fan, type: "fan" } : null;
-        } else if (clientActor?.type === "brand") {
-          const brand = brandsMap.get(booking.client_id);
-          booking.client = brand ? { ...brand, type: "brand" } : null;
-        }
-      }
-    }
-
-    setBookings(bookingsData);
+    setWorkshops(workshopsResult.data || []);
     setLoading(false);
   }, []);
 
@@ -207,14 +138,36 @@ export default function AdminCalendarPage() {
     loadData();
   }, [loadData]);
 
-  // Convert gigs and bookings to calendar events
+  // Check if an event should be shown based on filters
+  const shouldShowEvent = (event: CalendarEvent) => {
+    // Type filter
+    if (event.type === "gig" && !showGigs) return false;
+    if (event.type === "workshop" && !showWorkshops) return false;
+
+    // Status filter
+    const status = event.status;
+    if (event.type === "gig") {
+      if (status === "draft" && !showDrafts) return false;
+      if (status === "open" && !showOpen) return false;
+      if (status === "closed" && !showClosed) return false;
+    } else {
+      // Workshop statuses
+      if (status === "draft" && !showDrafts) return false;
+      if (status === "published" && !showOpen) return false;
+      if ((status === "completed" || status === "cancelled") && !showClosed) return false;
+    }
+
+    return true;
+  };
+
+  // Convert gigs and workshops to calendar events
   const calendarEvents = useMemo(() => {
     const events: CalendarEvent[] = [];
 
     // Add gigs
     for (const gig of gigs) {
       if (gig.start_at) {
-        events.push({
+        const event: CalendarEvent = {
           id: `gig-${gig.id}`,
           type: "gig",
           title: gig.title,
@@ -225,29 +178,36 @@ export default function AdminCalendarPage() {
             ? `${gig.location_city}, ${gig.location_state}`
             : undefined,
           details: gig,
-        });
+        };
+        if (shouldShowEvent(event)) {
+          events.push(event);
+        }
       }
     }
 
-    // Add bookings
-    for (const booking of bookings) {
-      if (booking.event_date) {
-        events.push({
-          id: `booking-${booking.id}`,
-          type: "booking",
-          title: `Booking #${booking.booking_number}`,
-          date: new Date(booking.event_date),
-          status: booking.status,
-          location: booking.location_city && booking.location_state
-            ? `${booking.location_city}, ${booking.location_state}`
+    // Add workshops
+    for (const workshop of workshops) {
+      if (workshop.date) {
+        const event: CalendarEvent = {
+          id: `workshop-${workshop.id}`,
+          type: "workshop",
+          title: workshop.title,
+          date: new Date(workshop.date),
+          status: workshop.status,
+          location: workshop.location_city && workshop.location_state
+            ? `${workshop.location_city}, ${workshop.location_state}`
             : undefined,
-          details: booking,
-        });
+          details: workshop,
+        };
+        if (shouldShowEvent(event)) {
+          events.push(event);
+        }
       }
     }
 
     return events;
-  }, [gigs, bookings]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gigs, workshops, showGigs, showWorkshops, showDrafts, showOpen, showClosed]);
 
   // Generate calendar days for current month view
   const calendarDays = useMemo(() => {
@@ -259,53 +219,82 @@ export default function AdminCalendarPage() {
     return eachDayOfInterval({ start: calendarStart, end: calendarEnd });
   }, [currentDate]);
 
-  // Get events for a specific day
+  // Get events for a specific day (including multi-day events)
   const getEventsForDay = (day: Date) => {
-    return calendarEvents.filter((event) => isSameDay(event.date, day));
+    return calendarEvents.filter((event) => {
+      // Check if day falls within the event's date range
+      const eventStart = event.date;
+      const eventEnd = event.endDate || event.date;
+
+      // Normalize dates to compare just the date part (ignore time)
+      const dayTime = new Date(day.getFullYear(), day.getMonth(), day.getDate()).getTime();
+      const startTime = new Date(eventStart.getFullYear(), eventStart.getMonth(), eventStart.getDate()).getTime();
+      const endTime = new Date(eventEnd.getFullYear(), eventEnd.getMonth(), eventEnd.getDate()).getTime();
+
+      return dayTime >= startTime && dayTime <= endTime;
+    });
   };
 
-  // Status badge color
-  const getStatusColor = (status: string, type: "gig" | "booking") => {
-    if (type === "gig") {
-      switch (status) {
-        case "open":
-          return "bg-green-500";
-        case "draft":
-          return "bg-amber-500";
-        case "closed":
-          return "bg-gray-500";
-        default:
-          return "bg-gray-500";
-      }
-    } else {
-      switch (status) {
-        case "pending":
-        case "counter":
-          return "bg-amber-500";
-        case "accepted":
-        case "confirmed":
-          return "bg-green-500";
-        case "completed":
-          return "bg-blue-500";
-        case "cancelled":
-        case "declined":
-          return "bg-red-500";
-        default:
-          return "bg-gray-500";
-      }
+  // Check if this is a continuation of a multi-day event
+  const isEventContinuation = (event: CalendarEvent, day: Date) => {
+    return event.endDate && !isSameDay(event.date, day);
+  };
+
+  // Check if event is a draft
+  const isDraft = (event: CalendarEvent) => {
+    return event.status === "draft";
+  };
+
+  // Status badge color for gigs
+  const getGigStatusColor = (status: string) => {
+    switch (status) {
+      case "open":
+        return "bg-green-500";
+      case "draft":
+        return "bg-amber-500";
+      case "closed":
+        return "bg-gray-500";
+      default:
+        return "bg-gray-500";
     }
   };
 
-  // Get booking event classes for calendar display
-  const getBookingEventClasses = (booking: Booking) => {
-    if (["pending", "counter"].includes(booking.status)) {
-      return "bg-amber-500/20 text-amber-400 border-l-2 border-amber-500";
-    } else if (["accepted", "confirmed"].includes(booking.status)) {
-      return "bg-green-500/20 text-green-400 border-l-2 border-green-500";
-    } else if (booking.status === "completed") {
-      return "bg-blue-500/20 text-blue-400 border-l-2 border-blue-500";
+  // Status badge color for workshops
+  const getWorkshopStatusColor = (status: string) => {
+    switch (status) {
+      case "published":
+        return "bg-green-500";
+      case "draft":
+        return "bg-amber-500";
+      case "cancelled":
+        return "bg-red-500";
+      case "completed":
+        return "bg-blue-500";
+      default:
+        return "bg-gray-500";
+    }
+  };
+
+  // Get event classes for calendar display
+  const getEventClasses = (event: CalendarEvent) => {
+    const draft = isDraft(event);
+
+    if (event.type === "gig") {
+      if (draft) {
+        return "bg-violet-500/10 text-violet-400/70 border-l-2 border-dashed border-violet-500/50";
+      }
+      if (event.status === "closed") {
+        return "bg-gray-500/20 text-gray-400 border-l-2 border-gray-500";
+      }
+      return "bg-violet-500/20 text-violet-400 border-l-2 border-violet-500";
     } else {
-      return "bg-gray-400/20 text-gray-400 border-l-2 border-gray-400";
+      if (draft) {
+        return "bg-pink-500/10 text-pink-400/70 border-l-2 border-dashed border-pink-500/50";
+      }
+      if (event.status === "completed" || event.status === "cancelled") {
+        return "bg-gray-500/20 text-gray-400 border-l-2 border-gray-500";
+      }
+      return "bg-pink-500/20 text-pink-400 border-l-2 border-pink-500";
     }
   };
 
@@ -313,6 +302,13 @@ export default function AdminCalendarPage() {
     setSelectedEvent(event);
     setDialogOpen(true);
   };
+
+  // Count stats
+  const draftGigsCount = gigs.filter(g => g.status === "draft").length;
+  const openGigsCount = gigs.filter(g => g.status === "open").length;
+  const closedGigsCount = gigs.filter(g => g.status === "closed").length;
+  const draftWorkshopsCount = workshops.filter(w => w.status === "draft").length;
+  const publishedWorkshopsCount = workshops.filter(w => w.status === "published").length;
 
   if (loading) {
     return (
@@ -335,31 +331,115 @@ export default function AdminCalendarPage() {
           <div>
             <h1 className="text-2xl font-bold">Calendar</h1>
             <p className="text-muted-foreground">
-              View all gigs and bookings across the platform
+              View and plan all gigs and workshops
             </p>
           </div>
         </div>
       </div>
 
-      {/* Legend */}
-      <div className="flex flex-wrap items-center gap-4 text-sm">
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-violet-500" />
-          <span className="text-muted-foreground">Gig</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-amber-500" />
-          <span className="text-muted-foreground">Pending Booking</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-green-500" />
-          <span className="text-muted-foreground">Confirmed Booking</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-blue-500" />
-          <span className="text-muted-foreground">Completed Booking</span>
-        </div>
-      </div>
+      {/* Filters & Legend */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-wrap items-start gap-8">
+            {/* Type Filters */}
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-muted-foreground">Event Types</p>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="show-gigs"
+                    checked={showGigs}
+                    onCheckedChange={(checked) => setShowGigs(checked as boolean)}
+                  />
+                  <Label htmlFor="show-gigs" className="flex items-center gap-2 cursor-pointer">
+                    <div className="w-3 h-3 rounded-full bg-violet-500" />
+                    <span>Gigs</span>
+                    <span className="text-xs text-muted-foreground">({gigs.length})</span>
+                  </Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="show-workshops"
+                    checked={showWorkshops}
+                    onCheckedChange={(checked) => setShowWorkshops(checked as boolean)}
+                  />
+                  <Label htmlFor="show-workshops" className="flex items-center gap-2 cursor-pointer">
+                    <div className="w-3 h-3 rounded-full bg-pink-500" />
+                    <span>Workshops</span>
+                    <span className="text-xs text-muted-foreground">({workshops.length})</span>
+                  </Label>
+                </div>
+              </div>
+            </div>
+
+            {/* Status Filters */}
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-muted-foreground">Status</p>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="show-drafts"
+                    checked={showDrafts}
+                    onCheckedChange={(checked) => setShowDrafts(checked as boolean)}
+                  />
+                  <Label htmlFor="show-drafts" className="flex items-center gap-2 cursor-pointer">
+                    <FileEdit className="h-3 w-3 text-amber-500" />
+                    <span>Drafts</span>
+                    <span className="text-xs text-muted-foreground">({draftGigsCount + draftWorkshopsCount})</span>
+                  </Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="show-open"
+                    checked={showOpen}
+                    onCheckedChange={(checked) => setShowOpen(checked as boolean)}
+                  />
+                  <Label htmlFor="show-open" className="flex items-center gap-2 cursor-pointer">
+                    <Eye className="h-3 w-3 text-green-500" />
+                    <span>Open / Published</span>
+                    <span className="text-xs text-muted-foreground">({openGigsCount + publishedWorkshopsCount})</span>
+                  </Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="show-closed"
+                    checked={showClosed}
+                    onCheckedChange={(checked) => setShowClosed(checked as boolean)}
+                  />
+                  <Label htmlFor="show-closed" className="flex items-center gap-2 cursor-pointer">
+                    <EyeOff className="h-3 w-3 text-gray-500" />
+                    <span>Closed / Completed</span>
+                    <span className="text-xs text-muted-foreground">({closedGigsCount})</span>
+                  </Label>
+                </div>
+              </div>
+            </div>
+
+            {/* Visual Legend */}
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-muted-foreground">Visual Guide</p>
+              <div className="flex flex-col gap-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-16 h-5 rounded bg-violet-500/20 border-l-2 border-violet-500" />
+                  <span className="text-muted-foreground">Open Gig</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-16 h-5 rounded bg-violet-500/10 border-l-2 border-dashed border-violet-500/50" />
+                  <span className="text-muted-foreground">Draft Gig</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-16 h-5 rounded bg-pink-500/20 border-l-2 border-pink-500" />
+                  <span className="text-muted-foreground">Published Workshop</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-16 h-5 rounded bg-pink-500/10 border-l-2 border-dashed border-pink-500/50" />
+                  <span className="text-muted-foreground">Draft Workshop</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Calendar Card */}
       <Card>
@@ -431,35 +511,32 @@ export default function AdminCalendarPage() {
                     {format(day, "d")}
                   </div>
                   <div className="space-y-1">
-                    {dayEvents.slice(0, 3).map((event) => (
-                      <button
-                        key={event.id}
-                        onClick={() => handleEventClick(event)}
-                        className={`w-full text-left px-1.5 py-0.5 rounded text-xs truncate transition-opacity hover:opacity-80 ${
-                          event.type === "gig"
-                            ? "bg-violet-500/20 text-violet-400 border-l-2 border-violet-500"
-                            : getBookingEventClasses(event.details as Booking)
-                        }`}
-                      >
-                        {event.type === "gig" ? (
+                    {dayEvents.slice(0, 3).map((event) => {
+                      const isContinuation = isEventContinuation(event, day);
+                      const draft = isDraft(event);
+                      return (
+                        <button
+                          key={event.id}
+                          onClick={() => handleEventClick(event)}
+                          className={`w-full text-left px-1.5 py-0.5 rounded text-xs truncate transition-opacity hover:opacity-80 ${getEventClasses(event)} ${isContinuation ? "opacity-70" : ""}`}
+                        >
                           <span className="flex items-center gap-1">
-                            <Sparkles className="h-3 w-3 flex-shrink-0" />
-                            <span className="truncate">{event.title}</span>
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-1">
-                            <Users className="h-3 w-3 flex-shrink-0" />
+                            {event.type === "gig" ? (
+                              <Sparkles className={`h-3 w-3 flex-shrink-0 ${draft ? "opacity-50" : ""}`} />
+                            ) : (
+                              <GraduationCap className={`h-3 w-3 flex-shrink-0 ${draft ? "opacity-50" : ""}`} />
+                            )}
                             <span className="truncate">
-                              {(event.details as Booking).model?.first_name || (event.details as Booking).model?.username || "Booking"}
+                              {draft && !isContinuation && "(Draft) "}
+                              {isContinuation ? `↳ ${event.title}` : event.title}
                             </span>
                           </span>
-                        )}
-                      </button>
-                    ))}
+                        </button>
+                      );
+                    })}
                     {dayEvents.length > 3 && (
                       <button
                         onClick={() => {
-                          // Show all events for this day in a modal
                           setSelectedEvent(dayEvents[0]);
                           setDialogOpen(true);
                         }}
@@ -477,7 +554,20 @@ export default function AdminCalendarPage() {
       </Card>
 
       {/* Stats Summary */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-full bg-amber-500/10">
+                <FileEdit className="h-5 w-5 text-amber-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{draftGigsCount}</p>
+                <p className="text-sm text-muted-foreground">Draft Gigs</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
@@ -485,8 +575,8 @@ export default function AdminCalendarPage() {
                 <Sparkles className="h-5 w-5 text-violet-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{gigs.filter(g => g.status === "open").length}</p>
-                <p className="text-sm text-muted-foreground">Active Gigs</p>
+                <p className="text-2xl font-bold">{openGigsCount}</p>
+                <p className="text-sm text-muted-foreground">Open Gigs</p>
               </div>
             </div>
           </CardContent>
@@ -494,14 +584,12 @@ export default function AdminCalendarPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-full bg-amber-500/10">
-                <Clock className="h-5 w-5 text-amber-500" />
+              <div className="p-2.5 rounded-full bg-gray-500/10">
+                <Sparkles className="h-5 w-5 text-gray-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">
-                  {bookings.filter(b => ["pending", "counter"].includes(b.status)).length}
-                </p>
-                <p className="text-sm text-muted-foreground">Pending Bookings</p>
+                <p className="text-2xl font-bold">{closedGigsCount}</p>
+                <p className="text-sm text-muted-foreground">Closed Gigs</p>
               </div>
             </div>
           </CardContent>
@@ -509,14 +597,12 @@ export default function AdminCalendarPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-full bg-green-500/10">
-                <CalendarIcon className="h-5 w-5 text-green-500" />
+              <div className="p-2.5 rounded-full bg-pink-500/10">
+                <GraduationCap className="h-5 w-5 text-pink-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">
-                  {bookings.filter(b => ["accepted", "confirmed"].includes(b.status)).length}
-                </p>
-                <p className="text-sm text-muted-foreground">Confirmed Bookings</p>
+                <p className="text-2xl font-bold">{publishedWorkshopsCount}</p>
+                <p className="text-sm text-muted-foreground">Published Workshops</p>
               </div>
             </div>
           </CardContent>
@@ -528,8 +614,8 @@ export default function AdminCalendarPage() {
                 <Users className="h-5 w-5 text-blue-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{bookings.filter(b => b.status === "completed").length}</p>
-                <p className="text-sm text-muted-foreground">Completed Bookings</p>
+                <p className="text-2xl font-bold">{gigs.reduce((sum, g) => sum + (g.spots_filled || 0), 0)}</p>
+                <p className="text-sm text-muted-foreground">Total Spots Filled</p>
               </div>
             </div>
           </CardContent>
@@ -546,9 +632,14 @@ export default function AdminCalendarPage() {
                   {selectedEvent.type === "gig" ? (
                     <Sparkles className="h-5 w-5 text-violet-500" />
                   ) : (
-                    <Users className="h-5 w-5 text-blue-500" />
+                    <GraduationCap className="h-5 w-5 text-pink-500" />
                   )}
-                  {selectedEvent.type === "gig" ? "Gig Details" : "Booking Details"}
+                  {selectedEvent.type === "gig" ? "Gig Details" : "Workshop Details"}
+                  {isDraft(selectedEvent) && (
+                    <Badge variant="outline" className="ml-2 text-amber-500 border-amber-500">
+                      Draft
+                    </Badge>
+                  )}
                 </DialogTitle>
               </DialogHeader>
 
@@ -565,7 +656,7 @@ export default function AdminCalendarPage() {
                             <Badge variant="outline" className="capitalize">
                               {GIG_TYPE_LABELS[gig.type] || gig.type}
                             </Badge>
-                            <Badge className={getStatusColor(gig.status, "gig")}>
+                            <Badge className={getGigStatusColor(gig.status)}>
                               {gig.status}
                             </Badge>
                           </div>
@@ -609,21 +700,20 @@ export default function AdminCalendarPage() {
                     );
                   })()
                 ) : (
-                  // Booking details
+                  // Workshop details
                   (() => {
-                    const booking = selectedEvent.details as Booking;
+                    const workshop = selectedEvent.details as Workshop;
                     return (
                       <>
                         <div>
-                          <h3 className="font-semibold text-lg">
-                            Booking #{booking.booking_number}
-                          </h3>
+                          <h3 className="font-semibold text-lg">{workshop.title}</h3>
+                          {workshop.subtitle && (
+                            <p className="text-sm text-muted-foreground">{workshop.subtitle}</p>
+                          )}
                           <div className="flex items-center gap-2 mt-1">
-                            <Badge variant="outline">
-                              {SERVICE_LABELS[booking.service_type] || booking.service_type}
-                            </Badge>
-                            <Badge className={getStatusColor(booking.status, "booking")}>
-                              {booking.status}
+                            <Badge variant="outline">Workshop</Badge>
+                            <Badge className={getWorkshopStatusColor(workshop.status)}>
+                              {workshop.status}
                             </Badge>
                           </div>
                         </div>
@@ -632,15 +722,18 @@ export default function AdminCalendarPage() {
                           <div className="flex items-center gap-2 text-muted-foreground">
                             <CalendarIcon className="h-4 w-4" />
                             <span>
-                              {format(new Date(booking.event_date), "EEEE, MMMM d, yyyy")}
-                              {booking.start_time && ` at ${booking.start_time}`}
+                              {format(new Date(workshop.date), "EEEE, MMMM d, yyyy")}
                             </span>
                           </div>
 
-                          {booking.duration_hours && (
+                          {(workshop.start_time || workshop.end_time) && (
                             <div className="flex items-center gap-2 text-muted-foreground">
                               <Clock className="h-4 w-4" />
-                              <span>{booking.duration_hours} hour(s)</span>
+                              <span>
+                                {workshop.start_time && workshop.start_time}
+                                {workshop.start_time && workshop.end_time && " - "}
+                                {workshop.end_time && workshop.end_time}
+                              </span>
                             </div>
                           )}
 
@@ -651,35 +744,36 @@ export default function AdminCalendarPage() {
                             </div>
                           )}
 
-                          {booking.model && (
+                          {workshop.location_address && (
                             <div className="flex items-center gap-2 text-muted-foreground">
-                              <User className="h-4 w-4" />
-                              <span>
-                                Model: {booking.model.first_name || ""} {booking.model.last_name || ""} (@{booking.model.username})
-                              </span>
+                              <MapPin className="h-4 w-4 opacity-0" />
+                              <span className="text-xs">{workshop.location_address}</span>
                             </div>
                           )}
 
-                          {booking.client && (
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                              {booking.client.type === "brand" ? (
-                                <Building2 className="h-4 w-4" />
-                              ) : (
-                                <User className="h-4 w-4" />
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <DollarSign className="h-4 w-4" />
+                            <span>
+                              ${(workshop.price_cents / 100).toLocaleString()}
+                              {workshop.original_price_cents && workshop.original_price_cents > workshop.price_cents && (
+                                <span className="line-through ml-2 text-muted-foreground/60">
+                                  ${(workshop.original_price_cents / 100).toLocaleString()}
+                                </span>
                               )}
-                              <span>
-                                Client: {booking.client.company_name || booking.client.display_name || "Unknown"} ({booking.client.type})
-                              </span>
-                            </div>
-                          )}
+                            </span>
+                          </div>
 
-                          {booking.total_amount > 0 && (
+                          {workshop.max_attendees && (
                             <div className="flex items-center gap-2 text-muted-foreground">
-                              <DollarSign className="h-4 w-4" />
-                              <span>{booking.total_amount.toLocaleString()} coins</span>
+                              <Users className="h-4 w-4" />
+                              <span>Max {workshop.max_attendees} attendees</span>
                             </div>
                           )}
                         </div>
+
+                        <Button asChild className="w-full">
+                          <Link href="/admin/gigs">Manage Workshop</Link>
+                        </Button>
                       </>
                     );
                   })()
