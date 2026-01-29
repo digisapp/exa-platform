@@ -42,6 +42,7 @@ import {
   GraduationCap,
   Calendar,
   DollarSign,
+  Search,
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -154,6 +155,7 @@ export default function AdminGigsPage() {
   const [applicationFilter, setApplicationFilter] = useState<"all" | "pending" | "approved" | "declined">("all");
   const [tripFilter, setTripFilter] = useState<"all" | "1" | "2">("all");
   const [spotTypeFilter, setSpotTypeFilter] = useState<"all" | "paid" | "sponsored">("all");
+  const [modelSearch, setModelSearch] = useState("");
   const [modelBadges, setModelBadges] = useState<Set<string>>(new Set()); // model_ids that have the event badge
   const [syncingBadges, setSyncingBadges] = useState(false);
 
@@ -222,6 +224,7 @@ export default function AdminGigsPage() {
       setApplicationFilter("all");
       setTripFilter("all");
       setSpotTypeFilter("all");
+      setModelSearch("");
     }
   }, [selectedGig]);
 
@@ -1589,6 +1592,18 @@ export default function AdminGigsPage() {
                 </div>
               </div>
             )}
+            {/* Search Box */}
+            {selectedGig && applications.length > 0 && (
+              <div className="relative mt-3">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name or username..."
+                  value={modelSearch}
+                  onChange={(e) => setModelSearch(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+            )}
           </CardHeader>
           <CardContent className="space-y-3 max-h-[600px] overflow-y-auto">
             {!selectedGig ? (
@@ -1612,6 +1627,17 @@ export default function AdminGigsPage() {
                   if (tripFilter !== "all" && app.trip_number !== parseInt(tripFilter)) return false;
                   // Spot type filter
                   if (spotTypeFilter !== "all" && app.spot_type !== spotTypeFilter) return false;
+                  // Search filter
+                  if (modelSearch) {
+                    const search = modelSearch.toLowerCase();
+                    const firstName = app.model?.first_name?.toLowerCase() || "";
+                    const lastName = app.model?.last_name?.toLowerCase() || "";
+                    const username = app.model?.username?.toLowerCase() || "";
+                    const fullName = `${firstName} ${lastName}`.trim();
+                    if (!firstName.includes(search) && !lastName.includes(search) && !username.includes(search) && !fullName.includes(search)) {
+                      return false;
+                    }
+                  }
                   return true;
                 })
                 .length === 0 ? (
@@ -1629,6 +1655,17 @@ export default function AdminGigsPage() {
                   if (tripFilter !== "all" && app.trip_number !== parseInt(tripFilter)) return false;
                   // Spot type filter
                   if (spotTypeFilter !== "all" && app.spot_type !== spotTypeFilter) return false;
+                  // Search filter
+                  if (modelSearch) {
+                    const search = modelSearch.toLowerCase();
+                    const firstName = app.model?.first_name?.toLowerCase() || "";
+                    const lastName = app.model?.last_name?.toLowerCase() || "";
+                    const username = app.model?.username?.toLowerCase() || "";
+                    const fullName = `${firstName} ${lastName}`.trim();
+                    if (!firstName.includes(search) && !lastName.includes(search) && !username.includes(search) && !fullName.includes(search)) {
+                      return false;
+                    }
+                  }
                   return true;
                 })
                 .map((app) => (
