@@ -166,11 +166,13 @@ export default function AdminGigsPage() {
   const [editingWorkshop, setEditingWorkshop] = useState<Workshop | null>(null);
   const [selectedWorkshop, setSelectedWorkshop] = useState<Workshop | null>(null);
   const [workshopSaving, setWorkshopSaving] = useState(false);
+  const [workshopUploading, setWorkshopUploading] = useState(false);
   const [workshopFormData, setWorkshopFormData] = useState({
     title: "",
     subtitle: "",
     slug: "",
     description: "",
+    cover_image_url: "",
     location_city: "",
     location_state: "",
     location_address: "",
@@ -739,12 +741,74 @@ export default function AdminGigsPage() {
     }));
   };
 
+  const handleWorkshopImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Invalid file type. Use JPEG, PNG, WebP, or GIF.");
+      return;
+    }
+
+    // Validate file size (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File too large. Maximum size is 10MB.");
+      return;
+    }
+
+    setWorkshopUploading(true);
+    try {
+      // Step 1: Get signed upload URL from our API
+      const response = await fetch("/api/admin/workshops/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filename: file.name,
+          contentType: file.type,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data.error || "Failed to get upload URL");
+        return;
+      }
+
+      // Step 2: Upload directly to Supabase Storage using signed URL
+      const uploadResponse = await fetch(data.signedUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": file.type,
+        },
+        body: file,
+      });
+
+      if (!uploadResponse.ok) {
+        toast.error("Failed to upload file");
+        return;
+      }
+
+      // Step 3: Set the public URL
+      setWorkshopFormData(prev => ({ ...prev, cover_image_url: data.publicUrl }));
+      toast.success("Flyer uploaded successfully!");
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("Failed to upload flyer");
+    } finally {
+      setWorkshopUploading(false);
+    }
+  };
+
   const resetWorkshopForm = () => {
     setWorkshopFormData({
       title: "",
       subtitle: "",
       slug: "",
       description: "",
+      cover_image_url: "",
       location_city: "",
       location_state: "",
       location_address: "",
@@ -771,6 +835,7 @@ export default function AdminGigsPage() {
       subtitle: workshop.subtitle || "",
       slug: workshop.slug,
       description: workshop.description || "",
+      cover_image_url: workshop.cover_image_url || "",
       location_city: workshop.location_city || "",
       location_state: workshop.location_state || "",
       location_address: workshop.location_address || "",
@@ -799,6 +864,7 @@ export default function AdminGigsPage() {
       subtitle: workshopFormData.subtitle || null,
       slug: workshopFormData.slug,
       description: workshopFormData.description || null,
+      cover_image_url: workshopFormData.cover_image_url || null,
       location_city: workshopFormData.location_city || null,
       location_state: workshopFormData.location_state || null,
       location_address: workshopFormData.location_address || null,
@@ -1847,6 +1913,54 @@ export default function AdminGigsPage() {
                   placeholder="miami-swim-week-runway-workshop"
                   required
                 />
+              </div>
+
+              {/* Cover Image / Flyer Upload */}
+              <div className="col-span-2">
+                <Label>Event Flyer / Cover Image</Label>
+                <div className="flex items-start gap-4 mt-2">
+                  {workshopFormData.cover_image_url ? (
+                    <div className="relative">
+                      <img
+                        src={workshopFormData.cover_image_url}
+                        alt="Workshop flyer"
+                        className="w-32 h-44 object-cover rounded-lg border"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute -top-2 -right-2 h-6 w-6"
+                        onClick={() => setWorkshopFormData(prev => ({ ...prev, cover_image_url: "" }))}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center w-32 h-44 border-2 border-dashed border-muted-foreground/25 rounded-lg cursor-pointer hover:border-muted-foreground/50 transition-colors">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleWorkshopImageUpload}
+                        disabled={workshopUploading}
+                      />
+                      {workshopUploading ? (
+                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                      ) : (
+                        <>
+                          <ImageIcon className="h-8 w-8 text-muted-foreground mb-2" />
+                          <span className="text-xs text-muted-foreground text-center px-2">Upload Flyer</span>
+                        </>
+                      )}
+                    </label>
+                  )}
+                  <div className="text-sm text-muted-foreground">
+                    <p>Upload a portrait flyer or promotional image.</p>
+                    <p className="mt-1">Recommended: Portrait orientation (e.g., 800x1100px)</p>
+                    <p>Max size: 10MB</p>
+                  </div>
+                </div>
               </div>
 
               <div>
