@@ -18,7 +18,9 @@ import {
   Gift,
   Crown,
   DollarSign,
+  Search,
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { COIN_PACKAGES } from "@/lib/stripe-config";
 
 // Get the USD price for a coin amount (returns cents)
@@ -204,6 +206,55 @@ export default async function TransactionsPage() {
   const totalRevenueCents = (purchaseTransactions || []).reduce((sum, p) => sum + getCoinPackagePrice(p.amount), 0);
   const totalRevenue = totalRevenueCents / 100;
 
+  // Get user info for ALL transactions (not just purchases)
+  const allActorIds = [...new Set(transactions.map(t => t.actor_id))];
+
+  const { data: allActors } = await supabase
+    .from("actors")
+    .select("id, user_id, type")
+    .in("id", allActorIds.length > 0 ? allActorIds : ["none"]) as { data: { id: string; user_id: string; type: string }[] | null };
+
+  const allActorMap = new Map(allActors?.map(a => [a.id, a]) || []);
+
+  // Get fan info for all transaction actors
+  const allFanUserIds = allActors?.filter(a => a.type === "fan").map(a => a.user_id) || [];
+  const { data: allFans } = await supabase
+    .from("fans")
+    .select("user_id, email, display_name")
+    .in("user_id", allFanUserIds.length > 0 ? allFanUserIds : ["none"]) as { data: { user_id: string; email: string; display_name: string | null }[] | null };
+
+  const allFanMap = new Map(allFans?.map(f => [f.user_id, f]) || []);
+
+  // Get model info for all transaction actors
+  const allModelUserIds = allActors?.filter(a => a.type === "model" || a.type === "admin").map(a => a.user_id) || [];
+  const { data: allModels } = await supabase
+    .from("models")
+    .select("user_id, email, first_name, last_name, username")
+    .in("user_id", allModelUserIds.length > 0 ? allModelUserIds : ["none"]) as { data: { user_id: string; email: string; first_name: string | null; last_name: string | null; username: string | null }[] | null };
+
+  const allModelMap = new Map(allModels?.map(m => [m.user_id, m]) || []);
+
+  // Helper to get user info for a transaction
+  const getUserInfoForTransaction = (actorId: string) => {
+    const actor = allActorMap.get(actorId);
+    let name = "";
+    let email = "";
+    let username = "";
+
+    if (actor?.type === "fan") {
+      const fan = allFanMap.get(actor.user_id);
+      email = fan?.email || "";
+      name = fan?.display_name || email.split("@")[0];
+    } else if (actor?.type === "model" || actor?.type === "admin") {
+      const model = allModelMap.get(actor.user_id);
+      email = model?.email || "";
+      name = [model?.first_name, model?.last_name].filter(Boolean).join(" ") || model?.username || email.split("@")[0];
+      username = model?.username || "";
+    }
+
+    return { name, email, username, type: actor?.type || "unknown" };
+  };
+
   const getActionIcon = (action: string) => {
     switch (action) {
       case "purchase":
@@ -272,51 +323,27 @@ export default async function TransactionsPage() {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+      {/* Stats - Top Row: Key metrics */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <DollarSign className="h-8 w-8 text-green-500" />
+              <div>
+                <p className="text-2xl font-bold">${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                <p className="text-xs text-muted-foreground">Total Revenue</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card className="bg-gradient-to-br from-pink-500/10 to-violet-500/10 border-pink-500/20">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <Coins className="h-8 w-8 text-pink-500" />
               <div>
                 <p className="text-2xl font-bold">{totalCoinsInCirculation.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Total Coins</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <CreditCard className="h-6 w-6 text-green-500" />
-              <div>
-                <p className="text-2xl font-bold">{totalPurchased.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Purchased</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <Heart className="h-6 w-6 text-pink-500" />
-              <div>
-                <p className="text-2xl font-bold">{totalTipped.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Tipped</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <Lock className="h-6 w-6 text-purple-500" />
-              <div>
-                <p className="text-2xl font-bold">{totalContentSales.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Content Sales</p>
+                <p className="text-xs text-muted-foreground">Coins in Circulation</p>
               </div>
             </div>
           </CardContent>
@@ -328,7 +355,7 @@ export default async function TransactionsPage() {
               <TrendingUp className="h-6 w-6 text-blue-500" />
               <div>
                 <p className="text-2xl font-bold">{totalModelCoins.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Model Coins</p>
+                <p className="text-xs text-muted-foreground">Model Balances</p>
               </div>
             </div>
           </CardContent>
@@ -340,19 +367,46 @@ export default async function TransactionsPage() {
               <Coins className="h-6 w-6 text-yellow-500" />
               <div>
                 <p className="text-2xl font-bold">{totalFanCoins.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Fan Coins</p>
+                <p className="text-xs text-muted-foreground">Fan Balances</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Stats - Second Row: Activity metrics */}
+      <div className="grid grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <CreditCard className="h-6 w-6 text-green-500" />
+              <div>
+                <p className="text-2xl font-bold">{totalPurchased.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">Coins Purchased (Last 200 txns)</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20">
+        <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <DollarSign className="h-8 w-8 text-green-500" />
+              <Heart className="h-6 w-6 text-pink-500" />
               <div>
-                <p className="text-2xl font-bold">${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-                <p className="text-xs text-muted-foreground">Total Revenue</p>
+                <p className="text-2xl font-bold">{totalTipped.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">Tips Sent (Last 200 txns)</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <Lock className="h-6 w-6 text-purple-500" />
+              <div>
+                <p className="text-2xl font-bold">{totalContentSales.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">Content Sales (Last 200 txns)</p>
               </div>
             </div>
           </CardContent>
@@ -485,37 +539,45 @@ export default async function TransactionsPage() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {transactions.map((tx) => (
-                    <div
-                      key={tx.id}
-                      className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted/70 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-full bg-background">
-                          {getActionIcon(tx.action)}
+                  {transactions.map((tx) => {
+                    const userInfo = getUserInfoForTransaction(tx.actor_id);
+                    return (
+                      <div
+                        key={tx.id}
+                        className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted/70 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-full bg-background">
+                            {getActionIcon(tx.action)}
+                          </div>
+                          <div>
+                            <p className="font-medium text-sm">{getActionLabel(tx.action)}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {formatDate(tx.created_at)}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium text-sm">{getActionLabel(tx.action)}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {formatDate(tx.created_at)}
-                          </p>
+                        <div className="flex items-center gap-3">
+                          <div className="text-right">
+                            <p className="text-sm font-medium">{userInfo.name}</p>
+                            <div className="flex items-center gap-1">
+                              <Badge variant="outline" className="text-xs">
+                                {userInfo.type}
+                              </Badge>
+                            </div>
+                          </div>
+                          <span className={`flex items-center gap-1 font-semibold min-w-[80px] justify-end ${tx.amount >= 0 ? "text-green-500" : "text-red-500"}`}>
+                            {tx.amount >= 0 ? (
+                              <ArrowUpRight className="h-4 w-4" />
+                            ) : (
+                              <ArrowDownRight className="h-4 w-4" />
+                            )}
+                            {tx.amount >= 0 ? "+" : ""}{tx.amount}
+                          </span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-xs">
-                          {tx.actor_id.slice(0, 8)}...
-                        </Badge>
-                        <span className={`flex items-center gap-1 font-semibold ${tx.amount >= 0 ? "text-green-500" : "text-red-500"}`}>
-                          {tx.amount >= 0 ? (
-                            <ArrowUpRight className="h-4 w-4" />
-                          ) : (
-                            <ArrowDownRight className="h-4 w-4" />
-                          )}
-                          {tx.amount >= 0 ? "+" : ""}{tx.amount}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
