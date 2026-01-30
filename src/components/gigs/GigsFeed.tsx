@@ -178,11 +178,6 @@ export function GigsFeed({ gigs, modelApplications, isApproved }: GigsFeedProps)
                           {gig.location_city}, {gig.location_state}
                         </span>
                       )}
-                      {gig.compensation_amount && gig.compensation_amount > 0 && (
-                        <span className="text-green-500 font-medium">
-                          ${(gig.compensation_amount / 100).toFixed(0)}
-                        </span>
-                      )}
                     </div>
                   </div>
                 </Link>
