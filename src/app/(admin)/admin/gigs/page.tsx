@@ -368,29 +368,29 @@ export default function AdminGigsPage() {
   function openEditForm(gig: Gig) {
     setEditingGig(gig);
 
-    // Parse start date/time
+    // Parse start date/time - extract directly from string to avoid timezone conversion
     let startDate = "";
     let startTime = "";
     if (gig.start_at) {
-      const start = new Date(gig.start_at);
-      startDate = start.toISOString().slice(0, 10);
-      const hours = start.getHours();
-      const minutes = start.getMinutes();
-      if (hours !== 0 || minutes !== 0) {
-        startTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+      // Extract date part (YYYY-MM-DD) directly from the stored string
+      startDate = gig.start_at.slice(0, 10);
+      // Extract time part (HH:MM) if present and not midnight
+      const timeMatch = gig.start_at.match(/T(\d{2}):(\d{2})/);
+      if (timeMatch && (timeMatch[1] !== "00" || timeMatch[2] !== "00")) {
+        startTime = `${timeMatch[1]}:${timeMatch[2]}`;
       }
     }
 
-    // Parse end date/time
+    // Parse end date/time - extract directly from string to avoid timezone conversion
     let endDate = "";
     let endTime = "";
     if (gig.end_at) {
-      const end = new Date(gig.end_at);
-      endDate = end.toISOString().slice(0, 10);
-      const hours = end.getHours();
-      const minutes = end.getMinutes();
-      if (hours !== 0 || minutes !== 0) {
-        endTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+      // Extract date part (YYYY-MM-DD) directly from the stored string
+      endDate = gig.end_at.slice(0, 10);
+      // Extract time part (HH:MM) if present and not midnight
+      const timeMatch = gig.end_at.match(/T(\d{2}):(\d{2})/);
+      if (timeMatch && (timeMatch[1] !== "00" || timeMatch[2] !== "00")) {
+        endTime = `${timeMatch[1]}:${timeMatch[2]}`;
       }
     }
 
