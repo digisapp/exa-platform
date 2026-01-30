@@ -159,6 +159,7 @@ export default function AdminGigsPage() {
   const [modelSearch, setModelSearch] = useState("");
   const [modelBadges, setModelBadges] = useState<Set<string>>(new Set()); // model_ids that have the event badge
   const [syncingBadges, setSyncingBadges] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   // Workshop state
   const [workshops, setWorkshops] = useState<Workshop[]>([]);
@@ -1399,6 +1400,15 @@ export default function AdminGigsPage() {
                 <Button type="button" variant="outline" onClick={resetForm}>
                   Cancel
                 </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setShowPreview(true)}
+                  disabled={!formData.title}
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  Preview
+                </Button>
                 <Button type="submit" disabled={saving}>
                   {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                   {editingGig ? "Update Gig" : "Create Gig"}
@@ -2379,6 +2389,141 @@ export default function AdminGigsPage() {
               ))}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Gig Preview Modal */}
+      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5" />
+              Gig Preview
+            </DialogTitle>
+            <DialogDescription>
+              This is how the gig will appear to models
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 mt-4">
+            {/* Cover Image */}
+            {formData.cover_image_url && (
+              <div className="aspect-[21/9] rounded-2xl overflow-hidden bg-gradient-to-br from-pink-500/20 to-violet-500/20">
+                <img
+                  src={formData.cover_image_url}
+                  alt={formData.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+
+            {/* Gallery Images */}
+            {formData.gallery_images.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground mb-2">Gallery</h3>
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                  {formData.gallery_images.map((url, index) => (
+                    <img
+                      key={index}
+                      src={url}
+                      alt={`Gallery ${index + 1}`}
+                      className="h-24 w-24 object-cover rounded-lg flex-shrink-0"
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Header */}
+            <div>
+              <Badge className="mb-3 capitalize">{formData.type}</Badge>
+              <h1 className="text-2xl font-bold mb-2">{formData.title || "Untitled Gig"}</h1>
+              {(formData.location_city || formData.location_state) && (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <MapPin className="h-4 w-4" />
+                  {formData.location_city}{formData.location_city && formData.location_state && ", "}{formData.location_state}
+                </div>
+              )}
+            </div>
+
+            {/* Description */}
+            {formData.description && (
+              <div>
+                <h2 className="font-semibold mb-2">About This Gig</h2>
+                <p className="text-muted-foreground whitespace-pre-wrap">
+                  {formData.description}
+                </p>
+              </div>
+            )}
+
+            {/* Details Card */}
+            <Card>
+              <CardContent className="pt-6">
+                <div className="grid grid-cols-2 gap-4">
+                  {formData.start_date && (
+                    <div className="flex items-center gap-3">
+                      <Calendar className="h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Date</p>
+                        <p className="font-medium">
+                          {format(new Date(formData.start_date), "MMM d, yyyy")}
+                          {formData.end_date && formData.end_date !== formData.start_date && (
+                            <> - {format(new Date(formData.end_date), "MMM d, yyyy")}</>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-3">
+                    <Users className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Spots Available</p>
+                      <p className="font-medium">{formData.spots}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <DollarSign className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Compensation</p>
+                      <p className="font-medium capitalize">
+                        {formData.compensation_type === "paid" && formData.compensation_amount > 0 ? (
+                          <span className="text-green-500">${formData.compensation_amount}</span>
+                        ) : (
+                          formData.compensation_type
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                  {formData.event_id && (
+                    <div className="flex items-center gap-3">
+                      <Sparkles className="h-5 w-5 text-pink-500" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Event</p>
+                        <p className="font-medium">
+                          {events.find(e => e.id === formData.event_id)?.name || "Linked Event"}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Status Notice */}
+            <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 flex items-center gap-3">
+              <AlertTriangle className="h-5 w-5 flex-shrink-0" />
+              <div className="text-sm">
+                <p className="font-medium">Preview Mode</p>
+                <p>This gig will be saved as a draft. You can publish it after saving.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={() => setShowPreview(false)}>
+              Close Preview
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
