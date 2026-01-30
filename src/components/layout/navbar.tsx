@@ -139,8 +139,8 @@ export function Navbar({ user, actorType, unreadCount = 0, gemBalance = 0 }: Nav
         <div className="flex items-center gap-3">
           {user ? (
             <>
-              {/* Gem Balance - Models only, Desktop */}
-              {actorType === "model" && (
+              {/* Gem Balance - Admin only (dev mode), Desktop */}
+              {actorType === "admin" && (
                 <Link
                   href="/games"
                   className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 hover:border-cyan-500/50 hover:from-cyan-500/30 hover:to-blue-500/30 transition-all shadow-sm"
@@ -226,11 +226,11 @@ export function Navbar({ user, actorType, unreadCount = 0, gemBalance = 0 }: Nav
                       </Link>
                     </DropdownMenuItem>
                   )}
-                  {actorType === "model" && (
+                  {actorType === "admin" && (
                     <DropdownMenuItem asChild>
                       <Link href="/games" className="cursor-pointer">
                         <Gamepad2 className="mr-2 h-4 w-4" />
-                        Games
+                        Games (Dev)
                         <span className="ml-auto text-xs text-cyan-400">
                           {gemBalance.toLocaleString()} gems
                         </span>
