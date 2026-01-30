@@ -79,8 +79,8 @@ export async function POST(request: NextRequest) {
 
     // Create Stripe checkout session
     const tripDates = tripNumber === 1
-      ? "January 28 - February 1, 2025"
-      : "February 4 - February 8, 2025";
+      ? "February 19 - February 23, 2026"
+      : "February 26 - March 2, 2026";
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],

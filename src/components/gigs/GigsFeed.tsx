@@ -110,6 +110,21 @@ export function GigsFeed({ gigs, modelApplications, isApproved }: GigsFeedProps)
       );
     }
 
+    // For travel gigs, link to the gig page for payment flow
+    if (gig.type === "travel") {
+      return (
+        <Button
+          size="sm"
+          asChild
+          className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
+        >
+          <Link href={`/gigs/${gig.slug}`}>
+            Apply
+          </Link>
+        </Button>
+      );
+    }
+
     return (
       <Button
         size="sm"
