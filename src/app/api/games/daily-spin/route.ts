@@ -38,6 +38,13 @@ export async function POST() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Check if user is admin for dev mode
+    const { data: actor } = await supabase
+      .from("actors")
+      .select("type")
+      .eq("user_id", user.id)
+      .single();
+
     // Get model data
     const { data: model } = await supabase
       .from("models")
@@ -45,7 +52,17 @@ export async function POST() {
       .eq("user_id", user.id)
       .single();
 
+    // For admins without a model profile, return dev/test data
     if (!model) {
+      if (actor?.type === "admin") {
+        const outcome = getRandomOutcome();
+        return NextResponse.json({
+          gemsWon: outcome.value,
+          spinResult: outcome.label,
+          newBalance: 9999,
+          isDevMode: true,
+        });
+      }
       return NextResponse.json(
         { error: "Model profile not found" },
         { status: 404 }

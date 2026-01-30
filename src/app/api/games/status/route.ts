@@ -10,6 +10,13 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Check if user is admin
+    const { data: actor } = await supabase
+      .from("actors")
+      .select("type")
+      .eq("user_id", user.id)
+      .single();
+
     // Get model data with gem balance (stored as points_cached)
     const { data: model } = await supabase
       .from("models")
@@ -17,7 +24,17 @@ export async function GET() {
       .eq("user_id", user.id)
       .single();
 
+    // For admins without a model profile, return dev/test data
     if (!model) {
+      if (actor?.type === "admin") {
+        return NextResponse.json({
+          gemBalance: 9999,
+          canSpin: true,
+          nextSpinTime: null,
+          spinHistory: [],
+          isDevMode: true,
+        });
+      }
       return NextResponse.json(
         { error: "Model profile not found" },
         { status: 404 }

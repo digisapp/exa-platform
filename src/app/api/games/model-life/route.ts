@@ -58,6 +58,13 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Check if user is admin for dev mode
+    const { data: actor } = await supabase
+      .from("actors")
+      .select("type")
+      .eq("user_id", user.id)
+      .single();
+
     // Get model data
     const { data: model } = await supabase
       .from("models")
@@ -65,7 +72,33 @@ export async function GET() {
       .eq("user_id", user.id)
       .single();
 
+    // For admins without a model profile, return dev/test data
     if (!model) {
+      if (actor?.type === "admin") {
+        return NextResponse.json({
+          gemBalance: 9999,
+          modelName: "Admin (Dev)",
+          profilePhoto: null,
+          activities: Object.entries(ACTIVITIES).map(([type, config]) => ({
+            type,
+            ...config,
+            available: true,
+            nextAvailable: null,
+            lastDone: null,
+          })),
+          stats: {
+            current_streak: 0,
+            longest_streak: 0,
+            total_workouts: 0,
+            total_content: 0,
+            total_events: 0,
+            total_wellness: 0,
+          },
+          todayEarnings: 0,
+          history: [],
+          isDevMode: true,
+        });
+      }
       return NextResponse.json(
         { error: "Model profile not found" },
         { status: 404 }
@@ -177,6 +210,13 @@ export async function POST(request: Request) {
 
     const activity = ACTIVITIES[activityType as ActivityType];
 
+    // Check if user is admin for dev mode
+    const { data: actorForPost } = await supabase
+      .from("actors")
+      .select("type")
+      .eq("user_id", user.id)
+      .single();
+
     // Get model data
     const { data: model } = await supabase
       .from("models")
@@ -184,7 +224,21 @@ export async function POST(request: Request) {
       .eq("user_id", user.id)
       .single();
 
+    // For admins without a model profile, return dev/test response
     if (!model) {
+      if (actorForPost?.type === "admin") {
+        return NextResponse.json({
+          success: true,
+          activity: {
+            type: activityType,
+            name: activity.name,
+            emoji: activity.emoji,
+            gemsChange: activity.gemsEarned,
+          },
+          newBalance: 9999,
+          isDevMode: true,
+        });
+      }
       return NextResponse.json(
         { error: "Model profile not found" },
         { status: 404 }

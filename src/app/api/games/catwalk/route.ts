@@ -68,6 +68,13 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Check if user is admin
+    const { data: actor } = await supabase
+      .from("actors")
+      .select("type")
+      .eq("user_id", user.id)
+      .single();
+
     // Get model data
     const { data: model } = await supabase
       .from("models")
@@ -75,7 +82,22 @@ export async function GET() {
       .eq("user_id", user.id)
       .single();
 
+    // For admins without a model profile, return dev/test data with all runways unlocked
     if (!model) {
+      if (actor?.type === "admin") {
+        const runwaysList = Object.values(RUNWAYS).map((runway) => ({
+          ...runway,
+          unlocked: true, // All unlocked for admin dev mode
+          bestScore: null,
+        }));
+        return NextResponse.json({
+          gemBalance: 9999,
+          modelName: "Admin (Dev)",
+          runways: runwaysList,
+          leaderboard: [],
+          isDevMode: true,
+        });
+      }
       return NextResponse.json(
         { error: "Model profile not found" },
         { status: 404 }
@@ -156,6 +178,13 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { action } = body;
 
+    // Check if user is admin
+    const { data: actor } = await supabase
+      .from("actors")
+      .select("type")
+      .eq("user_id", user.id)
+      .single();
+
     // Get model data
     const { data: model } = await supabase
       .from("models")
@@ -163,7 +192,34 @@ export async function POST(request: Request) {
       .eq("user_id", user.id)
       .single();
 
+    // For admins without a model profile, return dev/test responses
     if (!model) {
+      if (actor?.type === "admin") {
+        if (action === "unlock") {
+          return NextResponse.json({
+            success: true,
+            unlocked: body.runwayId,
+            newBalance: 9999,
+            isDevMode: true,
+          });
+        }
+        if (action === "score") {
+          const { walkScore, poseScore, gemsCollected } = body;
+          const totalScore = (walkScore || 0) + (poseScore || 0);
+          return NextResponse.json({
+            success: true,
+            walkScore,
+            poseScore,
+            totalScore,
+            gemsEarned: gemsCollected || 0,
+            bonusGems: 0,
+            isNewHighScore: false,
+            newBalance: 9999,
+            isDevMode: true,
+          });
+        }
+        return NextResponse.json({ error: "Invalid action" }, { status: 400 });
+      }
       return NextResponse.json(
         { error: "Model profile not found" },
         { status: 404 }
