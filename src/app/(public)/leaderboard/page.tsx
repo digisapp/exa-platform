@@ -1,25 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trophy, Medal, Award, TrendingUp, MapPin } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Trophy, MapPin } from "lucide-react";
 
-const levelIcons: Record<string, string> = {
-  rising: "⭐",
-  verified: "✓",
-  pro: "💎",
-  elite: "👑",
-};
-
-const levelColors: Record<string, string> = {
-  rising: "bg-gray-500/10 text-gray-500",
-  verified: "bg-blue-500/10 text-blue-500",
-  pro: "bg-violet-500/10 text-violet-500",
-  elite: "bg-amber-500/10 text-amber-500",
-};
 
 export default async function LeaderboardPage() {
   const supabase = await createClient();
@@ -127,14 +112,9 @@ function LeaderboardList({
 
               {/* Info */}
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="font-medium truncate">
-                    {model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username}
-                  </p>
-                  <Badge className={cn("capitalize text-xs", levelColors[model.level_cached] || levelColors.rising)}>
-                    {levelIcons[model.level_cached] || levelIcons.rising}
-                  </Badge>
-                </div>
+                <p className="font-medium truncate">
+                  {model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username}
+                </p>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <span>@{model.username}</span>
                   {model.city && model.state && (
@@ -149,10 +129,10 @@ function LeaderboardList({
                 </div>
               </div>
 
-              {/* Points */}
+              {/* Gems */}
               <div className="text-right">
-                <p className="font-bold text-lg">{points?.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">points</p>
+                <p className="font-bold text-lg text-cyan-500">{points?.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">gems</p>
               </div>
             </Link>
           );

@@ -592,8 +592,8 @@ export default function AdminModelDetailPage() {
                 )}
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Profile Level</span>
-                <span className="capitalize font-medium">{model.level_cached || "Rising"}</span>
+                <span className="text-sm text-muted-foreground">Gems</span>
+                <span className="font-medium text-cyan-500">{model.points_cached?.toLocaleString() || 0}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Availability</span>

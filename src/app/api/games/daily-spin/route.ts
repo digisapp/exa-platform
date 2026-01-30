@@ -39,11 +39,11 @@ export async function POST() {
     }
 
     // Get model data
-    const { data: model } = await (supabase as any)
+    const { data: model } = await supabase
       .from("models")
-      .select("id, gem_balance")
+      .select("id, points_cached")
       .eq("user_id", user.id)
-      .single() as { data: { id: string; gem_balance: number | null } | null };
+      .single();
 
     if (!model) {
       return NextResponse.json(
@@ -98,11 +98,13 @@ export async function POST() {
       );
     }
 
-    // Add gems to model balance using the function
-    const { data: newBalanceData, error: balanceError } = await (supabase as any)
-      .rpc("add_gems_to_model", {
+    // Add gems (points) to model balance using the existing award_points function
+    const { error: balanceError } = await supabase
+      .rpc("award_points", {
         p_model_id: model.id,
-        p_gems: outcome.value,
+        p_action: "daily_spin",
+        p_points: outcome.value,
+        p_metadata: { spin_result: outcome.label },
       });
 
     if (balanceError) {
@@ -110,7 +112,14 @@ export async function POST() {
       // Still return success since spin was recorded, but log the issue
     }
 
-    const newBalance = newBalanceData ?? (model.gem_balance || 0) + outcome.value;
+    // Get updated balance
+    const { data: updatedModel } = await supabase
+      .from("models")
+      .select("points_cached")
+      .eq("id", model.id)
+      .single();
+
+    const newBalance = updatedModel?.points_cached ?? (model.points_cached || 0) + outcome.value;
 
     return NextResponse.json({
       gemsWon: outcome.value,

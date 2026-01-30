@@ -391,7 +391,7 @@ export default async function DashboardPage() {
               <Gem className="h-6 w-6 text-cyan-400" />
               <div>
                 <p className="text-xs text-muted-foreground">Your Gems</p>
-                <p className="text-xl font-bold text-cyan-400">{model.gem_balance?.toLocaleString() || 0}</p>
+                <p className="text-xl font-bold text-cyan-400">{model.points_cached?.toLocaleString() || 0}</p>
               </div>
             </div>
 

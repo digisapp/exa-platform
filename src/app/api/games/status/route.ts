@@ -10,12 +10,12 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get model data with gem balance
-    const { data: model } = await (supabase as any)
+    // Get model data with gem balance (stored as points_cached)
+    const { data: model } = await supabase
       .from("models")
-      .select("id, gem_balance")
+      .select("id, points_cached")
       .eq("user_id", user.id)
-      .single() as { data: { id: string; gem_balance: number | null } | null };
+      .single();
 
     if (!model) {
       return NextResponse.json(
@@ -31,7 +31,7 @@ export async function GET() {
       .eq("model_id", model.id)
       .order("created_at", { ascending: false })
       .limit(1)
-      .single() as { data: { created_at: string } | null };
+      .single();
 
     // Calculate if can spin (24 hours since last spin)
     let canSpin = true;
@@ -57,7 +57,7 @@ export async function GET() {
       .limit(10);
 
     return NextResponse.json({
-      gemBalance: model.gem_balance || 0,
+      gemBalance: model.points_cached || 0,
       canSpin,
       nextSpinTime,
       spinHistory: spinHistory || [],
