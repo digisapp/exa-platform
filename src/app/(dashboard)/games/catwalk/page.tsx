@@ -165,32 +165,46 @@ export default function CatwalkPage() {
     };
   }, []);
 
-  // Handle keyboard input
+  // Handle keyboard input (Arrow keys + WASD support)
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (gamePhase === "idle" && selectedRunway) {
-        if (e.code === "Space") {
+        if (e.code === "Space" || e.code === "Enter") {
           e.preventDefault();
           startGame();
         }
       } else if (gamePhase === "walking") {
-        if (e.code === "ArrowLeft") {
+        // Left movement: ArrowLeft or A
+        if (e.code === "ArrowLeft" || e.code === "KeyA") {
           e.preventDefault();
           movePlayer(-1);
-        } else if (e.code === "ArrowRight") {
+        // Right movement: ArrowRight or D
+        } else if (e.code === "ArrowRight" || e.code === "KeyD") {
           e.preventDefault();
           movePlayer(1);
-        } else if (e.code === "ArrowUp") {
+        // Beat hit: ArrowUp, W, or Space
+        } else if (e.code === "ArrowUp" || e.code === "KeyW" || e.code === "Space") {
           e.preventDefault();
           hitBeat();
         }
       } else if (gamePhase === "posing") {
-        if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.code)) {
+        // Pose input: Arrow keys or WASD
+        const keyMap: Record<string, string> = {
+          ArrowUp: "ArrowUp",
+          ArrowDown: "ArrowDown",
+          ArrowLeft: "ArrowLeft",
+          ArrowRight: "ArrowRight",
+          KeyW: "ArrowUp",
+          KeyS: "ArrowDown",
+          KeyA: "ArrowLeft",
+          KeyD: "ArrowRight",
+        };
+        if (keyMap[e.code]) {
           e.preventDefault();
-          handlePoseInput(e.code);
+          handlePoseInput(keyMap[e.code]);
         }
       } else if (gamePhase === "results" && !saving) {
-        if (e.code === "Space") {
+        if (e.code === "Space" || e.code === "Enter") {
           e.preventDefault();
           resetGame();
         }
@@ -752,10 +766,20 @@ export default function CatwalkPage() {
     };
   }, [gamePhase, gameLoop]);
 
-  function getLaneX(lane: number): number {
+  function getLaneX(lane: number, y?: number): number {
     const centerX = CANVAS_WIDTH / 2;
-    const laneOffset = (lane - 1) * LANE_WIDTH;
-    return centerX + laneOffset;
+    const baseLaneOffset = (lane - 1) * LANE_WIDTH;
+
+    // Apply perspective narrowing based on Y position (for 2.5D effect)
+    if (y !== undefined) {
+      const farY = 30;
+      const nearY = CANVAS_HEIGHT + 20;
+      const t = (y - farY) / (nearY - farY);
+      const perspectiveScale = 0.35 + t * 0.75; // Narrower at far end
+      return centerX + baseLaneOffset * perspectiveScale;
+    }
+
+    return centerX + baseLaneOffset;
   }
 
   function startPosing() {
@@ -836,6 +860,26 @@ export default function CatwalkPage() {
     fetchStatus();
   }
 
+  // Isometric projection helpers for 2.5D view
+  function toIsometric(x: number, y: number, z: number = 0): { x: number; y: number } {
+    // Isometric projection with camera angle from behind-above
+    const isoAngle = 0.5; // Viewing angle (0.5 = 30 degrees down)
+    const scale = 1.2;
+
+    return {
+      x: CANVAS_WIDTH / 2 + (x - CANVAS_WIDTH / 2) * scale,
+      y: y * (1 - isoAngle * 0.3) + z * isoAngle * 0.5 + 50,
+    };
+  }
+
+  function getDepthScale(y: number): number {
+    // Objects closer to camera (higher y) appear larger
+    const minScale = 0.4;
+    const maxScale = 1.2;
+    const t = y / CANVAS_HEIGHT;
+    return minScale + (maxScale - minScale) * t;
+  }
+
   function draw(ctx: CanvasRenderingContext2D) {
     if (!selectedRunway) return;
 
@@ -852,9 +896,10 @@ export default function CatwalkPage() {
       );
     }
 
-    // Background gradient
+    // Background gradient - darker for 3D depth
     const bgGrad = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
     bgGrad.addColorStop(0, selectedRunway.background);
+    bgGrad.addColorStop(0.4, shadeColor(selectedRunway.background, -20));
     bgGrad.addColorStop(1, "#000000");
     ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
@@ -862,39 +907,84 @@ export default function CatwalkPage() {
     // Draw runway-specific themed background
     drawThemedBackground(ctx, selectedRunway.id);
 
-    // Perspective runway
-    const vanishY = -50;
-    const topWidth = 80;
-    const bottomWidth = LANE_WIDTH * 3 + 60;
+    // === 2.5D ISOMETRIC RUNWAY ===
     const centerX = CANVAS_WIDTH / 2;
+    const runwayWidth = LANE_WIDTH * 3 + 60;
+    const perspectiveNarrow = 0.35; // How much runway narrows at the back
 
-    // Runway surface with gradient
-    const runwayGrad = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
+    // Runway dimensions at different depths
+    const farY = 30;
+    const nearY = CANVAS_HEIGHT + 20;
+    const farWidth = runwayWidth * perspectiveNarrow;
+    const nearWidth = runwayWidth * 1.1;
+
+    // 3D Runway platform - Draw sides first (depth)
+    const platformHeight = 25;
+
+    // Left side of platform (3D edge)
+    ctx.beginPath();
+    ctx.moveTo(centerX - nearWidth / 2, nearY);
+    ctx.lineTo(centerX - farWidth / 2, farY);
+    ctx.lineTo(centerX - farWidth / 2, farY + platformHeight * 0.3);
+    ctx.lineTo(centerX - nearWidth / 2, nearY + platformHeight);
+    ctx.closePath();
+    const leftSideGrad = ctx.createLinearGradient(0, farY, 0, nearY);
+    leftSideGrad.addColorStop(0, "#0a0a0a");
+    leftSideGrad.addColorStop(1, "#1a1a1a");
+    ctx.fillStyle = leftSideGrad;
+    ctx.fill();
+
+    // Right side of platform (3D edge)
+    ctx.beginPath();
+    ctx.moveTo(centerX + nearWidth / 2, nearY);
+    ctx.lineTo(centerX + farWidth / 2, farY);
+    ctx.lineTo(centerX + farWidth / 2, farY + platformHeight * 0.3);
+    ctx.lineTo(centerX + nearWidth / 2, nearY + platformHeight);
+    ctx.closePath();
+    const rightSideGrad = ctx.createLinearGradient(0, farY, 0, nearY);
+    rightSideGrad.addColorStop(0, "#0a0a0a");
+    rightSideGrad.addColorStop(1, "#151515");
+    ctx.fillStyle = rightSideGrad;
+    ctx.fill();
+
+    // Main runway surface (top of platform)
+    const runwayGrad = ctx.createLinearGradient(0, farY, 0, nearY);
     runwayGrad.addColorStop(0, "#1a1a1a");
-    runwayGrad.addColorStop(0.5, "#252525");
-    runwayGrad.addColorStop(1, "#1f1f1f");
+    runwayGrad.addColorStop(0.3, "#252525");
+    runwayGrad.addColorStop(0.7, "#2a2a2a");
+    runwayGrad.addColorStop(1, "#222222");
 
     ctx.beginPath();
-    ctx.moveTo(centerX - topWidth / 2, vanishY);
-    ctx.lineTo(centerX + topWidth / 2, vanishY);
-    ctx.lineTo(centerX + bottomWidth / 2, CANVAS_HEIGHT);
-    ctx.lineTo(centerX - bottomWidth / 2, CANVAS_HEIGHT);
+    ctx.moveTo(centerX - farWidth / 2, farY);
+    ctx.lineTo(centerX + farWidth / 2, farY);
+    ctx.lineTo(centerX + nearWidth / 2, nearY);
+    ctx.lineTo(centerX - nearWidth / 2, nearY);
     ctx.closePath();
     ctx.fillStyle = runwayGrad;
     ctx.fill();
 
-    // Runway edge lights
-    const edgeLightCount = 12;
+    // Runway center line (perspective)
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([20, 15]);
+    ctx.beginPath();
+    ctx.moveTo(centerX, farY);
+    ctx.lineTo(centerX, nearY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Glowing runway edge lights with 3D effect
+    const edgeLightCount = 14;
     for (let i = 0; i < edgeLightCount; i++) {
       const t = i / edgeLightCount;
-      const y = vanishY + t * (CANVAS_HEIGHT - vanishY + 100);
-      const widthAtY = topWidth + (bottomWidth - topWidth) * t;
+      const y = farY + t * (nearY - farY);
+      const widthAtY = farWidth + (nearWidth - farWidth) * t;
       const leftX = centerX - widthAtY / 2;
       const rightX = centerX + widthAtY / 2;
-      const lightSize = 3 + t * 5;
+      const lightSize = 2 + t * 6;
       const pulse = Math.sin(frameCountRef.current * 0.1 + i * 0.5) * 0.3 + 0.7;
 
-      // Left light
+      // Left light with 3D glow
       ctx.beginPath();
       ctx.arc(leftX, y, lightSize, 0, Math.PI * 2);
       ctx.fillStyle = selectedRunway.accentColor;
@@ -902,12 +992,13 @@ export default function CatwalkPage() {
       ctx.fill();
       ctx.globalAlpha = 1;
 
-      // Light glow
-      const glowGrad = ctx.createRadialGradient(leftX, y, 0, leftX, y, lightSize * 3);
-      glowGrad.addColorStop(0, selectedRunway.accentColor + "60");
+      // Light glow on runway surface
+      const glowGrad = ctx.createRadialGradient(leftX, y, 0, leftX, y, lightSize * 4);
+      glowGrad.addColorStop(0, selectedRunway.accentColor + "50");
+      glowGrad.addColorStop(0.5, selectedRunway.accentColor + "20");
       glowGrad.addColorStop(1, "transparent");
       ctx.fillStyle = glowGrad;
-      ctx.fillRect(leftX - lightSize * 3, y - lightSize * 3, lightSize * 6, lightSize * 6);
+      ctx.fillRect(leftX - lightSize * 4, y - lightSize * 4, lightSize * 8, lightSize * 8);
 
       // Right light
       ctx.beginPath();
@@ -917,11 +1008,23 @@ export default function CatwalkPage() {
       ctx.fill();
       ctx.globalAlpha = 1;
 
-      const glowGrad2 = ctx.createRadialGradient(rightX, y, 0, rightX, y, lightSize * 3);
-      glowGrad2.addColorStop(0, selectedRunway.accentColor + "60");
+      const glowGrad2 = ctx.createRadialGradient(rightX, y, 0, rightX, y, lightSize * 4);
+      glowGrad2.addColorStop(0, selectedRunway.accentColor + "50");
+      glowGrad2.addColorStop(0.5, selectedRunway.accentColor + "20");
       glowGrad2.addColorStop(1, "transparent");
       ctx.fillStyle = glowGrad2;
-      ctx.fillRect(rightX - lightSize * 3, y - lightSize * 3, lightSize * 6, lightSize * 6);
+      ctx.fillRect(rightX - lightSize * 4, y - lightSize * 4, lightSize * 8, lightSize * 8);
+
+      // Light reflection on floor
+      ctx.globalAlpha = 0.1 * pulse;
+      ctx.fillStyle = selectedRunway.accentColor;
+      ctx.beginPath();
+      ctx.ellipse(leftX + 10, y + 5, lightSize * 2, lightSize * 0.8, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(rightX - 10, y + 5, lightSize * 2, lightSize * 0.8, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
     }
 
     // Crowd silhouettes on sides
@@ -998,69 +1101,101 @@ export default function CatwalkPage() {
     ctx.setLineDash([]);
     ctx.globalAlpha = 1;
 
-    // Draw objects
-    for (const obj of objects) {
-      const objX = getLaneX(obj.lane);
+    // Draw objects with 2.5D depth scaling
+    // Sort objects by Y so farther ones are drawn first
+    const sortedObjects = [...objects].sort((a, b) => a.y - b.y);
+
+    for (const obj of sortedObjects) {
+      // Use perspective-aware lane position
+      const objX = getLaneX(obj.lane, obj.y);
+      const depthScale = getDepthScale(obj.y);
 
       if (obj.type === "obstacle") {
-        // Paparazzi photographer
+        // Paparazzi photographer with depth scaling
+        ctx.save();
+        ctx.translate(objX, obj.y);
+        ctx.scale(depthScale, depthScale);
+        ctx.translate(-objX, -obj.y);
         drawPaparazzi(ctx, objX, obj.y);
+        ctx.restore();
       } else if (obj.type === "gem") {
-        // Spinning gem
-        drawGem(ctx, objX, obj.y + 15, 18, "#06b6d4");
+        // Spinning gem with depth scaling
+        const gemSize = 18 * depthScale;
+        // Draw shadow on runway
+        ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
+        ctx.beginPath();
+        ctx.ellipse(objX, obj.y + 25 * depthScale, gemSize * 0.8, gemSize * 0.3, 0, 0, Math.PI * 2);
+        ctx.fill();
+        drawGem(ctx, objX, obj.y + 15 * depthScale, gemSize, "#06b6d4");
       } else if (obj.type === "beat") {
-        // Beat marker with glow
+        // Beat marker with glow and depth scaling
         if (!obj.hit) {
           const beatPulse = Math.sin(frameCountRef.current * 0.15) * 0.3 + 0.7;
+          const beatSize = 22 * depthScale;
 
           // Outer glow
-          const beatGrad = ctx.createRadialGradient(objX, obj.y, 0, objX, obj.y, 35);
+          const beatGrad = ctx.createRadialGradient(objX, obj.y, 0, objX, obj.y, 35 * depthScale);
           beatGrad.addColorStop(0, selectedRunway.accentColor + "80");
           beatGrad.addColorStop(1, "transparent");
           ctx.fillStyle = beatGrad;
-          ctx.fillRect(objX - 40, obj.y - 40, 80, 80);
+          ctx.fillRect(objX - 40 * depthScale, obj.y - 40 * depthScale, 80 * depthScale, 80 * depthScale);
 
           // Beat circle
           ctx.strokeStyle = selectedRunway.accentColor;
-          ctx.lineWidth = 3;
+          ctx.lineWidth = 3 * depthScale;
           ctx.globalAlpha = beatPulse;
           ctx.beginPath();
-          ctx.arc(objX, obj.y, 22, 0, Math.PI * 2);
+          ctx.arc(objX, obj.y, beatSize, 0, Math.PI * 2);
           ctx.stroke();
           ctx.globalAlpha = 1;
 
           // Arrow up icon
           ctx.fillStyle = selectedRunway.accentColor;
           ctx.beginPath();
-          ctx.moveTo(objX, obj.y - 10);
-          ctx.lineTo(objX + 8, obj.y + 2);
-          ctx.lineTo(objX - 8, obj.y + 2);
+          ctx.moveTo(objX, obj.y - 10 * depthScale);
+          ctx.lineTo(objX + 8 * depthScale, obj.y + 2 * depthScale);
+          ctx.lineTo(objX - 8 * depthScale, obj.y + 2 * depthScale);
           ctx.closePath();
           ctx.fill();
         } else {
           // Hit sparkle
           ctx.fillStyle = "#22c55e";
-          ctx.font = "bold 28px sans-serif";
+          ctx.font = `bold ${Math.floor(28 * depthScale)}px sans-serif`;
           ctx.textAlign = "center";
-          ctx.fillText("✓", objX, obj.y + 10);
+          ctx.fillText("✓", objX, obj.y + 10 * depthScale);
         }
       }
     }
 
-    // Beat hit zone indicator
+    // Beat hit zone indicator with perspective
     const hitZoneY = player.y;
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+    const hitZoneWidth = nearWidth * 0.8;
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
     ctx.lineWidth = 2;
     ctx.setLineDash([8, 8]);
     ctx.beginPath();
-    ctx.moveTo(centerX - bottomWidth / 2 + 30, hitZoneY);
-    ctx.lineTo(centerX + bottomWidth / 2 - 30, hitZoneY);
+    ctx.moveTo(centerX - hitZoneWidth / 2 + 30, hitZoneY);
+    ctx.lineTo(centerX + hitZoneWidth / 2 - 30, hitZoneY);
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Draw player
-    const playerX = getLaneX(player.lane);
+    // Draw player with perspective
+    const playerX = getLaneX(player.lane, player.y);
+    const playerScale = getDepthScale(player.y);
+
+    // Player shadow on runway
+    ctx.fillStyle = "rgba(0, 0, 0, 0.35)";
+    ctx.beginPath();
+    ctx.ellipse(playerX, player.y + 95 * playerScale, 30 * playerScale, 12 * playerScale, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw model with scale
+    ctx.save();
+    ctx.translate(playerX, player.y);
+    ctx.scale(playerScale, playerScale);
+    ctx.translate(-playerX, -player.y);
     drawModel(ctx, playerX, player.y, player.walkFrame, selectedRunway.accentColor);
+    ctx.restore();
 
     // Draw particles
     for (const p of particlesRef.current) {
