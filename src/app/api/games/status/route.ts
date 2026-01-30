@@ -11,11 +11,11 @@ export async function GET() {
     }
 
     // Get model data with gem balance
-    const { data: model } = await supabase
+    const { data: model } = await (supabase as any)
       .from("models")
       .select("id, gem_balance")
       .eq("user_id", user.id)
-      .single();
+      .single() as { data: { id: string; gem_balance: number | null } | null };
 
     if (!model) {
       return NextResponse.json(
@@ -25,12 +25,13 @@ export async function GET() {
     }
 
     // Check last spin time
-    const { data: lastSpin } = await (supabase.from("daily_spin_history") as any)
+    const { data: lastSpin } = await (supabase as any)
+      .from("daily_spin_history")
       .select("created_at")
       .eq("model_id", model.id)
       .order("created_at", { ascending: false })
       .limit(1)
-      .single();
+      .single() as { data: { created_at: string } | null };
 
     // Calculate if can spin (24 hours since last spin)
     let canSpin = true;
@@ -48,7 +49,8 @@ export async function GET() {
     }
 
     // Get spin history
-    const { data: spinHistory } = await (supabase.from("daily_spin_history") as any)
+    const { data: spinHistory } = await (supabase as any)
+      .from("daily_spin_history")
       .select("id, gems_won, spin_result, created_at")
       .eq("model_id", model.id)
       .order("created_at", { ascending: false })

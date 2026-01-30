@@ -39,11 +39,11 @@ export async function POST() {
     }
 
     // Get model data
-    const { data: model } = await supabase
+    const { data: model } = await (supabase as any)
       .from("models")
       .select("id, gem_balance")
       .eq("user_id", user.id)
-      .single();
+      .single() as { data: { id: string; gem_balance: number | null } | null };
 
     if (!model) {
       return NextResponse.json(
@@ -53,12 +53,13 @@ export async function POST() {
     }
 
     // Check last spin time (must be 24+ hours ago)
-    const { data: lastSpin } = await (supabase.from("daily_spin_history") as any)
+    const { data: lastSpin } = await (supabase as any)
+      .from("daily_spin_history")
       .select("created_at")
       .eq("model_id", model.id)
       .order("created_at", { ascending: false })
       .limit(1)
-      .single();
+      .single() as { data: { created_at: string } | null };
 
     if (lastSpin) {
       const lastSpinDate = new Date(lastSpin.created_at);
@@ -81,7 +82,8 @@ export async function POST() {
     const outcome = getRandomOutcome();
 
     // Record the spin
-    const { error: historyError } = await (supabase.from("daily_spin_history") as any)
+    const { error: historyError } = await (supabase as any)
+      .from("daily_spin_history")
       .insert({
         model_id: model.id,
         gems_won: outcome.value,
@@ -97,7 +99,7 @@ export async function POST() {
     }
 
     // Add gems to model balance using the function
-    const { data: newBalanceData, error: balanceError } = await supabase
+    const { data: newBalanceData, error: balanceError } = await (supabase as any)
       .rpc("add_gems_to_model", {
         p_model_id: model.id,
         p_gems: outcome.value,
