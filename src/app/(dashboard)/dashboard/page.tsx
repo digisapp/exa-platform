@@ -287,8 +287,8 @@ export default async function DashboardPage() {
 
       {/* Bookings & Gigs */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Bookings */}
-        <Card>
+        {/* Bookings - shows second on mobile, first on desktop */}
+        <Card className="order-2 md:order-1">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5 text-green-500" />
@@ -359,12 +359,14 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Gigs */}
-        <GigsFeed
-          gigs={gigs || []}
-          modelApplications={modelApplications || []}
-          isApproved={model.is_approved}
-        />
+        {/* Gigs - shows first on mobile, second on desktop */}
+        <div className="order-1 md:order-2">
+          <GigsFeed
+            gigs={gigs || []}
+            modelApplications={modelApplications || []}
+            isApproved={model.is_approved}
+          />
+        </div>
       </div>
 
       {/* Games Widget - Hidden for now (admin-only development) */}
