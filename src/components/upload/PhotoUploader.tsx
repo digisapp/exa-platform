@@ -201,7 +201,7 @@ export function PhotoUploader({
       onUploadComplete(data.url, data.mediaAsset);
 
       if (data.pointsAwarded > 0) {
-        toast.success(`Photo uploaded! +${data.pointsAwarded} points`);
+        toast.success(`Photo uploaded! +${data.pointsAwarded} gems`);
       } else {
         toast.success("Photo uploaded successfully!");
       }
@@ -430,7 +430,7 @@ export function PhotoUploader({
 
       {type === "portfolio" && (
         <p className="text-sm text-muted-foreground mt-2 text-center">
-          Each portfolio photo earns you +10 points!
+          Each portfolio photo earns you +10 gems!
         </p>
       )}
 

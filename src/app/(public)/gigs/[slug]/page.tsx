@@ -362,9 +362,9 @@ export default async function GigDetailPage({ params }: Props) {
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground flex items-center gap-2">
                         <Trophy className="h-4 w-4" />
-                        Points
+                        Gems
                       </span>
-                      <span className="font-medium text-pink-500">
+                      <span className="font-medium text-cyan-500">
                         +{gig.points_for_completion}
                       </span>
                     </div>
