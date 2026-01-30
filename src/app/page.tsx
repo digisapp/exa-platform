@@ -250,12 +250,9 @@ export default async function HomePage() {
         {(newFaces?.length ?? 0) > 0 && (
           <section className="py-12">
             <div className="container px-8 md:px-16 mb-8">
-              <h2 className="text-3xl md:text-4xl font-bold mb-2 exa-gradient-text">
+              <h2 className="text-3xl md:text-4xl font-bold exa-gradient-text">
                 New Faces
               </h2>
-              <p className="text-muted-foreground">
-                Meet our newest talent
-              </p>
             </div>
             <TopModelsCarousel models={newFaces || []} showRank={false} />
           </section>
