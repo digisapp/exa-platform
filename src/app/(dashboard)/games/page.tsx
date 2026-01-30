@@ -22,16 +22,31 @@ interface GameInfo {
 export default function GamesPage() {
   const [gemBalance, setGemBalance] = useState<number | null>(null);
   const [canSpin, setCanSpin] = useState(true);
+  const [canOpenBox, setCanOpenBox] = useState(true);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchGameData() {
       try {
-        const response = await fetch("/api/games/status");
-        if (response.ok) {
-          const data = await response.json();
-          setGemBalance(data.gemBalance);
-          setCanSpin(data.canSpin);
+        // Fetch both game statuses in parallel
+        const [spinResponse, boxResponse] = await Promise.all([
+          fetch("/api/games/status"),
+          fetch("/api/games/mystery-box"),
+        ]);
+
+        if (spinResponse.ok) {
+          const spinData = await spinResponse.json();
+          setGemBalance(spinData.gemBalance);
+          setCanSpin(spinData.canSpin);
+        }
+
+        if (boxResponse.ok) {
+          const boxData = await boxResponse.json();
+          setCanOpenBox(boxData.canOpen);
+          // Use box balance if spin didn't return one
+          if (gemBalance === null) {
+            setGemBalance(boxData.gemBalance);
+          }
         }
       } catch (error) {
         console.error("Failed to fetch game data:", error);
@@ -54,6 +69,16 @@ export default function GamesPage() {
       available: canSpin,
     },
     {
+      id: "mystery-box",
+      title: "Mystery Box",
+      description: "Open mystery boxes for surprise gem rewards!",
+      icon: <Gift className="h-8 w-8" />,
+      href: "/games/mystery-box",
+      reward: "5-500 gems",
+      cooldown: "Weekly",
+      available: canOpenBox,
+    },
+    {
       id: "style-clash",
       title: "Style Clash",
       description: "Vote on outfit battles and earn gems for participating!",
@@ -61,17 +86,6 @@ export default function GamesPage() {
       href: "/games/style-clash",
       reward: "5 gems per vote",
       cooldown: "Unlimited",
-      available: false,
-      comingSoon: true,
-    },
-    {
-      id: "mystery-box",
-      title: "Mystery Box",
-      description: "Open mystery boxes for surprise gem rewards!",
-      icon: <Gift className="h-8 w-8" />,
-      href: "/games/mystery-box",
-      reward: "Random gems",
-      cooldown: "Weekly",
       available: false,
       comingSoon: true,
     },
