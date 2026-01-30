@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
-import { sendModelApprovalEmail, sendModelRejectionEmail } from "@/lib/email";
+import { sendModelApprovalEmail } from "@/lib/email";
 import { logAdminAction, AdminActions } from "@/lib/admin-audit";
 
 async function isAdmin(supabase: any, userId: string) {
@@ -71,30 +71,21 @@ export async function PATCH(
       }
     }
 
-    // Send email notification if status changed and model has email
-    if (statusChanged && model.email) {
+    // Send approval email only (never send rejection emails)
+    if (statusChanged && is_approved && model.email) {
       const modelName = model.first_name
         ? `${model.first_name}${model.last_name ? ' ' + model.last_name : ''}`
         : model.username;
 
       try {
-        if (is_approved) {
-          // Model was just approved
-          await sendModelApprovalEmail({
-            to: model.email,
-            modelName,
-            username: model.username,
-          });
-        } else {
-          // Model was just rejected/hidden
-          await sendModelRejectionEmail({
-            to: model.email,
-            modelName,
-          });
-        }
+        await sendModelApprovalEmail({
+          to: model.email,
+          modelName,
+          username: model.username,
+        });
       } catch (emailError) {
         // Log email error but don't fail the request
-        console.error("Failed to send notification email:", emailError);
+        console.error("Failed to send approval email:", emailError);
       }
     }
 
