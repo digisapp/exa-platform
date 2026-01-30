@@ -2890,3 +2890,156 @@ export async function sendMiamiSwimWeekProfileReminderEmail({
     return { success: false, error };
   }
 }
+
+export async function sendNewGigAnnouncementEmail({
+  to,
+  modelName,
+  gigTitle,
+  gigType,
+  gigDate,
+  gigLocation,
+  gigSlug,
+  coverImageUrl,
+}: {
+  to: string;
+  modelName: string;
+  gigTitle: string;
+  gigType: string;
+  gigDate?: string;
+  gigLocation?: string;
+  gigSlug: string;
+  coverImageUrl?: string;
+}) {
+  try {
+    // Check if unsubscribed
+    if (await isEmailUnsubscribed(to, "marketing")) {
+      console.log(`Email ${to} is unsubscribed, skipping`);
+      return { success: true, skipped: true };
+    }
+
+    const resend = getResendClient();
+    const gigUrl = `${BASE_URL}/gigs/${gigSlug}`;
+    const unsubscribeToken = await getUnsubscribeToken(to);
+
+    const greeting = modelName ? `Hey ${modelName}!` : "Hey!";
+    const typeLabel = gigType === "show" ? "Show" : gigType === "travel" ? "Travel Trip" : gigType === "photoshoot" ? "Photoshoot" : "Gig";
+    const typeEmoji = gigType === "show" ? "🎭" : gigType === "travel" ? "✈️" : gigType === "photoshoot" ? "📸" : "✨";
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      subject: `New ${typeLabel}: ${gigTitle} - Apply Now!`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 40px 30px; text-align: center;">
+              <p style="margin: 0; font-size: 48px;">${typeEmoji}</p>
+              <h1 style="margin: 10px 0 0; color: white; font-size: 28px; font-weight: bold;">
+                New ${typeLabel} Posted!
+              </h1>
+              <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
+                A new opportunity is waiting for you
+              </p>
+            </td>
+          </tr>
+
+          ${coverImageUrl ? `
+          <!-- Cover Image -->
+          <tr>
+            <td style="padding: 0;">
+              <img src="${coverImageUrl}" alt="${gigTitle}" style="width: 100%; height: auto; display: block;" />
+            </td>
+          </tr>
+          ` : ""}
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
+                ${greeting}
+              </p>
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                We just posted a new opportunity that might be perfect for you!
+              </p>
+
+              <!-- Gig Details -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px; background-color: #262626; border-radius: 12px; overflow: hidden;">
+                <tr>
+                  <td style="padding: 25px;">
+                    <p style="margin: 0 0 5px; color: #ec4899; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">
+                      ${typeLabel}
+                    </p>
+                    <h2 style="margin: 0 0 15px; color: #ffffff; font-size: 22px;">${gigTitle}</h2>
+
+                    ${gigDate ? `
+                    <table cellpadding="0" cellspacing="0" style="margin-bottom: 10px;">
+                      <tr>
+                        <td style="color: #71717a; font-size: 14px; padding-right: 10px;">📅</td>
+                        <td style="color: #ffffff; font-size: 14px;">${gigDate}</td>
+                      </tr>
+                    </table>
+                    ` : ""}
+
+                    ${gigLocation ? `
+                    <table cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="color: #71717a; font-size: 14px; padding-right: 10px;">📍</td>
+                        <td style="color: #ffffff; font-size: 14px;">${gigLocation}</td>
+                      </tr>
+                    </table>
+                    ` : ""}
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="${gigUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                      View Details & Apply
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 30px 0 0; color: #71717a; font-size: 14px; text-align: center;">
+                Spots are limited - apply early for the best chance!
+              </p>
+            </td>
+          </tr>
+
+          ${generateEmailFooter(unsubscribeToken)}
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      console.error("Resend error:", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error("Email send error:", error);
+    return { success: false, error };
+  }
+}

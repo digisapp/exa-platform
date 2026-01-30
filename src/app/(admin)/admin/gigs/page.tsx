@@ -43,6 +43,7 @@ import {
   Calendar,
   DollarSign,
   Search,
+  Clock,
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -160,6 +161,7 @@ export default function AdminGigsPage() {
   const [modelBadges, setModelBadges] = useState<Set<string>>(new Set()); // model_ids that have the event badge
   const [syncingBadges, setSyncingBadges] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [previewExpandedImage, setPreviewExpandedImage] = useState<string | null>(null);
 
   // Workshop state
   const [workshops, setWorkshops] = useState<Workshop[]>([]);
@@ -704,6 +706,28 @@ export default function AdminGigsPage() {
         closed: "Gig closed",
       };
       toast.success(messages[newStatus] || "Status updated");
+
+      // Send email notifications to all models with profile pictures when gig is published
+      if (newStatus === "open" && gig.status !== "open") {
+        toast.loading("Sending email notifications to models...", { id: "gig-announce" });
+        try {
+          const response = await fetch("/api/admin/gigs/announce", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ gigId: gig.id }),
+          });
+          const result = await response.json();
+          if (result.success) {
+            toast.success(`Emails sent to ${result.emailsSent} models!`, { id: "gig-announce" });
+          } else {
+            toast.error("Failed to send email notifications", { id: "gig-announce" });
+          }
+        } catch (emailError) {
+          console.error("Error sending gig announcements:", emailError);
+          toast.error("Failed to send email notifications", { id: "gig-announce" });
+        }
+      }
+
       loadGigs();
     } catch (error) {
       console.error("Error updating gig status:", error);
@@ -2393,7 +2417,10 @@ export default function AdminGigsPage() {
       </Dialog>
 
       {/* Gig Preview Modal */}
-      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+      <Dialog open={showPreview} onOpenChange={(open) => {
+        setShowPreview(open);
+        if (!open) setPreviewExpandedImage(null);
+      }}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -2408,7 +2435,10 @@ export default function AdminGigsPage() {
           <div className="space-y-6 mt-4">
             {/* Cover Image */}
             {formData.cover_image_url && (
-              <div className="aspect-[21/9] rounded-2xl overflow-hidden bg-gradient-to-br from-pink-500/20 to-violet-500/20">
+              <div
+                className="aspect-[21/9] rounded-2xl overflow-hidden bg-gradient-to-br from-pink-500/20 to-violet-500/20 cursor-pointer hover:opacity-90 transition-opacity"
+                onClick={() => setPreviewExpandedImage(formData.cover_image_url)}
+              >
                 <img
                   src={formData.cover_image_url}
                   alt={formData.title}
@@ -2417,18 +2447,23 @@ export default function AdminGigsPage() {
               </div>
             )}
 
-            {/* Gallery Images */}
+            {/* Gallery Images - Larger Grid */}
             {formData.gallery_images.length > 0 && (
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">Gallery</h3>
-                <div className="flex gap-2 overflow-x-auto pb-2">
+                <h3 className="text-sm font-medium text-muted-foreground mb-3">Gallery</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                   {formData.gallery_images.map((url, index) => (
-                    <img
+                    <div
                       key={index}
-                      src={url}
-                      alt={`Gallery ${index + 1}`}
-                      className="h-24 w-24 object-cover rounded-lg flex-shrink-0"
-                    />
+                      className="aspect-square rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity bg-muted"
+                      onClick={() => setPreviewExpandedImage(url)}
+                    >
+                      <img
+                        src={url}
+                        alt={`Gallery ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
                   ))}
                 </div>
               </div>
@@ -2474,6 +2509,19 @@ export default function AdminGigsPage() {
                       </div>
                     </div>
                   )}
+                  {(formData.start_time || formData.end_time) && (
+                    <div className="flex items-center gap-3">
+                      <Clock className="h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Time</p>
+                        <p className="font-medium">
+                          {formData.start_time && format(new Date(`2000-01-01T${formData.start_time}`), "h:mm a")}
+                          {formData.start_time && formData.end_time && " - "}
+                          {formData.end_time && format(new Date(`2000-01-01T${formData.end_time}`), "h:mm a")}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                   <div className="flex items-center gap-3">
                     <Users className="h-5 w-5 text-muted-foreground" />
                     <div>
@@ -2484,7 +2532,7 @@ export default function AdminGigsPage() {
                   <div className="flex items-center gap-3">
                     <DollarSign className="h-5 w-5 text-muted-foreground" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Compensation</p>
+                      <p className="text-sm text-muted-foreground">Cost</p>
                       <p className="font-medium capitalize">
                         {formData.compensation_type === "paid" && formData.compensation_amount > 0 ? (
                           <span className="text-green-500">${formData.compensation_amount}</span>
@@ -2509,6 +2557,21 @@ export default function AdminGigsPage() {
               </CardContent>
             </Card>
 
+            {/* Apply Button Mockup */}
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center space-y-3">
+                  <Button className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600" disabled>
+                    <Send className="h-4 w-4 mr-2" />
+                    Apply Now
+                  </Button>
+                  <p className="text-xs text-muted-foreground">
+                    This is how models will see the apply button
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Status Notice */}
             <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 flex items-center gap-3">
               <AlertTriangle className="h-5 w-5 flex-shrink-0" />
@@ -2523,6 +2586,29 @@ export default function AdminGigsPage() {
             <Button variant="outline" onClick={() => setShowPreview(false)}>
               Close Preview
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Expanded Image Modal */}
+      <Dialog open={!!previewExpandedImage} onOpenChange={(open) => !open && setPreviewExpandedImage(null)}>
+        <DialogContent className="max-w-5xl p-0 bg-transparent border-none">
+          <div className="relative">
+            <Button
+              variant="outline"
+              size="icon"
+              className="absolute top-2 right-2 z-10 bg-black/50 hover:bg-black/70 border-none text-white"
+              onClick={() => setPreviewExpandedImage(null)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+            {previewExpandedImage && (
+              <img
+                src={previewExpandedImage}
+                alt="Expanded view"
+                className="w-full h-auto max-h-[85vh] object-contain rounded-lg"
+              />
+            )}
           </div>
         </DialogContent>
       </Dialog>
