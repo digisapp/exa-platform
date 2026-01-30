@@ -1911,7 +1911,7 @@ export default function AdminGigsPage() {
                                 : "bg-violet-500/10 text-violet-500 border-violet-500/30"
                             }`}
                           >
-                            {app.spot_type === "paid" ? "Paid $1,400" : "Sponsored"}
+                            {app.spot_type === "paid" ? "$1,400 Spot" : "Sponsored"}
                           </Badge>
                           {app.payment_status === "paid" && (
                             <Badge variant="outline" className="text-xs bg-green-500/10 text-green-500 border-green-500/30">
