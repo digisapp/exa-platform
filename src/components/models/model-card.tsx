@@ -34,10 +34,8 @@ export const ModelCard = memo(function ModelCard({
   const [isFavorited, setIsFavorited] = useState(initialFavorited);
   const [loading, setLoading] = useState(false);
 
-  // Create display name from first_name and last_name
-  const displayName = model.first_name
-    ? `${model.first_name} ${model.last_name || ''}`.trim()
-    : model.username;
+  // Display first name only (not full name for privacy)
+  const displayName = model.first_name || model.username;
 
   // Get level badge
   const getLevel = () => {
