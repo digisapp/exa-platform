@@ -32,16 +32,18 @@ export default async function DashboardLayout({
   // Get profile info based on actor type
   let profileData: any = null;
   let coinBalance = 0;
+  let gemBalance = 0;
 
   if (actor?.type === "model" || actor?.type === "admin") {
     // Models are linked via user_id, not actor.id
     const { data } = await supabase
       .from("models")
-      .select("username, first_name, last_name, profile_photo_url, coin_balance")
+      .select("username, first_name, last_name, profile_photo_url, coin_balance, gem_balance")
       .eq("user_id", user.id)
       .single() as { data: any };
     profileData = data;
     coinBalance = data?.coin_balance ?? 0;
+    gemBalance = data?.gem_balance ?? 0;
   } else if (actor?.type === "fan") {
     // Fans use actor.id as their id
     const { data } = await supabase
@@ -116,6 +118,7 @@ export default async function DashboardLayout({
           }}
           actorType={actor?.type || null}
           unreadCount={unreadCount}
+          gemBalance={gemBalance}
         />
         <DashboardClientWrapper actorId={actor?.id || null}>
           <main className="container px-4 md:px-8 py-8 pb-24 md:pb-8">{children}</main>

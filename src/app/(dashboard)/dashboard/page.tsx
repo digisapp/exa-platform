@@ -34,6 +34,9 @@ import {
   BarChart3,
   Circle,
   Heart,
+  Gem,
+  Dices,
+  Gamepad2,
 } from "lucide-react";
 import { ModelCard } from "@/components/models/model-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -366,6 +369,49 @@ export default async function DashboardPage() {
           isApproved={model.is_approved}
         />
       </div>
+
+      {/* Games Widget */}
+      <Card className="border-cyan-500/30 bg-gradient-to-br from-cyan-500/5 to-blue-500/5">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Gamepad2 className="h-5 w-5 text-cyan-400" />
+            Games
+          </CardTitle>
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/games" className="text-cyan-400">
+              View All
+              <ArrowRight className="ml-1 h-4 w-4" />
+            </Link>
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+            {/* Gem Balance */}
+            <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20">
+              <Gem className="h-6 w-6 text-cyan-400" />
+              <div>
+                <p className="text-xs text-muted-foreground">Your Gems</p>
+                <p className="text-xl font-bold text-cyan-400">{model.gem_balance?.toLocaleString() || 0}</p>
+              </div>
+            </div>
+
+            {/* Daily Spin CTA */}
+            <Link
+              href="/games/daily-spin"
+              className="flex-1 flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-pink-500/10 to-violet-500/10 border border-pink-500/20 hover:border-pink-500/40 transition-all group"
+            >
+              <div className="p-2 rounded-lg bg-gradient-to-br from-pink-500/20 to-violet-500/20">
+                <Dices className="h-5 w-5 text-pink-500" />
+              </div>
+              <div className="flex-1">
+                <p className="font-medium text-sm">Daily Spin</p>
+                <p className="text-xs text-muted-foreground">Win up to 500 gems!</p>
+              </div>
+              <ArrowRight className="h-4 w-4 text-pink-500 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
 
     </div>
   );
