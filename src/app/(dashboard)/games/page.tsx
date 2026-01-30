@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Gem, Sparkles, Dices, Clock, Gift, Trophy, ArrowRight, Loader2 } from "lucide-react";
+import { Gem, Sparkles, Dices, Clock, Gift, Trophy, ArrowRight, Loader2, Heart } from "lucide-react";
 
 interface GameInfo {
   id: string;
@@ -23,15 +23,17 @@ export default function GamesPage() {
   const [gemBalance, setGemBalance] = useState<number | null>(null);
   const [canSpin, setCanSpin] = useState(true);
   const [canOpenBox, setCanOpenBox] = useState(true);
+  const [modelLifeAvailable, setModelLifeAvailable] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchGameData() {
       try {
-        // Fetch both game statuses in parallel
-        const [spinResponse, boxResponse] = await Promise.all([
+        // Fetch all game statuses in parallel
+        const [spinResponse, boxResponse, lifeResponse] = await Promise.all([
           fetch("/api/games/status"),
           fetch("/api/games/mystery-box"),
+          fetch("/api/games/model-life"),
         ]);
 
         if (spinResponse.ok) {
@@ -47,6 +49,13 @@ export default function GamesPage() {
           if (gemBalance === null) {
             setGemBalance(boxData.gemBalance);
           }
+        }
+
+        if (lifeResponse.ok) {
+          const lifeData = await lifeResponse.json();
+          // Count available activities
+          const available = lifeData.activities?.filter((a: any) => a.available).length || 0;
+          setModelLifeAvailable(available);
         }
       } catch (error) {
         console.error("Failed to fetch game data:", error);
@@ -77,6 +86,16 @@ export default function GamesPage() {
       reward: "5-500 gems",
       cooldown: "Weekly",
       available: canOpenBox,
+    },
+    {
+      id: "model-life",
+      title: "Model Life",
+      description: "Live your model lifestyle - workout, create content, attend events!",
+      icon: <Heart className="h-8 w-8" />,
+      href: "/games/model-life",
+      reward: "Earn & spend gems",
+      cooldown: "Various",
+      available: modelLifeAvailable > 0,
     },
     {
       id: "style-clash",
@@ -201,13 +220,13 @@ export default function GamesPage() {
                   <Link href={game.href}>
                     {game.available ? (
                       <>
-                        Play Now
+                        {game.id === "model-life" ? `${modelLifeAvailable} Activities Ready` : "Play Now"}
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </>
                     ) : (
                       <>
                         <Clock className="mr-2 h-4 w-4" />
-                        On Cooldown
+                        {game.id === "model-life" ? "Recharging..." : "On Cooldown"}
                       </>
                     )}
                   </Link>
