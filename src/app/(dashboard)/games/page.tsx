@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Gem, Sparkles, Dices, Clock, Gift, Trophy, ArrowRight, Loader2, Heart } from "lucide-react";
+import { Gem, Sparkles, Dices, Clock, Gift, Trophy, ArrowRight, Loader2, Heart, Zap } from "lucide-react";
 
 interface GameInfo {
   id: string;
@@ -96,6 +96,16 @@ export default function GamesPage() {
       reward: "Earn & spend gems",
       cooldown: "Various",
       available: modelLifeAvailable > 0,
+    },
+    {
+      id: "runway-rush",
+      title: "Runway Rush",
+      description: "Endless runner! Jump over obstacles and collect gems on the runway!",
+      icon: <Zap className="h-8 w-8" />,
+      href: "/games/runway-rush",
+      reward: "Keep what you collect",
+      cooldown: "Unlimited",
+      available: true,
     },
     {
       id: "style-clash",
