@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ChevronLeft, ChevronRight, MapPin, Calendar, Users, Star, Plane, Camera, PartyPopper, Sparkles } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, Users, Star, Plane, Camera, PartyPopper, Sparkles } from "lucide-react";
 import { ModelSignupDialog } from "@/components/auth/ModelSignupDialog";
 import { format } from "date-fns";
 
@@ -121,9 +121,6 @@ export function UpcomingEventsCarousel({ events }: UpcomingEventsCarouselProps) 
             const spotsLeft = event.spots && event.spots_filled !== null
               ? event.spots - event.spots_filled
               : null;
-            const location = event.location_city && event.location_state
-              ? `${event.location_city}, ${event.location_state}`
-              : event.location_city || null;
 
             return (
               <div
@@ -166,13 +163,6 @@ export function UpcomingEventsCarousel({ events }: UpcomingEventsCarouselProps) 
                         <p className="text-sm text-white/70 flex items-center gap-1 mb-1">
                           <Calendar className="h-3 w-3" />
                           {format(new Date(event.start_at), "MMM d, yyyy")}
-                        </p>
-                      )}
-
-                      {location && (
-                        <p className="text-sm text-white/70 flex items-center gap-1 mb-1">
-                          <MapPin className="h-3 w-3" />
-                          {location}
                         </p>
                       )}
 
@@ -230,12 +220,6 @@ export function UpcomingEventsCarousel({ events }: UpcomingEventsCarouselProps) 
                   <span className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
                     {format(new Date(selectedEvent.start_at), "MMM d, yyyy")}
-                  </span>
-                )}
-                {(selectedEvent.location_city || selectedEvent.location_state) && (
-                  <span className="flex items-center gap-1">
-                    <MapPin className="h-4 w-4" />
-                    {[selectedEvent.location_city, selectedEvent.location_state].filter(Boolean).join(", ")}
                   </span>
                 )}
               </div>
