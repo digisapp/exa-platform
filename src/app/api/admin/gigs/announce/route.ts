@@ -91,11 +91,19 @@ export async function POST(request: NextRequest) {
     let emailsSent = 0;
     let emailsSkipped = 0;
     let emailsFailed = 0;
+    const failedEmails: string[] = [];
 
     // Process in batches to avoid rate limits
+    // Resend has a rate limit of 10 emails/second, so we send 10 emails then wait 1 second
     const batchSize = 10;
+    const batchDelayMs = 1100; // Slightly over 1 second to be safe
+
+    console.log(`Starting gig announcement to ${models.length} models in batches of ${batchSize}`);
+
     for (let i = 0; i < models.length; i += batchSize) {
       const batch = models.slice(i, i + batchSize);
+      const batchNum = Math.floor(i / batchSize) + 1;
+      const totalBatches = Math.ceil(models.length / batchSize);
 
       await Promise.all(
         batch.map(async (model: any) => {
@@ -124,28 +132,37 @@ export async function POST(request: NextRequest) {
               }
             } else {
               emailsFailed++;
+              failedEmails.push(model.email);
+              console.error(`Failed to send to ${model.email}: ${(result as any).error || 'Unknown error'}`);
             }
           } catch (error) {
-            console.error(`Failed to send email to ${model.email}:`, error);
+            console.error(`Exception sending to ${model.email}:`, error);
             emailsFailed++;
+            failedEmails.push(model.email);
           }
         })
       );
 
-      // Small delay between batches to avoid rate limiting
+      console.log(`Batch ${batchNum}/${totalBatches} complete: ${emailsSent} sent, ${emailsSkipped} skipped, ${emailsFailed} failed`);
+
+      // Wait between batches to respect Resend rate limits (10 emails/second)
       if (i + batchSize < models.length) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, batchDelayMs));
       }
     }
 
     console.log(`Gig announcement emails: ${emailsSent} sent, ${emailsSkipped} skipped, ${emailsFailed} failed`);
+    if (failedEmails.length > 0) {
+      console.log(`Failed emails: ${failedEmails.slice(0, 10).join(', ')}${failedEmails.length > 10 ? '...' : ''}`);
+    }
 
     return NextResponse.json({
       success: true,
       emailsSent,
       emailsSkipped,
       emailsFailed,
-      totalModels: models.length
+      totalModels: models.length,
+      ...(failedEmails.length > 0 && { failedEmails: failedEmails.slice(0, 20) }) // Include first 20 failed emails for debugging
     });
   } catch (error) {
     console.error("Announce gig error:", error);

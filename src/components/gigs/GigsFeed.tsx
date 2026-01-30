@@ -148,13 +148,16 @@ export function GigsFeed({ gigs, modelApplications, isApproved }: GigsFeedProps)
                 key={gig.id}
                 className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
               >
-                <div className="flex items-center gap-3 flex-1 min-w-0">
+                <Link
+                  href={`/gigs/${gig.slug}`}
+                  className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
+                >
                   <div className="p-2 rounded-full bg-gradient-to-br from-pink-500/20 to-violet-500/20 flex-shrink-0">
                     <Sparkles className="h-4 w-4 text-pink-500" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="font-medium text-sm truncate">{gig.title}</p>
+                      <p className="font-medium text-sm truncate hover:text-pink-500 transition-colors">{gig.title}</p>
                       <Badge variant="outline" className="capitalize text-xs flex-shrink-0">
                         {gig.type}
                       </Badge>
@@ -182,7 +185,7 @@ export function GigsFeed({ gigs, modelApplications, isApproved }: GigsFeedProps)
                       )}
                     </div>
                   </div>
-                </div>
+                </Link>
                 <div className="flex-shrink-0 ml-3">
                   {getApplicationButton(gig)}
                 </div>

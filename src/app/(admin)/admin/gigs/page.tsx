@@ -709,7 +709,7 @@ export default function AdminGigsPage() {
 
       // Send email notifications to all models with profile pictures when gig is published
       if (newStatus === "open" && gig.status !== "open") {
-        toast.loading("Sending email notifications to models...", { id: "gig-announce" });
+        toast.loading("Sending email notifications to models (this may take 30+ seconds)...", { id: "gig-announce" });
         try {
           const response = await fetch("/api/admin/gigs/announce", {
             method: "POST",
@@ -718,7 +718,8 @@ export default function AdminGigsPage() {
           });
           const result = await response.json();
           if (result.success) {
-            toast.success(`Emails sent to ${result.emailsSent} models!`, { id: "gig-announce" });
+            const failedNote = result.emailsFailed > 0 ? ` (${result.emailsFailed} failed)` : "";
+            toast.success(`Emails sent to ${result.emailsSent} models${failedNote}`, { id: "gig-announce" });
           } else {
             toast.error("Failed to send email notifications", { id: "gig-announce" });
           }
