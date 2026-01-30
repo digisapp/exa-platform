@@ -44,9 +44,10 @@ const CANVAS_WIDTH = 800;
 const CANVAS_HEIGHT = 500;
 const LANE_COUNT = 3;
 const LANE_WIDTH = 100;
-const RUNWAY_LENGTH = 3000;
+const RUNWAY_LENGTH = 2400; // Shorter runway for better pace
 const PLAYER_WIDTH = 60;
 const PLAYER_HEIGHT = 120;
+const GAME_SPEED = 2.5; // Slower speed (was effectively 5)
 
 // Particle system
 interface Particle {
@@ -67,6 +68,17 @@ interface CameraFlash {
   y: number;
   life: number;
   intensity: number;
+  size?: number;
+  type?: "normal" | "burst" | "strobe";
+}
+
+// Paparazzi photographer in crowd
+interface Paparazzo {
+  x: number;
+  y: number;
+  side: "left" | "right";
+  flashCooldown: number;
+  cameraUp: boolean;
 }
 
 interface GameObject {
@@ -78,6 +90,18 @@ interface GameObject {
 }
 
 type GamePhase = "idle" | "walking" | "posing" | "results";
+
+// Atmospheric particles for runway themes
+interface AtmosphericParticle {
+  x: number;
+  y: number;
+  size: number;
+  speed: number;
+  opacity: number;
+  type: "sparkle" | "confetti" | "snowflake" | "leaf" | "star";
+  rotation: number;
+  color: string;
+}
 
 export default function CatwalkPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -124,6 +148,13 @@ export default function CatwalkPage() {
   const comboRef = useRef(0);
   const screenShakeRef = useRef(0);
   const lastBeatTimeRef = useRef(0);
+
+  // Media pit paparazzi
+  const paparazziRef = useRef<Paparazzo[]>([]);
+  const mediaPitActiveRef = useRef(false);
+
+  // Atmospheric particles for themed runways
+  const atmosphereRef = useRef<AtmosphericParticle[]>([]);
 
   useEffect(() => {
     fetchStatus();
@@ -278,13 +309,150 @@ export default function CatwalkPage() {
     }
   }
 
-  function spawnCameraFlash(x: number, y: number) {
+  function spawnCameraFlash(x: number, y: number, type: "normal" | "burst" | "strobe" = "normal") {
+    const sizes = { normal: 40, burst: 80, strobe: 30 };
     flashesRef.current.push({
       x,
       y,
       life: 1,
-      intensity: 0.8 + Math.random() * 0.2,
+      intensity: type === "burst" ? 1 : 0.7 + Math.random() * 0.3,
+      size: sizes[type],
+      type,
     });
+
+    // Burst creates multiple secondary flashes
+    if (type === "burst") {
+      for (let i = 0; i < 3; i++) {
+        setTimeout(() => {
+          flashesRef.current.push({
+            x: x + (Math.random() - 0.5) * 60,
+            y: y + (Math.random() - 0.5) * 40,
+            life: 0.8,
+            intensity: 0.6,
+            size: 25,
+            type: "normal",
+          });
+        }, i * 50);
+      }
+    }
+  }
+
+  function initializePaparazzi() {
+    const paparazzi: Paparazzo[] = [];
+    // Left side paparazzi (media pit)
+    for (let i = 0; i < 8; i++) {
+      paparazzi.push({
+        x: 60 + Math.random() * 80,
+        y: 120 + i * 45,
+        side: "left",
+        flashCooldown: Math.random() * 60,
+        cameraUp: Math.random() > 0.5,
+      });
+    }
+    // Right side paparazzi
+    for (let i = 0; i < 8; i++) {
+      paparazzi.push({
+        x: CANVAS_WIDTH - 60 - Math.random() * 80,
+        y: 120 + i * 45,
+        side: "right",
+        flashCooldown: Math.random() * 60,
+        cameraUp: Math.random() > 0.5,
+      });
+    }
+    paparazziRef.current = paparazzi;
+  }
+
+  function initializeAtmosphere() {
+    if (!selectedRunway) return;
+    const particles: AtmosphericParticle[] = [];
+    const runwayId = selectedRunway.id;
+
+    // Different atmospheres for different runways
+    for (let i = 0; i < 40; i++) {
+      let particle: AtmosphericParticle;
+
+      switch (runwayId) {
+        case "paris":
+          // Romantic sparkles and golden leaves
+          particle = {
+            x: Math.random() * CANVAS_WIDTH,
+            y: Math.random() * CANVAS_HEIGHT,
+            size: 3 + Math.random() * 5,
+            speed: 0.5 + Math.random() * 1.5,
+            opacity: 0.3 + Math.random() * 0.5,
+            type: i % 3 === 0 ? "leaf" : "sparkle",
+            rotation: Math.random() * Math.PI * 2,
+            color: i % 3 === 0 ? "#d4a853" : "#a855f7",
+          };
+          break;
+        case "nyc":
+          // Confetti and city lights sparkles
+          particle = {
+            x: Math.random() * CANVAS_WIDTH,
+            y: Math.random() * CANVAS_HEIGHT,
+            size: 4 + Math.random() * 6,
+            speed: 1 + Math.random() * 2,
+            opacity: 0.4 + Math.random() * 0.4,
+            type: i % 2 === 0 ? "confetti" : "sparkle",
+            rotation: Math.random() * Math.PI * 2,
+            color: ["#f59e0b", "#ef4444", "#3b82f6", "#22c55e", "#fff"][Math.floor(Math.random() * 5)],
+          };
+          break;
+        case "milan":
+          // Elegant white petals and gold dust
+          particle = {
+            x: Math.random() * CANVAS_WIDTH,
+            y: Math.random() * CANVAS_HEIGHT,
+            size: 3 + Math.random() * 4,
+            speed: 0.3 + Math.random() * 1,
+            opacity: 0.5 + Math.random() * 0.4,
+            type: "sparkle",
+            rotation: Math.random() * Math.PI * 2,
+            color: i % 2 === 0 ? "#fff" : "#14b8a6",
+          };
+          break;
+        case "london":
+          // Misty fog particles and red accents
+          particle = {
+            x: Math.random() * CANVAS_WIDTH,
+            y: Math.random() * CANVAS_HEIGHT,
+            size: 8 + Math.random() * 12,
+            speed: 0.2 + Math.random() * 0.5,
+            opacity: 0.1 + Math.random() * 0.2,
+            type: "sparkle",
+            rotation: 0,
+            color: i % 5 === 0 ? "#ef4444" : "#ffffff",
+          };
+          break;
+        case "lagerfeld":
+          // Magical golden stars and diamond sparkles
+          particle = {
+            x: Math.random() * CANVAS_WIDTH,
+            y: Math.random() * CANVAS_HEIGHT,
+            size: 3 + Math.random() * 6,
+            speed: 0.4 + Math.random() * 1,
+            opacity: 0.6 + Math.random() * 0.4,
+            type: i % 2 === 0 ? "star" : "sparkle",
+            rotation: Math.random() * Math.PI * 2,
+            color: ["#fbbf24", "#fff", "#d4af37"][Math.floor(Math.random() * 3)],
+          };
+          break;
+        default:
+          // Studio - basic sparkles
+          particle = {
+            x: Math.random() * CANVAS_WIDTH,
+            y: Math.random() * CANVAS_HEIGHT,
+            size: 2 + Math.random() * 3,
+            speed: 0.5 + Math.random() * 1,
+            opacity: 0.3 + Math.random() * 0.3,
+            type: "sparkle",
+            rotation: 0,
+            color: "#ec4899",
+          };
+      }
+      particles.push(particle);
+    }
+    atmosphereRef.current = particles;
   }
 
   function handlePoseInput(key: string) {
@@ -332,6 +500,13 @@ export default function CatwalkPage() {
     comboRef.current = 0;
     screenShakeRef.current = 0;
 
+    // Initialize media pit paparazzi
+    initializePaparazzi();
+    mediaPitActiveRef.current = false;
+
+    // Initialize runway-themed atmosphere
+    initializeAtmosphere();
+
     setWalkScore(100);
     setGemsCollected(0);
     setPerfectWalks(0);
@@ -348,13 +523,13 @@ export default function CatwalkPage() {
 
   function generateObjects() {
     const objects: GameObject[] = [];
-    const spacing = 200;
+    const spacing = 300; // More spread out for relaxed pace
 
     for (let y = -spacing; y > -RUNWAY_LENGTH; y -= spacing) {
       const random = Math.random();
 
-      if (random < 0.4) {
-        // Obstacle
+      if (random < 0.35) {
+        // Obstacle (slightly less frequent)
         objects.push({
           x: 0,
           y,
@@ -391,7 +566,7 @@ export default function CatwalkPage() {
     if (!canvas || !ctx) return;
 
     frameCountRef.current++;
-    distanceRef.current += 5;
+    distanceRef.current += GAME_SPEED;
 
     const player = playerRef.current;
 
@@ -399,13 +574,13 @@ export default function CatwalkPage() {
     const targetX = getLaneX(player.targetLane);
     const currentX = getLaneX(player.lane);
     if (Math.abs(targetX - currentX) > 5) {
-      player.lane += (player.targetLane - player.lane) * 0.2;
+      player.lane += (player.targetLane - player.lane) * 0.15;
     } else {
       player.lane = player.targetLane;
     }
 
-    // Walk animation
-    player.walkFrame = (frameCountRef.current / 6) % (Math.PI * 2);
+    // Walk animation (slower, more elegant)
+    player.walkFrame = (frameCountRef.current / 10) % (Math.PI * 2);
 
     // Update screen shake
     if (screenShakeRef.current > 0) {
@@ -428,24 +603,93 @@ export default function CatwalkPage() {
     // Update camera flashes
     const flashes = flashesRef.current;
     for (let i = flashes.length - 1; i >= 0; i--) {
-      flashes[i].life -= 0.08;
+      const decayRate = flashes[i].type === "burst" ? 0.06 : 0.1;
+      flashes[i].life -= decayRate;
       if (flashes[i].life <= 0) {
         flashes.splice(i, 1);
       }
     }
 
-    // Random camera flashes from crowd
-    if (Math.random() < 0.03) {
+    // Update paparazzi and trigger their flashes
+    const progress = distanceRef.current / RUNWAY_LENGTH;
+    const paparazzi = paparazziRef.current;
+    for (const pap of paparazzi) {
+      pap.flashCooldown--;
+
+      // Flash more frequently as model gets closer to camera
+      const flashChance = progress > 0.7 ? 0.08 : progress > 0.4 ? 0.04 : 0.02;
+
+      if (pap.flashCooldown <= 0 && Math.random() < flashChance) {
+        // Paparazzi takes photo!
+        pap.cameraUp = true;
+        const flashType = progress > 0.8 && Math.random() > 0.5 ? "burst" : "normal";
+        spawnCameraFlash(pap.x, pap.y - 15, flashType);
+        pap.flashCooldown = 30 + Math.random() * 60; // Cooldown before next flash
+
+        // Camera click sound effect could go here
+      }
+
+      // Camera lowering animation
+      if (pap.flashCooldown > 0 && pap.flashCooldown < 20) {
+        pap.cameraUp = false;
+      }
+    }
+
+    // Media pit activation near end of runway (intense flash zone)
+    if (progress > 0.85 && !mediaPitActiveRef.current) {
+      mediaPitActiveRef.current = true;
+      // Massive flash burst as model enters media pit
+      for (let i = 0; i < 6; i++) {
+        setTimeout(() => {
+          const side = i % 2 === 0 ? 1 : -1;
+          spawnCameraFlash(
+            CANVAS_WIDTH / 2 + side * (80 + Math.random() * 100),
+            150 + Math.random() * 200,
+            "burst"
+          );
+        }, i * 80);
+      }
+    }
+
+    // Continuous media pit flashes when active
+    if (mediaPitActiveRef.current && Math.random() < 0.15) {
+      const side = Math.random() > 0.5 ? 1 : -1;
+      spawnCameraFlash(
+        CANVAS_WIDTH / 2 + side * (60 + Math.random() * 120),
+        100 + Math.random() * 250,
+        Math.random() > 0.7 ? "burst" : "strobe"
+      );
+    }
+
+    // Random camera flashes from crowd (ambient)
+    if (Math.random() < 0.05) {
       const side = Math.random() > 0.5 ? 1 : -1;
       const crowdX = CANVAS_WIDTH / 2 + side * (LANE_WIDTH * 2 + 50 + Math.random() * 80);
       const crowdY = 100 + Math.random() * 300;
-      spawnCameraFlash(crowdX, crowdY);
+      spawnCameraFlash(crowdX, crowdY, "normal");
+    }
+
+    // Update atmospheric particles
+    const atmosphere = atmosphereRef.current;
+    for (const p of atmosphere) {
+      p.y += p.speed;
+      p.rotation += 0.02;
+      if (p.type === "confetti") {
+        p.x += Math.sin(p.rotation) * 0.5;
+      } else if (p.type === "leaf") {
+        p.x += Math.sin(p.rotation * 2) * 0.8;
+      }
+      // Reset particles that go off screen
+      if (p.y > CANVAS_HEIGHT + 20) {
+        p.y = -20;
+        p.x = Math.random() * CANVAS_WIDTH;
+      }
     }
 
     // Move objects toward player
     const objects = objectsRef.current;
     for (let i = objects.length - 1; i >= 0; i--) {
-      objects[i].y += 5;
+      objects[i].y += GAME_SPEED;
 
       // Check collision
       if (objects[i].y > player.y - PLAYER_HEIGHT / 2 && objects[i].y < player.y + 30) {
@@ -615,6 +859,9 @@ export default function CatwalkPage() {
     ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
+    // Draw runway-specific themed background
+    drawThemedBackground(ctx, selectedRunway.id);
+
     // Perspective runway
     const vanishY = -50;
     const topWidth = 80;
@@ -681,17 +928,59 @@ export default function CatwalkPage() {
     drawCrowd(ctx, true);
     drawCrowd(ctx, false);
 
-    // Draw camera flashes
+    // Draw paparazzi photographers
+    drawMediaPit(ctx);
+
+    // Draw camera flashes with enhanced effects
     for (const flash of flashesRef.current) {
+      const size = flash.size || 40;
+      const baseIntensity = flash.life * flash.intensity;
+
+      // Main flash
       const flashGrad = ctx.createRadialGradient(
         flash.x, flash.y, 0,
-        flash.x, flash.y, 40 * flash.intensity
+        flash.x, flash.y, size * flash.intensity
       );
-      flashGrad.addColorStop(0, `rgba(255, 255, 255, ${flash.life * flash.intensity})`);
-      flashGrad.addColorStop(0.3, `rgba(255, 255, 200, ${flash.life * 0.5})`);
+      flashGrad.addColorStop(0, `rgba(255, 255, 255, ${baseIntensity})`);
+      flashGrad.addColorStop(0.2, `rgba(255, 255, 240, ${baseIntensity * 0.8})`);
+      flashGrad.addColorStop(0.5, `rgba(255, 250, 200, ${baseIntensity * 0.4})`);
       flashGrad.addColorStop(1, "transparent");
       ctx.fillStyle = flashGrad;
-      ctx.fillRect(flash.x - 50, flash.y - 50, 100, 100);
+      ctx.fillRect(flash.x - size * 1.5, flash.y - size * 1.5, size * 3, size * 3);
+
+      // Burst flashes have lens flare effect
+      if (flash.type === "burst" && flash.life > 0.5) {
+        // Horizontal lens flare
+        ctx.fillStyle = `rgba(255, 255, 200, ${flash.life * 0.3})`;
+        ctx.fillRect(flash.x - 80, flash.y - 2, 160, 4);
+
+        // Vertical lens flare
+        ctx.fillRect(flash.x - 2, flash.y - 60, 4, 120);
+
+        // Star burst
+        ctx.save();
+        ctx.translate(flash.x, flash.y);
+        for (let i = 0; i < 6; i++) {
+          ctx.rotate(Math.PI / 3);
+          ctx.fillStyle = `rgba(255, 255, 255, ${flash.life * 0.2})`;
+          ctx.fillRect(-1, 0, 2, 50);
+        }
+        ctx.restore();
+      }
+
+      // Strobe flashes are sharper
+      if (flash.type === "strobe") {
+        ctx.fillStyle = `rgba(255, 255, 255, ${flash.life})`;
+        ctx.beginPath();
+        ctx.arc(flash.x, flash.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Screen flash effect when media pit is super active
+    if (mediaPitActiveRef.current && flashesRef.current.length > 5) {
+      ctx.fillStyle = `rgba(255, 255, 255, ${0.03 * flashesRef.current.length})`;
+      ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     }
 
     // Lane guides (subtle)
@@ -787,10 +1076,333 @@ export default function CatwalkPage() {
       ctx.globalAlpha = 1;
     }
 
+    // Draw atmospheric particles (falling sparkles, confetti, etc.)
+    drawAtmosphere(ctx);
+
     // HUD with glow
     drawHUD(ctx);
 
     ctx.restore();
+  }
+
+  function drawThemedBackground(ctx: CanvasRenderingContext2D, runwayId: string) {
+    const time = frameCountRef.current * 0.01;
+
+    switch (runwayId) {
+      case "paris": {
+        // Eiffel Tower silhouette
+        ctx.fillStyle = "rgba(100, 80, 120, 0.3)";
+        const towerX = CANVAS_WIDTH * 0.15;
+        ctx.beginPath();
+        ctx.moveTo(towerX, 200);
+        ctx.lineTo(towerX - 40, 180);
+        ctx.lineTo(towerX - 25, 120);
+        ctx.lineTo(towerX - 15, 80);
+        ctx.lineTo(towerX - 8, 30);
+        ctx.lineTo(towerX, 0);
+        ctx.lineTo(towerX + 8, 30);
+        ctx.lineTo(towerX + 15, 80);
+        ctx.lineTo(towerX + 25, 120);
+        ctx.lineTo(towerX + 40, 180);
+        ctx.closePath();
+        ctx.fill();
+
+        // Romantic streetlamp on right
+        ctx.fillStyle = "rgba(160, 100, 180, 0.25)";
+        ctx.fillRect(CANVAS_WIDTH * 0.85, 60, 4, 120);
+        // Lamp glow
+        const lampGlow = ctx.createRadialGradient(CANVAS_WIDTH * 0.85 + 2, 55, 0, CANVAS_WIDTH * 0.85 + 2, 55, 40);
+        lampGlow.addColorStop(0, "rgba(255, 220, 180, 0.4)");
+        lampGlow.addColorStop(1, "transparent");
+        ctx.fillStyle = lampGlow;
+        ctx.fillRect(CANVAS_WIDTH * 0.85 - 40, 15, 80, 80);
+
+        // Stars in night sky
+        for (let i = 0; i < 12; i++) {
+          const starX = 50 + i * 70;
+          const starY = 20 + Math.sin(time + i) * 10;
+          ctx.fillStyle = `rgba(255, 255, 255, ${0.3 + Math.sin(time * 2 + i) * 0.2})`;
+          ctx.beginPath();
+          ctx.arc(starX, starY, 1.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        break;
+      }
+
+      case "nyc": {
+        // NYC skyline silhouette
+        ctx.fillStyle = "rgba(30, 40, 60, 0.5)";
+        // Building 1 (Empire State style)
+        ctx.fillRect(50, 80, 40, 200);
+        ctx.fillRect(60, 40, 20, 40);
+        ctx.fillRect(68, 20, 4, 20);
+        // Building 2
+        ctx.fillRect(100, 100, 50, 180);
+        ctx.fillRect(110, 70, 30, 30);
+        // Building 3
+        ctx.fillRect(680, 90, 45, 190);
+        ctx.fillRect(690, 60, 25, 30);
+        // Building 4 (Freedom Tower style)
+        ctx.fillRect(730, 50, 35, 230);
+        ctx.fillRect(740, 10, 15, 40);
+
+        // Window lights
+        ctx.fillStyle = "rgba(255, 200, 100, 0.6)";
+        for (let i = 0; i < 8; i++) {
+          for (let j = 0; j < 5; j++) {
+            if (Math.random() > 0.3) {
+              ctx.fillRect(55 + j * 8, 90 + i * 12, 4, 6);
+            }
+          }
+        }
+        for (let i = 0; i < 6; i++) {
+          for (let j = 0; j < 4; j++) {
+            if (Math.random() > 0.3) {
+              ctx.fillRect(686 + j * 10, 100 + i * 14, 5, 7);
+            }
+          }
+        }
+
+        // Searchlight beam
+        ctx.save();
+        ctx.globalAlpha = 0.1;
+        ctx.fillStyle = "#f59e0b";
+        ctx.beginPath();
+        ctx.moveTo(CANVAS_WIDTH / 2, 0);
+        ctx.lineTo(CANVAS_WIDTH / 2 - 100 + Math.sin(time) * 50, 150);
+        ctx.lineTo(CANVAS_WIDTH / 2 + 100 + Math.sin(time) * 50, 150);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+        break;
+      }
+
+      case "milan": {
+        // Milan Cathedral (Duomo) silhouette
+        ctx.fillStyle = "rgba(50, 60, 70, 0.35)";
+        const duomoX = CANVAS_WIDTH * 0.85;
+        // Main cathedral body
+        ctx.fillRect(duomoX - 60, 80, 120, 200);
+        // Spires
+        for (let i = 0; i < 7; i++) {
+          const spireX = duomoX - 50 + i * 18;
+          const spireH = 30 + (i === 3 ? 50 : Math.random() * 20);
+          ctx.beginPath();
+          ctx.moveTo(spireX, 80);
+          ctx.lineTo(spireX + 6, 80 - spireH);
+          ctx.lineTo(spireX + 12, 80);
+          ctx.fill();
+        }
+
+        // Elegant arch on left
+        ctx.strokeStyle = "rgba(20, 184, 166, 0.3)";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(80, 180, 60, Math.PI, 0, false);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(80, 180, 45, Math.PI, 0, false);
+        ctx.stroke();
+        break;
+      }
+
+      case "london": {
+        // Big Ben / Tower Bridge silhouette
+        ctx.fillStyle = "rgba(40, 35, 30, 0.4)";
+        // Big Ben
+        const benX = 60;
+        ctx.fillRect(benX, 50, 35, 200);
+        ctx.fillRect(benX - 5, 40, 45, 15);
+        ctx.fillRect(benX + 10, 10, 15, 30);
+        // Clock face
+        ctx.fillStyle = "rgba(255, 220, 150, 0.4)";
+        ctx.beginPath();
+        ctx.arc(benX + 17, 70, 12, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Tower Bridge on right
+        ctx.fillStyle = "rgba(40, 35, 30, 0.4)";
+        ctx.fillRect(680, 100, 25, 150);
+        ctx.fillRect(740, 100, 25, 150);
+        // Bridge deck
+        ctx.fillRect(680, 160, 85, 15);
+        // Tower tops
+        ctx.beginPath();
+        ctx.moveTo(680, 100);
+        ctx.lineTo(692, 60);
+        ctx.lineTo(705, 100);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(740, 100);
+        ctx.lineTo(752, 60);
+        ctx.lineTo(765, 100);
+        ctx.fill();
+
+        // Fog/mist effect
+        for (let i = 0; i < 5; i++) {
+          const fogY = 200 + i * 60;
+          const fogGrad = ctx.createLinearGradient(0, fogY, 0, fogY + 80);
+          fogGrad.addColorStop(0, "transparent");
+          fogGrad.addColorStop(0.5, "rgba(200, 200, 210, 0.08)");
+          fogGrad.addColorStop(1, "transparent");
+          ctx.fillStyle = fogGrad;
+          ctx.fillRect(0, fogY, CANVAS_WIDTH, 80);
+        }
+        break;
+      }
+
+      case "lagerfeld": {
+        // Magical legendary show - golden sparkles everywhere
+        // Grand chandeliers
+        for (let i = 0; i < 3; i++) {
+          const chandelierX = 150 + i * 250;
+          const chandelierY = 50;
+
+          // Chandelier glow
+          const chandGlow = ctx.createRadialGradient(chandelierX, chandelierY, 0, chandelierX, chandelierY, 80);
+          chandGlow.addColorStop(0, "rgba(255, 215, 100, 0.3)");
+          chandGlow.addColorStop(0.5, "rgba(255, 200, 50, 0.1)");
+          chandGlow.addColorStop(1, "transparent");
+          ctx.fillStyle = chandGlow;
+          ctx.fillRect(chandelierX - 100, chandelierY - 100, 200, 200);
+
+          // Crystal droplets
+          ctx.fillStyle = "#fbbf24";
+          for (let j = 0; j < 8; j++) {
+            const angle = (j / 8) * Math.PI * 2 + time;
+            const dropX = chandelierX + Math.cos(angle) * 25;
+            const dropY = chandelierY + Math.sin(angle) * 15 + 20;
+            ctx.beginPath();
+            ctx.moveTo(dropX, dropY);
+            ctx.lineTo(dropX + 3, dropY + 8);
+            ctx.lineTo(dropX, dropY + 12);
+            ctx.lineTo(dropX - 3, dropY + 8);
+            ctx.closePath();
+            ctx.fill();
+          }
+        }
+
+        // Golden trim lines
+        ctx.strokeStyle = "rgba(212, 175, 55, 0.3)";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([10, 5]);
+        ctx.beginPath();
+        ctx.moveTo(0, 120);
+        ctx.lineTo(CANVAS_WIDTH, 120);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        break;
+      }
+
+      default: {
+        // Studio - professional lighting setup
+        // Stage lights
+        for (let i = 0; i < 4; i++) {
+          const lightX = 100 + i * 200;
+          const spotGrad = ctx.createRadialGradient(lightX, 0, 0, lightX, 0, 150);
+          spotGrad.addColorStop(0, "rgba(236, 72, 153, 0.15)");
+          spotGrad.addColorStop(1, "transparent");
+          ctx.fillStyle = spotGrad;
+          ctx.beginPath();
+          ctx.moveTo(lightX, 0);
+          ctx.lineTo(lightX - 80, 180);
+          ctx.lineTo(lightX + 80, 180);
+          ctx.closePath();
+          ctx.fill();
+        }
+      }
+    }
+  }
+
+  function drawAtmosphere(ctx: CanvasRenderingContext2D) {
+    const atmosphere = atmosphereRef.current;
+    const time = frameCountRef.current * 0.02;
+
+    for (const p of atmosphere) {
+      ctx.save();
+      ctx.globalAlpha = p.opacity;
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rotation);
+
+      switch (p.type) {
+        case "sparkle": {
+          // Diamond sparkle
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.moveTo(0, -p.size);
+          ctx.lineTo(p.size * 0.3, 0);
+          ctx.lineTo(0, p.size);
+          ctx.lineTo(-p.size * 0.3, 0);
+          ctx.closePath();
+          ctx.fill();
+
+          // Cross shine
+          ctx.strokeStyle = p.color;
+          ctx.lineWidth = 0.5;
+          ctx.beginPath();
+          ctx.moveTo(-p.size * 0.8, 0);
+          ctx.lineTo(p.size * 0.8, 0);
+          ctx.moveTo(0, -p.size * 0.8);
+          ctx.lineTo(0, p.size * 0.8);
+          ctx.stroke();
+          break;
+        }
+        case "confetti": {
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+          break;
+        }
+        case "leaf": {
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, p.size, p.size / 2, p.rotation, 0, Math.PI * 2);
+          ctx.fill();
+          // Leaf vein
+          ctx.strokeStyle = shadeColor(p.color, -20);
+          ctx.lineWidth = 0.5;
+          ctx.beginPath();
+          ctx.moveTo(-p.size, 0);
+          ctx.lineTo(p.size, 0);
+          ctx.stroke();
+          break;
+        }
+        case "star": {
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          for (let i = 0; i < 5; i++) {
+            const angle = (i * Math.PI * 2) / 5 - Math.PI / 2;
+            const outerX = Math.cos(angle) * p.size;
+            const outerY = Math.sin(angle) * p.size;
+            if (i === 0) {
+              ctx.moveTo(outerX, outerY);
+            } else {
+              ctx.lineTo(outerX, outerY);
+            }
+            const innerAngle = angle + Math.PI / 5;
+            const innerX = Math.cos(innerAngle) * p.size * 0.4;
+            const innerY = Math.sin(innerAngle) * p.size * 0.4;
+            ctx.lineTo(innerX, innerY);
+          }
+          ctx.closePath();
+          ctx.fill();
+          break;
+        }
+        case "snowflake": {
+          ctx.strokeStyle = p.color;
+          ctx.lineWidth = 1;
+          for (let i = 0; i < 6; i++) {
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0, -p.size);
+            ctx.stroke();
+            ctx.rotate(Math.PI / 3);
+          }
+          break;
+        }
+      }
+
+      ctx.restore();
+    }
   }
 
   function drawCrowd(ctx: CanvasRenderingContext2D, isLeft: boolean) {
@@ -828,6 +1440,118 @@ export default function CatwalkPage() {
 
       // Body
       ctx.fillRect(x - 6 * scale, y - 7 * scale, 12 * scale, 20 * scale);
+    }
+  }
+
+  function drawMediaPit(ctx: CanvasRenderingContext2D) {
+    const paparazzi = paparazziRef.current;
+    const progress = distanceRef.current / RUNWAY_LENGTH;
+
+    for (const pap of paparazzi) {
+      const isFlashing = pap.flashCooldown > 50;
+
+      // Photographer body (crouching/kneeling pose)
+      ctx.fillStyle = "#1a1a1a";
+
+      // Body
+      ctx.beginPath();
+      if (pap.cameraUp) {
+        // Standing pose with camera up
+        ctx.fillRect(pap.x - 10, pap.y - 5, 20, 35);
+      } else {
+        // Slightly hunched
+        ctx.fillRect(pap.x - 10, pap.y, 20, 30);
+      }
+      ctx.fill();
+
+      // Head
+      ctx.fillStyle = "#2a2a2a";
+      ctx.beginPath();
+      ctx.arc(pap.x, pap.y - 12, 9, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Camera (professional DSLR style)
+      ctx.save();
+      ctx.translate(pap.x, pap.y);
+
+      if (pap.cameraUp) {
+        // Camera raised to eye level
+        ctx.translate(pap.side === "left" ? 12 : -12, -8);
+        ctx.rotate(pap.side === "left" ? 0.3 : -0.3);
+      } else {
+        // Camera at chest level
+        ctx.translate(pap.side === "left" ? 8 : -8, 5);
+      }
+
+      // Camera body
+      ctx.fillStyle = "#222";
+      ctx.fillRect(-10, -8, 20, 14);
+
+      // Lens (pointing at runway)
+      ctx.fillStyle = "#111";
+      ctx.beginPath();
+      ctx.ellipse(pap.side === "left" ? 14 : -14, -1, 8, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Lens glass reflection
+      ctx.fillStyle = "rgba(100, 150, 200, 0.4)";
+      ctx.beginPath();
+      ctx.ellipse(pap.side === "left" ? 14 : -14, -1, 5, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Flash unit on top of camera
+      ctx.fillStyle = isFlashing ? "#fff" : "#333";
+      ctx.fillRect(-4, -14, 8, 6);
+
+      // Flash indicator light
+      if (isFlashing) {
+        ctx.fillStyle = "#ff4444";
+      } else {
+        const readyPulse = Math.sin(frameCountRef.current * 0.1 + pap.x) * 0.5 + 0.5;
+        ctx.fillStyle = `rgba(0, 255, 0, ${readyPulse * 0.8})`;
+      }
+      ctx.beginPath();
+      ctx.arc(0, -11, 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+
+      // Flash glow when taking photo
+      if (isFlashing) {
+        const flashIntensity = (pap.flashCooldown - 50) / 10;
+        ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(flashIntensity * 0.5, 0.8)})`;
+        ctx.beginPath();
+        ctx.arc(pap.x, pap.y - 10, 20, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Some paparazzi have phones too (for social media)
+      if (Math.abs(pap.x - CANVAS_WIDTH / 2) > 300) {
+        ctx.fillStyle = "#333";
+        ctx.fillRect(pap.x + (pap.side === "left" ? -18 : 6), pap.y + 10, 12, 20);
+        // Phone screen glow
+        ctx.fillStyle = "rgba(100, 200, 255, 0.3)";
+        ctx.fillRect(pap.x + (pap.side === "left" ? -17 : 7), pap.y + 12, 10, 16);
+      }
+    }
+
+    // Media pit zone indicator when active
+    if (mediaPitActiveRef.current) {
+      const pulse = Math.sin(frameCountRef.current * 0.15) * 0.3 + 0.7;
+      ctx.strokeStyle = `rgba(255, 215, 0, ${pulse * 0.5})`;
+      ctx.lineWidth = 3;
+      ctx.setLineDash([10, 5]);
+      ctx.beginPath();
+      ctx.moveTo(50, 100);
+      ctx.lineTo(CANVAS_WIDTH - 50, 100);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // "MEDIA PIT" text
+      ctx.fillStyle = `rgba(255, 215, 0, ${pulse})`;
+      ctx.font = "bold 14px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("📸 MEDIA PIT 📸", CANVAS_WIDTH / 2, 90);
     }
   }
 
@@ -1005,252 +1729,392 @@ export default function CatwalkPage() {
     ctx.save();
     ctx.translate(x, y);
 
-    // Walking animation values
-    const walkCycle = frame;
-    const hipSway = Math.sin(walkCycle) * 3;
-    const shoulderSway = Math.sin(walkCycle + Math.PI) * 2;
-    const legSwing = Math.sin(walkCycle) * 12;
-    const armSwing = Math.sin(walkCycle) * 8;
-    const bobHeight = Math.abs(Math.sin(walkCycle * 2)) * 3;
+    // Skin tone - fair porcelain
+    const skinBase = "#fce4d6";
+    const skinShadow = "#f0c9b8";
+    const skinHighlight = "#fff5f0";
 
-    // Slight rotation for sass
-    ctx.rotate(hipSway * 0.015);
+    // Blonde hair colors
+    const hairBase = "#d4a853";
+    const hairHighlight = "#f0d78c";
+    const hairShadow = "#b8923d";
+
+    // Walking animation values (more elegant, slower)
+    const walkCycle = frame;
+    const hipSway = Math.sin(walkCycle) * 2.5;
+    const shoulderSway = Math.sin(walkCycle + Math.PI) * 1.5;
+    const legSwing = Math.sin(walkCycle) * 10;
+    const armSwing = Math.sin(walkCycle) * 6;
+    const bobHeight = Math.abs(Math.sin(walkCycle * 2)) * 2;
+    const hairFlow = Math.sin(walkCycle * 0.8) * 3;
+
+    // Slight rotation for supermodel sass
+    ctx.rotate(hipSway * 0.012);
     ctx.translate(0, -bobHeight);
 
     // Shadow
-    ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
+    ctx.fillStyle = "rgba(0, 0, 0, 0.25)";
     ctx.beginPath();
-    ctx.ellipse(0, 95 + bobHeight, 25, 8, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 98 + bobHeight, 28, 10, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Back leg
-    const backLegX = -6 - legSwing * 0.3;
+    // Back leg with realistic shading
+    const backLegX = -5 - legSwing * 0.25;
     ctx.save();
-    ctx.translate(backLegX, 55);
-    ctx.rotate(legSwing * 0.03);
-    // Thigh
-    ctx.fillStyle = "#f5d0c5";
+    ctx.translate(backLegX, 58);
+    ctx.rotate(legSwing * 0.025);
+    // Thigh with gradient
+    const legGrad = ctx.createLinearGradient(-6, 0, 6, 0);
+    legGrad.addColorStop(0, skinShadow);
+    legGrad.addColorStop(0.5, skinBase);
+    legGrad.addColorStop(1, skinShadow);
+    ctx.fillStyle = legGrad;
     ctx.beginPath();
-    ctx.moveTo(-5, 0);
-    ctx.quadraticCurveTo(-6, 15, -4, 30);
-    ctx.lineTo(4, 30);
-    ctx.quadraticCurveTo(6, 15, 5, 0);
+    ctx.moveTo(-4, 0);
+    ctx.quadraticCurveTo(-5, 12, -4, 28);
+    ctx.quadraticCurveTo(-3, 32, 0, 32);
+    ctx.quadraticCurveTo(3, 32, 4, 28);
+    ctx.quadraticCurveTo(5, 12, 4, 0);
     ctx.closePath();
     ctx.fill();
-    // Heel
-    ctx.fillStyle = "#1a1a1a";
+    // Stiletto heel
+    ctx.fillStyle = "#0a0a0a";
     ctx.beginPath();
-    ctx.moveTo(-5, 30);
-    ctx.lineTo(8, 30);
-    ctx.lineTo(8, 35);
-    ctx.lineTo(2, 35);
-    ctx.lineTo(0, 42);
-    ctx.lineTo(-2, 35);
-    ctx.lineTo(-5, 35);
+    ctx.moveTo(-4, 32);
+    ctx.lineTo(6, 32);
+    ctx.lineTo(5, 36);
+    ctx.lineTo(1, 36);
+    ctx.lineTo(0, 46);
+    ctx.lineTo(-1, 36);
+    ctx.lineTo(-4, 36);
     ctx.closePath();
     ctx.fill();
+    // Heel shine
+    ctx.fillStyle = "rgba(255,255,255,0.2)";
+    ctx.fillRect(-3, 33, 2, 2);
     ctx.restore();
 
-    // Dress/outfit - elegant flowing dress
-    const dressGrad = ctx.createLinearGradient(-25, 20, 25, 85);
+    // Elegant cocktail dress
+    const dressGrad = ctx.createLinearGradient(-25, 18, 25, 88);
     dressGrad.addColorStop(0, accent);
-    dressGrad.addColorStop(0.5, accent);
-    dressGrad.addColorStop(1, shadeColor(accent, -30));
+    dressGrad.addColorStop(0.3, shadeColor(accent, 10));
+    dressGrad.addColorStop(0.7, accent);
+    dressGrad.addColorStop(1, shadeColor(accent, -35));
 
     ctx.fillStyle = dressGrad;
     ctx.beginPath();
-    ctx.moveTo(-12 + hipSway, 20);
-    ctx.quadraticCurveTo(-18 + hipSway * 0.5, 35, -22 + hipSway * 0.3, 55);
-    ctx.quadraticCurveTo(-25, 70, -20 + legSwing * 0.2, 85);
-    ctx.lineTo(20 - legSwing * 0.2, 85);
-    ctx.quadraticCurveTo(25, 70, 22 - hipSway * 0.3, 55);
-    ctx.quadraticCurveTo(18 - hipSway * 0.5, 35, 12 - hipSway, 20);
+    ctx.moveTo(-10 + hipSway * 0.5, 18);
+    ctx.quadraticCurveTo(-16 + hipSway * 0.3, 32, -20 + hipSway * 0.2, 52);
+    ctx.quadraticCurveTo(-23, 68, -18 + legSwing * 0.15, 88);
+    ctx.lineTo(18 - legSwing * 0.15, 88);
+    ctx.quadraticCurveTo(23, 68, 20 - hipSway * 0.2, 52);
+    ctx.quadraticCurveTo(16 - hipSway * 0.3, 32, 10 - hipSway * 0.5, 18);
     ctx.closePath();
     ctx.fill();
 
-    // Dress highlight
-    ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
+    // Dress fabric shine
+    ctx.fillStyle = "rgba(255, 255, 255, 0.12)";
     ctx.beginPath();
-    ctx.moveTo(-5, 25);
-    ctx.quadraticCurveTo(-10, 45, -8, 65);
-    ctx.lineTo(0, 65);
-    ctx.quadraticCurveTo(2, 45, 0, 25);
+    ctx.moveTo(-4, 22);
+    ctx.quadraticCurveTo(-8, 42, -6, 68);
+    ctx.lineTo(0, 68);
+    ctx.quadraticCurveTo(1, 42, 0, 22);
     ctx.closePath();
     ctx.fill();
 
     // Front leg
-    const frontLegX = 6 + legSwing * 0.3;
+    const frontLegX = 5 + legSwing * 0.25;
     ctx.save();
-    ctx.translate(frontLegX, 55);
-    ctx.rotate(-legSwing * 0.03);
-    // Thigh
-    ctx.fillStyle = "#f5d0c5";
+    ctx.translate(frontLegX, 58);
+    ctx.rotate(-legSwing * 0.025);
+    ctx.fillStyle = legGrad;
     ctx.beginPath();
-    ctx.moveTo(-5, 0);
-    ctx.quadraticCurveTo(-6, 15, -4, 30);
-    ctx.lineTo(4, 30);
-    ctx.quadraticCurveTo(6, 15, 5, 0);
+    ctx.moveTo(-4, 0);
+    ctx.quadraticCurveTo(-5, 12, -4, 28);
+    ctx.quadraticCurveTo(-3, 32, 0, 32);
+    ctx.quadraticCurveTo(3, 32, 4, 28);
+    ctx.quadraticCurveTo(5, 12, 4, 0);
     ctx.closePath();
     ctx.fill();
-    // Heel
-    ctx.fillStyle = "#1a1a1a";
+    // Stiletto
+    ctx.fillStyle = "#0a0a0a";
     ctx.beginPath();
-    ctx.moveTo(-5, 30);
-    ctx.lineTo(8, 30);
-    ctx.lineTo(8, 35);
-    ctx.lineTo(2, 35);
-    ctx.lineTo(0, 42);
-    ctx.lineTo(-2, 35);
-    ctx.lineTo(-5, 35);
+    ctx.moveTo(-4, 32);
+    ctx.lineTo(6, 32);
+    ctx.lineTo(5, 36);
+    ctx.lineTo(1, 36);
+    ctx.lineTo(0, 46);
+    ctx.lineTo(-1, 36);
+    ctx.lineTo(-4, 36);
     ctx.closePath();
     ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,0.2)";
+    ctx.fillRect(-3, 33, 2, 2);
     ctx.restore();
 
-    // Torso/body
-    ctx.fillStyle = "#f5d0c5";
+    // Torso with realistic shaping
+    const torsoGrad = ctx.createLinearGradient(-12, 0, 12, 0);
+    torsoGrad.addColorStop(0, skinShadow);
+    torsoGrad.addColorStop(0.3, skinBase);
+    torsoGrad.addColorStop(0.7, skinBase);
+    torsoGrad.addColorStop(1, skinShadow);
+    ctx.fillStyle = torsoGrad;
     ctx.beginPath();
-    ctx.moveTo(-10 + shoulderSway, 0);
-    ctx.quadraticCurveTo(-12, 10, -10, 22);
-    ctx.lineTo(10, 22);
-    ctx.quadraticCurveTo(12, 10, 10 + shoulderSway, 0);
+    ctx.moveTo(-9 + shoulderSway, -2);
+    ctx.quadraticCurveTo(-11, 6, -9, 20);
+    ctx.lineTo(9, 20);
+    ctx.quadraticCurveTo(11, 6, 9 + shoulderSway, -2);
     ctx.closePath();
     ctx.fill();
 
-    // Neckline detail
+    // Elegant neckline
     ctx.fillStyle = accent;
     ctx.beginPath();
-    ctx.moveTo(-8, 18);
-    ctx.quadraticCurveTo(0, 25, 8, 18);
-    ctx.lineTo(10, 22);
-    ctx.quadraticCurveTo(0, 30, -10, 22);
+    ctx.moveTo(-7, 16);
+    ctx.quadraticCurveTo(0, 22, 7, 16);
+    ctx.lineTo(9, 20);
+    ctx.quadraticCurveTo(0, 28, -9, 20);
     ctx.closePath();
     ctx.fill();
 
     // Back arm
     ctx.save();
-    ctx.translate(-10 + shoulderSway, 5);
-    ctx.rotate(armSwing * 0.04 + 0.1);
-    ctx.fillStyle = "#f5d0c5";
+    ctx.translate(-9 + shoulderSway, 3);
+    ctx.rotate(armSwing * 0.035 + 0.08);
+    const armGrad = ctx.createLinearGradient(-3, 0, 3, 0);
+    armGrad.addColorStop(0, skinShadow);
+    armGrad.addColorStop(0.5, skinBase);
+    armGrad.addColorStop(1, skinShadow);
+    ctx.fillStyle = armGrad;
     ctx.beginPath();
     ctx.moveTo(-2, 0);
-    ctx.quadraticCurveTo(-4, 12, -3, 25);
-    ctx.lineTo(2, 25);
-    ctx.quadraticCurveTo(3, 12, 2, 0);
+    ctx.quadraticCurveTo(-3, 10, -2, 24);
+    ctx.lineTo(2, 24);
+    ctx.quadraticCurveTo(3, 10, 2, 0);
     ctx.closePath();
     ctx.fill();
     ctx.restore();
 
     // Front arm
     ctx.save();
-    ctx.translate(10 + shoulderSway, 5);
-    ctx.rotate(-armSwing * 0.04 - 0.1);
-    ctx.fillStyle = "#f5d0c5";
+    ctx.translate(9 + shoulderSway, 3);
+    ctx.rotate(-armSwing * 0.035 - 0.08);
+    ctx.fillStyle = armGrad;
     ctx.beginPath();
     ctx.moveTo(-2, 0);
-    ctx.quadraticCurveTo(-4, 12, -3, 25);
-    ctx.lineTo(2, 25);
-    ctx.quadraticCurveTo(3, 12, 2, 0);
+    ctx.quadraticCurveTo(-3, 10, -2, 24);
+    ctx.lineTo(2, 24);
+    ctx.quadraticCurveTo(3, 10, 2, 0);
     ctx.closePath();
     ctx.fill();
     ctx.restore();
 
-    // Neck
-    ctx.fillStyle = "#f5d0c5";
-    ctx.fillRect(-4, -8, 8, 10);
-
-    // Head
+    // Elegant neck
+    ctx.fillStyle = skinBase;
     ctx.beginPath();
-    ctx.ellipse(0, -18, 12, 14, 0, 0, Math.PI * 2);
-    ctx.fillStyle = "#f5d0c5";
-    ctx.fill();
-
-    // Hair - long flowing hair
-    ctx.fillStyle = "#2d1810";
-    // Top of head
-    ctx.beginPath();
-    ctx.ellipse(0, -22, 13, 10, 0, Math.PI, 0);
-    ctx.fill();
-
-    // Side hair left
-    ctx.beginPath();
-    ctx.moveTo(-13, -18);
-    ctx.quadraticCurveTo(-16, 0, -14 + hipSway * 0.5, 25);
-    ctx.quadraticCurveTo(-12, 30, -8, 25);
-    ctx.quadraticCurveTo(-10, 5, -11, -15);
+    ctx.moveTo(-3, -10);
+    ctx.quadraticCurveTo(-4, -4, -3, 0);
+    ctx.lineTo(3, 0);
+    ctx.quadraticCurveTo(4, -4, 3, -10);
     ctx.closePath();
     ctx.fill();
 
-    // Side hair right
+    // Head - more oval, model proportions
+    const headGrad = ctx.createRadialGradient(-2, -20, 0, 0, -18, 18);
+    headGrad.addColorStop(0, skinHighlight);
+    headGrad.addColorStop(0.5, skinBase);
+    headGrad.addColorStop(1, skinShadow);
     ctx.beginPath();
-    ctx.moveTo(13, -18);
-    ctx.quadraticCurveTo(16, 0, 14 - hipSway * 0.5, 25);
-    ctx.quadraticCurveTo(12, 30, 8, 25);
-    ctx.quadraticCurveTo(10, 5, 11, -15);
+    ctx.ellipse(0, -20, 11, 14, 0, 0, Math.PI * 2);
+    ctx.fillStyle = headGrad;
+    ctx.fill();
+
+    // Blonde hair - voluminous flowing
+    // Hair base layer
+    ctx.fillStyle = hairBase;
+    ctx.beginPath();
+    ctx.ellipse(0, -24, 14, 11, 0, Math.PI, 0);
+    ctx.fill();
+
+    // Left side hair - long flowing
+    ctx.beginPath();
+    ctx.moveTo(-14, -20);
+    ctx.quadraticCurveTo(-18, -5, -16 + hairFlow * 0.4, 20);
+    ctx.quadraticCurveTo(-15, 35, -10 + hairFlow * 0.3, 40);
+    ctx.quadraticCurveTo(-8, 35, -8 + hairFlow * 0.2, 25);
+    ctx.quadraticCurveTo(-10, 5, -12, -18);
     ctx.closePath();
     ctx.fill();
 
-    // Hair shine
-    ctx.fillStyle = "#4a2c20";
+    // Right side hair
     ctx.beginPath();
-    ctx.ellipse(-4, -26, 5, 3, -0.3, 0, Math.PI * 2);
+    ctx.moveTo(14, -20);
+    ctx.quadraticCurveTo(18, -5, 16 - hairFlow * 0.4, 20);
+    ctx.quadraticCurveTo(15, 35, 10 - hairFlow * 0.3, 40);
+    ctx.quadraticCurveTo(8, 35, 8 - hairFlow * 0.2, 25);
+    ctx.quadraticCurveTo(10, 5, 12, -18);
+    ctx.closePath();
     ctx.fill();
 
-    // Face features
-    // Eyes
-    ctx.fillStyle = "#2d1810";
+    // Hair highlights
+    ctx.fillStyle = hairHighlight;
     ctx.beginPath();
-    ctx.ellipse(-4, -18, 2, 1.5, 0, 0, Math.PI * 2);
+    ctx.ellipse(-5, -28, 6, 4, -0.2, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.ellipse(4, -18, 2, 1.5, 0, 0, Math.PI * 2);
+    ctx.moveTo(-12, -18);
+    ctx.quadraticCurveTo(-14, 0, -13 + hairFlow * 0.3, 15);
+    ctx.quadraticCurveTo(-11, 10, -10, 0);
+    ctx.quadraticCurveTo(-10, -10, -11, -16);
+    ctx.closePath();
     ctx.fill();
 
-    // Eyebrows
-    ctx.strokeStyle = "#2d1810";
-    ctx.lineWidth = 1;
+    // Hair shadow/depth
+    ctx.fillStyle = hairShadow;
     ctx.beginPath();
-    ctx.moveTo(-6, -21);
-    ctx.quadraticCurveTo(-4, -22, -2, -21);
+    ctx.moveTo(10, -18);
+    ctx.quadraticCurveTo(14, 0, 12 - hairFlow * 0.2, 20);
+    ctx.quadraticCurveTo(10, 15, 9, 5);
+    ctx.quadraticCurveTo(9, -5, 10, -16);
+    ctx.closePath();
+    ctx.fill();
+
+    // Face features - more detailed
+    // Cheekbones highlight
+    ctx.fillStyle = "rgba(255, 200, 180, 0.3)";
+    ctx.beginPath();
+    ctx.ellipse(-6, -15, 3, 2, 0.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(6, -15, 3, 2, -0.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Eyes - almond shaped with detail
+    // Eye whites
+    ctx.fillStyle = "#fff";
+    ctx.beginPath();
+    ctx.ellipse(-4, -19, 3, 1.8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(4, -19, 3, 1.8, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Iris - blue/green
+    ctx.fillStyle = "#4a90a4";
+    ctx.beginPath();
+    ctx.arc(-4, -19, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(4, -19, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Pupils
+    ctx.fillStyle = "#1a1a1a";
+    ctx.beginPath();
+    ctx.arc(-4, -19, 0.8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(4, -19, 0.8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Eye catchlight
+    ctx.fillStyle = "#fff";
+    ctx.beginPath();
+    ctx.arc(-4.5, -19.5, 0.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(3.5, -19.5, 0.4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Eyeliner/lashes
+    ctx.strokeStyle = "#2a1a10";
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(-7, -19);
+    ctx.quadraticCurveTo(-4, -21, -1, -19);
     ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(6, -21);
-    ctx.quadraticCurveTo(4, -22, 2, -21);
+    ctx.moveTo(7, -19);
+    ctx.quadraticCurveTo(4, -21, 1, -19);
     ctx.stroke();
 
-    // Nose
-    ctx.fillStyle = "#e8c4b8";
+    // Eyebrows - blonde, groomed
+    ctx.strokeStyle = "#c9a040";
+    ctx.lineWidth = 1.2;
     ctx.beginPath();
-    ctx.moveTo(0, -16);
-    ctx.lineTo(1, -12);
-    ctx.lineTo(-1, -12);
+    ctx.moveTo(-7, -23);
+    ctx.quadraticCurveTo(-4, -24.5, -1, -23);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(7, -23);
+    ctx.quadraticCurveTo(4, -24.5, 1, -23);
+    ctx.stroke();
+
+    // Nose - delicate
+    ctx.strokeStyle = skinShadow;
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(0, -17);
+    ctx.lineTo(0, -13);
+    ctx.stroke();
+    ctx.fillStyle = skinShadow;
+    ctx.beginPath();
+    ctx.ellipse(0, -12, 2, 1, 0, 0, Math.PI);
+    ctx.fill();
+
+    // Lips - full, glossy
+    ctx.fillStyle = "#c45a5a";
+    ctx.beginPath();
+    ctx.moveTo(-4, -8);
+    ctx.quadraticCurveTo(-2, -10, 0, -9);
+    ctx.quadraticCurveTo(2, -10, 4, -8);
+    ctx.quadraticCurveTo(2, -6, 0, -6.5);
+    ctx.quadraticCurveTo(-2, -6, -4, -8);
+    ctx.fill();
+    // Lip highlight
+    ctx.fillStyle = "rgba(255,255,255,0.3)";
+    ctx.beginPath();
+    ctx.ellipse(0, -8.5, 1.5, 0.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Diamond earrings
+    ctx.fillStyle = "#fff";
+    ctx.beginPath();
+    ctx.moveTo(-11, -16);
+    ctx.lineTo(-10, -14);
+    ctx.lineTo(-11, -12);
+    ctx.lineTo(-12, -14);
     ctx.closePath();
     ctx.fill();
-
-    // Lips
-    ctx.fillStyle = "#d4736a";
     ctx.beginPath();
-    ctx.moveTo(-3, -8);
-    ctx.quadraticCurveTo(0, -6, 3, -8);
-    ctx.quadraticCurveTo(0, -5, -3, -8);
+    ctx.moveTo(11, -16);
+    ctx.lineTo(12, -14);
+    ctx.lineTo(11, -12);
+    ctx.lineTo(10, -14);
+    ctx.closePath();
     ctx.fill();
-
-    // Earrings
-    ctx.fillStyle = "#fbbf24";
+    // Earring sparkle
+    ctx.fillStyle = "rgba(255,255,255,0.8)";
     ctx.beginPath();
-    ctx.arc(-11, -14, 2, 0, Math.PI * 2);
+    ctx.arc(-11, -14.5, 0.5, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(11, -14, 2, 0, Math.PI * 2);
+    ctx.arc(11, -14.5, 0.5, 0, Math.PI * 2);
     ctx.fill();
 
-    // Clutch bag
-    ctx.fillStyle = shadeColor(accent, -40);
+    // Designer clutch bag
+    ctx.fillStyle = shadeColor(accent, -45);
     ctx.save();
-    ctx.translate(14 + shoulderSway, 28);
-    ctx.rotate(-armSwing * 0.02);
-    ctx.fillRect(-6, -3, 12, 8);
-    ctx.fillStyle = "#fbbf24";
-    ctx.fillRect(-2, 1, 4, 2);
+    ctx.translate(13 + shoulderSway, 26);
+    ctx.rotate(-armSwing * 0.015);
+    ctx.beginPath();
+    ctx.roundRect(-7, -4, 14, 10, 2);
+    ctx.fill();
+    // Gold clasp
+    ctx.fillStyle = "#d4af37";
+    ctx.beginPath();
+    ctx.roundRect(-3, 0, 6, 3, 1);
+    ctx.fill();
     ctx.restore();
 
     ctx.restore();
@@ -1291,18 +2155,72 @@ export default function CatwalkPage() {
     ctx.fillStyle = spotlightGrad;
     ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-    // Random camera flashes
-    const flashCount = Math.floor(Math.random() * 3) + 2;
+    // Intense camera flashes from media pit
+    const flashCount = Math.floor(Math.random() * 6) + 4;
     for (let i = 0; i < flashCount; i++) {
-      const flashX = Math.random() * CANVAS_WIDTH;
-      const flashY = 250 + Math.random() * 150;
-      const flashGrad = ctx.createRadialGradient(flashX, flashY, 0, flashX, flashY, 30);
-      flashGrad.addColorStop(0, "rgba(255, 255, 255, 0.8)");
-      flashGrad.addColorStop(0.3, "rgba(255, 255, 200, 0.3)");
+      const side = i % 2 === 0 ? 1 : -1;
+      const flashX = CANVAS_WIDTH / 2 + side * (80 + Math.random() * 200);
+      const flashY = 280 + Math.random() * 150;
+      const flashSize = 30 + Math.random() * 40;
+
+      // Main flash
+      const flashGrad = ctx.createRadialGradient(flashX, flashY, 0, flashX, flashY, flashSize);
+      flashGrad.addColorStop(0, "rgba(255, 255, 255, 0.9)");
+      flashGrad.addColorStop(0.2, "rgba(255, 255, 240, 0.6)");
+      flashGrad.addColorStop(0.5, "rgba(255, 250, 200, 0.3)");
       flashGrad.addColorStop(1, "transparent");
       ctx.fillStyle = flashGrad;
-      ctx.fillRect(flashX - 40, flashY - 40, 80, 80);
+      ctx.fillRect(flashX - flashSize * 1.5, flashY - flashSize * 1.5, flashSize * 3, flashSize * 3);
+
+      // Some flashes have lens flare
+      if (Math.random() > 0.6) {
+        ctx.fillStyle = "rgba(255, 255, 200, 0.25)";
+        ctx.fillRect(flashX - 60, flashY - 1, 120, 2);
+        ctx.fillRect(flashX - 1, flashY - 40, 2, 80);
+      }
     }
+
+    // Draw paparazzi silhouettes at bottom
+    for (let i = 0; i < 12; i++) {
+      const papX = 40 + i * 65;
+      const papY = CANVAS_HEIGHT - 60;
+      const isFlashing = Math.random() > 0.7;
+
+      // Photographer body
+      ctx.fillStyle = "#0a0a0a";
+      ctx.fillRect(papX - 12, papY - 10, 24, 40);
+
+      // Head
+      ctx.beginPath();
+      ctx.arc(papX, papY - 18, 10, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Camera
+      ctx.fillStyle = "#1a1a1a";
+      ctx.fillRect(papX - 8, papY, 20, 14);
+      ctx.beginPath();
+      ctx.arc(papX + 4, papY + 7, 6, 0, Math.PI * 2);
+      ctx.fillStyle = isFlashing ? "#fff" : "#333";
+      ctx.fill();
+
+      // Flash on camera
+      if (isFlashing) {
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(papX - 4, papY - 8, 8, 6);
+
+        // Flash effect
+        const flashGrad = ctx.createRadialGradient(papX, papY, 0, papX, papY, 35);
+        flashGrad.addColorStop(0, "rgba(255, 255, 255, 0.7)");
+        flashGrad.addColorStop(1, "transparent");
+        ctx.fillStyle = flashGrad;
+        ctx.fillRect(papX - 40, papY - 40, 80, 80);
+      }
+    }
+
+    // Screen flash overlay for dramatic effect
+    const overallFlash = Math.random() * 0.08;
+    ctx.fillStyle = `rgba(255, 255, 255, ${overallFlash})`;
+    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
     // Title with glow
     ctx.shadowColor = selectedRunway.accentColor;
@@ -1365,21 +2283,21 @@ export default function CatwalkPage() {
     drawModelPose(ctx, 0, 0, poseProgress, selectedRunway.accentColor);
     ctx.restore();
 
-    // Crowd silhouettes at bottom
-    for (let i = 0; i < 20; i++) {
-      const crowdX = (i / 20) * CANVAS_WIDTH;
-      const crowdY = CANVAS_HEIGHT - 30 - Math.random() * 20;
-      ctx.fillStyle = `rgba(0, 0, 0, ${0.5 + Math.random() * 0.3})`;
-      ctx.beginPath();
-      ctx.arc(crowdX, crowdY, 8, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillRect(crowdX - 5, crowdY, 10, 15);
-    }
   }
 
   function drawModelPose(ctx: CanvasRenderingContext2D, x: number, y: number, posePhase: number, accent: string) {
     ctx.save();
     ctx.translate(x, y);
+
+    // Skin tones - fair porcelain (matching drawModel)
+    const skinBase = "#fce4d6";
+    const skinShadow = "#f0c9b8";
+    const skinHighlight = "#fff5f0";
+
+    // Blonde hair colors
+    const hairBase = "#d4a853";
+    const hairHighlight = "#f0d78c";
+    const hairShadow = "#b8923d";
 
     // Dynamic pose based on phase
     const poseAngle = Math.sin(posePhase * Math.PI * 2) * 0.1;
@@ -1391,12 +2309,17 @@ export default function CatwalkPage() {
     ctx.ellipse(0, 95, 25, 8, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Legs in pose stance
+    // Legs in pose stance - with gradient
+    const legGrad = ctx.createLinearGradient(-6, 0, 6, 0);
+    legGrad.addColorStop(0, skinShadow);
+    legGrad.addColorStop(0.5, skinBase);
+    legGrad.addColorStop(1, skinShadow);
+
     // Back leg
     ctx.save();
     ctx.translate(-8, 55);
     ctx.rotate(-0.15);
-    ctx.fillStyle = "#f5d0c5";
+    ctx.fillStyle = legGrad;
     ctx.beginPath();
     ctx.moveTo(-5, 0);
     ctx.quadraticCurveTo(-6, 15, -4, 32);
@@ -1404,24 +2327,28 @@ export default function CatwalkPage() {
     ctx.quadraticCurveTo(6, 15, 5, 0);
     ctx.closePath();
     ctx.fill();
-    // Heel
-    ctx.fillStyle = "#1a1a1a";
+    // Stiletto heel
+    ctx.fillStyle = "#0a0a0a";
     ctx.beginPath();
     ctx.moveTo(-5, 32);
     ctx.lineTo(8, 32);
-    ctx.lineTo(8, 37);
+    ctx.lineTo(7, 37);
     ctx.lineTo(2, 37);
-    ctx.lineTo(0, 44);
+    ctx.lineTo(0, 46);
     ctx.lineTo(-2, 37);
     ctx.lineTo(-5, 37);
     ctx.closePath();
     ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,0.2)";
+    ctx.fillRect(-4, 33, 2, 2);
     ctx.restore();
 
-    // Dress
+    // Dress with gradient
     const dressGrad = ctx.createLinearGradient(-25, 20, 25, 85);
     dressGrad.addColorStop(0, accent);
-    dressGrad.addColorStop(1, shadeColor(accent, -30));
+    dressGrad.addColorStop(0.3, shadeColor(accent, 10));
+    dressGrad.addColorStop(0.7, accent);
+    dressGrad.addColorStop(1, shadeColor(accent, -35));
     ctx.fillStyle = dressGrad;
     ctx.beginPath();
     ctx.moveTo(-12, 20);
@@ -1431,11 +2358,21 @@ export default function CatwalkPage() {
     ctx.closePath();
     ctx.fill();
 
+    // Dress shine
+    ctx.fillStyle = "rgba(255, 255, 255, 0.12)";
+    ctx.beginPath();
+    ctx.moveTo(-4, 22);
+    ctx.quadraticCurveTo(-8, 42, -6, 68);
+    ctx.lineTo(0, 68);
+    ctx.quadraticCurveTo(1, 42, 0, 22);
+    ctx.closePath();
+    ctx.fill();
+
     // Front leg
     ctx.save();
     ctx.translate(6, 55);
     ctx.rotate(0.1);
-    ctx.fillStyle = "#f5d0c5";
+    ctx.fillStyle = legGrad;
     ctx.beginPath();
     ctx.moveTo(-5, 0);
     ctx.quadraticCurveTo(-6, 15, -4, 30);
@@ -1443,21 +2380,28 @@ export default function CatwalkPage() {
     ctx.quadraticCurveTo(6, 15, 5, 0);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = "#1a1a1a";
+    ctx.fillStyle = "#0a0a0a";
     ctx.beginPath();
     ctx.moveTo(-5, 30);
     ctx.lineTo(8, 30);
-    ctx.lineTo(8, 35);
+    ctx.lineTo(7, 35);
     ctx.lineTo(2, 35);
-    ctx.lineTo(0, 42);
+    ctx.lineTo(0, 44);
     ctx.lineTo(-2, 35);
     ctx.lineTo(-5, 35);
     ctx.closePath();
     ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,0.2)";
+    ctx.fillRect(-4, 31, 2, 2);
     ctx.restore();
 
-    // Torso
-    ctx.fillStyle = "#f5d0c5";
+    // Torso with gradient
+    const torsoGrad = ctx.createLinearGradient(-12, 0, 12, 0);
+    torsoGrad.addColorStop(0, skinShadow);
+    torsoGrad.addColorStop(0.3, skinBase);
+    torsoGrad.addColorStop(0.7, skinBase);
+    torsoGrad.addColorStop(1, skinShadow);
+    ctx.fillStyle = torsoGrad;
     ctx.beginPath();
     ctx.moveTo(-10, 0);
     ctx.quadraticCurveTo(-12, 10, -10, 22);
@@ -1476,12 +2420,17 @@ export default function CatwalkPage() {
     ctx.closePath();
     ctx.fill();
 
-    // Arms in pose
+    // Arms with gradient
+    const armGrad = ctx.createLinearGradient(-3, 0, 3, 0);
+    armGrad.addColorStop(0, skinShadow);
+    armGrad.addColorStop(0.5, skinBase);
+    armGrad.addColorStop(1, skinShadow);
+
     // Left arm on hip
     ctx.save();
     ctx.translate(-10, 8);
     ctx.rotate(0.8);
-    ctx.fillStyle = "#f5d0c5";
+    ctx.fillStyle = armGrad;
     ctx.beginPath();
     ctx.moveTo(-2, 0);
     ctx.quadraticCurveTo(-5, 8, -3, 18);
@@ -1495,7 +2444,7 @@ export default function CatwalkPage() {
     ctx.save();
     ctx.translate(10, 5);
     ctx.rotate(-0.3 + Math.sin(posePhase * Math.PI) * 0.2);
-    ctx.fillStyle = "#f5d0c5";
+    ctx.fillStyle = armGrad;
     ctx.beginPath();
     ctx.moveTo(-2, 0);
     ctx.quadraticCurveTo(-4, 12, -3, 28);
@@ -1506,59 +2455,182 @@ export default function CatwalkPage() {
     ctx.restore();
 
     // Neck
-    ctx.fillStyle = "#f5d0c5";
+    ctx.fillStyle = skinBase;
     ctx.fillRect(-4, -8, 8, 10);
 
     // Head tilted
     ctx.save();
     ctx.rotate(0.1);
+
+    // Head with gradient
+    const headGrad = ctx.createRadialGradient(-2, -18, 0, 0, -16, 16);
+    headGrad.addColorStop(0, skinHighlight);
+    headGrad.addColorStop(0.5, skinBase);
+    headGrad.addColorStop(1, skinShadow);
     ctx.beginPath();
     ctx.ellipse(0, -18, 12, 14, 0, 0, Math.PI * 2);
-    ctx.fillStyle = "#f5d0c5";
+    ctx.fillStyle = headGrad;
     ctx.fill();
 
-    // Hair
-    ctx.fillStyle = "#2d1810";
+    // Blonde hair - voluminous
+    ctx.fillStyle = hairBase;
     ctx.beginPath();
-    ctx.ellipse(0, -22, 13, 10, 0, Math.PI, 0);
+    ctx.ellipse(0, -22, 14, 10, 0, Math.PI, 0);
     ctx.fill();
+
+    // Left flowing hair
     ctx.beginPath();
-    ctx.moveTo(-13, -18);
-    ctx.quadraticCurveTo(-16, 0, -14, 25);
-    ctx.quadraticCurveTo(-12, 30, -8, 25);
-    ctx.quadraticCurveTo(-10, 5, -11, -15);
-    ctx.closePath();
-    ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(13, -18);
-    ctx.quadraticCurveTo(16, 0, 14, 25);
-    ctx.quadraticCurveTo(12, 30, 8, 25);
-    ctx.quadraticCurveTo(10, 5, 11, -15);
+    ctx.moveTo(-14, -18);
+    ctx.quadraticCurveTo(-17, 0, -15, 25);
+    ctx.quadraticCurveTo(-13, 30, -9, 25);
+    ctx.quadraticCurveTo(-11, 5, -12, -15);
     ctx.closePath();
     ctx.fill();
 
-    // Face
-    ctx.fillStyle = "#2d1810";
+    // Right flowing hair
     ctx.beginPath();
-    ctx.ellipse(-4, -18, 2, 1.5, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(4, -18, 2, 1.5, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#d4736a";
-    ctx.beginPath();
-    ctx.moveTo(-3, -8);
-    ctx.quadraticCurveTo(0, -6, 3, -8);
-    ctx.quadraticCurveTo(0, -5, -3, -8);
+    ctx.moveTo(14, -18);
+    ctx.quadraticCurveTo(17, 0, 15, 25);
+    ctx.quadraticCurveTo(13, 30, 9, 25);
+    ctx.quadraticCurveTo(11, 5, 12, -15);
+    ctx.closePath();
     ctx.fill();
 
-    // Earrings
-    ctx.fillStyle = "#fbbf24";
+    // Hair highlights
+    ctx.fillStyle = hairHighlight;
     ctx.beginPath();
-    ctx.arc(-11, -14, 2, 0, Math.PI * 2);
+    ctx.ellipse(-5, -26, 6, 4, -0.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Hair shadow/depth
+    ctx.fillStyle = hairShadow;
+    ctx.beginPath();
+    ctx.moveTo(10, -16);
+    ctx.quadraticCurveTo(14, 0, 12, 18);
+    ctx.quadraticCurveTo(10, 12, 9, 5);
+    ctx.quadraticCurveTo(9, -5, 10, -14);
+    ctx.closePath();
+    ctx.fill();
+
+    // Cheekbones highlight
+    ctx.fillStyle = "rgba(255, 200, 180, 0.3)";
+    ctx.beginPath();
+    ctx.ellipse(-6, -14, 3, 2, 0.2, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(11, -14, 2, 0, Math.PI * 2);
+    ctx.ellipse(6, -14, 3, 2, -0.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Eyes - almond shaped with detail
+    ctx.fillStyle = "#fff";
+    ctx.beginPath();
+    ctx.ellipse(-4, -17, 3, 1.8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(4, -17, 3, 1.8, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Iris - blue/green
+    ctx.fillStyle = "#4a90a4";
+    ctx.beginPath();
+    ctx.arc(-4, -17, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(4, -17, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Pupils
+    ctx.fillStyle = "#1a1a1a";
+    ctx.beginPath();
+    ctx.arc(-4, -17, 0.8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(4, -17, 0.8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Eye catchlight
+    ctx.fillStyle = "#fff";
+    ctx.beginPath();
+    ctx.arc(-4.5, -17.5, 0.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(3.5, -17.5, 0.4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Eyeliner/lashes
+    ctx.strokeStyle = "#2a1a10";
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(-7, -17);
+    ctx.quadraticCurveTo(-4, -19, -1, -17);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(7, -17);
+    ctx.quadraticCurveTo(4, -19, 1, -17);
+    ctx.stroke();
+
+    // Blonde eyebrows
+    ctx.strokeStyle = "#c9a040";
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(-7, -21);
+    ctx.quadraticCurveTo(-4, -22.5, -1, -21);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(7, -21);
+    ctx.quadraticCurveTo(4, -22.5, 1, -21);
+    ctx.stroke();
+
+    // Nose
+    ctx.strokeStyle = skinShadow;
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(0, -15);
+    ctx.lineTo(0, -11);
+    ctx.stroke();
+    ctx.fillStyle = skinShadow;
+    ctx.beginPath();
+    ctx.ellipse(0, -10, 2, 1, 0, 0, Math.PI);
+    ctx.fill();
+
+    // Lips - full, glossy
+    ctx.fillStyle = "#c45a5a";
+    ctx.beginPath();
+    ctx.moveTo(-4, -6);
+    ctx.quadraticCurveTo(-2, -8, 0, -7);
+    ctx.quadraticCurveTo(2, -8, 4, -6);
+    ctx.quadraticCurveTo(2, -4, 0, -4.5);
+    ctx.quadraticCurveTo(-2, -4, -4, -6);
+    ctx.fill();
+    // Lip highlight
+    ctx.fillStyle = "rgba(255,255,255,0.3)";
+    ctx.beginPath();
+    ctx.ellipse(0, -6.5, 1.5, 0.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Diamond earrings
+    ctx.fillStyle = "#fff";
+    ctx.beginPath();
+    ctx.moveTo(-12, -14);
+    ctx.lineTo(-11, -12);
+    ctx.lineTo(-12, -10);
+    ctx.lineTo(-13, -12);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(12, -14);
+    ctx.lineTo(13, -12);
+    ctx.lineTo(12, -10);
+    ctx.lineTo(11, -12);
+    ctx.closePath();
+    ctx.fill();
+    // Earring sparkle
+    ctx.fillStyle = "rgba(255,255,255,0.8)";
+    ctx.beginPath();
+    ctx.arc(-12, -12.5, 0.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(12, -12.5, 0.5, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.restore();
