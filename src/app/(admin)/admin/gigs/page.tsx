@@ -1918,6 +1918,19 @@ export default function AdminGigsPage() {
                               Paid ✓
                             </Badge>
                           )}
+                          {app.payment_status === "interested" && (
+                            <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-500 border-amber-500/30">
+                              Interested
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+                      {/* Show interested badge even without trip_number */}
+                      {!app.trip_number && app.payment_status === "interested" && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-500 border-amber-500/30">
+                            Interested
+                          </Badge>
                         </div>
                       )}
                       {app.instagram_handle && (

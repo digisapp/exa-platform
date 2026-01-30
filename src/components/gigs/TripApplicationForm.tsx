@@ -4,13 +4,11 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import {
   Loader2,
   Calendar,
-  CreditCard,
   CheckCircle,
   Plane,
 } from "lucide-react";
@@ -30,8 +28,9 @@ export function TripApplicationForm({
 }: TripApplicationFormProps) {
   const [tripNumber, setTripNumber] = useState<"1" | "2">("1");
   const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
-  const handlePaidCheckout = async () => {
+  const handleApply = async () => {
     if (!modelId) {
       toast.error("Please sign in to continue");
       return;
@@ -39,7 +38,7 @@ export function TripApplicationForm({
 
     setLoading(true);
     try {
-      const response = await fetch("/api/trips/checkout", {
+      const response = await fetch("/api/trips/interest", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -52,15 +51,15 @@ export function TripApplicationForm({
       const data = await response.json();
 
       if (!response.ok) {
-        toast.error(data.error || "Failed to create checkout session");
+        toast.error(data.error || "Failed to submit application");
         return;
       }
 
-      // Redirect to Stripe Checkout
-      window.location.href = data.checkoutUrl;
+      setSubmitted(true);
+      toast.success("Application submitted! We'll reach out to you soon.");
     } catch (error) {
-      console.error("Checkout error:", error);
-      toast.error("Failed to start checkout");
+      console.error("Apply error:", error);
+      toast.error("Failed to submit application");
     } finally {
       setLoading(false);
     }
@@ -76,6 +75,22 @@ export function TripApplicationForm({
             <Button asChild className="w-full">
               <a href={`/signin?redirect=/gigs/${gigSlug}`}>Sign In</a>
             </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (submitted) {
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <div className="text-center space-y-4">
+            <CheckCircle className="h-12 w-12 mx-auto text-green-500" />
+            <p className="font-medium">Application Submitted!</p>
+            <p className="text-muted-foreground text-sm">
+              We&apos;ll reach out to you soon with more details about the trip.
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -136,57 +151,23 @@ export function TripApplicationForm({
           </RadioGroup>
         </div>
 
-        {/* What's Included */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <p className="font-medium flex items-center gap-2">
-              <CreditCard className="h-4 w-4" />
-              Trip Cost
-            </p>
-            <Badge className="bg-green-500">$1,400</Badge>
-          </div>
-          <div className="p-4 rounded-lg bg-muted">
-            <h4 className="font-medium mb-2">What&apos;s Included:</h4>
-            <ul className="text-sm text-muted-foreground space-y-1">
-              <li className="flex items-center gap-2">
-                <CheckCircle className="h-3 w-3 text-green-500" />
-                Your own bed in the villa
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle className="h-3 w-3 text-green-500" />
-                3 meals per day
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle className="h-3 w-3 text-green-500" />
-                Designer swimwear photoshoots
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle className="h-3 w-3 text-green-500" />
-                Runway workshop & yoga sessions
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle className="h-3 w-3 text-green-500" />
-                Airport transportation
-              </li>
-            </ul>
-            <p className="text-xs text-muted-foreground mt-3">
-              * Airfare not included - you book your own flight to Santo Domingo (SDQ)
-            </p>
-          </div>
-          <Button
-            onClick={handlePaidCheckout}
-            disabled={loading}
-            className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
-            size="lg"
-          >
-            {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            ) : (
-              <CreditCard className="h-4 w-4 mr-2" />
-            )}
-            Pay $1,400 & Secure Your Spot
-          </Button>
-        </div>
+        {/* Apply Button */}
+        <Button
+          onClick={handleApply}
+          disabled={loading}
+          className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
+          size="lg"
+        >
+          {loading ? (
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+          ) : (
+            <Plane className="h-4 w-4 mr-2" />
+          )}
+          Apply for This Trip
+        </Button>
+        <p className="text-xs text-center text-muted-foreground">
+          Submit your application and we&apos;ll reach out with next steps.
+        </p>
       </CardContent>
     </Card>
   );
