@@ -228,11 +228,11 @@ export default async function GigDetailPage({ params }: Props) {
               </Card>
             )}
 
-            {/* Compensation */}
+            {/* Cost */}
             {gig.compensation_description && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Compensation</CardTitle>
+                  <CardTitle>Cost</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground">{gig.compensation_description}</p>
@@ -346,7 +346,7 @@ export default async function GigDetailPage({ params }: Props) {
                       <div className="flex items-center justify-between">
                         <span className="text-muted-foreground flex items-center gap-2">
                           <DollarSign className="h-4 w-4" />
-                          Compensation
+                          Cost
                         </span>
                         <span className="font-medium capitalize">
                           {gig.compensation_type === "paid" && gig.compensation_amount > 0 ? (

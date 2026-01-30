@@ -94,8 +94,8 @@ export async function POST(request: NextRequest) {
     const failedEmails: string[] = [];
 
     // Process in batches to avoid rate limits
-    // Resend has a rate limit of 10 emails/second, so we send 10 emails then wait 1 second
-    const batchSize = 10;
+    // Resend has a rate limit of 2 emails/second, so we send 2 emails then wait 1 second
+    const batchSize = 2;
     const batchDelayMs = 1100; // Slightly over 1 second to be safe
 
     console.log(`Starting gig announcement to ${models.length} models in batches of ${batchSize}`);
