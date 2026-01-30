@@ -55,6 +55,7 @@ interface Gig {
   type: string;
   description: string;
   cover_image_url: string | null;
+  gallery_images: string[] | null;
   location_city: string;
   location_state: string;
   start_at: string;
@@ -200,6 +201,7 @@ export default function AdminGigsPage() {
     type: "show",
     description: "",
     cover_image_url: "",
+    gallery_images: [] as string[],
     location_city: "",
     location_state: "",
     start_date: "",
@@ -211,6 +213,7 @@ export default function AdminGigsPage() {
     spots: 10,
     event_id: "",
   });
+  const [uploadingGallery, setUploadingGallery] = useState(false);
 
   useEffect(() => {
     loadGigs();
@@ -343,6 +346,7 @@ export default function AdminGigsPage() {
       type: "show",
       description: "",
       cover_image_url: "",
+      gallery_images: [],
       location_city: "",
       location_state: "",
       start_date: "",
@@ -392,6 +396,7 @@ export default function AdminGigsPage() {
       type: gig.type,
       description: gig.description || "",
       cover_image_url: gig.cover_image_url || "",
+      gallery_images: gig.gallery_images || [],
       location_city: gig.location_city || "",
       location_state: gig.location_state || "",
       start_date: startDate,
@@ -467,6 +472,91 @@ export default function AdminGigsPage() {
     }
   }
 
+  async function handleGalleryImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    // Check if adding these would exceed 10 images
+    const remainingSlots = 10 - formData.gallery_images.length;
+    if (files.length > remainingSlots) {
+      toast.error(`You can only add ${remainingSlots} more image${remainingSlots !== 1 ? 's' : ''} (max 10 total)`);
+      return;
+    }
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    const maxSize = 10 * 1024 * 1024; // 10MB
+
+    // Validate all files first
+    for (const file of Array.from(files)) {
+      if (!allowedTypes.includes(file.type)) {
+        toast.error(`Invalid file type for ${file.name}. Use JPEG, PNG, WebP, or GIF.`);
+        return;
+      }
+      if (file.size > maxSize) {
+        toast.error(`${file.name} is too large. Maximum size is 10MB.`);
+        return;
+      }
+    }
+
+    setUploadingGallery(true);
+    const uploadedUrls: string[] = [];
+
+    try {
+      for (const file of Array.from(files)) {
+        // Get signed upload URL
+        const response = await fetch("/api/admin/gigs/upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            filename: file.name,
+            contentType: file.type,
+          }),
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          toast.error(data.error || `Failed to upload ${file.name}`);
+          continue;
+        }
+
+        // Upload to storage
+        const uploadResponse = await fetch(data.signedUrl, {
+          method: "PUT",
+          headers: { "Content-Type": file.type },
+          body: file,
+        });
+
+        if (uploadResponse.ok) {
+          uploadedUrls.push(data.publicUrl);
+        } else {
+          toast.error(`Failed to upload ${file.name}`);
+        }
+      }
+
+      if (uploadedUrls.length > 0) {
+        setFormData(prev => ({
+          ...prev,
+          gallery_images: [...prev.gallery_images, ...uploadedUrls],
+        }));
+        toast.success(`${uploadedUrls.length} image${uploadedUrls.length !== 1 ? 's' : ''} uploaded!`);
+      }
+    } catch (error) {
+      console.error("Gallery upload error:", error);
+      toast.error("Failed to upload images");
+    } finally {
+      setUploadingGallery(false);
+      // Reset the input
+      e.target.value = "";
+    }
+  }
+
+  function removeGalleryImage(index: number) {
+    setFormData(prev => ({
+      ...prev,
+      gallery_images: prev.gallery_images.filter((_, i) => i !== index),
+    }));
+  }
+
   // Helper to combine date and optional time into timestamp
   function combineDateTime(date: string, time: string): string | null {
     if (!date) return null;
@@ -493,6 +583,7 @@ export default function AdminGigsPage() {
             type: formData.type,
             description: formData.description,
             cover_image_url: formData.cover_image_url || null,
+            gallery_images: formData.gallery_images.length > 0 ? formData.gallery_images : null,
             location_city: formData.location_city,
             location_state: formData.location_state,
             start_at: startAt,
@@ -521,6 +612,7 @@ export default function AdminGigsPage() {
             type: formData.type,
             description: formData.description,
             cover_image_url: formData.cover_image_url || null,
+            gallery_images: formData.gallery_images.length > 0 ? formData.gallery_images : null,
             location_city: formData.location_city,
             location_state: formData.location_state,
             start_at: startAt,
@@ -1150,6 +1242,54 @@ export default function AdminGigsPage() {
                     <p>Max size: 10MB</p>
                   </div>
                 </div>
+              </div>
+
+              {/* Gallery Images */}
+              <div className="space-y-2">
+                <Label>Gallery Photos <span className="text-muted-foreground text-xs">(optional, up to 10)</span></Label>
+                <div className="flex flex-wrap gap-3">
+                  {formData.gallery_images.map((url, index) => (
+                    <div key={index} className="relative">
+                      <img
+                        src={url}
+                        alt={`Gallery ${index + 1}`}
+                        className="w-24 h-24 object-cover rounded-lg border"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute -top-2 -right-2 h-5 w-5"
+                        onClick={() => removeGalleryImage(index)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                  {formData.gallery_images.length < 10 && (
+                    <label className="flex flex-col items-center justify-center w-24 h-24 border-2 border-dashed border-muted-foreground/25 rounded-lg cursor-pointer hover:border-muted-foreground/50 transition-colors">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={handleGalleryImageUpload}
+                        disabled={uploadingGallery}
+                      />
+                      {uploadingGallery ? (
+                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                      ) : (
+                        <>
+                          <ImageIcon className="h-6 w-6 text-muted-foreground mb-1" />
+                          <span className="text-xs text-muted-foreground">Add</span>
+                        </>
+                      )}
+                    </label>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {formData.gallery_images.length}/10 photos • Click to add multiple at once
+                </p>
               </div>
 
               <div className="grid md:grid-cols-3 gap-4">
