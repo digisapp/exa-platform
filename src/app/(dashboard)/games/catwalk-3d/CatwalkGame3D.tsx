@@ -489,7 +489,6 @@ function ThemedRunway({ theme }: { theme: ThemeId }) {
         color={themeData.accentColor}
         anchorX="center"
         anchorY="middle"
-        font="/fonts/inter-bold.woff"
       >
         EXA COUTURE
       </Text>
