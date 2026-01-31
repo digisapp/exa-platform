@@ -31,11 +31,11 @@ import {
 // KARL LAGERFELD INSPIRED GAME CONSTANTS
 // ============================================
 
-const RUNWAY_LENGTH = 120; // Much longer runway for dramatic effect
+const RUNWAY_LENGTH = 60; // Balanced runway length
 const RUNWAY_WIDTH = 5;
 const LANE_COUNT = 3;
 const LANE_WIDTH = RUNWAY_WIDTH / LANE_COUNT;
-const WALK_SPEED = 0.12;
+const WALK_SPEED = 0.25; // Faster walk speed
 
 // Lagerfeld-inspired runway themes
 const RUNWAY_THEMES = {
@@ -417,21 +417,13 @@ function ThemedRunway({ theme }: { theme: ThemeId }) {
 
   return (
     <group>
-      {/* Main runway floor */}
+      {/* Main runway floor - simplified for performance */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, -RUNWAY_LENGTH / 2]}>
         <planeGeometry args={[RUNWAY_WIDTH, RUNWAY_LENGTH]} />
-        <MeshReflectorMaterial
-          blur={[400, 100]}
-          resolution={1024}
-          mixBlur={1}
-          mixStrength={50}
-          roughness={0.8}
-          depthScale={1.5}
-          minDepthThreshold={0.4}
-          maxDepthThreshold={1.4}
+        <meshStandardMaterial
           color={themeData.floorColor}
-          metalness={0.6}
-          mirror={0.6}
+          metalness={0.8}
+          roughness={0.2}
         />
       </mesh>
 
@@ -459,18 +451,15 @@ function ThemedRunway({ theme }: { theme: ThemeId }) {
         <meshStandardMaterial color={themeData.accentColor} emissive={themeData.accentColor} emissiveIntensity={0.8} />
       </mesh>
 
-      {/* Runway spotlights */}
-      {Array.from({ length: 15 }).map((_, i) => (
-        <group key={i}>
-          <spotLight
-            position={[0, 8, -i * 8]}
-            angle={0.3}
-            penumbra={0.5}
-            intensity={1.5}
-            color="#ffffff"
-            target-position={[0, 0, -i * 8]}
-          />
-        </group>
+      {/* Runway spotlights - reduced for performance */}
+      {Array.from({ length: 4 }).map((_, i) => (
+        <pointLight
+          key={i}
+          position={[0, 6, -i * 15]}
+          intensity={2}
+          color="#ffffff"
+          distance={20}
+        />
       ))}
 
       {/* Theme-specific decorations */}
@@ -1013,28 +1002,21 @@ function PoseStationMesh({ station, playerZ }: { station: PoseStation; playerZ: 
 // ============================================
 
 function Audience({ theme }: { theme: ThemeId }) {
+  // Simplified audience - just 1 row with fewer members for performance
   const audienceData = useMemo(() => {
-    const left: Array<{ pos: [number, number, number]; rot: number; phone: boolean }> = [];
-    const right: Array<{ pos: [number, number, number]; rot: number; phone: boolean }> = [];
+    const left: Array<{ pos: [number, number, number]; rot: number }> = [];
+    const right: Array<{ pos: [number, number, number]; rot: number }> = [];
 
-    for (let row = 0; row < 3; row++) {
-      for (let i = 0; i < 20; i++) {
-        const z = -5 - i * 5.5;
-        const xOffset = row * 0.7;
-        const yOffset = row * 0.15;
-
-        left.push({
-          pos: [-(RUNWAY_WIDTH / 2 + 1.8 + xOffset), yOffset, z],
-          rot: Math.PI / 5,
-          phone: Math.random() > 0.6,
-        });
-
-        right.push({
-          pos: [RUNWAY_WIDTH / 2 + 1.8 + xOffset, yOffset, z],
-          rot: -Math.PI / 5,
-          phone: Math.random() > 0.6,
-        });
-      }
+    for (let i = 0; i < 8; i++) {
+      const z = -8 - i * 7;
+      left.push({
+        pos: [-(RUNWAY_WIDTH / 2 + 2), 0, z],
+        rot: Math.PI / 5,
+      });
+      right.push({
+        pos: [RUNWAY_WIDTH / 2 + 2, 0, z],
+        rot: -Math.PI / 5,
+      });
     }
 
     return { left, right };
@@ -1042,65 +1024,38 @@ function Audience({ theme }: { theme: ThemeId }) {
 
   return (
     <group>
-      {/* Seating risers */}
-      {[0, 1, 2].map((row) => (
-        <group key={row}>
-          <mesh position={[-(RUNWAY_WIDTH / 2 + 2.1 + row * 0.7), row * 0.15, -RUNWAY_LENGTH / 2]}>
-            <boxGeometry args={[0.8, 0.15 + row * 0.15, RUNWAY_LENGTH - 8]} />
-            <meshStandardMaterial color="#0a0a0e" />
-          </mesh>
-          <mesh position={[RUNWAY_WIDTH / 2 + 2.1 + row * 0.7, row * 0.15, -RUNWAY_LENGTH / 2]}>
-            <boxGeometry args={[0.8, 0.15 + row * 0.15, RUNWAY_LENGTH - 8]} />
-            <meshStandardMaterial color="#0a0a0e" />
-          </mesh>
-        </group>
-      ))}
+      {/* Single seating riser per side */}
+      <mesh position={[-(RUNWAY_WIDTH / 2 + 2.1), 0.1, -RUNWAY_LENGTH / 2]}>
+        <boxGeometry args={[1.5, 0.2, RUNWAY_LENGTH - 8]} />
+        <meshStandardMaterial color="#0a0a0e" />
+      </mesh>
+      <mesh position={[RUNWAY_WIDTH / 2 + 2.1, 0.1, -RUNWAY_LENGTH / 2]}>
+        <boxGeometry args={[1.5, 0.2, RUNWAY_LENGTH - 8]} />
+        <meshStandardMaterial color="#0a0a0e" />
+      </mesh>
 
-      {/* Audience members */}
+      {/* Simplified audience members - no phone flashes for performance */}
       {audienceData.left.map((a, i) => (
-        <AudienceMember key={`left-${i}`} position={a.pos} rotation={a.rot} hasPhone={a.phone} />
+        <SimpleAudienceMember key={`left-${i}`} position={a.pos} rotation={a.rot} />
       ))}
       {audienceData.right.map((a, i) => (
-        <AudienceMember key={`right-${i}`} position={a.pos} rotation={a.rot} hasPhone={a.phone} />
+        <SimpleAudienceMember key={`right-${i}`} position={a.pos} rotation={a.rot} />
       ))}
     </group>
   );
 }
 
-function AudienceMember({ position, rotation, hasPhone }: { position: [number, number, number]; rotation: number; hasPhone: boolean }) {
-  const [flash, setFlash] = useState(false);
-
-  useEffect(() => {
-    if (hasPhone) {
-      const interval = setInterval(() => {
-        if (Math.random() > 0.92) {
-          setFlash(true);
-          setTimeout(() => setFlash(false), 120);
-        }
-      }, 1500 + Math.random() * 2500);
-      return () => clearInterval(interval);
-    }
-  }, [hasPhone]);
-
+function SimpleAudienceMember({ position, rotation }: { position: [number, number, number]; rotation: number }) {
   return (
     <group position={position} rotation={[0, rotation, 0]}>
       <mesh position={[0, 0.35, 0]}>
-        <capsuleGeometry args={[0.08, 0.22, 6, 12]} />
-        <meshStandardMaterial color="#1a1a2e" />
+        <capsuleGeometry args={[0.08, 0.22, 4, 8]} />
+        <meshBasicMaterial color="#1a1a2e" />
       </mesh>
       <mesh position={[0, 0.65, 0]}>
-        <sphereGeometry args={[0.07, 10, 10]} />
-        <meshStandardMaterial color="#2a2a3e" />
+        <sphereGeometry args={[0.07, 8, 8]} />
+        <meshBasicMaterial color="#2a2a3e" />
       </mesh>
-      {hasPhone && (
-        <group position={[0, 0.5, 0.12]}>
-          <mesh>
-            <boxGeometry args={[0.035, 0.06, 0.008]} />
-            <meshStandardMaterial color={flash ? "#ffffff" : "#222"} emissive={flash ? "#ffffff" : "#000"} emissiveIntensity={flash ? 2 : 0} />
-          </mesh>
-          {flash && <pointLight position={[0, 0, 0.03]} color="#ffffff" intensity={15} distance={4} />}
-        </group>
-      )}
     </group>
   );
 }
@@ -1110,68 +1065,40 @@ function MediaPit({ theme }: { theme: ThemeId }) {
 
   return (
     <group position={[0, 0, -RUNWAY_LENGTH - 2]}>
-      {/* Barrier */}
-      <mesh position={[0, 0.45, 1]}>
-        <boxGeometry args={[10, 0.06, 0.06]} />
-        <meshStandardMaterial color="#333" metalness={0.9} />
+      {/* Simple barrier */}
+      <mesh position={[0, 0.3, 1]}>
+        <boxGeometry args={[8, 0.05, 0.05]} />
+        <meshBasicMaterial color="#333" />
       </mesh>
-      {[-4, -2, 0, 2, 4].map((x, i) => (
-        <mesh key={i} position={[x, 0.22, 1]}>
-          <cylinderGeometry args={[0.03, 0.03, 0.45, 8]} />
-          <meshStandardMaterial color="#333" metalness={0.9} />
-        </mesh>
+
+      {/* Simplified photographers - just 3 */}
+      {[-2, 0, 2].map((x, i) => (
+        <SimplePhotographer key={i} position={[x, 0, -0.5]} />
       ))}
 
-      {/* Photographers */}
-      {[-4, -2.5, -1, 0, 1, 2.5, 4].map((x, i) => (
-        <Photographer key={i} position={[x, 0, -1 - Math.abs(x) * 0.3]} rotation={x * 0.08} accentColor={themeData.accentColor} />
-      ))}
-
-      <Text position={[0, 0.7, 0.8]} fontSize={0.12} color={themeData.accentColor} anchorX="center">
+      <Text position={[0, 0.6, 0.8]} fontSize={0.1} color={themeData.accentColor} anchorX="center">
         PRESS
       </Text>
     </group>
   );
 }
 
-function Photographer({ position, rotation, accentColor }: { position: [number, number, number]; rotation: number; accentColor: string }) {
-  const [flash, setFlash] = useState(false);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (Math.random() > 0.6) {
-        setFlash(true);
-        setTimeout(() => setFlash(false), 80);
-      }
-    }, 400 + Math.random() * 800);
-    return () => clearInterval(interval);
-  }, []);
-
+function SimplePhotographer({ position }: { position: [number, number, number] }) {
   return (
-    <group position={position} rotation={[0, rotation, 0]}>
-      <mesh position={[0, 0.55, 0]}>
-        <capsuleGeometry args={[0.1, 0.4, 6, 12]} />
-        <meshStandardMaterial color="#1a1a2e" />
+    <group position={position}>
+      <mesh position={[0, 0.5, 0]}>
+        <capsuleGeometry args={[0.1, 0.35, 4, 8]} />
+        <meshBasicMaterial color="#1a1a2e" />
       </mesh>
-      <mesh position={[0, 0.95, 0]}>
-        <sphereGeometry args={[0.09, 12, 12]} />
-        <meshStandardMaterial color="#c4a080" />
+      <mesh position={[0, 0.85, 0]}>
+        <sphereGeometry args={[0.08, 8, 8]} />
+        <meshBasicMaterial color="#c4a080" />
       </mesh>
       {/* Camera */}
-      <mesh position={[0, 0.75, 0.12]}>
-        <boxGeometry args={[0.1, 0.07, 0.08]} />
-        <meshStandardMaterial color="#111" metalness={0.9} />
+      <mesh position={[0, 0.7, 0.1]}>
+        <boxGeometry args={[0.08, 0.06, 0.06]} />
+        <meshBasicMaterial color="#111" />
       </mesh>
-      <mesh position={[0, 0.75, 0.18]} rotation={[Math.PI / 2, 0, 0]}>
-        <cylinderGeometry args={[0.03, 0.035, 0.06, 12]} />
-        <meshStandardMaterial color="#222" metalness={0.95} />
-      </mesh>
-      {/* Flash */}
-      <mesh position={[0, 0.85, 0.12]}>
-        <boxGeometry args={[0.07, 0.035, 0.025]} />
-        <meshStandardMaterial color={flash ? "#fff" : "#444"} emissive={flash ? "#fff" : "#000"} emissiveIntensity={flash ? 3 : 0} />
-      </mesh>
-      {flash && <pointLight position={[0, 0.85, 0.15]} color="#ffffff" intensity={80} distance={12} />}
     </group>
   );
 }
@@ -1241,18 +1168,17 @@ function GameScene({
 
   return (
     <>
-      {/* Lighting */}
-      <ambientLight intensity={0.25} />
-      <directionalLight position={[5, 15, 5]} intensity={0.8} castShadow />
-      <spotLight position={[0, 12, -RUNWAY_LENGTH / 2]} angle={0.4} penumbra={0.6} intensity={1.5} color="#ffffff" />
+      {/* Lighting - simplified */}
+      <ambientLight intensity={0.4} />
+      <directionalLight position={[5, 15, 5]} intensity={1} />
 
-      {/* Themed atmosphere */}
+      {/* Themed atmosphere - reduced particles */}
       <Sparkles
-        count={150}
-        scale={[12, 6, RUNWAY_LENGTH]}
+        count={30}
+        scale={[10, 4, RUNWAY_LENGTH]}
         position={[0, 3, -RUNWAY_LENGTH / 2]}
-        size={2.5}
-        speed={0.4}
+        size={2}
+        speed={0.3}
         color={themeData.accentColor}
       />
 
@@ -1351,35 +1277,36 @@ export default function CatwalkGame3D() {
 
     const types = obstacleTypes[themeId];
 
-    for (let i = 0; i < 18; i++) {
+    // Reduced obstacles for shorter runway
+    for (let i = 0; i < 8; i++) {
       newObstacles.push({
         id: i,
-        z: 12 + i * 6,
+        z: 10 + i * 7,
         lane: Math.floor(Math.random() * 3),
         type: types[Math.floor(Math.random() * types.length)],
         hit: false,
       });
     }
 
-    // Generate gems with variety
-    const gemTypes: GemObject["type"][] = ["normal", "normal", "normal", "gold", "diamond", "pearl"];
-    for (let i = 0; i < 25; i++) {
+    // Reduced gems for shorter runway
+    const gemTypes: GemObject["type"][] = ["normal", "normal", "gold", "diamond"];
+    for (let i = 0; i < 12; i++) {
       const type = gemTypes[Math.floor(Math.random() * gemTypes.length)];
       newGems.push({
         id: i,
-        z: 8 + i * 4.5,
+        z: 6 + i * 5,
         lane: Math.floor(Math.random() * 3),
         collected: false,
         type,
-        value: type === "diamond" ? 50 : type === "gold" ? 25 : type === "pearl" ? 15 : 10,
+        value: type === "diamond" ? 50 : type === "gold" ? 25 : 10,
       });
     }
 
-    // Generate pose stations
-    for (let i = 0; i < 5; i++) {
+    // Reduced pose stations
+    for (let i = 0; i < 3; i++) {
       newPoseStations.push({
         id: i,
-        z: 20 + i * 22,
+        z: 15 + i * 18,
         completed: false,
         score: 0,
       });
