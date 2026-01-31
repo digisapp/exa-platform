@@ -138,8 +138,8 @@ export default function TrafficPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [days]);
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
+  const formatDate = (label: unknown) => {
+    const date = new Date(String(label));
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   };
 
