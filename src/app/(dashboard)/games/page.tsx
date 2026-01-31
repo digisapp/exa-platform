@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Gem, Sparkles, Dices, Clock, Gift, Trophy, ArrowRight, Loader2, Heart, Zap, Crown, Box } from "lucide-react";
+import { Gem, Sparkles, Clock, Trophy, ArrowRight, Loader2, Heart, Box } from "lucide-react";
 
 interface GameInfo {
   id: string;
@@ -21,38 +21,17 @@ interface GameInfo {
 
 export default function GamesPage() {
   const [gemBalance, setGemBalance] = useState<number | null>(null);
-  const [canSpin, setCanSpin] = useState(true);
-  const [canOpenBox, setCanOpenBox] = useState(true);
   const [modelLifeAvailable, setModelLifeAvailable] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchGameData() {
       try {
-        // Fetch all game statuses in parallel
-        const [spinResponse, boxResponse, lifeResponse] = await Promise.all([
-          fetch("/api/games/status"),
-          fetch("/api/games/mystery-box"),
-          fetch("/api/games/model-life"),
-        ]);
-
-        if (spinResponse.ok) {
-          const spinData = await spinResponse.json();
-          setGemBalance(spinData.gemBalance);
-          setCanSpin(spinData.canSpin);
-        }
-
-        if (boxResponse.ok) {
-          const boxData = await boxResponse.json();
-          setCanOpenBox(boxData.canOpen);
-          // Use box balance if spin didn't return one
-          if (gemBalance === null) {
-            setGemBalance(boxData.gemBalance);
-          }
-        }
+        const lifeResponse = await fetch("/api/games/model-life");
 
         if (lifeResponse.ok) {
           const lifeData = await lifeResponse.json();
+          setGemBalance(lifeData.gemBalance);
           // Count available activities
           const available = lifeData.activities?.filter((a: any) => a.available).length || 0;
           setModelLifeAvailable(available);
@@ -68,24 +47,14 @@ export default function GamesPage() {
 
   const games: GameInfo[] = [
     {
-      id: "daily-spin",
-      title: "Daily Spin",
-      description: "Spin the wheel once a day for a chance to win gems!",
-      icon: <Dices className="h-8 w-8" />,
-      href: "/games/daily-spin",
-      reward: "Up to 500 gems",
-      cooldown: "24 hours",
-      available: canSpin,
-    },
-    {
-      id: "mystery-box",
-      title: "Mystery Box",
-      description: "Open mystery boxes for surprise gem rewards!",
-      icon: <Gift className="h-8 w-8" />,
-      href: "/games/mystery-box",
-      reward: "5-500 gems",
-      cooldown: "Weekly",
-      available: canOpenBox,
+      id: "catwalk-3d",
+      title: "Catwalk 3D",
+      description: "Experience the runway in stunning 3D! Walk, pose, and dazzle the paparazzi!",
+      icon: <Box className="h-8 w-8" />,
+      href: "/games/catwalk-3d",
+      reward: "Up to 3x gem multiplier",
+      cooldown: "Unlimited",
+      available: true,
     },
     {
       id: "model-life",
@@ -96,36 +65,6 @@ export default function GamesPage() {
       reward: "Earn & spend gems",
       cooldown: "Various",
       available: modelLifeAvailable > 0,
-    },
-    {
-      id: "runway-rush",
-      title: "Runway Rush",
-      description: "Endless runner! Jump over obstacles and collect gems on the runway!",
-      icon: <Zap className="h-8 w-8" />,
-      href: "/games/runway-rush",
-      reward: "Keep what you collect",
-      cooldown: "Unlimited",
-      available: true,
-    },
-    {
-      id: "catwalk",
-      title: "Catwalk",
-      description: "Walk world-famous runways, dodge obstacles, and strike poses!",
-      icon: <Crown className="h-8 w-8" />,
-      href: "/games/catwalk",
-      reward: "Up to 3x gem multiplier",
-      cooldown: "Unlimited",
-      available: true,
-    },
-    {
-      id: "catwalk-3d",
-      title: "Catwalk 3D",
-      description: "Experience the runway in stunning 3D! Walk, pose, and dazzle the paparazzi!",
-      icon: <Box className="h-8 w-8" />,
-      href: "/games/catwalk-3d",
-      reward: "Up to 3x gem multiplier",
-      cooldown: "Unlimited",
-      available: true,
     },
     {
       id: "style-clash",
@@ -276,12 +215,12 @@ export default function GamesPage() {
           <div className="grid gap-4 md:grid-cols-3">
             <div className="flex items-start gap-3">
               <div className="p-2 rounded-lg bg-pink-500/20 text-pink-500">
-                <Dices className="h-5 w-5" />
+                <Box className="h-5 w-5" />
               </div>
               <div>
                 <p className="font-medium">Play Games</p>
                 <p className="text-sm text-muted-foreground">
-                  Spin the wheel, vote in battles, and complete challenges
+                  Walk the runway, complete activities, and vote in battles
                 </p>
               </div>
             </div>
@@ -292,13 +231,13 @@ export default function GamesPage() {
               <div>
                 <p className="font-medium">Collect Gems</p>
                 <p className="text-sm text-muted-foreground">
-                  Earn gems based on your luck and participation
+                  Earn gems based on your performance and participation
                 </p>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <div className="p-2 rounded-lg bg-violet-500/20 text-violet-400">
-                <Gift className="h-5 w-5" />
+                <Trophy className="h-5 w-5" />
               </div>
               <div>
                 <p className="font-medium">Unlock Rewards</p>
