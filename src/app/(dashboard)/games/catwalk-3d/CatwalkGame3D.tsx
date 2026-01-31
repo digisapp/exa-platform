@@ -31,11 +31,15 @@ import {
 // KARL LAGERFELD INSPIRED GAME CONSTANTS
 // ============================================
 
-const RUNWAY_LENGTH = 60; // Balanced runway length
+const RUNWAY_LENGTH = 80; // Good runway length for gameplay
 const RUNWAY_WIDTH = 5;
 const LANE_COUNT = 3;
 const LANE_WIDTH = RUNWAY_WIDTH / LANE_COUNT;
-const WALK_SPEED = 0.25; // Faster walk speed
+
+// Progressive speed - starts slow, increases as you progress
+const BASE_WALK_SPEED = 0.06; // Starting speed (slow and elegant)
+const MAX_WALK_SPEED = 0.15; // Maximum speed near end
+const LANE_SWITCH_SPEED = 0.12; // Smooth but responsive lane switching
 
 // Lagerfeld-inspired runway themes
 const RUNWAY_THEMES = {
@@ -451,14 +455,14 @@ function ThemedRunway({ theme }: { theme: ThemeId }) {
         <meshStandardMaterial color={themeData.accentColor} emissive={themeData.accentColor} emissiveIntensity={0.8} />
       </mesh>
 
-      {/* Runway spotlights - reduced for performance */}
-      {Array.from({ length: 4 }).map((_, i) => (
+      {/* Runway spotlights - spread for 80-unit runway */}
+      {Array.from({ length: 5 }).map((_, i) => (
         <pointLight
           key={i}
-          position={[0, 6, -i * 15]}
+          position={[0, 6, -i * 18]}
           intensity={2}
           color="#ffffff"
-          distance={20}
+          distance={25}
         />
       ))}
 
@@ -1002,13 +1006,13 @@ function PoseStationMesh({ station, playerZ }: { station: PoseStation; playerZ: 
 // ============================================
 
 function Audience({ theme }: { theme: ThemeId }) {
-  // Simplified audience - just 1 row with fewer members for performance
+  // Simplified audience - spread along runway for performance
   const audienceData = useMemo(() => {
     const left: Array<{ pos: [number, number, number]; rot: number }> = [];
     const right: Array<{ pos: [number, number, number]; rot: number }> = [];
 
-    for (let i = 0; i < 8; i++) {
-      const z = -8 - i * 7;
+    for (let i = 0; i < 10; i++) {
+      const z = -6 - i * 7.5; // Spread across 80-unit runway
       left.push({
         pos: [-(RUNWAY_WIDTH / 2 + 2), 0, z],
         rot: Math.PI / 5,
@@ -1277,24 +1281,24 @@ export default function CatwalkGame3D() {
 
     const types = obstacleTypes[themeId];
 
-    // Reduced obstacles for shorter runway
-    for (let i = 0; i < 8; i++) {
+    // Obstacles spread across runway - starts easy, gets denser
+    for (let i = 0; i < 10; i++) {
       newObstacles.push({
         id: i,
-        z: 10 + i * 7,
+        z: 12 + i * 7, // Start after some distance, even spacing
         lane: Math.floor(Math.random() * 3),
         type: types[Math.floor(Math.random() * types.length)],
         hit: false,
       });
     }
 
-    // Reduced gems for shorter runway
-    const gemTypes: GemObject["type"][] = ["normal", "normal", "gold", "diamond"];
-    for (let i = 0; i < 12; i++) {
+    // Gems distributed throughout runway
+    const gemTypes: GemObject["type"][] = ["normal", "normal", "normal", "gold", "diamond"];
+    for (let i = 0; i < 16; i++) {
       const type = gemTypes[Math.floor(Math.random() * gemTypes.length)];
       newGems.push({
         id: i,
-        z: 6 + i * 5,
+        z: 5 + i * 4.5, // Well distributed
         lane: Math.floor(Math.random() * 3),
         collected: false,
         type,
@@ -1302,11 +1306,11 @@ export default function CatwalkGame3D() {
       });
     }
 
-    // Reduced pose stations
-    for (let i = 0; i < 3; i++) {
+    // Pose stations at key points
+    for (let i = 0; i < 4; i++) {
       newPoseStations.push({
         id: i,
-        z: 15 + i * 18,
+        z: 18 + i * 17, // Well spaced for dramatic moments
         completed: false,
         score: 0,
       });
@@ -1336,26 +1340,36 @@ export default function CatwalkGame3D() {
     setWalkFrame(0);
   }, [initializeGame, gameState.currentTheme]);
 
-  // Game loop
+  // Game loop with progressive speed
   useEffect(() => {
     if (gameState.phase !== "walking") return;
 
+    let lastTime = performance.now();
+
     const gameLoop = () => {
+      const currentTime = performance.now();
+      const deltaTime = Math.min((currentTime - lastTime) / 16.67, 2); // Normalize to ~60fps, cap at 2x
+      lastTime = currentTime;
+
       setWalkFrame((prev) => prev + 1);
 
       setGameState((prev) => {
-        const newDistance = prev.distance + WALK_SPEED;
+        // Progressive speed: starts slow, gradually increases
+        const progress = prev.distance / RUNWAY_LENGTH;
+        const currentSpeed = BASE_WALK_SPEED + (MAX_WALK_SPEED - BASE_WALK_SPEED) * Math.min(progress * 1.5, 1);
+        const newDistance = prev.distance + currentSpeed * deltaTime;
 
         if (newDistance >= RUNWAY_LENGTH) {
           return { ...prev, phase: "results", distance: RUNWAY_LENGTH };
         }
 
+        // Smooth lane switching
         let newLane = prev.lane;
         if (prev.lane !== prev.targetLane) {
-          const laneSpeed = 0.18;
+          const laneStep = LANE_SWITCH_SPEED * deltaTime;
           newLane = prev.lane < prev.targetLane
-            ? Math.min(prev.lane + laneSpeed, prev.targetLane)
-            : Math.max(prev.lane - laneSpeed, prev.targetLane);
+            ? Math.min(prev.lane + laneStep, prev.targetLane)
+            : Math.max(prev.lane - laneStep, prev.targetLane);
         }
 
         return { ...prev, distance: newDistance, lane: newLane };
