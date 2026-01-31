@@ -143,7 +143,7 @@ function InfoRow({ label, value, copyable, icon: Icon }: {
   label: string;
   value: string | number | null | undefined;
   copyable?: boolean;
-  icon?: React.ElementType;
+  icon?: React.ComponentType<{ className?: string }>;
 }) {
   if (value === null || value === undefined || value === "") return null;
 
@@ -166,7 +166,7 @@ function InfoRow({ label, value, copyable, icon: Icon }: {
 function StatCard({ label, value, icon: Icon, color }: {
   label: string;
   value: string | number;
-  icon: React.ElementType;
+  icon: React.ComponentType<{ className?: string }>;
   color: string;
 }) {
   return (
