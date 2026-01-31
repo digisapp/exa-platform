@@ -60,7 +60,7 @@ interface GemObject {
   collected: boolean;
 }
 
-// Model character component
+// Female model character component
 function ModelCharacter({
   position,
   walkFrame,
@@ -72,72 +72,178 @@ function ModelCharacter({
 }) {
   const groupRef = useRef<THREE.Group>(null);
 
-  // Simple walk animation - bob up and down, slight rotation
-  const bobHeight = isWalking ? Math.sin(walkFrame * 0.3) * 0.05 : 0;
-  const hipSway = isWalking ? Math.sin(walkFrame * 0.15) * 0.03 : 0;
+  // Runway walk animation - elegant sway and stride
+  const bobHeight = isWalking ? Math.sin(walkFrame * 0.25) * 0.03 : 0;
+  const hipSway = isWalking ? Math.sin(walkFrame * 0.125) * 0.08 : 0;
+  const shoulderSway = isWalking ? -Math.sin(walkFrame * 0.125) * 0.04 : 0;
+  const walkCycle = walkFrame * 0.25;
 
   return (
     <group ref={groupRef} position={[position[0], position[1] + bobHeight, position[2]]}>
-      {/* Body */}
-      <mesh position={[0, 0.9, 0]} rotation={[0, hipSway, 0]}>
-        <capsuleGeometry args={[0.15, 0.5, 8, 16]} />
-        <meshStandardMaterial color="#1a1a2e" metalness={0.3} roughness={0.7} />
+      {/* Torso/Dress - elegant fitted silhouette */}
+      <group rotation={[0, hipSway, 0]}>
+        {/* Upper body */}
+        <mesh position={[0, 1.1, 0]}>
+          <capsuleGeometry args={[0.12, 0.3, 8, 16]} />
+          <meshStandardMaterial color="#1a1a2e" metalness={0.4} roughness={0.6} />
+        </mesh>
+
+        {/* Waist */}
+        <mesh position={[0, 0.85, 0]}>
+          <cylinderGeometry args={[0.08, 0.1, 0.15, 16]} />
+          <meshStandardMaterial color="#1a1a2e" metalness={0.4} roughness={0.6} />
+        </mesh>
+
+        {/* Hips/Dress bottom - flowing skirt */}
+        <mesh position={[0, 0.65, 0]}>
+          <coneGeometry args={[0.22, 0.5, 16]} />
+          <meshStandardMaterial color="#1a1a2e" metalness={0.3} roughness={0.7} />
+        </mesh>
+
+        {/* Dress slit detail */}
+        <mesh position={[0.08, 0.5, 0.05]} rotation={[0.1, 0, 0.1]}>
+          <planeGeometry args={[0.12, 0.3]} />
+          <meshStandardMaterial color="#fcd9d0" side={THREE.DoubleSide} />
+        </mesh>
+      </group>
+
+      {/* Neck */}
+      <mesh position={[0, 1.35, 0]}>
+        <cylinderGeometry args={[0.04, 0.05, 0.1, 16]} />
+        <meshStandardMaterial color="#fcd9d0" />
       </mesh>
 
       {/* Head */}
       <mesh position={[0, 1.5, 0]}>
-        <sphereGeometry args={[0.12, 16, 16]} />
+        <sphereGeometry args={[0.11, 16, 16]} />
         <meshStandardMaterial color="#fcd9d0" />
       </mesh>
 
-      {/* Hair */}
-      <mesh position={[0, 1.6, -0.05]}>
-        <sphereGeometry args={[0.14, 16, 16]} />
-        <meshStandardMaterial color="#2a1810" />
+      {/* Face details - subtle */}
+      <mesh position={[0, 1.48, 0.09]}>
+        <sphereGeometry args={[0.02, 8, 8]} />
+        <meshStandardMaterial color="#d4a5a5" />
       </mesh>
 
-      {/* Left leg */}
-      <mesh
-        position={[-0.08, 0.3, isWalking ? Math.sin(walkFrame * 0.3) * 0.1 : 0]}
-        rotation={[isWalking ? Math.sin(walkFrame * 0.3) * 0.3 : 0, 0, 0]}
+      {/* Long flowing hair */}
+      <group position={[0, 1.55, -0.02]}>
+        {/* Hair top/crown */}
+        <mesh position={[0, 0.02, 0]}>
+          <sphereGeometry args={[0.13, 16, 16]} />
+          <meshStandardMaterial color="#1a0a05" />
+        </mesh>
+        {/* Hair back - long */}
+        <mesh position={[0, -0.25, -0.08]} rotation={[0.3, 0, 0]}>
+          <capsuleGeometry args={[0.1, 0.5, 8, 16]} />
+          <meshStandardMaterial color="#1a0a05" />
+        </mesh>
+        {/* Hair sides */}
+        <mesh position={[-0.1, -0.1, 0]} rotation={[0.1, 0, 0.2]}>
+          <capsuleGeometry args={[0.04, 0.25, 8, 16]} />
+          <meshStandardMaterial color="#1a0a05" />
+        </mesh>
+        <mesh position={[0.1, -0.1, 0]} rotation={[0.1, 0, -0.2]}>
+          <capsuleGeometry args={[0.04, 0.25, 8, 16]} />
+          <meshStandardMaterial color="#1a0a05" />
+        </mesh>
+      </group>
+
+      {/* Left leg - model walk with cross-over */}
+      <group
+        position={[-0.06, 0.35, isWalking ? Math.sin(walkCycle) * 0.15 : 0]}
+        rotation={[isWalking ? Math.sin(walkCycle) * 0.4 : 0, 0, 0]}
       >
-        <capsuleGeometry args={[0.05, 0.4, 8, 16]} />
-        <meshStandardMaterial color="#1a1a2e" />
-      </mesh>
+        <mesh position={[0, 0, 0]}>
+          <capsuleGeometry args={[0.045, 0.35, 8, 16]} />
+          <meshStandardMaterial color="#fcd9d0" />
+        </mesh>
+        {/* Heel */}
+        <mesh position={[0, -0.22, 0.03]}>
+          <boxGeometry args={[0.05, 0.12, 0.1]} />
+          <meshStandardMaterial color="#ec4899" metalness={0.9} roughness={0.1} />
+        </mesh>
+        {/* Stiletto heel */}
+        <mesh position={[0, -0.26, -0.03]} rotation={[0.2, 0, 0]}>
+          <cylinderGeometry args={[0.008, 0.01, 0.08, 8]} />
+          <meshStandardMaterial color="#ec4899" metalness={0.9} roughness={0.1} />
+        </mesh>
+      </group>
 
       {/* Right leg */}
-      <mesh
-        position={[0.08, 0.3, isWalking ? -Math.sin(walkFrame * 0.3) * 0.1 : 0]}
-        rotation={[isWalking ? -Math.sin(walkFrame * 0.3) * 0.3 : 0, 0, 0]}
+      <group
+        position={[0.06, 0.35, isWalking ? -Math.sin(walkCycle) * 0.15 : 0]}
+        rotation={[isWalking ? -Math.sin(walkCycle) * 0.4 : 0, 0, 0]}
       >
-        <capsuleGeometry args={[0.05, 0.4, 8, 16]} />
-        <meshStandardMaterial color="#1a1a2e" />
+        <mesh position={[0, 0, 0]}>
+          <capsuleGeometry args={[0.045, 0.35, 8, 16]} />
+          <meshStandardMaterial color="#fcd9d0" />
+        </mesh>
+        {/* Heel */}
+        <mesh position={[0, -0.22, 0.03]}>
+          <boxGeometry args={[0.05, 0.12, 0.1]} />
+          <meshStandardMaterial color="#ec4899" metalness={0.9} roughness={0.1} />
+        </mesh>
+        {/* Stiletto heel */}
+        <mesh position={[0, -0.26, -0.03]} rotation={[0.2, 0, 0]}>
+          <cylinderGeometry args={[0.008, 0.01, 0.08, 8]} />
+          <meshStandardMaterial color="#ec4899" metalness={0.9} roughness={0.1} />
+        </mesh>
+      </group>
+
+      {/* Arms with natural swing */}
+      <group rotation={[0, shoulderSway, 0]}>
+        {/* Left arm */}
+        <group
+          position={[-0.18, 1.15, 0]}
+          rotation={[isWalking ? -Math.sin(walkCycle) * 0.15 : 0, 0, 0.15]}
+        >
+          <mesh>
+            <capsuleGeometry args={[0.025, 0.22, 8, 16]} />
+            <meshStandardMaterial color="#fcd9d0" />
+          </mesh>
+          {/* Lower arm */}
+          <mesh position={[0, -0.18, 0]} rotation={[0.2, 0, 0]}>
+            <capsuleGeometry args={[0.022, 0.18, 8, 16]} />
+            <meshStandardMaterial color="#fcd9d0" />
+          </mesh>
+        </group>
+
+        {/* Right arm - holding clutch bag */}
+        <group
+          position={[0.18, 1.15, 0]}
+          rotation={[0.3, 0, -0.15]}
+        >
+          <mesh>
+            <capsuleGeometry args={[0.025, 0.22, 8, 16]} />
+            <meshStandardMaterial color="#fcd9d0" />
+          </mesh>
+          {/* Lower arm */}
+          <mesh position={[0, -0.18, 0.05]} rotation={[-0.5, 0, 0]}>
+            <capsuleGeometry args={[0.022, 0.18, 8, 16]} />
+            <meshStandardMaterial color="#fcd9d0" />
+          </mesh>
+          {/* Clutch bag */}
+          <mesh position={[0.02, -0.3, 0.1]}>
+            <boxGeometry args={[0.15, 0.08, 0.03]} />
+            <meshStandardMaterial color="#ec4899" metalness={0.7} roughness={0.3} />
+          </mesh>
+        </group>
+      </group>
+
+      {/* Jewelry - necklace */}
+      <mesh position={[0, 1.28, 0.06]}>
+        <torusGeometry args={[0.06, 0.005, 8, 32]} />
+        <meshStandardMaterial color="#ffd700" metalness={1} roughness={0.2} />
       </mesh>
 
-      {/* High heels */}
-      <mesh position={[-0.08, 0.05, isWalking ? Math.sin(walkFrame * 0.3) * 0.1 : 0]}>
-        <boxGeometry args={[0.06, 0.1, 0.12]} />
-        <meshStandardMaterial color="#ec4899" metalness={0.8} roughness={0.2} />
+      {/* Earrings */}
+      <mesh position={[-0.11, 1.48, 0]}>
+        <sphereGeometry args={[0.015, 8, 8]} />
+        <meshStandardMaterial color="#ffd700" metalness={1} roughness={0.2} />
       </mesh>
-      <mesh position={[0.08, 0.05, isWalking ? -Math.sin(walkFrame * 0.3) * 0.1 : 0]}>
-        <boxGeometry args={[0.06, 0.1, 0.12]} />
-        <meshStandardMaterial color="#ec4899" metalness={0.8} roughness={0.2} />
-      </mesh>
-
-      {/* Arms */}
-      <mesh
-        position={[-0.25, 0.95, 0]}
-        rotation={[0, 0, isWalking ? Math.sin(walkFrame * 0.3) * 0.2 + 0.2 : 0.2]}
-      >
-        <capsuleGeometry args={[0.03, 0.3, 8, 16]} />
-        <meshStandardMaterial color="#fcd9d0" />
-      </mesh>
-      <mesh
-        position={[0.25, 0.95, 0]}
-        rotation={[0, 0, isWalking ? -Math.sin(walkFrame * 0.3) * 0.2 - 0.2 : -0.2]}
-      >
-        <capsuleGeometry args={[0.03, 0.3, 8, 16]} />
-        <meshStandardMaterial color="#fcd9d0" />
+      <mesh position={[0.11, 1.48, 0]}>
+        <sphereGeometry args={[0.015, 8, 8]} />
+        <meshStandardMaterial color="#ffd700" metalness={1} roughness={0.2} />
       </mesh>
     </group>
   );
@@ -353,6 +459,264 @@ function PaparazziFlashes({ playerZ }: { playerZ: number }) {
   );
 }
 
+// Single photographer figure
+function Photographer({ position, rotation = 0 }: { position: [number, number, number]; rotation?: number }) {
+  const flashRef = useRef<THREE.PointLight>(null);
+  const [isFlashing, setIsFlashing] = useState(false);
+
+  // Random flash timing
+  useEffect(() => {
+    const flashInterval = setInterval(() => {
+      if (Math.random() > 0.7) {
+        setIsFlashing(true);
+        setTimeout(() => setIsFlashing(false), 100);
+      }
+    }, 500 + Math.random() * 1000);
+
+    return () => clearInterval(flashInterval);
+  }, []);
+
+  return (
+    <group position={position} rotation={[0, rotation, 0]}>
+      {/* Body */}
+      <mesh position={[0, 0.5, 0]}>
+        <capsuleGeometry args={[0.12, 0.4, 8, 16]} />
+        <meshStandardMaterial color="#2a2a3e" />
+      </mesh>
+
+      {/* Head */}
+      <mesh position={[0, 0.95, 0]}>
+        <sphereGeometry args={[0.1, 16, 16]} />
+        <meshStandardMaterial color="#d4a5a5" />
+      </mesh>
+
+      {/* Camera body */}
+      <mesh position={[0, 0.7, 0.15]}>
+        <boxGeometry args={[0.12, 0.08, 0.1]} />
+        <meshStandardMaterial color="#1a1a1a" metalness={0.8} roughness={0.2} />
+      </mesh>
+
+      {/* Camera lens */}
+      <mesh position={[0, 0.7, 0.22]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.035, 0.04, 0.08, 16]} />
+        <meshStandardMaterial color="#333" metalness={0.9} roughness={0.1} />
+      </mesh>
+
+      {/* Flash unit */}
+      <mesh position={[0, 0.82, 0.15]}>
+        <boxGeometry args={[0.08, 0.04, 0.03]} />
+        <meshStandardMaterial
+          color={isFlashing ? "#ffffff" : "#444"}
+          emissive={isFlashing ? "#ffffff" : "#000000"}
+          emissiveIntensity={isFlashing ? 2 : 0}
+        />
+      </mesh>
+
+      {/* Flash light */}
+      {isFlashing && (
+        <pointLight
+          ref={flashRef}
+          position={[0, 0.82, 0.2]}
+          color="#ffffff"
+          intensity={100}
+          distance={15}
+        />
+      )}
+
+      {/* Arms holding camera */}
+      <mesh position={[-0.12, 0.6, 0.1]} rotation={[0.5, 0, 0.3]}>
+        <capsuleGeometry args={[0.025, 0.15, 8, 16]} />
+        <meshStandardMaterial color="#d4a5a5" />
+      </mesh>
+      <mesh position={[0.12, 0.6, 0.1]} rotation={[0.5, 0, -0.3]}>
+        <capsuleGeometry args={[0.025, 0.15, 8, 16]} />
+        <meshStandardMaterial color="#d4a5a5" />
+      </mesh>
+
+      {/* Legs */}
+      <mesh position={[-0.06, 0.15, 0]}>
+        <capsuleGeometry args={[0.04, 0.25, 8, 16]} />
+        <meshStandardMaterial color="#1a1a2e" />
+      </mesh>
+      <mesh position={[0.06, 0.15, 0]}>
+        <capsuleGeometry args={[0.04, 0.25, 8, 16]} />
+        <meshStandardMaterial color="#1a1a2e" />
+      </mesh>
+    </group>
+  );
+}
+
+// Media pit at end of runway
+function MediaPit() {
+  const photographers = [
+    { pos: [-3, 0, -RUNWAY_LENGTH - 4] as [number, number, number], rot: 0.3 },
+    { pos: [-2, 0, -RUNWAY_LENGTH - 5] as [number, number, number], rot: 0.2 },
+    { pos: [-1, 0, -RUNWAY_LENGTH - 5.5] as [number, number, number], rot: 0.1 },
+    { pos: [0, 0, -RUNWAY_LENGTH - 6] as [number, number, number], rot: 0 },
+    { pos: [1, 0, -RUNWAY_LENGTH - 5.5] as [number, number, number], rot: -0.1 },
+    { pos: [2, 0, -RUNWAY_LENGTH - 5] as [number, number, number], rot: -0.2 },
+    { pos: [3, 0, -RUNWAY_LENGTH - 4] as [number, number, number], rot: -0.3 },
+  ];
+
+  return (
+    <group>
+      {/* Barrier/rail */}
+      <mesh position={[0, 0.4, -RUNWAY_LENGTH - 3]}>
+        <boxGeometry args={[8, 0.05, 0.05]} />
+        <meshStandardMaterial color="#333" metalness={0.8} />
+      </mesh>
+      {/* Barrier posts */}
+      {[-3.5, -2, 0, 2, 3.5].map((x, i) => (
+        <mesh key={i} position={[x, 0.2, -RUNWAY_LENGTH - 3]}>
+          <cylinderGeometry args={[0.03, 0.03, 0.4, 8]} />
+          <meshStandardMaterial color="#333" metalness={0.8} />
+        </mesh>
+      ))}
+
+      {/* Photographers */}
+      {photographers.map((p, i) => (
+        <Photographer key={i} position={p.pos} rotation={p.rot} />
+      ))}
+
+      {/* Camera crew signs */}
+      <Text
+        position={[0, 0.6, -RUNWAY_LENGTH - 3.2]}
+        fontSize={0.15}
+        color="#ec4899"
+        anchorX="center"
+      >
+        PRESS
+      </Text>
+    </group>
+  );
+}
+
+// Audience member silhouette
+function AudienceMember({
+  position,
+  rotation = 0,
+  hasPhone = false,
+}: {
+  position: [number, number, number];
+  rotation?: number;
+  hasPhone?: boolean;
+}) {
+  const [phoneFlash, setPhoneFlash] = useState(false);
+
+  useEffect(() => {
+    if (hasPhone) {
+      const flashInterval = setInterval(() => {
+        if (Math.random() > 0.85) {
+          setPhoneFlash(true);
+          setTimeout(() => setPhoneFlash(false), 150);
+        }
+      }, 2000 + Math.random() * 3000);
+
+      return () => clearInterval(flashInterval);
+    }
+  }, [hasPhone]);
+
+  return (
+    <group position={position} rotation={[0, rotation, 0]}>
+      {/* Seated body */}
+      <mesh position={[0, 0.35, 0]}>
+        <capsuleGeometry args={[0.1, 0.25, 8, 16]} />
+        <meshStandardMaterial color="#1a1a2e" />
+      </mesh>
+
+      {/* Head */}
+      <mesh position={[0, 0.7, 0]}>
+        <sphereGeometry args={[0.08, 12, 12]} />
+        <meshStandardMaterial color="#3a3a4e" />
+      </mesh>
+
+      {/* Chair */}
+      <mesh position={[0, 0.2, -0.05]}>
+        <boxGeometry args={[0.25, 0.35, 0.2]} />
+        <meshStandardMaterial color="#2a2a3e" />
+      </mesh>
+
+      {/* Phone (if holding) */}
+      {hasPhone && (
+        <group position={[0, 0.55, 0.15]}>
+          <mesh>
+            <boxGeometry args={[0.04, 0.07, 0.01]} />
+            <meshStandardMaterial
+              color={phoneFlash ? "#ffffff" : "#222"}
+              emissive={phoneFlash ? "#ffffff" : "#000000"}
+              emissiveIntensity={phoneFlash ? 1 : 0}
+            />
+          </mesh>
+          {phoneFlash && (
+            <pointLight position={[0, 0, 0.05]} color="#ffffff" intensity={20} distance={5} />
+          )}
+        </group>
+      )}
+    </group>
+  );
+}
+
+// Full audience section
+function Audience() {
+  // Create rows of audience on both sides
+  const leftAudience: Array<{ pos: [number, number, number]; rot: number; phone: boolean }> = [];
+  const rightAudience: Array<{ pos: [number, number, number]; rot: number; phone: boolean }> = [];
+
+  // Generate audience members along the runway
+  for (let row = 0; row < 2; row++) {
+    for (let i = 0; i < 12; i++) {
+      const z = -5 - i * 3.5;
+      const xOffset = row * 0.6;
+
+      leftAudience.push({
+        pos: [-(RUNWAY_WIDTH / 2 + 1.5 + xOffset), 0, z],
+        rot: Math.PI / 6,
+        phone: Math.random() > 0.7,
+      });
+
+      rightAudience.push({
+        pos: [RUNWAY_WIDTH / 2 + 1.5 + xOffset, 0, z],
+        rot: -Math.PI / 6,
+        phone: Math.random() > 0.7,
+      });
+    }
+  }
+
+  return (
+    <group>
+      {/* Seating platforms */}
+      <mesh position={[-(RUNWAY_WIDTH / 2 + 1.8), 0.05, -RUNWAY_LENGTH / 2]}>
+        <boxGeometry args={[1.5, 0.1, RUNWAY_LENGTH - 5]} />
+        <meshStandardMaterial color="#0a0a0e" />
+      </mesh>
+      <mesh position={[RUNWAY_WIDTH / 2 + 1.8, 0.05, -RUNWAY_LENGTH / 2]}>
+        <boxGeometry args={[1.5, 0.1, RUNWAY_LENGTH - 5]} />
+        <meshStandardMaterial color="#0a0a0e" />
+      </mesh>
+
+      {/* Left side audience */}
+      {leftAudience.map((a, i) => (
+        <AudienceMember key={`left-${i}`} position={a.pos} rotation={a.rot} hasPhone={a.phone} />
+      ))}
+
+      {/* Right side audience */}
+      {rightAudience.map((a, i) => (
+        <AudienceMember key={`right-${i}`} position={a.pos} rotation={a.rot} hasPhone={a.phone} />
+      ))}
+
+      {/* VIP section near end - front row */}
+      {[-2.5, -1.5, 1.5, 2.5].map((x, i) => (
+        <AudienceMember
+          key={`vip-${i}`}
+          position={[x, 0, -RUNWAY_LENGTH + 3]}
+          rotation={x < 0 ? 0.4 : -0.4}
+          hasPhone={true}
+        />
+      ))}
+    </group>
+  );
+}
+
 // Main 3D scene
 function GameScene({
   gameState,
@@ -399,6 +763,12 @@ function GameScene({
 
       {/* Runway */}
       <Runway />
+
+      {/* Audience on both sides */}
+      <Audience />
+
+      {/* Media pit with photographers */}
+      <MediaPit />
 
       {/* Character */}
       <ModelCharacter
