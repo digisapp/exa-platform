@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Gem, Sparkles, Dices, Clock, Gift, Trophy, ArrowRight, Loader2, Heart, Zap, Crown } from "lucide-react";
+import { Gem, Sparkles, Dices, Clock, Gift, Trophy, ArrowRight, Loader2, Heart, Zap, Crown, Box } from "lucide-react";
 
 interface GameInfo {
   id: string;
@@ -113,6 +113,16 @@ export default function GamesPage() {
       description: "Walk world-famous runways, dodge obstacles, and strike poses!",
       icon: <Crown className="h-8 w-8" />,
       href: "/games/catwalk",
+      reward: "Up to 3x gem multiplier",
+      cooldown: "Unlimited",
+      available: true,
+    },
+    {
+      id: "catwalk-3d",
+      title: "Catwalk 3D",
+      description: "Experience the runway in stunning 3D! Walk, pose, and dazzle the paparazzi!",
+      icon: <Box className="h-8 w-8" />,
+      href: "/games/catwalk-3d",
       reward: "Up to 3x gem multiplier",
       cooldown: "Unlimited",
       available: true,
