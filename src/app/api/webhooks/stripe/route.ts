@@ -60,6 +60,12 @@ export async function POST(request: NextRequest) {
           break;
         }
 
+        // Check if this is a shop order
+        if (session.metadata?.order_id) {
+          await handleShopOrderPayment(session);
+          break;
+        }
+
         // Handle regular coin purchase
         const actorId = session.metadata?.actor_id;
         const coinsStr = session.metadata?.coins;
@@ -564,6 +570,153 @@ async function handleWorkshopRegistration(session: Stripe.Checkout.Session) {
   }
 
   console.log("Workshop registration successful:", { workshopId, quantity, buyerEmail });
+}
+
+async function handleShopOrderPayment(session: Stripe.Checkout.Session) {
+  const orderId = session.metadata?.order_id;
+  const orderNumber = session.metadata?.order_number;
+  const affiliateModelId = session.metadata?.affiliate_model_id;
+  const affiliateCode = session.metadata?.affiliate_code;
+
+  if (!orderId) {
+    console.error("Missing shop order metadata:", session.id);
+    return;
+  }
+
+  const paymentIntentId = typeof session.payment_intent === "string"
+    ? session.payment_intent
+    : session.payment_intent?.id;
+
+  const chargeId = session.payment_intent
+    ? (await stripe.paymentIntents.retrieve(
+        typeof session.payment_intent === "string"
+          ? session.payment_intent
+          : session.payment_intent.id
+      )).latest_charge
+    : null;
+
+  // Update order to paid
+  const { data: order, error: updateError } = await supabaseAdmin
+    .from("shop_orders")
+    .update({
+      payment_status: "paid",
+      status: "confirmed",
+      stripe_payment_intent_id: paymentIntentId,
+      stripe_charge_id: typeof chargeId === "string" ? chargeId : chargeId?.toString(),
+      paid_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", orderId)
+    .select("id, total, affiliate_model_id, affiliate_commission")
+    .single();
+
+  if (updateError) {
+    console.error("Error updating shop order:", updateError);
+    return;
+  }
+
+  // Update order items to confirmed
+  await supabaseAdmin
+    .from("shop_order_items")
+    .update({ fulfillment_status: "confirmed" })
+    .eq("order_id", orderId);
+
+  // Decrease stock for purchased items
+  const { data: orderItems } = await supabaseAdmin
+    .from("shop_order_items")
+    .select("variant_id, quantity")
+    .eq("order_id", orderId);
+
+  if (orderItems) {
+    for (const item of orderItems) {
+      // Get current stock
+      const { data: variant } = await supabaseAdmin
+        .from("shop_product_variants")
+        .select("stock_quantity")
+        .eq("id", item.variant_id)
+        .single();
+
+      if (variant) {
+        await supabaseAdmin
+          .from("shop_product_variants")
+          .update({
+            stock_quantity: Math.max(0, (variant.stock_quantity || 0) - item.quantity),
+          })
+          .eq("id", item.variant_id);
+      }
+
+      // Increment total_sold on product
+      const { data: variantData } = await supabaseAdmin
+        .from("shop_product_variants")
+        .select("product_id")
+        .eq("id", item.variant_id)
+        .single();
+
+      if (variantData?.product_id) {
+        const { data: product } = await supabaseAdmin
+          .from("shop_products")
+          .select("total_sold")
+          .eq("id", variantData.product_id)
+          .single();
+
+        await supabaseAdmin
+          .from("shop_products")
+          .update({ total_sold: (product?.total_sold || 0) + item.quantity })
+          .eq("id", variantData.product_id);
+      }
+    }
+  }
+
+  // Process affiliate commission if applicable
+  const modelId = order?.affiliate_model_id || affiliateModelId;
+  if (modelId && order?.affiliate_commission && order.affiliate_commission > 0) {
+    // Create affiliate earning record
+    const { error: earningError } = await supabaseAdmin
+      .from("shop_affiliate_earnings")
+      .insert({
+        model_id: modelId,
+        order_id: orderId,
+        order_total: order.total,
+        commission_rate: 10, // Default 10%
+        commission_amount: order.affiliate_commission,
+        status: "pending", // Pending until order is delivered + hold period
+        available_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), // 14 day hold
+      });
+
+    if (earningError) {
+      console.error("Error creating affiliate earning:", earningError);
+    }
+
+    // Update affiliate code stats
+    if (affiliateCode) {
+      const { data: codeData } = await supabaseAdmin
+        .from("shop_affiliate_codes")
+        .select("order_count, total_earnings")
+        .eq("code", affiliateCode)
+        .single();
+
+      if (codeData) {
+        await supabaseAdmin
+          .from("shop_affiliate_codes")
+          .update({
+            order_count: (codeData.order_count || 0) + 1,
+            total_earnings: (codeData.total_earnings || 0) + order.affiliate_commission,
+          })
+          .eq("code", affiliateCode);
+      }
+    }
+  }
+
+  // Clear the user's cart
+  const userId = session.metadata?.user_id;
+  if (userId) {
+    await supabaseAdmin
+      .from("shop_carts")
+      .delete()
+      .eq("user_id", userId);
+  }
+
+  console.log("Shop order payment successful:", { orderId, orderNumber, total: order?.total });
 }
 
 // Disable body parsing for webhook signature verification
