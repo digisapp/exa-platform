@@ -58,7 +58,7 @@ interface Particle {
   maxLife: number;
   color: string;
   size: number;
-  type: "sparkle" | "flash" | "star";
+  type: "sparkle" | "flash" | "star" | "circle";
 }
 
 // Camera flash
