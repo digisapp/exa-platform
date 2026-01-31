@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -45,7 +45,6 @@ const CANVAS_HEIGHT = 500;
 const LANE_COUNT = 3;
 const LANE_WIDTH = 100;
 const RUNWAY_LENGTH = 2400; // Shorter runway for better pace
-const PLAYER_WIDTH = 60;
 const PLAYER_HEIGHT = 120;
 const GAME_SPEED = 2.5; // Slower speed (was effectively 5)
 
@@ -91,6 +90,16 @@ interface GameObject {
 
 type GamePhase = "idle" | "walking" | "posing" | "results";
 
+// Floating text for visual feedback
+interface FloatingText {
+  x: number;
+  y: number;
+  text: string;
+  color: string;
+  life: number;
+  scale: number;
+}
+
 // Atmospheric particles for runway themes
 interface AtmosphericParticle {
   x: number;
@@ -108,7 +117,7 @@ export default function CatwalkPage() {
   const gameLoopRef = useRef<number | null>(null);
 
   const [gemBalance, setGemBalance] = useState<number>(0);
-  const [modelName, setModelName] = useState<string>("Model");
+  const [_modelName, setModelName] = useState<string>("Model");
   const [runways, setRunways] = useState<Runway[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [selectedRunway, setSelectedRunway] = useState<Runway | null>(null);
@@ -116,7 +125,7 @@ export default function CatwalkPage() {
   const [saving, setSaving] = useState(false);
 
   const [gamePhase, setGamePhase] = useState<GamePhase>("idle");
-  const [walkScore, setWalkScore] = useState(0);
+  const [_walkScore, setWalkScore] = useState(0);
   const [poseScore, setPoseScore] = useState(0);
   const [gemsCollected, setGemsCollected] = useState(0);
   const [perfectWalks, setPerfectWalks] = useState(0);
@@ -145,9 +154,11 @@ export default function CatwalkPage() {
   // Visual effects
   const particlesRef = useRef<Particle[]>([]);
   const flashesRef = useRef<CameraFlash[]>([]);
+  const floatingTextsRef = useRef<FloatingText[]>([]);
   const comboRef = useRef(0);
   const screenShakeRef = useRef(0);
   const lastBeatTimeRef = useRef(0);
+  const screenFlashRef = useRef(0); // Screen-wide flash effect
 
   // Media pit paparazzi
   const paparazziRef = useRef<Paparazzo[]>([]);
@@ -155,6 +166,14 @@ export default function CatwalkPage() {
 
   // Atmospheric particles for themed runways
   const atmosphereRef = useRef<AtmosphericParticle[]>([]);
+
+  // Ref to keep selectedRunway accessible in game loop without stale closures
+  const selectedRunwayRef = useRef<Runway | null>(null);
+
+  // Keep the ref updated when selectedRunway changes
+  useEffect(() => {
+    selectedRunwayRef.current = selectedRunway;
+  }, [selectedRunway]);
 
   useEffect(() => {
     fetchStatus();
@@ -214,6 +233,89 @@ export default function CatwalkPage() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [gamePhase, selectedRunway, saving]);
+
+  // Touch controls for mobile
+  const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  const lastTouchMoveRef = useRef<number>(0);
+
+  // Handle touch events on the canvas
+  function handleTouchStart(e: React.TouchEvent) {
+    if (e.touches.length === 1) {
+      const touch = e.touches[0];
+      touchStartRef.current = {
+        x: touch.clientX,
+        y: touch.clientY,
+        time: Date.now(),
+      };
+    }
+  }
+
+  function handleTouchMove(e: React.TouchEvent) {
+    if (!touchStartRef.current || gamePhase !== "walking") return;
+
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - touchStartRef.current.x;
+    const now = Date.now();
+
+    // Throttle touch moves to avoid too many lane changes
+    if (now - lastTouchMoveRef.current < 200) return;
+
+    // Swipe threshold for lane change
+    if (Math.abs(deltaX) > 40) {
+      if (deltaX > 0) {
+        movePlayer(1); // Swipe right
+      } else {
+        movePlayer(-1); // Swipe left
+      }
+      lastTouchMoveRef.current = now;
+      // Reset touch start for continuous swiping
+      touchStartRef.current = {
+        x: touch.clientX,
+        y: touch.clientY,
+        time: now,
+      };
+    }
+  }
+
+  function handleTouchEnd(e: React.TouchEvent) {
+    if (!touchStartRef.current) return;
+
+    const touchDuration = Date.now() - touchStartRef.current.time;
+
+    // Quick tap = beat hit or start game
+    if (touchDuration < 200) {
+      if (gamePhase === "idle" && selectedRunway) {
+        e.preventDefault();
+        startGame();
+      } else if (gamePhase === "walking") {
+        hitBeat();
+      } else if (gamePhase === "results" && !saving) {
+        resetGame();
+      }
+    }
+
+    touchStartRef.current = null;
+  }
+
+  // Mobile control button handlers
+  function handleMobileLeft() {
+    if (gamePhase === "walking") movePlayer(-1);
+    else if (gamePhase === "posing") handlePoseInput("ArrowLeft");
+  }
+
+  function handleMobileRight() {
+    if (gamePhase === "walking") movePlayer(1);
+    else if (gamePhase === "posing") handlePoseInput("ArrowRight");
+  }
+
+  function handleMobileUp() {
+    if (gamePhase === "walking") hitBeat();
+    else if (gamePhase === "posing") handlePoseInput("ArrowUp");
+  }
+
+  function handleMobileDown() {
+    if (gamePhase === "posing") handlePoseInput("ArrowDown");
+  }
 
   async function fetchStatus() {
     try {
@@ -284,6 +386,9 @@ export default function CatwalkPage() {
           walkScoreRef.current = Math.min(100, walkScoreRef.current + 2);
           lastBeatTimeRef.current = Date.now();
 
+          // Screen flash effect based on combo
+          screenFlashRef.current = comboRef.current > 3 ? 0.4 : 0.2;
+
           // Spawn sparkle particles
           const beatX = getLaneX(1);
           for (let p = 0; p < 12; p++) {
@@ -299,12 +404,47 @@ export default function CatwalkPage() {
               type: "star",
             });
           }
+
+          // Floating text feedback based on timing and combo
+          const feedbackText = distance < 15 ? "PERFECT!" : distance < 30 ? "GREAT!" : "GOOD";
+          const feedbackColor = distance < 15 ? "#fbbf24" : distance < 30 ? "#22c55e" : "#06b6d4";
+          floatingTextsRef.current.push({
+            x: beatX,
+            y: player.y - 40,
+            text: feedbackText,
+            color: feedbackColor,
+            life: 1,
+            scale: distance < 15 ? 2 : 1.5,
+          });
+
+          // Show combo text for streaks
+          if (comboRef.current > 2) {
+            floatingTextsRef.current.push({
+              x: beatX,
+              y: player.y - 70,
+              text: `${comboRef.current}x COMBO`,
+              color: "#ec4899",
+              life: 1,
+              scale: 1.2,
+            });
+          }
           return;
         }
       }
     }
     // Missed - reset combo
     comboRef.current = 0;
+  }
+
+  function spawnFloatingText(x: number, y: number, text: string, color: string) {
+    floatingTextsRef.current.push({
+      x,
+      y,
+      text,
+      color,
+      life: 1,
+      scale: 1.5,
+    });
   }
 
   function spawnGemParticles(x: number, y: number) {
@@ -321,6 +461,8 @@ export default function CatwalkPage() {
         type: "sparkle",
       });
     }
+    // Add floating +1 text
+    spawnFloatingText(x, y - 20, "+1", "#06b6d4");
   }
 
   function spawnCameraFlash(x: number, y: number, type: "normal" | "burst" | "strobe" = "normal") {
@@ -478,10 +620,47 @@ export default function CatwalkPage() {
       ArrowRight: "right",
     };
 
-    if (keyMap[key] === expected) {
+    const player = playerRef.current;
+    const isCorrect = keyMap[key] === expected;
+
+    if (isCorrect) {
       poseResultsRef.current.push(true);
+      // Visual feedback for correct pose
+      floatingTextsRef.current.push({
+        x: CANVAS_WIDTH / 2,
+        y: player.y - 60,
+        text: "STRIKE!",
+        color: "#22c55e",
+        life: 1,
+        scale: 2,
+      });
+      screenFlashRef.current = 0.15;
+      // Green sparkle particles
+      for (let p = 0; p < 10; p++) {
+        particlesRef.current.push({
+          x: CANVAS_WIDTH / 2 + (Math.random() - 0.5) * 100,
+          y: player.y - 30,
+          vx: (Math.random() - 0.5) * 6,
+          vy: -Math.random() * 5 - 1,
+          life: 1,
+          maxLife: 1,
+          color: "#22c55e",
+          size: Math.random() * 4 + 2,
+          type: "star",
+        });
+      }
     } else {
       poseResultsRef.current.push(false);
+      // Visual feedback for wrong pose
+      floatingTextsRef.current.push({
+        x: CANVAS_WIDTH / 2,
+        y: player.y - 60,
+        text: "MISS",
+        color: "#ef4444",
+        life: 1,
+        scale: 1.5,
+      });
+      screenShakeRef.current = 5;
     }
 
     currentPoseRef.current++;
@@ -526,13 +705,12 @@ export default function CatwalkPage() {
     setPerfectWalks(0);
     setPoseScore(0);
     setGameResult(null);
-    setGamePhase("walking");
 
     // Generate obstacles and gems
     generateObjects();
 
-    // Start game loop
-    gameLoop();
+    // Set game phase to walking - useEffect will start the game loop
+    setGamePhase("walking");
   }
 
   function generateObjects() {
@@ -572,8 +750,15 @@ export default function CatwalkPage() {
     objectsRef.current = objects;
   }
 
-  const gameLoop = useCallback(() => {
-    if (gamePhase !== "walking") return;
+  // Store game phase in a ref for the animation loop
+  const gamePhaseRef = useRef<GamePhase>("idle");
+  useEffect(() => {
+    gamePhaseRef.current = gamePhase;
+  }, [gamePhase]);
+
+  // The actual game tick function - defined as a regular function so it always has fresh state
+  function gameTick() {
+    if (gamePhaseRef.current !== "walking") return;
 
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
@@ -621,6 +806,26 @@ export default function CatwalkPage() {
       flashes[i].life -= decayRate;
       if (flashes[i].life <= 0) {
         flashes.splice(i, 1);
+      }
+    }
+
+    // Update floating texts
+    const floatingTexts = floatingTextsRef.current;
+    for (let i = floatingTexts.length - 1; i >= 0; i--) {
+      const ft = floatingTexts[i];
+      ft.y -= 1.5; // Float upward
+      ft.life -= 0.02;
+      ft.scale *= 0.98; // Shrink slightly
+      if (ft.life <= 0) {
+        floatingTexts.splice(i, 1);
+      }
+    }
+
+    // Update screen flash (decay)
+    if (screenFlashRef.current > 0) {
+      screenFlashRef.current *= 0.85;
+      if (screenFlashRef.current < 0.01) {
+        screenFlashRef.current = 0;
       }
     }
 
@@ -712,19 +917,61 @@ export default function CatwalkPage() {
 
         if (Math.abs(objLane - playerLane) < 0.5) {
           if (objects[i].type === "obstacle") {
-            // Hit obstacle - screen shake
+            // Hit obstacle - screen shake and visual feedback
+            const obstacleX = getLaneX(objLane);
             walkScoreRef.current = Math.max(0, walkScoreRef.current - 15);
             setWalkScore(walkScoreRef.current);
             screenShakeRef.current = 10;
             comboRef.current = 0;
+
+            // Red floating text for penalty
+            floatingTextsRef.current.push({
+              x: obstacleX,
+              y: objects[i].y - 30,
+              text: "-15",
+              color: "#ef4444",
+              life: 1,
+              scale: 1.5,
+            });
+
+            // Spawn red particles for hit effect
+            for (let p = 0; p < 6; p++) {
+              particlesRef.current.push({
+                x: obstacleX,
+                y: objects[i].y,
+                vx: (Math.random() - 0.5) * 8,
+                vy: (Math.random() - 0.5) * 8,
+                life: 0.8,
+                maxLife: 0.8,
+                color: "#ef4444",
+                size: Math.random() * 5 + 3,
+                type: "circle",
+              });
+            }
+
             objects.splice(i, 1);
             continue;
           } else if (objects[i].type === "gem") {
-            // Collect gem with particles
+            // Collect gem with particles and feedback
             const gemX = getLaneX(objLane);
-            spawnGemParticles(gemX, objects[i].y);
+            const gemY = objects[i].y;
+            spawnGemParticles(gemX, gemY);
             gemsRef.current++;
             setGemsCollected(gemsRef.current);
+
+            // Floating text for gem collection
+            floatingTextsRef.current.push({
+              x: gemX,
+              y: gemY - 20,
+              text: "+1",
+              color: "#06b6d4",
+              life: 0.8,
+              scale: 1.2,
+            });
+
+            // Subtle cyan screen flash for gems
+            screenFlashRef.current = Math.max(screenFlashRef.current, 0.1);
+
             objects.splice(i, 1);
             continue;
           }
@@ -751,20 +998,26 @@ export default function CatwalkPage() {
 
     // Draw
     draw(ctx);
+  }
 
-    gameLoopRef.current = requestAnimationFrame(gameLoop);
-  }, [gamePhase]);
+  // Animation loop wrapper - uses ref to always call latest gameTick
+  function runGameLoop() {
+    gameTick();
+    if (gamePhaseRef.current === "walking") {
+      gameLoopRef.current = requestAnimationFrame(runGameLoop);
+    }
+  }
 
   useEffect(() => {
     if (gamePhase === "walking") {
-      gameLoopRef.current = requestAnimationFrame(gameLoop);
+      gameLoopRef.current = requestAnimationFrame(runGameLoop);
     }
     return () => {
       if (gameLoopRef.current) {
         cancelAnimationFrame(gameLoopRef.current);
       }
     };
-  }, [gamePhase, gameLoop]);
+  }, [gamePhase]);
 
   function getLaneX(lane: number, y?: number): number {
     const centerX = CANVAS_WIDTH / 2;
@@ -876,7 +1129,8 @@ export default function CatwalkPage() {
     // Objects closer to camera (higher y) appear larger
     const minScale = 0.4;
     const maxScale = 1.2;
-    const t = y / CANVAS_HEIGHT;
+    // Clamp t to prevent negative scales for objects above the canvas
+    const t = Math.max(0, Math.min(1, y / CANVAS_HEIGHT));
     return minScale + (maxScale - minScale) * t;
   }
 
@@ -1214,8 +1468,34 @@ export default function CatwalkPage() {
     // Draw atmospheric particles (falling sparkles, confetti, etc.)
     drawAtmosphere(ctx);
 
+    // Draw floating texts (PERFECT!, GREAT!, combo multipliers, etc.)
+    for (const ft of floatingTextsRef.current) {
+      ctx.save();
+      ctx.globalAlpha = ft.life;
+      ctx.font = `bold ${Math.floor(16 * ft.scale)}px Arial`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      // Text shadow/glow
+      ctx.shadowColor = ft.color;
+      ctx.shadowBlur = 10;
+      ctx.fillStyle = ft.color;
+      ctx.fillText(ft.text, ft.x, ft.y);
+      // Second pass for extra glow
+      ctx.fillText(ft.text, ft.x, ft.y);
+      ctx.restore();
+    }
+
     // HUD with glow
     drawHUD(ctx);
+
+    // Screen flash overlay (for beat hits)
+    if (screenFlashRef.current > 0) {
+      ctx.save();
+      ctx.globalAlpha = screenFlashRef.current;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+      ctx.restore();
+    }
 
     ctx.restore();
   }
@@ -2956,8 +3236,48 @@ export default function CatwalkPage() {
                 ref={canvasRef}
                 width={CANVAS_WIDTH}
                 height={CANVAS_HEIGHT}
-                className="w-full h-auto"
+                className="w-full h-auto touch-none"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
               />
+
+              {/* In-Game HUD - shown during walking phase */}
+              {gamePhase === "walking" && (
+                <div className="absolute top-0 left-0 right-0 p-3 pointer-events-none">
+                  <div className="flex justify-between items-start">
+                    {/* Walk Score */}
+                    <div className="bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2">
+                      <p className="text-xs text-gray-400">Walk Score</p>
+                      <p className={`text-xl font-bold ${walkScoreRef.current >= 80 ? 'text-green-400' : walkScoreRef.current >= 50 ? 'text-yellow-400' : 'text-red-400'}`}>
+                        {walkScoreRef.current}
+                      </p>
+                    </div>
+
+                    {/* Combo Counter */}
+                    {comboRef.current > 1 && (
+                      <div className="bg-gradient-to-r from-pink-500/80 to-violet-500/80 backdrop-blur-sm rounded-lg px-4 py-2 animate-pulse">
+                        <p className="text-xs text-white/80">COMBO</p>
+                        <p className="text-2xl font-bold text-white">{comboRef.current}x</p>
+                      </div>
+                    )}
+
+                    {/* Gems Collected */}
+                    <div className="bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2 flex items-center gap-2">
+                      <Gem className="h-4 w-4 text-cyan-400" />
+                      <span className="text-xl font-bold text-cyan-400">{gemsRef.current}</span>
+                    </div>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="mt-2 bg-black/40 rounded-full h-2 overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-pink-500 to-violet-500 transition-all duration-100"
+                      style={{ width: `${Math.min(100, (distanceRef.current / RUNWAY_LENGTH) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* Results Overlay */}
               {gamePhase === "results" && gameResult && (
@@ -3009,9 +3329,53 @@ export default function CatwalkPage() {
                   className="absolute inset-0 flex items-center justify-center cursor-pointer"
                   onClick={startGame}
                 >
-                  <div className="bg-black/50 rounded-full p-6">
+                  <div className="bg-black/50 rounded-full p-6 animate-pulse">
                     <Play className="h-16 w-16 text-white" />
                   </div>
+                  <p className="absolute bottom-8 text-white/60 text-sm">Tap to Start • Swipe to Move • Tap for Beat</p>
+                </div>
+              )}
+
+              {/* Mobile Controls - shown during walking/posing on mobile */}
+              {(gamePhase === "walking" || gamePhase === "posing") && (
+                <div className="absolute bottom-0 left-0 right-0 p-4 md:hidden">
+                  <div className="flex justify-between items-center gap-4">
+                    {/* Left Button */}
+                    <button
+                      onTouchStart={(e) => { e.preventDefault(); handleMobileLeft(); }}
+                      className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center active:bg-white/40 transition-colors border border-white/30"
+                    >
+                      <span className="text-2xl text-white">←</span>
+                    </button>
+
+                    {/* Center - Up/Beat button */}
+                    <button
+                      onTouchStart={(e) => { e.preventDefault(); handleMobileUp(); }}
+                      className="w-20 h-20 bg-gradient-to-br from-pink-500/60 to-violet-500/60 backdrop-blur-sm rounded-full flex items-center justify-center active:from-pink-500 active:to-violet-500 transition-all border border-white/30 shadow-lg"
+                    >
+                      <span className="text-2xl text-white">{gamePhase === "walking" ? "↑" : "↑"}</span>
+                    </button>
+
+                    {/* Right Button */}
+                    <button
+                      onTouchStart={(e) => { e.preventDefault(); handleMobileRight(); }}
+                      className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center active:bg-white/40 transition-colors border border-white/30"
+                    >
+                      <span className="text-2xl text-white">→</span>
+                    </button>
+                  </div>
+
+                  {/* Down button for posing */}
+                  {gamePhase === "posing" && (
+                    <div className="flex justify-center mt-3">
+                      <button
+                        onTouchStart={(e) => { e.preventDefault(); handleMobileDown(); }}
+                        className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center active:bg-white/40 transition-colors border border-white/30"
+                      >
+                        <span className="text-2xl text-white">↓</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>
@@ -3056,19 +3420,32 @@ export default function CatwalkPage() {
             <CardHeader className="pb-3">
               <CardTitle className="text-lg">Controls</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">←</Badge>
-                <Badge variant="outline">→</Badge>
-                <span className="text-muted-foreground">Dodge obstacles</span>
+            <CardContent className="space-y-3 text-sm">
+              {/* Keyboard Controls */}
+              <div>
+                <p className="text-xs text-muted-foreground mb-2 font-medium">Keyboard</p>
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-xs">A/D</Badge>
+                    <Badge variant="outline" className="text-xs">←/→</Badge>
+                    <span className="text-muted-foreground">Dodge</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-xs">W</Badge>
+                    <Badge variant="outline" className="text-xs">↑</Badge>
+                    <Badge variant="outline" className="text-xs">SPACE</Badge>
+                    <span className="text-muted-foreground">Beat</span>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">↑</Badge>
-                <span className="text-muted-foreground">Hit beat markers</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">SPACE</Badge>
-                <span className="text-muted-foreground">Start/Restart</span>
+              {/* Mobile Controls */}
+              <div className="border-t border-border pt-3">
+                <p className="text-xs text-muted-foreground mb-2 font-medium">Mobile</p>
+                <div className="space-y-1.5">
+                  <p className="text-muted-foreground">• Swipe left/right to dodge</p>
+                  <p className="text-muted-foreground">• Tap anywhere for beat</p>
+                  <p className="text-muted-foreground">• Use on-screen buttons</p>
+                </div>
               </div>
             </CardContent>
           </Card>
