@@ -16,7 +16,7 @@ import {
   ShoppingBag,
   Clock,
   Wallet,
-  ExternalLink,
+  
 } from "lucide-react";
 import { toast } from "sonner";
 

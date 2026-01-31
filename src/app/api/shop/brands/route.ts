@@ -6,10 +6,9 @@ export async function GET(request: Request) {
     const supabase = await createClient();
     const { searchParams } = new URL(request.url);
 
-    const featured = searchParams.get("featured") === "true";
     const limit = Math.min(parseInt(searchParams.get("limit") || "50"), 100);
 
-    let query = (supabase as any)
+    const query = (supabase as any)
       .from("shop_brands")
       .select(`
         id,

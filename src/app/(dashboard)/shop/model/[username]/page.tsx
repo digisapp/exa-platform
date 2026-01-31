@@ -18,7 +18,7 @@ import {
   Sparkles,
   ExternalLink,
 } from "lucide-react";
-import { toast } from "sonner";
+
 
 interface Product {
   id: string;
