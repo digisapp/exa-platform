@@ -17,6 +17,7 @@ export async function POST(request: Request) {
       message,
       source,
       source_detail,
+      slot_id,
     } = body;
 
     // Validate required fields
@@ -39,6 +40,34 @@ export async function POST(request: Request) {
       modelId = model?.id || null;
     }
 
+    // If slot_id provided, verify it's still available and book it
+    let scheduledAt = null;
+    if (slot_id) {
+      // Check slot availability
+      const { data: slot, error: slotError } = await (supabase as any)
+        .from("availability_slots")
+        .select("id, date, start_time, is_available")
+        .eq("id", slot_id)
+        .single();
+
+      if (slotError || !slot) {
+        return NextResponse.json(
+          { error: "Time slot not found" },
+          { status: 404 }
+        );
+      }
+
+      if (!slot.is_available) {
+        return NextResponse.json(
+          { error: "This time slot is no longer available. Please select another." },
+          { status: 409 }
+        );
+      }
+
+      // Construct scheduled_at from date and start_time
+      scheduledAt = `${slot.date}T${slot.start_time}`;
+    }
+
     // Create the call request
     const { data: callRequest, error } = await (supabase as any)
       .from("call_requests")
@@ -52,9 +81,10 @@ export async function POST(request: Request) {
         source_detail: source_detail || null,
         model_id: modelId,
         user_id: user?.id || null,
-        status: "pending",
+        status: slot_id ? "scheduled" : "pending",
+        scheduled_at: scheduledAt,
       })
-      .select("id, created_at")
+      .select("id, created_at, scheduled_at")
       .single();
 
     if (error) {
@@ -65,15 +95,34 @@ export async function POST(request: Request) {
       );
     }
 
+    // If slot was booked, mark it as unavailable
+    if (slot_id) {
+      const { error: updateError } = await (supabase as any)
+        .from("availability_slots")
+        .update({
+          is_available: false,
+          booked_by: callRequest.id,
+        })
+        .eq("id", slot_id)
+        .eq("is_available", true); // Extra check to prevent race conditions
+
+      if (updateError) {
+        console.error("Failed to mark slot as booked:", updateError);
+        // The call request is still created, just without the slot being marked
+      }
+    }
+
     // Log activity
     await (supabase as any)
       .from("crm_activities")
       .insert({
         call_request_id: callRequest.id,
         model_id: modelId,
-        activity_type: "call_requested",
-        description: `Call request submitted from ${source || "website"}`,
-        metadata: { source, source_detail },
+        activity_type: slot_id ? "call_scheduled" : "call_requested",
+        description: slot_id
+          ? `Call scheduled for ${scheduledAt} from ${source || "website"}`
+          : `Call request submitted from ${source || "website"}`,
+        metadata: { source, source_detail, slot_id, scheduled_at: scheduledAt },
       });
 
     // Send SMS notifications (non-blocking)
@@ -84,9 +133,10 @@ export async function POST(request: Request) {
         phone,
         instagram_handle,
         source,
+        scheduled_at: scheduledAt,
       }),
       // Send confirmation to the person who requested the call
-      sendCallRequestConfirmation(phone, name),
+      sendCallRequestConfirmation(phone, name, scheduledAt),
     ]).catch((err) => {
       console.error("SMS notification error:", err);
     });
@@ -94,7 +144,10 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       id: callRequest.id,
-      message: "Call request submitted successfully! We'll be in touch soon.",
+      scheduled_at: callRequest.scheduled_at,
+      message: slot_id
+        ? "Call booked successfully!"
+        : "Call request submitted successfully! We'll be in touch soon.",
     });
   } catch (error) {
     console.error("Call request error:", error);

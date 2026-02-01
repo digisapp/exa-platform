@@ -499,6 +499,12 @@ export default function AdminCrmPage() {
             <Copy className="h-4 w-4 mr-2" />
             Copy Link
           </Button>
+          <Link href="/admin/crm/availability">
+            <Button variant="outline" size="sm">
+              <Calendar className="h-4 w-4 mr-2" />
+              Availability
+            </Button>
+          </Link>
           <Link href="/admin/crm/analytics">
             <Button variant="outline" size="sm">
               <BarChart3 className="h-4 w-4 mr-2" />

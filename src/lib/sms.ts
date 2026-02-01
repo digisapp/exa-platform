@@ -86,12 +86,28 @@ function formatPhoneNumber(phone: string): string | null {
   return null;
 }
 
+// Format scheduled time for display
+function formatScheduledTime(scheduledAt: string): string {
+  const date = new Date(scheduledAt);
+  const options: Intl.DateTimeFormatOptions = {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "America/Los_Angeles",
+  };
+  return date.toLocaleString("en-US", options);
+}
+
 // Send notification to admin about new call request
 export async function notifyAdminNewCallRequest(request: {
   name: string;
   phone: string;
   instagram_handle?: string;
   source?: string;
+  scheduled_at?: string | null;
 }): Promise<void> {
   const adminPhone = process.env.ADMIN_PHONE_NUMBER;
   if (!adminPhone) {
@@ -99,14 +115,28 @@ export async function notifyAdminNewCallRequest(request: {
     return;
   }
 
-  const message = `New EXA Call Request!\n\nName: ${request.name}\nPhone: ${request.phone}${request.instagram_handle ? `\nIG: @${request.instagram_handle}` : ""}${request.source ? `\nSource: ${request.source}` : ""}\n\nCall them back!`;
+  const scheduledInfo = request.scheduled_at
+    ? `\nScheduled: ${formatScheduledTime(request.scheduled_at)}`
+    : "";
+
+  const message = request.scheduled_at
+    ? `New EXA Call BOOKED!\n\nName: ${request.name}\nPhone: ${request.phone}${request.instagram_handle ? `\nIG: @${request.instagram_handle}` : ""}${scheduledInfo}${request.source ? `\nSource: ${request.source}` : ""}`
+    : `New EXA Call Request!\n\nName: ${request.name}\nPhone: ${request.phone}${request.instagram_handle ? `\nIG: @${request.instagram_handle}` : ""}${request.source ? `\nSource: ${request.source}` : ""}\n\nCall them back!`;
 
   await sendSMS({ to: adminPhone, message });
 }
 
 // Send confirmation to model
-export async function sendCallRequestConfirmation(phone: string, name: string): Promise<void> {
-  const message = `Hi ${name.split(" ")[0]}! Thanks for reaching out to EXA. We got your call request and will be in touch soon! - The EXA Team`;
+export async function sendCallRequestConfirmation(
+  phone: string,
+  name: string,
+  scheduledAt?: string | null
+): Promise<void> {
+  const firstName = name.split(" ")[0];
+
+  const message = scheduledAt
+    ? `Hi ${firstName}! Your call with EXA is confirmed for ${formatScheduledTime(scheduledAt)}. We'll call you then! - The EXA Team`
+    : `Hi ${firstName}! Thanks for reaching out to EXA. We got your call request and will be in touch soon! - The EXA Team`;
 
   await sendSMS({ to: phone, message });
 }
