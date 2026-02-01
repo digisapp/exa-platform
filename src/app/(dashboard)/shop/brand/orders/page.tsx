@@ -234,10 +234,10 @@ export default function BrandOrdersPage() {
 
           {/* Status Filter */}
           <Select
-            value={statusFilter}
+            value={statusFilter || "all"}
             onValueChange={(v) => {
               const url = new URL(window.location.href);
-              if (v) {
+              if (v && v !== "all") {
                 url.searchParams.set("status", v);
               } else {
                 url.searchParams.delete("status");
@@ -250,7 +250,7 @@ export default function BrandOrdersPage() {
               <SelectValue placeholder="All Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Status</SelectItem>
+              <SelectItem value="all">All Status</SelectItem>
               <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="confirmed">Confirmed</SelectItem>
               <SelectItem value="shipped">Shipped</SelectItem>

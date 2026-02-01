@@ -217,12 +217,12 @@ export default function ShopPage() {
         </form>
 
         <div className="flex gap-2">
-          <Select value={categoryFilter} onValueChange={(v) => updateFilter("category", v)}>
+          <Select value={categoryFilter || "all"} onValueChange={(v) => updateFilter("category", v === "all" ? "" : v)}>
             <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="Category" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Categories</SelectItem>
+              <SelectItem value="all">All Categories</SelectItem>
               {categories.map((cat) => (
                 <SelectItem key={cat.id} value={cat.slug}>
                   {cat.name}
@@ -231,12 +231,12 @@ export default function ShopPage() {
             </SelectContent>
           </Select>
 
-          <Select value={brandFilter} onValueChange={(v) => updateFilter("brand", v)}>
+          <Select value={brandFilter || "all"} onValueChange={(v) => updateFilter("brand", v === "all" ? "" : v)}>
             <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="Brand" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Brands</SelectItem>
+              <SelectItem value="all">All Brands</SelectItem>
               {brands.map((brand) => (
                 <SelectItem key={brand.id} value={brand.id}>
                   {brand.name}
