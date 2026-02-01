@@ -6,6 +6,7 @@ import { TopModelsLeaderboard } from "./TopModelsLeaderboard";
 import { BoostModal } from "./BoostModal";
 import { GameComplete } from "./GameComplete";
 import { Loader2, Sparkles, Trophy, Heart, X, Flame, HelpCircle } from "lucide-react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
@@ -308,10 +309,22 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
       {/* Welcome Modal */}
       <Dialog open={showWelcome} onOpenChange={(open) => !open && dismissWelcome()}>
         <DialogContent className="max-w-sm">
-          <DialogHeader>
+          <DialogHeader className="text-center">
+            <div className="flex justify-center mb-2">
+              <Image
+                src="/exa-logo-white.png"
+                alt="EXA"
+                width={80}
+                height={32}
+                className="h-8 w-auto"
+              />
+            </div>
             <DialogTitle className="text-center text-xl">
               Welcome to EXA Boost
             </DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              Boost your Favorite Models
+            </p>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="flex items-center gap-4 p-3 bg-green-500/10 rounded-lg">
