@@ -1,0 +1,122 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+
+// GET - Fetch models for the swipe game
+export async function GET(request: NextRequest) {
+  try {
+    const supabase = await createClient();
+    const { searchParams } = new URL(request.url);
+    const fingerprint = searchParams.get("fingerprint");
+
+    // Get current user if logged in
+    const { data: { user } } = await supabase.auth.getUser();
+
+    // Get or create session
+    const { data: sessionData, error: sessionError } = await (supabase as any).rpc(
+      "get_or_create_top_model_session",
+      {
+        p_user_id: user?.id || null,
+        p_fingerprint: fingerprint,
+      }
+    );
+
+    if (sessionError) {
+      console.error("Session error:", sessionError);
+    }
+
+    const session = (sessionData as {
+      session_id: string | null;
+      can_swipe: boolean;
+      models_swiped: number;
+      total_models: number;
+      next_reset_at: string | null;
+    }) || {
+      session_id: null,
+      can_swipe: true,
+      models_swiped: 0,
+      total_models: 0,
+      next_reset_at: null,
+    };
+
+    // If can't swipe, return early with session info
+    if (!session.can_swipe) {
+      return NextResponse.json({
+        models: [],
+        session: {
+          canSwipe: false,
+          modelsSwiped: session.models_swiped,
+          totalModels: session.total_models,
+          nextResetAt: session.next_reset_at,
+          sessionId: session.session_id,
+        },
+      });
+    }
+
+    // Get swiped model IDs from session
+    let swipedIds: string[] = [];
+    if (session.session_id) {
+      const { data: sessionRow } = await (supabase as any)
+        .from("top_model_sessions")
+        .select("models_swiped")
+        .eq("id", session.session_id)
+        .single();
+      swipedIds = sessionRow?.models_swiped || [];
+    }
+
+    // Fetch models with profile pictures, excluding already swiped
+    let query = supabase
+      .from("models")
+      .select(`
+        id,
+        first_name,
+        username,
+        profile_photo_url,
+        city,
+        state,
+        focus_tags,
+        is_verified,
+        is_featured
+      `)
+      .eq("is_approved", true)
+      .not("profile_photo_url", "is", null);
+
+    // Exclude already swiped models
+    if (swipedIds.length > 0) {
+      query = query.not("id", "in", `(${swipedIds.join(",")})`);
+    }
+
+    // Randomize order and limit
+    const { data: models, error } = await query
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (error) {
+      console.error("Fetch models error:", error);
+      return NextResponse.json(
+        { error: "Failed to fetch models" },
+        { status: 500 }
+      );
+    }
+
+    // Shuffle the models for randomness
+    const shuffledModels = (models || []).sort(() => Math.random() - 0.5);
+
+    return NextResponse.json({
+      models: shuffledModels,
+      session: {
+        canSwipe: true,
+        modelsSwiped: session.models_swiped,
+        totalModels: session.total_models,
+        modelsRemaining: session.total_models - session.models_swiped,
+        nextResetAt: null,
+        sessionId: session.session_id,
+      },
+    });
+  } catch (error) {
+    console.error("Top models error:", error);
+    return NextResponse.json(
+      { error: "Failed to load game" },
+      { status: 500 }
+    );
+  }
+}
