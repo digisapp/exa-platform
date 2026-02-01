@@ -258,18 +258,12 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
             </div>
           )}
 
-          {/* Coin balance and help button */}
+          {/* Help button */}
           {!gameComplete && (
-            <div className="mt-6 flex items-center gap-3 text-sm text-muted-foreground">
-              {initialUser && (
-                <div className="flex items-center gap-1 px-3 py-1.5 bg-white/5 rounded-full">
-                  <span className="text-yellow-400 font-medium">{coinBalance}</span>
-                  <span>coins</span>
-                </div>
-              )}
+            <div className="mt-6">
               <button
                 onClick={() => setShowWelcome(true)}
-                className="flex items-center gap-1 px-3 py-1.5 bg-white/5 rounded-full hover:bg-white/10 transition-colors"
+                className="flex items-center gap-1 px-3 py-1.5 text-sm text-muted-foreground bg-white/5 rounded-full hover:bg-white/10 transition-colors"
               >
                 <HelpCircle className="h-4 w-4" />
                 <span>How to play</span>
