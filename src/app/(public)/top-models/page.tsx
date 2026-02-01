@@ -5,11 +5,11 @@ import { TopModelsGame } from "@/components/games/TopModelsGame";
 import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 
 export const metadata: Metadata = {
-  title: "Top Models | EXA Models",
+  title: "Boost Models | EXA Models",
   description:
     "Boost your favorite models to the top of the leaderboard! Swipe, like, and help them trend.",
   openGraph: {
-    title: "Top Models | EXA Models",
+    title: "Boost Models | EXA Models",
     description: "Swipe, like, and boost your favorite models to the top!",
     type: "website",
   },
@@ -73,7 +73,7 @@ export default async function TopModelsPage() {
           {/* Minimal Header */}
           <div className="text-center mb-4">
             <h1 className="text-2xl font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 text-transparent bg-clip-text">
-              Top Models
+              Boost Models
             </h1>
           </div>
 

@@ -41,12 +41,12 @@ export function GameComplete({ nextResetAt, totalSwiped, onPlayAgain }: GameComp
   }, [nextResetAt]);
 
   const handleShare = async () => {
-    const text = `I just swiped through ${totalSwiped} models on Top Models! Can you beat my record? Play now:`;
+    const text = `I just swiped through ${totalSwiped} models on Boost Models! Can you beat my record? Play now:`;
     const url = typeof window !== "undefined" ? window.location.href : "";
 
     if (navigator.share) {
       try {
-        await navigator.share({ title: "Top Models Game", text, url });
+        await navigator.share({ title: "Boost Models", text, url });
       } catch {
         // User cancelled share
       }
