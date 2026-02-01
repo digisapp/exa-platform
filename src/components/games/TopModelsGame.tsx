@@ -5,9 +5,15 @@ import { SwipeStack } from "./SwipeStack";
 import { TopModelsLeaderboard } from "./TopModelsLeaderboard";
 import { BoostModal } from "./BoostModal";
 import { GameComplete } from "./GameComplete";
-import { Loader2, Sparkles, Trophy } from "lucide-react";
+import { Loader2, Sparkles, Trophy, Heart, X, Flame, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface Model {
   id: string;
@@ -45,6 +51,20 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
   const [boostModal, setBoostModal] = useState<Model | null>(null);
   const [gameComplete, setGameComplete] = useState(false);
   const [fingerprint, setFingerprint] = useState<string | null>(null);
+  const [showWelcome, setShowWelcome] = useState(false);
+
+  // Check if first visit
+  useEffect(() => {
+    const hasSeenWelcome = localStorage.getItem("topModelsWelcomeSeen");
+    if (!hasSeenWelcome) {
+      setShowWelcome(true);
+    }
+  }, []);
+
+  const dismissWelcome = () => {
+    localStorage.setItem("topModelsWelcomeSeen", "true");
+    setShowWelcome(false);
+  };
 
   // Generate browser fingerprint
   useEffect(() => {
@@ -274,6 +294,58 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
         isLoggedIn={!!initialUser}
         onBoost={handleBoost}
       />
+
+      {/* Welcome Modal */}
+      <Dialog open={showWelcome} onOpenChange={(open) => !open && dismissWelcome()}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-center text-xl">
+              Welcome to Top Models
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="flex items-center gap-4 p-3 bg-green-500/10 rounded-lg">
+              <div className="p-2 rounded-full bg-green-500/20">
+                <Heart className="h-5 w-5 text-green-500" />
+              </div>
+              <div>
+                <p className="font-medium">Swipe Right = Like</p>
+                <p className="text-sm text-muted-foreground">Give 1 point</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4 p-3 bg-red-500/10 rounded-lg">
+              <div className="p-2 rounded-full bg-red-500/20">
+                <X className="h-5 w-5 text-red-500" />
+              </div>
+              <div>
+                <p className="font-medium">Swipe Left = Pass</p>
+                <p className="text-sm text-muted-foreground">Skip to next</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4 p-3 bg-orange-500/10 rounded-lg">
+              <div className="p-2 rounded-full bg-orange-500/20">
+                <Flame className="h-5 w-5 text-orange-500" />
+              </div>
+              <div>
+                <p className="font-medium">Boost = 5x Points</p>
+                <p className="text-sm text-muted-foreground">Use coins to boost</p>
+              </div>
+            </div>
+            <Button onClick={dismissWelcome} className="w-full bg-gradient-to-r from-pink-500 to-purple-500">
+              Start Swiping
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Help Button */}
+      <button
+        onClick={() => setShowWelcome(true)}
+        className="fixed bottom-4 right-4 p-3 bg-white/10 backdrop-blur-sm rounded-full hover:bg-white/20 transition-colors"
+        title="How to play"
+      >
+        <HelpCircle className="h-5 w-5 text-muted-foreground" />
+      </button>
     </div>
   );
 }
