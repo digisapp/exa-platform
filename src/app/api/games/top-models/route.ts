@@ -85,10 +85,9 @@ export async function GET(request: NextRequest) {
       query = query.not("id", "in", `(${swipedIds.join(",")})`);
     }
 
-    // Randomize order and limit
+    // Fetch all models
     const { data: models, error } = await query
-      .order("created_at", { ascending: false })
-      .limit(50);
+      .order("created_at", { ascending: false });
 
     if (error) {
       console.error("Fetch models error:", error);

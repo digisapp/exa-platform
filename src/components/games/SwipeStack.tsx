@@ -21,9 +21,11 @@ interface SwipeStackProps {
   onSwipe: (modelId: string, direction: "left" | "right") => void;
   onBoost: (model: Model) => void;
   onEmpty?: () => void;
+  totalModels?: number;
+  modelsSwiped?: number;
 }
 
-export function SwipeStack({ models, onSwipe, onBoost, onEmpty }: SwipeStackProps) {
+export function SwipeStack({ models, onSwipe, onBoost, onEmpty, totalModels, modelsSwiped = 0 }: SwipeStackProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [exitDirection, setExitDirection] = useState<"left" | "right" | null>(null);
 
@@ -122,7 +124,7 @@ export function SwipeStack({ models, onSwipe, onBoost, onEmpty }: SwipeStackProp
 
       {/* Progress indicator */}
       <div className="text-center text-sm text-muted-foreground">
-        {currentIndex + 1} of {models.length} models
+        {modelsSwiped + currentIndex + 1} of {totalModels || models.length} models
       </div>
     </div>
   );

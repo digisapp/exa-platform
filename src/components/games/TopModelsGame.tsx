@@ -217,6 +217,8 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
               onSwipe={handleSwipe}
               onBoost={(model) => setBoostModal(model)}
               onEmpty={handleEmpty}
+              totalModels={session?.totalModels}
+              modelsSwiped={session?.modelsSwiped}
             />
           ) : (
             <div className="text-center py-12">
