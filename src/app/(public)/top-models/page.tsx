@@ -7,7 +7,7 @@ import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 export const metadata: Metadata = {
   title: "Top Models | EXA Models",
   description:
-    "Discover amazing models in this fun swipe game. Like your favorites, boost them to the top of the leaderboard, and see who's trending!",
+    "Boost your favorite models to the top of the leaderboard! Swipe, like, and help them trend.",
   openGraph: {
     title: "Top Models | EXA Models",
     description: "Swipe, like, and boost your favorite models to the top!",

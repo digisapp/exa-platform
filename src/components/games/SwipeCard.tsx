@@ -2,7 +2,8 @@
 
 import { motion, useMotionValue, useTransform } from "framer-motion";
 import Image from "next/image";
-import { Heart, X, MapPin, Flame, Verified, Star } from "lucide-react";
+import { Heart, X, MapPin, Flame, Verified, Star, ExternalLink } from "lucide-react";
+import Link from "next/link";
 
 interface Model {
   id: string;
@@ -109,9 +110,19 @@ export function SwipeCard({
 
         {/* Model Info */}
         <div className="absolute bottom-0 left-0 right-0 p-6">
-          <h2 className="text-3xl font-bold text-white mb-1">
-            {model.first_name || model.username}
-          </h2>
+          <div className="flex items-center gap-2 mb-1">
+            <h2 className="text-3xl font-bold text-white">
+              {model.first_name || model.username}
+            </h2>
+            <Link
+              href={`/${model.username}`}
+              onClick={(e) => e.stopPropagation()}
+              className="p-1.5 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+              title="View profile"
+            >
+              <ExternalLink className="h-4 w-4 text-white" />
+            </Link>
+          </div>
 
           {location && (
             <div className="flex items-center gap-1 text-white/80 mb-3">
