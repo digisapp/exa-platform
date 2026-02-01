@@ -11,7 +11,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Flame, Eye, Coins, Loader2, Sparkles, Zap } from "lucide-react";
+import { Eye, Coins, Loader2, Sparkles, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Model {
@@ -72,7 +72,7 @@ export function BoostModal({
       <DialogContent className="max-w-sm">
         <DialogHeader className="text-center">
           <DialogTitle className="flex items-center justify-center gap-2">
-            <Flame className="h-5 w-5 text-orange-500" />
+            <span className="text-xl">🔥</span>
             Boost {model.first_name || model.username}
           </DialogTitle>
           <DialogDescription>
@@ -131,8 +131,8 @@ export function BoostModal({
                   )}
                 >
                   <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-gradient-to-r from-orange-500 to-pink-500">
-                      <Flame className="h-5 w-5 text-white" />
+                    <div className="p-2 rounded-lg bg-gradient-to-r from-orange-500 to-pink-500 flex items-center justify-center">
+                      <span className="text-xl">🔥</span>
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
@@ -235,7 +235,7 @@ export function BoostModal({
                     </>
                   ) : selectedType ? (
                     <>
-                      {selectedType === "super" ? <Zap className="h-4 w-4 mr-2" /> : <Flame className="h-4 w-4 mr-2" />}
+                      {selectedType === "super" ? <Zap className="h-4 w-4 mr-2" /> : <span className="mr-2">🔥</span>}
                       {selectedType === "super" ? "Super " : ""}Boost for {selectedType === "super" ? SUPER_COST : selectedType === "reveal" ? REVEAL_COST : BOOST_COST} coins
                     </>
                   ) : (
