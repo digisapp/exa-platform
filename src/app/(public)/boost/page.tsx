@@ -64,12 +64,12 @@ export default async function TopModelsPage() {
     } else if (actor?.type === "brand") {
       const { data: brand } = await supabase
         .from("brands")
-        .select("coin_balance, logo_url, name")
+        .select("coin_balance, logo_url, company_name")
         .eq("user_id", user.id)
         .single();
       coinBalance = brand?.coin_balance || 0;
       avatarUrl = brand?.logo_url || "";
-      name = brand?.name || "";
+      name = brand?.company_name || "";
     }
 
     initialUser = {
