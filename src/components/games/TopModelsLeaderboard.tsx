@@ -42,7 +42,7 @@ export function TopModelsLeaderboard({
     const fetchLeaderboard = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/games/top-models/leaderboard?period=${period}&limit=10`);
+        const res = await fetch(`/api/games/boost-models/leaderboard?period=${period}&limit=10`);
         if (res.ok) {
           const data = await res.json();
           setLeaderboard(data.leaderboard || []);
