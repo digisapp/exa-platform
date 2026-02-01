@@ -309,7 +309,7 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-center text-xl">
-              Welcome to Boost Models
+              Welcome to EXA Boost
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
