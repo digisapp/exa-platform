@@ -124,11 +124,6 @@ export function SwipeStack({ models, onSwipe, onBoost, onEmpty, totalModels, mod
         onBoost={handleBoost}
         disabled={!currentModel}
       />
-
-      {/* Progress indicator */}
-      <div className="text-center text-sm text-muted-foreground">
-        {modelsSwiped + currentIndex + 1} of {totalModels || models.length} models
-      </div>
     </div>
   );
 }
