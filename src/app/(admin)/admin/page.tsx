@@ -17,6 +17,7 @@ import {
   Send,
   Calendar,
   GraduationCap,
+  Phone,
 } from "lucide-react";
 
 export default async function AdminPage() {
@@ -42,6 +43,7 @@ export default async function AdminPage() {
   const { count: totalTransactions } = await supabase.from("coin_transactions").select("*", { count: "exact", head: true });
   const { count: pendingModelApps } = await (supabase.from("model_applications") as any).select("*", { count: "exact", head: true }).eq("status", "pending");
   const { count: pendingBrands } = await (supabase.from("brands") as any).select("*", { count: "exact", head: true }).eq("is_verified", false);
+  const { count: pendingCalls } = await (supabase.from("call_requests") as any).select("*", { count: "exact", head: true }).eq("status", "pending");
 
   const { data: modelBalances } = await supabase.from("models").select("coin_balance") as { data: { coin_balance: number }[] | null };
   const { data: fanBalances } = await supabase.from("fans").select("coin_balance") as { data: { coin_balance: number }[] | null };
@@ -179,10 +181,22 @@ export default async function AdminPage() {
             <span>Workshops</span>
           </Link>
         </Button>
+
+        <Button variant="outline" asChild className="h-auto py-4 flex-col gap-2">
+          <Link href="/admin/crm">
+            <Phone className="h-6 w-6 text-pink-500" />
+            <span>Call Queue</span>
+            {(pendingCalls || 0) > 0 && (
+              <span className="text-xs text-muted-foreground">
+                {pendingCalls} pending
+              </span>
+            )}
+          </Link>
+        </Button>
       </div>
 
       {/* Pending Items Summary */}
-      {((pendingModelApps || 0) > 0 || (pendingBrands || 0) > 0) && (
+      {((pendingModelApps || 0) > 0 || (pendingBrands || 0) > 0 || (pendingCalls || 0) > 0) && (
         <Card className="border-pink-500/30">
           <CardContent className="pt-6">
             <div className="flex flex-wrap items-center gap-4">
@@ -197,6 +211,12 @@ export default async function AdminPage() {
                 <Link href="/admin/community" className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-500/10 text-cyan-500 hover:bg-cyan-500/20 transition-colors">
                   <Building2 className="h-4 w-4" />
                   {pendingBrands} Brand Inquiries
+                </Link>
+              )}
+              {(pendingCalls || 0) > 0 && (
+                <Link href="/admin/crm" className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 text-green-500 hover:bg-green-500/20 transition-colors">
+                  <Phone className="h-4 w-4" />
+                  {pendingCalls} Call Requests
                 </Link>
               )}
             </div>
