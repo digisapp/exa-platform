@@ -75,7 +75,11 @@ export async function GET(request: NextRequest) {
         state,
         focus_tags,
         is_verified,
-        is_featured
+        is_featured,
+        top_model_leaderboard (
+          today_points,
+          total_points
+        )
       `)
       .eq("is_approved", true)
       .not("profile_photo_url", "is", null);
@@ -89,6 +93,29 @@ export async function GET(request: NextRequest) {
     const { data: models, error } = await query
       .order("created_at", { ascending: false });
 
+    // Get today's leaderboard rankings
+    const { data: leaderboardData } = await supabase
+      .from("top_model_leaderboard")
+      .select("model_id, today_points")
+      .gt("today_points", 0)
+      .order("today_points", { ascending: false })
+      .limit(100);
+
+    // Create a map of model_id to rank
+    const rankMap = new Map<string, number>();
+    (leaderboardData || []).forEach((entry: any, index: number) => {
+      rankMap.set(entry.model_id, index + 1);
+    });
+
+    // Transform models to include points and rank at top level
+    const modelsWithPoints = (models || []).map((model: any) => ({
+      ...model,
+      today_points: model.top_model_leaderboard?.today_points || 0,
+      total_points: model.top_model_leaderboard?.total_points || 0,
+      today_rank: rankMap.get(model.id) || null,
+      top_model_leaderboard: undefined, // Remove nested object
+    }));
+
     if (error) {
       console.error("Fetch models error:", error);
       return NextResponse.json(
@@ -98,7 +125,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Shuffle the models for randomness
-    const shuffledModels = (models || []).sort(() => Math.random() - 0.5);
+    const shuffledModels = modelsWithPoints.sort(() => Math.random() - 0.5);
 
     return NextResponse.json({
       models: shuffledModels,

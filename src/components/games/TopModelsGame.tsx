@@ -26,6 +26,9 @@ interface Model {
   focus_tags: string[] | null;
   is_verified: boolean | null;
   is_featured: boolean | null;
+  today_points?: number;
+  total_points?: number;
+  today_rank?: number | null;
 }
 
 interface Session {

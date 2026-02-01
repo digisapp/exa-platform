@@ -2,7 +2,7 @@
 
 import { motion, useMotionValue, useTransform } from "framer-motion";
 import Image from "next/image";
-import { Heart, X, MapPin, Flame, Verified, Star, ExternalLink, Share2 } from "lucide-react";
+import { Heart, X, MapPin, Flame, Verified, Star, ExternalLink, Share2, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -16,6 +16,9 @@ interface Model {
   focus_tags: string[] | null;
   is_verified: boolean | null;
   is_featured: boolean | null;
+  today_points?: number;
+  total_points?: number;
+  today_rank?: number | null;
 }
 
 interface SwipeCardProps {
@@ -64,7 +67,7 @@ export function SwipeCard({
       onDragEnd={handleDragEnd}
       whileTap={{ scale: isTop ? 1.02 : 1 }}
     >
-      <div className="relative w-full h-full rounded-2xl overflow-hidden bg-black shadow-2xl">
+      <div className="relative w-full h-full rounded-3xl overflow-hidden bg-black shadow-[0_20px_50px_rgba(0,0,0,0.5)] ring-1 ring-white/10">
         {/* Model Image */}
         <Image
           src={model.profile_photo_url}
@@ -77,7 +80,7 @@ export function SwipeCard({
         />
 
         {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 via-30% to-transparent" />
 
         {/* Like Indicator */}
         <motion.div
@@ -107,12 +110,20 @@ export function SwipeCard({
               <Star className="h-4 w-4 text-white" />
             </div>
           )}
+          {model.today_rank && (
+            <div className="flex items-center gap-1 bg-gradient-to-r from-pink-500 to-purple-500 backdrop-blur-sm rounded-full px-2.5 py-1">
+              <TrendingUp className="h-3.5 w-3.5 text-white" />
+              <span className="text-xs font-semibold text-white">
+                #{model.today_rank} Today
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Model Info */}
-        <div className="absolute bottom-0 left-0 right-0 p-6">
+        <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6">
           <div className="flex items-center gap-2 mb-1">
-            <h2 className="text-3xl font-bold text-white">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white drop-shadow-lg">
               {model.first_name || model.username}
             </h2>
             <Link
@@ -146,49 +157,33 @@ export function SwipeCard({
           )}
         </div>
 
-        {/* Top Right Buttons (only on top card) */}
+        {/* Top Right Share Button (only on top card) */}
         {isTop && (
-          <div className="absolute top-4 right-4 flex gap-2">
-            {/* Share Button */}
-            <button
-              onClick={async (e) => {
-                e.stopPropagation();
-                const shareUrl = `${window.location.origin}/${model.username}`;
-                const shareText = `Check out ${model.first_name || model.username} on EXA Models!`;
+          <button
+            onClick={async (e) => {
+              e.stopPropagation();
+              const shareUrl = `${window.location.origin}/${model.username}`;
+              const shareText = `Check out ${model.first_name || model.username} on EXA Models!`;
 
-                if (navigator.share) {
-                  try {
-                    await navigator.share({
-                      title: `${model.first_name || model.username} | EXA Models`,
-                      text: shareText,
-                      url: shareUrl,
-                    });
-                  } catch {
-                    // User cancelled
-                  }
-                } else {
-                  await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
-                  toast.success("Link copied!");
+              if (navigator.share) {
+                try {
+                  await navigator.share({
+                    title: `${model.first_name || model.username} | EXA Models`,
+                    text: shareText,
+                    url: shareUrl,
+                  });
+                } catch {
+                  // User cancelled
                 }
-              }}
-              className="bg-white/20 backdrop-blur-sm rounded-full p-2.5 shadow-lg hover:bg-white/30 transition-colors"
-            >
-              <Share2 className="h-5 w-5 text-white" />
-            </button>
-
-            {/* Boost Button */}
-            {onBoost && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onBoost();
-                }}
-                className="bg-gradient-to-r from-orange-500 to-pink-500 rounded-full p-3 shadow-lg hover:scale-110 transition-transform"
-              >
-                <Flame className="h-6 w-6 text-white" />
-              </button>
-            )}
-          </div>
+              } else {
+                await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
+                toast.success("Link copied!");
+              }
+            }}
+            className="absolute top-4 right-4 bg-white/20 backdrop-blur-sm rounded-full p-2 shadow-lg hover:bg-white/30 transition-colors"
+          >
+            <Share2 className="h-4 w-4 text-white" />
+          </button>
         )}
       </div>
     </motion.div>
@@ -205,12 +200,12 @@ interface ActionButtonsProps {
 
 export function ActionButtons({ onPass, onLike, onBoost, disabled }: ActionButtonsProps) {
   return (
-    <div className="flex items-center justify-center gap-6">
+    <div className="flex items-center justify-center gap-4 sm:gap-6">
       {/* Pass Button */}
       <button
         onClick={onPass}
         disabled={disabled}
-        className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm border-2 border-red-500/50 flex items-center justify-center hover:bg-red-500/20 transition-colors disabled:opacity-50"
+        className="w-16 h-16 sm:w-18 sm:h-18 rounded-full bg-white/10 backdrop-blur-sm border-2 border-red-500/50 flex items-center justify-center hover:bg-red-500/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 shadow-lg shadow-red-500/10"
       >
         <X className="h-8 w-8 text-red-500" />
       </button>
@@ -219,16 +214,16 @@ export function ActionButtons({ onPass, onLike, onBoost, disabled }: ActionButto
       <button
         onClick={onBoost}
         disabled={disabled}
-        className="w-14 h-14 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 flex items-center justify-center hover:scale-110 transition-transform shadow-lg disabled:opacity-50"
+        className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-lg shadow-orange-500/30 disabled:opacity-50"
       >
-        <Flame className="h-7 w-7 text-white" />
+        <Flame className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
       </button>
 
       {/* Like Button */}
       <button
         onClick={onLike}
         disabled={disabled}
-        className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm border-2 border-green-500/50 flex items-center justify-center hover:bg-green-500/20 transition-colors disabled:opacity-50"
+        className="w-16 h-16 sm:w-18 sm:h-18 rounded-full bg-white/10 backdrop-blur-sm border-2 border-green-500/50 flex items-center justify-center hover:bg-green-500/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 shadow-lg shadow-green-500/10"
       >
         <Heart className="h-8 w-8 text-green-500" />
       </button>

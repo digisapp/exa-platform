@@ -14,6 +14,9 @@ interface Model {
   focus_tags: string[] | null;
   is_verified: boolean | null;
   is_featured: boolean | null;
+  today_points?: number;
+  total_points?: number;
+  today_rank?: number | null;
 }
 
 interface SwipeStackProps {
@@ -65,9 +68,9 @@ export function SwipeStack({ models, onSwipe, onBoost, onEmpty, totalModels, mod
   }
 
   return (
-    <div className="flex flex-col items-center gap-6">
+    <div className="flex flex-col items-center gap-4 sm:gap-6">
       {/* Card Stack */}
-      <div className="relative w-full max-w-[340px] aspect-[3/4]">
+      <div className="relative w-[calc(100vw-32px)] max-w-[380px] sm:max-w-[400px] aspect-[3/4]">
         {/* Background cards (show up to 2 cards behind) */}
         {nextModels.map((model, index) => (
           <div
@@ -79,7 +82,7 @@ export function SwipeStack({ models, onSwipe, onBoost, onEmpty, totalModels, mod
               opacity: 1 - (index + 1) * 0.2,
             }}
           >
-            <div className="w-full h-full rounded-2xl overflow-hidden bg-zinc-800">
+            <div className="w-full h-full rounded-3xl overflow-hidden bg-zinc-800">
               <div
                 className="w-full h-full bg-cover bg-center"
                 style={{ backgroundImage: `url(${model.profile_photo_url})` }}
