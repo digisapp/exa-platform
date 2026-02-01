@@ -5,7 +5,7 @@ import { SwipeStack } from "./SwipeStack";
 import { TopModelsLeaderboard } from "./TopModelsLeaderboard";
 import { BoostModal } from "./BoostModal";
 import { GameComplete } from "./GameComplete";
-import { Loader2, Sparkles, Trophy, Heart, X, HelpCircle } from "lucide-react";
+import { Loader2, Sparkles, Trophy, Heart, X, HelpCircle, Flame } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -349,8 +349,8 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
               </div>
             </div>
             <div className="flex items-center gap-4 p-3 bg-orange-500/10 rounded-lg">
-              <div className="p-2 rounded-full bg-orange-500/20 flex items-center justify-center">
-                <span className="text-xl">🔥</span>
+              <div className="p-2 rounded-full bg-orange-500/20">
+                <Flame className="h-5 w-5 text-orange-500" />
               </div>
               <div>
                 <p className="font-medium">Boost = 5x Points</p>

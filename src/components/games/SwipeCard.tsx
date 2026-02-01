@@ -2,7 +2,7 @@
 
 import { motion, useMotionValue, useTransform } from "framer-motion";
 import Image from "next/image";
-import { Heart, X, MapPin, Verified, Star, ExternalLink, Share2, TrendingUp } from "lucide-react";
+import { Heart, X, MapPin, Verified, Star, ExternalLink, Share2, TrendingUp, Flame } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -217,7 +217,7 @@ export function ActionButtons({ onPass, onLike, onBoost, disabled }: ActionButto
         disabled={disabled}
         className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-lg shadow-orange-500/30 disabled:opacity-50"
       >
-        <span className="text-2xl sm:text-3xl">🔥</span>
+        <Flame className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
       </button>
 
       {/* Like Button */}
