@@ -55,7 +55,8 @@ export function SwipeCard({
     }
   };
 
-  const location = [model.city, model.state].filter(Boolean).join(", ");
+  // Only show state for privacy (no city)
+  const location = model.state || null;
 
   return (
     <motion.div
