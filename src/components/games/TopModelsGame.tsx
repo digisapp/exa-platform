@@ -285,7 +285,7 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
         <details className="bg-white/5 rounded-xl">
           <summary className="p-4 cursor-pointer flex items-center gap-2 font-medium">
             <Trophy className="h-5 w-5 text-yellow-400" />
-            View Leaderboard
+            Leaderboard
           </summary>
           <div className="p-4 pt-0">
             <TopModelsLeaderboard compact={true} />

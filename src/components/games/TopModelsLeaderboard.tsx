@@ -89,16 +89,16 @@ export function TopModelsLeaderboard({
 
   return (
     <div className={cn("space-y-4", className)}>
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Trophy className="h-5 w-5 text-yellow-400" />
-          <h3 className="font-bold text-lg">Leaderboard</h3>
-        </div>
-        {!compact && (
+      {/* Header - hidden on mobile/compact since parent shows it */}
+      {!compact && (
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Trophy className="h-5 w-5 text-yellow-400" />
+            <h3 className="font-bold text-lg">Leaderboard</h3>
+          </div>
           <TrendingUp className="h-4 w-4 text-green-400 animate-pulse" />
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Period Tabs */}
       <div className="flex gap-1 bg-white/5 rounded-lg p-1">

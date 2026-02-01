@@ -35,7 +35,7 @@ export default async function TopModelsPage() {
       .eq("user_id", user.id)
       .single();
 
-    actorType = actor?.type as typeof actorType;
+    actorType = (actor?.type as "model" | "fan" | "brand" | "admin") ?? null;
     let coinBalance = 0;
     let avatarUrl = "";
     let name = "";
