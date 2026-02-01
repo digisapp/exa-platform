@@ -100,7 +100,7 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
     try {
       setLoading(true);
       const res = await fetch(
-        `/api/games/boost-models${fingerprint ? `?fingerprint=${fingerprint}` : ""}`
+        `/api/games/boost${fingerprint ? `?fingerprint=${fingerprint}` : ""}`
       );
       if (!res.ok) throw new Error("Failed to fetch");
 
@@ -132,7 +132,7 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
     const voteType = direction === "right" ? "like" : "pass";
 
     try {
-      const res = await fetch("/api/games/boost-models/vote", {
+      const res = await fetch("/api/games/boost/vote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -154,18 +154,19 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
   };
 
   // Handle boost
-  const handleBoost = async (type: "boost" | "reveal") => {
+  const handleBoost = async (type: "boost" | "reveal" | "super") => {
     if (!boostModal) return;
 
     try {
-      const res = await fetch("/api/games/boost-models/vote", {
+      const res = await fetch("/api/games/boost/vote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model_id: boostModal.id,
           vote_type: "like",
           boost: true,
-          reveal: type === "reveal",
+          reveal: type === "reveal" || type === "super",
+          super_boost: type === "super",
           fingerprint,
           session_id: session?.sessionId,
         }),

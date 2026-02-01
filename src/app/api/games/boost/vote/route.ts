@@ -3,7 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 
 const BOOST_COST = 5;
 const REVEAL_COST = 10;
+const SUPER_COST = 20;
 const BOOST_MULTIPLIER = 5;
+const SUPER_MULTIPLIER = 10;
 
 // POST - Record a vote
 export async function POST(request: NextRequest) {
@@ -17,6 +19,7 @@ export async function POST(request: NextRequest) {
       vote_type,
       boost = false,
       reveal = false,
+      super_boost = false,
       fingerprint,
       session_id,
     } = body;
@@ -79,9 +82,29 @@ export async function POST(request: NextRequest) {
     let coinsToSpend = 0;
     let isBoosted = false;
     let isRevealed = false;
+    let isSuperBoosted = false;
 
     if (vote_type === "like") {
-      if (reveal) {
+      if (super_boost) {
+        // Super boost - 10x points, reveal, priority
+        if (!user) {
+          return NextResponse.json(
+            { error: "Sign in to super boost this model" },
+            { status: 401 }
+          );
+        }
+        if (coinBalance < SUPER_COST) {
+          return NextResponse.json(
+            { error: `Not enough coins. Need ${SUPER_COST} coins.`, needCoins: true },
+            { status: 402 }
+          );
+        }
+        coinsToSpend = SUPER_COST;
+        points = SUPER_MULTIPLIER;
+        isBoosted = true;
+        isRevealed = true;
+        isSuperBoosted = true;
+      } else if (reveal) {
         // Reveal includes boost
         if (!user) {
           return NextResponse.json(
@@ -125,8 +148,8 @@ export async function POST(request: NextRequest) {
         {
           p_actor_id: actorId,
           p_amount: coinsToSpend,
-          p_action: isRevealed ? "top_models_reveal" : "top_models_boost",
-          p_metadata: { model_id, game: "top_models" },
+          p_action: isSuperBoosted ? "exa_boost_super" : isRevealed ? "exa_boost_reveal" : "exa_boost",
+          p_metadata: { model_id, game: "exa_boost", is_super: isSuperBoosted },
         }
       );
 
@@ -218,12 +241,17 @@ export async function POST(request: NextRequest) {
           .single();
 
         if (modelActor) {
+          const notificationTitle = isSuperBoosted ? "SUPER BOOST!" : "You got boosted!";
+          const notificationBody = isSuperBoosted
+            ? `${voterName} gave you a SUPER BOOST in EXA Boost! You gained ${points} points!`
+            : `${voterName} boosted you in EXA Boost! You gained ${points} points.`;
+
           await (supabase as any).from("notifications").insert({
             actor_id: modelActor.id,
-            type: "top_models_boost",
-            title: "You got boosted!",
-            body: `${voterName} boosted you in Top Models! You gained ${points} points.`,
-            data: { game: "top_models", points, voter_revealed: true },
+            type: isSuperBoosted ? "exa_boost_super" : "exa_boost",
+            title: notificationTitle,
+            body: notificationBody,
+            data: { game: "exa_boost", points, voter_revealed: true, is_super: isSuperBoosted },
           });
         }
       }

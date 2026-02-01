@@ -2,7 +2,8 @@
 
 import { motion, useMotionValue, useTransform } from "framer-motion";
 import Image from "next/image";
-import { Heart, X, MapPin, Flame, Verified, Star, ExternalLink } from "lucide-react";
+import { Heart, X, MapPin, Flame, Verified, Star, ExternalLink, Share2 } from "lucide-react";
+import { toast } from "sonner";
 import Link from "next/link";
 
 interface Model {
@@ -145,17 +146,49 @@ export function SwipeCard({
           )}
         </div>
 
-        {/* Boost Button (only on top card) */}
-        {isTop && onBoost && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onBoost();
-            }}
-            className="absolute top-4 right-4 bg-gradient-to-r from-orange-500 to-pink-500 rounded-full p-3 shadow-lg hover:scale-110 transition-transform"
-          >
-            <Flame className="h-6 w-6 text-white" />
-          </button>
+        {/* Top Right Buttons (only on top card) */}
+        {isTop && (
+          <div className="absolute top-4 right-4 flex gap-2">
+            {/* Share Button */}
+            <button
+              onClick={async (e) => {
+                e.stopPropagation();
+                const shareUrl = `${window.location.origin}/${model.username}`;
+                const shareText = `Check out ${model.first_name || model.username} on EXA Models!`;
+
+                if (navigator.share) {
+                  try {
+                    await navigator.share({
+                      title: `${model.first_name || model.username} | EXA Models`,
+                      text: shareText,
+                      url: shareUrl,
+                    });
+                  } catch {
+                    // User cancelled
+                  }
+                } else {
+                  await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
+                  toast.success("Link copied!");
+                }
+              }}
+              className="bg-white/20 backdrop-blur-sm rounded-full p-2.5 shadow-lg hover:bg-white/30 transition-colors"
+            >
+              <Share2 className="h-5 w-5 text-white" />
+            </button>
+
+            {/* Boost Button */}
+            {onBoost && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onBoost();
+                }}
+                className="bg-gradient-to-r from-orange-500 to-pink-500 rounded-full p-3 shadow-lg hover:scale-110 transition-transform"
+              >
+                <Flame className="h-6 w-6 text-white" />
+              </button>
+            )}
+          </div>
         )}
       </div>
     </motion.div>
