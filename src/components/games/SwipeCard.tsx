@@ -204,31 +204,38 @@ export function ActionButtons({ onPass, onLike, onBoost, disabled }: ActionButto
   return (
     <div className="flex items-center justify-center gap-4 sm:gap-6">
       {/* Pass Button */}
-      <button
+      <motion.button
         onClick={onPass}
         disabled={disabled}
-        className="w-16 h-16 sm:w-18 sm:h-18 rounded-full bg-white/10 backdrop-blur-sm border-2 border-red-500/50 flex items-center justify-center hover:bg-red-500/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 shadow-lg shadow-red-500/10"
+        whileTap={{ scale: 0.9, backgroundColor: "rgba(239, 68, 68, 0.3)" }}
+        className="w-16 h-16 sm:w-18 sm:h-18 rounded-full bg-white/10 backdrop-blur-sm border-2 border-red-500/50 flex items-center justify-center hover:bg-red-500/20 hover:scale-105 transition-all disabled:opacity-50 shadow-lg shadow-red-500/10"
       >
         <X className="h-8 w-8 text-red-500" />
-      </button>
+      </motion.button>
 
       {/* Boost Button */}
-      <button
+      <motion.button
         onClick={onBoost}
         disabled={disabled}
-        className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-lg shadow-orange-500/30 disabled:opacity-50"
+        whileTap={{ scale: 0.9 }}
+        className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 flex items-center justify-center hover:scale-110 transition-all shadow-lg shadow-orange-500/30 disabled:opacity-50"
       >
         <Flame className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
-      </button>
+      </motion.button>
 
       {/* Like Button */}
-      <button
+      <motion.button
         onClick={onLike}
         disabled={disabled}
-        className="w-16 h-16 sm:w-18 sm:h-18 rounded-full bg-white/10 backdrop-blur-sm border-2 border-green-500/50 flex items-center justify-center hover:bg-green-500/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 shadow-lg shadow-green-500/10"
+        whileTap={{
+          scale: 0.9,
+          backgroundColor: "rgba(34, 197, 94, 0.4)",
+          boxShadow: "0 0 30px rgba(34, 197, 94, 0.6)"
+        }}
+        className="w-16 h-16 sm:w-18 sm:h-18 rounded-full bg-white/10 backdrop-blur-sm border-2 border-green-500/50 flex items-center justify-center hover:bg-green-500/20 hover:scale-105 transition-all disabled:opacity-50 shadow-lg shadow-green-500/10"
       >
         <Heart className="h-8 w-8 text-green-500" />
-      </button>
+      </motion.button>
     </div>
   );
 }
