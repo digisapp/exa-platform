@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
       .order("created_at", { ascending: false });
 
     // Get today's leaderboard rankings
-    const { data: leaderboardData } = await supabase
+    const { data: leaderboardData } = await (supabase as any)
       .from("top_model_leaderboard")
       .select("model_id, today_points")
       .gt("today_points", 0)
