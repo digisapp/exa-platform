@@ -16,6 +16,7 @@ import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { GigsFeed } from "@/components/gigs/GigsFeed";
+import { RequestCallCard } from "@/components/dashboard/RequestCallCard";
 import { Badge } from "@/components/ui/badge";
 import {
   ArrowRight,
@@ -368,6 +369,17 @@ export default async function DashboardPage() {
           />
         </div>
       </div>
+
+      {/* Request Call Card */}
+      {model.phone && (
+        <div className="max-w-md">
+          <RequestCallCard
+            modelName={displayName}
+            modelPhone={model.phone}
+            modelInstagram={model.instagram_name}
+          />
+        </div>
+      )}
 
       {/* Games Widget - Hidden for now (admin-only development) */}
 
