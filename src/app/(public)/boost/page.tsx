@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { Navbar } from "@/components/layout/navbar";
+import { BottomNav } from "@/components/layout/BottomNav";
 import { TopModelsGame } from "@/components/games/TopModelsGame";
 import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 
@@ -91,7 +92,7 @@ export default async function TopModelsPage() {
       <div className="min-h-screen bg-gradient-to-b from-background to-background/95">
         <Navbar user={navbarUser} actorType={actorType} />
 
-        <main className="container mx-auto px-4 py-6">
+        <main className="container mx-auto px-4 py-6 pb-24 md:pb-6">
           {/* Enhanced Header */}
           <div className="text-center mb-4">
             <h1 className="relative inline-flex items-center justify-center gap-2">
@@ -111,6 +112,18 @@ export default async function TopModelsPage() {
           {/* Game Component */}
           <TopModelsGame initialUser={initialUser} />
         </main>
+
+        {/* Bottom Nav for signed-in users on mobile */}
+        {navbarUser && (
+          <BottomNav
+            user={{
+              avatar_url: navbarUser.avatar_url,
+              name: navbarUser.name,
+              email: navbarUser.email,
+            }}
+            actorType={actorType}
+          />
+        )}
       </div>
     </CoinBalanceProvider>
   );

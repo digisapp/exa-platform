@@ -136,7 +136,7 @@ export function Navbar({ user, actorType, unreadCount = 0, gemBalance = 0 }: Nav
         </nav>
 
         {/* Right side */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 md:gap-3">
           {user ? (
             <>
               {/* Gem Balance - Admin only (dev mode), Desktop */}
@@ -150,7 +150,40 @@ export function Navbar({ user, actorType, unreadCount = 0, gemBalance = 0 }: Nav
                 </Link>
               )}
 
-              {/* Coin Balance - Desktop only */}
+              {/* Coin Balance - Mobile (compact) */}
+              {actorType === "fan" ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="flex md:hidden items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/30">
+                      <Coins className="h-4 w-4 text-yellow-500" />
+                      <span className="text-sm font-semibold">{coinBalance.toLocaleString()}</span>
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <div className="px-3 py-2 text-center">
+                      <p className="text-xs text-muted-foreground">Available Balance</p>
+                      <p className="text-xl font-bold text-yellow-500">{coinBalance.toLocaleString()}</p>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/wallet" className="cursor-pointer justify-center">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Buy Coins
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Link
+                  href="/wallet"
+                  className="flex md:hidden items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/30"
+                >
+                  <Coins className="h-4 w-4 text-yellow-500" />
+                  <span className="text-sm font-semibold">{coinBalance.toLocaleString()}</span>
+                </Link>
+              )}
+
+              {/* Coin Balance - Desktop */}
               {actorType === "fan" ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
