@@ -24,6 +24,8 @@ export default async function TopModelsPage() {
   } = await supabase.auth.getUser();
 
   let initialUser = null;
+  let navbarUser = null;
+  let actorType: "model" | "fan" | "brand" | "admin" | null = null;
 
   if (user) {
     // Get actor and coin balance
@@ -33,41 +35,61 @@ export default async function TopModelsPage() {
       .eq("user_id", user.id)
       .single();
 
+    actorType = actor?.type as typeof actorType;
     let coinBalance = 0;
+    let avatarUrl = "";
+    let name = "";
+    let username = "";
 
     if (actor?.type === "model") {
       const { data: model } = await supabase
         .from("models")
-        .select("coin_balance")
+        .select("coin_balance, profile_photo_url, first_name, username")
         .eq("user_id", user.id)
         .single();
       coinBalance = model?.coin_balance || 0;
+      avatarUrl = model?.profile_photo_url || "";
+      name = model?.first_name || "";
+      username = model?.username || "";
     } else if (actor?.type === "fan") {
       const { data: fan } = await supabase
         .from("fans")
-        .select("coin_balance")
+        .select("coin_balance, avatar_url, display_name, username")
         .eq("user_id", user.id)
         .single();
       coinBalance = fan?.coin_balance || 0;
+      avatarUrl = fan?.avatar_url || "";
+      name = fan?.display_name || "";
+      username = fan?.username || "";
     } else if (actor?.type === "brand") {
       const { data: brand } = await supabase
         .from("brands")
-        .select("coin_balance")
+        .select("coin_balance, logo_url, name")
         .eq("user_id", user.id)
         .single();
       coinBalance = brand?.coin_balance || 0;
+      avatarUrl = brand?.logo_url || "";
+      name = brand?.name || "";
     }
 
     initialUser = {
       id: user.id,
       coinBalance,
     };
+
+    navbarUser = {
+      id: user.id,
+      email: user.email || "",
+      avatar_url: avatarUrl,
+      name: name,
+      username: username,
+    };
   }
 
   return (
     <CoinBalanceProvider initialBalance={initialUser?.coinBalance || 0}>
       <div className="min-h-screen bg-gradient-to-b from-background to-background/95">
-        <Navbar />
+        <Navbar user={navbarUser} actorType={actorType} />
 
         <main className="container mx-auto px-4 py-6">
           {/* Enhanced Header */}
