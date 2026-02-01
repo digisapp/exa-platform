@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { notifyAdminNewCallRequest, sendCallRequestConfirmation } from "@/lib/sms";
 
 // POST - Create a new call request (public or authenticated)
 export async function POST(request: Request) {
@@ -74,6 +75,21 @@ export async function POST(request: Request) {
         description: `Call request submitted from ${source || "website"}`,
         metadata: { source, source_detail },
       });
+
+    // Send SMS notifications (non-blocking)
+    Promise.all([
+      // Notify admin of new call request
+      notifyAdminNewCallRequest({
+        name,
+        phone,
+        instagram_handle,
+        source,
+      }),
+      // Send confirmation to the person who requested the call
+      sendCallRequestConfirmation(phone, name),
+    ]).catch((err) => {
+      console.error("SMS notification error:", err);
+    });
 
     return NextResponse.json({
       success: true,
