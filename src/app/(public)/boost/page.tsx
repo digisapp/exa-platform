@@ -70,10 +70,19 @@ export default async function TopModelsPage() {
         <Navbar />
 
         <main className="container mx-auto px-4 py-6">
-          {/* Minimal Header */}
+          {/* Enhanced Header */}
           <div className="text-center mb-4">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 text-transparent bg-clip-text">
-              EXA Boost
+            <h1 className="relative inline-flex items-center justify-center gap-2">
+              <span className="absolute inset-0 blur-2xl bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 opacity-50 animate-pulse" />
+              <svg className="w-6 h-6 text-yellow-400 animate-[spin_3s_linear_infinite]" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 0L14.59 8.41L23 11L14.59 13.59L12 22L9.41 13.59L1 11L9.41 8.41L12 0Z" />
+              </svg>
+              <span className="relative text-3xl sm:text-4xl font-black tracking-tight bg-gradient-to-r from-pink-400 via-purple-400 via-50% to-orange-400 text-transparent bg-clip-text bg-[length:200%_auto] animate-[gradient_3s_linear_infinite]">
+                EXA Boost
+              </span>
+              <svg className="w-6 h-6 text-yellow-400 animate-[spin_3s_linear_infinite_reverse]" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 0L14.59 8.41L23 11L14.59 13.59L12 22L9.41 13.59L1 11L9.41 8.41L12 0Z" />
+              </svg>
             </h1>
           </div>
 
