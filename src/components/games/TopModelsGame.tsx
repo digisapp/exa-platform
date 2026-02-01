@@ -320,7 +320,7 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
               Welcome to EXA Boost
             </DialogTitle>
             <p className="text-sm text-muted-foreground">
-              Boost your favorite Models up the Leaderboard
+              Boost Models up the Leaderboard
             </p>
           </DialogHeader>
           <div className="space-y-4 py-2">
