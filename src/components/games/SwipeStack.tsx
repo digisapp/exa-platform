@@ -37,11 +37,11 @@ export function SwipeStack({ models, onSwipe, onBoost, onEmpty, totalModels, mod
 
   const handleSwipe = useCallback(
     (direction: "left" | "right") => {
-      if (!currentModel) return;
+      if (!currentModel || exitDirection) return; // Prevent double swipes
 
       setExitDirection(direction);
 
-      // Small delay to allow exit animation
+      // Sync with exit animation duration (250ms)
       setTimeout(() => {
         onSwipe(currentModel.id, direction);
         setCurrentIndex((prev) => {
@@ -52,9 +52,9 @@ export function SwipeStack({ models, onSwipe, onBoost, onEmpty, totalModels, mod
           return newIndex;
         });
         setExitDirection(null);
-      }, 200);
+      }, 250);
     },
-    [currentModel, models.length, onSwipe, onEmpty]
+    [currentModel, exitDirection, models.length, onSwipe, onEmpty]
   );
 
   const handleBoost = useCallback(() => {
@@ -93,18 +93,18 @@ export function SwipeStack({ models, onSwipe, onBoost, onEmpty, totalModels, mod
         ))}
 
         {/* Current (top) card */}
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="popLayout">
           <motion.div
             key={currentModel.id}
             className="absolute inset-0"
             style={{ zIndex: 10 }}
-            initial={{ scale: 0.95, opacity: 0 }}
+            initial={false}
             animate={{ scale: 1, opacity: 1 }}
             exit={{
               x: exitDirection === "right" ? 300 : exitDirection === "left" ? -300 : 0,
               opacity: 0,
               rotate: exitDirection === "right" ? 20 : exitDirection === "left" ? -20 : 0,
-              transition: { duration: 0.2 },
+              transition: { duration: 0.25, ease: "easeOut" },
             }}
           >
             <SwipeCard
