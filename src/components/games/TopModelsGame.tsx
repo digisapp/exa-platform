@@ -5,7 +5,7 @@ import { SwipeStack } from "./SwipeStack";
 import { TopModelsLeaderboard } from "./TopModelsLeaderboard";
 import { BoostModal } from "./BoostModal";
 import { GameComplete } from "./GameComplete";
-import { Loader2, Sparkles, Trophy, Heart, X, HelpCircle, Flame } from "lucide-react";
+import { Loader2, Sparkles, Trophy, Heart, X, HelpCircle, Flame, Share2 } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -258,9 +258,34 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
             </div>
           )}
 
-          {/* Help button */}
+          {/* Help & Share buttons */}
           {!gameComplete && (
-            <div className="mt-6">
+            <div className="mt-6 flex items-center gap-3">
+              <button
+                onClick={async () => {
+                  const shareUrl = `${window.location.origin}/boost`;
+                  const shareText = "Play EXA Boost - Swipe and boost your favorite models!";
+
+                  if (navigator.share) {
+                    try {
+                      await navigator.share({
+                        title: "EXA Boost",
+                        text: shareText,
+                        url: shareUrl,
+                      });
+                    } catch {
+                      // User cancelled
+                    }
+                  } else {
+                    await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
+                    toast.success("Link copied!");
+                  }
+                }}
+                className="flex items-center gap-1 px-3 py-1.5 text-sm text-muted-foreground bg-white/5 rounded-full hover:bg-white/10 transition-colors"
+              >
+                <Share2 className="h-4 w-4" />
+                <span>Share</span>
+              </button>
               <button
                 onClick={() => setShowWelcome(true)}
                 className="flex items-center gap-1 px-3 py-1.5 text-sm text-muted-foreground bg-white/5 rounded-full hover:bg-white/10 transition-colors"
