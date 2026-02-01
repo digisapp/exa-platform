@@ -10,7 +10,7 @@ export async function GET(
     const { username } = await params;
 
     // Get model by username
-    const { data: model, error: modelError } = await supabase
+    const { data: model, error: modelError } = await (supabase as any)
       .from("models")
       .select(`
         id,
