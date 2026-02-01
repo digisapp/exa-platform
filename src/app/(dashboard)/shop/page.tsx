@@ -18,12 +18,10 @@ import {
 import {
   ShoppingBag,
   Search,
-  
   Loader2,
   Star,
   ArrowRight,
   Tag,
-  
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -92,7 +90,7 @@ export default function ShopPage() {
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, category brandFilter, sortBy]);
+  }, [searchQuery, categoryFilter, brandFilter, sortBy]);
 
   useEffect(() => {
     fetchProducts();

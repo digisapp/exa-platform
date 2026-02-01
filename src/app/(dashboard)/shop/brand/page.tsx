@@ -15,7 +15,6 @@ import {
   Truck,
   ArrowRight,
   Loader2,
-  
 } from "lucide-react";
 
 interface BrandStats {

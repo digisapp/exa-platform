@@ -28,7 +28,6 @@ import {
   Package,
   Check,
   MapPin,
-  
   Search,
 } from "lucide-react";
 import { toast } from "sonner";
