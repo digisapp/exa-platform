@@ -253,13 +253,22 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
             </div>
           )}
 
-          {/* Coin balance for logged-in users */}
-          {initialUser && !gameComplete && (
-            <div className="mt-6 flex items-center gap-2 text-sm text-muted-foreground">
-              <div className="flex items-center gap-1 px-3 py-1.5 bg-white/5 rounded-full">
-                <span className="text-yellow-400 font-medium">{coinBalance}</span>
-                <span>coins</span>
-              </div>
+          {/* Coin balance and help button */}
+          {!gameComplete && (
+            <div className="mt-6 flex items-center gap-3 text-sm text-muted-foreground">
+              {initialUser && (
+                <div className="flex items-center gap-1 px-3 py-1.5 bg-white/5 rounded-full">
+                  <span className="text-yellow-400 font-medium">{coinBalance}</span>
+                  <span>coins</span>
+                </div>
+              )}
+              <button
+                onClick={() => setShowWelcome(true)}
+                className="flex items-center gap-1 px-3 py-1.5 bg-white/5 rounded-full hover:bg-white/10 transition-colors"
+              >
+                <HelpCircle className="h-4 w-4" />
+                <span>How to play</span>
+              </button>
             </div>
           )}
         </div>
@@ -338,14 +347,6 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
         </DialogContent>
       </Dialog>
 
-      {/* Help Button */}
-      <button
-        onClick={() => setShowWelcome(true)}
-        className="fixed bottom-4 right-4 p-3 bg-white/10 backdrop-blur-sm rounded-full hover:bg-white/20 transition-colors"
-        title="How to play"
-      >
-        <HelpCircle className="h-5 w-5 text-muted-foreground" />
-      </button>
     </div>
   );
 }
