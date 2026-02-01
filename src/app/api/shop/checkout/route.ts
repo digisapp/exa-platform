@@ -260,7 +260,10 @@ export async function POST(request: Request) {
           currency: "usd",
           product_data: {
             name: "Shipping",
-            metadata: {},
+            metadata: {
+              variant_id: "shipping",
+              brand_id: "shipping",
+            },
           },
           unit_amount: shippingCost,
         },
