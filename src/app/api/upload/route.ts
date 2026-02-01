@@ -72,9 +72,9 @@ export async function POST(request: NextRequest) {
       // Don't process GIFs as they may lose animation
       try {
         const processed = await processImage(inputBuffer, {
-          maxWidth: uploadType === "avatar" ? 800 : 2048,
-          maxHeight: uploadType === "avatar" ? 800 : 2048,
-          quality: 85,
+          maxWidth: uploadType === "avatar" ? 1200 : 2048,
+          maxHeight: uploadType === "avatar" ? 1200 : 2048,
+          quality: uploadType === "avatar" ? 90 : 85,
         });
         processedBuffer = processed.buffer;
         finalContentType = processed.contentType;

@@ -75,7 +75,8 @@ export function SwipeCard({
           alt={model.first_name || model.username}
           fill
           className="object-cover"
-          sizes="(max-width: 768px) 90vw, 400px"
+          sizes="(max-width: 640px) calc(100vw - 32px), 400px"
+          quality={90}
           priority={isTop}
           unoptimized={model.profile_photo_url?.includes("cdninstagram.com")}
         />

@@ -39,6 +39,16 @@ const US_STATES = [
   "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
 ];
 
+// Proper title case for city names (e.g., "cumming" -> "Cumming", "new york" -> "New York")
+function toTitleCase(str: string | null | undefined): string | null {
+  if (!str) return null;
+  return str
+    .toLowerCase()
+    .split(" ")
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
 export default function ProfilePage() {
   const [model, setModel] = useState<Model | null>(null);
   const [fan, setFan] = useState<Fan | null>(null);
@@ -548,7 +558,7 @@ export default function ProfilePage() {
         first_name: model.first_name,
         last_name: model.last_name,
         bio: model.bio,
-        city: model.city,
+        city: toTitleCase(model.city),
         state: model.state,
         height: model.height,
         bust: model.bust,

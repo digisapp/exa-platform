@@ -174,9 +174,9 @@ export function TopModelsLeaderboard({
                 <p className="font-medium truncate">
                   {entry.model?.firstName || entry.model?.username}
                 </p>
-                {!compact && entry.model?.city && (
+                {!compact && entry.model?.state && (
                   <p className="text-xs text-muted-foreground truncate">
-                    {entry.model.city}
+                    {entry.model.state}
                   </p>
                 )}
               </div>

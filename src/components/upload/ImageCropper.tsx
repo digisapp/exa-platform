@@ -80,8 +80,8 @@ export function ImageCropper({
     const cropWidth = completedCrop.width * scaleX;
     const cropHeight = completedCrop.height * scaleY;
 
-    // Use a reasonable output size (max 500px for avatars)
-    const maxSize = 500;
+    // Use higher output size for retina displays (1200px for crisp avatars)
+    const maxSize = 1200;
     const scale = Math.min(maxSize / cropWidth, maxSize / cropHeight, 1);
 
     canvas.width = cropWidth * scale;
