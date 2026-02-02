@@ -330,53 +330,75 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
 
       {/* Welcome Modal */}
       <Dialog open={showWelcome} onOpenChange={(open) => !open && dismissWelcome()}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader className="text-center">
-            <div className="flex justify-center mb-2">
-              <Image
-                src="/exa-logo-white.png"
-                alt="EXA"
-                width={80}
-                height={32}
-                className="h-8 w-auto"
-              />
+        <DialogContent className="max-w-sm overflow-hidden">
+          {/* Background glow effect */}
+          <div className="absolute inset-0 bg-gradient-to-br from-pink-500/10 via-purple-500/5 to-orange-500/10 pointer-events-none" />
+
+          <DialogHeader className="text-center relative">
+            {/* Animated logo with glow */}
+            <div className="flex justify-center mb-3">
+              <div className="relative">
+                <span className="absolute inset-0 blur-xl bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 opacity-60 animate-pulse" />
+                <Image
+                  src="/exa-logo-white.png"
+                  alt="EXA"
+                  width={100}
+                  height={40}
+                  className="h-10 w-auto relative"
+                />
+              </div>
             </div>
-            <DialogTitle className="text-center text-xl">
-              Welcome to EXA Boost
+            <DialogTitle className="text-center text-2xl flex items-center justify-center gap-2">
+              <Sparkles className="h-5 w-5 text-yellow-400 animate-pulse" />
+              <span className="bg-gradient-to-r from-pink-400 via-purple-400 to-orange-400 text-transparent bg-clip-text font-bold">
+                Welcome to EXA Boost
+              </span>
+              <Sparkles className="h-5 w-5 text-yellow-400 animate-pulse" />
             </DialogTitle>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground mt-1">
               Boost Models up the Leaderboard
             </p>
           </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="flex items-center gap-4 p-3 bg-green-500/10 rounded-lg">
-              <div className="p-2 rounded-full bg-green-500/20">
-                <Heart className="h-5 w-5 text-green-500" />
+
+          <div className="space-y-3 py-3 relative">
+            {/* Like instruction */}
+            <div className="flex items-center gap-4 p-3 bg-gradient-to-r from-green-500/10 to-green-500/5 rounded-xl border border-green-500/20">
+              <div className="p-2.5 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg shadow-green-500/30">
+                <Heart className="h-5 w-5 text-white" />
               </div>
-              <div>
-                <p className="font-medium">Swipe Right = Like</p>
-                <p className="text-sm text-muted-foreground">Give 1 point</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4 p-3 bg-red-500/10 rounded-lg">
-              <div className="p-2 rounded-full bg-red-500/20">
-                <X className="h-5 w-5 text-red-500" />
-              </div>
-              <div>
-                <p className="font-medium">Swipe Left = Pass</p>
-                <p className="text-sm text-muted-foreground">Skip to next</p>
+              <div className="flex-1">
+                <p className="font-semibold text-green-400">Swipe Right = Like</p>
+                <p className="text-sm text-muted-foreground">Give 1 point to boost their rank</p>
               </div>
             </div>
-            <div className="flex items-center gap-4 p-3 bg-orange-500/10 rounded-lg">
-              <div className="p-2 rounded-full bg-orange-500/20">
-                <Flame className="h-5 w-5 text-orange-500" />
+
+            {/* Pass instruction */}
+            <div className="flex items-center gap-4 p-3 bg-gradient-to-r from-red-500/10 to-red-500/5 rounded-xl border border-red-500/20">
+              <div className="p-2.5 rounded-xl bg-gradient-to-br from-red-500 to-rose-600 shadow-lg shadow-red-500/30">
+                <X className="h-5 w-5 text-white" />
               </div>
-              <div>
-                <p className="font-medium">Boost = 5x Points</p>
-                <p className="text-sm text-muted-foreground">Use coins to boost</p>
+              <div className="flex-1">
+                <p className="font-semibold text-red-400">Swipe Left = Pass</p>
+                <p className="text-sm text-muted-foreground">Skip to the next model</p>
               </div>
             </div>
-            <Button onClick={dismissWelcome} className="w-full bg-gradient-to-r from-pink-500 to-purple-500">
+
+            {/* Boost instruction */}
+            <div className="flex items-center gap-4 p-3 bg-gradient-to-r from-orange-500/10 via-pink-500/10 to-purple-500/10 rounded-xl border border-orange-500/20">
+              <div className="p-2.5 rounded-xl bg-gradient-to-br from-orange-500 via-pink-500 to-purple-500 shadow-lg shadow-orange-500/30 animate-pulse">
+                <Flame className="h-5 w-5 text-white" />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold bg-gradient-to-r from-orange-400 to-pink-400 text-transparent bg-clip-text">Boost = 5x Points</p>
+                <p className="text-sm text-muted-foreground">Use coins for maximum impact</p>
+              </div>
+            </div>
+
+            <Button
+              onClick={dismissWelcome}
+              className="w-full h-12 text-base bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 hover:from-pink-600 hover:via-purple-600 hover:to-orange-600 shadow-lg shadow-pink-500/25 mt-2"
+            >
+              <Sparkles className="h-4 w-4 mr-2" />
               Start Swiping
             </Button>
           </div>
