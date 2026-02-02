@@ -354,13 +354,13 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
 
       {/* Mobile Leaderboard - Collapsible */}
       <div className="lg:hidden mt-8">
-        <details className="bg-white/5 rounded-xl">
+        <details className="bg-white/5 rounded-xl" open>
           <summary className="p-4 cursor-pointer flex items-center gap-2 font-medium">
             <Trophy className="h-5 w-5 text-yellow-400" />
             Leaderboard
           </summary>
-          <div className="p-4 pt-0">
-            <TopModelsLeaderboard compact={true} />
+          <div className="p-4 pt-0 max-h-[400px] overflow-y-auto scrollbar-hide">
+            <TopModelsLeaderboard compact={false} />
           </div>
         </details>
       </div>
