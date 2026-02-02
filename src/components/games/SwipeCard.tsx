@@ -102,7 +102,7 @@ export function SwipeCard({
           className="absolute top-8 left-8 -rotate-12 border-4 border-red-500 rounded-lg px-4 py-2"
           style={{ opacity: passOpacity }}
         >
-          <span className="text-red-500 font-bold text-2xl">NOPE</span>
+          <span className="text-red-500 font-bold text-2xl">PASS</span>
         </motion.div>
 
         {/* Badges */}
