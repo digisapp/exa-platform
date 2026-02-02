@@ -404,7 +404,7 @@ async function FanDashboard({ actorId }: { actorId: string }) {
       `)
       .eq("follower_id", actorId)
       .order("created_at", { ascending: false })
-      .limit(8),
+      .limit(20),
     // Get featured models (only those with uploaded profile photos)
     // Exclude Instagram CDN URLs which are low quality
     // Fetch more models and rotate selection every 3 days
@@ -471,21 +471,15 @@ async function FanDashboard({ actorId }: { actorId: string }) {
       {/* Favorites */}
       {favoriteModels.length > 0 ? (
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Heart className="h-5 w-5 text-pink-500 fill-pink-500" />
               Favorites
             </CardTitle>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/favorites" className="text-pink-500">
-                View All
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
-            </Button>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {favoriteModels.slice(0, 4).map((model: any) => (
+              {favoriteModels.map((model: any) => (
                 <ModelCard key={model.id} model={model} showFavorite={true} isFavorited={true} />
               ))}
             </div>
