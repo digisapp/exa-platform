@@ -42,13 +42,14 @@ export function SwipeCard({
   const rotate = useTransform(x, [-200, 200], [-15, 15]);
   const opacity = useTransform(x, [-200, -100, 0, 100, 200], [0.5, 1, 1, 1, 0.5]);
 
-  // Like/Pass indicator opacity
-  const likeOpacity = useTransform(x, [0, 100], [0, 1]);
-  const passOpacity = useTransform(x, [-100, 0], [1, 0]);
+  // Like/Pass indicator opacity - show earlier for better feedback
+  const likeOpacity = useTransform(x, [0, 50, 75], [0, 0.5, 1]);
+  const passOpacity = useTransform(x, [-75, -50, 0], [1, 0.5, 0]);
 
   const handleDragEnd = (_: any, info: { offset: { x: number }; velocity: { x: number } }) => {
-    const swipeThreshold = 100;
-    const velocityThreshold = 500;
+    // Lower thresholds for easier swiping on mobile
+    const swipeThreshold = 75;
+    const velocityThreshold = 300;
 
     if (info.offset.x > swipeThreshold || info.velocity.x > velocityThreshold) {
       onSwipe("right");
