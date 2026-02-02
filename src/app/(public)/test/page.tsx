@@ -254,9 +254,6 @@ export default async function TestHomePage() {
                 <Link href="/models" className="text-muted-foreground hover:text-[#FF69B4] transition-colors">
                   Models
                 </Link>
-                <Link href="/leaderboard" className="text-muted-foreground hover:text-[#FF69B4] transition-colors">
-                  Leaderboard
-                </Link>
                 <a
                   href="https://instagram.com/examodels"
                   target="_blank"

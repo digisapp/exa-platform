@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
-import { getModelIdFromActorId } from "@/lib/ids";
 import { NextRequest, NextResponse } from "next/server";
 import { sendTipReceivedEmail } from "@/lib/email";
 
@@ -105,21 +104,6 @@ export async function POST(request: NextRequest) {
         },
         { status: 402 }
       );
-    }
-
-    // Award points to recipient for receiving tip (+2)
-    const recipientModelId = await getModelIdFromActorId(supabase, recipientId);
-    if (recipientModelId) {
-      const { error: pointsError } = await (supabase.rpc as any)("award_points", {
-        p_model_id: recipientModelId,
-        p_action: "tip_received",
-        p_points: 2,
-        p_metadata: { sender_actor_id: sender.id, amount },
-      });
-      if (pointsError) {
-        console.error("Failed to award points for tip:", pointsError);
-        // Non-critical error, don't fail the tip
-      }
     }
 
     // Create a tip message in the conversation if conversationId provided

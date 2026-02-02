@@ -73,17 +73,6 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (content?.model_id) {
-        const { error: pointsError } = await (supabase.rpc as any)("award_points", {
-          p_model_id: content.model_id,
-          p_action: "content_sale",
-          p_points: 5,
-          p_metadata: { content_id: contentId, buyer_actor_id: actor.id },
-        });
-        if (pointsError) {
-          console.error("Failed to award points for content sale:", pointsError);
-          // Non-critical error, don't fail the unlock
-        }
-
         // Send email notification to model (non-blocking)
         try {
           // Get model info

@@ -33,7 +33,6 @@ function getPageType(path: string): string {
   if (path === "/" || path === "") return "home";
   if (path === "/models") return "explore";
   if (path === "/gigs") return "gigs";
-  if (path === "/leaderboard") return "leaderboard";
   if (path === "/dashboard") return "dashboard";
   if (path === "/settings") return "settings";
   if (path === "/chats" || path.startsWith("/chats/")) return "chats";

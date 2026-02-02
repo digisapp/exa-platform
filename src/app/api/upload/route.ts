@@ -144,25 +144,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // If portfolio photo and user is a model, award points
-    let pointsAwarded = 0;
-    if (uploadType === "portfolio" && actor.type === "model") {
-      // Get model ID (models.id != actors.id)
-      const modelId = await getModelId(supabase, user.id);
-      if (modelId) {
-        const { error: pointsError } = await (supabase.rpc as any)("award_points", {
-          p_model_id: modelId,
-          p_action: "portfolio_photo",
-          p_points: 10,
-          p_metadata: { photo_id: mediaAsset.id },
-        });
-
-        if (!pointsError) {
-          pointsAwarded = 10;
-        }
-      }
-    }
-
     // If avatar upload, update the model's profile_photo_url
     if (uploadType === "avatar" && actor.type === "model") {
       // Get model ID (models.id != actors.id)
@@ -179,7 +160,6 @@ export async function POST(request: NextRequest) {
       success: true,
       url: publicUrl,
       mediaAsset,
-      pointsAwarded,
     });
   } catch (error) {
     console.error("Upload route error:", error);
