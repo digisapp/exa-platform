@@ -1,0 +1,46 @@
+{
+  "name": "EXA Models",
+  "short_name": "EXA",
+  "description": "The premier platform for models worldwide. Book top models, join experiences, and get discovered.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#FF69B4",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/apple-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["lifestyle", "social", "entertainment"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Explore Models",
+      "short_name": "Explore",
+      "url": "/models",
+      "icons": [{ "src": "/apple-icon.png", "sizes": "180x180" }]
+    },
+    {
+      "name": "EXA Boost",
+      "short_name": "Boost",
+      "url": "/boost",
+      "icons": [{ "src": "/apple-icon.png", "sizes": "180x180" }]
+    }
+  ]
+}
