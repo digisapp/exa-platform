@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
-import { Camera, Video, Lock, X, Play, ImageOff } from "lucide-react";
+import { Camera, Video, Lock, X, Play, ImageOff, ChevronLeft, ChevronRight } from "lucide-react";
 import { PremiumContentGrid } from "@/components/content/PremiumContentGrid";
 
 interface MediaAsset {
@@ -151,24 +151,59 @@ export function ProfileContentTabs({
   const [videoDurations, setVideoDurations] = useState<Record<string, number>>({});
 
   const videoRef = useRef<HTMLVideoElement>(null);
-  const touchStartY = useRef(0);
+  const touchStart = useRef({ x: 0, y: 0 });
+  const [swipeOffset, setSwipeOffset] = useState({ x: 0, y: 0 });
+  const [isClosing, setIsClosing] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(0);
 
   const handleDurationLoaded = useCallback((videoId: string, duration: number) => {
     setVideoDurations(prev => ({ ...prev, [videoId]: duration }));
   }, []);
 
+  // Get the current list based on selected type
+  const currentList = selectedType === "photo" ? photos : videos;
+
   const openLightbox = (item: MediaAsset, type: "photo" | "video") => {
+    const list = type === "photo" ? photos : videos;
+    const index = list.findIndex(i => i.id === item.id);
     setSelectedItem(item);
     setSelectedType(type);
+    setSelectedIndex(index >= 0 ? index : 0);
     setLightboxOpen(true);
     setVideoPlaying(false);
+    setSwipeOffset({ x: 0, y: 0 });
+    setIsClosing(false);
   };
 
   const closeLightbox = useCallback(() => {
-    setLightboxOpen(false);
-    setSelectedItem(null);
-    setVideoPlaying(false);
+    setIsClosing(true);
+    setTimeout(() => {
+      setLightboxOpen(false);
+      setSelectedItem(null);
+      setVideoPlaying(false);
+      setSwipeOffset({ x: 0, y: 0 });
+      setIsClosing(false);
+    }, 200);
   }, []);
+
+  // Navigate to previous/next image
+  const goToPrevious = useCallback(() => {
+    if (selectedIndex > 0) {
+      const newIndex = selectedIndex - 1;
+      setSelectedIndex(newIndex);
+      setSelectedItem(currentList[newIndex]);
+      setVideoPlaying(false);
+    }
+  }, [selectedIndex, currentList]);
+
+  const goToNext = useCallback(() => {
+    if (selectedIndex < currentList.length - 1) {
+      const newIndex = selectedIndex + 1;
+      setSelectedIndex(newIndex);
+      setSelectedItem(currentList[newIndex]);
+      setVideoPlaying(false);
+    }
+  }, [selectedIndex, currentList]);
 
   const handlePlayVideo = () => {
     if (videoRef.current) {
@@ -189,33 +224,67 @@ export function ProfileContentTabs({
     };
   }, [lightboxOpen]);
 
-  // Keyboard - ESC to close
+  // Keyboard - ESC to close, arrows to navigate
   useEffect(() => {
     if (!lightboxOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         closeLightbox();
+      } else if (e.key === "ArrowLeft") {
+        goToPrevious();
+      } else if (e.key === "ArrowRight") {
+        goToNext();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [lightboxOpen, closeLightbox]);
+  }, [lightboxOpen, closeLightbox, goToPrevious, goToNext]);
 
-  // Swipe down to close
+  // Touch handlers for swipe gestures
   const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartY.current = e.touches[0].clientY;
+    touchStart.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+    };
+    setSwipeOffset({ x: 0, y: 0 });
   };
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    const touchEndY = e.changedTouches[0].clientY;
-    const diffY = touchStartY.current - touchEndY;
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const deltaX = e.touches[0].clientX - touchStart.current.x;
+    const deltaY = e.touches[0].clientY - touchStart.current.y;
+    setSwipeOffset({ x: deltaX, y: deltaY });
+  };
 
-    // Swipe down to close
-    if (diffY < -80) {
-      closeLightbox();
+  const handleTouchEnd = () => {
+    const { x, y } = swipeOffset;
+    const absX = Math.abs(x);
+    const absY = Math.abs(y);
+    const swipeThreshold = 80;
+
+    // Check if swipe was significant enough
+    if (absX > swipeThreshold || absY > swipeThreshold) {
+      // Determine primary direction
+      if (absX > absY) {
+        // Horizontal swipe
+        if (x > swipeThreshold && selectedIndex > 0) {
+          // Swipe right - go to previous
+          goToPrevious();
+        } else if (x < -swipeThreshold && selectedIndex < currentList.length - 1) {
+          // Swipe left - go to next
+          goToNext();
+        } else if (absX > swipeThreshold * 1.5) {
+          // Strong horizontal swipe at edge - close
+          closeLightbox();
+        }
+      } else {
+        // Vertical swipe - close in any direction
+        closeLightbox();
+      }
     }
+
+    setSwipeOffset({ x: 0, y: 0 });
   };
 
   const hasPhotos = photos && photos.length > 0;
@@ -420,67 +489,128 @@ export function ProfileContentTabs({
         <div
           className={cn(
             "fixed inset-0 z-50 flex items-center justify-center",
-            "animate-in fade-in duration-300"
+            "transition-opacity duration-200",
+            isClosing ? "opacity-0" : "opacity-100"
           )}
-          onClick={closeLightbox}
           onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-          {/* Blurred background image */}
-          {selectedType === "photo" && (
-            <div className="absolute inset-0 overflow-hidden">
-              <img
-                src={selectedItem.photo_url || selectedItem.url}
-                alt=""
-                className="absolute inset-0 w-full h-full object-cover scale-110 blur-3xl opacity-40"
-              />
-              <div className="absolute inset-0 bg-black/70" />
-            </div>
-          )}
-          {selectedType === "video" && (
-            <div className="absolute inset-0 bg-black/95" />
-          )}
+          {/* Backdrop - tap to close */}
+          <div
+            className="absolute inset-0 cursor-pointer"
+            onClick={closeLightbox}
+          >
+            {/* Blurred background image */}
+            {selectedType === "photo" && (
+              <div className="absolute inset-0 overflow-hidden">
+                <img
+                  src={selectedItem.photo_url || selectedItem.url}
+                  alt=""
+                  className="absolute inset-0 w-full h-full object-cover scale-110 blur-3xl opacity-40"
+                />
+                <div className="absolute inset-0 bg-black/80" />
+              </div>
+            )}
+            {selectedType === "video" && (
+              <div className="absolute inset-0 bg-black/95" />
+            )}
+          </div>
 
-          {/* Close button */}
+          {/* Close button - positioned near image on mobile, corner on desktop */}
           <button
             onClick={closeLightbox}
             className={cn(
-              "absolute top-6 right-6 p-3 rounded-full z-20",
-              "bg-black/40 hover:bg-black/60 backdrop-blur-md",
-              "border border-white/10 hover:border-white/20",
-              "transition-all duration-300 ease-out",
-              "group"
+              "absolute z-30 p-2.5 rounded-full",
+              "bg-black/60 hover:bg-black/80 backdrop-blur-md",
+              "border border-white/20 hover:border-white/40",
+              "transition-all duration-200 ease-out",
+              "active:scale-90",
+              // Mobile: top right, closer to content
+              "top-4 right-4",
+              // Desktop: slightly more padding
+              "md:top-6 md:right-6 md:p-3"
             )}
           >
-            <X className="h-5 w-5 text-white/70 group-hover:text-white transition-colors" />
+            <X className="h-5 w-5 md:h-6 md:w-6 text-white" />
           </button>
 
-          {/* Main content area */}
+          {/* Navigation arrows - desktop only */}
+          {currentList.length > 1 && (
+            <>
+              {selectedIndex > 0 && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); goToPrevious(); }}
+                  className={cn(
+                    "hidden md:flex absolute left-4 z-30",
+                    "p-3 rounded-full",
+                    "bg-black/40 hover:bg-black/60 backdrop-blur-md",
+                    "border border-white/10 hover:border-white/30",
+                    "transition-all duration-200",
+                    "hover:scale-110 active:scale-95"
+                  )}
+                >
+                  <ChevronLeft className="h-6 w-6 text-white" />
+                </button>
+              )}
+              {selectedIndex < currentList.length - 1 && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); goToNext(); }}
+                  className={cn(
+                    "hidden md:flex absolute right-4 z-30",
+                    "p-3 rounded-full",
+                    "bg-black/40 hover:bg-black/60 backdrop-blur-md",
+                    "border border-white/10 hover:border-white/30",
+                    "transition-all duration-200",
+                    "hover:scale-110 active:scale-95"
+                  )}
+                >
+                  <ChevronRight className="h-6 w-6 text-white" />
+                </button>
+              )}
+            </>
+          )}
+
+          {/* Main content area - doesn't close on tap */}
           <div
             className={cn(
-              "relative w-full h-full flex flex-col items-center justify-center",
-              "px-4 py-16 md:py-8"
+              "relative flex flex-col items-center justify-center",
+              "pointer-events-none", // Allow clicks to pass through to backdrop
+              "transition-transform duration-200 ease-out"
             )}
-            onClick={(e) => e.stopPropagation()}
+            style={{
+              transform: `translate(${swipeOffset.x * 0.5}px, ${swipeOffset.y * 0.5}px) scale(${1 - Math.abs(swipeOffset.y) / 1000})`,
+              opacity: 1 - Math.abs(swipeOffset.y) / 400,
+            }}
           >
             {/* Media container */}
-            <div className="relative flex items-center justify-center w-full h-full">
+            <div
+              className="relative pointer-events-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
               {selectedType === "photo" ? (
                 <img
                   src={selectedItem.photo_url || selectedItem.url}
                   alt={selectedItem.title || ""}
-                  className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
+                  className={cn(
+                    "max-w-[92vw] max-h-[80vh] md:max-w-[85vw] md:max-h-[85vh]",
+                    "object-contain rounded-xl shadow-2xl",
+                    "select-none"
+                  )}
                   draggable={false}
                 />
               ) : (
-                <div className="relative max-w-full max-h-[85vh]">
+                <div className="relative">
                   <video
                     ref={videoRef}
                     key={selectedItem.id}
                     src={selectedItem.url}
                     controls={videoPlaying}
                     playsInline
-                    className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
+                    className={cn(
+                      "max-w-[92vw] max-h-[80vh] md:max-w-[85vw] md:max-h-[85vh]",
+                      "object-contain rounded-xl shadow-2xl"
+                    )}
                     onEnded={() => setVideoPlaying(false)}
                   />
                   {/* Play button overlay */}
@@ -489,13 +619,13 @@ export function ProfileContentTabs({
                       onClick={handlePlayVideo}
                       className={cn(
                         "absolute inset-0 flex items-center justify-center",
-                        "bg-black/30 backdrop-blur-sm rounded-lg",
+                        "bg-black/30 backdrop-blur-sm rounded-xl",
                         "transition-all duration-300",
                         "group"
                       )}
                     >
                       <div className={cn(
-                        "w-20 h-20 md:w-24 md:h-24 rounded-full",
+                        "w-18 h-18 md:w-24 md:h-24 rounded-full",
                         "bg-white/10 backdrop-blur-md",
                         "border border-white/30",
                         "flex items-center justify-center",
@@ -509,29 +639,38 @@ export function ProfileContentTabs({
                   )}
                 </div>
               )}
-            </div>
 
-            {/* Title */}
-            {selectedItem.title && (
-              <div className={cn(
-                "absolute bottom-20 md:bottom-8 left-0 right-0 text-center",
-                "animate-in fade-in slide-in-from-bottom-2 duration-500 delay-100"
-              )}>
-                <h3 className="text-white text-lg md:text-xl font-medium tracking-wide drop-shadow-lg">
-                  {selectedItem.title}
-                </h3>
-              </div>
-            )}
+              {/* Title - below image */}
+              {selectedItem.title && (
+                <div className="mt-4 text-center px-4">
+                  <h3 className="text-white text-base md:text-lg font-medium drop-shadow-lg">
+                    {selectedItem.title}
+                  </h3>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Swipe hint for mobile */}
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 md:hidden">
-            <div className="flex flex-col items-center gap-1">
-              <p className="text-white/40 text-xs tracking-wide">
-                Swipe down to close
-              </p>
-              <div className="w-10 h-1 bg-white/20 rounded-full" />
+          {/* Counter and hints */}
+          <div className="absolute bottom-6 left-0 right-0 flex flex-col items-center gap-3 pointer-events-none">
+            {/* Image counter */}
+            {currentList.length > 1 && (
+              <div className="px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-sm">
+                <span className="text-white/90 text-sm font-medium tabular-nums">
+                  {selectedIndex + 1} / {currentList.length}
+                </span>
+              </div>
+            )}
+
+            {/* Hints */}
+            <div className="flex items-center gap-4 text-white/40 text-xs">
+              <span className="hidden md:inline">← → navigate</span>
+              <span className="hidden md:inline">ESC close</span>
+              <span className="md:hidden">Swipe to navigate or close</span>
             </div>
+
+            {/* Swipe indicator line for mobile */}
+            <div className="w-12 h-1 bg-white/30 rounded-full md:hidden" />
           </div>
         </div>
       )}
