@@ -468,44 +468,45 @@ async function FanDashboard({ actorId }: { actorId: string }) {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* Favorites */}
-      {favoriteModels.length > 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Heart className="h-5 w-5 text-pink-500 fill-pink-500" />
-              Favorites
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {favoriteModels.map((model: any) => (
-                <ModelCard key={model.id} model={model} showFavorite={true} isFavorited={true} />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card className="border-pink-500/20 bg-gradient-to-br from-pink-500/5 to-violet-500/5">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-full bg-pink-500/10">
-                <Heart className="h-6 w-6 text-pink-500" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold">Start building your favorites</h3>
-                <p className="text-sm text-muted-foreground">
-                  Click the heart icon on any model to add them to your favorites for quick access.
-                </p>
-              </div>
-              <Button asChild size="sm" className="bg-gradient-to-r from-pink-500 to-violet-500">
-                <Link href="/models">
-                  Browse Models
-                </Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Favorites - Horizontal scrolling gallery */}
+      {favoriteModels.length > 0 && (
+        <div>
+          <h3 className="flex items-center gap-2 text-lg font-semibold mb-4">
+            <Heart className="h-5 w-5 text-pink-500 fill-pink-500" />
+            Favorites
+          </h3>
+          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
+            {favoriteModels.map((model: any) => (
+              <Link
+                key={model.id}
+                href={`/${model.username}`}
+                className="flex-shrink-0 flex flex-col items-center gap-2 group"
+              >
+                <div className="relative">
+                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-full ring-2 ring-pink-500/50 group-hover:ring-pink-500 transition-all overflow-hidden">
+                    <Image
+                      src={model.profile_photo_url}
+                      alt={model.first_name || model.username}
+                      width={80}
+                      height={80}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  {model.is_verified && (
+                    <div className="absolute -bottom-0.5 -right-0.5 bg-blue-500 rounded-full p-0.5">
+                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+                <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors truncate max-w-[80px] text-center">
+                  {model.first_name || model.username}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Featured Models */}
