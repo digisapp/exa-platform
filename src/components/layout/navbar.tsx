@@ -26,6 +26,7 @@ import {
   BarChart3,
   FolderHeart,
   Plus,
+  Flame,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/auth/logout-button";
@@ -268,6 +269,12 @@ export function Navbar({ user, actorType, unreadCount = 0 }: NavbarProps) {
                       </DropdownMenuItem>
                     </>
                   )}
+                  <DropdownMenuItem asChild>
+                    <Link href="/boost" className="cursor-pointer">
+                      <Flame className="mr-2 h-4 w-4 text-orange-500" />
+                      EXA Boost
+                    </Link>
+                  </DropdownMenuItem>
                   {actorType !== "admin" && (
                     <DropdownMenuItem asChild>
                       <Link href="/settings" className="cursor-pointer">

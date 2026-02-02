@@ -10,6 +10,8 @@ import { createClient } from "@/lib/supabase/server";
 import {
   ArrowRight,
   Instagram,
+  Flame,
+  Trophy,
 } from "lucide-react";
 import { TopModelsCarousel } from "@/components/home/TopModelsCarousel";
 import { UpcomingEventsCarousel } from "@/components/home/UpcomingEventsCarousel";
@@ -221,6 +223,45 @@ export default async function HomePage() {
               </div>
             </div>
           </div>
+        </section>
+
+        {/* EXA Boost Banner */}
+        <section className="container px-8 md:px-16 py-8">
+          <Link href="/boost" className="block group">
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-orange-500 via-pink-500 to-purple-600 p-[2px]">
+              <div className="relative rounded-3xl bg-black/90 backdrop-blur-xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+                {/* Left side - Icon and Text */}
+                <div className="flex items-center gap-4 md:gap-6">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-pink-500 rounded-2xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity" />
+                    <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center">
+                      <Flame className="h-8 w-8 md:h-10 md:w-10 text-white" />
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-2xl md:text-3xl font-bold text-white mb-1">
+                      EXA Boost
+                    </h3>
+                    <p className="text-white/70 text-sm md:text-base">
+                      Swipe, like & boost your favorite models to the top!
+                    </p>
+                  </div>
+                </div>
+
+                {/* Right side - CTA */}
+                <div className="flex items-center gap-4">
+                  <div className="hidden md:flex items-center gap-2 text-white/60">
+                    <Trophy className="h-5 w-5 text-yellow-400" />
+                    <span className="text-sm">Live Leaderboard</span>
+                  </div>
+                  <div className="px-6 py-3 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 text-white font-semibold group-hover:scale-105 transition-transform flex items-center gap-2">
+                    Play Now
+                    <ArrowRight className="h-4 w-4" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Link>
         </section>
 
         {/* Upcoming Experiences Section */}
