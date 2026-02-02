@@ -420,24 +420,33 @@ export function ProfileContentTabs({
         <div
           className={cn(
             "fixed inset-0 z-50 flex items-center justify-center",
-            "bg-black/90 backdrop-blur-xl",
             "animate-in fade-in duration-300"
           )}
           onClick={closeLightbox}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
-          {/* Ambient glow effect */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-pink-500/20 to-violet-500/20 rounded-full blur-[120px] opacity-50" />
-          </div>
+          {/* Blurred background image */}
+          {selectedType === "photo" && (
+            <div className="absolute inset-0 overflow-hidden">
+              <img
+                src={selectedItem.photo_url || selectedItem.url}
+                alt=""
+                className="absolute inset-0 w-full h-full object-cover scale-110 blur-3xl opacity-40"
+              />
+              <div className="absolute inset-0 bg-black/70" />
+            </div>
+          )}
+          {selectedType === "video" && (
+            <div className="absolute inset-0 bg-black/95" />
+          )}
 
           {/* Close button */}
           <button
             onClick={closeLightbox}
             className={cn(
               "absolute top-6 right-6 p-3 rounded-full z-20",
-              "bg-white/5 hover:bg-white/15 backdrop-blur-md",
+              "bg-black/40 hover:bg-black/60 backdrop-blur-md",
               "border border-white/10 hover:border-white/20",
               "transition-all duration-300 ease-out",
               "group"
@@ -449,33 +458,29 @@ export function ProfileContentTabs({
           {/* Main content area */}
           <div
             className={cn(
-              "relative max-w-[92vw] flex flex-col items-center justify-center",
-              "pt-16 pb-20 md:pt-8 md:pb-8"
+              "relative w-full h-full flex flex-col items-center justify-center",
+              "px-4 py-16 md:py-8"
             )}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Media container */}
-            <div className={cn(
-              "relative rounded-2xl overflow-hidden",
-              "shadow-2xl shadow-black/50",
-              "ring-1 ring-white/10"
-            )}>
+            <div className="relative flex items-center justify-center w-full h-full">
               {selectedType === "photo" ? (
                 <img
                   src={selectedItem.photo_url || selectedItem.url}
                   alt={selectedItem.title || ""}
-                  className="max-w-[90vw] max-h-[70vh] md:max-h-[80vh] object-contain"
+                  className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
                   draggable={false}
                 />
               ) : (
-                <div className="relative">
+                <div className="relative max-w-full max-h-[85vh]">
                   <video
                     ref={videoRef}
                     key={selectedItem.id}
                     src={selectedItem.url}
                     controls={videoPlaying}
                     playsInline
-                    className="max-w-[90vw] max-h-[70vh] md:max-h-[80vh] object-contain"
+                    className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
                     onEnded={() => setVideoPlaying(false)}
                   />
                   {/* Play button overlay */}
@@ -484,7 +489,7 @@ export function ProfileContentTabs({
                       onClick={handlePlayVideo}
                       className={cn(
                         "absolute inset-0 flex items-center justify-center",
-                        "bg-black/30 backdrop-blur-sm",
+                        "bg-black/30 backdrop-blur-sm rounded-lg",
                         "transition-all duration-300",
                         "group"
                       )}
@@ -509,10 +514,10 @@ export function ProfileContentTabs({
             {/* Title */}
             {selectedItem.title && (
               <div className={cn(
-                "mt-6 text-center",
+                "absolute bottom-20 md:bottom-8 left-0 right-0 text-center",
                 "animate-in fade-in slide-in-from-bottom-2 duration-500 delay-100"
               )}>
-                <h3 className="text-white text-lg md:text-xl font-medium tracking-wide">
+                <h3 className="text-white text-lg md:text-xl font-medium tracking-wide drop-shadow-lg">
                   {selectedItem.title}
                 </h3>
               </div>
