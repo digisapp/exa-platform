@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { SwipeCard, ActionButtons } from "./SwipeCard";
 
@@ -62,6 +62,27 @@ export function SwipeStack({ models, onSwipe, onBoost, onEmpty, totalModels, mod
       onBoost(currentModel);
     }
   }, [currentModel, onBoost]);
+
+  // Keyboard arrow controls for desktop
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only handle if no input is focused
+      if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") {
+        return;
+      }
+
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        handleSwipe("left");
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        handleSwipe("right");
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleSwipe]);
 
   if (!currentModel) {
     return null;

@@ -2,7 +2,7 @@
 
 import { motion, useMotionValue, useTransform } from "framer-motion";
 import Image from "next/image";
-import { Heart, X, MapPin, Verified, Star, Share2, TrendingUp, Flame } from "lucide-react";
+import { Heart, X, MapPin, Verified, Star, Share2, TrendingUp, Flame, User } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -155,33 +155,45 @@ export function SwipeCard({
           )}
         </div>
 
-        {/* Top Right Share Button (only on top card) */}
+        {/* Top Right Buttons (only on top card) */}
         {isTop && (
-          <button
-            onClick={async (e) => {
-              e.stopPropagation();
-              const shareUrl = `${window.location.origin}/${model.username}`;
-              const shareText = `Check out ${model.first_name || model.username} on EXA Models!`;
+          <div className="absolute top-4 right-4 flex gap-2">
+            {/* View Profile Button */}
+            <Link
+              href={`/${model.username}`}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white/20 backdrop-blur-sm rounded-full p-2 shadow-lg hover:bg-white/30 transition-colors"
+            >
+              <User className="h-4 w-4 text-white" />
+            </Link>
 
-              if (navigator.share) {
-                try {
-                  await navigator.share({
-                    title: `${model.first_name || model.username} | EXA Models`,
-                    text: shareText,
-                    url: shareUrl,
-                  });
-                } catch {
-                  // User cancelled
+            {/* Share Button */}
+            <button
+              onClick={async (e) => {
+                e.stopPropagation();
+                const shareUrl = `${window.location.origin}/${model.username}`;
+                const shareText = `Check out ${model.first_name || model.username} on EXA Models!`;
+
+                if (navigator.share) {
+                  try {
+                    await navigator.share({
+                      title: `${model.first_name || model.username} | EXA Models`,
+                      text: shareText,
+                      url: shareUrl,
+                    });
+                  } catch {
+                    // User cancelled
+                  }
+                } else {
+                  await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
+                  toast.success("Link copied!");
                 }
-              } else {
-                await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
-                toast.success("Link copied!");
-              }
-            }}
-            className="absolute top-4 right-4 bg-white/20 backdrop-blur-sm rounded-full p-2 shadow-lg hover:bg-white/30 transition-colors"
-          >
-            <Share2 className="h-4 w-4 text-white" />
-          </button>
+              }}
+              className="bg-white/20 backdrop-blur-sm rounded-full p-2 shadow-lg hover:bg-white/30 transition-colors"
+            >
+              <Share2 className="h-4 w-4 text-white" />
+            </button>
+          </div>
         )}
       </div>
     </motion.div>
