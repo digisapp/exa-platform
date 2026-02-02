@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Heart, X, MapPin, Verified, Star, Share2, TrendingUp, Flame, User } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface Model {
   id: string;
@@ -36,6 +37,7 @@ export function SwipeCard({
   isTop = false,
   style,
 }: SwipeCardProps) {
+  const router = useRouter();
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-15, 15]);
   const opacity = useTransform(x, [-200, -100, 0, 100, 200], [0.5, 1, 1, 1, 0.5]);
@@ -68,7 +70,10 @@ export function SwipeCard({
       onDragEnd={handleDragEnd}
       whileTap={{ scale: isTop ? 1.02 : 1 }}
     >
-      <div className="relative w-full h-full rounded-3xl overflow-hidden bg-black shadow-[0_20px_50px_rgba(0,0,0,0.5)] ring-1 ring-white/10">
+      <div
+        className="relative w-full h-full rounded-3xl overflow-hidden bg-black shadow-[0_20px_50px_rgba(0,0,0,0.5)] ring-1 ring-white/10"
+        onDoubleClick={() => isTop && router.push(`/${model.username}`)}
+      >
         {/* Model Image */}
         <Image
           src={model.profile_photo_url}
