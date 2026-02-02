@@ -26,8 +26,6 @@ import {
   BarChart3,
   FolderHeart,
   Plus,
-  Gem,
-  Gamepad2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/auth/logout-button";
@@ -43,7 +41,6 @@ interface NavbarProps {
   } | null;
   actorType?: "model" | "brand" | "admin" | "fan" | null;
   unreadCount?: number;
-  gemBalance?: number;
 }
 
 const publicLinks: { href: string; label: string; icon: any }[] = [];
@@ -73,7 +70,7 @@ const adminLinks = [
   { href: "/chats", label: "Chats", icon: MessageCircle },
 ];
 
-export function Navbar({ user, actorType, unreadCount = 0, gemBalance = 0 }: NavbarProps) {
+export function Navbar({ user, actorType, unreadCount = 0 }: NavbarProps) {
   const pathname = usePathname();
   const coinBalanceContext = useCoinBalanceOptional();
   const coinBalance = coinBalanceContext?.balance ?? 0;
@@ -138,17 +135,6 @@ export function Navbar({ user, actorType, unreadCount = 0, gemBalance = 0 }: Nav
         <div className="flex items-center gap-2 md:gap-3">
           {user ? (
             <>
-              {/* Gem Balance - Admin only (dev mode), Desktop */}
-              {actorType === "admin" && (
-                <Link
-                  href="/games"
-                  className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 hover:border-cyan-500/50 hover:from-cyan-500/30 hover:to-blue-500/30 transition-all shadow-sm"
-                >
-                  <Gem className="h-4 w-4 text-cyan-400" />
-                  <span className="text-sm font-semibold">{gemBalance.toLocaleString()}</span>
-                </Link>
-              )}
-
               {/* Coin Balance - Mobile (compact) */}
               {actorType === "fan" ? (
                 <DropdownMenu>
@@ -254,17 +240,6 @@ export function Navbar({ user, actorType, unreadCount = 0, gemBalance = 0 }: Nav
                         Wallet
                         <span className="ml-auto text-xs text-muted-foreground">
                           {coinBalance.toLocaleString()}
-                        </span>
-                      </Link>
-                    </DropdownMenuItem>
-                  )}
-                  {actorType === "admin" && (
-                    <DropdownMenuItem asChild>
-                      <Link href="/games" className="cursor-pointer">
-                        <Gamepad2 className="mr-2 h-4 w-4" />
-                        Games (Dev)
-                        <span className="ml-auto text-xs text-cyan-400">
-                          {gemBalance.toLocaleString()} gems
                         </span>
                       </Link>
                     </DropdownMenuItem>

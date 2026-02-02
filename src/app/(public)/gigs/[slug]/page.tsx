@@ -14,7 +14,6 @@ import {
   DollarSign,
   Clock,
   ArrowLeft,
-  Trophy,
   CheckCircle,
   XCircle,
   Loader2,
@@ -359,15 +358,6 @@ export default async function GigDetailPage({ params }: Props) {
                         </span>
                       </div>
                     )}
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground flex items-center gap-2">
-                        <Trophy className="h-4 w-4" />
-                        Gems
-                      </span>
-                      <span className="font-medium text-cyan-500">
-                        +{gig.points_for_completion}
-                      </span>
-                    </div>
                   </div>
                 </CardContent>
               </Card>

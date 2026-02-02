@@ -129,7 +129,7 @@ export function PhotoUploader({
       setUploadProgress(100);
 
       onUploadComplete(data.url, data.mediaAsset);
-      toast.success("Photo uploaded successfully!");
+      toast.success("Photo uploaded!");
 
       // Clear preview after successful upload
       setPreview(null);
@@ -199,12 +199,7 @@ export function PhotoUploader({
       }
 
       onUploadComplete(data.url, data.mediaAsset);
-
-      if (data.pointsAwarded > 0) {
-        toast.success(`Photo uploaded! +${data.pointsAwarded} gems`);
-      } else {
-        toast.success("Photo uploaded successfully!");
-      }
+      toast.success("Photo uploaded!");
 
       setPreview(null);
     } catch (error) {
@@ -427,12 +422,6 @@ export function PhotoUploader({
           </div>
         )}
       </div>
-
-      {type === "portfolio" && (
-        <p className="text-sm text-muted-foreground mt-2 text-center">
-          Each portfolio photo earns you +10 gems!
-        </p>
-      )}
 
       {/* Image Cropper Dialog for avatars */}
       {imageToCrop && (

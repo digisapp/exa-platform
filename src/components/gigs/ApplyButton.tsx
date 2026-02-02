@@ -49,15 +49,7 @@ export function ApplyButton({ gigId, modelId }: ApplyButtonProps) {
 
       if (appError) throw appError;
 
-      // Award gems for applying
-      await (supabase.rpc as any)("award_points", {
-        p_model_id: modelId,
-        p_action: "gig_apply",
-        p_points: 5,
-        p_metadata: { gig_id: gigId },
-      });
-
-      toast.success("Application submitted! +5 gems earned");
+      toast.success("Application submitted!");
       setOpen(false);
       router.refresh();
     } catch (error: unknown) {
@@ -80,7 +72,7 @@ export function ApplyButton({ gigId, modelId }: ApplyButtonProps) {
         <DialogHeader>
           <DialogTitle>Apply for this Gig</DialogTitle>
           <DialogDescription>
-            Submit your application. You&apos;ll earn +5 gems for applying!
+            Submit your application to express your interest in this opportunity.
           </DialogDescription>
         </DialogHeader>
 
