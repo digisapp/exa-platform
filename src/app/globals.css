@@ -702,6 +702,20 @@ input:focus, textarea:focus, select:focus {
   }
 }
 
+/* Shimmer animation for loading states and highlights */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s ease-in-out infinite;
+}
+
 /* Improved focus states for accessibility */
 @media (prefers-reduced-motion: no-preference) {
   .focus-ring {

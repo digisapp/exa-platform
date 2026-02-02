@@ -68,7 +68,7 @@ export function SwipeStack({ models, onSwipe, onBoost, onEmpty, totalModels, mod
   }
 
   return (
-    <div className="flex flex-col items-center gap-4 sm:gap-6">
+    <div className="flex flex-col items-center gap-4 sm:gap-6 pb-4 md:pb-0">
       {/* Card Stack */}
       <div className="relative w-[calc(100vw-32px)] max-w-[380px] sm:max-w-[400px] aspect-[3/4]">
         {/* Background cards (show up to 2 cards behind) */}

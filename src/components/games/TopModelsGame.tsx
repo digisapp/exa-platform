@@ -217,9 +217,38 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <Loader2 className="h-8 w-8 animate-spin text-pink-500" />
-        <p className="text-muted-foreground">Loading models...</p>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
+        {/* Animated loading card */}
+        <div className="relative">
+          {/* Glow effect */}
+          <div className="absolute inset-0 bg-gradient-to-r from-pink-500 via-purple-500 to-orange-500 rounded-3xl blur-2xl opacity-30 animate-pulse" />
+
+          {/* Card skeleton */}
+          <div className="relative w-[280px] h-[380px] rounded-3xl bg-gradient-to-br from-white/10 to-white/5 border border-white/10 overflow-hidden">
+            {/* Shimmer effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-shimmer" />
+
+            {/* Content skeleton */}
+            <div className="absolute bottom-0 left-0 right-0 p-6 space-y-3">
+              <div className="h-8 w-32 bg-white/10 rounded-lg" />
+              <div className="h-4 w-24 bg-white/5 rounded" />
+              <div className="flex gap-2">
+                <div className="h-6 w-16 bg-white/5 rounded-full" />
+                <div className="h-6 w-20 bg-white/5 rounded-full" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Loading text */}
+        <div className="flex items-center gap-3">
+          <Loader2 className="h-5 w-5 animate-spin text-pink-500" />
+          <p className="text-muted-foreground">
+            <span className="bg-gradient-to-r from-pink-400 to-purple-400 text-transparent bg-clip-text font-medium">
+              Loading models
+            </span>
+          </p>
+        </div>
       </div>
     );
   }
@@ -229,7 +258,7 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
       {/* Desktop: Two columns - Game + Leaderboard */}
       <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
         {/* Game Area */}
-        <div className="flex-1 flex flex-col items-center">
+        <div className="flex-1 flex flex-col items-center pb-8 md:pb-0">
           {gameComplete ? (
             <GameComplete
               nextResetAt={session?.nextResetAt || null}
@@ -246,15 +275,33 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
               modelsSwiped={session?.modelsSwiped}
             />
           ) : (
-            <div className="text-center py-12">
-              <Sparkles className="h-12 w-12 mx-auto mb-4 text-pink-500" />
-              <h3 className="text-xl font-bold mb-2">No models available</h3>
-              <p className="text-muted-foreground mb-4">
-                Check back later for more models to discover!
-              </p>
-              <Button onClick={fetchModels} variant="outline">
-                Refresh
-              </Button>
+            <div className="text-center py-12 px-6 relative max-w-sm mx-auto">
+              {/* Background glow */}
+              <div className="absolute inset-0 bg-gradient-to-br from-pink-500/10 via-purple-500/5 to-orange-500/10 rounded-3xl pointer-events-none" />
+
+              <div className="relative">
+                {/* Icon with glow */}
+                <div className="relative inline-block mb-4">
+                  <div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full blur-xl opacity-40 animate-pulse" />
+                  <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-pink-500/20 to-purple-500/20 border border-white/10 flex items-center justify-center">
+                    <Sparkles className="h-10 w-10 text-pink-400" />
+                  </div>
+                </div>
+
+                <h3 className="text-xl font-bold mb-2 bg-gradient-to-r from-pink-400 to-purple-400 text-transparent bg-clip-text">
+                  No models available
+                </h3>
+                <p className="text-muted-foreground mb-6">
+                  Check back later for more models to discover!
+                </p>
+                <Button
+                  onClick={fetchModels}
+                  className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 shadow-lg shadow-pink-500/25"
+                >
+                  <Loader2 className="h-4 w-4 mr-2" />
+                  Refresh
+                </Button>
+              </div>
             </div>
           )}
 
