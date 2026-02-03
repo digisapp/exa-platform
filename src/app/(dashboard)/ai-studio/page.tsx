@@ -157,8 +157,14 @@ export default function AIStudioPage() {
 
   // Start generation
   const handleGenerate = async () => {
-    if (!uploadedImageUrl || !selectedScenario) {
-      toast.error("Please upload a photo and select a scenario");
+    // Show specific error messages for missing requirements
+    if (!uploadedImageUrl) {
+      toast.error("Please upload a photo first");
+      return;
+    }
+
+    if (!selectedScenario) {
+      toast.error("Please select a scenario");
       return;
     }
 
@@ -419,7 +425,7 @@ export default function AIStudioPage() {
           {status !== "completed" && (
             <Button
               onClick={handleGenerate}
-              disabled={status === "generating" || !uploadedImageUrl || !selectedScenario}
+              disabled={status === "generating" || status === "uploading"}
               size="lg"
               className="w-full h-14 text-lg exa-gradient-button"
             >
@@ -428,20 +434,15 @@ export default function AIStudioPage() {
                   <Loader2 className="h-5 w-5 mr-2 animate-spin" />
                   Generating... (this takes ~30 seconds)
                 </>
-              ) : !uploadedImageUrl ? (
+              ) : status === "uploading" ? (
                 <>
-                  <Upload className="h-5 w-5 mr-2" />
-                  Upload a Photo First
-                </>
-              ) : !selectedScenario ? (
-                <>
-                  <ImageIcon className="h-5 w-5 mr-2" />
-                  Select a Scenario Above
+                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                  Uploading...
                 </>
               ) : (
                 <>
                   <Sparkles className="h-5 w-5 mr-2" />
-                  Generate 4 Photos ({AI_GENERATION_COST} coins)
+                  Generate ({AI_GENERATION_COST} coins)
                 </>
               )}
             </Button>
