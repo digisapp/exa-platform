@@ -223,7 +223,7 @@ export async function getGenerationStatus(
 
   try {
     const response = await fetch(
-      `https://queue.fal.run/${PULID_MODEL}/requests/${requestId}/status`,
+      `https://queue.fal.run/${FACE_ID_MODEL}/requests/${requestId}/status`,
       {
         headers: {
           Authorization: `Key ${FAL_KEY}`,
@@ -261,7 +261,7 @@ export async function getGenerationResult(
 
   try {
     const response = await fetch(
-      `https://queue.fal.run/${PULID_MODEL}/requests/${requestId}`,
+      `https://queue.fal.run/${FACE_ID_MODEL}/requests/${requestId}`,
       {
         headers: {
           Authorization: `Key ${FAL_KEY}`,
@@ -297,7 +297,7 @@ export async function cancelGeneration(requestId: string): Promise<boolean> {
 
   try {
     const response = await fetch(
-      `https://queue.fal.run/${PULID_MODEL}/requests/${requestId}/cancel`,
+      `https://queue.fal.run/${FACE_ID_MODEL}/requests/${requestId}/cancel`,
       {
         method: "PUT",
         headers: {
