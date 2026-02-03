@@ -416,11 +416,11 @@ export default function AIStudioPage() {
             </div>
           </div>
 
-          {/* Generate Button */}
-          {uploadedImageUrl && selectedScenario && status !== "completed" && (
+          {/* Generate Button - Always visible */}
+          {status !== "completed" && (
             <Button
               onClick={handleGenerate}
-              disabled={status === "generating"}
+              disabled={status === "generating" || !uploadedImageUrl || !selectedScenario}
               size="lg"
               className="w-full h-14 text-lg exa-gradient-button"
             >
@@ -428,6 +428,16 @@ export default function AIStudioPage() {
                 <>
                   <Loader2 className="h-5 w-5 mr-2 animate-spin" />
                   Generating... (this takes ~30 seconds)
+                </>
+              ) : !uploadedImageUrl ? (
+                <>
+                  <Upload className="h-5 w-5 mr-2" />
+                  Upload a Photo First
+                </>
+              ) : !selectedScenario ? (
+                <>
+                  <ImageIcon className="h-5 w-5 mr-2" />
+                  Select a Scenario Above
                 </>
               ) : (
                 <>
