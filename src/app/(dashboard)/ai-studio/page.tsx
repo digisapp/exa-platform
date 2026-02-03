@@ -448,7 +448,7 @@ export default function AIStudioPage() {
               {status === "generating" ? (
                 <>
                   <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                  Generating... (this takes ~30 seconds)
+                  Generating... (1-2 minutes)
                 </>
               ) : status === "uploading" ? (
                 <>
