@@ -1,10 +1,10 @@
 // fal.ai API integration for AI photo generation
-// Using PuLID for photorealistic face-preserving generation
+// Using IP Adapter Face ID for high-quality face-preserving generation
 
 const FAL_KEY = process.env.FAL_KEY;
 
-// PuLID model - specifically designed for face identity preservation
-const PULID_MODEL = "fal-ai/pulid";
+// IP Adapter Face ID - uses face embeddings for accurate face preservation
+const FACE_ID_MODEL = "fal-ai/ip-adapter-face-id";
 
 // Scenario presets - IMPORTANT: Prompts must NOT describe the person's appearance
 // PuLID takes the face from the input image, so prompts should ONLY describe scene/setting/clothing
@@ -168,8 +168,8 @@ export async function startGeneration(
       console.error("[fal.ai] Could not verify face image URL:", e);
     }
 
-    // Use fal.ai queue API for async generation
-    const apiUrl = `https://queue.fal.run/${PULID_MODEL}`;
+    // Use fal.ai queue API for async generation with IP Adapter Face ID
+    const apiUrl = `https://queue.fal.run/${FACE_ID_MODEL}`;
     console.log("[fal.ai] API URL:", apiUrl);
 
     const response = await fetch(apiUrl, {
@@ -179,25 +179,21 @@ export async function startGeneration(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        // PuLID parameters
-        reference_images: [{ image_url: faceImageUrl }],
-        prompt: `professional photo of a woman, ${scenario.prompt}, highly detailed face, sharp focus, photorealistic skin texture`,
-        negative_prompt: `${scenario.negative_prompt}, deformed face, distorted face, bad face, ugly face, asymmetric face, blurry face, mutated face, extra fingers, missing fingers`,
-        // Face identity preservation strength (0-5, higher = more faithful to face)
-        id_scale: 1.5,
-        // Mode: "fidelity" preserves face better, "extreme style" for artistic
-        mode: "fidelity",
-        // Number of inference steps (max 12 for PuLID) - higher = better quality
-        num_inference_steps: 12,
-        // CFG scale (1-1.5 for PuLID)
-        guidance_scale: 1.4,
-        // Output dimensions
-        image_size: {
-          width: 768,
-          height: 1024,
-        },
-        // Number of images to generate
-        num_images: 1,
+        // IP Adapter Face ID parameters
+        face_image_url: faceImageUrl,
+        prompt: `professional photo of a beautiful woman, ${scenario.prompt}, highly detailed face, sharp focus, photorealistic, studio lighting, 8k uhd`,
+        negative_prompt: `${scenario.negative_prompt}, deformed face, distorted face, bad face, ugly face, asymmetric face, blurry face, mutated face, extra fingers, missing fingers, bad anatomy, worst quality, low quality`,
+        // Use SDXL model for best quality
+        model_type: "SDXL-v2-plus",
+        // CFG scale (0-16, default 7.5)
+        guidance_scale: 7.5,
+        // More inference steps for better quality
+        num_inference_steps: 50,
+        // Output dimensions (portrait format)
+        width: 768,
+        height: 1024,
+        // Number of face samples for better accuracy
+        num_samples: 4,
       }),
     });
 
