@@ -6,13 +6,14 @@ const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN;
 const INSTANT_ID_MODEL = "zsxkib/instant-id:2e4785a4d80dadf580077b2244c8d7c05d8e3faac04a04c02d8e099dd2876789";
 
 // Scenario presets with optimized prompts
+// Note: InstantID preserves the face from the input image, so prompts focus on scene/style
 export const AI_SCENARIOS = {
   beach_sunset: {
     id: "beach_sunset",
     name: "Beach Sunset",
     description: "Golden hour on a tropical beach",
-    prompt: "professional photo of person on a beautiful tropical beach at golden hour sunset, warm lighting, ocean waves, palm trees in background, natural pose, high fashion photography, 8k, highly detailed",
-    negative_prompt: "ugly, blurry, low quality, distorted face, extra limbs, bad anatomy",
+    prompt: "portrait photo, same person, beautiful tropical beach at golden hour sunset, warm lighting, ocean waves, palm trees in background, natural pose, professional fashion photography, high quality, detailed face",
+    negative_prompt: "ugly, blurry, low quality, distorted face, extra limbs, bad anatomy, different person, wrong face",
     preview_image: "/ai-scenarios/beach-sunset.jpg",
     category: "outdoor",
   },
@@ -20,8 +21,8 @@ export const AI_SCENARIOS = {
     id: "nyc_street",
     name: "NYC Street Style",
     description: "Urban vibes in New York City",
-    prompt: "professional street photography of person in New York City, Times Square lights in background, urban fashion, cinematic lighting, editorial style, 8k, highly detailed",
-    negative_prompt: "ugly, blurry, low quality, distorted face, extra limbs, bad anatomy",
+    prompt: "portrait photo, same person, street photography in New York City, Times Square lights in background, urban fashion, cinematic lighting, editorial style, high quality, detailed face",
+    negative_prompt: "ugly, blurry, low quality, distorted face, extra limbs, bad anatomy, different person, wrong face",
     preview_image: "/ai-scenarios/nyc-street.jpg",
     category: "urban",
   },
@@ -29,8 +30,8 @@ export const AI_SCENARIOS = {
     id: "studio_glamour",
     name: "Studio Glamour",
     description: "Professional studio with dramatic lighting",
-    prompt: "professional studio portrait of person, dramatic lighting, beauty photography, soft shadows, elegant pose, high-end fashion magazine style, 8k, highly detailed",
-    negative_prompt: "ugly, blurry, low quality, distorted face, extra limbs, bad anatomy",
+    prompt: "studio portrait photo, same person, dramatic lighting, beauty photography, soft shadows, elegant pose, high-end fashion magazine style, high quality, detailed face",
+    negative_prompt: "ugly, blurry, low quality, distorted face, extra limbs, bad anatomy, different person, wrong face",
     preview_image: "/ai-scenarios/studio-glamour.jpg",
     category: "studio",
   },
@@ -38,8 +39,8 @@ export const AI_SCENARIOS = {
     id: "paris_cafe",
     name: "Parisian Cafe",
     description: "Chic European cafe setting",
-    prompt: "professional photo of person at a charming Parisian cafe, Eiffel Tower visible in distance, elegant atmosphere, natural daylight, editorial fashion photography, 8k, highly detailed",
-    negative_prompt: "ugly, blurry, low quality, distorted face, extra limbs, bad anatomy",
+    prompt: "portrait photo, same person, charming Parisian cafe, Eiffel Tower visible in distance, elegant atmosphere, natural daylight, editorial fashion photography, high quality, detailed face",
+    negative_prompt: "ugly, blurry, low quality, distorted face, extra limbs, bad anatomy, different person, wrong face",
     preview_image: "/ai-scenarios/paris-cafe.jpg",
     category: "urban",
   },
@@ -47,8 +48,8 @@ export const AI_SCENARIOS = {
     id: "fitness_gym",
     name: "Fitness Studio",
     description: "Athletic and powerful gym shot",
-    prompt: "professional fitness photography of person in modern gym, athletic wear, dramatic lighting, powerful pose, sports photography style, 8k, highly detailed",
-    negative_prompt: "ugly, blurry, low quality, distorted face, extra limbs, bad anatomy",
+    prompt: "portrait photo, same person, fitness photography in modern gym, athletic wear, dramatic lighting, powerful pose, sports photography style, high quality, detailed face",
+    negative_prompt: "ugly, blurry, low quality, distorted face, extra limbs, bad anatomy, different person, wrong face",
     preview_image: "/ai-scenarios/fitness-gym.jpg",
     category: "lifestyle",
   },
@@ -56,8 +57,8 @@ export const AI_SCENARIOS = {
     id: "nature_forest",
     name: "Enchanted Forest",
     description: "Magical forest with natural light",
-    prompt: "professional photo of person in beautiful forest, dappled sunlight through trees, ethereal atmosphere, nature photography, bohemian style, 8k, highly detailed",
-    negative_prompt: "ugly, blurry, low quality, distorted face, extra limbs, bad anatomy",
+    prompt: "portrait photo, same person, beautiful forest, dappled sunlight through trees, ethereal atmosphere, nature photography, bohemian style, high quality, detailed face",
+    negative_prompt: "ugly, blurry, low quality, distorted face, extra limbs, bad anatomy, different person, wrong face",
     preview_image: "/ai-scenarios/nature-forest.jpg",
     category: "outdoor",
   },
@@ -65,8 +66,8 @@ export const AI_SCENARIOS = {
     id: "rooftop_night",
     name: "Rooftop Night",
     description: "City lights at night from a rooftop",
-    prompt: "professional photo of person on rooftop at night, city skyline with lights in background, urban nightlife, cinematic lighting, editorial fashion, 8k, highly detailed",
-    negative_prompt: "ugly, blurry, low quality, distorted face, extra limbs, bad anatomy",
+    prompt: "portrait photo, same person, rooftop at night, city skyline with lights in background, urban nightlife, cinematic lighting, editorial fashion, high quality, detailed face",
+    negative_prompt: "ugly, blurry, low quality, distorted face, extra limbs, bad anatomy, different person, wrong face",
     preview_image: "/ai-scenarios/rooftop-night.jpg",
     category: "urban",
   },
@@ -74,8 +75,8 @@ export const AI_SCENARIOS = {
     id: "desert_golden",
     name: "Desert Golden Hour",
     description: "Stunning desert landscape at sunset",
-    prompt: "professional photo of person in beautiful desert landscape at golden hour, sand dunes, warm dramatic lighting, fashion photography, 8k, highly detailed",
-    negative_prompt: "ugly, blurry, low quality, distorted face, extra limbs, bad anatomy",
+    prompt: "portrait photo, same person, beautiful desert landscape at golden hour, sand dunes, warm dramatic lighting, fashion photography, high quality, detailed face",
+    negative_prompt: "ugly, blurry, low quality, distorted face, extra limbs, bad anatomy, different person, wrong face",
     preview_image: "/ai-scenarios/desert-golden.jpg",
     category: "outdoor",
   },
@@ -83,8 +84,8 @@ export const AI_SCENARIOS = {
     id: "luxury_interior",
     name: "Luxury Interior",
     description: "Elegant high-end interior setting",
-    prompt: "professional photo of person in luxurious modern interior, elegant furniture, soft natural lighting, high fashion editorial, sophisticated atmosphere, 8k, highly detailed",
-    negative_prompt: "ugly, blurry, low quality, distorted face, extra limbs, bad anatomy",
+    prompt: "portrait photo, same person, luxurious modern interior, elegant furniture, soft natural lighting, high fashion editorial, sophisticated atmosphere, high quality, detailed face",
+    negative_prompt: "ugly, blurry, low quality, distorted face, extra limbs, bad anatomy, different person, wrong face",
     preview_image: "/ai-scenarios/luxury-interior.jpg",
     category: "lifestyle",
   },
@@ -92,8 +93,8 @@ export const AI_SCENARIOS = {
     id: "pool_summer",
     name: "Pool Summer Vibes",
     description: "Sunny poolside lifestyle shot",
-    prompt: "professional photo of person by luxury pool, summer vibes, bright sunny day, palm trees, lifestyle photography, vacation aesthetic, 8k, highly detailed",
-    negative_prompt: "ugly, blurry, low quality, distorted face, extra limbs, bad anatomy",
+    prompt: "portrait photo, same person, luxury pool, summer vibes, bright sunny day, palm trees, lifestyle photography, vacation aesthetic, high quality, detailed face",
+    negative_prompt: "ugly, blurry, low quality, distorted face, extra limbs, bad anatomy, different person, wrong face",
     preview_image: "/ai-scenarios/pool-summer.jpg",
     category: "lifestyle",
   },
@@ -101,8 +102,8 @@ export const AI_SCENARIOS = {
     id: "red_carpet",
     name: "Red Carpet Glamour",
     description: "Celebrity-style red carpet moment",
-    prompt: "professional photo of person on red carpet, paparazzi lights, glamorous pose, celebrity style, evening wear, high fashion photography, 8k, highly detailed",
-    negative_prompt: "ugly, blurry, low quality, distorted face, extra limbs, bad anatomy",
+    prompt: "portrait photo, same person, red carpet, paparazzi lights, glamorous pose, celebrity style, evening wear, high fashion photography, high quality, detailed face",
+    negative_prompt: "ugly, blurry, low quality, distorted face, extra limbs, bad anatomy, different person, wrong face",
     preview_image: "/ai-scenarios/red-carpet.jpg",
     category: "studio",
   },
@@ -110,8 +111,8 @@ export const AI_SCENARIOS = {
     id: "miami_art_deco",
     name: "Miami Art Deco",
     description: "Colorful Miami Beach vibes",
-    prompt: "professional photo of person in Miami Beach, colorful art deco buildings, pastel colors, sunny day, South Beach style, fashion photography, 8k, highly detailed",
-    negative_prompt: "ugly, blurry, low quality, distorted face, extra limbs, bad anatomy",
+    prompt: "portrait photo, same person, Miami Beach, colorful art deco buildings, pastel colors, sunny day, South Beach style, fashion photography, high quality, detailed face",
+    negative_prompt: "ugly, blurry, low quality, distorted face, extra limbs, bad anatomy, different person, wrong face",
     preview_image: "/ai-scenarios/miami-art-deco.jpg",
     category: "urban",
   },
@@ -147,6 +148,9 @@ export async function startGeneration(
   }
 
   try {
+    console.log("[Replicate] Starting generation with face image:", faceImageUrl);
+    console.log("[Replicate] Scenario:", scenarioId, "Prompt:", scenario.prompt.slice(0, 100));
+
     const response = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
@@ -156,14 +160,21 @@ export async function startGeneration(
       body: JSON.stringify({
         version: INSTANT_ID_MODEL.split(":")[1],
         input: {
+          // InstantID uses 'image' for the face reference
           image: faceImageUrl,
           prompt: scenario.prompt,
           negative_prompt: scenario.negative_prompt,
           num_outputs: 4,
-          guidance_scale: 5,
-          ip_adapter_scale: 0.8,
+          // Higher guidance makes it follow prompt more (lower = more face preservation)
+          guidance_scale: 3.5,
+          // IP adapter scale - higher = stronger face preservation (0.0-1.5)
+          ip_adapter_scale: 1.2,
+          // IdentityNet strength - higher = stronger face identity (0.0-1.5)
+          identitynet_strength_ratio: 1.0,
+          // Number of inference steps
           num_inference_steps: 30,
-          // Face preservation settings
+          // Scheduler
+          scheduler: "EulerDiscreteScheduler",
           enable_safety_checker: true,
         },
       }),
@@ -177,6 +188,7 @@ export async function startGeneration(
     }
 
     const prediction = await response.json();
+    console.log("[Replicate] Prediction started:", prediction.id);
     return { predictionId: prediction.id };
   } catch (error) {
     console.error("[Replicate] Error:", error);

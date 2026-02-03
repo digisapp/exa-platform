@@ -176,21 +176,23 @@ export default async function ModelProfilePage({ params }: Props) {
     })).filter(eb => eb.badges.events !== null);
   }
 
-  // Get portfolio photos
+  // Get portfolio photos (only visible ones)
   const { data: photos } = await supabase
     .from("media_assets")
     .select("*")
     .eq("model_id", model.id)
     .eq("asset_type", "portfolio")
+    .neq("is_visible", false)
     .order("created_at", { ascending: false })
     .limit(50) as { data: any[] | null };
 
-  // Get videos
+  // Get videos (only visible ones)
   const { data: videos } = await supabase
     .from("media_assets")
     .select("*")
     .eq("model_id", model.id)
     .eq("asset_type", "video")
+    .neq("is_visible", false)
     .order("created_at", { ascending: false })
     .limit(24) as { data: any[] | null };
 

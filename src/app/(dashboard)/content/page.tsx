@@ -31,6 +31,7 @@ import {
   Upload,
   Coins,
   Eye,
+  EyeOff,
   Image as ImageIcon,
   Video,
   Camera,
@@ -50,6 +51,7 @@ interface MediaAsset {
   url: string;
   created_at: string;
   title: string | null;
+  is_visible: boolean | null;
 }
 
 interface PremiumContent {
@@ -119,7 +121,7 @@ export default function ContentPage() {
     // Get portfolio content
     const { data: portfolioData } = await supabase
       .from("media_assets")
-      .select("id, asset_type, photo_url, url, created_at, title")
+      .select("id, asset_type, photo_url, url, created_at, title, is_visible")
       .eq("model_id", model.id)
       .in("asset_type", ["portfolio", "video"])
       .order("created_at", { ascending: false });
@@ -377,6 +379,23 @@ export default function ContentPage() {
     }
   };
 
+  const handleToggleVisibility = async (mediaId: string, currentVisible: boolean | null) => {
+    const newVisible = !(currentVisible !== false); // Toggle: null/true → false, false → true
+    const { error } = await supabase
+      .from("media_assets")
+      .update({ is_visible: newVisible })
+      .eq("id", mediaId);
+
+    if (!error) {
+      setPortfolio((prev) =>
+        prev.map((p) => (p.id === mediaId ? { ...p, is_visible: newVisible } : p))
+      );
+      toast.success(newVisible ? "Now visible on profile" : "Hidden from profile");
+    } else {
+      toast.error("Failed to update visibility");
+    }
+  };
+
   const resetForm = () => {
     setTitle("");
     setDescription("");
@@ -568,18 +587,47 @@ export default function ContentPage() {
                       </div>
                     </div>
 
-                    {/* Delete Button - visible on mobile, hover on desktop */}
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      className="absolute top-2 right-2 h-8 w-8 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeletePortfolio(item.id);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    {/* Action Buttons - visible on mobile, hover on desktop */}
+                    <div className="absolute top-2 right-2 flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        className={cn(
+                          "h-8 w-8",
+                          item.is_visible === false ? "bg-yellow-500/80 hover:bg-yellow-500" : "bg-white/80 hover:bg-white"
+                        )}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleVisibility(item.id, item.is_visible);
+                        }}
+                        title={item.is_visible === false ? "Hidden from profile - click to show" : "Visible on profile - click to hide"}
+                      >
+                        {item.is_visible === false ? (
+                          <EyeOff className="h-4 w-4 text-yellow-900" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-gray-700" />
+                        )}
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeletePortfolio(item.id);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+
+                    {/* Hidden indicator - always visible when hidden */}
+                    {item.is_visible === false && (
+                      <div className="absolute bottom-2 right-2 bg-yellow-500 px-2 py-1 rounded-full flex items-center gap-1">
+                        <EyeOff className="h-3 w-3 text-yellow-900" />
+                        <span className="text-yellow-900 text-xs font-medium">Hidden</span>
+                      </div>
+                    )}
 
                     {/* Title overlay - show on hover */}
                     {item.title && (
