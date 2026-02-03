@@ -60,9 +60,47 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Convert File to ArrayBuffer for processing
+    // Convert File to ArrayBuffer
     const arrayBuffer = await file.arrayBuffer();
     const inputBuffer = Buffer.from(arrayBuffer);
+
+    // Determine file extension from content type
+    const extMap: Record<string, string> = {
+      "image/jpeg": "jpg",
+      "image/png": "png",
+      "image/webp": "webp",
+      "image/gif": "gif",
+    };
+    const ext = extMap[file.type] || "jpg";
+    const timestamp = Date.now();
+    const filename = `${actor.id}/${timestamp}.${ext}`;
+
+    // For AI source images, use a simplified upload path (no processing, no media_asset record)
+    if (uploadType === "ai-source") {
+      const { error: uploadError } = await supabase.storage
+        .from("portfolio")
+        .upload(filename, inputBuffer, {
+          contentType: file.type,
+          upsert: false,
+        });
+
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        return NextResponse.json(
+          { error: `Upload failed: ${uploadError.message}` },
+          { status: 500 }
+        );
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("portfolio")
+        .getPublicUrl(filename);
+
+      return NextResponse.json({
+        success: true,
+        url: publicUrl,
+      });
+    }
 
     // Process image to strip EXIF data (contains GPS, camera info, etc.)
     let processedBuffer: Buffer | Uint8Array = inputBuffer;
@@ -83,17 +121,6 @@ export async function POST(request: NextRequest) {
         // Fall back to original if processing fails
       }
     }
-
-    // Determine file extension from content type
-    const extMap: Record<string, string> = {
-      "image/jpeg": "jpg",
-      "image/png": "png",
-      "image/webp": "webp",
-      "image/gif": "gif",
-    };
-    const ext = extMap[finalContentType] || "jpg";
-    const timestamp = Date.now();
-    const filename = `${actor.id}/${timestamp}.${ext}`;
 
     // Determine bucket based on upload type
     const bucket = uploadType === "avatar" ? "avatars" : "portfolio";

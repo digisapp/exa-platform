@@ -122,10 +122,10 @@ export default function AIStudioPage() {
     setUploadedImagePreview(previewUrl);
 
     try {
-      // Upload to storage
+      // Upload to storage (use ai-source for faster upload without image processing)
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("type", "portfolio");
+      formData.append("type", "ai-source");
 
       const res = await fetch("/api/upload", {
         method: "POST",
