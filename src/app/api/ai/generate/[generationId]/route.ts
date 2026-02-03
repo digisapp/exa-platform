@@ -52,14 +52,20 @@ export async function GET(
     if (!generation.replicate_prediction_id) {
       return NextResponse.json({ error: "No prediction ID" }, { status: 400 });
     }
+
+    console.log("[AI Status] Checking prediction:", generation.replicate_prediction_id);
     const prediction = await getPrediction(generation.replicate_prediction_id);
+    console.log("[AI Status] Replicate response:", JSON.stringify(prediction).slice(0, 500));
 
     if ("error" in prediction) {
+      console.log("[AI Status] Error from Replicate:", prediction.error);
       return NextResponse.json({
         status: "processing",
         message: "Checking status...",
       });
     }
+
+    console.log("[AI Status] Replicate status:", prediction.status);
 
     // Update based on Replicate status
     if (prediction.status === "succeeded" && prediction.output) {
