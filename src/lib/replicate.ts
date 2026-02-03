@@ -2,9 +2,9 @@
 
 const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN;
 
-// InstantID model - identity-preserving image generation
-// Generates images that preserve facial identity from the reference photo
-const INSTANT_ID_MODEL = "zsxkib/instant-id:bc613ffc51cf9e896c50fb7abeec06e29beae6e40cc1e5d4ff11fd6c0f146c88";
+// PhotoMaker model - identity-preserving image generation
+// Uses lucataco/photomaker which is well-maintained and documented
+const PHOTOMAKER_MODEL = "lucataco/photomaker";
 
 // Scenario presets - IMPORTANT: Prompts must NOT describe the person's appearance
 // InstantID takes the face from the input image, so prompts should ONLY describe scene/setting/clothing
@@ -163,35 +163,33 @@ export async function startGeneration(
       console.error("[Replicate] Could not verify face image URL:", e);
     }
 
-    const response = await fetch("https://api.replicate.com/v1/predictions", {
+    // Use models endpoint to automatically use latest version
+    const response = await fetch(`https://api.replicate.com/v1/models/${PHOTOMAKER_MODEL}/predictions`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${REPLICATE_API_TOKEN}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        version: INSTANT_ID_MODEL.split(":")[1],
         input: {
-          // InstantID face reference image
-          image: faceImageUrl,
-          // Prompt describes the scene and outfit (NOT the person's appearance)
-          prompt: `a woman, ${scenario.prompt}`,
-          negative_prompt: `${scenario.negative_prompt}, different person, wrong face, distorted face`,
-          // Identity preservation strength (0-1, higher = more face fidelity)
-          ip_adapter_scale: 0.8,
-          // IdentityNet strength (0-1, higher = more identity preservation)
-          identitynet_strength_ratio: 0.8,
-          // CFG scale - how closely to follow the prompt (lower = more natural)
+          // PhotoMaker face reference image
+          input_image: faceImageUrl,
+          // Prompt MUST include "img" trigger word for PhotoMaker
+          // The "img" word tells PhotoMaker where to inject the face identity
+          prompt: `a woman img, ${scenario.prompt}`,
+          negative_prompt: `${scenario.negative_prompt}, different person, wrong face, distorted face, bad face`,
+          // Number of inference steps (20-50, default 50)
+          num_steps: 30,
+          // Style name - use photographic for realistic output
+          style_name: "(No style)",
+          // CFG scale - how closely to follow the prompt (1-10)
           guidance_scale: 5,
-          // Number of inference steps
-          num_inference_steps: 30,
-          // Scheduler
-          scheduler: "EulerDiscreteScheduler",
-          // Seed for reproducibility (random if not set)
-          seed: -1,
-          // Output dimensions (portrait ratio for fashion)
-          width: 640,
-          height: 960,
+          // Style strength ratio (15-50, higher = more stylized)
+          style_strength_ratio: 20,
+          // Number of output images
+          num_outputs: 1,
+          // Disable safety checker for fashion/swimwear content
+          disable_safety_checker: true,
         },
       }),
     });
@@ -199,7 +197,7 @@ export async function startGeneration(
     if (!response.ok) {
       const error = await response.text();
       console.error("[Replicate] API error:", response.status, error);
-      console.error("[Replicate] Model version:", INSTANT_ID_MODEL.split(":")[1]);
+      console.error("[Replicate] Model:", PHOTOMAKER_MODEL);
       return { error: `Failed to start generation: ${response.status}` };
     }
 
