@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { startGeneration, AI_SCENARIOS, AI_GENERATION_COST, type ScenarioId } from "@/lib/replicate";
+import { startGeneration, AI_SCENARIOS, AI_GENERATION_COST, type ScenarioId } from "@/lib/fal";
 
 // POST - Start a new AI generation
 export async function POST(request: NextRequest) {
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       }, { status: 402 });
     }
 
-    // Start the generation on Replicate
+    // Start the generation on fal.ai
     const result = await startGeneration(sourceImageUrl, scenarioId);
 
     if ("error" in result) {
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
       // Continue anyway - we'll handle this manually if needed
     }
 
-    // Create generation record
+    // Create generation record (store fal request_id in replicate_prediction_id field for compatibility)
     const { data: generation, error: insertError } = await supabase
       .from("ai_generations")
       .insert({
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
         scenario_name: scenario.name,
         prompt: scenario.prompt,
         status: "processing",
-        replicate_prediction_id: result.predictionId,
+        replicate_prediction_id: result.requestId, // Using same field for fal.ai request_id
         coins_spent: AI_GENERATION_COST,
       })
       .select()
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       generationId: generation.id,
-      predictionId: result.predictionId,
+      requestId: result.requestId,
       coinsSpent: AI_GENERATION_COST,
       newBalance: coinBalance - AI_GENERATION_COST,
     });

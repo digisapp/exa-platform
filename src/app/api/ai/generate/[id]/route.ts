@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getPrediction } from "@/lib/replicate";
+import { getGenerationStatus, getGenerationResult } from "@/lib/fal";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
-// GET - Check generation status
+// GET - Check generation status (alternative route)
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
@@ -51,28 +51,34 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       });
     }
 
-    // Check Replicate for status
-    if (!generation.replicate_prediction_id) {
-      return NextResponse.json({ error: "No prediction ID" }, { status: 500 });
+    // Check fal.ai for status
+    const requestId = generation.replicate_prediction_id; // Field reused for fal.ai request_id
+    if (!requestId) {
+      return NextResponse.json({ error: "No request ID" }, { status: 500 });
     }
 
-    const prediction = await getPrediction(generation.replicate_prediction_id);
+    const statusResult = await getGenerationStatus(requestId);
 
-    if ("error" in prediction) {
-      return NextResponse.json({ error: prediction.error }, { status: 500 });
+    if ("error" in statusResult) {
+      return NextResponse.json({ error: statusResult.error }, { status: 500 });
     }
 
-    // Update our database based on Replicate status
-    if (prediction.status === "succeeded" && prediction.output) {
+    // Update our database based on fal.ai status
+    if (statusResult.status === "COMPLETED") {
+      const result = await getGenerationResult(requestId);
+
+      if ("error" in result || !result.images) {
+        return NextResponse.json({ error: "Failed to get result" }, { status: 500 });
+      }
+
+      const outputUrls = result.images.map(img => img.url);
+
       const { error: updateError } = await supabase
         .from("ai_generations")
         .update({
           status: "completed",
-          result_urls: prediction.output,
+          result_urls: outputUrls,
           completed_at: new Date().toISOString(),
-          processing_time_ms: prediction.metrics?.predict_time
-            ? Math.round(prediction.metrics.predict_time * 1000)
-            : null,
         })
         .eq("id", id);
 
@@ -81,18 +87,18 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       }
 
       return NextResponse.json({
-        generation: { ...generation, status: "completed", result_urls: prediction.output },
+        generation: { ...generation, status: "completed", result_urls: outputUrls },
         status: "completed",
-        resultUrls: prediction.output,
+        resultUrls: outputUrls,
       });
     }
 
-    if (prediction.status === "failed" || prediction.status === "canceled") {
+    if (statusResult.status === "FAILED") {
       const { error: updateError } = await supabase
         .from("ai_generations")
         .update({
           status: "failed",
-          error_message: prediction.error || "Generation failed",
+          error_message: "Generation failed",
           completed_at: new Date().toISOString(),
         })
         .eq("id", id);
@@ -104,14 +110,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({
         generation: { ...generation, status: "failed" },
         status: "failed",
-        error: prediction.error || "Generation failed",
+        error: "Generation failed",
       });
     }
 
-    // Still processing
+    // Still processing (IN_QUEUE or IN_PROGRESS)
     return NextResponse.json({
       generation,
-      status: prediction.status,
+      status: statusResult.status === "IN_QUEUE" ? "starting" : "processing",
       resultUrls: null,
     });
   } catch (error) {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getPrediction } from "@/lib/replicate";
+import { getGenerationStatus, getGenerationResult } from "@/lib/fal";
 
 // Allow longer timeout for downloading and saving images
 export const maxDuration = 60;
@@ -21,18 +21,18 @@ async function downloadImage(url: string): Promise<Buffer | null> {
 // Save images to Supabase storage and return permanent URLs
 async function saveImagesToStorage(
   supabase: Awaited<ReturnType<typeof createClient>>,
-  replicateUrls: string[],
+  imageUrls: string[],
   generationId: string,
   modelId: string
 ): Promise<string[]> {
   const permanentUrls: string[] = [];
 
-  for (let i = 0; i < replicateUrls.length; i++) {
-    const url = replicateUrls[i];
+  for (let i = 0; i < imageUrls.length; i++) {
+    const url = imageUrls[i];
     const buffer = await downloadImage(url);
 
     if (!buffer) {
-      console.error(`[AI Status] Failed to download image ${i} from Replicate`);
+      console.error(`[AI Status] Failed to download image ${i} from fal.ai`);
       continue;
     }
 
@@ -106,46 +106,55 @@ export async function GET(
       });
     }
 
-    // Check Replicate for current status
-    if (!generation.replicate_prediction_id) {
-      return NextResponse.json({ error: "No prediction ID" }, { status: 400 });
+    // Check fal.ai for current status
+    const requestId = generation.replicate_prediction_id; // Field reused for fal.ai request_id
+    if (!requestId) {
+      return NextResponse.json({ error: "No request ID" }, { status: 400 });
     }
 
-    console.log("[AI Status] Checking prediction:", generation.replicate_prediction_id);
-    const prediction = await getPrediction(generation.replicate_prediction_id);
-    console.log("[AI Status] Replicate response:", JSON.stringify(prediction).slice(0, 500));
+    console.log("[AI Status] Checking fal.ai request:", requestId);
+    const statusResult = await getGenerationStatus(requestId);
+    console.log("[AI Status] fal.ai status response:", JSON.stringify(statusResult).slice(0, 500));
 
-    if ("error" in prediction) {
-      console.log("[AI Status] Error from Replicate:", prediction.error);
+    if ("error" in statusResult) {
+      console.log("[AI Status] Error from fal.ai:", statusResult.error);
       return NextResponse.json({
         status: "processing",
         message: "Checking status...",
       });
     }
 
-    console.log("[AI Status] Replicate status:", prediction.status);
+    console.log("[AI Status] fal.ai status:", statusResult.status);
 
-    // Update based on Replicate status
-    if (prediction.status === "succeeded" && prediction.output) {
-      console.log("[AI Status] Generation succeeded, output:", JSON.stringify(prediction.output).slice(0, 200));
+    // Handle fal.ai status: IN_QUEUE, IN_PROGRESS, COMPLETED, FAILED
+    if (statusResult.status === "COMPLETED") {
+      // Fetch the actual result
+      const result = await getGenerationResult(requestId);
 
-      // Normalize output to array (some models return single URL string)
-      let outputUrls: string[] = [];
-      if (typeof prediction.output === "string") {
-        outputUrls = [prediction.output];
-      } else if (Array.isArray(prediction.output)) {
-        outputUrls = prediction.output;
-      } else {
-        console.error("[AI Status] Unexpected output format:", typeof prediction.output);
+      if ("error" in result) {
+        console.error("[AI Status] Failed to get fal.ai result:", result.error);
         return NextResponse.json({
           status: "failed",
-          error: "Unexpected output format from AI",
+          error: "Failed to retrieve generated images",
         });
       }
 
+      if (!result.images || result.images.length === 0) {
+        console.error("[AI Status] No images in fal.ai result");
+        return NextResponse.json({
+          status: "failed",
+          error: "No images generated",
+        });
+      }
+
+      console.log("[AI Status] Generation succeeded, images:", result.images.length);
+
+      // Extract URLs from fal.ai image objects
+      const outputUrls = result.images.map(img => img.url);
+
       console.log("[AI Status] Saving", outputUrls.length, "images to storage...");
 
-      // Save images to our storage (Replicate deletes them after 1 hour!)
+      // Save images to our storage (fal.ai URLs expire!)
       const permanentUrls = await saveImagesToStorage(
         supabase,
         outputUrls,
@@ -177,26 +186,26 @@ export async function GET(
         status: "completed",
         resultUrls: permanentUrls,
       });
-    } else if (prediction.status === "failed") {
+    } else if (statusResult.status === "FAILED") {
       // Update generation as failed
       await supabase
         .from("ai_generations")
         .update({
           status: "failed",
-          error_message: prediction.error || "Generation failed",
+          error_message: "Generation failed",
         })
         .eq("id", generationId);
 
       return NextResponse.json({
         status: "failed",
-        error: prediction.error || "Generation failed",
+        error: "Generation failed",
       });
     }
 
-    // Still processing
+    // Still processing (IN_QUEUE or IN_PROGRESS)
     return NextResponse.json({
       status: "processing",
-      replicateStatus: prediction.status,
+      falStatus: statusResult.status,
     });
   } catch (error) {
     console.error("[AI Generate Status] Error:", error);
