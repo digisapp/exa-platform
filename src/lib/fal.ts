@@ -181,14 +181,16 @@ export async function startGeneration(
       body: JSON.stringify({
         // PuLID parameters
         reference_images: [{ image_url: faceImageUrl }],
-        prompt: `photo of a woman, ${scenario.prompt}`,
-        negative_prompt: scenario.negative_prompt,
+        prompt: `professional photo of a woman, ${scenario.prompt}, highly detailed face, sharp focus, photorealistic skin texture`,
+        negative_prompt: `${scenario.negative_prompt}, deformed face, distorted face, bad face, ugly face, asymmetric face, blurry face, mutated face, extra fingers, missing fingers`,
         // Face identity preservation strength (0-5, higher = more faithful to face)
-        id_scale: 0.8,
-        // Number of inference steps (max 12 for PuLID)
-        num_inference_steps: 8,
+        id_scale: 1.5,
+        // Mode: "fidelity" preserves face better, "extreme style" for artistic
+        mode: "fidelity",
+        // Number of inference steps (max 12 for PuLID) - higher = better quality
+        num_inference_steps: 12,
         // CFG scale (1-1.5 for PuLID)
-        guidance_scale: 1.2,
+        guidance_scale: 1.4,
         // Output dimensions
         image_size: {
           width: 768,
