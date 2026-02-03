@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import {
   Sparkles,
   Upload,
@@ -158,7 +157,7 @@ export default function AIStudioPage() {
 
     if (coinBalance < AI_GENERATION_COST) {
       toast.error(`You need ${AI_GENERATION_COST} coins. Buy more coins to continue.`);
-      router.push("/coins");
+      router.push("/wallet");
       return;
     }
 
@@ -535,7 +534,7 @@ export default function AIStudioPage() {
               <Button
                 variant="outline"
                 className="w-full mt-4 border-amber-500/50 text-amber-500 hover:bg-amber-500/10"
-                onClick={() => router.push("/coins")}
+                onClick={() => router.push("/wallet")}
               >
                 <Coins className="h-4 w-4 mr-2" />
                 Buy Coins
