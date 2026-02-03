@@ -2,18 +2,19 @@
 
 const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN;
 
-// InstantID model for face-preserving generation
-const INSTANT_ID_MODEL = "zsxkib/instant-id:2e4785a4d80dadf580077b2244c8d7c05d8e3faac04a04c02d8e099dd2876789";
+// Face-to-Many model - reliable face swapping that preserves identity
+// Uses the uploaded face and places it into the generated scene
+const FACE_TO_MANY_MODEL = "fofr/face-to-many:a07f252abbbd832009640b27f063ea52d87d7a23a185ca165bec23b5adc8deaf";
 
-// Scenario presets with optimized prompts for sexy fashion/model photography
-// Note: InstantID preserves the face from the input image, so prompts focus on scene/style
+// Scenario presets - IMPORTANT: Prompts must NOT describe the person's appearance
+// InstantID takes the face from the input image, so prompts should ONLY describe scene/setting/clothing
 export const AI_SCENARIOS = {
   miami_bikini: {
     id: "miami_bikini",
     name: "Miami Bikini",
     description: "Hot Miami Beach swimwear shot",
-    prompt: "portrait photo, same person, gorgeous supermodel in designer bikini on Miami Beach, golden tan skin, sexy confident pose, ocean waves, palm trees, Sports Illustrated swimsuit style, hot summer vibes, professional fashion photography, high quality, detailed face, stunning beauty",
-    negative_prompt: "ugly, blurry, low quality, distorted face, extra limbs, bad anatomy, different person, wrong face, clothed, modest",
+    prompt: "fashion photo, wearing designer bikini swimsuit, Miami Beach background, ocean waves, palm trees, golden hour lighting, Sports Illustrated swimsuit editorial, professional photography, 8k",
+    negative_prompt: "ugly, blurry, low quality, distorted, deformed, disfigured, bad anatomy, extra limbs",
     preview_image: "/ai-scenarios/miami-bikini.jpg",
     category: "swimwear",
   },
@@ -21,8 +22,8 @@ export const AI_SCENARIOS = {
     id: "pool_goddess",
     name: "Pool Goddess",
     description: "Luxury poolside glamour",
-    prompt: "portrait photo, same person, stunning supermodel in sexy bikini by infinity pool, luxury resort, glistening skin, seductive pose, bright sunny day, Maxim magazine style, hot and glamorous, professional fashion photography, high quality, detailed face, gorgeous",
-    negative_prompt: "ugly, blurry, low quality, distorted face, extra limbs, bad anatomy, different person, wrong face",
+    prompt: "fashion photo, wearing sexy bikini, luxury infinity pool, resort setting, bright sunny day, glistening water, Maxim magazine style, professional photography, 8k",
+    negative_prompt: "ugly, blurry, low quality, distorted, deformed, disfigured, bad anatomy, extra limbs",
     preview_image: "/ai-scenarios/pool-goddess.jpg",
     category: "swimwear",
   },
@@ -30,8 +31,8 @@ export const AI_SCENARIOS = {
     id: "beach_sunset",
     name: "Beach Sunset",
     description: "Golden hour beach goddess",
-    prompt: "portrait photo, same person, sexy supermodel in revealing bikini on tropical beach at golden hour sunset, warm glowing skin, sultry pose, ocean waves, Victoria's Secret style, hot and alluring, professional swimwear photography, high quality, detailed face, stunning",
-    negative_prompt: "ugly, blurry, low quality, distorted face, extra limbs, bad anatomy, different person, wrong face",
+    prompt: "fashion photo, wearing bikini, tropical beach at golden hour sunset, warm lighting, ocean waves, Victoria's Secret campaign style, professional swimwear photography, 8k",
+    negative_prompt: "ugly, blurry, low quality, distorted, deformed, disfigured, bad anatomy, extra limbs",
     preview_image: "/ai-scenarios/beach-sunset.jpg",
     category: "swimwear",
   },
@@ -39,8 +40,8 @@ export const AI_SCENARIOS = {
     id: "lingerie_boudoir",
     name: "Lingerie Boudoir",
     description: "Sexy intimate boudoir shoot",
-    prompt: "portrait photo, same person, gorgeous supermodel in designer lingerie, luxury bedroom setting, soft romantic lighting, seductive confident pose, silk sheets, high-end boudoir photography, sexy and elegant, Victoria's Secret Angel style, high quality, detailed face, stunning beauty",
-    negative_prompt: "ugly, blurry, low quality, distorted face, extra limbs, bad anatomy, different person, wrong face",
+    prompt: "boudoir photo, wearing designer lingerie, luxury bedroom, silk sheets, soft romantic lighting, Victoria's Secret Angel campaign, professional photography, 8k",
+    negative_prompt: "ugly, blurry, low quality, distorted, deformed, disfigured, bad anatomy, extra limbs",
     preview_image: "/ai-scenarios/lingerie-boudoir.jpg",
     category: "intimate",
   },
@@ -48,8 +49,8 @@ export const AI_SCENARIOS = {
     id: "studio_glamour",
     name: "Studio Glamour",
     description: "High fashion studio shoot",
-    prompt: "portrait photo, same person, stunning supermodel in sexy designer outfit, professional studio, dramatic lighting, fierce confident pose, Vogue magazine cover style, high fashion glamour, flawless skin, high quality, detailed face, gorgeous",
-    negative_prompt: "ugly, blurry, low quality, distorted face, extra limbs, bad anatomy, different person, wrong face",
+    prompt: "studio portrait, wearing sexy designer outfit, professional studio lighting, dramatic shadows, Vogue magazine cover style, high fashion, professional photography, 8k",
+    negative_prompt: "ugly, blurry, low quality, distorted, deformed, disfigured, bad anatomy, extra limbs",
     preview_image: "/ai-scenarios/studio-glamour.jpg",
     category: "fashion",
   },
@@ -57,8 +58,8 @@ export const AI_SCENARIOS = {
     id: "red_carpet",
     name: "Red Carpet Glam",
     description: "Celebrity red carpet moment",
-    prompt: "portrait photo, same person, stunning supermodel in sexy revealing evening gown on red carpet, paparazzi lights, glamorous confident pose, celebrity style, designer dress with high slit, Met Gala fashion, high quality, detailed face, gorgeous",
-    negative_prompt: "ugly, blurry, low quality, distorted face, extra limbs, bad anatomy, different person, wrong face",
+    prompt: "red carpet photo, wearing sexy evening gown with high slit, paparazzi lights, glamorous setting, Met Gala fashion, celebrity style, professional photography, 8k",
+    negative_prompt: "ugly, blurry, low quality, distorted, deformed, disfigured, bad anatomy, extra limbs",
     preview_image: "/ai-scenarios/red-carpet.jpg",
     category: "fashion",
   },
@@ -66,8 +67,8 @@ export const AI_SCENARIOS = {
     id: "yacht_life",
     name: "Yacht Life",
     description: "Luxury yacht lifestyle",
-    prompt: "portrait photo, same person, sexy supermodel in designer bikini on luxury yacht, Mediterranean sea, golden tan, glamorous lifestyle, champagne vibes, hot summer day, billionaire lifestyle photography, high quality, detailed face, stunning beauty",
-    negative_prompt: "ugly, blurry, low quality, distorted face, extra limbs, bad anatomy, different person, wrong face",
+    prompt: "lifestyle photo, wearing designer bikini, luxury yacht deck, Mediterranean sea background, sunny day, champagne lifestyle, billionaire aesthetic, professional photography, 8k",
+    negative_prompt: "ugly, blurry, low quality, distorted, deformed, disfigured, bad anatomy, extra limbs",
     preview_image: "/ai-scenarios/yacht-life.jpg",
     category: "swimwear",
   },
@@ -75,8 +76,8 @@ export const AI_SCENARIOS = {
     id: "fitness_hot",
     name: "Fitness Model",
     description: "Sexy athletic shoot",
-    prompt: "portrait photo, same person, hot fitness model in revealing sports bra and shorts, toned athletic body, modern gym, dramatic lighting, sexy powerful pose, Sports Illustrated fitness style, sweaty glow, high quality, detailed face, stunning",
-    negative_prompt: "ugly, blurry, low quality, distorted face, extra limbs, bad anatomy, different person, wrong face",
+    prompt: "fitness photo, wearing sports bra and shorts, modern gym setting, dramatic lighting, athletic pose, Sports Illustrated fitness style, professional photography, 8k",
+    negative_prompt: "ugly, blurry, low quality, distorted, deformed, disfigured, bad anatomy, extra limbs",
     preview_image: "/ai-scenarios/fitness-hot.jpg",
     category: "fitness",
   },
@@ -84,8 +85,8 @@ export const AI_SCENARIOS = {
     id: "rooftop_night",
     name: "Rooftop Nights",
     description: "Sexy nightlife vibes",
-    prompt: "portrait photo, same person, stunning supermodel in sexy revealing dress on rooftop bar, city skyline at night, sultry confident pose, nightlife glamour, club style, hot and alluring, cinematic lighting, high quality, detailed face, gorgeous",
-    negative_prompt: "ugly, blurry, low quality, distorted face, extra limbs, bad anatomy, different person, wrong face",
+    prompt: "nightlife photo, wearing sexy cocktail dress, rooftop bar, city skyline at night, cinematic lighting, club style, professional photography, 8k",
+    negative_prompt: "ugly, blurry, low quality, distorted, deformed, disfigured, bad anatomy, extra limbs",
     preview_image: "/ai-scenarios/rooftop-night.jpg",
     category: "nightlife",
   },
@@ -93,8 +94,8 @@ export const AI_SCENARIOS = {
     id: "desert_goddess",
     name: "Desert Goddess",
     description: "Exotic desert editorial",
-    prompt: "portrait photo, same person, stunning supermodel in sexy flowing sheer dress, beautiful desert at golden hour, sand dunes, exotic goddess vibes, sensual pose, warm dramatic lighting, fashion editorial, high quality, detailed face, gorgeous",
-    negative_prompt: "ugly, blurry, low quality, distorted face, extra limbs, bad anatomy, different person, wrong face",
+    prompt: "editorial photo, wearing flowing sheer dress, desert landscape at golden hour, sand dunes, warm dramatic lighting, fashion magazine style, professional photography, 8k",
+    negative_prompt: "ugly, blurry, low quality, distorted, deformed, disfigured, bad anatomy, extra limbs",
     preview_image: "/ai-scenarios/desert-goddess.jpg",
     category: "editorial",
   },
@@ -102,8 +103,8 @@ export const AI_SCENARIOS = {
     id: "tropical_paradise",
     name: "Tropical Paradise",
     description: "Exotic island beauty",
-    prompt: "portrait photo, same person, gorgeous supermodel in tiny string bikini, tropical island paradise, crystal clear water, palm trees, exotic beauty, sexy confident pose, Sports Illustrated swimsuit style, hot summer vibes, high quality, detailed face, stunning",
-    negative_prompt: "ugly, blurry, low quality, distorted face, extra limbs, bad anatomy, different person, wrong face",
+    prompt: "fashion photo, wearing string bikini, tropical island paradise, crystal clear water, palm trees, Sports Illustrated swimsuit style, professional photography, 8k",
+    negative_prompt: "ugly, blurry, low quality, distorted, deformed, disfigured, bad anatomy, extra limbs",
     preview_image: "/ai-scenarios/tropical-paradise.jpg",
     category: "swimwear",
   },
@@ -111,8 +112,8 @@ export const AI_SCENARIOS = {
     id: "penthouse_luxury",
     name: "Penthouse Luxury",
     description: "High-end luxury lifestyle",
-    prompt: "portrait photo, same person, stunning supermodel in sexy designer outfit, luxury penthouse with city views, sophisticated glamour, seductive confident pose, billionaire lifestyle, high fashion editorial, high quality, detailed face, gorgeous",
-    negative_prompt: "ugly, blurry, low quality, distorted face, extra limbs, bad anatomy, different person, wrong face",
+    prompt: "lifestyle photo, wearing sexy designer outfit, luxury penthouse, city views through windows, sophisticated setting, high fashion editorial style, professional photography, 8k",
+    negative_prompt: "ugly, blurry, low quality, distorted, deformed, disfigured, bad anatomy, extra limbs",
     preview_image: "/ai-scenarios/penthouse-luxury.jpg",
     category: "lifestyle",
   },
@@ -133,7 +134,7 @@ export interface ReplicatePrediction {
   };
 }
 
-// Start a prediction on Replicate
+// Start a prediction on Replicate using Face-to-Many model
 export async function startGeneration(
   faceImageUrl: string,
   scenarioId: ScenarioId
@@ -151,6 +152,17 @@ export async function startGeneration(
     console.log("[Replicate] Starting generation with face image:", faceImageUrl);
     console.log("[Replicate] Scenario:", scenarioId, "Prompt:", scenario.prompt.slice(0, 100));
 
+    // Verify the image URL is accessible
+    try {
+      const imgCheck = await fetch(faceImageUrl, { method: "HEAD" });
+      console.log("[Replicate] Face image URL check:", imgCheck.status, imgCheck.ok ? "OK" : "FAILED");
+      if (!imgCheck.ok) {
+        console.error("[Replicate] Face image URL not accessible!");
+      }
+    } catch (e) {
+      console.error("[Replicate] Could not verify face image URL:", e);
+    }
+
     const response = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
@@ -158,24 +170,26 @@ export async function startGeneration(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        version: INSTANT_ID_MODEL.split(":")[1],
+        version: FACE_TO_MANY_MODEL.split(":")[1],
         input: {
-          // InstantID uses 'image' for the face reference
+          // Face-to-Many uses 'image' for the face to swap in
           image: faceImageUrl,
+          // Prompt describes the scene (NOT the person's appearance)
           prompt: scenario.prompt,
           negative_prompt: scenario.negative_prompt,
+          // Style - use realistic for best quality
+          style: "Photographic",
+          // Number of outputs
           num_outputs: 4,
-          // Higher guidance makes it follow prompt more (lower = more face preservation)
-          guidance_scale: 3.5,
-          // IP adapter scale - higher = stronger face preservation (0.0-1.5)
-          ip_adapter_scale: 1.2,
-          // IdentityNet strength - higher = stronger face identity (0.0-1.5)
-          identitynet_strength_ratio: 1.0,
+          // Output format
+          output_format: "webp",
+          output_quality: 90,
+          // Guidance scale - how closely to follow the prompt
+          guidance_scale: 4.5,
           // Number of inference steps
-          num_inference_steps: 30,
-          // Scheduler
-          scheduler: "EulerDiscreteScheduler",
-          enable_safety_checker: true,
+          num_inference_steps: 50,
+          // Disable safety checker for swimwear/lingerie
+          disable_safety_checker: true,
         },
       }),
     });
@@ -183,7 +197,7 @@ export async function startGeneration(
     if (!response.ok) {
       const error = await response.text();
       console.error("[Replicate] API error:", response.status, error);
-      console.error("[Replicate] Model version:", INSTANT_ID_MODEL.split(":")[1]);
+      console.error("[Replicate] Model version:", FACE_TO_MANY_MODEL.split(":")[1]);
       return { error: `Failed to start generation: ${response.status}` };
     }
 
