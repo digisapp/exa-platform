@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { AI_SCENARIOS, AI_GENERATION_COST, type ScenarioId } from "@/lib/replicate";
+import { useCoinBalance } from "@/contexts/CoinBalanceContext";
 
 type GenerationStatus = "idle" | "uploading" | "generating" | "completed" | "error";
 
@@ -32,7 +33,7 @@ interface Generation {
 
 export default function AIStudioPage() {
   const router = useRouter();
-  const [coinBalance, setCoinBalance] = useState<number>(0);
+  const { balance: coinBalance, deductCoins } = useCoinBalance();
   const [status, setStatus] = useState<GenerationStatus>("idle");
   const [selectedScenario, setSelectedScenario] = useState<ScenarioId | null>(null);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
@@ -44,18 +45,10 @@ export default function AIStudioPage() {
   const [savingImage, setSavingImage] = useState<string | null>(null);
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
 
-  // Fetch coin balance and past generations
+  // Fetch past generations
   useEffect(() => {
     async function fetchData() {
       try {
-        // Fetch model data
-        const modelRes = await fetch("/api/model/me");
-        if (modelRes.ok) {
-          const data = await modelRes.json();
-          setCoinBalance(data.model?.coin_balance || 0);
-        }
-
-        // Fetch past generations
         const genRes = await fetch("/api/ai/generate?limit=10");
         if (genRes.ok) {
           const data = await genRes.json();
@@ -181,7 +174,7 @@ export default function AIStudioPage() {
       }
 
       setGenerationId(data.generationId);
-      setCoinBalance(data.newBalance);
+      deductCoins(AI_GENERATION_COST);
       toast.success(`Generation started! ${AI_GENERATION_COST} coins deducted.`);
     } catch (error) {
       console.error("Generation error:", error);
