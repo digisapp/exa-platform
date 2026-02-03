@@ -46,11 +46,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Check coin balance
-    if (model.coin_balance < AI_GENERATION_COST) {
+    const coinBalance = model.coin_balance ?? 0;
+    if (coinBalance < AI_GENERATION_COST) {
       return NextResponse.json({
         error: `Not enough coins. You need ${AI_GENERATION_COST} coins.`,
         required: AI_GENERATION_COST,
-        balance: model.coin_balance,
+        balance: coinBalance,
       }, { status: 402 });
     }
 
@@ -64,7 +65,7 @@ export async function POST(request: NextRequest) {
     // Deduct coins
     const { error: coinError } = await supabase
       .from("models")
-      .update({ coin_balance: model.coin_balance - AI_GENERATION_COST })
+      .update({ coin_balance: coinBalance - AI_GENERATION_COST })
       .eq("id", model.id);
 
     if (coinError) {
@@ -98,7 +99,7 @@ export async function POST(request: NextRequest) {
       generationId: generation.id,
       predictionId: result.predictionId,
       coinsSpent: AI_GENERATION_COST,
-      newBalance: model.coin_balance - AI_GENERATION_COST,
+      newBalance: coinBalance - AI_GENERATION_COST,
     });
   } catch (error) {
     console.error("[AI Generate] Error:", error);

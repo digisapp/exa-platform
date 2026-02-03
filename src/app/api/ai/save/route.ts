@@ -100,12 +100,12 @@ export async function POST(request: NextRequest) {
       const { data: mediaAsset, error: mediaError } = await supabase
         .from("media_assets")
         .insert({
+          owner_id: user.id,
           model_id: model.id,
           asset_type: "portfolio",
           photo_url: publicUrl,
           url: publicUrl,
           storage_path: storagePath,
-          bucket: "avatars",
           title: `AI: ${generation.scenario_name}`,
         })
         .select()

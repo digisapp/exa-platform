@@ -120,7 +120,7 @@ export const AI_SCENARIOS = {
 export type ScenarioId = keyof typeof AI_SCENARIOS;
 
 // Cost in coins per generation (generates 4 images)
-export const AI_GENERATION_COST = 10;
+export const AI_GENERATION_COST = 5;
 
 export interface ReplicatePrediction {
   id: string;

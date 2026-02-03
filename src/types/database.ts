@@ -219,6 +219,164 @@ export type Database = {
           },
         ]
       }
+      ai_generations: {
+        Row: {
+          coins_spent: number
+          completed_at: string | null
+          created_at: string | null
+          error_message: string | null
+          id: string
+          model_id: string
+          processing_time_ms: number | null
+          prompt: string
+          replicate_prediction_id: string | null
+          result_urls: string[] | null
+          scenario_id: string
+          scenario_name: string
+          source_image_url: string
+          status: string
+        }
+        Insert: {
+          coins_spent?: number
+          completed_at?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          model_id: string
+          processing_time_ms?: number | null
+          prompt: string
+          replicate_prediction_id?: string | null
+          result_urls?: string[] | null
+          scenario_id: string
+          scenario_name: string
+          source_image_url: string
+          status?: string
+        }
+        Update: {
+          coins_spent?: number
+          completed_at?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          model_id?: string
+          processing_time_ms?: number | null
+          prompt?: string
+          replicate_prediction_id?: string | null
+          result_urls?: string[] | null
+          scenario_id?: string
+          scenario_name?: string
+          source_image_url?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_generations_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_saved_photos: {
+        Row: {
+          added_to_portfolio: boolean | null
+          created_at: string | null
+          generation_id: string
+          id: string
+          image_url: string
+          model_id: string
+          portfolio_media_id: string | null
+          scenario_name: string
+        }
+        Insert: {
+          added_to_portfolio?: boolean | null
+          created_at?: string | null
+          generation_id: string
+          id?: string
+          image_url: string
+          model_id: string
+          portfolio_media_id?: string | null
+          scenario_name: string
+        }
+        Update: {
+          added_to_portfolio?: boolean | null
+          created_at?: string | null
+          generation_id?: string
+          id?: string
+          image_url?: string
+          model_id?: string
+          portfolio_media_id?: string | null
+          scenario_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_saved_photos_generation_id_fkey"
+            columns: ["generation_id"]
+            isOneToOne: false
+            referencedRelation: "ai_generations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_saved_photos_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_saved_photos_portfolio_media_id_fkey"
+            columns: ["portfolio_media_id"]
+            isOneToOne: false
+            referencedRelation: "media_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      availability_slots: {
+        Row: {
+          booked_by: string | null
+          created_at: string | null
+          date: string
+          end_time: string
+          id: string
+          is_available: boolean | null
+          notes: string | null
+          start_time: string
+          updated_at: string | null
+        }
+        Insert: {
+          booked_by?: string | null
+          created_at?: string | null
+          date: string
+          end_time: string
+          id?: string
+          is_available?: boolean | null
+          notes?: string | null
+          start_time: string
+          updated_at?: string | null
+        }
+        Update: {
+          booked_by?: string | null
+          created_at?: string | null
+          date?: string
+          end_time?: string
+          id?: string
+          is_available?: boolean | null
+          notes?: string | null
+          start_time?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "availability_slots_booked_by_fkey"
+            columns: ["booked_by"]
+            isOneToOne: false
+            referencedRelation: "call_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       badges: {
         Row: {
           badge_type: string | null
@@ -504,10 +662,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "bookings_cancelled_by_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "public_model_actors"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "bookings_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "actors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "public_model_actors"
             referencedColumns: ["id"]
           },
           {
@@ -553,6 +725,13 @@ export type Database = {
             columns: ["brand_id"]
             isOneToOne: false
             referencedRelation: "actors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "brand_model_notes_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "public_model_actors"
             referencedColumns: ["id"]
           },
           {
@@ -634,6 +813,13 @@ export type Database = {
             columns: ["id"]
             isOneToOne: true
             referencedRelation: "actors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "brands_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "public_model_actors"
             referencedColumns: ["id"]
           },
         ]
@@ -755,9 +941,82 @@ export type Database = {
         }
         Relationships: []
       }
+      call_notes: {
+        Row: {
+          call_request_id: string
+          content: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          note_type: string | null
+        }
+        Insert: {
+          call_request_id: string
+          content: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          note_type?: string | null
+        }
+        Update: {
+          call_request_id?: string
+          content?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          note_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_notes_call_request_id_fkey"
+            columns: ["call_request_id"]
+            isOneToOne: false
+            referencedRelation: "call_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      call_request_tags: {
+        Row: {
+          added_at: string | null
+          added_by: string | null
+          call_request_id: string
+          tag_id: string
+        }
+        Insert: {
+          added_at?: string | null
+          added_by?: string | null
+          call_request_id: string
+          tag_id: string
+        }
+        Update: {
+          added_at?: string | null
+          added_by?: string | null
+          call_request_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_request_tags_call_request_id_fkey"
+            columns: ["call_request_id"]
+            isOneToOne: false
+            referencedRelation: "call_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_request_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "crm_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       call_requests: {
         Row: {
           agora_token: string | null
+          assigned_to: string | null
+          call_duration: number | null
           call_type: string
           caller_id: string
           caller_name: string | null
@@ -766,13 +1025,24 @@ export type Database = {
           created_at: string | null
           duration_seconds: number | null
           id: string
+          message: string | null
           model_id: string
           model_name: string | null
+          outcome: string | null
+          priority: string | null
           responded_at: string | null
+          scheduled_at: string | null
+          scheduled_duration: number | null
+          source: string | null
+          source_detail: string | null
           status: string | null
+          updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           agora_token?: string | null
+          assigned_to?: string | null
+          call_duration?: number | null
           call_type: string
           caller_id: string
           caller_name?: string | null
@@ -781,13 +1051,24 @@ export type Database = {
           created_at?: string | null
           duration_seconds?: number | null
           id?: string
+          message?: string | null
           model_id: string
           model_name?: string | null
+          outcome?: string | null
+          priority?: string | null
           responded_at?: string | null
+          scheduled_at?: string | null
+          scheduled_duration?: number | null
+          source?: string | null
+          source_detail?: string | null
           status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           agora_token?: string | null
+          assigned_to?: string | null
+          call_duration?: number | null
           call_type?: string
           caller_id?: string
           caller_name?: string | null
@@ -796,10 +1077,19 @@ export type Database = {
           created_at?: string | null
           duration_seconds?: number | null
           id?: string
+          message?: string | null
           model_id?: string
           model_name?: string | null
+          outcome?: string | null
+          priority?: string | null
           responded_at?: string | null
+          scheduled_at?: string | null
+          scheduled_duration?: number | null
+          source?: string | null
+          source_detail?: string | null
           status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -888,6 +1178,79 @@ export type Database = {
           },
         ]
       }
+      catwalk_scores: {
+        Row: {
+          created_at: string | null
+          gems_collected: number
+          id: string
+          model_id: string
+          perfect_walks: number
+          pose_score: number
+          runway_id: string
+          total_score: number
+          walk_score: number
+        }
+        Insert: {
+          created_at?: string | null
+          gems_collected?: number
+          id?: string
+          model_id: string
+          perfect_walks?: number
+          pose_score?: number
+          runway_id?: string
+          total_score?: number
+          walk_score?: number
+        }
+        Update: {
+          created_at?: string | null
+          gems_collected?: number
+          id?: string
+          model_id?: string
+          perfect_walks?: number
+          pose_score?: number
+          runway_id?: string
+          total_score?: number
+          walk_score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catwalk_scores_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catwalk_unlocks: {
+        Row: {
+          id: string
+          model_id: string
+          runway_id: string
+          unlocked_at: string | null
+        }
+        Insert: {
+          id?: string
+          model_id: string
+          runway_id: string
+          unlocked_at?: string | null
+        }
+        Update: {
+          id?: string
+          model_id?: string
+          runway_id?: string
+          unlocked_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catwalk_unlocks_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coin_escrows: {
         Row: {
           actor_id: string
@@ -925,6 +1288,13 @@ export type Database = {
             columns: ["actor_id"]
             isOneToOne: false
             referencedRelation: "actors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coin_escrows_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "public_model_actors"
             referencedColumns: ["id"]
           },
           {
@@ -973,6 +1343,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "coin_transactions_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "public_model_actors"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "coin_transactions_message_id_fkey"
             columns: ["message_id"]
             isOneToOne: false
@@ -1009,6 +1386,13 @@ export type Database = {
             columns: ["buyer_id"]
             isOneToOne: false
             referencedRelation: "actors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_unlocks_buyer_id_fkey"
+            columns: ["buyer_id"]
+            isOneToOne: false
+            referencedRelation: "public_model_actors"
             referencedColumns: ["id"]
           },
           {
@@ -1054,6 +1438,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "conversation_participants_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "public_model_actors"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "conversation_participants_conversation_id_fkey"
             columns: ["conversation_id"]
             isOneToOne: false
@@ -1093,6 +1484,167 @@ export type Database = {
             columns: ["gig_id"]
             isOneToOne: false
             referencedRelation: "gigs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_activities: {
+        Row: {
+          activity_type: string
+          call_request_id: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          metadata: Json | null
+          model_id: string | null
+        }
+        Insert: {
+          activity_type: string
+          call_request_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          model_id?: string | null
+        }
+        Update: {
+          activity_type?: string
+          call_request_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          model_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_activities_call_request_id_fkey"
+            columns: ["call_request_id"]
+            isOneToOne: false
+            referencedRelation: "call_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_activities_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_reminders: {
+        Row: {
+          call_request_id: string | null
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          is_completed: boolean | null
+          model_id: string | null
+          reminder_at: string
+          title: string
+        }
+        Insert: {
+          call_request_id?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_completed?: boolean | null
+          model_id?: string | null
+          reminder_at: string
+          title: string
+        }
+        Update: {
+          call_request_id?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_completed?: boolean | null
+          model_id?: string | null
+          reminder_at?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_reminders_call_request_id_fkey"
+            columns: ["call_request_id"]
+            isOneToOne: false
+            referencedRelation: "call_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_reminders_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_tags: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      daily_spin_history: {
+        Row: {
+          created_at: string | null
+          gems_won: number
+          id: string
+          model_id: string
+          spin_result: string
+        }
+        Insert: {
+          created_at?: string | null
+          gems_won: number
+          id?: string
+          model_id: string
+          spin_result: string
+        }
+        Update: {
+          created_at?: string | null
+          gems_won?: number
+          id?: string
+          model_id?: string
+          spin_result?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_spin_history_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
             referencedColumns: ["id"]
           },
         ]
@@ -1528,10 +2080,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "follows_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
+            referencedRelation: "public_model_actors"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "follows_following_id_fkey"
             columns: ["following_id"]
             isOneToOne: false
             referencedRelation: "actors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "follows_following_id_fkey"
+            columns: ["following_id"]
+            isOneToOne: false
+            referencedRelation: "public_model_actors"
             referencedColumns: ["id"]
           },
         ]
@@ -1622,6 +2188,13 @@ export type Database = {
             referencedRelation: "actors"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "opportunity_applications_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "public_model_actors"
+            referencedColumns: ["id"]
+          },
         ]
       }
       gigs: {
@@ -1636,6 +2209,7 @@ export type Database = {
           description: string | null
           end_at: string | null
           event_id: string | null
+          gallery_images: string[] | null
           id: string
           location_city: string | null
           location_country: string | null
@@ -1664,6 +2238,7 @@ export type Database = {
           description?: string | null
           end_at?: string | null
           event_id?: string | null
+          gallery_images?: string[] | null
           id?: string
           location_city?: string | null
           location_country?: string | null
@@ -1692,6 +2267,7 @@ export type Database = {
           description?: string | null
           end_at?: string | null
           event_id?: string | null
+          gallery_images?: string[] | null
           id?: string
           location_city?: string | null
           location_country?: string | null
@@ -1715,6 +2291,92 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "actors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunities_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "public_model_actors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lifestyle_activities: {
+        Row: {
+          activity_type: string
+          created_at: string | null
+          gems_change: number
+          id: string
+          model_id: string
+          streak_day: number | null
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string | null
+          gems_change: number
+          id?: string
+          model_id: string
+          streak_day?: number | null
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string | null
+          gems_change?: number
+          id?: string
+          model_id?: string
+          streak_day?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lifestyle_activities_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lifestyle_stats: {
+        Row: {
+          current_streak: number | null
+          last_activity_date: string | null
+          longest_streak: number | null
+          model_id: string
+          total_content: number | null
+          total_events: number | null
+          total_wellness: number | null
+          total_workouts: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          current_streak?: number | null
+          last_activity_date?: string | null
+          longest_streak?: number | null
+          model_id: string
+          total_content?: number | null
+          total_events?: number | null
+          total_wellness?: number | null
+          total_workouts?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          current_streak?: number | null
+          last_activity_date?: string | null
+          longest_streak?: number | null
+          model_id?: string
+          total_content?: number | null
+          total_events?: number | null
+          total_wellness?: number | null
+          total_workouts?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lifestyle_stats_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: true
+            referencedRelation: "models"
             referencedColumns: ["id"]
           },
         ]
@@ -1908,6 +2570,13 @@ export type Database = {
             referencedRelation: "actors"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "media_assets_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "public_model_actors"
+            referencedColumns: ["id"]
+          },
         ]
       }
       media_unlocks: {
@@ -1992,6 +2661,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "message_reactions_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "public_model_actors"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "message_reactions_message_id_fkey"
             columns: ["message_id"]
             isOneToOne: false
@@ -2022,6 +2698,13 @@ export type Database = {
             columns: ["actor_id"]
             isOneToOne: false
             referencedRelation: "actors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_reads_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "public_model_actors"
             referencedColumns: ["id"]
           },
           {
@@ -2171,6 +2854,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "public_model_actors"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "messages_transaction_id_fkey"
             columns: ["transaction_id"]
             isOneToOne: false
@@ -2247,6 +2937,13 @@ export type Database = {
             columns: ["reviewed_by"]
             isOneToOne: false
             referencedRelation: "actors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "model_applications_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "public_model_actors"
             referencedColumns: ["id"]
           },
         ]
@@ -2784,6 +3481,10 @@ export type Database = {
           admin_rating: number | null
           affiliate_code: string | null
           affiliate_links: Json | null
+          allow_chat: boolean | null
+          allow_tips: boolean | null
+          allow_video_call: boolean | null
+          allow_voice_call: boolean | null
           availability_status: string | null
           bio: string | null
           brand_ambassador_daily_rate: number | null
@@ -2803,6 +3504,7 @@ export type Database = {
           first_name: string | null
           focus_tags: string[] | null
           form_data: Json | null
+          gem_balance: number | null
           hair_color: string | null
           height: string | null
           hips: string | null
@@ -2832,6 +3534,7 @@ export type Database = {
           photoshoot_half_day_rate: number | null
           photoshoot_hourly_rate: number | null
           points_cached: number | null
+          preferred_payout_method: string | null
           private_event_hourly_rate: number | null
           profile_completion_percent: number | null
           profile_photo_url: string | null
@@ -2875,6 +3578,10 @@ export type Database = {
           admin_rating?: number | null
           affiliate_code?: string | null
           affiliate_links?: Json | null
+          allow_chat?: boolean | null
+          allow_tips?: boolean | null
+          allow_video_call?: boolean | null
+          allow_voice_call?: boolean | null
           availability_status?: string | null
           bio?: string | null
           brand_ambassador_daily_rate?: number | null
@@ -2894,6 +3601,7 @@ export type Database = {
           first_name?: string | null
           focus_tags?: string[] | null
           form_data?: Json | null
+          gem_balance?: number | null
           hair_color?: string | null
           height?: string | null
           hips?: string | null
@@ -2923,6 +3631,7 @@ export type Database = {
           photoshoot_half_day_rate?: number | null
           photoshoot_hourly_rate?: number | null
           points_cached?: number | null
+          preferred_payout_method?: string | null
           private_event_hourly_rate?: number | null
           profile_completion_percent?: number | null
           profile_photo_url?: string | null
@@ -2966,6 +3675,10 @@ export type Database = {
           admin_rating?: number | null
           affiliate_code?: string | null
           affiliate_links?: Json | null
+          allow_chat?: boolean | null
+          allow_tips?: boolean | null
+          allow_video_call?: boolean | null
+          allow_voice_call?: boolean | null
           availability_status?: string | null
           bio?: string | null
           brand_ambassador_daily_rate?: number | null
@@ -2985,6 +3698,7 @@ export type Database = {
           first_name?: string | null
           focus_tags?: string[] | null
           form_data?: Json | null
+          gem_balance?: number | null
           hair_color?: string | null
           height?: string | null
           hips?: string | null
@@ -3014,6 +3728,7 @@ export type Database = {
           photoshoot_half_day_rate?: number | null
           photoshoot_hourly_rate?: number | null
           points_cached?: number | null
+          preferred_payout_method?: string | null
           private_event_hourly_rate?: number | null
           profile_completion_percent?: number | null
           profile_photo_url?: string | null
@@ -3054,6 +3769,38 @@ export type Database = {
           youtube_username?: string | null
         }
         Relationships: []
+      }
+      mystery_box_history: {
+        Row: {
+          box_tier: string
+          created_at: string | null
+          gems_won: number
+          id: string
+          model_id: string
+        }
+        Insert: {
+          box_tier: string
+          created_at?: string | null
+          gems_won: number
+          id?: string
+          model_id: string
+        }
+        Update: {
+          box_tier?: string
+          created_at?: string | null
+          gems_won?: number
+          id?: string
+          model_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mystery_box_history_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notification_preferences: {
         Row: {
@@ -3383,6 +4130,13 @@ export type Database = {
             columns: ["brand_id"]
             isOneToOne: false
             referencedRelation: "actors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offers_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "public_model_actors"
             referencedColumns: ["id"]
           },
           {
@@ -4135,8 +4889,29 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "reports_reported_user_id_fkey"
+            columns: ["reported_user_id"]
+            isOneToOne: false
+            referencedRelation: "public_model_actors"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "reports_reporter_id_fkey"
             columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "actors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "public_model_actors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_reviewed_by_fkey"
+            columns: ["reviewed_by"]
             isOneToOne: false
             referencedRelation: "actors"
             referencedColumns: ["id"]
@@ -4145,7 +4920,7 @@ export type Database = {
             foreignKeyName: "reports_reviewed_by_fkey"
             columns: ["reviewed_by"]
             isOneToOne: false
-            referencedRelation: "actors"
+            referencedRelation: "public_model_actors"
             referencedColumns: ["id"]
           },
         ]
@@ -4184,6 +4959,859 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "actors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reserved_usernames_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "public_model_actors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      runway_rush_scores: {
+        Row: {
+          created_at: string | null
+          distance: number
+          gems_collected: number
+          id: string
+          model_id: string
+          score: number
+        }
+        Insert: {
+          created_at?: string | null
+          distance?: number
+          gems_collected?: number
+          id?: string
+          model_id: string
+          score: number
+        }
+        Update: {
+          created_at?: string | null
+          distance?: number
+          gems_collected?: number
+          id?: string
+          model_id?: string
+          score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "runway_rush_scores_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_affiliate_codes: {
+        Row: {
+          click_count: number | null
+          code: string
+          created_at: string | null
+          discount_type: string | null
+          discount_value: number | null
+          id: string
+          is_active: boolean | null
+          model_id: string
+          order_count: number | null
+          total_earnings: number | null
+        }
+        Insert: {
+          click_count?: number | null
+          code: string
+          created_at?: string | null
+          discount_type?: string | null
+          discount_value?: number | null
+          id?: string
+          is_active?: boolean | null
+          model_id: string
+          order_count?: number | null
+          total_earnings?: number | null
+        }
+        Update: {
+          click_count?: number | null
+          code?: string
+          created_at?: string | null
+          discount_type?: string | null
+          discount_value?: number | null
+          id?: string
+          is_active?: boolean | null
+          model_id?: string
+          order_count?: number | null
+          total_earnings?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_affiliate_codes_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_affiliate_earnings: {
+        Row: {
+          available_at: string | null
+          commission_amount: number
+          commission_rate: number
+          created_at: string | null
+          id: string
+          model_id: string
+          order_id: string
+          order_item_id: string | null
+          order_total: number
+          paid_at: string | null
+          status: string | null
+        }
+        Insert: {
+          available_at?: string | null
+          commission_amount: number
+          commission_rate: number
+          created_at?: string | null
+          id?: string
+          model_id: string
+          order_id: string
+          order_item_id?: string | null
+          order_total: number
+          paid_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          available_at?: string | null
+          commission_amount?: number
+          commission_rate?: number
+          created_at?: string | null
+          id?: string
+          model_id?: string
+          order_id?: string
+          order_item_id?: string | null
+          order_total?: number
+          paid_at?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_affiliate_earnings_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_affiliate_earnings_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "shop_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_affiliate_earnings_order_item_id_fkey"
+            columns: ["order_item_id"]
+            isOneToOne: false
+            referencedRelation: "shop_order_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_brand_payouts: {
+        Row: {
+          affiliate_commission: number
+          brand_id: string
+          created_at: string | null
+          gross_sales: number
+          id: string
+          net_payout: number
+          order_count: number
+          order_item_ids: string[]
+          our_commission: number
+          paid_at: string | null
+          payment_method: string | null
+          payment_reference: string | null
+          period_end: string
+          period_start: string
+          status: string | null
+        }
+        Insert: {
+          affiliate_commission: number
+          brand_id: string
+          created_at?: string | null
+          gross_sales: number
+          id?: string
+          net_payout: number
+          order_count: number
+          order_item_ids: string[]
+          our_commission: number
+          paid_at?: string | null
+          payment_method?: string | null
+          payment_reference?: string | null
+          period_end: string
+          period_start: string
+          status?: string | null
+        }
+        Update: {
+          affiliate_commission?: number
+          brand_id?: string
+          created_at?: string | null
+          gross_sales?: number
+          id?: string
+          net_payout?: number
+          order_count?: number
+          order_item_ids?: string[]
+          our_commission?: number
+          paid_at?: string | null
+          payment_method?: string | null
+          payment_reference?: string | null
+          period_end?: string
+          period_start?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_brand_payouts_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "shop_brands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_brands: {
+        Row: {
+          avg_ship_days: number | null
+          commission_rate: number | null
+          contact_email: string
+          contact_phone: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          logo_url: string | null
+          model_commission_rate: number | null
+          name: string
+          payout_email: string | null
+          ships_internationally: boolean | null
+          slug: string
+          status: string | null
+          stripe_account_id: string | null
+          updated_at: string | null
+          website_url: string | null
+        }
+        Insert: {
+          avg_ship_days?: number | null
+          commission_rate?: number | null
+          contact_email: string
+          contact_phone?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          model_commission_rate?: number | null
+          name: string
+          payout_email?: string | null
+          ships_internationally?: boolean | null
+          slug: string
+          status?: string | null
+          stripe_account_id?: string | null
+          updated_at?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          avg_ship_days?: number | null
+          commission_rate?: number | null
+          contact_email?: string
+          contact_phone?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          model_commission_rate?: number | null
+          name?: string
+          payout_email?: string | null
+          ships_internationally?: boolean | null
+          slug?: string
+          status?: string | null
+          stripe_account_id?: string | null
+          updated_at?: string | null
+          website_url?: string | null
+        }
+        Relationships: []
+      }
+      shop_cart_items: {
+        Row: {
+          cart_id: string
+          created_at: string | null
+          id: string
+          quantity: number
+          updated_at: string | null
+          variant_id: string
+        }
+        Insert: {
+          cart_id: string
+          created_at?: string | null
+          id?: string
+          quantity?: number
+          updated_at?: string | null
+          variant_id: string
+        }
+        Update: {
+          cart_id?: string
+          created_at?: string | null
+          id?: string
+          quantity?: number
+          updated_at?: string | null
+          variant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_cart_items_cart_id_fkey"
+            columns: ["cart_id"]
+            isOneToOne: false
+            referencedRelation: "shop_carts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_cart_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "shop_product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_carts: {
+        Row: {
+          affiliate_code: string | null
+          affiliate_model_id: string | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          session_id: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          affiliate_code?: string | null
+          affiliate_model_id?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          session_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          affiliate_code?: string | null
+          affiliate_model_id?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          session_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_carts_affiliate_model_id_fkey"
+            columns: ["affiliate_model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_categories: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          name: string
+          parent_id: string | null
+          slug: string
+          sort_order: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name: string
+          parent_id?: string | null
+          slug: string
+          sort_order?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          parent_id?: string | null
+          slug?: string
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "shop_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_model_products: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_favorite: boolean | null
+          model_id: string
+          photo_urls: string[] | null
+          product_id: string
+          worn_at_event: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_favorite?: boolean | null
+          model_id: string
+          photo_urls?: string[] | null
+          product_id: string
+          worn_at_event?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_favorite?: boolean | null
+          model_id?: string
+          photo_urls?: string[] | null
+          product_id?: string
+          worn_at_event?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_model_products_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_model_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "shop_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_order_items: {
+        Row: {
+          brand_id: string
+          created_at: string | null
+          delivered_at: string | null
+          fulfillment_status: string | null
+          id: string
+          line_total: number
+          order_id: string
+          product_name: string
+          quantity: number
+          return_reason: string | null
+          return_status: string | null
+          shipped_at: string | null
+          store_credit_issued: number | null
+          tracking_carrier: string | null
+          tracking_number: string | null
+          unit_price: number
+          updated_at: string | null
+          variant_color: string | null
+          variant_id: string
+          variant_size: string
+          variant_sku: string
+          wholesale_price: number
+        }
+        Insert: {
+          brand_id: string
+          created_at?: string | null
+          delivered_at?: string | null
+          fulfillment_status?: string | null
+          id?: string
+          line_total: number
+          order_id: string
+          product_name: string
+          quantity: number
+          return_reason?: string | null
+          return_status?: string | null
+          shipped_at?: string | null
+          store_credit_issued?: number | null
+          tracking_carrier?: string | null
+          tracking_number?: string | null
+          unit_price: number
+          updated_at?: string | null
+          variant_color?: string | null
+          variant_id: string
+          variant_size: string
+          variant_sku: string
+          wholesale_price: number
+        }
+        Update: {
+          brand_id?: string
+          created_at?: string | null
+          delivered_at?: string | null
+          fulfillment_status?: string | null
+          id?: string
+          line_total?: number
+          order_id?: string
+          product_name?: string
+          quantity?: number
+          return_reason?: string | null
+          return_status?: string | null
+          shipped_at?: string | null
+          store_credit_issued?: number | null
+          tracking_carrier?: string | null
+          tracking_number?: string | null
+          unit_price?: number
+          updated_at?: string | null
+          variant_color?: string | null
+          variant_id?: string
+          variant_size?: string
+          variant_sku?: string
+          wholesale_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_order_items_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "shop_brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "shop_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_order_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "shop_product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_orders: {
+        Row: {
+          affiliate_code: string | null
+          affiliate_commission: number | null
+          affiliate_model_id: string | null
+          billing_address_line1: string | null
+          billing_address_line2: string | null
+          billing_city: string | null
+          billing_country: string | null
+          billing_postal_code: string | null
+          billing_same_as_shipping: boolean | null
+          billing_state: string | null
+          created_at: string | null
+          customer_email: string
+          customer_name: string
+          customer_notes: string | null
+          customer_phone: string | null
+          discount_amount: number | null
+          id: string
+          internal_notes: string | null
+          order_number: string
+          paid_at: string | null
+          payment_status: string | null
+          shipping_address_line1: string
+          shipping_address_line2: string | null
+          shipping_city: string
+          shipping_cost: number | null
+          shipping_country: string
+          shipping_postal_code: string
+          shipping_state: string
+          status: string | null
+          stripe_charge_id: string | null
+          stripe_payment_intent_id: string | null
+          subtotal: number
+          tax_amount: number | null
+          total: number
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          affiliate_code?: string | null
+          affiliate_commission?: number | null
+          affiliate_model_id?: string | null
+          billing_address_line1?: string | null
+          billing_address_line2?: string | null
+          billing_city?: string | null
+          billing_country?: string | null
+          billing_postal_code?: string | null
+          billing_same_as_shipping?: boolean | null
+          billing_state?: string | null
+          created_at?: string | null
+          customer_email: string
+          customer_name: string
+          customer_notes?: string | null
+          customer_phone?: string | null
+          discount_amount?: number | null
+          id?: string
+          internal_notes?: string | null
+          order_number: string
+          paid_at?: string | null
+          payment_status?: string | null
+          shipping_address_line1: string
+          shipping_address_line2?: string | null
+          shipping_city: string
+          shipping_cost?: number | null
+          shipping_country?: string
+          shipping_postal_code: string
+          shipping_state: string
+          status?: string | null
+          stripe_charge_id?: string | null
+          stripe_payment_intent_id?: string | null
+          subtotal: number
+          tax_amount?: number | null
+          total: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          affiliate_code?: string | null
+          affiliate_commission?: number | null
+          affiliate_model_id?: string | null
+          billing_address_line1?: string | null
+          billing_address_line2?: string | null
+          billing_city?: string | null
+          billing_country?: string | null
+          billing_postal_code?: string | null
+          billing_same_as_shipping?: boolean | null
+          billing_state?: string | null
+          created_at?: string | null
+          customer_email?: string
+          customer_name?: string
+          customer_notes?: string | null
+          customer_phone?: string | null
+          discount_amount?: number | null
+          id?: string
+          internal_notes?: string | null
+          order_number?: string
+          paid_at?: string | null
+          payment_status?: string | null
+          shipping_address_line1?: string
+          shipping_address_line2?: string | null
+          shipping_city?: string
+          shipping_cost?: number | null
+          shipping_country?: string
+          shipping_postal_code?: string
+          shipping_state?: string
+          status?: string | null
+          stripe_charge_id?: string | null
+          stripe_payment_intent_id?: string | null
+          subtotal?: number
+          tax_amount?: number | null
+          total?: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_orders_affiliate_model_id_fkey"
+            columns: ["affiliate_model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_product_variants: {
+        Row: {
+          color: string | null
+          color_hex: string | null
+          created_at: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          low_stock_threshold: number | null
+          price_override: number | null
+          product_id: string
+          size: string
+          sku: string
+          stock_quantity: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          color?: string | null
+          color_hex?: string | null
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          low_stock_threshold?: number | null
+          price_override?: number | null
+          product_id: string
+          size: string
+          sku: string
+          stock_quantity?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          color?: string | null
+          color_hex?: string | null
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          low_stock_threshold?: number | null
+          price_override?: number | null
+          product_id?: string
+          size?: string
+          sku?: string
+          stock_quantity?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "shop_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_products: {
+        Row: {
+          allow_backorder: boolean | null
+          brand_id: string
+          category_id: string | null
+          compare_at_price: number | null
+          created_at: string | null
+          description: string | null
+          id: string
+          images: string[] | null
+          is_active: boolean | null
+          is_featured: boolean | null
+          meta_description: string | null
+          meta_title: string | null
+          name: string
+          retail_price: number
+          slug: string
+          total_sold: number | null
+          track_inventory: boolean | null
+          updated_at: string | null
+          view_count: number | null
+          wholesale_price: number
+        }
+        Insert: {
+          allow_backorder?: boolean | null
+          brand_id: string
+          category_id?: string | null
+          compare_at_price?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          images?: string[] | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          meta_description?: string | null
+          meta_title?: string | null
+          name: string
+          retail_price: number
+          slug: string
+          total_sold?: number | null
+          track_inventory?: boolean | null
+          updated_at?: string | null
+          view_count?: number | null
+          wholesale_price: number
+        }
+        Update: {
+          allow_backorder?: boolean | null
+          brand_id?: string
+          category_id?: string | null
+          compare_at_price?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          images?: string[] | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          meta_description?: string | null
+          meta_title?: string | null
+          name?: string
+          retail_price?: number
+          slug?: string
+          total_sold?: number | null
+          track_inventory?: boolean | null
+          updated_at?: string | null
+          view_count?: number | null
+          wholesale_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_products_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "shop_brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "shop_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_store_credits: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          original_amount: number
+          reason: string | null
+          remaining_amount: number
+          source_order_id: string | null
+          source_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          original_amount: number
+          reason?: string | null
+          remaining_amount: number
+          source_order_id?: string | null
+          source_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          original_amount?: number
+          reason?: string | null
+          remaining_amount?: number
+          source_order_id?: string | null
+          source_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_store_credits_source_order_id_fkey"
+            columns: ["source_order_id"]
+            isOneToOne: false
+            referencedRelation: "shop_orders"
             referencedColumns: ["id"]
           },
         ]
@@ -4397,6 +6025,132 @@ export type Database = {
           },
         ]
       }
+      top_model_leaderboard: {
+        Row: {
+          last_updated: string | null
+          model_id: string
+          today_points: number | null
+          total_boosts: number | null
+          total_likes: number | null
+          total_points: number | null
+          week_points: number | null
+        }
+        Insert: {
+          last_updated?: string | null
+          model_id: string
+          today_points?: number | null
+          total_boosts?: number | null
+          total_likes?: number | null
+          total_points?: number | null
+          week_points?: number | null
+        }
+        Update: {
+          last_updated?: string | null
+          model_id?: string
+          today_points?: number | null
+          total_boosts?: number | null
+          total_likes?: number | null
+          total_points?: number | null
+          week_points?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "top_model_leaderboard_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: true
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      top_model_sessions: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          fingerprint: string | null
+          id: string
+          models_swiped: string[] | null
+          user_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          fingerprint?: string | null
+          id?: string
+          models_swiped?: string[] | null
+          user_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          fingerprint?: string | null
+          id?: string
+          models_swiped?: string[] | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      top_model_votes: {
+        Row: {
+          coins_spent: number | null
+          created_at: string | null
+          id: string
+          is_boosted: boolean | null
+          is_revealed: boolean | null
+          model_id: string
+          points: number
+          vote_type: string
+          voter_fingerprint: string | null
+          voter_id: string | null
+        }
+        Insert: {
+          coins_spent?: number | null
+          created_at?: string | null
+          id?: string
+          is_boosted?: boolean | null
+          is_revealed?: boolean | null
+          model_id: string
+          points?: number
+          vote_type: string
+          voter_fingerprint?: string | null
+          voter_id?: string | null
+        }
+        Update: {
+          coins_spent?: number | null
+          created_at?: string | null
+          id?: string
+          is_boosted?: boolean | null
+          is_revealed?: boolean | null
+          model_id?: string
+          points?: number
+          vote_type?: string
+          voter_fingerprint?: string | null
+          voter_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "top_model_votes_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "top_model_votes_voter_id_fkey"
+            columns: ["voter_id"]
+            isOneToOne: false
+            referencedRelation: "actors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "top_model_votes_voter_id_fkey"
+            columns: ["voter_id"]
+            isOneToOne: false
+            referencedRelation: "public_model_actors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_blocks: {
         Row: {
           blocked_id: string
@@ -4428,10 +6182,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "user_blocks_blocked_id_fkey"
+            columns: ["blocked_id"]
+            isOneToOne: false
+            referencedRelation: "public_model_actors"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "user_blocks_blocker_id_fkey"
             columns: ["blocker_id"]
             isOneToOne: false
             referencedRelation: "actors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_blocks_blocker_id_fkey"
+            columns: ["blocker_id"]
+            isOneToOne: false
+            referencedRelation: "public_model_actors"
             referencedColumns: ["id"]
           },
         ]
@@ -4637,10 +6405,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "video_call_sessions_initiated_by_fkey"
+            columns: ["initiated_by"]
+            isOneToOne: false
+            referencedRelation: "public_model_actors"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "video_call_sessions_recipient_id_fkey"
             columns: ["recipient_id"]
             isOneToOne: false
             referencedRelation: "actors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_call_sessions_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "public_model_actors"
             referencedColumns: ["id"]
           },
         ]
@@ -4873,9 +6655,180 @@ export type Database = {
           },
         ]
       }
+      workshop_registrations: {
+        Row: {
+          buyer_email: string
+          buyer_name: string | null
+          buyer_phone: string | null
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          quantity: number
+          status: string | null
+          stripe_checkout_session_id: string | null
+          stripe_payment_intent_id: string | null
+          total_price_cents: number
+          unit_price_cents: number
+          updated_at: string | null
+          workshop_id: string
+        }
+        Insert: {
+          buyer_email: string
+          buyer_name?: string | null
+          buyer_phone?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          quantity?: number
+          status?: string | null
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
+          total_price_cents: number
+          unit_price_cents: number
+          updated_at?: string | null
+          workshop_id: string
+        }
+        Update: {
+          buyer_email?: string
+          buyer_name?: string | null
+          buyer_phone?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          quantity?: number
+          status?: string | null
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
+          total_price_cents?: number
+          unit_price_cents?: number
+          updated_at?: string | null
+          workshop_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workshop_registrations_workshop_id_fkey"
+            columns: ["workshop_id"]
+            isOneToOne: false
+            referencedRelation: "workshops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workshops: {
+        Row: {
+          cover_image_url: string | null
+          created_at: string | null
+          date: string
+          description: string | null
+          end_time: string | null
+          event_id: string | null
+          highlights: string[] | null
+          id: string
+          instructors: string[] | null
+          is_featured: boolean | null
+          location_address: string | null
+          location_city: string | null
+          location_name: string | null
+          location_state: string | null
+          meta_description: string | null
+          meta_title: string | null
+          original_price_cents: number | null
+          price_cents: number
+          slug: string
+          spots_available: number | null
+          spots_sold: number | null
+          start_time: string | null
+          status: string | null
+          subtitle: string | null
+          title: string
+          updated_at: string | null
+          what_to_bring: string[] | null
+        }
+        Insert: {
+          cover_image_url?: string | null
+          created_at?: string | null
+          date: string
+          description?: string | null
+          end_time?: string | null
+          event_id?: string | null
+          highlights?: string[] | null
+          id?: string
+          instructors?: string[] | null
+          is_featured?: boolean | null
+          location_address?: string | null
+          location_city?: string | null
+          location_name?: string | null
+          location_state?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
+          original_price_cents?: number | null
+          price_cents: number
+          slug: string
+          spots_available?: number | null
+          spots_sold?: number | null
+          start_time?: string | null
+          status?: string | null
+          subtitle?: string | null
+          title: string
+          updated_at?: string | null
+          what_to_bring?: string[] | null
+        }
+        Update: {
+          cover_image_url?: string | null
+          created_at?: string | null
+          date?: string
+          description?: string | null
+          end_time?: string | null
+          event_id?: string | null
+          highlights?: string[] | null
+          id?: string
+          instructors?: string[] | null
+          is_featured?: boolean | null
+          location_address?: string | null
+          location_city?: string | null
+          location_name?: string | null
+          location_state?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
+          original_price_cents?: number | null
+          price_cents?: number
+          slug?: string
+          spots_available?: number | null
+          spots_sold?: number | null
+          start_time?: string | null
+          status?: string | null
+          subtitle?: string | null
+          title?: string
+          updated_at?: string | null
+          what_to_bring?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workshops_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
-      [_ in never]: never
+      public_model_actors: {
+        Row: {
+          id: string | null
+          type: string | null
+        }
+        Insert: {
+          id?: string | null
+          type?: string | null
+        }
+        Update: {
+          id?: string | null
+          type?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       add_coins: {
@@ -4886,6 +6839,10 @@ export type Database = {
           p_metadata?: Json
         }
         Returns: boolean
+      }
+      add_gems_to_model: {
+        Args: { p_gems: number; p_model_id: string }
+        Returns: number
       }
       add_tag_to_model: {
         Args: { p_model_id: string; p_tag_id: string }
@@ -4967,6 +6924,14 @@ export type Database = {
         }
         Returns: string
       }
+      create_payoneer_withdrawal_request: {
+        Args: {
+          p_coins: number
+          p_model_id: string
+          p_payoneer_account_id: string
+        }
+        Returns: string
+      }
       create_withdrawal_request: {
         Args: {
           p_bank_account_id?: string
@@ -5015,6 +6980,7 @@ export type Database = {
       }
       generate_affiliate_code: { Args: { p_username: string }; Returns: string }
       generate_booking_number: { Args: never; Returns: string }
+      generate_order_number: { Args: never; Returns: string }
       get_active_spotlights: {
         Args: { p_model_id?: string; p_model_instagram?: string }
         Returns: {
@@ -5068,6 +7034,7 @@ export type Database = {
           country: string
         }[]
       }
+      get_current_actor_id: { Args: never; Returns: string }
       get_current_user_model_id: { Args: never; Returns: string }
       get_daily_views: {
         Args: { start_date: string }
@@ -5145,6 +7112,10 @@ export type Database = {
           unsubscribe_token: string
           unsubscribed_all: boolean
         }[]
+      }
+      get_or_create_top_model_session: {
+        Args: { p_fingerprint: string; p_user_id: string }
+        Returns: Json
       }
       get_pending_withdrawals: { Args: { p_user_id: string }; Returns: number }
       get_popular_tags: {
@@ -5224,6 +7195,10 @@ export type Database = {
         Args: { p_actor_id_1: string; p_actor_id_2: string }
         Returns: boolean
       }
+      is_conversation_participant: {
+        Args: { conv_id: string }
+        Returns: boolean
+      }
       is_email_unsubscribed: {
         Args: { p_email: string; p_email_type?: string }
         Returns: boolean
@@ -5250,6 +7225,14 @@ export type Database = {
       mark_message_read: {
         Args: { p_message_id: string; p_user_id: string }
         Returns: boolean
+      }
+      mark_model_swiped: {
+        Args: {
+          p_model_id: string
+          p_session_id: string
+          p_total_models: number
+        }
+        Returns: Json
       }
       mark_notification_read: {
         Args: { p_notification_id: string }
@@ -5279,6 +7262,19 @@ export type Database = {
         }
         Returns: boolean
       }
+      record_top_model_vote: {
+        Args: {
+          p_coins_spent: number
+          p_is_boosted: boolean
+          p_is_revealed: boolean
+          p_model_id: string
+          p_points: number
+          p_vote_type: string
+          p_voter_fingerprint: string
+          p_voter_id: string
+        }
+        Returns: Json
+      }
       refund_escrow: { Args: { p_escrow_id: string }; Returns: Json }
       release_escrow_to_model: {
         Args: { p_escrow_id: string; p_model_id: string }
@@ -5288,7 +7284,9 @@ export type Database = {
         Args: { p_model_id: string; p_tag_id: string }
         Returns: boolean
       }
+      reset_daily_top_model_leaderboard: { Args: never; Returns: undefined }
       reset_weekly_free_stars: { Args: never; Returns: number }
+      reset_weekly_top_model_leaderboard: { Args: never; Returns: undefined }
       search_models_by_tags: {
         Args: {
           p_limit?: number
@@ -5489,6 +7487,7 @@ export type Database = {
         | "model_rejected"
         | "new_follower"
         | "system_announcement"
+      payout_method_type: "bank" | "payoneer" | "stripe_connect"
       rate_type: "hourly" | "half_day" | "full_day" | "per_event" | "custom"
       tag_category:
         | "specialty"
@@ -5695,6 +7694,7 @@ export const Constants = {
         "new_follower",
         "system_announcement",
       ],
+      payout_method_type: ["bank", "payoneer", "stripe_connect"],
       rate_type: ["hourly", "half_day", "full_day", "per_event", "custom"],
       tag_category: [
         "specialty",
@@ -5707,31 +7707,18 @@ export const Constants = {
   },
 } as const
 
-// Helper types for easy access to table row types
-export type Model = Database['public']['Tables']['models']['Row']
-export type Brand = Database['public']['Tables']['brands']['Row']
+// Type aliases for common table rows
 export type Actor = Database['public']['Tables']['actors']['Row']
+export type Model = Database['public']['Tables']['models']['Row']
+export type Fan = Database['public']['Tables']['fans']['Row']
+export type Brand = Database['public']['Tables']['brands']['Row']
 export type Message = Database['public']['Tables']['messages']['Row']
 export type Conversation = Database['public']['Tables']['conversations']['Row']
-export type ConversationParticipant = Database['public']['Tables']['conversation_participants']['Row']
 export type MediaAsset = Database['public']['Tables']['media_assets']['Row']
-export type PayoneerAccount = Database['public']['Tables']['payoneer_accounts']['Row']
-export type PayoneerPayout = Database['public']['Tables']['payoneer_payouts']['Row']
-export type WithdrawalRequest = Database['public']['Tables']['withdrawal_requests']['Row']
-
-// Fan type (if fans table exists, otherwise define manually)
-export interface Fan {
-  id: string
-  user_id: string
-  display_name: string | null
-  username: string | null
-  email: string | null
-  phone: string | null
-  bio: string | null
-  avatar_url: string | null
-  coin_balance: number
-  total_coins_purchased: number
-  username_changed_at: string | null
-  created_at: string
-  updated_at: string
-}
+export type Booking = Database['public']['Tables']['bookings']['Row']
+export type Tag = Database['public']['Tables']['tags']['Row']
+export type Gig = Database['public']['Tables']['gigs']['Row']
+export type Event = Database['public']['Tables']['events']['Row']
+export type Workshop = Database['public']['Tables']['workshops']['Row']
+export type AIGeneration = Database['public']['Tables']['ai_generations']['Row']
+export type AISavedPhoto = Database['public']['Tables']['ai_saved_photos']['Row']
