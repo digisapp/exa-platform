@@ -127,12 +127,28 @@ export async function GET(
 
     // Update based on Replicate status
     if (prediction.status === "succeeded" && prediction.output) {
-      console.log("[AI Status] Generation succeeded, saving images to storage...");
+      console.log("[AI Status] Generation succeeded, output:", JSON.stringify(prediction.output).slice(0, 200));
+
+      // Normalize output to array (some models return single URL string)
+      let outputUrls: string[] = [];
+      if (typeof prediction.output === "string") {
+        outputUrls = [prediction.output];
+      } else if (Array.isArray(prediction.output)) {
+        outputUrls = prediction.output;
+      } else {
+        console.error("[AI Status] Unexpected output format:", typeof prediction.output);
+        return NextResponse.json({
+          status: "failed",
+          error: "Unexpected output format from AI",
+        });
+      }
+
+      console.log("[AI Status] Saving", outputUrls.length, "images to storage...");
 
       // Save images to our storage (Replicate deletes them after 1 hour!)
       const permanentUrls = await saveImagesToStorage(
         supabase,
-        prediction.output,
+        outputUrls,
         generationId,
         generation.model_id
       );

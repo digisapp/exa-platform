@@ -2,10 +2,9 @@
 
 const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN;
 
-// Face-to-Many model - identity-preserving face transformation
-// Note: This model uses stylized outputs (3D, Emoji, etc.) not photorealistic
-// Version hash for direct API call
-const FACE_TO_MANY_VERSION = "a07f252abbbd832009640b27f063ea52d87d7a23a185ca165bec23b5adc8deaf";
+// InstantID model for photorealistic face-preserving generation
+// Uses the InstantX/InstantID implementation
+const INSTANT_ID_MODEL = "InstantX/InstantID";
 
 // Scenario presets - IMPORTANT: Prompts must NOT describe the person's appearance
 // InstantID takes the face from the input image, so prompts should ONLY describe scene/setting/clothing
@@ -128,7 +127,7 @@ export const AI_GENERATION_COST = 5;
 export interface ReplicatePrediction {
   id: string;
   status: "starting" | "processing" | "succeeded" | "failed" | "canceled";
-  output?: string[];
+  output?: string | string[];  // Some models return single URL, others return array
   error?: string;
   metrics?: {
     predict_time?: number;
@@ -164,29 +163,29 @@ export async function startGeneration(
       console.error("[Replicate] Could not verify face image URL:", e);
     }
 
-    // Use predictions endpoint with version hash
-    const response = await fetch("https://api.replicate.com/v1/predictions", {
+    // Use models endpoint for InstantID (auto-selects latest version)
+    const response = await fetch(`https://api.replicate.com/v1/models/${INSTANT_ID_MODEL}/predictions`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${REPLICATE_API_TOKEN}`,
         "Content-Type": "application/json",
+        Prefer: "wait",  // Wait for model to be ready
       },
       body: JSON.stringify({
-        version: FACE_TO_MANY_VERSION,
         input: {
-          // Face-to-Many face reference image
+          // InstantID face reference image
           image: faceImageUrl,
-          // Style - valid options: 3D, Emoji, Video game, Pixels, Clay, Toy
-          style: "3D",
-          // Prompt describes the scene (face comes from input image)
-          prompt: scenario.prompt,
-          negative_prompt: scenario.negative_prompt,
-          // Denoising strength (0-1, higher = more creative but less like original)
-          denoising_strength: 0.65,
-          // Prompt strength (0-1, how much to follow the prompt)
-          prompt_strength: 4.5,
-          // Instant ID strength (0-1, higher = more face fidelity)
-          instant_id_strength: 0.8,
+          // Prompt describes the scene and outfit
+          prompt: `photo of a woman, ${scenario.prompt}`,
+          negative_prompt: `${scenario.negative_prompt}, different face, wrong face`,
+          // IP-Adapter scale - controls face identity preservation (0.0-1.5)
+          ip_adapter_scale: 0.8,
+          // ControlNet scale - controls pose/structure (0.0-1.5)
+          controlnet_conditioning_scale: 0.8,
+          // Number of inference steps
+          num_inference_steps: 30,
+          // CFG scale - how closely to follow prompt
+          guidance_scale: 5,
         },
       }),
     });
@@ -194,7 +193,7 @@ export async function startGeneration(
     if (!response.ok) {
       const error = await response.text();
       console.error("[Replicate] API error:", response.status, error);
-      console.error("[Replicate] Version:", FACE_TO_MANY_VERSION);
+      console.error("[Replicate] Model:", INSTANT_ID_MODEL);
       return { error: `Failed to start generation: ${response.status}` };
     }
 
