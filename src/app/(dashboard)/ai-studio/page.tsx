@@ -252,24 +252,16 @@ export default function AIStudioPage() {
   return (
     <div className="container max-w-6xl py-8 px-4">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-violet-500 to-pink-500">
-              <Sparkles className="h-6 w-6 text-white" />
-            </div>
-            AI Photo Studio
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Generate stunning photos of yourself in different scenarios
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/30">
-          <Coins className="h-4 w-4 text-amber-500" />
-          <span className="font-semibold text-amber-500">{coinBalance}</span>
-          <span className="text-muted-foreground text-sm">coins</span>
-        </div>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-gradient-to-br from-violet-500 to-pink-500">
+            <Sparkles className="h-6 w-6 text-white" />
+          </div>
+          AI Photo Studio
+        </h1>
+        <p className="text-muted-foreground mt-1">
+          Generate stunning photos of yourself in different scenarios
+        </p>
       </div>
 
       {/* Main Content */}
