@@ -104,18 +104,18 @@ export default function AIStudioPage() {
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("Image must be less than 10MB");
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be less than 5MB");
       return;
     }
 
     setStatus("uploading");
 
-    try {
-      // Create preview
-      const previewUrl = URL.createObjectURL(file);
-      setUploadedImagePreview(previewUrl);
+    // Create preview first
+    const previewUrl = URL.createObjectURL(file);
+    setUploadedImagePreview(previewUrl);
 
+    try {
       // Upload to storage
       const formData = new FormData();
       formData.append("file", file);
@@ -126,18 +126,21 @@ export default function AIStudioPage() {
         body: formData,
       });
 
+      const data = await res.json();
+
       if (!res.ok) {
-        throw new Error("Upload failed");
+        throw new Error(data.error || "Upload failed");
       }
 
-      const data = await res.json();
       setUploadedImageUrl(data.url);
       setStatus("idle");
       toast.success("Photo uploaded! Now select a scenario.");
     } catch (error) {
       console.error("Upload error:", error);
-      setStatus("error");
-      toast.error("Failed to upload image");
+      setStatus("idle");
+      setUploadedImagePreview(null);
+      setUploadedImageUrl(null);
+      toast.error(error instanceof Error ? error.message : "Failed to upload image. Please try again.");
     }
   }, []);
 
