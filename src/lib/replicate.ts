@@ -3,7 +3,7 @@
 const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN;
 
 // InstantID model for face-preserving generation
-const INSTANT_ID_MODEL = "zsxkib/instant-id:a]cb11d6f195f1f78211bab51f612bce3bc9323175fb02850530e31c6a3c29ff";
+const INSTANT_ID_MODEL = "zsxkib/instant-id:acb11d6f195f1f78211bab51f612bce3bc9323175fb02850530e31c6a3c29ff";
 
 // Scenario presets with optimized prompts
 export const AI_SCENARIOS = {
