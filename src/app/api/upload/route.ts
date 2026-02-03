@@ -9,6 +9,11 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 export async function POST(request: NextRequest) {
   try {
+    // Parse form data first to get upload type
+    const formData = await request.formData();
+    const file = formData.get("file") as File;
+    const uploadType = (formData.get("type") as string) || "portfolio";
+
     const supabase = await createClient();
 
     // Auth check
@@ -19,10 +24,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Rate limit check
-    const rateLimitResponse = await checkEndpointRateLimit(request, "uploads", user.id);
-    if (rateLimitResponse) {
-      return rateLimitResponse;
+    // Skip rate limit for AI uploads (they're time-sensitive)
+    if (uploadType !== "ai-source") {
+      const rateLimitResponse = await checkEndpointRateLimit(request, "uploads", user.id);
+      if (rateLimitResponse) {
+        return rateLimitResponse;
+      }
     }
 
     // Get actor
@@ -35,10 +42,6 @@ export async function POST(request: NextRequest) {
     if (!actor) {
       return NextResponse.json({ error: "No actor found" }, { status: 400 });
     }
-
-    const formData = await request.formData();
-    const file = formData.get("file") as File;
-    const uploadType = (formData.get("type") as string) || "portfolio"; // 'portfolio' | 'message' | 'avatar'
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
