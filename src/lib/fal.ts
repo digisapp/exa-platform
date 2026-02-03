@@ -155,6 +155,7 @@ export async function startGeneration(
   try {
     console.log("[fal.ai] Starting generation with face image:", faceImageUrl);
     console.log("[fal.ai] Scenario:", scenarioId, "Prompt:", scenario.prompt.slice(0, 100));
+    console.log("[fal.ai] API Key present:", !!FAL_KEY, "Key length:", FAL_KEY?.length);
 
     // Verify the image URL is accessible
     try {
@@ -168,7 +169,10 @@ export async function startGeneration(
     }
 
     // Use fal.ai queue API for async generation
-    const response = await fetch(`https://queue.fal.run/${PULID_MODEL}`, {
+    const apiUrl = `https://queue.fal.run/${PULID_MODEL}`;
+    console.log("[fal.ai] API URL:", apiUrl);
+
+    const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
         Authorization: `Key ${FAL_KEY}`,
@@ -179,12 +183,12 @@ export async function startGeneration(
         reference_images: [{ image_url: faceImageUrl }],
         prompt: `photo of a woman, ${scenario.prompt}`,
         negative_prompt: scenario.negative_prompt,
-        // Face identity preservation strength (0-1, higher = more faithful to face)
+        // Face identity preservation strength (0-5, higher = more faithful to face)
         id_scale: 0.8,
-        // Number of inference steps
-        num_inference_steps: 30,
-        // CFG scale - how closely to follow prompt
-        guidance_scale: 5,
+        // Number of inference steps (max 12 for PuLID)
+        num_inference_steps: 8,
+        // CFG scale (1-1.5 for PuLID)
+        guidance_scale: 1.2,
         // Output dimensions
         image_size: {
           width: 768,
@@ -192,15 +196,14 @@ export async function startGeneration(
         },
         // Number of images to generate
         num_images: 1,
-        // Use high quality mode
-        enable_safety_checker: false,
       }),
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      console.error("[fal.ai] API error:", response.status, error);
-      return { error: `Failed to start generation: ${response.status}` };
+      const errorText = await response.text();
+      console.error("[fal.ai] API error:", response.status, response.statusText);
+      console.error("[fal.ai] Error body:", errorText);
+      return { error: `Failed to start generation: ${response.status} - ${errorText}` };
     }
 
     const result = await response.json();
