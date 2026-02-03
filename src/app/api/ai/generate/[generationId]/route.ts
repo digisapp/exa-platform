@@ -49,6 +49,9 @@ export async function GET(
     }
 
     // Check Replicate for current status
+    if (!generation.replicate_prediction_id) {
+      return NextResponse.json({ error: "No prediction ID" }, { status: 400 });
+    }
     const prediction = await getPrediction(generation.replicate_prediction_id);
 
     if ("error" in prediction) {
