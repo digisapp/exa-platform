@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getGenerationStatus, getGenerationResult } from "@/lib/fal";
+import { getGenerationStatus, getGenerationResult, faceSwap } from "@/lib/fal";
 
 // Allow longer timeout for downloading and saving images
 export const maxDuration = 60;
@@ -128,31 +128,64 @@ export async function GET(
 
     // Handle fal.ai status: IN_QUEUE, IN_PROGRESS, COMPLETED, FAILED
     if (statusResult.status === "COMPLETED") {
-      // Fetch the actual result
-      const result = await getGenerationResult(requestId);
+      // Step 1: Get the Flux base image result
+      const baseResult = await getGenerationResult(requestId);
 
-      if ("error" in result) {
-        console.error("[AI Status] Failed to get fal.ai result:", result.error);
+      if ("error" in baseResult) {
+        console.error("[AI Status] Failed to get Flux result:", baseResult.error);
         return NextResponse.json({
           status: "failed",
-          error: "Failed to retrieve generated images",
+          error: "Failed to retrieve base image",
         });
       }
 
-      if (!result.images || result.images.length === 0) {
-        console.error("[AI Status] No images in fal.ai result");
+      if (!baseResult.images || baseResult.images.length === 0) {
+        console.error("[AI Status] No images in Flux result");
         return NextResponse.json({
           status: "failed",
-          error: "No images generated",
+          error: "No base image generated",
         });
       }
 
-      console.log("[AI Status] Generation succeeded, images:", result.images.length);
+      console.log("[AI Status] Flux base image ready, starting face swap...");
+      const baseImageUrl = baseResult.images[0].url;
 
-      // Extract URLs from fal.ai image objects
-      const outputUrls = result.images.map(img => img.url);
+      // Step 2: Face swap - put user's face on the base image
+      const faceImageUrl = generation.source_image_url;
+      console.log("[AI Status] Face swap: base =", baseImageUrl.slice(0, 50), "face =", faceImageUrl?.slice(0, 50));
 
-      console.log("[AI Status] Saving", outputUrls.length, "images to storage...");
+      if (!faceImageUrl) {
+        console.error("[AI Status] No face image URL in generation record");
+        return NextResponse.json({
+          status: "failed",
+          error: "Missing source face image",
+        });
+      }
+
+      const swapResult = await faceSwap(baseImageUrl, faceImageUrl);
+
+      if ("error" in swapResult) {
+        console.error("[AI Status] Face swap failed:", swapResult.error);
+        return NextResponse.json({
+          status: "failed",
+          error: "Face swap failed",
+        });
+      }
+
+      if (!swapResult.images || swapResult.images.length === 0) {
+        console.error("[AI Status] No images in face swap result");
+        return NextResponse.json({
+          status: "failed",
+          error: "Face swap returned no image",
+        });
+      }
+
+      console.log("[AI Status] Face swap succeeded!");
+
+      // Extract URLs from face swap result
+      const outputUrls = swapResult.images.map(img => img.url);
+
+      console.log("[AI Status] Saving", outputUrls.length, "face-swapped images to storage...");
 
       // Save images to our storage (fal.ai URLs expire!)
       const permanentUrls = await saveImagesToStorage(

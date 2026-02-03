@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getGenerationStatus, getGenerationResult } from "@/lib/fal";
+import { getGenerationStatus, getGenerationResult, faceSwap } from "@/lib/fal";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -65,13 +65,28 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     // Update our database based on fal.ai status
     if (statusResult.status === "COMPLETED") {
-      const result = await getGenerationResult(requestId);
+      // Step 1: Get the Flux base image result
+      const baseResult = await getGenerationResult(requestId);
 
-      if ("error" in result || !result.images) {
-        return NextResponse.json({ error: "Failed to get result" }, { status: 500 });
+      if ("error" in baseResult || !baseResult.images) {
+        return NextResponse.json({ error: "Failed to get base image" }, { status: 500 });
       }
 
-      const outputUrls = result.images.map(img => img.url);
+      const baseImageUrl = baseResult.images[0].url;
+
+      // Step 2: Face swap - put user's face on the base image
+      const faceImageUrl = generation.source_image_url;
+      if (!faceImageUrl) {
+        return NextResponse.json({ error: "Missing source face image" }, { status: 500 });
+      }
+
+      const swapResult = await faceSwap(baseImageUrl, faceImageUrl);
+
+      if ("error" in swapResult || !swapResult.images) {
+        return NextResponse.json({ error: "Face swap failed" }, { status: 500 });
+      }
+
+      const outputUrls = swapResult.images.map(img => img.url);
 
       const { error: updateError } = await supabase
         .from("ai_generations")

@@ -1,13 +1,15 @@
 // fal.ai API integration for AI photo generation
-// Using IP Adapter Face ID for high-quality face-preserving generation
+// Two-step approach: Generate base image with Flux, then face-swap
 
 const FAL_KEY = process.env.FAL_KEY;
 
-// IP Adapter Face ID - uses face embeddings for accurate face preservation
-const FACE_ID_MODEL = "fal-ai/ip-adapter-face-id";
+// Flux Pro for high-quality base image generation
+const FLUX_MODEL = "fal-ai/flux-pro/v1.1";
+// Face swap model for accurate face preservation
+const FACE_SWAP_MODEL = "fal-ai/face-swap";
 
-// Scenario presets - IMPORTANT: Prompts must NOT describe the person's appearance
-// PuLID takes the face from the input image, so prompts should ONLY describe scene/setting/clothing
+// Scenario presets for base image generation
+// Face will be swapped in the second step, so prompts describe the full scene with a model
 export const AI_SCENARIOS = {
   miami_bikini: {
     id: "miami_bikini",
@@ -138,11 +140,11 @@ export interface FalPrediction {
   error?: string;
 }
 
-// Start a generation on fal.ai using PuLID model
+// Step 1: Start base image generation with Flux Pro
 export async function startGeneration(
   faceImageUrl: string,
   scenarioId: ScenarioId
-): Promise<{ requestId: string } | { error: string }> {
+): Promise<{ requestId: string; faceImageUrl: string } | { error: string }> {
   if (!FAL_KEY) {
     return { error: "fal.ai API key not configured" };
   }
@@ -153,24 +155,16 @@ export async function startGeneration(
   }
 
   try {
-    console.log("[fal.ai] Starting generation with face image:", faceImageUrl);
-    console.log("[fal.ai] Scenario:", scenarioId, "Prompt:", scenario.prompt.slice(0, 100));
-    console.log("[fal.ai] API Key present:", !!FAL_KEY, "Key length:", FAL_KEY?.length);
+    console.log("[fal.ai] Starting Flux base image generation");
+    console.log("[fal.ai] Scenario:", scenarioId);
+    console.log("[fal.ai] Face image (for later swap):", faceImageUrl);
 
-    // Verify the image URL is accessible
-    try {
-      const imgCheck = await fetch(faceImageUrl, { method: "HEAD" });
-      console.log("[fal.ai] Face image URL check:", imgCheck.status, imgCheck.ok ? "OK" : "FAILED");
-      if (!imgCheck.ok) {
-        console.error("[fal.ai] Face image URL not accessible!");
-      }
-    } catch (e) {
-      console.error("[fal.ai] Could not verify face image URL:", e);
-    }
-
-    // Use fal.ai queue API for async generation with IP Adapter Face ID
-    const apiUrl = `https://queue.fal.run/${FACE_ID_MODEL}`;
+    // Use fal.ai queue API for async generation with Flux Pro
+    const apiUrl = `https://queue.fal.run/${FLUX_MODEL}`;
     console.log("[fal.ai] API URL:", apiUrl);
+
+    // Flux Pro prompt - describe a model in the scene (face will be swapped later)
+    const fullPrompt = `professional fashion photography of a beautiful young woman, ${scenario.prompt}, clear face visible, front-facing, looking at camera, photorealistic, high quality`;
 
     const response = await fetch(apiUrl, {
       method: "POST",
@@ -179,37 +173,80 @@ export async function startGeneration(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        // IP Adapter Face ID parameters
-        face_image_url: faceImageUrl,
-        prompt: `professional photo of a beautiful woman, ${scenario.prompt}, highly detailed face, sharp focus, photorealistic, studio lighting, 8k uhd`,
-        negative_prompt: `${scenario.negative_prompt}, deformed face, distorted face, bad face, ugly face, asymmetric face, blurry face, mutated face, extra fingers, missing fingers, bad anatomy, worst quality, low quality`,
-        // Use SDXL model for best quality
-        model_type: "SDXL-v2-plus",
-        // CFG scale (0-16, default 7.5)
-        guidance_scale: 7.5,
-        // More inference steps for better quality
-        num_inference_steps: 50,
-        // Output dimensions (portrait format)
-        width: 768,
-        height: 1024,
-        // Number of face samples for better accuracy
-        num_samples: 4,
+        prompt: fullPrompt,
+        image_size: {
+          width: 768,
+          height: 1024,
+        },
+        num_images: 1,
+        safety_tolerance: "5", // Less strict for fashion/swimwear
+        output_format: "jpeg",
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("[fal.ai] API error:", response.status, response.statusText);
+      console.error("[fal.ai] Flux API error:", response.status, response.statusText);
       console.error("[fal.ai] Error body:", errorText);
       return { error: `Failed to start generation: ${response.status} - ${errorText}` };
     }
 
     const result = await response.json();
-    console.log("[fal.ai] Generation queued:", result.request_id);
-    return { requestId: result.request_id };
+    console.log("[fal.ai] Flux generation queued:", result.request_id);
+
+    // Return both the request ID and the face URL (needed for step 2)
+    return { requestId: result.request_id, faceImageUrl };
   } catch (error) {
     console.error("[fal.ai] Error:", error);
     return { error: "Failed to connect to AI service" };
+  }
+}
+
+// Step 2: Face swap - swap the user's face onto the generated base image
+export async function faceSwap(
+  baseImageUrl: string,
+  faceImageUrl: string
+): Promise<{ images: Array<{ url: string }> } | { error: string }> {
+  if (!FAL_KEY) {
+    return { error: "fal.ai API key not configured" };
+  }
+
+  try {
+    console.log("[fal.ai] Starting face swap");
+    console.log("[fal.ai] Base image:", baseImageUrl);
+    console.log("[fal.ai] Face image:", faceImageUrl);
+
+    // Use synchronous API for face swap (it's fast)
+    const response = await fetch(`https://fal.run/${FACE_SWAP_MODEL}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Key ${FAL_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        base_image_url: baseImageUrl,
+        swap_image_url: faceImageUrl,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("[fal.ai] Face swap error:", response.status, errorText);
+      return { error: `Face swap failed: ${response.status}` };
+    }
+
+    const result = await response.json();
+    console.log("[fal.ai] Face swap completed:", JSON.stringify(result).slice(0, 200));
+
+    // face-swap returns { image: { url, ... } } - convert to our format
+    if (result.image) {
+      return { images: [{ url: result.image.url }] };
+    }
+
+    return { error: "No image in face swap result" };
+  } catch (error) {
+    console.error("[fal.ai] Face swap error:", error);
+    return { error: "Face swap failed" };
   }
 }
 
@@ -223,7 +260,7 @@ export async function getGenerationStatus(
 
   try {
     const response = await fetch(
-      `https://queue.fal.run/${FACE_ID_MODEL}/requests/${requestId}/status`,
+      `https://queue.fal.run/${FLUX_MODEL}/requests/${requestId}/status`,
       {
         headers: {
           Authorization: `Key ${FAL_KEY}`,
@@ -261,7 +298,7 @@ export async function getGenerationResult(
 
   try {
     const response = await fetch(
-      `https://queue.fal.run/${FACE_ID_MODEL}/requests/${requestId}`,
+      `https://queue.fal.run/${FLUX_MODEL}/requests/${requestId}`,
       {
         headers: {
           Authorization: `Key ${FAL_KEY}`,
@@ -297,7 +334,7 @@ export async function cancelGeneration(requestId: string): Promise<boolean> {
 
   try {
     const response = await fetch(
-      `https://queue.fal.run/${FACE_ID_MODEL}/requests/${requestId}/cancel`,
+      `https://queue.fal.run/${FLUX_MODEL}/requests/${requestId}/cancel`,
       {
         method: "PUT",
         headers: {
