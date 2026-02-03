@@ -382,8 +382,9 @@ export default function ContentPage() {
 
   const handleToggleVisibility = async (mediaId: string, currentVisible: boolean | null) => {
     const newVisible = !(currentVisible !== false); // Toggle: null/true → false, false → true
-    const { error } = await supabase
-      .from("media_assets")
+    // Note: is_visible column added via migration - using type assertion until types are regenerated
+    const { error } = await (supabase
+      .from("media_assets") as any)
       .update({ is_visible: newVisible })
       .eq("id", mediaId);
 
