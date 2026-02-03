@@ -4,17 +4,25 @@ import { NextRequest, NextResponse } from "next/server";
 import { processImage, isProcessableImage } from "@/lib/image-processing";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
+// Configure route to accept larger body sizes
+export const runtime = "nodejs";
+export const maxDuration = 60; // 60 seconds timeout
+
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 export async function POST(request: NextRequest) {
+  console.log("[Upload API] Request received");
   try {
     // Parse form data first to get upload type
+    console.log("[Upload API] Parsing form data...");
     const formData = await request.formData();
     const file = formData.get("file") as File;
     const uploadType = (formData.get("type") as string) || "portfolio";
+    console.log("[Upload API] Form data parsed, type:", uploadType, "file size:", file?.size);
 
     const supabase = await createClient();
+    console.log("[Upload API] Supabase client created");
 
     // Auth check
     const {
@@ -80,6 +88,7 @@ export async function POST(request: NextRequest) {
 
     // For AI source images, use a simplified upload path (no processing, no media_asset record)
     if (uploadType === "ai-source") {
+      console.log("[Upload API] AI source upload, uploading to storage...");
       const { error: uploadError } = await supabase.storage
         .from("portfolio")
         .upload(filename, inputBuffer, {
@@ -88,17 +97,19 @@ export async function POST(request: NextRequest) {
         });
 
       if (uploadError) {
-        console.error("Upload error:", uploadError);
+        console.error("[Upload API] Storage upload error:", uploadError);
         return NextResponse.json(
           { error: `Upload failed: ${uploadError.message}` },
           { status: 500 }
         );
       }
 
+      console.log("[Upload API] Storage upload complete, getting public URL...");
       const { data: { publicUrl } } = supabase.storage
         .from("portfolio")
         .getPublicUrl(filename);
 
+      console.log("[Upload API] Returning success with URL:", publicUrl);
       return NextResponse.json({
         success: true,
         url: publicUrl,

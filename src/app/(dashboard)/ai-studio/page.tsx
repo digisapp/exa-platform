@@ -121,16 +121,26 @@ export default function AIStudioPage() {
     const previewUrl = URL.createObjectURL(file);
     setUploadedImagePreview(previewUrl);
 
+    // Create abort controller with 30 second timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, 30000);
+
     try {
       // Upload to storage (use ai-source for faster upload without image processing)
       const formData = new FormData();
       formData.append("file", file);
       formData.append("type", "ai-source");
 
+      console.log("[AI Studio] Starting upload...");
       const res = await fetch("/api/upload", {
         method: "POST",
         body: formData,
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       const data = await res.json();
       console.log("[AI Studio] Upload response:", data);
@@ -147,11 +157,17 @@ export default function AIStudioPage() {
       setStatus("idle");
       toast.success("Photo uploaded! Now select a scenario.");
     } catch (error) {
+      clearTimeout(timeoutId);
       console.error("Upload error:", error);
       setStatus("idle");
       setUploadedImagePreview(null);
       setUploadedImageUrl(null);
-      toast.error(error instanceof Error ? error.message : "Failed to upload image. Please try again.");
+
+      if (error instanceof Error && error.name === "AbortError") {
+        toast.error("Upload timed out. Please try again with a smaller image.");
+      } else {
+        toast.error(error instanceof Error ? error.message : "Failed to upload image. Please try again.");
+      }
     }
   }, []);
 
