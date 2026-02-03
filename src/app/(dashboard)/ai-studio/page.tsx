@@ -383,33 +383,33 @@ export default function AIStudioPage() {
               ))}
             </div>
 
-            {/* Scenarios Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {/* Scenarios List */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {filteredScenarios.map(([id, scenario]) => (
                 <button
                   key={id}
                   onClick={() => setSelectedScenario(id as ScenarioId)}
                   disabled={status === "generating"}
                   className={cn(
-                    "relative rounded-xl overflow-hidden text-left transition-all",
-                    "border-2 hover:scale-[1.02]",
+                    "flex items-center gap-3 p-3 rounded-xl text-left transition-all",
+                    "border hover:bg-muted/50",
                     selectedScenario === id
-                      ? "border-primary ring-2 ring-primary/30"
-                      : "border-transparent hover:border-white/20"
+                      ? "border-primary bg-primary/10"
+                      : "border-border"
                   )}
                 >
-                  <div className="aspect-[4/5] bg-gradient-to-br from-violet-500/20 to-pink-500/20 flex items-center justify-center">
-                    <ImageIcon className="h-8 w-8 text-white/30" />
+                  <div className={cn(
+                    "w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0",
+                    "bg-gradient-to-br from-violet-500/20 to-pink-500/20"
+                  )}>
+                    <ImageIcon className="h-5 w-5 text-violet-400" />
                   </div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-3">
-                    <p className="font-medium text-white text-sm">{scenario.name}</p>
-                    <p className="text-xs text-white/60 line-clamp-1">{scenario.description}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm">{scenario.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{scenario.description}</p>
                   </div>
                   {selectedScenario === id && (
-                    <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-primary flex items-center justify-center">
-                      <Check className="h-4 w-4 text-white" />
-                    </div>
+                    <Check className="h-5 w-5 text-primary flex-shrink-0" />
                   )}
                 </button>
               ))}
