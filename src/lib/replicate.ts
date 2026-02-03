@@ -171,8 +171,9 @@ export async function startGeneration(
 
     if (!response.ok) {
       const error = await response.text();
-      console.error("[Replicate] API error:", error);
-      return { error: "Failed to start generation" };
+      console.error("[Replicate] API error:", response.status, error);
+      console.error("[Replicate] Model version:", INSTANT_ID_MODEL.split(":")[1]);
+      return { error: `Failed to start generation: ${response.status}` };
     }
 
     const prediction = await response.json();
