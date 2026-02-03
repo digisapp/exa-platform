@@ -45,20 +45,26 @@ export default function AIStudioPage() {
   const [savingImage, setSavingImage] = useState<string | null>(null);
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
 
-  // Fetch past generations
+  // Fetch past generations (non-blocking)
   useEffect(() => {
+    const controller = new AbortController();
     async function fetchData() {
       try {
-        const genRes = await fetch("/api/ai/generate?limit=10");
+        const genRes = await fetch("/api/ai/generate?limit=10", {
+          signal: controller.signal,
+        });
         if (genRes.ok) {
           const data = await genRes.json();
           setPastGenerations(data.generations || []);
         }
       } catch (error) {
-        console.error("Failed to fetch data:", error);
+        if (error instanceof Error && error.name !== "AbortError") {
+          console.error("Failed to fetch generations:", error);
+        }
       }
     }
     fetchData();
+    return () => controller.abort();
   }, []);
 
   // Poll for generation status
@@ -127,9 +133,14 @@ export default function AIStudioPage() {
       });
 
       const data = await res.json();
+      console.log("[AI Studio] Upload response:", data);
 
       if (!res.ok) {
         throw new Error(data.error || "Upload failed");
+      }
+
+      if (!data.url) {
+        throw new Error("No URL returned from upload");
       }
 
       setUploadedImageUrl(data.url);
