@@ -104,15 +104,16 @@ export default async function ModelRatesPage({ params }: Props) {
   const hasTravelFee = (model.travel_fee || 0) > 0;
   const hasAnyRates = hasPhotographyRates || hasPromoRates || hasPrivateRates;
 
-  // Get portfolio photos (only visible ones)
-  const { data: photos } = await supabase
+  // Get portfolio photos - filter out hidden ones
+  const { data: allPhotos } = await supabase
     .from("media_assets")
     .select("*")
     .eq("model_id", model.id)
     .eq("asset_type", "portfolio")
-    .neq("is_visible", false)
     .order("created_at", { ascending: false })
     .limit(6) as { data: any[] | null };
+
+  const photos = (allPhotos || []).filter((p: any) => p.is_visible !== false);
 
   const displayName = model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username;
 

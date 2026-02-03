@@ -176,25 +176,29 @@ export default async function ModelProfilePage({ params }: Props) {
     })).filter(eb => eb.badges.events !== null);
   }
 
-  // Get portfolio photos (only visible ones)
-  const { data: photos } = await supabase
+  // Get portfolio photos - filter out hidden ones (is_visible = false)
+  const { data: allPhotos } = await supabase
     .from("media_assets")
     .select("*")
     .eq("model_id", model.id)
     .eq("asset_type", "portfolio")
-    .neq("is_visible", false)
     .order("created_at", { ascending: false })
     .limit(50) as { data: any[] | null };
 
-  // Get videos (only visible ones)
-  const { data: videos } = await supabase
+  // Filter out hidden photos (is_visible column added via migration)
+  const photos = (allPhotos || []).filter((p: any) => p.is_visible !== false);
+
+  // Get videos - filter out hidden ones
+  const { data: allVideos } = await supabase
     .from("media_assets")
     .select("*")
     .eq("model_id", model.id)
     .eq("asset_type", "video")
-    .neq("is_visible", false)
     .order("created_at", { ascending: false })
     .limit(24) as { data: any[] | null };
+
+  // Filter out hidden videos
+  const videos = (allVideos || []).filter((v: any) => v.is_visible !== false);
 
   // Get PPV content count (only paid content)
   const { count: premiumContentCount } = await supabase

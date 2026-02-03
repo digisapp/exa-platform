@@ -119,14 +119,15 @@ export default function ContentPage() {
     setModelUsername(model.username);
 
     // Get portfolio content
+    // Note: is_visible column added via migration - using * to include it when available
     const { data: portfolioData } = await supabase
       .from("media_assets")
-      .select("id, asset_type, photo_url, url, created_at, title, is_visible")
+      .select("*")
       .eq("model_id", model.id)
       .in("asset_type", ["portfolio", "video"])
       .order("created_at", { ascending: false });
 
-    setPortfolio((portfolioData || []) as MediaAsset[]);
+    setPortfolio((portfolioData || []) as unknown as MediaAsset[]);
 
     // Get PPV content
     const { data: contentData } = await supabase
