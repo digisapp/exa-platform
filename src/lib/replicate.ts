@@ -2,9 +2,10 @@
 
 const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN;
 
-// PhotoMaker model - identity-preserving image generation
-// Uses lucataco/photomaker which is well-maintained and documented
-const PHOTOMAKER_MODEL = "lucataco/photomaker";
+// Face-to-Many model - identity-preserving face transformation
+// Note: This model uses stylized outputs (3D, Emoji, etc.) not photorealistic
+// Version hash for direct API call
+const FACE_TO_MANY_VERSION = "a07f252abbbd832009640b27f063ea52d87d7a23a185ca165bec23b5adc8deaf";
 
 // Scenario presets - IMPORTANT: Prompts must NOT describe the person's appearance
 // InstantID takes the face from the input image, so prompts should ONLY describe scene/setting/clothing
@@ -163,33 +164,29 @@ export async function startGeneration(
       console.error("[Replicate] Could not verify face image URL:", e);
     }
 
-    // Use models endpoint to automatically use latest version
-    const response = await fetch(`https://api.replicate.com/v1/models/${PHOTOMAKER_MODEL}/predictions`, {
+    // Use predictions endpoint with version hash
+    const response = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${REPLICATE_API_TOKEN}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        version: FACE_TO_MANY_VERSION,
         input: {
-          // PhotoMaker face reference image
-          input_image: faceImageUrl,
-          // Prompt MUST include "img" trigger word for PhotoMaker
-          // The "img" word tells PhotoMaker where to inject the face identity
-          prompt: `a woman img, ${scenario.prompt}`,
-          negative_prompt: `${scenario.negative_prompt}, different person, wrong face, distorted face, bad face`,
-          // Number of inference steps (20-50, default 50)
-          num_steps: 30,
-          // Style name - use photographic for realistic output
-          style_name: "(No style)",
-          // CFG scale - how closely to follow the prompt (1-10)
-          guidance_scale: 5,
-          // Style strength ratio (15-50, higher = more stylized)
-          style_strength_ratio: 20,
-          // Number of output images
-          num_outputs: 1,
-          // Disable safety checker for fashion/swimwear content
-          disable_safety_checker: true,
+          // Face-to-Many face reference image
+          image: faceImageUrl,
+          // Style - valid options: 3D, Emoji, Video game, Pixels, Clay, Toy
+          style: "3D",
+          // Prompt describes the scene (face comes from input image)
+          prompt: scenario.prompt,
+          negative_prompt: scenario.negative_prompt,
+          // Denoising strength (0-1, higher = more creative but less like original)
+          denoising_strength: 0.65,
+          // Prompt strength (0-1, how much to follow the prompt)
+          prompt_strength: 4.5,
+          // Instant ID strength (0-1, higher = more face fidelity)
+          instant_id_strength: 0.8,
         },
       }),
     });
@@ -197,7 +194,7 @@ export async function startGeneration(
     if (!response.ok) {
       const error = await response.text();
       console.error("[Replicate] API error:", response.status, error);
-      console.error("[Replicate] Model:", PHOTOMAKER_MODEL);
+      console.error("[Replicate] Version:", FACE_TO_MANY_VERSION);
       return { error: `Failed to start generation: ${response.status}` };
     }
 
