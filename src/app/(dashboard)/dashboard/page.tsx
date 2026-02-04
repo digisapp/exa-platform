@@ -34,10 +34,31 @@ import {
   BarChart3,
   Circle,
   Heart,
+  MessageCircle,
+  Coins,
+  UserPlus,
+  Activity,
 } from "lucide-react";
 import { ModelCard } from "@/components/models/model-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BRAND_SUBSCRIPTION_TIERS } from "@/lib/stripe-config";
+
+// Helper function to format relative time
+function getTimeAgo(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return "Just now";
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -200,6 +221,191 @@ export default async function DashboardPage() {
     .select("gig_id, status")
     .eq("model_id", model.id);
 
+  // ============================================
+  // RECENT ACTIVITY FEED
+  // ============================================
+
+  // Get recent tips received (last 7 days)
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+  const { data: recentTips } = await (adminClient
+    .from("coin_transactions") as any)
+    .select("id, amount, created_at, metadata")
+    .eq("actor_id", model.id)
+    .eq("action", "tip_received")
+    .gte("created_at", sevenDaysAgo.toISOString())
+    .order("created_at", { ascending: false })
+    .limit(10);
+
+  // Get recent followers (last 7 days)
+  const { data: recentFollowers } = await (adminClient
+    .from("follows") as any)
+    .select("follower_id, created_at")
+    .eq("following_id", actor.id)
+    .gte("created_at", sevenDaysAgo.toISOString())
+    .order("created_at", { ascending: false })
+    .limit(10);
+
+  // Get recent unread messages (conversations model is part of)
+  const { data: modelParticipations } = await (supabase
+    .from("conversation_participants") as any)
+    .select("conversation_id, last_read_at")
+    .eq("actor_id", actor.id);
+
+  const conversationIds = modelParticipations?.map((p: any) => p.conversation_id) || [];
+  const lastReadMap = new Map((modelParticipations || []).map((p: any) => [p.conversation_id, p.last_read_at]));
+
+  let recentMessages: any[] = [];
+  if (conversationIds.length > 0) {
+    const { data: messages } = await (adminClient
+      .from("messages") as any)
+      .select("id, conversation_id, sender_id, content, created_at, is_system")
+      .in("conversation_id", conversationIds)
+      .neq("sender_id", actor.id)
+      .eq("is_system", false)
+      .gte("created_at", sevenDaysAgo.toISOString())
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    // Filter to only unread messages
+    recentMessages = (messages || []).filter((msg: any) => {
+      const lastRead = lastReadMap.get(msg.conversation_id);
+      return !lastRead || new Date(msg.created_at) > new Date(lastRead);
+    }).slice(0, 10);
+  }
+
+  // Enrich activity data with user info
+  const tipSenderIds = (recentTips || [])
+    .map((t: any) => t.metadata?.sender_id)
+    .filter(Boolean);
+  const followerIds = (recentFollowers || [])
+    .map((f: any) => f.follower_id)
+    .filter(Boolean);
+  const messageSenderIds = recentMessages
+    .map((m: any) => m.sender_id)
+    .filter(Boolean);
+
+  const allActivityActorIds = [...new Set([...tipSenderIds, ...followerIds, ...messageSenderIds])];
+
+  let activityActorsMap = new Map<string, any>();
+  if (allActivityActorIds.length > 0) {
+    const { data: activityActors } = await (adminClient.from("actors") as any)
+      .select("id, type")
+      .in("id", allActivityActorIds);
+
+    const actorTypes = new Map((activityActors || []).map((a: any) => [a.id, a.type]));
+
+    // Get fan and brand IDs separately
+    const activityFanIds = allActivityActorIds.filter(id => actorTypes.get(id) === "fan");
+    const activityBrandIds = allActivityActorIds.filter(id => actorTypes.get(id) === "brand");
+    const activityModelUserIds: string[] = [];
+
+    // For model actors, we need their user_ids
+    for (const actorData of activityActors || []) {
+      if (actorData.type === "model") {
+        const { data: modelActor } = await (adminClient.from("actors") as any)
+          .select("user_id")
+          .eq("id", actorData.id)
+          .single();
+        if (modelActor?.user_id) activityModelUserIds.push(modelActor.user_id);
+      }
+    }
+
+    const [activityFans, activityBrands, activityModels] = await Promise.all([
+      activityFanIds.length > 0
+        ? (adminClient.from("fans") as any).select("id, display_name, username, avatar_url").in("id", activityFanIds)
+        : { data: [] },
+      activityBrandIds.length > 0
+        ? (adminClient.from("brands") as any).select("id, company_name, logo_url").in("id", activityBrandIds)
+        : { data: [] },
+      activityModelUserIds.length > 0
+        ? (adminClient.from("models") as any).select("id, user_id, first_name, last_name, username, profile_photo_url").in("user_id", activityModelUserIds)
+        : { data: [] },
+    ]);
+
+    // Build combined map
+    for (const fan of activityFans.data || []) {
+      activityActorsMap.set(fan.id, {
+        type: "fan",
+        name: fan.display_name || fan.username || "Fan",
+        avatar: fan.avatar_url
+      });
+    }
+    for (const brand of activityBrands.data || []) {
+      activityActorsMap.set(brand.id, {
+        type: "brand",
+        name: brand.company_name || "Brand",
+        avatar: brand.logo_url
+      });
+    }
+    // Map model actors by their actor ID
+    for (const actorData of activityActors || []) {
+      if (actorData.type === "model") {
+        const modelData = (activityModels.data || []).find((m: any) =>
+          // We need to find the actor's user_id first
+          true // Will be matched below
+        );
+        // For now, set a placeholder - this is complex with the current data model
+        const { data: actorWithUser } = await (adminClient.from("actors") as any)
+          .select("user_id")
+          .eq("id", actorData.id)
+          .single();
+        const matchedModel = (activityModels.data || []).find((m: any) => m.user_id === actorWithUser?.user_id);
+        if (matchedModel) {
+          activityActorsMap.set(actorData.id, {
+            type: "model",
+            name: matchedModel.first_name
+              ? `${matchedModel.first_name} ${matchedModel.last_name || ""}`.trim()
+              : matchedModel.username,
+            avatar: matchedModel.profile_photo_url,
+            username: matchedModel.username
+          });
+        }
+      }
+    }
+  }
+
+  // Build unified activity feed
+  type ActivityItem = {
+    id: string;
+    type: "tip" | "follower" | "message";
+    actor: { name: string; avatar: string | null; type: string; username?: string } | null;
+    amount?: number;
+    messagePreview?: string;
+    conversationId?: string;
+    createdAt: string;
+  };
+
+  const activityFeed: ActivityItem[] = [
+    // Tips
+    ...(recentTips || []).map((tip: any) => ({
+      id: `tip-${tip.id}`,
+      type: "tip" as const,
+      actor: activityActorsMap.get(tip.metadata?.sender_id) || null,
+      amount: tip.amount,
+      createdAt: tip.created_at,
+    })),
+    // Followers
+    ...(recentFollowers || []).map((follow: any) => ({
+      id: `follow-${follow.follower_id}-${follow.created_at}`,
+      type: "follower" as const,
+      actor: activityActorsMap.get(follow.follower_id) || null,
+      createdAt: follow.created_at,
+    })),
+    // Messages
+    ...recentMessages.map((msg: any) => ({
+      id: `msg-${msg.id}`,
+      type: "message" as const,
+      actor: activityActorsMap.get(msg.sender_id) || null,
+      messagePreview: msg.content?.slice(0, 50) + (msg.content?.length > 50 ? "..." : ""),
+      conversationId: msg.conversation_id,
+      createdAt: msg.created_at,
+    })),
+  ]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 10);
+
   const displayName = model.first_name
     ? `${model.first_name} ${model.last_name || ''}`.trim()
     : model.username;
@@ -278,6 +484,105 @@ export default async function DashboardPage() {
                       New
                     </Badge>
                   </Link>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Recent Activity Feed */}
+      {activityFeed.length > 0 && (
+        <Card className="border-pink-500/30 bg-gradient-to-br from-pink-500/5 to-violet-500/5">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5 text-pink-500" />
+              Recent Activity
+              <Badge className="bg-pink-500 text-white ml-2">{activityFeed.length}</Badge>
+            </CardTitle>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/chats" className="text-pink-500">
+                View Chats
+                <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {activityFeed.map((item) => {
+                const timeAgo = getTimeAgo(item.createdAt);
+                return (
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-3 p-3 rounded-xl bg-white/50 dark:bg-muted/50 border border-transparent"
+                  >
+                    {/* Activity Icon */}
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                      item.type === "tip"
+                        ? "bg-gradient-to-br from-amber-500/20 to-yellow-500/20"
+                        : item.type === "follower"
+                          ? "bg-gradient-to-br from-pink-500/20 to-rose-500/20"
+                          : "bg-gradient-to-br from-blue-500/20 to-cyan-500/20"
+                    }`}>
+                      {item.actor?.avatar ? (
+                        <Image
+                          src={item.actor.avatar}
+                          alt={item.actor.name}
+                          width={40}
+                          height={40}
+                          className="rounded-full object-cover"
+                        />
+                      ) : item.type === "tip" ? (
+                        <Coins className="h-5 w-5 text-amber-500" />
+                      ) : item.type === "follower" ? (
+                        <UserPlus className="h-5 w-5 text-pink-500" />
+                      ) : (
+                        <MessageCircle className="h-5 w-5 text-blue-500" />
+                      )}
+                    </div>
+
+                    {/* Activity Content */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm">
+                        <span className="font-medium">{item.actor?.name || "Someone"}</span>
+                        {item.type === "tip" && (
+                          <> sent you a <span className="text-amber-500 font-semibold">{item.amount} coin</span> tip!</>
+                        )}
+                        {item.type === "follower" && " started following you"}
+                        {item.type === "message" && " sent you a message"}
+                      </p>
+                      {item.type === "message" && item.messagePreview && (
+                        <p className="text-xs text-muted-foreground truncate mt-0.5">
+                          {item.messagePreview}
+                        </p>
+                      )}
+                      <p className="text-xs text-muted-foreground mt-0.5">{timeAgo}</p>
+                    </div>
+
+                    {/* Action Button */}
+                    {item.type === "message" && item.conversationId && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        asChild
+                        className="flex-shrink-0 text-blue-500 hover:text-blue-600"
+                      >
+                        <Link href={`/chats/${item.conversationId}`}>
+                          Reply
+                        </Link>
+                      </Button>
+                    )}
+                    {item.type === "tip" && (
+                      <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/30 flex-shrink-0">
+                        +{item.amount}
+                      </Badge>
+                    )}
+                    {item.type === "follower" && (
+                      <Badge variant="outline" className="bg-pink-500/10 text-pink-600 border-pink-500/30 flex-shrink-0">
+                        New
+                      </Badge>
+                    )}
+                  </div>
                 );
               })}
             </div>
