@@ -3,8 +3,9 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Coins, Sparkles, Gift } from "lucide-react";
+import { Coins, Sparkles, Gift, UserPlus } from "lucide-react";
 import confetti from "canvas-confetti";
+import Link from "next/link";
 
 // Spin wheel segments with coin rewards
 const SEGMENTS = [
@@ -115,12 +116,62 @@ export function DailySpin({ isLoggedIn, onSpinComplete, hasSpunToday }: DailySpi
     };
   }, []);
 
-  if (!isLoggedIn) {
-    return null; // Don't show spin for anonymous users
-  }
-
   if (hasSpunToday) {
     return null; // Already spun today
+  }
+
+  // Show sign-up prompt for anonymous users
+  if (!isLoggedIn) {
+    return (
+      <div className="bg-gradient-to-r from-yellow-500/10 via-orange-500/10 to-pink-500/10 rounded-xl p-4 mb-4 w-full border border-yellow-500/20 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(234,179,8,0.1),transparent_70%)]" />
+
+        <div className="relative">
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <Gift className="h-5 w-5 text-yellow-400" />
+            <span className="font-semibold bg-gradient-to-r from-yellow-400 to-orange-400 text-transparent bg-clip-text">
+              Daily Reward!
+            </span>
+            <Sparkles className="h-4 w-4 text-yellow-400 animate-pulse" />
+          </div>
+
+          {/* Static wheel preview */}
+          <div className="relative w-32 h-32 mx-auto mb-4 opacity-60">
+            <div className="absolute inset-0 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full blur-lg opacity-30" />
+            <div className="relative w-full h-full rounded-full overflow-hidden border-4 border-yellow-500/50 shadow-lg">
+              {SEGMENTS.map((segment, index) => {
+                const angle = (360 / SEGMENTS.length) * index;
+                return (
+                  <div
+                    key={index}
+                    className={`absolute w-full h-full bg-gradient-to-br ${segment.color}`}
+                    style={{
+                      clipPath: `polygon(50% 50%, 50% 0%, ${50 + 50 * Math.tan(Math.PI / SEGMENTS.length)}% 0%)`,
+                      transform: `rotate(${angle}deg)`,
+                      transformOrigin: "50% 50%",
+                    }}
+                  />
+                );
+              })}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-gradient-to-br from-zinc-800 to-zinc-900 border-2 border-yellow-500/50 flex items-center justify-center z-10">
+                <Coins className="h-4 w-4 text-yellow-400" />
+              </div>
+            </div>
+          </div>
+
+          <p className="text-sm text-center text-muted-foreground mb-3">
+            Sign up to spin the wheel and win <span className="text-yellow-400 font-semibold">free coins</span> daily!
+          </p>
+
+          <Link href="/fan/sign-up" className="block">
+            <Button className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 shadow-lg shadow-yellow-500/25">
+              <UserPlus className="h-4 w-4 mr-2" />
+              Sign Up to Spin
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return (

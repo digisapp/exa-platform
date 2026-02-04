@@ -180,11 +180,11 @@ export function GameComplete({
         </div>
       )}
 
-      {/* Daily Spin Reward (for logged-in users who haven't spun today) */}
-      {isLoggedIn && !hasSpunToday && onSpinComplete && (
+      {/* Daily Spin Reward (shows sign-up prompt for anonymous users) */}
+      {!hasSpunToday && (
         <DailySpin
           isLoggedIn={isLoggedIn}
-          onSpinComplete={onSpinComplete}
+          onSpinComplete={onSpinComplete || (() => {})}
           hasSpunToday={hasSpunToday}
         />
       )}
