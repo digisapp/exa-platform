@@ -1,10 +1,17 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { headers, cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { ConversationList } from "@/components/chat/ConversationList";
 import { NewMessageDialog } from "@/components/chat/NewMessageDialog";
 import { BlastDialog } from "@/components/chat/BlastDialog";
 import { MessageCircle } from "lucide-react";
+
+// Admin client for fetching participant data (bypasses RLS)
+const adminClient = createSupabaseClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 interface PageProps {
   searchParams: Promise<{ new?: string }>;
@@ -152,9 +159,9 @@ export default async function MessagesPage({ searchParams }: PageProps) {
         .in("user_id", userIds) as { data: any[] | null }
     : { data: [] };
 
-  // Fetch all fans
+  // Fetch all fans (use admin client to bypass RLS)
   const { data: fans } = fanActorIds.length > 0
-    ? await supabase
+    ? await adminClient
         .from("fans")
         .select("id, display_name, username, avatar_url")
         .in("id", fanActorIds) as { data: any[] | null }

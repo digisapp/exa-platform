@@ -1,8 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import { ConversationList } from "@/components/chat/ConversationList";
 import { BlastDialog } from "@/components/chat/BlastDialog";
 import { NewMessageDialog } from "@/components/chat/NewMessageDialog";
+
+// Admin client for fetching participant data (bypasses RLS)
+const adminClient = createSupabaseClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -111,9 +118,9 @@ export default async function ChatsLayout({ children }: LayoutProps) {
         .in("user_id", userIds) as { data: any[] | null }
     : { data: [] };
 
-  // Fetch all fans
+  // Fetch all fans (use admin client to bypass RLS)
   const { data: fans } = fanActorIds.length > 0
-    ? await supabase
+    ? await adminClient
         .from("fans")
         .select("id, display_name, username, avatar_url")
         .in("id", fanActorIds) as { data: any[] | null }
