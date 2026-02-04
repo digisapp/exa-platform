@@ -100,7 +100,7 @@ export default function RootLayout({
           <PageViewTracker />
         </Suspense>
         <ServiceWorkerRegistration />
-        <Toaster position="top-right" />
+        <Toaster position="top-center" />
       </body>
     </html>
   );
