@@ -435,12 +435,12 @@ export default function AdminBoostPage() {
           </CardContent>
         </Card>
 
-        {/* Top Models */}
+        {/* Leaderboard */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Trophy className="h-5 w-5 text-yellow-500" />
-              Top Models
+              Leaderboard
             </CardTitle>
             <CardDescription>Most liked and boosted models</CardDescription>
           </CardHeader>

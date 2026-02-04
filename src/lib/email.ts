@@ -2783,6 +2783,9 @@ export async function sendMiamiSwimWeekProfileReminderEmail({
                       Action Required
                     </p>
                     <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 15px; line-height: 1.6;">
+                      Login to your <a href="https://www.examodels.com" style="color: #ec4899; text-decoration: none;">examodels.com</a> account to update your profile settings.
+                    </p>
+                    <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 15px; line-height: 1.6;">
                       To be considered for Miami Swim Week shows, designers need:
                     </p>
                     <table width="100%" cellpadding="0" cellspacing="0">
@@ -2795,19 +2798,13 @@ export async function sendMiamiSwimWeekProfileReminderEmail({
                       <tr>
                         <td style="padding: 10px 0; color: #a1a1aa; font-size: 15px;">
                           <span style="color: #06b6d4; margin-right: 10px;">2.</span>
-                          <strong style="color: #fff;">Measurements</strong> - Height, bust, waist, hips for swimwear fittings
+                          <strong style="color: #fff;">Measurements</strong> - Height, bust, waist, hips for swimwear fittings (input measurements in profile settings)
                         </td>
                       </tr>
                     </table>
                   </td>
                 </tr>
               </table>
-
-              <!-- Why It Matters -->
-              <p style="margin: 0 0 25px; color: #a1a1aa; font-size: 15px; line-height: 1.7;">
-                Swimwear brands specifically need accurate measurements to select models for their runway shows.
-                Without a profile photo and measurements, your profile won't appear in designer searches for Miami Swim Week castings.
-              </p>
 
               <!-- CTA Button -->
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
@@ -2816,52 +2813,6 @@ export async function sendMiamiSwimWeekProfileReminderEmail({
                     <a href="${dashboardUrl}" style="display: inline-block; background: linear-gradient(135deg, #06b6d4 0%, #ec4899 100%); color: white; text-decoration: none; padding: 16px 40px; border-radius: 30px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 15px rgba(236, 72, 153, 0.4);">
                       Complete My Profile Now
                     </a>
-                  </td>
-                </tr>
-              </table>
-
-              <!-- Quick Tips -->
-              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #262626; border-radius: 12px; padding: 20px;">
-                <tr>
-                  <td>
-                    <p style="margin: 0 0 15px; color: #ffffff; font-size: 15px; font-weight: 600;">
-                      Quick tips for your profile:
-                    </p>
-                    <table width="100%" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="padding: 6px 0; color: #a1a1aa; font-size: 14px;">
-                          <span style="color: #10b981; margin-right: 8px;">&#10003;</span> Use a well-lit photo with a clean background
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 6px 0; color: #a1a1aa; font-size: 14px;">
-                          <span style="color: #10b981; margin-right: 8px;">&#10003;</span> Take measurements in form-fitting clothes or swimwear
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 6px 0; color: #a1a1aa; font-size: 14px;">
-                          <span style="color: #10b981; margin-right: 8px;">&#10003;</span> Double-check your measurements for accuracy
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <!-- Urgency Banner -->
-          <tr>
-            <td style="padding: 0 30px 30px;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, rgba(249, 115, 22, 0.2) 0%, rgba(236, 72, 153, 0.2) 100%); border: 1px solid rgba(249, 115, 22, 0.3); border-radius: 12px; padding: 20px;">
-                <tr>
-                  <td style="text-align: center;">
-                    <p style="margin: 0; color: #f97316; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">
-                      Designers are selecting models now!
-                    </p>
-                    <p style="margin: 8px 0 0; color: #a1a1aa; font-size: 13px;">
-                      Complete your profile today to be considered for Miami Swim Week 2026
-                    </p>
                   </td>
                 </tr>
               </table>
