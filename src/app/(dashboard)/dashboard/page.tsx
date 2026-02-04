@@ -254,7 +254,7 @@ export default async function DashboardPage() {
     .eq("actor_id", actor.id);
 
   const conversationIds = modelParticipations?.map((p: any) => p.conversation_id) || [];
-  const lastReadMap = new Map((modelParticipations || []).map((p: any) => [p.conversation_id, p.last_read_at]));
+  const lastReadMap = new Map<string, string | null>((modelParticipations || []).map((p: any) => [p.conversation_id, p.last_read_at]));
 
   let recentMessages: any[] = [];
   if (conversationIds.length > 0) {
