@@ -27,7 +27,6 @@ import {
   FolderHeart,
   Plus,
   Flame,
-  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/auth/logout-button";
@@ -269,17 +268,6 @@ export function Navbar({ user, actorType, unreadCount = 0 }: NavbarProps) {
                         </Link>
                       </DropdownMenuItem>
                     </>
-                  )}
-                  {actorType === "model" && (
-                    <DropdownMenuItem asChild>
-                      <Link href="/ai-studio" className="cursor-pointer">
-                        <Sparkles className="mr-2 h-4 w-4 text-violet-500" />
-                        AI Photo Studio
-                        <span className="ml-auto text-[10px] bg-gradient-to-r from-violet-500 to-pink-500 text-white px-1.5 py-0.5 rounded-full">
-                          NEW
-                        </span>
-                      </Link>
-                    </DropdownMenuItem>
                   )}
                   <DropdownMenuItem asChild>
                     <Link href="/boost" className="cursor-pointer">
