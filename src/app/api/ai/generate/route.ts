@@ -1,24 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { startGeneration, faceSwap, AI_SCENARIOS, AI_GENERATION_COST, type ScenarioId } from "@/lib/fal";
+import { startGeneration, AI_SCENARIOS, AI_GENERATION_COST, type ScenarioId } from "@/lib/fal";
 
-// Allow longer timeout for full generation + face swap
+// Allow longer timeout for Flux generation (~20-30 seconds)
 export const maxDuration = 60;
 
-// Download image from URL and return as buffer
-async function downloadImage(url: string): Promise<Buffer | null> {
-  try {
-    const response = await fetch(url);
-    if (!response.ok) return null;
-    const arrayBuffer = await response.arrayBuffer();
-    return Buffer.from(arrayBuffer);
-  } catch (error) {
-    console.error("[AI Generate] Failed to download image:", error);
-    return null;
-  }
-}
-
-// POST - Generate AI image (synchronous - does everything in one call)
+// POST - Generate base image with Flux (face swap happens on status check)
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -81,8 +68,8 @@ export async function POST(request: NextRequest) {
       console.error("[AI Generate] Failed to deduct coins:", coinError);
     }
 
-    // Step 1: Generate base image with Flux (synchronous - waits for result)
-    console.log("[AI Generate] Step 1: Generating base image with Flux...");
+    // Generate base image with Flux (synchronous - waits for result)
+    console.log("[AI Generate] Generating base image with Flux...");
     const fluxResult = await startGeneration(sourceImageUrl, scenarioId);
 
     if ("error" in fluxResult) {
@@ -94,55 +81,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: fluxResult.error }, { status: 500 });
     }
 
-    console.log("[AI Generate] Step 1 complete! Base image:", fluxResult.baseImageUrl.slice(0, 50));
+    console.log("[AI Generate] Flux complete! Base image:", fluxResult.baseImageUrl.slice(0, 50));
 
-    // Step 2: Face swap with Replicate/Easel
-    console.log("[AI Generate] Step 2: Face swapping...");
-    const swapResult = await faceSwap(fluxResult.baseImageUrl, sourceImageUrl);
-
-    if ("error" in swapResult) {
-      // Refund coins on error
-      await supabase
-        .from("models")
-        .update({ coin_balance: coinBalance })
-        .eq("id", model.id);
-      return NextResponse.json({ error: swapResult.error }, { status: 500 });
-    }
-
-    if (!swapResult.images || swapResult.images.length === 0) {
-      await supabase
-        .from("models")
-        .update({ coin_balance: coinBalance })
-        .eq("id", model.id);
-      return NextResponse.json({ error: "Face swap returned no image" }, { status: 500 });
-    }
-
-    console.log("[AI Generate] Step 2 complete! Saving to storage...");
-
-    // Step 3: Save to permanent storage
+    // Create generation record with base image (face swap happens on status check)
     const generationId = crypto.randomUUID();
-    const outputUrl = swapResult.images[0].url;
-    const buffer = await downloadImage(outputUrl);
-
-    let permanentUrl = outputUrl; // Fallback to original URL
-    if (buffer) {
-      const filename = `${model.id}/ai-${generationId}-0.webp`;
-      const { error: uploadError } = await supabase.storage
-        .from("portfolio")
-        .upload(filename, buffer, {
-          contentType: "image/webp",
-          upsert: true,
-        });
-
-      if (!uploadError) {
-        const { data: { publicUrl } } = supabase.storage
-          .from("portfolio")
-          .getPublicUrl(filename);
-        permanentUrl = publicUrl;
-      }
-    }
-
-    // Create generation record
     const { data: generation, error: insertError } = await supabase
       .from("ai_generations")
       .insert({
@@ -152,26 +94,29 @@ export async function POST(request: NextRequest) {
         scenario_id: scenarioId,
         scenario_name: scenario.name,
         prompt: scenario.prompt,
-        status: "completed",
-        result_urls: [permanentUrl],
+        status: "face_swap_pending", // New status - base image ready, face swap needed
+        replicate_prediction_id: fluxResult.baseImageUrl, // Store base image URL here temporarily
         coins_spent: AI_GENERATION_COST,
-        completed_at: new Date().toISOString(),
       })
       .select()
       .single();
 
     if (insertError) {
       console.error("[AI Generate] Failed to create record:", insertError);
-      // Don't fail - the image was generated successfully
+      // Refund coins
+      await supabase
+        .from("models")
+        .update({ coin_balance: coinBalance })
+        .eq("id", model.id);
+      return NextResponse.json({ error: "Failed to save generation" }, { status: 500 });
     }
 
-    console.log("[AI Generate] Complete! Image saved:", permanentUrl.slice(0, 50));
+    console.log("[AI Generate] Base image saved, returning for face swap...");
 
     return NextResponse.json({
       success: true,
-      generationId: generation?.id || generationId,
-      status: "completed",
-      resultUrls: [permanentUrl],
+      generationId: generation.id,
+      status: "processing", // Client will poll for status
       coinsSpent: AI_GENERATION_COST,
       newBalance: coinBalance - AI_GENERATION_COST,
     });

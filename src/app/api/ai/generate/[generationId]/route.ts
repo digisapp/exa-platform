@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getGenerationStatus, getGenerationResult, faceSwap } from "@/lib/fal";
+import { faceSwap } from "@/lib/fal";
 
-// Allow longer timeout for downloading and saving images
+// Allow longer timeout for face swap (~20-30 seconds)
 export const maxDuration = 60;
 
 // Download image from URL and return as buffer
@@ -32,7 +32,7 @@ async function saveImagesToStorage(
     const buffer = await downloadImage(url);
 
     if (!buffer) {
-      console.error(`[AI Status] Failed to download image ${i} from fal.ai`);
+      console.error(`[AI Status] Failed to download image ${i}`);
       continue;
     }
 
@@ -60,7 +60,7 @@ async function saveImagesToStorage(
   return permanentUrls;
 }
 
-// GET - Check generation status
+// GET - Check generation status and do face swap if needed
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ generationId: string }> }
@@ -98,82 +98,87 @@ export async function GET(
     }
 
     // If already completed or failed, return cached result
-    if (generation.status === "completed" || generation.status === "failed") {
+    if (generation.status === "completed") {
       return NextResponse.json({
-        status: generation.status,
+        status: "completed",
         resultUrls: generation.result_urls,
+      });
+    }
+
+    if (generation.status === "failed") {
+      return NextResponse.json({
+        status: "failed",
         error: generation.error_message,
       });
     }
 
-    // Check fal.ai for current status
-    const requestId = generation.replicate_prediction_id; // Field reused for fal.ai request_id
-    if (!requestId) {
-      return NextResponse.json({ error: "No request ID" }, { status: 400 });
-    }
-
-    console.log("[AI Status] Checking fal.ai request:", requestId);
-    const statusResult = await getGenerationStatus(requestId);
-    console.log("[AI Status] fal.ai status response:", JSON.stringify(statusResult).slice(0, 500));
-
-    if ("error" in statusResult) {
-      console.log("[AI Status] Error from fal.ai:", statusResult.error);
-      return NextResponse.json({
-        status: "processing",
-        message: "Checking status...",
-      });
-    }
-
-    console.log("[AI Status] fal.ai status:", statusResult.status);
-
-    // Handle fal.ai status: IN_QUEUE, IN_PROGRESS, COMPLETED, FAILED
-    if (statusResult.status === "COMPLETED") {
-      // Step 1: Get the Flux base image result
-      const baseResult = await getGenerationResult(requestId);
-
-      if ("error" in baseResult) {
-        console.error("[AI Status] Failed to get Flux result:", baseResult.error);
-        return NextResponse.json({
-          status: "failed",
-          error: "Failed to retrieve base image",
-        });
-      }
-
-      if (!baseResult.images || baseResult.images.length === 0) {
-        console.error("[AI Status] No images in Flux result");
-        return NextResponse.json({
-          status: "failed",
-          error: "No base image generated",
-        });
-      }
-
-      console.log("[AI Status] Flux base image ready, starting face swap...");
-      const baseImageUrl = baseResult.images[0].url;
-
-      // Step 2: Face swap - put user's face on the base image
+    // Handle face_swap_pending status - do the face swap now
+    if (generation.status === "face_swap_pending") {
+      // Base image URL is stored in replicate_prediction_id field
+      const baseImageUrl = generation.replicate_prediction_id;
       const faceImageUrl = generation.source_image_url;
-      console.log("[AI Status] Face swap: base =", baseImageUrl.slice(0, 50), "face =", faceImageUrl?.slice(0, 50));
+
+      if (!baseImageUrl) {
+        console.error("[AI Status] No base image URL in generation record");
+        await supabase
+          .from("ai_generations")
+          .update({
+            status: "failed",
+            error_message: "Missing base image",
+          })
+          .eq("id", generationId);
+        return NextResponse.json({
+          status: "failed",
+          error: "Missing base image",
+        });
+      }
 
       if (!faceImageUrl) {
         console.error("[AI Status] No face image URL in generation record");
+        await supabase
+          .from("ai_generations")
+          .update({
+            status: "failed",
+            error_message: "Missing source face image",
+          })
+          .eq("id", generationId);
         return NextResponse.json({
           status: "failed",
           error: "Missing source face image",
         });
       }
 
+      console.log("[AI Status] Starting face swap...");
+      console.log("[AI Status] Base image:", baseImageUrl.slice(0, 80));
+      console.log("[AI Status] Face image:", faceImageUrl.slice(0, 80));
+
+      // Do the face swap
       const swapResult = await faceSwap(baseImageUrl, faceImageUrl);
 
       if ("error" in swapResult) {
         console.error("[AI Status] Face swap failed:", swapResult.error);
+        await supabase
+          .from("ai_generations")
+          .update({
+            status: "failed",
+            error_message: swapResult.error,
+          })
+          .eq("id", generationId);
         return NextResponse.json({
           status: "failed",
-          error: "Face swap failed",
+          error: swapResult.error,
         });
       }
 
       if (!swapResult.images || swapResult.images.length === 0) {
         console.error("[AI Status] No images in face swap result");
+        await supabase
+          .from("ai_generations")
+          .update({
+            status: "failed",
+            error_message: "Face swap returned no image",
+          })
+          .eq("id", generationId);
         return NextResponse.json({
           status: "failed",
           error: "Face swap returned no image",
@@ -185,9 +190,9 @@ export async function GET(
       // Extract URLs from face swap result
       const outputUrls = swapResult.images.map(img => img.url);
 
-      console.log("[AI Status] Saving", outputUrls.length, "face-swapped images to storage...");
+      console.log("[AI Status] Saving", outputUrls.length, "images to storage...");
 
-      // Save images to our storage (fal.ai URLs expire!)
+      // Save images to our storage (external URLs expire!)
       const permanentUrls = await saveImagesToStorage(
         supabase,
         outputUrls,
@@ -197,6 +202,13 @@ export async function GET(
 
       if (permanentUrls.length === 0) {
         console.error("[AI Status] Failed to save any images to storage");
+        await supabase
+          .from("ai_generations")
+          .update({
+            status: "failed",
+            error_message: "Failed to save generated images",
+          })
+          .eq("id", generationId);
         return NextResponse.json({
           status: "failed",
           error: "Failed to save generated images",
@@ -219,26 +231,12 @@ export async function GET(
         status: "completed",
         resultUrls: permanentUrls,
       });
-    } else if (statusResult.status === "FAILED") {
-      // Update generation as failed
-      await supabase
-        .from("ai_generations")
-        .update({
-          status: "failed",
-          error_message: "Generation failed",
-        })
-        .eq("id", generationId);
-
-      return NextResponse.json({
-        status: "failed",
-        error: "Generation failed",
-      });
     }
 
-    // Still processing (IN_QUEUE or IN_PROGRESS)
+    // Still processing (unknown status)
     return NextResponse.json({
       status: "processing",
-      falStatus: statusResult.status,
+      message: "Generation in progress...",
     });
   } catch (error) {
     console.error("[AI Generate Status] Error:", error);
