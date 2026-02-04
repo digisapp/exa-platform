@@ -16,7 +16,6 @@ import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { GigsFeed } from "@/components/gigs/GigsFeed";
-import { RequestCallCard } from "@/components/dashboard/RequestCallCard";
 import { Badge } from "@/components/ui/badge";
 import {
   ArrowRight,
@@ -201,23 +200,6 @@ export default async function DashboardPage() {
     .select("gig_id, status")
     .eq("model_id", model.id);
 
-  // Get EXA Boost leaderboard stats
-  const { data: boostStats } = await (supabase
-    .from("top_model_leaderboard") as any)
-    .select("today_points, week_points, total_points, total_likes, total_boosts")
-    .eq("model_id", model.id)
-    .single();
-
-  // Get rank (count models with more today_points)
-  let todayRank = null;
-  if (boostStats?.today_points > 0) {
-    const { count } = await (supabase
-      .from("top_model_leaderboard") as any)
-      .select("*", { count: "exact", head: true })
-      .gt("today_points", boostStats.today_points);
-    todayRank = (count || 0) + 1;
-  }
-
   const displayName = model.first_name
     ? `${model.first_name} ${model.last_name || ''}`.trim()
     : model.username;
@@ -386,92 +368,6 @@ export default async function DashboardPage() {
           />
         </div>
       </div>
-
-      {/* Request Call Card */}
-      {model.phone && (
-        <div className="max-w-md">
-          <RequestCallCard
-            modelName={displayName}
-            modelPhone={model.phone}
-            modelInstagram={model.instagram_name}
-          />
-        </div>
-      )}
-
-      {/* EXA Boost Stats */}
-      {model.is_approved && (
-        <Card className="max-w-md border-pink-500/30 bg-gradient-to-br from-pink-500/5 via-purple-500/5 to-orange-500/5">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <div className="p-1.5 rounded-lg bg-gradient-to-br from-pink-500 to-purple-500">
-                <Sparkles className="h-4 w-4 text-white" />
-              </div>
-              <span className="bg-gradient-to-r from-pink-400 to-purple-400 text-transparent bg-clip-text">
-                EXA Boost
-              </span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {boostStats ? (
-              <div className="space-y-4">
-                {/* Today's Rank */}
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Today&apos;s Rank</span>
-                  <div className="flex items-center gap-2">
-                    {todayRank ? (
-                      <>
-                        <span className="text-2xl font-bold text-pink-400">#{todayRank}</span>
-                        <Badge className="bg-green-500/20 text-green-400 border-0 text-xs">
-                          {boostStats.today_points} pts
-                        </Badge>
-                      </>
-                    ) : (
-                      <span className="text-muted-foreground">No votes today</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Stats Grid */}
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="text-center p-2 rounded-lg bg-white/5">
-                    <p className="text-lg font-bold">{boostStats.total_likes || 0}</p>
-                    <p className="text-xs text-muted-foreground">Total Likes</p>
-                  </div>
-                  <div className="text-center p-2 rounded-lg bg-white/5">
-                    <p className="text-lg font-bold">{boostStats.total_boosts || 0}</p>
-                    <p className="text-xs text-muted-foreground">Boosts</p>
-                  </div>
-                  <div className="text-center p-2 rounded-lg bg-white/5">
-                    <p className="text-lg font-bold">{boostStats.total_points || 0}</p>
-                    <p className="text-xs text-muted-foreground">All-Time</p>
-                  </div>
-                </div>
-
-                {/* Play Button */}
-                <Button asChild size="sm" className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600">
-                  <Link href="/boost">
-                    Play EXA Boost
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-            ) : (
-              <div className="text-center py-4">
-                <p className="text-sm text-muted-foreground mb-3">
-                  Get discovered by fans and climb the leaderboard!
-                </p>
-                <Button asChild size="sm" className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600">
-                  <Link href="/boost">
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Check it out
-                  </Link>
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
     </div>
   );
 }
