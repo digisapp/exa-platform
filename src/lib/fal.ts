@@ -9,8 +9,8 @@ const FLUX_MODEL = "fal-ai/flux-pro/v1.1";
 const FLUX_MODEL_BASE = "fal-ai/flux-pro"; // For status checks
 // Replicate API for face swap
 const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN;
-// Use face26/face-swap - simpler but reliable face swap
-const REPLICATE_FACE_SWAP_MODEL = "face26/face-swap";
+// codeplugtech/face-swap - fast and reliable, runs on CPU
+const REPLICATE_FACE_SWAP_MODEL = "codeplugtech/face-swap";
 
 // Scenario presets for base image generation
 // Face will be swapped in the second step, so prompts describe the full scene with a model
@@ -230,9 +230,9 @@ export async function startFaceSwap(
   }
 
   try {
-    console.log("[Replicate/Face26] Starting face swap");
-    console.log("[Replicate/Face26] Target image (Flux):", baseImageUrl);
-    console.log("[Replicate/Face26] Source face (user):", faceImageUrl);
+    console.log("[Replicate/FaceSwap] Starting face swap");
+    console.log("[Replicate/FaceSwap] Target image (Flux):", baseImageUrl);
+    console.log("[Replicate/FaceSwap] Source face (user):", faceImageUrl);
 
     const response = await fetch("https://api.replicate.com/v1/models/" + REPLICATE_FACE_SWAP_MODEL + "/predictions", {
       method: "POST",
@@ -242,24 +242,24 @@ export async function startFaceSwap(
       },
       body: JSON.stringify({
         input: {
-          source_image: baseImageUrl,   // The image to put face into
-          target_image: faceImageUrl,   // The face to use
+          input_image: baseImageUrl,   // Target image (Flux base)
+          swap_image: faceImageUrl,    // Source face (user's photo)
         },
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("[Replicate/Face26] Face swap start error:", response.status, errorText);
+      console.error("[Replicate/FaceSwap] Face swap start error:", response.status, errorText);
       return { error: `Face swap failed to start: ${response.status}` };
     }
 
     const prediction = await response.json();
-    console.log("[Replicate/Face26] Prediction started:", prediction.id);
+    console.log("[Replicate/FaceSwap] Prediction started:", prediction.id);
 
     return { predictionId: prediction.id };
   } catch (error) {
-    console.error("[Replicate/Face26] Face swap start error:", error);
+    console.error("[Replicate/FaceSwap] Face swap start error:", error);
     return { error: "Face swap failed to start" };
   }
 }
@@ -283,21 +283,21 @@ export async function checkFaceSwapStatus(
     );
 
     if (!response.ok) {
-      console.error("[Replicate/Face26] Status check failed:", response.status);
+      console.error("[Replicate/FaceSwap] Status check failed:", response.status);
       return { status: "processing" }; // Retry on next poll
     }
 
     const result = await response.json();
-    console.log("[Replicate/Face26] Status:", result.status);
+    console.log("[Replicate/FaceSwap] Status:", result.status);
 
     if (result.status === "succeeded") {
       const outputUrl = Array.isArray(result.output) ? result.output[0] : result.output;
-      console.log("[Replicate/Face26] Face swap completed:", outputUrl);
+      console.log("[Replicate/FaceSwap] Face swap completed:", outputUrl);
       return { status: "completed", imageUrl: outputUrl };
     }
 
     if (result.status === "failed") {
-      console.error("[Replicate/Face26] Face swap failed:", result.error);
+      console.error("[Replicate/FaceSwap] Face swap failed:", result.error);
       return { status: "failed", error: result.error || "Face swap failed" };
     }
 
@@ -308,7 +308,7 @@ export async function checkFaceSwapStatus(
     // Still processing (starting, processing, etc.)
     return { status: "processing" };
   } catch (error) {
-    console.error("[Replicate/Face26] Status check error:", error);
+    console.error("[Replicate/FaceSwap] Status check error:", error);
     return { status: "processing" }; // Retry on next poll
   }
 }
