@@ -2,12 +2,9 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Instagram, Heart, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState, useCallback, memo } from "react";
+import { useState, memo } from "react";
 import { toast } from "sonner";
 import { AddToCampaignButton } from "@/components/ui/add-to-campaign-button";
 import { ModelNotesDialog } from "@/components/brands/ModelNotesDialog";

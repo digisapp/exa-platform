@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { Megaphone, Plus, Check, Loader2 } from "lucide-react";
 import {
@@ -50,14 +50,7 @@ export function AddToCampaignButton({
     lg: "h-6 w-6",
   };
 
-  // Fetch campaigns when popover opens
-  useEffect(() => {
-    if (open) {
-      fetchCampaigns();
-    }
-  }, [open]);
-
-  const fetchCampaigns = async () => {
+  const fetchCampaigns = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch(`/api/campaigns/model/${modelId}`);
@@ -69,7 +62,14 @@ export function AddToCampaignButton({
     } finally {
       setLoading(false);
     }
-  };
+  }, [modelId]);
+
+  // Fetch campaigns when popover opens
+  useEffect(() => {
+    if (open) {
+      fetchCampaigns();
+    }
+  }, [open, fetchCampaigns]);
 
   const toggleCampaign = async (campaignId: string, currentlyInCampaign: boolean) => {
     setToggling(campaignId);
@@ -95,7 +95,7 @@ export function AddToCampaignButton({
           ? `Removed ${modelName} from ${campaignName}`
           : `Added ${modelName} to ${campaignName}`
       );
-    } catch (error) {
+    } catch {
       toast.error("Failed to update campaign");
     } finally {
       setToggling(null);

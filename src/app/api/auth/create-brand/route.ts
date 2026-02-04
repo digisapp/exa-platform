@@ -1,6 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { z } from "zod";
+
+// Zod schema for brand creation validation
+const createBrandSchema = z.object({
+  companyName: z.string().min(1, "Company name is required").max(100, "Company name is too long").trim(),
+  contactName: z.string().max(100, "Contact name is too long").optional().nullable(),
+  bio: z.string().max(1000, "Bio is too long").optional().nullable(),
+});
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,14 +18,19 @@ export async function POST(request: NextRequest) {
       return rateLimitResponse;
     }
 
-    const { companyName, contactName, bio } = await request.json();
+    const body = await request.json();
 
-    if (!companyName?.trim()) {
+    // Validate request body with Zod schema
+    const validationResult = createBrandSchema.safeParse(body);
+    if (!validationResult.success) {
+      const firstError = validationResult.error.issues[0];
       return NextResponse.json(
-        { error: "Company name is required" },
+        { error: firstError.message },
         { status: 400 }
       );
     }
+
+    const { companyName, contactName, bio } = validationResult.data;
 
     const supabase = await createClient();
 
@@ -56,7 +69,7 @@ export async function POST(request: NextRequest) {
 
       // Actor exists but no brand - create brand profile
       // Generate username from company name
-      let baseUsername = companyName.trim().toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 20);
+      let baseUsername = companyName.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 20);
       if (baseUsername.length < 3) {
         baseUsername = baseUsername + "brand";
       }
@@ -82,10 +95,10 @@ export async function POST(request: NextRequest) {
         .upsert({
           id: existingActor.id,
           username: finalUsername,
-          company_name: companyName.trim(),
-          contact_name: contactName?.trim() || null,
+          company_name: companyName,
+          contact_name: contactName || null,
           email: user.email,
-          bio: bio?.trim() || null,
+          bio: bio || null,
           is_verified: false,
           subscription_tier: "free",
         }, { onConflict: "id" });
@@ -126,7 +139,7 @@ export async function POST(request: NextRequest) {
     const actorId = (actor as { id: string }).id;
 
     // Generate username from company name
-    let baseUsername = companyName.trim().toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 20);
+    let baseUsername = companyName.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 20);
     if (baseUsername.length < 3) {
       baseUsername = baseUsername + "brand";
     }
@@ -153,10 +166,10 @@ export async function POST(request: NextRequest) {
       .upsert({
         id: actorId,
         username: finalUsername,
-        company_name: companyName.trim(),
-        contact_name: contactName?.trim() || null,
+        company_name: companyName,
+        contact_name: contactName || null,
         email: user.email,
-        bio: bio?.trim() || null,
+        bio: bio || null,
         is_verified: false,
         subscription_tier: "free",
       }, { onConflict: "id" });

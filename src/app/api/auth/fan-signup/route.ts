@@ -1,39 +1,40 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { z } from "zod";
+
+// Zod schema for fan signup validation
+const fanSignupSchema = z.object({
+  email: z.string().email("Invalid email address").max(254, "Email is too long").toLowerCase().trim(),
+  password: z.string().min(6, "Password must be at least 6 characters").max(128, "Password is too long"),
+  username: z.string()
+    .min(3, "Username must be at least 3 characters")
+    .max(20, "Username must be 20 characters or less")
+    .regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores")
+    .transform(val => val.toLowerCase().trim()),
+});
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, username } = await request.json();
-
-    if (!email || !password || !username) {
-      return NextResponse.json(
-        { error: "Email, password, and username are required" },
-        { status: 400 }
-      );
+    // Rate limit check (unauthenticated endpoint - use IP)
+    const rateLimitResponse = await checkEndpointRateLimit(request, "auth");
+    if (rateLimitResponse) {
+      return rateLimitResponse;
     }
 
-    // Validate username
-    const cleanUsername = username.trim().toLowerCase().replace(/[^a-z0-9_]/g, "");
-    if (cleanUsername.length < 3) {
+    const body = await request.json();
+
+    // Validate request body with Zod schema
+    const validationResult = fanSignupSchema.safeParse(body);
+    if (!validationResult.success) {
+      const firstError = validationResult.error.issues[0];
       return NextResponse.json(
-        { error: "Username must be at least 3 characters" },
-        { status: 400 }
-      );
-    }
-    if (cleanUsername.length > 20) {
-      return NextResponse.json(
-        { error: "Username must be 20 characters or less" },
+        { error: firstError.message },
         { status: 400 }
       );
     }
 
-    // Validate password
-    if (password.length < 6) {
-      return NextResponse.json(
-        { error: "Password must be at least 6 characters" },
-        { status: 400 }
-      );
-    }
+    const { email, password, username: cleanUsername } = validationResult.data;
 
     // Use service role client to bypass RLS
     const supabase = createClient(
