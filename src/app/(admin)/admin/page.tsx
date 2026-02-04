@@ -253,6 +253,16 @@ export default async function AdminPage() {
             )}
           </Link>
         </Button>
+
+        <Button variant="outline" asChild className="h-auto py-4 flex-col gap-2 border-orange-500/30 hover:border-orange-500/50">
+          <Link href="/admin/boost">
+            <Flame className="h-6 w-6 text-orange-500" />
+            <span className="bg-gradient-to-r from-orange-400 to-pink-400 text-transparent bg-clip-text">Boost</span>
+            <span className="text-xs text-muted-foreground">
+              {boostTodayPlayers || 0} today
+            </span>
+          </Link>
+        </Button>
       </div>
 
       {/* EXA Boost Stats */}
