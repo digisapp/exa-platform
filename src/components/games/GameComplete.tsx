@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Trophy, Clock, RotateCcw, Sparkles, Star, Heart, X, Flame, Zap, UserPlus, Coins } from "lucide-react";
+import { Trophy, Clock, RotateCcw, Sparkles, Star, Heart, X, Flame, Zap, UserPlus, Coins, Share2 } from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
+import { DailySpin } from "./DailySpin";
 
 interface SessionStats {
   likes: number;
@@ -19,6 +21,8 @@ interface GameCompleteProps {
   sessionStats?: SessionStats;
   streak?: number;
   isLoggedIn?: boolean;
+  hasSpunToday?: boolean;
+  onSpinComplete?: (coins: number) => void;
 }
 
 export function GameComplete({
@@ -28,8 +32,33 @@ export function GameComplete({
   sessionStats,
   streak = 0,
   isLoggedIn = false,
+  hasSpunToday = false,
+  onSpinComplete,
 }: GameCompleteProps) {
   const [timeRemaining, setTimeRemaining] = useState<string>("");
+
+  // Share results
+  const handleShare = async () => {
+    const pointsText = sessionStats?.pointsGiven ? `${sessionStats.pointsGiven} points` : "some love";
+    const streakText = streak > 1 ? ` 🔥 ${streak}-day streak!` : "";
+    const shareText = `I just gave ${pointsText} on EXA Boost!${streakText} Play now and boost your favorite models!`;
+    const shareUrl = `${window.location.origin}/boost`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "EXA Boost",
+          text: shareText,
+          url: shareUrl,
+        });
+      } catch {
+        // User cancelled share
+      }
+    } else {
+      await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
+      toast.success("Copied to clipboard!");
+    }
+  };
 
   useEffect(() => {
     if (!nextResetAt) return;
@@ -149,6 +178,27 @@ export function GameComplete({
             Come back tomorrow to keep it going
           </p>
         </div>
+      )}
+
+      {/* Daily Spin Reward (for logged-in users who haven't spun today) */}
+      {isLoggedIn && !hasSpunToday && onSpinComplete && (
+        <DailySpin
+          isLoggedIn={isLoggedIn}
+          onSpinComplete={onSpinComplete}
+          hasSpunToday={hasSpunToday}
+        />
+      )}
+
+      {/* Share Results */}
+      {sessionStats && sessionStats.pointsGiven > 0 && (
+        <Button
+          onClick={handleShare}
+          variant="outline"
+          className="w-full mb-4 bg-white/5 border-white/10 hover:bg-white/10"
+        >
+          <Share2 className="h-4 w-4 mr-2" />
+          Share Your Results
+        </Button>
       )}
 
       {/* Sign Up Prompt for Anonymous Users */}
