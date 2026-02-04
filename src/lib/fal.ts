@@ -7,9 +7,10 @@ const FAL_KEY = process.env.FAL_KEY;
 const FLUX_MODEL = "fal-ai/flux-pro/v1.1";
 // Base path without version - needed for status/result endpoints (fal.ai quirk)
 const FLUX_MODEL_BASE = "fal-ai/flux-pro";
-// Replicate API for high-quality face swap (InsightFace-powered)
+// Replicate API for deepfake-quality face swap (Easel AI)
 const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN;
-const REPLICATE_FACE_SWAP_VERSION = "278a81e7ebb22db98bcba54de985d22cc1abeead2754eb1f2af717247be69b34";
+// easel/advanced-face-swap - commercial deepfake quality, replaces full body
+const REPLICATE_FACE_SWAP_MODEL = "easel/advanced-face-swap";
 
 // Scenario presets for base image generation
 // Face will be swapped in the second step, so prompts describe the full scene with a model
@@ -205,7 +206,7 @@ export async function startGeneration(
   }
 }
 
-// Step 2: Face swap using Replicate's high-quality model
+// Step 2: Deepfake-quality face swap using Easel AI on Replicate
 export async function faceSwap(
   baseImageUrl: string,
   faceImageUrl: string
@@ -215,43 +216,44 @@ export async function faceSwap(
   }
 
   try {
-    console.log("[Replicate] Starting face swap");
-    console.log("[Replicate] Target image (Flux):", baseImageUrl);
-    console.log("[Replicate] Source face (user):", faceImageUrl);
+    console.log("[Replicate/Easel] Starting deepfake face swap");
+    console.log("[Replicate/Easel] Target image (Flux):", baseImageUrl);
+    console.log("[Replicate/Easel] Source face (user):", faceImageUrl);
 
-    // Start prediction on Replicate
-    const response = await fetch("https://api.replicate.com/v1/predictions", {
+    // Start prediction on Replicate using Easel's advanced face swap
+    // This model replaces full body while preserving user's likeness
+    const response = await fetch("https://api.replicate.com/v1/models/" + REPLICATE_FACE_SWAP_MODEL + "/predictions", {
       method: "POST",
       headers: {
-        Authorization: `Token ${REPLICATE_API_TOKEN}`,
+        Authorization: `Bearer ${REPLICATE_API_TOKEN}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        version: REPLICATE_FACE_SWAP_VERSION,
         input: {
-          input_image: baseImageUrl,  // Target image (Flux generated)
-          swap_image: faceImageUrl,   // Source face (user's face)
+          swap_image: faceImageUrl,    // User's face to transfer
+          target_image: baseImageUrl,  // Flux generated image
+          hair_source: "target",       // Keep target's hair style
         },
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("[Replicate] Face swap start error:", response.status, errorText);
+      console.error("[Replicate/Easel] Face swap start error:", response.status, errorText);
       return { error: `Face swap failed to start: ${response.status}` };
     }
 
     const prediction = await response.json();
-    console.log("[Replicate] Prediction started:", prediction.id);
+    console.log("[Replicate/Easel] Prediction started:", prediction.id);
 
-    // Poll for completion (face swap takes ~30 seconds)
+    // Poll for completion (Easel takes ~15-30 seconds)
     let result = prediction;
-    const maxWait = 60000; // 60 seconds max
+    const maxWait = 90000; // 90 seconds max
     const startTime = Date.now();
 
-    while (result.status !== "succeeded" && result.status !== "failed") {
+    while (result.status !== "succeeded" && result.status !== "failed" && result.status !== "canceled") {
       if (Date.now() - startTime > maxWait) {
-        console.error("[Replicate] Face swap timeout");
+        console.error("[Replicate/Easel] Face swap timeout");
         return { error: "Face swap timed out" };
       }
 
@@ -261,28 +263,32 @@ export async function faceSwap(
         `https://api.replicate.com/v1/predictions/${prediction.id}`,
         {
           headers: {
-            Authorization: `Token ${REPLICATE_API_TOKEN}`,
+            Authorization: `Bearer ${REPLICATE_API_TOKEN}`,
           },
         }
       );
 
       if (!statusResponse.ok) {
-        console.error("[Replicate] Status check failed:", statusResponse.status);
+        console.error("[Replicate/Easel] Status check failed:", statusResponse.status);
         continue;
       }
 
       result = await statusResponse.json();
-      console.log("[Replicate] Status:", result.status);
+      console.log("[Replicate/Easel] Status:", result.status);
     }
 
     if (result.status === "failed") {
-      console.error("[Replicate] Face swap failed:", result.error);
-      return { error: "Face swap failed" };
+      console.error("[Replicate/Easel] Face swap failed:", result.error);
+      return { error: `Face swap failed: ${result.error}` };
     }
 
-    console.log("[Replicate] Face swap completed:", result.output);
+    if (result.status === "canceled") {
+      return { error: "Face swap was canceled" };
+    }
 
-    // Replicate returns the output URL directly
+    console.log("[Replicate/Easel] Face swap completed:", result.output);
+
+    // Easel returns the output URL directly
     if (result.output) {
       const outputUrl = Array.isArray(result.output) ? result.output[0] : result.output;
       return { images: [{ url: outputUrl }] };
@@ -290,7 +296,7 @@ export async function faceSwap(
 
     return { error: "No image in face swap result" };
   } catch (error) {
-    console.error("[Replicate] Face swap error:", error);
+    console.error("[Replicate/Easel] Face swap error:", error);
     return { error: "Face swap failed" };
   }
 }
