@@ -491,6 +491,90 @@ export default async function DashboardPage() {
         </Card>
       )}
 
+      {/* Bookings & Gigs */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Bookings - shows second on mobile, first on desktop */}
+        <Card className="order-2 md:order-1">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-green-500" />
+              Bookings
+              {(pendingBookings?.length || 0) > 0 && (
+                <Badge className="bg-green-500 text-white ml-2">{pendingBookings?.length}</Badge>
+              )}
+              {/* Debug: model.id */}
+              <span className="text-[10px] text-muted-foreground font-mono hidden">{model.id}</span>
+            </CardTitle>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/bookings" className="text-green-500">
+                View All
+                <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {(pendingBookings?.length || 0) > 0 ? (
+              <div className="space-y-3">
+                {pendingBookings?.map((booking: any) => (
+                  <Link
+                    key={booking.id}
+                    href="/bookings"
+                    className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors border border-transparent hover:border-green-500/30"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center overflow-hidden">
+                      {booking.client?.avatar_url || booking.client?.logo_url ? (
+                        <Image
+                          src={booking.client.avatar_url || booking.client.logo_url}
+                          alt="Client"
+                          width={40}
+                          height={40}
+                          className="object-cover"
+                        />
+                      ) : (
+                        <Building2 className="h-5 w-5 text-green-500" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">
+                        {booking.client?.company_name || booking.client?.display_name || "Client"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(booking.event_date).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        })}
+                        {" • "}
+                        {booking.total_amount?.toLocaleString()} coins
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/30 text-xs">
+                      {booking.status === "counter" ? "Counter" : "Pending"}
+                    </Badge>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <div className="p-4 rounded-full bg-green-500/10 inline-block mb-4">
+                  <Calendar className="h-8 w-8 text-green-500" />
+                </div>
+                <p className="text-muted-foreground">No pending bookings</p>
+                <p className="text-sm text-muted-foreground mt-1">Booking requests will appear here</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Gigs - shows first on mobile, second on desktop */}
+        <div className="order-1 md:order-2">
+          <GigsFeed
+            gigs={gigs || []}
+            modelApplications={modelApplications || []}
+            isApproved={model.is_approved}
+          />
+        </div>
+      </div>
+
       {/* Recent Activity Feed */}
       {activityFeed.length > 0 && (
         <Card className="border-pink-500/30 bg-gradient-to-br from-pink-500/5 to-violet-500/5">
@@ -589,90 +673,6 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       )}
-
-      {/* Bookings & Gigs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Bookings - shows second on mobile, first on desktop */}
-        <Card className="order-2 md:order-1">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-green-500" />
-              Bookings
-              {(pendingBookings?.length || 0) > 0 && (
-                <Badge className="bg-green-500 text-white ml-2">{pendingBookings?.length}</Badge>
-              )}
-              {/* Debug: model.id */}
-              <span className="text-[10px] text-muted-foreground font-mono hidden">{model.id}</span>
-            </CardTitle>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/bookings" className="text-green-500">
-                View All
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {(pendingBookings?.length || 0) > 0 ? (
-              <div className="space-y-3">
-                {pendingBookings?.map((booking: any) => (
-                  <Link
-                    key={booking.id}
-                    href="/bookings"
-                    className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors border border-transparent hover:border-green-500/30"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center overflow-hidden">
-                      {booking.client?.avatar_url || booking.client?.logo_url ? (
-                        <Image
-                          src={booking.client.avatar_url || booking.client.logo_url}
-                          alt="Client"
-                          width={40}
-                          height={40}
-                          className="object-cover"
-                        />
-                      ) : (
-                        <Building2 className="h-5 w-5 text-green-500" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">
-                        {booking.client?.company_name || booking.client?.display_name || "Client"}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(booking.event_date).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                        })}
-                        {" • "}
-                        {booking.total_amount?.toLocaleString()} coins
-                      </p>
-                    </div>
-                    <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/30 text-xs">
-                      {booking.status === "counter" ? "Counter" : "Pending"}
-                    </Badge>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <div className="p-4 rounded-full bg-green-500/10 inline-block mb-4">
-                  <Calendar className="h-8 w-8 text-green-500" />
-                </div>
-                <p className="text-muted-foreground">No pending bookings</p>
-                <p className="text-sm text-muted-foreground mt-1">Booking requests will appear here</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Gigs - shows first on mobile, second on desktop */}
-        <div className="order-1 md:order-2">
-          <GigsFeed
-            gigs={gigs || []}
-            modelApplications={modelApplications || []}
-            isApproved={model.is_approved}
-          />
-        </div>
-      </div>
     </div>
   );
 }
