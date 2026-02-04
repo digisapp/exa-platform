@@ -106,14 +106,85 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create a tip message in the conversation if conversationId provided
-    if (conversationId) {
-      const tipMessage = `🪙 Tip Sent — ${amount} Coins!`;
-      // Use admin client to bypass RLS and ensure message is created
+    // Get sender name for the tip message
+    let senderName = "Someone";
+    if (sender.type === "fan") {
+      const { data: fan } = await (supabase
+        .from("fans") as any)
+        .select("display_name")
+        .eq("id", sender.id)
+        .single();
+      senderName = fan?.display_name || "A fan";
+    } else if (sender.type === "model") {
+      const { data: senderModel } = await (supabase
+        .from("models") as any)
+        .select("first_name, username")
+        .eq("user_id", user.id)
+        .single();
+      senderName = senderModel?.first_name || senderModel?.username || "A model";
+    } else if (sender.type === "brand") {
+      const { data: brand } = await (supabase
+        .from("brands") as any)
+        .select("company_name")
+        .eq("id", sender.id)
+        .single();
+      senderName = brand?.company_name || "A brand";
+    }
+
+    // Find or create conversation and add tip message
+    let finalConversationId = conversationId;
+
+    if (!finalConversationId) {
+      // Find existing conversation between sender and recipient
+      const { data: senderParticipations } = await supabase
+        .from("conversation_participants")
+        .select("conversation_id")
+        .eq("actor_id", sender.id);
+
+      if (senderParticipations && senderParticipations.length > 0) {
+        const conversationIds = senderParticipations.map(p => p.conversation_id);
+
+        // Check if recipient is in any of these conversations
+        const { data: recipientParticipation } = await adminClient
+          .from("conversation_participants")
+          .select("conversation_id")
+          .eq("actor_id", recipientId)
+          .in("conversation_id", conversationIds)
+          .limit(1)
+          .maybeSingle();
+
+        if (recipientParticipation) {
+          finalConversationId = recipientParticipation.conversation_id;
+        }
+      }
+
+      // Create new conversation if none exists
+      if (!finalConversationId) {
+        const { data: conversation } = await adminClient
+          .from("conversations")
+          .insert({ type: "direct", title: null })
+          .select()
+          .single();
+
+        if (conversation) {
+          await adminClient
+            .from("conversation_participants")
+            .insert([
+              { conversation_id: conversation.id, actor_id: sender.id },
+              { conversation_id: conversation.id, actor_id: recipientId },
+            ]);
+          finalConversationId = conversation.id;
+        }
+      }
+    }
+
+    // Create tip message in conversation
+    if (finalConversationId) {
+      const tipMessage = `💝 ${senderName} sent a ${amount} coin tip!`;
       const { error: msgError } = await adminClient
         .from("messages")
         .insert({
-          conversation_id: conversationId,
+          conversation_id: finalConversationId,
           sender_id: sender.id,
           content: tipMessage,
           is_system: true,
@@ -121,14 +192,13 @@ export async function POST(request: NextRequest) {
 
       if (msgError) {
         console.error("Failed to create tip message:", msgError);
-        // Non-critical error, tip was still successful
       }
 
       // Update conversation timestamp
       await adminClient
         .from("conversations")
         .update({ updated_at: new Date().toISOString() })
-        .eq("id", conversationId);
+        .eq("id", finalConversationId);
     }
 
     // Get recipient display name for response and send email
@@ -143,24 +213,6 @@ export async function POST(request: NextRequest) {
 
       // Send email notification to model (non-blocking)
       if (model?.email) {
-        // Get sender name
-        let senderName = "Someone";
-        if (sender.type === "fan") {
-          const { data: fan } = await (supabase
-            .from("fans") as any)
-            .select("display_name")
-            .eq("id", sender.id)
-            .single();
-          senderName = fan?.display_name || "A fan";
-        } else if (sender.type === "model") {
-          const { data: senderModel } = await (supabase
-            .from("models") as any)
-            .select("first_name, username")
-            .eq("user_id", user.id)
-            .single();
-          senderName = senderModel?.first_name || senderModel?.username || "A model";
-        }
-
         sendTipReceivedEmail({
           to: model.email,
           modelName: model.first_name || model.username || "Model",
