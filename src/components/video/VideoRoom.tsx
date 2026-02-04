@@ -16,6 +16,7 @@ import { PhoneOff, Mic, MicOff, Video, VideoOff, Coins, Heart, Loader2, X, Wifi,
 import { CALL_COST_PER_MINUTE } from "@/lib/livekit-constants";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { showTipSuccessToast } from "@/lib/tip-toast";
 
 const TIP_AMOUNTS = [5, 10, 25, 50];
 
@@ -211,7 +212,7 @@ function VideoCallContent({
         return;
       }
 
-      toast.success(`Sent ${amount} coins to ${recipientName}!`);
+      showTipSuccessToast({ amount, recipientName: recipientName || "Model" });
       setShowTipMenu(false);
       if (onTipSuccess) {
         onTipSuccess(amount, data.newBalance);

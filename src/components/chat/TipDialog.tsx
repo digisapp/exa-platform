@@ -15,6 +15,7 @@ import { Gift, Loader2, Coins } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { hapticFeedback } from "@/hooks/useHapticFeedback";
+import { showTipSuccessToast } from "@/lib/tip-toast";
 
 const TIP_AMOUNTS = [1, 5, 10, 25, 50, 100];
 
@@ -65,7 +66,7 @@ export function TipDialog({
       }
 
       hapticFeedback("success");
-      toast.success(`Sent ${selectedAmount} coins to ${data.recipientName}!`);
+      showTipSuccessToast({ amount: selectedAmount, recipientName: data.recipientName });
       setOpen(false);
       setSelectedAmount(null);
 

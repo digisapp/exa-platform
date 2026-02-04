@@ -15,6 +15,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { hapticFeedback } from "@/hooks/useHapticFeedback";
+import { showTipSuccessToast } from "@/lib/tip-toast";
 
 // Dynamic import for VideoRoom - only loads when call starts (saves ~200KB)
 const VideoRoom = dynamic(() => import("@/components/video").then(mod => mod.VideoRoom), {
@@ -227,7 +228,7 @@ export function ProfileActionButtons({
       }
 
       hapticFeedback("success");
-      toast.success(`Sent ${selectedTipAmount} coins to ${data.recipientName}!`);
+      showTipSuccessToast({ amount: selectedTipAmount, recipientName: data.recipientName });
       setShowTipDialog(false);
       setSelectedTipAmount(null);
     } catch (error) {
