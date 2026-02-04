@@ -218,11 +218,11 @@ export async function startGeneration(
   }
 }
 
-// Step 2: Deepfake-quality face swap using Easel AI on Replicate
-export async function faceSwap(
+// Step 2a: START face swap (returns prediction ID immediately, doesn't wait)
+export async function startFaceSwap(
   baseImageUrl: string,
   faceImageUrl: string
-): Promise<{ images: Array<{ url: string }> } | { error: string }> {
+): Promise<{ predictionId: string } | { error: string }> {
   if (!REPLICATE_API_TOKEN) {
     return { error: "Replicate API token not configured" };
   }
@@ -232,8 +232,6 @@ export async function faceSwap(
     console.log("[Replicate/Easel] Target image (Flux):", baseImageUrl);
     console.log("[Replicate/Easel] Source face (user):", faceImageUrl);
 
-    // Start prediction on Replicate using Easel's advanced face swap
-    // This model replaces full body while preserving user's likeness
     const response = await fetch("https://api.replicate.com/v1/models/" + REPLICATE_FACE_SWAP_MODEL + "/predictions", {
       method: "POST",
       headers: {
@@ -258,58 +256,59 @@ export async function faceSwap(
     const prediction = await response.json();
     console.log("[Replicate/Easel] Prediction started:", prediction.id);
 
-    // Poll for completion (Easel takes ~15-30 seconds)
-    let result = prediction;
-    const maxWait = 55000; // 55 seconds max (Vercel has 60s timeout)
-    const startTime = Date.now();
+    return { predictionId: prediction.id };
+  } catch (error) {
+    console.error("[Replicate/Easel] Face swap start error:", error);
+    return { error: "Face swap failed to start" };
+  }
+}
 
-    while (result.status !== "succeeded" && result.status !== "failed" && result.status !== "canceled") {
-      if (Date.now() - startTime > maxWait) {
-        console.error("[Replicate/Easel] Face swap timeout");
-        return { error: "Face swap timed out" };
+// Step 2b: CHECK face swap status (poll for result)
+export async function checkFaceSwapStatus(
+  predictionId: string
+): Promise<{ status: "processing" | "completed" | "failed"; imageUrl?: string; error?: string }> {
+  if (!REPLICATE_API_TOKEN) {
+    return { status: "failed", error: "Replicate API token not configured" };
+  }
+
+  try {
+    const response = await fetch(
+      `https://api.replicate.com/v1/predictions/${predictionId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${REPLICATE_API_TOKEN}`,
+        },
       }
+    );
 
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+    if (!response.ok) {
+      console.error("[Replicate/Easel] Status check failed:", response.status);
+      return { status: "processing" }; // Retry on next poll
+    }
 
-      const statusResponse = await fetch(
-        `https://api.replicate.com/v1/predictions/${prediction.id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${REPLICATE_API_TOKEN}`,
-          },
-        }
-      );
+    const result = await response.json();
+    console.log("[Replicate/Easel] Status:", result.status);
 
-      if (!statusResponse.ok) {
-        console.error("[Replicate/Easel] Status check failed:", statusResponse.status);
-        continue;
-      }
-
-      result = await statusResponse.json();
-      console.log("[Replicate/Easel] Status:", result.status);
+    if (result.status === "succeeded") {
+      const outputUrl = Array.isArray(result.output) ? result.output[0] : result.output;
+      console.log("[Replicate/Easel] Face swap completed:", outputUrl);
+      return { status: "completed", imageUrl: outputUrl };
     }
 
     if (result.status === "failed") {
       console.error("[Replicate/Easel] Face swap failed:", result.error);
-      return { error: `Face swap failed: ${result.error}` };
+      return { status: "failed", error: result.error || "Face swap failed" };
     }
 
     if (result.status === "canceled") {
-      return { error: "Face swap was canceled" };
+      return { status: "failed", error: "Face swap was canceled" };
     }
 
-    console.log("[Replicate/Easel] Face swap completed:", result.output);
-
-    // Easel returns the output URL directly
-    if (result.output) {
-      const outputUrl = Array.isArray(result.output) ? result.output[0] : result.output;
-      return { images: [{ url: outputUrl }] };
-    }
-
-    return { error: "No image in face swap result" };
+    // Still processing (starting, processing, etc.)
+    return { status: "processing" };
   } catch (error) {
-    console.error("[Replicate/Easel] Face swap error:", error);
-    return { error: "Face swap failed" };
+    console.error("[Replicate/Easel] Status check error:", error);
+    return { status: "processing" }; // Retry on next poll
   }
 }
 
