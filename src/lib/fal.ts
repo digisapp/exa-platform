@@ -248,7 +248,7 @@ export async function faceSwap(
 
     // Poll for completion (Easel takes ~15-30 seconds)
     let result = prediction;
-    const maxWait = 90000; // 90 seconds max
+    const maxWait = 55000; // 55 seconds max (Vercel has 60s timeout)
     const startTime = Date.now();
 
     while (result.status !== "succeeded" && result.status !== "failed" && result.status !== "canceled") {
