@@ -190,6 +190,7 @@ function LoginForm() {
                 required
                 disabled={loading || magicLinkLoading}
                 autoComplete="email"
+                className="h-12"
               />
             </div>
             <div className="space-y-2">
@@ -212,7 +213,7 @@ function LoginForm() {
                   required
                   disabled={loading || magicLinkLoading}
                   autoComplete="current-password"
-                  className="pr-10"
+                  className="h-12 pr-10"
                 />
                 <button
                   type="button"
