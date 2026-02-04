@@ -288,7 +288,7 @@ export default async function DashboardPage() {
 
   const allActivityActorIds = [...new Set([...tipSenderIds, ...followerIds, ...messageSenderIds])];
 
-  let activityActorsMap = new Map<string, any>();
+  const activityActorsMap = new Map<string, any>();
   if (allActivityActorIds.length > 0) {
     const { data: activityActors } = await (adminClient.from("actors") as any)
       .select("id, type")

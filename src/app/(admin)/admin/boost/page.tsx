@@ -188,7 +188,7 @@ export default function AdminBoostPage() {
         .filter((s: any) => s.user_id)
         .map((s: any) => s.user_id);
 
-      let fanNames = new Map<string, string>();
+      const fanNames = new Map<string, string>();
       if (userIds.length > 0) {
         // Get actor IDs from user IDs
         const { data: actors } = await supabase
