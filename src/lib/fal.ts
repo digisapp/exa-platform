@@ -4,9 +4,8 @@
 const FAL_KEY = process.env.FAL_KEY;
 
 // Flux Pro for high-quality base image generation
+// Use the same model ID for all queue operations (submit, status, result)
 const FLUX_MODEL = "fal-ai/flux-pro/v1.1";
-// fal.ai quirk: subpath (v1.1) is used for submission but NOT for status/result endpoints
-const FLUX_MODEL_BASE = "fal-ai/flux-pro";
 // Replicate API for deepfake-quality face swap (Easel AI)
 const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN;
 // easel/advanced-face-swap - commercial deepfake quality, replaces full body
@@ -148,7 +147,7 @@ export interface FalPrediction {
 export async function startGeneration(
   faceImageUrl: string,
   scenarioId: ScenarioId
-): Promise<{ requestId: string; faceImageUrl: string } | { error: string }> {
+): Promise<{ requestId: string; statusUrl: string; responseUrl: string; faceImageUrl: string } | { error: string }> {
   if (!FAL_KEY) {
     return { error: "fal.ai API key not configured" };
   }
@@ -197,9 +196,16 @@ export async function startGeneration(
 
     const result = await response.json();
     console.log("[fal.ai] Flux generation queued:", result.request_id);
+    console.log("[fal.ai] Status URL:", result.status_url);
+    console.log("[fal.ai] Response URL:", result.response_url);
 
-    // Return both the request ID and the face URL (needed for step 2)
-    return { requestId: result.request_id, faceImageUrl };
+    // Return the request ID, URLs from fal.ai, and the face URL (needed for step 2)
+    return {
+      requestId: result.request_id,
+      statusUrl: result.status_url,
+      responseUrl: result.response_url,
+      faceImageUrl
+    };
   } catch (error) {
     console.error("[fal.ai] Error:", error);
     return { error: "Failed to connect to AI service" };
@@ -311,7 +317,7 @@ export async function getGenerationStatus(
 
   try {
     const response = await fetch(
-      `https://queue.fal.run/${FLUX_MODEL_BASE}/requests/${requestId}/status`,
+      `https://queue.fal.run/${FLUX_MODEL}/requests/${requestId}/status`,
       {
         headers: {
           Authorization: `Key ${FAL_KEY}`,
@@ -349,7 +355,7 @@ export async function getGenerationResult(
 
   try {
     const response = await fetch(
-      `https://queue.fal.run/${FLUX_MODEL_BASE}/requests/${requestId}`,
+      `https://queue.fal.run/${FLUX_MODEL}/requests/${requestId}`,
       {
         headers: {
           Authorization: `Key ${FAL_KEY}`,
@@ -385,7 +391,7 @@ export async function cancelGeneration(requestId: string): Promise<boolean> {
 
   try {
     const response = await fetch(
-      `https://queue.fal.run/${FLUX_MODEL_BASE}/requests/${requestId}/cancel`,
+      `https://queue.fal.run/${FLUX_MODEL}/requests/${requestId}/cancel`,
       {
         method: "PUT",
         headers: {
