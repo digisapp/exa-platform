@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Users,
@@ -18,6 +18,11 @@ import {
   Calendar,
   GraduationCap,
   Phone,
+  Flame,
+  Trophy,
+  ThumbsUp,
+  ThumbsDown,
+  Eye,
 } from "lucide-react";
 
 export default async function AdminPage() {
@@ -50,6 +55,43 @@ export default async function AdminPage() {
 
   const totalCoins = (modelBalances?.reduce((sum, m) => sum + (m.coin_balance || 0), 0) || 0) +
                      (fanBalances?.reduce((sum, f) => sum + (f.coin_balance || 0), 0) || 0);
+
+  // EXA Boost stats
+  const { count: boostSessions } = await (supabase as any)
+    .from("top_model_sessions")
+    .select("*", { count: "exact", head: true });
+
+  const { count: boostSignedIn } = await (supabase as any)
+    .from("top_model_sessions")
+    .select("*", { count: "exact", head: true })
+    .not("user_id", "is", null);
+
+  const { count: boostVotes } = await (supabase as any)
+    .from("top_model_votes")
+    .select("*", { count: "exact", head: true });
+
+  const { count: boostLikes } = await (supabase as any)
+    .from("top_model_votes")
+    .select("*", { count: "exact", head: true })
+    .eq("vote_type", "like");
+
+  const { count: boostPurchased } = await (supabase as any)
+    .from("top_model_votes")
+    .select("*", { count: "exact", head: true })
+    .eq("is_boosted", true);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const { count: boostTodayPlayers } = await (supabase as any)
+    .from("top_model_sessions")
+    .select("*", { count: "exact", head: true })
+    .gte("created_at", today.toISOString());
+
+  const { count: boostTodayVotes } = await (supabase as any)
+    .from("top_model_votes")
+    .select("*", { count: "exact", head: true })
+    .gte("created_at", today.toISOString());
 
   return (
     <div className="container px-8 md:px-16 py-8 space-y-8">
@@ -194,6 +236,62 @@ export default async function AdminPage() {
           </Link>
         </Button>
       </div>
+
+      {/* EXA Boost Stats */}
+      <Card className="border-orange-500/30">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <div className="p-2 rounded-full bg-gradient-to-r from-orange-500/20 to-pink-500/20">
+              <Flame className="h-5 w-5 text-orange-500" />
+            </div>
+            <span className="bg-gradient-to-r from-orange-400 to-pink-400 text-transparent bg-clip-text">
+              EXA Boost
+            </span>
+            <Link href="/boost" target="_blank" className="text-xs text-muted-foreground hover:text-white ml-2">
+              View Game →
+            </Link>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+            <div className="text-center p-3 rounded-lg bg-white/5">
+              <Users className="h-5 w-5 mx-auto mb-1 text-blue-400" />
+              <p className="text-2xl font-bold">{(boostSessions || 0).toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">Total Players</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-white/5">
+              <UserPlus className="h-5 w-5 mx-auto mb-1 text-green-400" />
+              <p className="text-2xl font-bold">{(boostSignedIn || 0).toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">Signed In</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-white/5">
+              <Eye className="h-5 w-5 mx-auto mb-1 text-purple-400" />
+              <p className="text-2xl font-bold">{((boostSessions || 0) - (boostSignedIn || 0)).toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">Anonymous</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-white/5">
+              <ThumbsUp className="h-5 w-5 mx-auto mb-1 text-pink-400" />
+              <p className="text-2xl font-bold">{(boostVotes || 0).toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">Total Votes</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-white/5">
+              <Heart className="h-5 w-5 mx-auto mb-1 text-red-400" />
+              <p className="text-2xl font-bold">{(boostLikes || 0).toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">Likes</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-white/5">
+              <Flame className="h-5 w-5 mx-auto mb-1 text-orange-400" />
+              <p className="text-2xl font-bold">{(boostPurchased || 0).toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">Boosts Purchased</p>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-gradient-to-r from-orange-500/10 to-pink-500/10 border border-orange-500/20">
+              <Trophy className="h-5 w-5 mx-auto mb-1 text-yellow-400" />
+              <p className="text-2xl font-bold text-orange-400">{(boostTodayPlayers || 0).toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">Today&apos;s Players</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Pending Items Summary */}
       {((pendingModelApps || 0) > 0 || (pendingBrands || 0) > 0 || (pendingCalls || 0) > 0) && (
