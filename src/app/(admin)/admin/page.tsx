@@ -19,10 +19,6 @@ import {
   GraduationCap,
   Phone,
   Flame,
-  Trophy,
-  ThumbsUp,
-  ThumbsDown,
-  Eye,
 } from "lucide-react";
 
 export default async function AdminPage() {
@@ -55,61 +51,6 @@ export default async function AdminPage() {
 
   const totalCoins = (modelBalances?.reduce((sum, m) => sum + (m.coin_balance || 0), 0) || 0) +
                      (fanBalances?.reduce((sum, f) => sum + (f.coin_balance || 0), 0) || 0);
-
-  // EXA Boost stats
-  const { count: boostSessions } = await (supabase as any)
-    .from("top_model_sessions")
-    .select("*", { count: "exact", head: true });
-
-  const { count: boostSignedIn } = await (supabase as any)
-    .from("top_model_sessions")
-    .select("*", { count: "exact", head: true })
-    .not("user_id", "is", null);
-
-  const { count: boostVotes } = await (supabase as any)
-    .from("top_model_votes")
-    .select("*", { count: "exact", head: true });
-
-  const { count: boostLikes } = await (supabase as any)
-    .from("top_model_votes")
-    .select("*", { count: "exact", head: true })
-    .eq("vote_type", "like");
-
-  const { count: boostPurchased } = await (supabase as any)
-    .from("top_model_votes")
-    .select("*", { count: "exact", head: true })
-    .eq("is_boosted", true);
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const { count: boostTodayPlayers } = await (supabase as any)
-    .from("top_model_sessions")
-    .select("*", { count: "exact", head: true })
-    .gte("created_at", today.toISOString());
-
-  const { count: boostTodaySignedIn } = await (supabase as any)
-    .from("top_model_sessions")
-    .select("*", { count: "exact", head: true })
-    .gte("created_at", today.toISOString())
-    .not("user_id", "is", null);
-
-  const { count: boostTodayVotes } = await (supabase as any)
-    .from("top_model_votes")
-    .select("*", { count: "exact", head: true })
-    .gte("created_at", today.toISOString());
-
-  const { count: boostTodayLikes } = await (supabase as any)
-    .from("top_model_votes")
-    .select("*", { count: "exact", head: true })
-    .gte("created_at", today.toISOString())
-    .eq("vote_type", "like");
-
-  const { count: boostTodayPurchased } = await (supabase as any)
-    .from("top_model_votes")
-    .select("*", { count: "exact", head: true })
-    .gte("created_at", today.toISOString())
-    .eq("is_boosted", true);
 
   return (
     <div className="container px-8 md:px-16 py-8 space-y-8">
@@ -257,108 +198,10 @@ export default async function AdminPage() {
         <Button variant="outline" asChild className="h-auto py-4 flex-col gap-2 border-orange-500/30 hover:border-orange-500/50">
           <Link href="/admin/boost">
             <Flame className="h-6 w-6 text-orange-500" />
-            <span className="bg-gradient-to-r from-orange-400 to-pink-400 text-transparent bg-clip-text">Boost</span>
-            <span className="text-xs text-muted-foreground">
-              {boostTodayPlayers || 0} today
-            </span>
+            <span className="bg-gradient-to-r from-orange-400 to-pink-400 text-transparent bg-clip-text">EXA Boost</span>
           </Link>
         </Button>
       </div>
-
-      {/* EXA Boost Stats */}
-      <Card className="border-orange-500/30">
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <div className="p-2 rounded-full bg-gradient-to-r from-orange-500/20 to-pink-500/20">
-              <Flame className="h-5 w-5 text-orange-500" />
-            </div>
-            <span className="bg-gradient-to-r from-orange-400 to-pink-400 text-transparent bg-clip-text">
-              EXA Boost
-            </span>
-            <Link href="/boost" target="_blank" className="text-xs text-muted-foreground hover:text-white ml-2">
-              View Game →
-            </Link>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Today's Stats */}
-          <div>
-            <p className="text-sm font-medium text-orange-400 mb-2 flex items-center gap-2">
-              <Trophy className="h-4 w-4" />
-              Today
-            </p>
-            <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-              <div className="text-center p-3 rounded-lg bg-gradient-to-r from-orange-500/10 to-pink-500/10 border border-orange-500/20">
-                <Users className="h-4 w-4 mx-auto mb-1 text-blue-400" />
-                <p className="text-xl font-bold text-orange-400">{(boostTodayPlayers || 0).toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Players</p>
-              </div>
-              <div className="text-center p-3 rounded-lg bg-gradient-to-r from-orange-500/10 to-pink-500/10 border border-orange-500/20">
-                <UserPlus className="h-4 w-4 mx-auto mb-1 text-green-400" />
-                <p className="text-xl font-bold text-orange-400">{(boostTodaySignedIn || 0).toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Signed In</p>
-              </div>
-              <div className="text-center p-3 rounded-lg bg-gradient-to-r from-orange-500/10 to-pink-500/10 border border-orange-500/20">
-                <Eye className="h-4 w-4 mx-auto mb-1 text-purple-400" />
-                <p className="text-xl font-bold text-orange-400">{((boostTodayPlayers || 0) - (boostTodaySignedIn || 0)).toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Anonymous</p>
-              </div>
-              <div className="text-center p-3 rounded-lg bg-gradient-to-r from-orange-500/10 to-pink-500/10 border border-orange-500/20">
-                <ThumbsUp className="h-4 w-4 mx-auto mb-1 text-pink-400" />
-                <p className="text-xl font-bold text-orange-400">{(boostTodayVotes || 0).toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Votes</p>
-              </div>
-              <div className="text-center p-3 rounded-lg bg-gradient-to-r from-orange-500/10 to-pink-500/10 border border-orange-500/20">
-                <Heart className="h-4 w-4 mx-auto mb-1 text-red-400" />
-                <p className="text-xl font-bold text-orange-400">{(boostTodayLikes || 0).toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Likes</p>
-              </div>
-              <div className="text-center p-3 rounded-lg bg-gradient-to-r from-orange-500/10 to-pink-500/10 border border-orange-500/20">
-                <Flame className="h-4 w-4 mx-auto mb-1 text-orange-400" />
-                <p className="text-xl font-bold text-orange-400">{(boostTodayPurchased || 0).toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Boosts</p>
-              </div>
-            </div>
-          </div>
-
-          {/* All-Time Stats */}
-          <div>
-            <p className="text-sm font-medium text-muted-foreground mb-2">All Time</p>
-            <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-              <div className="text-center p-3 rounded-lg bg-white/5">
-                <Users className="h-4 w-4 mx-auto mb-1 text-blue-400" />
-                <p className="text-xl font-bold">{(boostSessions || 0).toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Players</p>
-              </div>
-              <div className="text-center p-3 rounded-lg bg-white/5">
-                <UserPlus className="h-4 w-4 mx-auto mb-1 text-green-400" />
-                <p className="text-xl font-bold">{(boostSignedIn || 0).toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Signed In</p>
-              </div>
-              <div className="text-center p-3 rounded-lg bg-white/5">
-                <Eye className="h-4 w-4 mx-auto mb-1 text-purple-400" />
-                <p className="text-xl font-bold">{((boostSessions || 0) - (boostSignedIn || 0)).toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Anonymous</p>
-              </div>
-              <div className="text-center p-3 rounded-lg bg-white/5">
-                <ThumbsUp className="h-4 w-4 mx-auto mb-1 text-pink-400" />
-                <p className="text-xl font-bold">{(boostVotes || 0).toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Votes</p>
-              </div>
-              <div className="text-center p-3 rounded-lg bg-white/5">
-                <Heart className="h-4 w-4 mx-auto mb-1 text-red-400" />
-                <p className="text-xl font-bold">{(boostLikes || 0).toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Likes</p>
-              </div>
-              <div className="text-center p-3 rounded-lg bg-white/5">
-                <Flame className="h-4 w-4 mx-auto mb-1 text-orange-400" />
-                <p className="text-xl font-bold">{(boostPurchased || 0).toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Boosts</p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Pending Items Summary */}
       {((pendingModelApps || 0) > 0 || (pendingBrands || 0) > 0 || (pendingCalls || 0) > 0) && (
