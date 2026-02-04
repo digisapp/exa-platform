@@ -143,11 +143,11 @@ export interface FalPrediction {
   error?: string;
 }
 
-// Step 1: Generate base image with Flux Pro (synchronous - waits for result)
+// Step 1: Submit Flux generation to queue (returns immediately with request_id)
 export async function startGeneration(
   faceImageUrl: string,
   scenarioId: ScenarioId
-): Promise<{ requestId: string; baseImageUrl: string; faceImageUrl: string } | { error: string }> {
+): Promise<{ requestId: string; faceImageUrl: string } | { error: string }> {
   if (!FAL_KEY) {
     return { error: "fal.ai API key not configured" };
   }
@@ -158,12 +158,12 @@ export async function startGeneration(
   }
 
   try {
-    console.log("[fal.ai] Starting Flux base image generation (sync mode)");
+    console.log("[fal.ai] Submitting Flux generation to queue");
     console.log("[fal.ai] Scenario:", scenarioId);
     console.log("[fal.ai] Face image (for later swap):", faceImageUrl);
 
-    // Use fal.ai synchronous API (fal.run instead of queue.fal.run)
-    const apiUrl = `https://fal.run/${FLUX_MODEL}`;
+    // Use fal.ai queue API (returns immediately)
+    const apiUrl = `https://queue.fal.run/${FLUX_MODEL}`;
     console.log("[fal.ai] API URL:", apiUrl);
 
     // Flux Pro prompt - describe a model in the scene (face will be swapped later)
@@ -189,32 +189,91 @@ export async function startGeneration(
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("[fal.ai] Flux API error:", response.status, response.statusText);
+      console.error("[fal.ai] Queue submit error:", response.status, response.statusText);
       console.error("[fal.ai] Error body:", errorText);
-      return { error: `Failed to generate image: ${response.status} - ${errorText}` };
+      return { error: `Failed to start generation: ${response.status}` };
     }
 
     const result = await response.json();
-    console.log("[fal.ai] Flux generation complete!");
-    console.log("[fal.ai] Result:", JSON.stringify(result).slice(0, 500));
+    console.log("[fal.ai] Queue response:", JSON.stringify(result).slice(0, 300));
 
-    // Synchronous API returns the images directly
-    if (!result.images || result.images.length === 0) {
-      return { error: "No image generated" };
+    // Queue API returns request_id
+    if (!result.request_id) {
+      return { error: "No request ID returned from queue" };
     }
 
-    const baseImageUrl = result.images[0].url;
-    console.log("[fal.ai] Base image URL:", baseImageUrl);
+    console.log("[fal.ai] Request ID:", result.request_id);
 
-    // Return the base image URL directly (no need for status polling)
     return {
-      requestId: `sync-${Date.now()}`, // Generate a fake ID for tracking
-      baseImageUrl,
+      requestId: result.request_id,
       faceImageUrl
     };
   } catch (error) {
     console.error("[fal.ai] Error:", error);
     return { error: "Failed to connect to AI service" };
+  }
+}
+
+// Check Flux generation status and get result
+export async function checkFluxStatus(
+  requestId: string
+): Promise<{ status: "processing" | "completed" | "failed"; imageUrl?: string; error?: string }> {
+  if (!FAL_KEY) {
+    return { status: "failed", error: "fal.ai API key not configured" };
+  }
+
+  try {
+    // Check status first
+    const statusUrl = `https://queue.fal.run/${FLUX_MODEL}/requests/${requestId}/status`;
+    console.log("[fal.ai] Checking status:", statusUrl);
+
+    const statusResponse = await fetch(statusUrl, {
+      headers: {
+        Authorization: `Key ${FAL_KEY}`,
+      },
+    });
+
+    if (!statusResponse.ok) {
+      console.error("[fal.ai] Status check failed:", statusResponse.status);
+      // If status check fails, try to get the result directly
+      // (fal.ai sometimes skips status and result is ready)
+    }
+
+    const statusData = await statusResponse.json();
+    console.log("[fal.ai] Status:", statusData.status);
+
+    if (statusData.status === "COMPLETED") {
+      // Get the result
+      const resultUrl = `https://queue.fal.run/${FLUX_MODEL}/requests/${requestId}`;
+      const resultResponse = await fetch(resultUrl, {
+        headers: {
+          Authorization: `Key ${FAL_KEY}`,
+        },
+      });
+
+      if (!resultResponse.ok) {
+        return { status: "failed", error: "Failed to get result" };
+      }
+
+      const result = await resultResponse.json();
+      console.log("[fal.ai] Result:", JSON.stringify(result).slice(0, 300));
+
+      if (result.images && result.images.length > 0) {
+        return { status: "completed", imageUrl: result.images[0].url };
+      }
+
+      return { status: "failed", error: "No image in result" };
+    }
+
+    if (statusData.status === "FAILED") {
+      return { status: "failed", error: "Generation failed" };
+    }
+
+    // Still processing (IN_QUEUE, IN_PROGRESS)
+    return { status: "processing" };
+  } catch (error) {
+    console.error("[fal.ai] Status check error:", error);
+    return { status: "processing" }; // Retry on next poll
   }
 }
 

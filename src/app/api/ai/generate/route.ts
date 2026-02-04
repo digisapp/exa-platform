@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { startGeneration, AI_SCENARIOS, AI_GENERATION_COST, type ScenarioId } from "@/lib/fal";
 
-// Allow longer timeout for Flux generation (~20-30 seconds)
-export const maxDuration = 60;
+// POST returns quickly now since we use queue API
+export const maxDuration = 30;
 
-// POST - Generate base image with Flux (face swap happens on status check)
+// POST - Submit generation to queue (returns immediately)
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -68,8 +68,8 @@ export async function POST(request: NextRequest) {
       console.error("[AI Generate] Failed to deduct coins:", coinError);
     }
 
-    // Generate base image with Flux (synchronous - waits for result)
-    console.log("[AI Generate] Generating base image with Flux...");
+    // Submit to Flux queue (returns immediately with request_id)
+    console.log("[AI Generate] Submitting to Flux queue...");
     const fluxResult = await startGeneration(sourceImageUrl, scenarioId);
 
     if ("error" in fluxResult) {
@@ -81,9 +81,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: fluxResult.error }, { status: 500 });
     }
 
-    console.log("[AI Generate] Flux complete! Base image:", fluxResult.baseImageUrl.slice(0, 50));
+    console.log("[AI Generate] Queued! Request ID:", fluxResult.requestId);
 
-    // Create generation record with base image (face swap happens on status check)
+    // Create generation record with Flux request ID
     const generationId = crypto.randomUUID();
     const { data: generation, error: insertError } = await supabase
       .from("ai_generations")
@@ -94,8 +94,8 @@ export async function POST(request: NextRequest) {
         scenario_id: scenarioId,
         scenario_name: scenario.name,
         prompt: scenario.prompt,
-        status: "face_swap_pending", // New status - base image ready, face swap needed
-        replicate_prediction_id: fluxResult.baseImageUrl, // Store base image URL here temporarily
+        status: "flux_pending", // New status - waiting for Flux to complete
+        replicate_prediction_id: fluxResult.requestId, // Store Flux request ID
         coins_spent: AI_GENERATION_COST,
       })
       .select()
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Failed to save generation" }, { status: 500 });
     }
 
-    console.log("[AI Generate] Base image saved, returning for face swap...");
+    console.log("[AI Generate] Generation record created, polling will check status...");
 
     return NextResponse.json({
       success: true,
