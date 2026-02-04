@@ -2,83 +2,92 @@
 
 import { useCallback, useEffect, useRef } from "react";
 
-// Sound frequencies for Web Audio API
+// Sound frequencies for Web Audio API - made longer and more noticeable
 const SOUNDS = {
-  swipe: { frequency: 220, duration: 0.08, type: "sine" as OscillatorType },
-  like: { frequency: 523, duration: 0.15, type: "sine" as OscillatorType }, // C5 - happy ding
-  pass: { frequency: 196, duration: 0.1, type: "triangle" as OscillatorType }, // G3 - soft thud
-  boost: { frequency: 659, duration: 0.2, type: "sine" as OscillatorType }, // E5 - excited
-  spin: { frequency: 440, duration: 0.05, type: "square" as OscillatorType }, // tick
-  win: { frequency: 784, duration: 0.3, type: "sine" as OscillatorType }, // G5 - celebration
+  swipe: { frequency: 300, duration: 0.1, type: "sine" as OscillatorType },
+  like: { frequency: 880, duration: 0.2, type: "sine" as OscillatorType }, // A5 - happy ding
+  pass: { frequency: 220, duration: 0.15, type: "triangle" as OscillatorType }, // A3 - soft whoosh
+  boost: { frequency: 440, duration: 0.35, type: "sine" as OscillatorType }, // A4 - excited sweep
+  spin: { frequency: 600, duration: 0.08, type: "square" as OscillatorType }, // tick
+  win: { frequency: 880, duration: 0.5, type: "sine" as OscillatorType }, // celebration
 };
 
 export function useGameSounds() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const enabledRef = useRef(true);
 
-  // Initialize audio context on first user interaction
-  useEffect(() => {
-    const initAudio = () => {
-      if (!audioContextRef.current) {
+  // Get or create AudioContext lazily
+  const getAudioContext = useCallback(() => {
+    if (!audioContextRef.current) {
+      try {
         audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      } catch (e) {
+        console.warn("Web Audio API not supported");
+        return null;
       }
-    };
+    }
+    return audioContextRef.current;
+  }, []);
 
-    // Initialize on any user interaction
-    const events = ["touchstart", "mousedown", "keydown"];
-    events.forEach((event) => document.addEventListener(event, initAudio, { once: true }));
-
-    // Check localStorage for sound preference
+  // Check localStorage for sound preference on mount
+  useEffect(() => {
     const soundPref = localStorage.getItem("boostSoundsEnabled");
     enabledRef.current = soundPref !== "false";
-
-    return () => {
-      events.forEach((event) => document.removeEventListener(event, initAudio));
-    };
   }, []);
 
-  const playSound = useCallback((soundName: keyof typeof SOUNDS) => {
+  const playSound = useCallback(async (soundName: keyof typeof SOUNDS) => {
     if (!enabledRef.current) return;
 
-    const ctx = audioContextRef.current;
+    const ctx = getAudioContext();
     if (!ctx) return;
 
-    // Resume context if suspended
+    // Resume context if suspended (required for mobile browsers)
     if (ctx.state === "suspended") {
-      ctx.resume();
+      await ctx.resume();
     }
 
-    const sound = SOUNDS[soundName];
-    const oscillator = ctx.createOscillator();
-    const gainNode = ctx.createGain();
+    try {
+      const sound = SOUNDS[soundName];
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
 
-    oscillator.type = sound.type;
-    oscillator.frequency.setValueAtTime(sound.frequency, ctx.currentTime);
+      oscillator.type = sound.type;
+      oscillator.frequency.setValueAtTime(sound.frequency, ctx.currentTime);
 
-    // For boost, add a frequency sweep up
-    if (soundName === "boost") {
-      oscillator.frequency.exponentialRampToValueAtTime(
-        sound.frequency * 1.5,
-        ctx.currentTime + sound.duration
-      );
+      // For like, play two quick notes (happy sound)
+      if (soundName === "like") {
+        oscillator.frequency.setValueAtTime(660, ctx.currentTime); // E5
+        oscillator.frequency.setValueAtTime(880, ctx.currentTime + 0.1); // A5
+      }
+
+      // For boost, sweep up dramatically
+      if (soundName === "boost") {
+        oscillator.frequency.setValueAtTime(440, ctx.currentTime); // A4
+        oscillator.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15); // up to A5
+        oscillator.frequency.exponentialRampToValueAtTime(1320, ctx.currentTime + 0.3); // up to E6
+      }
+
+      // For win, play ascending notes
+      if (soundName === "win") {
+        oscillator.frequency.setValueAtTime(523, ctx.currentTime); // C5
+        oscillator.frequency.setValueAtTime(659, ctx.currentTime + 0.15); // E5
+        oscillator.frequency.setValueAtTime(784, ctx.currentTime + 0.3); // G5
+        oscillator.frequency.setValueAtTime(1047, ctx.currentTime + 0.4); // C6
+      }
+
+      // Higher volume for better audibility
+      gainNode.gain.setValueAtTime(0.5, ctx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + sound.duration);
+
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+      oscillator.start(ctx.currentTime);
+      oscillator.stop(ctx.currentTime + sound.duration);
+    } catch (e) {
+      console.warn("Error playing sound:", e);
     }
-
-    // For win, add a frequency sweep
-    if (soundName === "win") {
-      oscillator.frequency.setValueAtTime(523, ctx.currentTime); // C5
-      oscillator.frequency.setValueAtTime(659, ctx.currentTime + 0.1); // E5
-      oscillator.frequency.setValueAtTime(784, ctx.currentTime + 0.2); // G5
-    }
-
-    gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + sound.duration);
-
-    oscillator.connect(gainNode);
-    gainNode.connect(ctx.destination);
-
-    oscillator.start(ctx.currentTime);
-    oscillator.stop(ctx.currentTime + sound.duration);
-  }, []);
+  }, [getAudioContext]);
 
   const vibrate = useCallback((pattern: number | number[]) => {
     if (!enabledRef.current) return;
