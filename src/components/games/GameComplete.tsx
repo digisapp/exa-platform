@@ -22,7 +22,7 @@ interface GameCompleteProps {
   streak?: number;
   isLoggedIn?: boolean;
   hasSpunToday?: boolean;
-  onSpinComplete?: (coins: number) => void;
+  onSpinComplete?: (coins: number, newBalance?: number) => void;
 }
 
 export function GameComplete({

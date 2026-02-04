@@ -52,6 +52,7 @@ export async function POST(request: NextRequest) {
       success: true,
       coinsAwarded: data.coins_awarded,
       totalSpinCoins: data.total_spin_coins,
+      newBalance: data.new_balance,
     });
   } catch (error) {
     console.error("Spin error:", error);

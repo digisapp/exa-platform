@@ -33,6 +33,8 @@ export async function GET(request: NextRequest) {
       current_streak: number;
       longest_streak: number;
       last_play_date: string | null;
+      has_spun_today: boolean;
+      total_spin_coins: number;
     }) || {
       session_id: null,
       can_swipe: true,
@@ -42,6 +44,8 @@ export async function GET(request: NextRequest) {
       current_streak: 0,
       longest_streak: 0,
       last_play_date: null,
+      has_spun_today: false,
+      total_spin_coins: 0,
     };
 
     // If can't swipe, return early with session info
@@ -57,6 +61,8 @@ export async function GET(request: NextRequest) {
           currentStreak: session.current_streak,
           longestStreak: session.longest_streak,
           lastPlayDate: session.last_play_date,
+          hasSpunToday: session.has_spun_today,
+          totalSpinCoins: session.total_spin_coins,
         },
       });
     }
@@ -148,6 +154,8 @@ export async function GET(request: NextRequest) {
         currentStreak: session.current_streak,
         longestStreak: session.longest_streak,
         lastPlayDate: session.last_play_date,
+        hasSpunToday: session.has_spun_today,
+        totalSpinCoins: session.total_spin_coins,
       },
     });
   } catch (error) {

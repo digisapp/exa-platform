@@ -75,8 +75,13 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
   const [hasSpunToday, setHasSpunToday] = useState(false);
 
   // Handle spin completion - update coin balance
-  const handleSpinComplete = (coins: number) => {
-    setCoinBalance((prev) => prev + coins);
+  const handleSpinComplete = (coins: number, newBalance?: number) => {
+    // Use server's new balance if provided, otherwise calculate locally
+    if (newBalance !== undefined) {
+      setCoinBalance(newBalance);
+    } else {
+      setCoinBalance((prev) => prev + coins);
+    }
     setHasSpunToday(true);
     toast.success(`You won ${coins} coins!`);
   };

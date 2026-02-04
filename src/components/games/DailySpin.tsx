@@ -19,7 +19,7 @@ const SEGMENTS = [
 
 interface DailySpinProps {
   isLoggedIn: boolean;
-  onSpinComplete: (coins: number) => void;
+  onSpinComplete: (coins: number, newBalance?: number) => void;
   hasSpunToday: boolean;
 }
 
@@ -97,7 +97,8 @@ export function DailySpin({ isLoggedIn, onSpinComplete, hasSpunToday }: DailySpi
         });
 
         if (res.ok) {
-          onSpinComplete(wonCoins);
+          const data = await res.json();
+          onSpinComplete(wonCoins, data.newBalance);
         }
       } catch (error) {
         console.error("Failed to claim spin reward:", error);
