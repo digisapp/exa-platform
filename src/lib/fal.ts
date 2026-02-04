@@ -8,7 +8,7 @@ const FLUX_MODEL = "fal-ai/flux-pro/v1.1";
 // Base path without version - needed for status/result endpoints (fal.ai quirk)
 const FLUX_MODEL_BASE = "fal-ai/flux-pro";
 // Face swap model for accurate face preservation
-const FACE_SWAP_MODEL = "fal-ai/face-swap";
+const FACE_SWAP_MODEL = "half-moon-ai/ai-face-swap/faceswapimage";
 
 // Scenario presets for base image generation
 // Face will be swapped in the second step, so prompts describe the full scene with a model
@@ -215,8 +215,8 @@ export async function faceSwap(
 
   try {
     console.log("[fal.ai] Starting face swap");
-    console.log("[fal.ai] Base image:", baseImageUrl);
-    console.log("[fal.ai] Face image:", faceImageUrl);
+    console.log("[fal.ai] Target image (Flux):", baseImageUrl);
+    console.log("[fal.ai] Source face (user):", faceImageUrl);
 
     // Use synchronous API for face swap (it's fast)
     const response = await fetch(`https://fal.run/${FACE_SWAP_MODEL}`, {
@@ -226,21 +226,22 @@ export async function faceSwap(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        base_image_url: baseImageUrl,
-        swap_image_url: faceImageUrl,
+        // half-moon-ai model parameters:
+        source_face_url: faceImageUrl,    // The face to use (user's face)
+        target_image_url: baseImageUrl,   // The image to swap into (Flux generated)
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error("[fal.ai] Face swap error:", response.status, errorText);
-      return { error: `Face swap failed: ${response.status}` };
+      return { error: `Face swap failed: ${response.status} - ${errorText}` };
     }
 
     const result = await response.json();
-    console.log("[fal.ai] Face swap completed:", JSON.stringify(result).slice(0, 200));
+    console.log("[fal.ai] Face swap completed:", JSON.stringify(result).slice(0, 300));
 
-    // face-swap returns { image: { url, ... } } - convert to our format
+    // half-moon-ai returns { image: { url, ... } } - convert to our format
     if (result.image) {
       return { images: [{ url: result.image.url }] };
     }
