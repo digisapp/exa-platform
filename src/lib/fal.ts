@@ -7,8 +7,9 @@ const FAL_KEY = process.env.FAL_KEY;
 const FLUX_MODEL = "fal-ai/flux-pro/v1.1";
 // Base path without version - needed for status/result endpoints (fal.ai quirk)
 const FLUX_MODEL_BASE = "fal-ai/flux-pro";
-// Face swap model for accurate face preservation
-const FACE_SWAP_MODEL = "half-moon-ai/ai-face-swap/faceswapimage";
+// Replicate API for high-quality face swap (InsightFace-powered)
+const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN;
+const REPLICATE_FACE_SWAP_VERSION = "278a81e7ebb22db98bcba54de985d22cc1abeead2754eb1f2af717247be69b34";
 
 // Scenario presets for base image generation
 // Face will be swapped in the second step, so prompts describe the full scene with a model
@@ -204,51 +205,92 @@ export async function startGeneration(
   }
 }
 
-// Step 2: Face swap - swap the user's face onto the generated base image
+// Step 2: Face swap using Replicate's high-quality model
 export async function faceSwap(
   baseImageUrl: string,
   faceImageUrl: string
 ): Promise<{ images: Array<{ url: string }> } | { error: string }> {
-  if (!FAL_KEY) {
-    return { error: "fal.ai API key not configured" };
+  if (!REPLICATE_API_TOKEN) {
+    return { error: "Replicate API token not configured" };
   }
 
   try {
-    console.log("[fal.ai] Starting face swap");
-    console.log("[fal.ai] Target image (Flux):", baseImageUrl);
-    console.log("[fal.ai] Source face (user):", faceImageUrl);
+    console.log("[Replicate] Starting face swap");
+    console.log("[Replicate] Target image (Flux):", baseImageUrl);
+    console.log("[Replicate] Source face (user):", faceImageUrl);
 
-    // Use synchronous API for face swap (it's fast)
-    const response = await fetch(`https://fal.run/${FACE_SWAP_MODEL}`, {
+    // Start prediction on Replicate
+    const response = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
-        Authorization: `Key ${FAL_KEY}`,
+        Authorization: `Token ${REPLICATE_API_TOKEN}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        // half-moon-ai model parameters:
-        source_face_url: faceImageUrl,    // The face to use (user's face)
-        target_image_url: baseImageUrl,   // The image to swap into (Flux generated)
+        version: REPLICATE_FACE_SWAP_VERSION,
+        input: {
+          input_image: baseImageUrl,  // Target image (Flux generated)
+          swap_image: faceImageUrl,   // Source face (user's face)
+        },
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("[fal.ai] Face swap error:", response.status, errorText);
-      return { error: `Face swap failed: ${response.status} - ${errorText}` };
+      console.error("[Replicate] Face swap start error:", response.status, errorText);
+      return { error: `Face swap failed to start: ${response.status}` };
     }
 
-    const result = await response.json();
-    console.log("[fal.ai] Face swap completed:", JSON.stringify(result).slice(0, 300));
+    const prediction = await response.json();
+    console.log("[Replicate] Prediction started:", prediction.id);
 
-    // half-moon-ai returns { image: { url, ... } } - convert to our format
-    if (result.image) {
-      return { images: [{ url: result.image.url }] };
+    // Poll for completion (face swap takes ~30 seconds)
+    let result = prediction;
+    const maxWait = 60000; // 60 seconds max
+    const startTime = Date.now();
+
+    while (result.status !== "succeeded" && result.status !== "failed") {
+      if (Date.now() - startTime > maxWait) {
+        console.error("[Replicate] Face swap timeout");
+        return { error: "Face swap timed out" };
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+
+      const statusResponse = await fetch(
+        `https://api.replicate.com/v1/predictions/${prediction.id}`,
+        {
+          headers: {
+            Authorization: `Token ${REPLICATE_API_TOKEN}`,
+          },
+        }
+      );
+
+      if (!statusResponse.ok) {
+        console.error("[Replicate] Status check failed:", statusResponse.status);
+        continue;
+      }
+
+      result = await statusResponse.json();
+      console.log("[Replicate] Status:", result.status);
+    }
+
+    if (result.status === "failed") {
+      console.error("[Replicate] Face swap failed:", result.error);
+      return { error: "Face swap failed" };
+    }
+
+    console.log("[Replicate] Face swap completed:", result.output);
+
+    // Replicate returns the output URL directly
+    if (result.output) {
+      const outputUrl = Array.isArray(result.output) ? result.output[0] : result.output;
+      return { images: [{ url: outputUrl }] };
     }
 
     return { error: "No image in face swap result" };
   } catch (error) {
-    console.error("[fal.ai] Face swap error:", error);
+    console.error("[Replicate] Face swap error:", error);
     return { error: "Face swap failed" };
   }
 }
