@@ -249,7 +249,7 @@ export default function AdminBoostPage() {
     fetchStats();
   }, [period]);
 
-  const formatDate = (dateStr: string) => {
+  const formatDate = (dateStr: string | number) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   };
