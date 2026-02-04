@@ -25,7 +25,6 @@ import {
   Search,
   Loader2,
   MapPin,
-  Package,
   Mail,
   Phone,
   Eye,

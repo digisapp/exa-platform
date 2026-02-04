@@ -22,11 +22,9 @@ import {
   XCircle,
   Clock,
   MapPin,
-  Calendar,
   DollarSign,
   Repeat,
   Eye,
-  X,
 } from "lucide-react";
 import Link from "next/link";
 

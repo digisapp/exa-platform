@@ -3,6 +3,33 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { sendBookingRequestEmail } from "@/lib/email";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { z } from "zod";
+
+// Zod schema for booking creation validation
+const createBookingSchema = z.object({
+  modelId: z.string().uuid("Invalid model ID"),
+  serviceType: z.enum([
+    "photoshoot_hourly",
+    "photoshoot_half_day",
+    "photoshoot_full_day",
+    "promo",
+    "brand_ambassador",
+    "private_event",
+    "social_companion",
+    "meet_greet",
+    "other"
+  ], { message: "Invalid service type" }),
+  serviceDescription: z.string().max(1000, "Description is too long").optional().nullable(),
+  eventDate: z.string().min(1, "Event date is required"),
+  startTime: z.string().max(50, "Start time is too long").optional().nullable(),
+  durationHours: z.number().min(0.5, "Minimum duration is 30 minutes").max(24, "Maximum duration is 24 hours").optional().nullable(),
+  locationName: z.string().max(200, "Location name is too long").optional().nullable(),
+  locationAddress: z.string().max(500, "Address is too long").optional().nullable(),
+  locationCity: z.string().max(100, "City is too long").optional().nullable(),
+  locationState: z.string().max(100, "State is too long").optional().nullable(),
+  isRemote: z.boolean().default(false),
+  clientNotes: z.string().max(2000, "Notes are too long").optional().nullable(),
+});
 
 // Admin client for bypassing RLS on specific queries
 const adminClient = createSupabaseClient(
@@ -263,6 +290,17 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+
+    // Validate request body with Zod schema
+    const validationResult = createBookingSchema.safeParse(body);
+    if (!validationResult.success) {
+      const firstError = validationResult.error.issues[0];
+      return NextResponse.json(
+        { error: firstError.message },
+        { status: 400 }
+      );
+    }
+
     const {
       modelId,
       serviceType,
@@ -276,15 +314,7 @@ export async function POST(request: NextRequest) {
       locationState,
       isRemote,
       clientNotes,
-    } = body;
-
-    // Validate required fields
-    if (!modelId || !serviceType || !eventDate) {
-      return NextResponse.json(
-        { error: "Model, service type, and event date are required" },
-        { status: 400 }
-      );
-    }
+    } = validationResult.data;
 
     // Get model to verify and get rate
     const { data: model } = await (supabase.from("models") as any)

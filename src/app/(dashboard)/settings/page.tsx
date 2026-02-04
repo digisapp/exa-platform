@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2, User, Lock, DollarSign, Camera, BarChart3, Coins, Trash2, AlertTriangle, Building2, Globe, Users, Heart, MessageCircle, LogOut } from "lucide-react";
+import { Loader2, User, Lock, DollarSign, Camera, BarChart3, Trash2, AlertTriangle, Building2, Globe, Users, MessageCircle, LogOut } from "lucide-react";
 import { LogoutButton } from "@/components/auth/logout-button";
 import Image from "next/image";
 import { formatDistanceToNow } from "date-fns";

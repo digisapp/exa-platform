@@ -3,6 +3,21 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { sendPasswordResetEmail as sendCustomPasswordResetEmail } from "@/lib/email";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { z } from "zod";
+
+// Zod schema for model signup validation
+const modelSignupSchema = z.object({
+  name: z.string().min(1, "Name is required").max(100, "Name is too long").trim(),
+  email: z.string().email("Invalid email address").max(254, "Email is too long").toLowerCase().trim(),
+  instagram_username: z.string().max(30, "Instagram username is too long").optional().nullable(),
+  tiktok_username: z.string().max(24, "TikTok username is too long").optional().nullable(),
+  phone: z.string().max(20, "Phone number is too long").optional().nullable(),
+  date_of_birth: z.string().optional().nullable(),
+  height: z.string().max(10, "Height is too long").optional().nullable(),
+}).refine(
+  (data) => data.instagram_username?.trim() || data.tiktok_username?.trim(),
+  { message: "Please provide at least one social media handle", path: ["instagram_username"] }
+);
 
 // Admin client to bypass RLS
 const adminClient = createAdminClient(
@@ -96,6 +111,17 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+
+    // Validate request body with Zod schema
+    const validationResult = modelSignupSchema.safeParse(body);
+    if (!validationResult.success) {
+      const firstError = validationResult.error.issues[0];
+      return NextResponse.json(
+        { error: firstError.message },
+        { status: 400 }
+      );
+    }
+
     const {
       name,
       email,
@@ -104,25 +130,9 @@ export async function POST(request: NextRequest) {
       phone,
       date_of_birth,
       height,
-    } = body;
+    } = validationResult.data;
 
-    // Validate required fields
-    if (!name?.trim()) {
-      return NextResponse.json({ error: "Name is required" }, { status: 400 });
-    }
-
-    if (!email?.trim()) {
-      return NextResponse.json({ error: "Email is required" }, { status: 400 });
-    }
-
-    if (!instagram_username?.trim() && !tiktok_username?.trim()) {
-      return NextResponse.json(
-        { error: "Please provide at least one social media handle" },
-        { status: 400 }
-      );
-    }
-
-    // Age validation
+    // Age validation (if date_of_birth provided)
     if (date_of_birth) {
       const dob = new Date(date_of_birth);
       const today = new Date();
@@ -139,7 +149,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedEmail = email; // Already normalized by Zod schema
     const normalizedInstagram = extractInstagramUsername(instagram_username);
 
     // Check for Instagram duplicate in existing models (claimed accounts only)
@@ -338,11 +348,11 @@ async function createFanAndApplication(
   userId: string,
   email: string,
   displayName: string,
-  instagramUsername: string | null,
-  tiktokUsername: string | null,
-  phone: string | null,
-  dateOfBirth: string | null,
-  height: string | null
+  instagramUsername: string | null | undefined,
+  tiktokUsername: string | null | undefined,
+  phone: string | null | undefined,
+  dateOfBirth: string | null | undefined,
+  height: string | null | undefined
 ): Promise<boolean> {
   // Check for existing model record with this email (from imports)
   const { data: existingModel } = await (adminClient

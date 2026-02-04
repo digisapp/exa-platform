@@ -12,11 +12,9 @@ import {
   Wallet,
   Clock,
   CheckCircle,
-  XCircle,
   DollarSign,
   Coins,
   Building2,
-  User,
 } from "lucide-react";
 
 interface WithdrawalRequest {

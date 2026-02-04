@@ -5,32 +5,10 @@ import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  Dumbbell,
-  Sparkles,
-  Heart,
-  Camera,
-  MessageCircle,
-  Wallet,
-  Calendar,
-  Users,
-  TrendingUp,
-  Play,
-  Lock,
-  DollarSign,
   Instagram,
   CheckCircle,
   ArrowRight,
-  Zap,
-  Star,
-  Gift,
-  Globe,
-  Briefcase,
-  Shirt,
-  Salad,
-  PartyPopper,
   Crown,
-  Flame,
-  Sparkle,
 } from "lucide-react";
 import type { Metadata } from "next";
 

@@ -2,6 +2,14 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { sendTipReceivedEmail } from "@/lib/email";
+import { z } from "zod";
+
+// Zod schema for tip validation
+const tipSchema = z.object({
+  recipientId: z.string().uuid("Invalid recipient ID"),
+  amount: z.number().int("Amount must be a whole number").min(1, "Minimum tip is 1 coin").max(100000, "Maximum tip is 100,000 coins"),
+  conversationId: z.string().uuid("Invalid conversation ID").optional().nullable(),
+});
 
 // Admin client for inserting tip messages (bypasses RLS)
 const adminClient = createSupabaseClient(
@@ -23,22 +31,18 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { recipientId, amount, conversationId } = body;
 
-    // Validate inputs
-    if (!recipientId) {
+    // Validate request body with Zod schema
+    const validationResult = tipSchema.safeParse(body);
+    if (!validationResult.success) {
+      const firstError = validationResult.error.issues[0];
       return NextResponse.json(
-        { error: "Recipient ID required" },
+        { error: firstError.message },
         { status: 400 }
       );
     }
 
-    if (!amount || amount < 1) {
-      return NextResponse.json(
-        { error: "Invalid tip amount" },
-        { status: 400 }
-      );
-    }
+    const { recipientId, amount, conversationId } = validationResult.data;
 
     // Get sender's actor info
     const { data: sender } = await supabase

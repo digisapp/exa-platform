@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import Image from "next/image";
@@ -24,13 +24,10 @@ import {
   Eye,
   Heart,
   ThumbsUp,
-  ThumbsDown,
   Trophy,
   Loader2,
   RefreshCw,
-  TrendingUp,
   Calendar,
-  Coins,
   ExternalLink,
 } from "lucide-react";
 import {
@@ -41,8 +38,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  BarChart,
-  Bar,
 } from "recharts";
 
 interface PeriodStats {
@@ -69,7 +64,7 @@ export default function AdminBoostPage() {
   const [statsPeriod, setStatsPeriod] = useState<"today" | "monthly" | "all">("today");
   const supabase = createClient();
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     setLoading(true);
     try {
       const today = new Date();
@@ -257,11 +252,11 @@ export default function AdminBoostPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [chartPeriod, supabase]);
 
   useEffect(() => {
     fetchStats();
-  }, [chartPeriod]);
+  }, [fetchStats]);
 
   const formatDate = (dateStr: unknown) => {
     if (typeof dateStr !== "string" && typeof dateStr !== "number") return "";

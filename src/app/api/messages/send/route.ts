@@ -1,8 +1,20 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { z } from "zod";
 
 const DEFAULT_MESSAGE_COST = 10; // Default coins if model hasn't set a rate
+
+// Zod schema for message validation
+const sendMessageSchema = z.object({
+  conversationId: z.string().uuid("Invalid conversation ID"),
+  content: z.string().max(5000, "Message is too long").optional().nullable(),
+  mediaUrl: z.string().url("Invalid media URL").max(2048, "URL is too long").optional().nullable(),
+  mediaType: z.enum(["image", "video", "audio"]).optional().nullable(),
+}).refine(
+  (data) => data.content?.trim() || data.mediaUrl,
+  { message: "Message content or media required", path: ["content"] }
+);
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,21 +35,18 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { conversationId, content, mediaUrl, mediaType } = body;
 
-    if (!conversationId) {
+    // Validate request body with Zod schema
+    const validationResult = sendMessageSchema.safeParse(body);
+    if (!validationResult.success) {
+      const firstError = validationResult.error.issues[0];
       return NextResponse.json(
-        { error: "Conversation ID required" },
+        { error: firstError.message },
         { status: 400 }
       );
     }
 
-    if (!content && !mediaUrl) {
-      return NextResponse.json(
-        { error: "Message content or media required" },
-        { status: 400 }
-      );
-    }
+    const { conversationId, content, mediaUrl, mediaType } = validationResult.data;
 
     // Get sender's actor info
     const { data: sender } = await supabase

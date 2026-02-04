@@ -447,7 +447,8 @@ export default function AdminCrmPage() {
     }
   };
 
-  const getPriorityColor = (priority: string) => {
+  // Priority color helper - reserved for future use with CRM priority tags
+  const _getPriorityColor = (priority: string) => {
     switch (priority) {
       case "urgent": return "bg-red-500";
       case "high": return "bg-orange-500";
@@ -456,6 +457,7 @@ export default function AdminCrmPage() {
       default: return "bg-blue-500";
     }
   };
+  void _getPriorityColor; // Suppress unused warning
 
   const filteredRequests = callRequests.filter((req) => {
     const query = searchQuery.toLowerCase();

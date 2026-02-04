@@ -19,7 +19,6 @@ import { GigsFeed } from "@/components/gigs/GigsFeed";
 import { Badge } from "@/components/ui/badge";
 import {
   ArrowRight,
-  Image as ImageIcon,
   Sparkles,
   Users,
   Building2,

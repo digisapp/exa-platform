@@ -12,7 +12,6 @@ export default function CoinSuccessPage() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
   const [loading, setLoading] = useState(true);
-  const [verified, setVerified] = useState(false);
 
   useEffect(() => {
     // Trigger confetti on mount
@@ -42,9 +41,8 @@ export default function CoinSuccessPage() {
 
     frame();
 
-    // Simulate verification (in production, you'd verify the session)
+    // Simulate verification delay (in production, you'd verify the session)
     const timer = setTimeout(() => {
-      setVerified(true);
       setLoading(false);
     }, 1500);
 

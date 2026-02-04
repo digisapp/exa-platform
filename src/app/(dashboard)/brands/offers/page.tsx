@@ -28,7 +28,6 @@ import {
   Send,
   UserCheck,
   UserX,
-  MoreHorizontal,
   Check,
   X,
   Star,

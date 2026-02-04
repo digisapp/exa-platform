@@ -6,7 +6,7 @@ import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Clock, Instagram, LogOut, ArrowRight } from "lucide-react";
+import { Clock, Instagram, LogOut } from "lucide-react";
 import { TikTokIcon } from "@/components/ui/tiktok-icon";
 
 export default function PendingApprovalPage() {

@@ -3,6 +3,27 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { sendOfferReceivedEmail } from "@/lib/email";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { z } from "zod";
+
+// Zod schema for offer creation validation
+const createOfferSchema = z.object({
+  campaign_id: z.string().uuid("Invalid campaign ID"),
+  title: z.string().min(1, "Title is required").max(200, "Title is too long").trim(),
+  description: z.string().max(2000, "Description is too long").optional().nullable(),
+  location_name: z.string().max(200, "Location name is too long").optional().nullable(),
+  location_city: z.string().max(100, "City is too long").optional().nullable(),
+  location_state: z.string().max(100, "State is too long").optional().nullable(),
+  event_date: z.string().optional().nullable(),
+  event_time: z.string().max(50, "Event time is too long").optional().nullable(),
+  compensation_type: z.enum(["paid", "tfp", "perks", "negotiable"]).default("perks"),
+  compensation_amount: z.number().min(0, "Amount cannot be negative").optional().nullable(),
+  compensation_description: z.string().max(500, "Compensation description is too long").optional().nullable(),
+  spots: z.number().int("Spots must be a whole number").min(1, "At least 1 spot required").max(1000, "Maximum 1000 spots").default(1),
+  // Recurring offer fields
+  is_recurring: z.boolean().default(false),
+  recurrence_pattern: z.enum(["daily", "weekly", "biweekly", "monthly"]).optional().nullable(),
+  recurrence_end_date: z.string().optional().nullable(),
+});
 
 const adminClient = createSupabaseClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -191,6 +212,17 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+
+    // Validate request body with Zod schema
+    const validationResult = createOfferSchema.safeParse(body);
+    if (!validationResult.success) {
+      const firstError = validationResult.error.issues[0];
+      return NextResponse.json(
+        { error: firstError.message },
+        { status: 400 }
+      );
+    }
+
     const {
       campaign_id,
       title,
@@ -204,15 +236,10 @@ export async function POST(request: NextRequest) {
       compensation_amount,
       compensation_description,
       spots,
-      // Recurring offer fields
       is_recurring,
       recurrence_pattern,
       recurrence_end_date,
-    } = body;
-
-    if (!campaign_id || !title) {
-      return NextResponse.json({ error: "Campaign and title are required" }, { status: 400 });
-    }
+    } = validationResult.data;
 
     // Get the campaign
     const { data: campaign } = await (adminClient
@@ -321,7 +348,7 @@ export async function POST(request: NextRequest) {
               brandName,
               offerTitle: title,
               eventDate: event_date ? new Date(event_date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }) : "",
-              eventTime: event_time,
+              eventTime: event_time ?? undefined,
               location: locationStr,
               compensation: compensationStr,
               offerId: offer.id,

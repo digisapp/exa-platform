@@ -48,7 +48,6 @@ import {
   UserCheck,
   Mail,
   Send,
-  DollarSign,
   KeyRound,
   UserPlus,
   Sparkles,

@@ -15,7 +15,6 @@ import {
   Instagram,
   MapPin,
   Loader2,
-  SkipForward,
   CheckCircle,
   XCircle,
   Keyboard,

@@ -18,9 +18,7 @@ import {
   Gift,
   Crown,
   DollarSign,
-  Search,
 } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { COIN_PACKAGES } from "@/lib/stripe-config";
 
 // Get the USD price for a coin amount (returns cents)
@@ -78,7 +76,9 @@ export default async function TransactionsPage() {
   const purchases = transactions.filter(t => t.action === "purchase");
   const tips = transactions.filter(t => t.action === "tip_sent" || t.action === "tip_received");
   const contentSales = transactions.filter(t => t.action === "content_sale" || t.action === "content_unlock");
-  const messageCosts = transactions.filter(t => t.action === "message_sent" || t.action === "message_received");
+  // Message costs tracked for potential future analytics
+  const _messageCosts = transactions.filter(t => t.action === "message_sent" || t.action === "message_received");
+  void _messageCosts;
 
   const totalPurchased = purchases.reduce((sum, t) => sum + t.amount, 0);
   const totalTipped = tips.filter(t => t.action === "tip_sent").reduce((sum, t) => sum + Math.abs(t.amount), 0);
@@ -97,10 +97,11 @@ export default async function TransactionsPage() {
   const totalFanCoins = fanBalances?.reduce((sum, f) => sum + (f.coin_balance || 0), 0) || 0;
   const totalCoinsInCirculation = totalModelCoins + totalFanCoins;
 
-  // Get fan count
-  const { count: totalFans } = await supabase
+  // Get fan count (reserved for future use in stats display)
+  const { count: _totalFans } = await supabase
     .from("fans")
     .select("*", { count: "exact", head: true });
+  void _totalFans;
 
   // Get all purchase transactions with actor info for top purchasers
   const { data: purchaseTransactions } = await supabase

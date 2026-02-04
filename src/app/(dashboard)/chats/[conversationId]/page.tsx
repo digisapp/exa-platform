@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import { ChatView } from "@/components/chat/ChatView";
-import type { Message, Actor, Model, Conversation, Fan, Brand } from "@/types/database";
+import type { Message, Actor, Model, Fan, Brand } from "@/types/database";
 
 interface PageProps {
   params: Promise<{ conversationId: string }>;

@@ -22,7 +22,6 @@ import {
   Loader2,
   CheckCircle,
   AlertTriangle,
-  ExternalLink,
   Receipt,
 } from "lucide-react";
 import { BRAND_SUBSCRIPTION_TIERS, BrandTier } from "@/lib/stripe-config";

@@ -3,6 +3,12 @@ import { stripe } from "@/lib/stripe";
 import { COIN_PACKAGES } from "@/lib/stripe-config";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+
+// Zod schema for coin checkout validation
+const coinCheckoutSchema = z.object({
+  coins: z.number().int("Coins must be a whole number").positive("Invalid coin amount"),
+});
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,7 +41,18 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { coins } = body;
+
+    // Validate request body with Zod schema
+    const validationResult = coinCheckoutSchema.safeParse(body);
+    if (!validationResult.success) {
+      const firstError = validationResult.error.issues[0];
+      return NextResponse.json(
+        { error: firstError.message },
+        { status: 400 }
+      );
+    }
+
+    const { coins } = validationResult.data;
 
     // Find the package
     const coinPackage = COIN_PACKAGES.find((p) => p.coins === coins);
