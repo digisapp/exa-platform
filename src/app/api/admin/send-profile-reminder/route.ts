@@ -22,34 +22,51 @@ export async function POST(request: NextRequest) {
     // Get optional parameters from body
     let dryRun = false;
     let limit = 1000;
+    let days: number | null = null;
     try {
       const body = await request.json();
       dryRun = body.dryRun === true;
       if (body.limit && typeof body.limit === "number") {
         limit = Math.min(body.limit, 1000);
       }
+      // Filter for recently approved models (claimed within last N days)
+      if (body.days && typeof body.days === "number") {
+        days = body.days;
+      }
     } catch {
       // No body or invalid JSON, use defaults
     }
 
     // Find models without profile photos who are approved and have claimed their profile
-    const { data: models, error } = await adminClient
+    let query = adminClient
       .from("models")
-      .select("id, first_name, last_name, username, user_id")
+      .select("id, first_name, last_name, username, user_id, claimed_at")
       .is("profile_photo_url", null)
       .eq("is_approved", true)
       .not("user_id", "is", null)
-      .not("claimed_at", "is", null)
-      .order("created_at", { ascending: false })
+      .not("claimed_at", "is", null);
+
+    // If days specified, only get models claimed/approved within last N days
+    if (days) {
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - days);
+      query = query.gte("claimed_at", cutoffDate.toISOString());
+    }
+
+    const { data: models, error } = await query
+      .order("claimed_at", { ascending: false })
       .limit(limit);
 
     if (error) throw error;
 
     if (!models || models.length === 0) {
       return NextResponse.json({
-        message: "No models without profile photos found",
+        message: days
+          ? `No models without profile photos found (approved in last ${days} days)`
+          : "No models without profile photos found",
         sent: 0,
         total: 0,
+        filter: days ? { days } : undefined,
       });
     }
 
@@ -104,11 +121,12 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       message: dryRun
-        ? `Dry run complete - would send ${sentCount} emails`
-        : `Sent ${sentCount} emails`,
+        ? `Dry run complete - would send ${sentCount} emails${days ? ` (models approved in last ${days} days)` : ""}`
+        : `Sent ${sentCount} emails${days ? ` (models approved in last ${days} days)` : ""}`,
       sent: sentCount,
       skipped: skippedCount,
       total: models.length,
+      filter: days ? { days } : undefined,
       errors: errors.length > 0 ? errors : undefined,
       sentTo: dryRun ? sentTo : undefined,
     });
