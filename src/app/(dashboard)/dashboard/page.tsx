@@ -232,7 +232,7 @@ export default async function DashboardPage() {
   const { data: recentTips } = await (adminClient
     .from("coin_transactions") as any)
     .select("id, amount, created_at, metadata")
-    .eq("actor_id", model.id)
+    .eq("actor_id", actor.id)
     .eq("action", "tip_received")
     .gte("created_at", sevenDaysAgo.toISOString())
     .order("created_at", { ascending: false })
