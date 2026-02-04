@@ -38,6 +38,9 @@ interface Session {
   modelsRemaining?: number;
   nextResetAt: string | null;
   sessionId: string | null;
+  currentStreak?: number;
+  longestStreak?: number;
+  lastPlayDate?: string | null;
 }
 
 interface TopModelsGameProps {
@@ -74,27 +77,33 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
     }
   }, []);
 
-  // Load and update streak
+  // Load streak from session (Supabase for signed-in users, localStorage for anonymous)
   useEffect(() => {
-    const today = new Date().toDateString();
-    const lastPlayDate = localStorage.getItem("boostLastPlayDate");
-    const savedStreak = parseInt(localStorage.getItem("boostStreak") || "0");
+    if (initialUser && session?.currentStreak !== undefined) {
+      // Signed-in user: use streak from Supabase
+      setStreak(session.currentStreak);
+    } else if (!initialUser) {
+      // Anonymous user: use localStorage
+      const today = new Date().toDateString();
+      const lastPlayDate = localStorage.getItem("boostLastPlayDate");
+      const savedStreak = parseInt(localStorage.getItem("boostStreak") || "0");
 
-    if (lastPlayDate === today) {
-      // Already played today, keep current streak
-      setStreak(savedStreak);
-    } else {
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      if (lastPlayDate === yesterday.toDateString()) {
-        // Played yesterday, streak continues
+      if (lastPlayDate === today) {
+        // Already played today, keep current streak
         setStreak(savedStreak);
       } else {
-        // Streak broken, reset to 0 (will become 1 when they complete)
-        setStreak(0);
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        if (lastPlayDate === yesterday.toDateString()) {
+          // Played yesterday, streak continues
+          setStreak(savedStreak);
+        } else {
+          // Streak broken, reset to 0 (will become 1 when they complete)
+          setStreak(0);
+        }
       }
     }
-  }, []);
+  }, [initialUser, session?.currentStreak]);
 
   const dismissWelcome = () => {
     localStorage.setItem("topModelsWelcomeSeen", "true");
@@ -252,21 +261,39 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
   };
 
   // Handle empty stack
-  const handleEmpty = () => {
+  const handleEmpty = async () => {
     // Update streak when game completes
-    const today = new Date().toDateString();
-    const lastPlayDate = localStorage.getItem("boostLastPlayDate");
-    const savedStreak = parseInt(localStorage.getItem("boostStreak") || "0");
+    if (initialUser && session?.sessionId) {
+      // Signed-in user: save to Supabase
+      try {
+        const res = await fetch("/api/games/boost/streak", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId: session.sessionId }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          setStreak(data.currentStreak);
+        }
+      } catch (error) {
+        console.error("Failed to update streak:", error);
+      }
+    } else {
+      // Anonymous user: save to localStorage
+      const today = new Date().toDateString();
+      const lastPlayDate = localStorage.getItem("boostLastPlayDate");
+      const savedStreak = parseInt(localStorage.getItem("boostStreak") || "0");
 
-    if (lastPlayDate !== today) {
-      // First completion today
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      const newStreak = lastPlayDate === yesterday.toDateString() ? savedStreak + 1 : 1;
+      if (lastPlayDate !== today) {
+        // First completion today
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const newStreak = lastPlayDate === yesterday.toDateString() ? savedStreak + 1 : 1;
 
-      localStorage.setItem("boostLastPlayDate", today);
-      localStorage.setItem("boostStreak", newStreak.toString());
-      setStreak(newStreak);
+        localStorage.setItem("boostLastPlayDate", today);
+        localStorage.setItem("boostStreak", newStreak.toString());
+        setStreak(newStreak);
+      }
     }
 
     setGameComplete(true);
@@ -330,6 +357,7 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
               onPlayAgain={handlePlayAgain}
               sessionStats={sessionStats}
               streak={streak}
+              isLoggedIn={!!initialUser}
             />
           ) : models.length > 0 ? (
             <SwipeStack

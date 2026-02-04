@@ -30,12 +30,18 @@ export async function GET(request: NextRequest) {
       models_swiped: number;
       total_models: number;
       next_reset_at: string | null;
+      current_streak: number;
+      longest_streak: number;
+      last_play_date: string | null;
     }) || {
       session_id: null,
       can_swipe: true,
       models_swiped: 0,
       total_models: 0,
       next_reset_at: null,
+      current_streak: 0,
+      longest_streak: 0,
+      last_play_date: null,
     };
 
     // If can't swipe, return early with session info
@@ -48,6 +54,9 @@ export async function GET(request: NextRequest) {
           totalModels: session.total_models,
           nextResetAt: session.next_reset_at,
           sessionId: session.session_id,
+          currentStreak: session.current_streak,
+          longestStreak: session.longest_streak,
+          lastPlayDate: session.last_play_date,
         },
       });
     }
@@ -136,6 +145,9 @@ export async function GET(request: NextRequest) {
         modelsRemaining: session.total_models - session.models_swiped,
         nextResetAt: null,
         sessionId: session.session_id,
+        currentStreak: session.current_streak,
+        longestStreak: session.longest_streak,
+        lastPlayDate: session.last_play_date,
       },
     });
   } catch (error) {
