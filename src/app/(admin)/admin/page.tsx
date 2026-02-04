@@ -88,10 +88,28 @@ export default async function AdminPage() {
     .select("*", { count: "exact", head: true })
     .gte("created_at", today.toISOString());
 
+  const { count: boostTodaySignedIn } = await (supabase as any)
+    .from("top_model_sessions")
+    .select("*", { count: "exact", head: true })
+    .gte("created_at", today.toISOString())
+    .not("user_id", "is", null);
+
   const { count: boostTodayVotes } = await (supabase as any)
     .from("top_model_votes")
     .select("*", { count: "exact", head: true })
     .gte("created_at", today.toISOString());
+
+  const { count: boostTodayLikes } = await (supabase as any)
+    .from("top_model_votes")
+    .select("*", { count: "exact", head: true })
+    .gte("created_at", today.toISOString())
+    .eq("vote_type", "like");
+
+  const { count: boostTodayPurchased } = await (supabase as any)
+    .from("top_model_votes")
+    .select("*", { count: "exact", head: true })
+    .gte("created_at", today.toISOString())
+    .eq("is_boosted", true);
 
   return (
     <div className="container px-8 md:px-16 py-8 space-y-8">
@@ -252,42 +270,81 @@ export default async function AdminPage() {
             </Link>
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-            <div className="text-center p-3 rounded-lg bg-white/5">
-              <Users className="h-5 w-5 mx-auto mb-1 text-blue-400" />
-              <p className="text-2xl font-bold">{(boostSessions || 0).toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground">Total Players</p>
+        <CardContent className="space-y-4">
+          {/* Today's Stats */}
+          <div>
+            <p className="text-sm font-medium text-orange-400 mb-2 flex items-center gap-2">
+              <Trophy className="h-4 w-4" />
+              Today
+            </p>
+            <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+              <div className="text-center p-3 rounded-lg bg-gradient-to-r from-orange-500/10 to-pink-500/10 border border-orange-500/20">
+                <Users className="h-4 w-4 mx-auto mb-1 text-blue-400" />
+                <p className="text-xl font-bold text-orange-400">{(boostTodayPlayers || 0).toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">Players</p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-gradient-to-r from-orange-500/10 to-pink-500/10 border border-orange-500/20">
+                <UserPlus className="h-4 w-4 mx-auto mb-1 text-green-400" />
+                <p className="text-xl font-bold text-orange-400">{(boostTodaySignedIn || 0).toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">Signed In</p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-gradient-to-r from-orange-500/10 to-pink-500/10 border border-orange-500/20">
+                <Eye className="h-4 w-4 mx-auto mb-1 text-purple-400" />
+                <p className="text-xl font-bold text-orange-400">{((boostTodayPlayers || 0) - (boostTodaySignedIn || 0)).toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">Anonymous</p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-gradient-to-r from-orange-500/10 to-pink-500/10 border border-orange-500/20">
+                <ThumbsUp className="h-4 w-4 mx-auto mb-1 text-pink-400" />
+                <p className="text-xl font-bold text-orange-400">{(boostTodayVotes || 0).toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">Votes</p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-gradient-to-r from-orange-500/10 to-pink-500/10 border border-orange-500/20">
+                <Heart className="h-4 w-4 mx-auto mb-1 text-red-400" />
+                <p className="text-xl font-bold text-orange-400">{(boostTodayLikes || 0).toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">Likes</p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-gradient-to-r from-orange-500/10 to-pink-500/10 border border-orange-500/20">
+                <Flame className="h-4 w-4 mx-auto mb-1 text-orange-400" />
+                <p className="text-xl font-bold text-orange-400">{(boostTodayPurchased || 0).toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">Boosts</p>
+              </div>
             </div>
-            <div className="text-center p-3 rounded-lg bg-white/5">
-              <UserPlus className="h-5 w-5 mx-auto mb-1 text-green-400" />
-              <p className="text-2xl font-bold">{(boostSignedIn || 0).toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground">Signed In</p>
-            </div>
-            <div className="text-center p-3 rounded-lg bg-white/5">
-              <Eye className="h-5 w-5 mx-auto mb-1 text-purple-400" />
-              <p className="text-2xl font-bold">{((boostSessions || 0) - (boostSignedIn || 0)).toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground">Anonymous</p>
-            </div>
-            <div className="text-center p-3 rounded-lg bg-white/5">
-              <ThumbsUp className="h-5 w-5 mx-auto mb-1 text-pink-400" />
-              <p className="text-2xl font-bold">{(boostVotes || 0).toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground">Total Votes</p>
-            </div>
-            <div className="text-center p-3 rounded-lg bg-white/5">
-              <Heart className="h-5 w-5 mx-auto mb-1 text-red-400" />
-              <p className="text-2xl font-bold">{(boostLikes || 0).toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground">Likes</p>
-            </div>
-            <div className="text-center p-3 rounded-lg bg-white/5">
-              <Flame className="h-5 w-5 mx-auto mb-1 text-orange-400" />
-              <p className="text-2xl font-bold">{(boostPurchased || 0).toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground">Boosts Purchased</p>
-            </div>
-            <div className="text-center p-3 rounded-lg bg-gradient-to-r from-orange-500/10 to-pink-500/10 border border-orange-500/20">
-              <Trophy className="h-5 w-5 mx-auto mb-1 text-yellow-400" />
-              <p className="text-2xl font-bold text-orange-400">{(boostTodayPlayers || 0).toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground">Today&apos;s Players</p>
+          </div>
+
+          {/* All-Time Stats */}
+          <div>
+            <p className="text-sm font-medium text-muted-foreground mb-2">All Time</p>
+            <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+              <div className="text-center p-3 rounded-lg bg-white/5">
+                <Users className="h-4 w-4 mx-auto mb-1 text-blue-400" />
+                <p className="text-xl font-bold">{(boostSessions || 0).toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">Players</p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-white/5">
+                <UserPlus className="h-4 w-4 mx-auto mb-1 text-green-400" />
+                <p className="text-xl font-bold">{(boostSignedIn || 0).toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">Signed In</p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-white/5">
+                <Eye className="h-4 w-4 mx-auto mb-1 text-purple-400" />
+                <p className="text-xl font-bold">{((boostSessions || 0) - (boostSignedIn || 0)).toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">Anonymous</p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-white/5">
+                <ThumbsUp className="h-4 w-4 mx-auto mb-1 text-pink-400" />
+                <p className="text-xl font-bold">{(boostVotes || 0).toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">Votes</p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-white/5">
+                <Heart className="h-4 w-4 mx-auto mb-1 text-red-400" />
+                <p className="text-xl font-bold">{(boostLikes || 0).toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">Likes</p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-white/5">
+                <Flame className="h-4 w-4 mx-auto mb-1 text-orange-400" />
+                <p className="text-xl font-bold">{(boostPurchased || 0).toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">Boosts</p>
+              </div>
             </div>
           </div>
         </CardContent>
