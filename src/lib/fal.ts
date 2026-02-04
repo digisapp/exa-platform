@@ -4,8 +4,9 @@
 const FAL_KEY = process.env.FAL_KEY;
 
 // Flux Pro for high-quality base image generation
-// Use the same model ID for all queue operations (submit, status, result)
+// IMPORTANT: Use full path for submission, base path for status/result
 const FLUX_MODEL = "fal-ai/flux-pro/v1.1";
+const FLUX_MODEL_BASE = "fal-ai/flux-pro"; // For status checks
 // Replicate API for deepfake-quality face swap (Easel AI)
 const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN;
 // easel/advanced-face-swap - commercial deepfake quality, replaces full body
@@ -223,8 +224,8 @@ export async function checkFluxStatus(
   }
 
   try {
-    // Check status first
-    const statusUrl = `https://queue.fal.run/${FLUX_MODEL}/requests/${requestId}/status`;
+    // Check status - use BASE path (not versioned path) for status/result
+    const statusUrl = `https://queue.fal.run/${FLUX_MODEL_BASE}/requests/${requestId}/status`;
     console.log("[fal.ai] Checking status:", statusUrl);
 
     const statusResponse = await fetch(statusUrl, {
@@ -235,16 +236,16 @@ export async function checkFluxStatus(
 
     if (!statusResponse.ok) {
       console.error("[fal.ai] Status check failed:", statusResponse.status);
-      // If status check fails, try to get the result directly
-      // (fal.ai sometimes skips status and result is ready)
+      // Return processing to retry on next poll
+      return { status: "processing" };
     }
 
     const statusData = await statusResponse.json();
     console.log("[fal.ai] Status:", statusData.status);
 
     if (statusData.status === "COMPLETED") {
-      // Get the result
-      const resultUrl = `https://queue.fal.run/${FLUX_MODEL}/requests/${requestId}`;
+      // Get the result - use BASE path
+      const resultUrl = `https://queue.fal.run/${FLUX_MODEL_BASE}/requests/${requestId}`;
       const resultResponse = await fetch(resultUrl, {
         headers: {
           Authorization: `Key ${FAL_KEY}`,
