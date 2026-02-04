@@ -15,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useGameSounds } from "@/hooks/useGameSounds";
 
 interface Model {
   id: string;
@@ -61,6 +62,7 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
   const [gameComplete, setGameComplete] = useState(false);
   const [fingerprint, setFingerprint] = useState<string | null>(null);
   const [showWelcome, setShowWelcome] = useState(false);
+  const sounds = useGameSounds();
 
   // Session stats tracking
   const [sessionStats, setSessionStats] = useState({
@@ -264,6 +266,9 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
 
       const title = type === "reveal" ? "Boosted & Revealed!" : "Boosted!";
       toast.success(`${title} You gave ${boostModal.first_name || boostModal.username} ${data.points_awarded} points!`);
+
+      // Play boost sound
+      sounds.onBoost();
 
       // Remove this model from the stack
       setModels((prev) => prev.filter((m) => m.id !== boostModal.id));

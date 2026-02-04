@@ -3,7 +3,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { SwipeCard, ActionButtons } from "./SwipeCard";
-import { useGameSounds } from "@/hooks/useGameSounds";
 
 interface Model {
   id: string;
@@ -32,7 +31,6 @@ interface SwipeStackProps {
 export function SwipeStack({ models, onSwipe, onBoost, onEmpty, totalModels, modelsSwiped = 0 }: SwipeStackProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [exitDirection, setExitDirection] = useState<"left" | "right" | null>(null);
-  const sounds = useGameSounds();
 
   const currentModel = models[currentIndex];
   const nextModels = models.slice(currentIndex + 1, currentIndex + 3);
@@ -42,13 +40,6 @@ export function SwipeStack({ models, onSwipe, onBoost, onEmpty, totalModels, mod
       if (!currentModel || exitDirection) return; // Prevent double swipes
 
       setExitDirection(direction);
-
-      // Play sound and haptic feedback based on direction
-      if (direction === "right") {
-        sounds.onLike();
-      } else {
-        sounds.onPass();
-      }
 
       // Sync with exit animation duration (250ms)
       setTimeout(() => {
@@ -63,15 +54,14 @@ export function SwipeStack({ models, onSwipe, onBoost, onEmpty, totalModels, mod
         setExitDirection(null);
       }, 250);
     },
-    [currentModel, exitDirection, models.length, onSwipe, onEmpty, sounds]
+    [currentModel, exitDirection, models.length, onSwipe, onEmpty]
   );
 
   const handleBoost = useCallback(() => {
     if (currentModel) {
-      sounds.onBoost();
       onBoost(currentModel);
     }
-  }, [currentModel, onBoost, sounds]);
+  }, [currentModel, onBoost]);
 
   // Keyboard arrow controls for desktop
   useEffect(() => {
