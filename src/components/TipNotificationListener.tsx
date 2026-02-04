@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
@@ -10,6 +11,7 @@ interface TipNotificationListenerProps {
 
 export function TipNotificationListener({ actorId }: TipNotificationListenerProps) {
   const supabase = createClient();
+  const router = useRouter();
   const shownTipsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -96,7 +98,13 @@ export function TipNotificationListener({ actorId }: TipNotificationListenerProp
               : `${senderName} sent you a tip!`,
             {
               icon: "💝",
-              duration: 6000,
+              duration: 8000,
+              action: {
+                label: "Reply",
+                onClick: () => {
+                  router.push(`/chats/${message.conversation_id}`);
+                },
+              },
             }
           );
         }
@@ -106,7 +114,7 @@ export function TipNotificationListener({ actorId }: TipNotificationListenerProp
     return () => {
       channel.unsubscribe();
     };
-  }, [actorId, supabase]);
+  }, [actorId, supabase, router]);
 
   return null; // This component doesn't render anything
 }

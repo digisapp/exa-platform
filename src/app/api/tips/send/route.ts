@@ -1,7 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { sendTipReceivedEmail } from "@/lib/email";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+
+// Service role client for privileged operations (server-side only)
+const adminClient = createSupabaseClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function POST(request: NextRequest) {
   try {
@@ -101,33 +108,104 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Send email notification to model (non-blocking)
-    if (recipientModel.email) {
-      // Get sender name
-      let senderName = "Someone";
-      if (sender.type === "fan") {
-        const { data: fan } = await (supabase
-          .from("fans") as any)
-          .select("display_name")
-          .eq("id", sender.id)
-          .single();
-        senderName = fan?.display_name || "A fan";
-      } else if (sender.type === "model") {
-        const { data: senderModel } = await (supabase
-          .from("models") as any)
-          .select("first_name, username")
-          .eq("user_id", user.id)
-          .single();
-        senderName = senderModel?.first_name || senderModel?.username || "A model";
-      } else if (sender.type === "brand") {
-        const { data: brand } = await (supabase
-          .from("brands") as any)
-          .select("company_name")
-          .eq("id", sender.id)
-          .single();
-        senderName = brand?.company_name || "A brand";
+    // Get sender name for messages and emails
+    let senderName = "Someone";
+    if (sender.type === "fan") {
+      const { data: fan } = await (supabase
+        .from("fans") as any)
+        .select("display_name")
+        .eq("id", sender.id)
+        .single();
+      senderName = fan?.display_name || "A fan";
+    } else if (sender.type === "model") {
+      const { data: senderModel } = await (supabase
+        .from("models") as any)
+        .select("first_name, username")
+        .eq("user_id", user.id)
+        .single();
+      senderName = senderModel?.first_name || senderModel?.username || "A model";
+    } else if (sender.type === "brand") {
+      const { data: brand } = await (supabase
+        .from("brands") as any)
+        .select("company_name")
+        .eq("id", sender.id)
+        .single();
+      senderName = brand?.company_name || "A brand";
+    }
+
+    // Get recipient's actor ID
+    const { data: recipientActor } = await adminClient
+      .from("actors")
+      .select("id")
+      .eq("user_id", recipientModel.user_id)
+      .single();
+
+    let conversationId: string | null = null;
+
+    if (recipientActor) {
+      // Find or create conversation between sender and recipient
+      const { data: senderParticipations } = await supabase
+        .from("conversation_participants")
+        .select("conversation_id")
+        .eq("actor_id", sender.id);
+
+      if (senderParticipations && senderParticipations.length > 0) {
+        const conversationIds = senderParticipations.map(p => p.conversation_id);
+
+        // Check if recipient is in any of these conversations
+        const { data: recipientParticipation } = await adminClient
+          .from("conversation_participants")
+          .select("conversation_id")
+          .eq("actor_id", recipientActor.id)
+          .in("conversation_id", conversationIds)
+          .limit(1)
+          .maybeSingle();
+
+        if (recipientParticipation) {
+          conversationId = recipientParticipation.conversation_id;
+        }
       }
 
+      // Create new conversation if none exists
+      if (!conversationId) {
+        const { data: conversation } = await adminClient
+          .from("conversations")
+          .insert({ type: "direct", title: null })
+          .select()
+          .single();
+
+        if (conversation) {
+          await adminClient
+            .from("conversation_participants")
+            .insert([
+              { conversation_id: conversation.id, actor_id: sender.id },
+              { conversation_id: conversation.id, actor_id: recipientActor.id },
+            ]);
+          conversationId = conversation.id;
+        }
+      }
+
+      // Insert system message about the tip
+      if (conversationId) {
+        await adminClient
+          .from("messages")
+          .insert({
+            conversation_id: conversationId,
+            sender_id: sender.id,
+            content: `💝 ${senderName} sent a ${amount} coin tip!`,
+            is_system: true,
+          });
+
+        // Update conversation timestamp
+        await adminClient
+          .from("conversations")
+          .update({ updated_at: new Date().toISOString() })
+          .eq("id", conversationId);
+      }
+    }
+
+    // Send email notification to model (non-blocking)
+    if (recipientModel.email) {
       sendTipReceivedEmail({
         to: recipientModel.email,
         modelName: recipientModel.first_name || recipientModel.username || "Model",
@@ -141,6 +219,7 @@ export async function POST(request: NextRequest) {
       amount: result.amount,
       newBalance: result.sender_new_balance,
       recipientName: recipientModel.first_name || recipientModel.username,
+      conversationId,
     });
   } catch (error) {
     console.error("Tip error:", error);
