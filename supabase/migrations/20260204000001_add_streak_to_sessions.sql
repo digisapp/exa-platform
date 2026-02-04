@@ -9,12 +9,14 @@ ADD COLUMN IF NOT EXISTS longest_streak INTEGER DEFAULT 0,
 ADD COLUMN IF NOT EXISTS last_play_date DATE;
 
 -- Update the get_or_create_top_model_session function to include streak
+-- Also preserves session merging logic from migration 20260201000007
 CREATE OR REPLACE FUNCTION get_or_create_top_model_session(
   p_user_id UUID,
   p_fingerprint TEXT
 ) RETURNS JSONB AS $$
 DECLARE
   v_session top_model_sessions%ROWTYPE;
+  v_anon_session top_model_sessions%ROWTYPE;
   v_total_models INTEGER;
 BEGIN
   -- Get total swipeable models count
@@ -23,11 +25,25 @@ BEGIN
   WHERE is_approved = true
     AND profile_photo_url IS NOT NULL;
 
-  -- Try to find existing session
+  -- Try to find existing session by user_id first
   IF p_user_id IS NOT NULL THEN
     SELECT * INTO v_session FROM top_model_sessions WHERE user_id = p_user_id;
+
+    -- If logged in user has no session, check if there's an anonymous session with their fingerprint
+    IF v_session.id IS NULL AND p_fingerprint IS NOT NULL THEN
+      SELECT * INTO v_anon_session FROM top_model_sessions WHERE fingerprint = p_fingerprint AND user_id IS NULL;
+
+      -- If found anonymous session, convert it to user session
+      IF v_anon_session.id IS NOT NULL THEN
+        UPDATE top_model_sessions
+        SET user_id = p_user_id
+        WHERE id = v_anon_session.id
+        RETURNING * INTO v_session;
+      END IF;
+    END IF;
   ELSIF p_fingerprint IS NOT NULL THEN
-    SELECT * INTO v_session FROM top_model_sessions WHERE fingerprint = p_fingerprint;
+    -- Anonymous user - look up by fingerprint
+    SELECT * INTO v_session FROM top_model_sessions WHERE fingerprint = p_fingerprint AND user_id IS NULL;
   END IF;
 
   -- Create new session if not exists
@@ -43,7 +59,7 @@ BEGIN
     RETURN jsonb_build_object(
       'session_id', v_session.id,
       'can_swipe', false,
-      'models_swiped', array_length(v_session.models_swiped, 1),
+      'models_swiped', COALESCE(array_length(v_session.models_swiped, 1), 0),
       'total_models', v_total_models,
       'next_reset_at', v_session.completed_at + INTERVAL '24 hours',
       'current_streak', COALESCE(v_session.current_streak, 0),
