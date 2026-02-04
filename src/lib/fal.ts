@@ -4,9 +4,8 @@
 const FAL_KEY = process.env.FAL_KEY;
 
 // Flux Pro for high-quality base image generation
+// Use the same model ID for all queue operations (submit, status, result)
 const FLUX_MODEL = "fal-ai/flux-pro/v1.1";
-// Base path without version - needed for status/result endpoints (fal.ai quirk)
-const FLUX_MODEL_BASE = "fal-ai/flux-pro";
 // Replicate API for deepfake-quality face swap (Easel AI)
 const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN;
 // easel/advanced-face-swap - commercial deepfake quality, replaces full body
@@ -302,7 +301,6 @@ export async function faceSwap(
 }
 
 // Check generation status
-// Note: fal.ai requires base model path (without version suffix) for status checks
 export async function getGenerationStatus(
   requestId: string
 ): Promise<FalPrediction | { error: string }> {
@@ -312,7 +310,7 @@ export async function getGenerationStatus(
 
   try {
     const response = await fetch(
-      `https://queue.fal.run/${FLUX_MODEL_BASE}/requests/${requestId}/status`,
+      `https://queue.fal.run/${FLUX_MODEL}/requests/${requestId}/status`,
       {
         headers: {
           Authorization: `Key ${FAL_KEY}`,
@@ -341,7 +339,6 @@ export async function getGenerationStatus(
 }
 
 // Get generation result (after status is COMPLETED)
-// Note: fal.ai requires base model path (without version suffix) for result retrieval
 export async function getGenerationResult(
   requestId: string
 ): Promise<FalPrediction | { error: string }> {
@@ -351,7 +348,7 @@ export async function getGenerationResult(
 
   try {
     const response = await fetch(
-      `https://queue.fal.run/${FLUX_MODEL_BASE}/requests/${requestId}`,
+      `https://queue.fal.run/${FLUX_MODEL}/requests/${requestId}`,
       {
         headers: {
           Authorization: `Key ${FAL_KEY}`,
@@ -387,7 +384,7 @@ export async function cancelGeneration(requestId: string): Promise<boolean> {
 
   try {
     const response = await fetch(
-      `https://queue.fal.run/${FLUX_MODEL_BASE}/requests/${requestId}/cancel`,
+      `https://queue.fal.run/${FLUX_MODEL}/requests/${requestId}/cancel`,
       {
         method: "PUT",
         headers: {
