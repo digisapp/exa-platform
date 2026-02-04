@@ -7,10 +7,10 @@ const FAL_KEY = process.env.FAL_KEY;
 // IMPORTANT: Use full path for submission, base path for status/result
 const FLUX_MODEL = "fal-ai/flux-pro/v1.1";
 const FLUX_MODEL_BASE = "fal-ai/flux-pro"; // For status checks
-// Replicate API for deepfake-quality face swap (Easel AI)
+// Replicate API for face swap
 const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN;
-// easel/advanced-face-swap - commercial deepfake quality, replaces full body
-const REPLICATE_FACE_SWAP_MODEL = "easel/advanced-face-swap";
+// Use face26/face-swap - simpler but reliable face swap
+const REPLICATE_FACE_SWAP_MODEL = "face26/face-swap";
 
 // Scenario presets for base image generation
 // Face will be swapped in the second step, so prompts describe the full scene with a model
@@ -144,11 +144,11 @@ export interface FalPrediction {
   error?: string;
 }
 
-// Step 1: Submit Flux generation to queue (returns immediately with request_id)
+// Step 1: Generate base image with Flux Pro (synchronous API with timeout)
 export async function startGeneration(
   faceImageUrl: string,
   scenarioId: ScenarioId
-): Promise<{ requestId: string; faceImageUrl: string } | { error: string }> {
+): Promise<{ baseImageUrl: string; faceImageUrl: string } | { error: string }> {
   if (!FAL_KEY) {
     return { error: "fal.ai API key not configured" };
   }
@@ -159,16 +159,19 @@ export async function startGeneration(
   }
 
   try {
-    console.log("[fal.ai] Submitting Flux generation to queue");
+    console.log("[fal.ai] Starting Flux generation (sync mode)");
     console.log("[fal.ai] Scenario:", scenarioId);
-    console.log("[fal.ai] Face image (for later swap):", faceImageUrl);
 
-    // Use fal.ai queue API (returns immediately)
-    const apiUrl = `https://queue.fal.run/${FLUX_MODEL}`;
+    // Use synchronous fal.ai API (fal.run - waits for result)
+    const apiUrl = `https://fal.run/${FLUX_MODEL}`;
     console.log("[fal.ai] API URL:", apiUrl);
 
-    // Flux Pro prompt - describe a model in the scene (face will be swapped later)
+    // Flux Pro prompt
     const fullPrompt = `professional fashion photography of a beautiful young woman, ${scenario.prompt}, clear face visible, front-facing, looking at camera, photorealistic, high quality`;
+
+    // Add timeout (55s to stay under Vercel's 60s limit)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 55000);
 
     const response = await fetch(apiUrl, {
       method: "POST",
@@ -183,98 +186,37 @@ export async function startGeneration(
           height: 1024,
         },
         num_images: 1,
-        safety_tolerance: "5", // Less strict for fashion/swimwear
+        safety_tolerance: "5",
         output_format: "jpeg",
       }),
+      signal: controller.signal,
     });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("[fal.ai] Queue submit error:", response.status, response.statusText);
-      console.error("[fal.ai] Error body:", errorText);
-      return { error: `Failed to start generation: ${response.status}` };
+      console.error("[fal.ai] API error:", response.status, errorText);
+      return { error: `Failed to generate: ${response.status}` };
     }
 
     const result = await response.json();
-    console.log("[fal.ai] Queue response:", JSON.stringify(result).slice(0, 300));
+    console.log("[fal.ai] Generation complete!");
 
-    // Queue API returns request_id
-    if (!result.request_id) {
-      return { error: "No request ID returned from queue" };
+    if (!result.images || result.images.length === 0) {
+      return { error: "No image generated" };
     }
 
-    console.log("[fal.ai] Request ID:", result.request_id);
+    const baseImageUrl = result.images[0].url;
+    console.log("[fal.ai] Base image:", baseImageUrl.slice(0, 60));
 
-    return {
-      requestId: result.request_id,
-      faceImageUrl
-    };
+    return { baseImageUrl, faceImageUrl };
   } catch (error) {
     console.error("[fal.ai] Error:", error);
+    if (error instanceof Error && error.name === "AbortError") {
+      return { error: "Generation timed out. Please try again." };
+    }
     return { error: "Failed to connect to AI service" };
-  }
-}
-
-// Check Flux generation status and get result
-export async function checkFluxStatus(
-  requestId: string
-): Promise<{ status: "processing" | "completed" | "failed"; imageUrl?: string; error?: string }> {
-  if (!FAL_KEY) {
-    return { status: "failed", error: "fal.ai API key not configured" };
-  }
-
-  try {
-    // Check status - use BASE path (not versioned path) for status/result
-    const statusUrl = `https://queue.fal.run/${FLUX_MODEL_BASE}/requests/${requestId}/status`;
-    console.log("[fal.ai] Checking status:", statusUrl);
-
-    const statusResponse = await fetch(statusUrl, {
-      headers: {
-        Authorization: `Key ${FAL_KEY}`,
-      },
-    });
-
-    if (!statusResponse.ok) {
-      console.error("[fal.ai] Status check failed:", statusResponse.status);
-      // Return processing to retry on next poll
-      return { status: "processing" };
-    }
-
-    const statusData = await statusResponse.json();
-    console.log("[fal.ai] Status:", statusData.status);
-
-    if (statusData.status === "COMPLETED") {
-      // Get the result - use BASE path
-      const resultUrl = `https://queue.fal.run/${FLUX_MODEL_BASE}/requests/${requestId}`;
-      const resultResponse = await fetch(resultUrl, {
-        headers: {
-          Authorization: `Key ${FAL_KEY}`,
-        },
-      });
-
-      if (!resultResponse.ok) {
-        return { status: "failed", error: "Failed to get result" };
-      }
-
-      const result = await resultResponse.json();
-      console.log("[fal.ai] Result:", JSON.stringify(result).slice(0, 300));
-
-      if (result.images && result.images.length > 0) {
-        return { status: "completed", imageUrl: result.images[0].url };
-      }
-
-      return { status: "failed", error: "No image in result" };
-    }
-
-    if (statusData.status === "FAILED") {
-      return { status: "failed", error: "Generation failed" };
-    }
-
-    // Still processing (IN_QUEUE, IN_PROGRESS)
-    return { status: "processing" };
-  } catch (error) {
-    console.error("[fal.ai] Status check error:", error);
-    return { status: "processing" }; // Retry on next poll
   }
 }
 
@@ -288,9 +230,9 @@ export async function startFaceSwap(
   }
 
   try {
-    console.log("[Replicate/Easel] Starting deepfake face swap");
-    console.log("[Replicate/Easel] Target image (Flux):", baseImageUrl);
-    console.log("[Replicate/Easel] Source face (user):", faceImageUrl);
+    console.log("[Replicate/Face26] Starting face swap");
+    console.log("[Replicate/Face26] Target image (Flux):", baseImageUrl);
+    console.log("[Replicate/Face26] Source face (user):", faceImageUrl);
 
     const response = await fetch("https://api.replicate.com/v1/models/" + REPLICATE_FACE_SWAP_MODEL + "/predictions", {
       method: "POST",
@@ -300,25 +242,24 @@ export async function startFaceSwap(
       },
       body: JSON.stringify({
         input: {
-          swap_image: faceImageUrl,    // User's face to transfer
-          target_image: baseImageUrl,  // Flux generated image
-          hair_source: "target",       // Keep target's hair style
+          source_image: baseImageUrl,   // The image to put face into
+          target_image: faceImageUrl,   // The face to use
         },
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("[Replicate/Easel] Face swap start error:", response.status, errorText);
+      console.error("[Replicate/Face26] Face swap start error:", response.status, errorText);
       return { error: `Face swap failed to start: ${response.status}` };
     }
 
     const prediction = await response.json();
-    console.log("[Replicate/Easel] Prediction started:", prediction.id);
+    console.log("[Replicate/Face26] Prediction started:", prediction.id);
 
     return { predictionId: prediction.id };
   } catch (error) {
-    console.error("[Replicate/Easel] Face swap start error:", error);
+    console.error("[Replicate/Face26] Face swap start error:", error);
     return { error: "Face swap failed to start" };
   }
 }
@@ -342,21 +283,21 @@ export async function checkFaceSwapStatus(
     );
 
     if (!response.ok) {
-      console.error("[Replicate/Easel] Status check failed:", response.status);
+      console.error("[Replicate/Face26] Status check failed:", response.status);
       return { status: "processing" }; // Retry on next poll
     }
 
     const result = await response.json();
-    console.log("[Replicate/Easel] Status:", result.status);
+    console.log("[Replicate/Face26] Status:", result.status);
 
     if (result.status === "succeeded") {
       const outputUrl = Array.isArray(result.output) ? result.output[0] : result.output;
-      console.log("[Replicate/Easel] Face swap completed:", outputUrl);
+      console.log("[Replicate/Face26] Face swap completed:", outputUrl);
       return { status: "completed", imageUrl: outputUrl };
     }
 
     if (result.status === "failed") {
-      console.error("[Replicate/Easel] Face swap failed:", result.error);
+      console.error("[Replicate/Face26] Face swap failed:", result.error);
       return { status: "failed", error: result.error || "Face swap failed" };
     }
 
@@ -367,7 +308,7 @@ export async function checkFaceSwapStatus(
     // Still processing (starting, processing, etc.)
     return { status: "processing" };
   } catch (error) {
-    console.error("[Replicate/Easel] Status check error:", error);
+    console.error("[Replicate/Face26] Status check error:", error);
     return { status: "processing" }; // Retry on next poll
   }
 }

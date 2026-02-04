@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { checkFluxStatus, startFaceSwap, checkFaceSwapStatus } from "@/lib/fal";
+import { startFaceSwap, checkFaceSwapStatus } from "@/lib/fal";
 
 // Each poll is quick
 export const maxDuration = 30;
@@ -112,72 +112,7 @@ export async function GET(
       });
     }
 
-    // STEP 1: flux_pending - Check if Flux is done
-    if (generation.status === "flux_pending") {
-      const fluxRequestId = generation.replicate_prediction_id;
-
-      if (!fluxRequestId) {
-        console.error("[AI Status] No Flux request ID");
-        await supabase
-          .from("ai_generations")
-          .update({ status: "failed", error_message: "Missing request ID" })
-          .eq("id", generationId);
-        return NextResponse.json({ status: "failed", error: "Missing request ID" });
-      }
-
-      console.log("[AI Status] Checking Flux status:", fluxRequestId);
-      const fluxStatus = await checkFluxStatus(fluxRequestId);
-
-      if (fluxStatus.status === "completed" && fluxStatus.imageUrl) {
-        console.log("[AI Status] Flux complete! Starting face swap...");
-
-        // Start face swap with the base image
-        const faceImageUrl = generation.source_image_url;
-        const startResult = await startFaceSwap(fluxStatus.imageUrl, faceImageUrl);
-
-        if ("error" in startResult) {
-          console.error("[AI Status] Failed to start face swap:", startResult.error);
-          await supabase
-            .from("ai_generations")
-            .update({ status: "failed", error_message: startResult.error })
-            .eq("id", generationId);
-          return NextResponse.json({ status: "failed", error: startResult.error });
-        }
-
-        // Update to face_swap_in_progress with the prediction ID
-        await supabase
-          .from("ai_generations")
-          .update({
-            status: "face_swap_in_progress",
-            replicate_prediction_id: startResult.predictionId,
-          })
-          .eq("id", generationId);
-
-        console.log("[AI Status] Face swap started:", startResult.predictionId);
-
-        return NextResponse.json({
-          status: "processing",
-          message: "Face swap in progress...",
-        });
-      }
-
-      if (fluxStatus.status === "failed") {
-        console.error("[AI Status] Flux failed:", fluxStatus.error);
-        await supabase
-          .from("ai_generations")
-          .update({ status: "failed", error_message: fluxStatus.error })
-          .eq("id", generationId);
-        return NextResponse.json({ status: "failed", error: fluxStatus.error });
-      }
-
-      // Still processing
-      return NextResponse.json({
-        status: "processing",
-        message: "Generating base image...",
-      });
-    }
-
-    // STEP 2: face_swap_pending - Start face swap (legacy status, handle for existing records)
+    // STEP 1: face_swap_pending - Start face swap
     if (generation.status === "face_swap_pending") {
       const baseImageUrl = generation.replicate_prediction_id;
       const faceImageUrl = generation.source_image_url;
@@ -217,7 +152,7 @@ export async function GET(
       });
     }
 
-    // STEP 3: face_swap_in_progress - Check face swap status
+    // STEP 2: face_swap_in_progress - Check face swap status
     if (generation.status === "face_swap_in_progress") {
       const predictionId = generation.replicate_prediction_id;
 
