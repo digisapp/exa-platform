@@ -45,18 +45,18 @@ import {
   Bar,
 } from "recharts";
 
+interface PeriodStats {
+  sessions: number;
+  signedIn: number;
+  votes: number;
+  likes: number;
+  boosts: number;
+}
+
 interface BoostStats {
-  totalSessions: number;
-  signedInSessions: number;
-  totalVotes: number;
-  totalLikes: number;
-  totalDislikes: number;
-  totalBoosts: number;
-  todaySessions: number;
-  todaySignedIn: number;
-  todayVotes: number;
-  todayLikes: number;
-  todayBoosts: number;
+  today: PeriodStats;
+  monthly: PeriodStats;
+  all: PeriodStats;
   dailyData: { date: string; sessions: number; votes: number; boosts: number }[];
   topModels: { model_id: string; username: string; first_name: string | null; profile_photo_url: string | null; likes: number; dislikes: number; boosts: number }[];
   recentSessions: { id: string; user_id: string | null; created_at: string; completed_at: string | null; models_shown: number; total_votes: number; fan_display_name: string | null }[];
@@ -65,7 +65,8 @@ interface BoostStats {
 export default function AdminBoostPage() {
   const [stats, setStats] = useState<BoostStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState<"7d" | "30d" | "all">("7d");
+  const [chartPeriod, setChartPeriod] = useState<"7d" | "30d" | "all">("7d");
+  const [statsPeriod, setStatsPeriod] = useState<"today" | "monthly" | "all">("today");
   const supabase = createClient();
 
   const fetchStats = async () => {
@@ -74,11 +75,15 @@ export default function AdminBoostPage() {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      // Calculate date range based on period
+      // Calculate monthly date (30 days ago)
+      const monthlyDate = new Date();
+      monthlyDate.setDate(monthlyDate.getDate() - 30);
+
+      // Calculate date range based on chart period
       const startDate = new Date();
-      if (period === "7d") {
+      if (chartPeriod === "7d") {
         startDate.setDate(startDate.getDate() - 7);
-      } else if (period === "30d") {
+      } else if (chartPeriod === "30d") {
         startDate.setDate(startDate.getDate() - 30);
       } else {
         startDate.setFullYear(2020); // Far back for "all"
@@ -86,17 +91,25 @@ export default function AdminBoostPage() {
 
       // Fetch all stats in parallel
       const [
+        // All-time counts
         { count: totalSessions },
-        { count: signedInSessions },
+        { count: totalSignedIn },
         { count: totalVotes },
         { count: totalLikes },
-        { count: totalDislikes },
         { count: totalBoosts },
+        // Today counts
         { count: todaySessions },
         { count: todaySignedIn },
         { count: todayVotes },
         { count: todayLikes },
         { count: todayBoosts },
+        // Monthly counts
+        { count: monthlySessions },
+        { count: monthlySignedIn },
+        { count: monthlyVotes },
+        { count: monthlyLikes },
+        { count: monthlyBoosts },
+        // Chart and other data
         { data: sessionsData },
         { data: votesData },
         { data: topModelsData },
@@ -107,7 +120,6 @@ export default function AdminBoostPage() {
         supabase.from("top_model_sessions").select("*", { count: "exact", head: true }).not("user_id", "is", null),
         supabase.from("top_model_votes").select("*", { count: "exact", head: true }),
         supabase.from("top_model_votes").select("*", { count: "exact", head: true }).eq("vote_type", "like"),
-        supabase.from("top_model_votes").select("*", { count: "exact", head: true }).eq("vote_type", "dislike"),
         supabase.from("top_model_votes").select("*", { count: "exact", head: true }).eq("is_boosted", true),
         // Today counts
         supabase.from("top_model_sessions").select("*", { count: "exact", head: true }).gte("created_at", today.toISOString()),
@@ -115,6 +127,12 @@ export default function AdminBoostPage() {
         supabase.from("top_model_votes").select("*", { count: "exact", head: true }).gte("created_at", today.toISOString()),
         supabase.from("top_model_votes").select("*", { count: "exact", head: true }).gte("created_at", today.toISOString()).eq("vote_type", "like"),
         supabase.from("top_model_votes").select("*", { count: "exact", head: true }).gte("created_at", today.toISOString()).eq("is_boosted", true),
+        // Monthly counts
+        supabase.from("top_model_sessions").select("*", { count: "exact", head: true }).gte("created_at", monthlyDate.toISOString()),
+        supabase.from("top_model_sessions").select("*", { count: "exact", head: true }).gte("created_at", monthlyDate.toISOString()).not("user_id", "is", null),
+        supabase.from("top_model_votes").select("*", { count: "exact", head: true }).gte("created_at", monthlyDate.toISOString()),
+        supabase.from("top_model_votes").select("*", { count: "exact", head: true }).gte("created_at", monthlyDate.toISOString()).eq("vote_type", "like"),
+        supabase.from("top_model_votes").select("*", { count: "exact", head: true }).gte("created_at", monthlyDate.toISOString()).eq("is_boosted", true),
         // Sessions for chart
         supabase.from("top_model_sessions").select("created_at").gte("created_at", startDate.toISOString()).order("created_at", { ascending: true }),
         // Votes for chart
@@ -209,17 +227,27 @@ export default function AdminBoostPage() {
       }));
 
       setStats({
-        totalSessions: totalSessions || 0,
-        signedInSessions: signedInSessions || 0,
-        totalVotes: totalVotes || 0,
-        totalLikes: totalLikes || 0,
-        totalDislikes: totalDislikes || 0,
-        totalBoosts: totalBoosts || 0,
-        todaySessions: todaySessions || 0,
-        todaySignedIn: todaySignedIn || 0,
-        todayVotes: todayVotes || 0,
-        todayLikes: todayLikes || 0,
-        todayBoosts: todayBoosts || 0,
+        today: {
+          sessions: todaySessions || 0,
+          signedIn: todaySignedIn || 0,
+          votes: todayVotes || 0,
+          likes: todayLikes || 0,
+          boosts: todayBoosts || 0,
+        },
+        monthly: {
+          sessions: monthlySessions || 0,
+          signedIn: monthlySignedIn || 0,
+          votes: monthlyVotes || 0,
+          likes: monthlyLikes || 0,
+          boosts: monthlyBoosts || 0,
+        },
+        all: {
+          sessions: totalSessions || 0,
+          signedIn: totalSignedIn || 0,
+          votes: totalVotes || 0,
+          likes: totalLikes || 0,
+          boosts: totalBoosts || 0,
+        },
         dailyData,
         topModels,
         recentSessions,
@@ -233,7 +261,7 @@ export default function AdminBoostPage() {
 
   useEffect(() => {
     fetchStats();
-  }, [period]);
+  }, [chartPeriod]);
 
   const formatDate = (dateStr: unknown) => {
     if (typeof dateStr !== "string" && typeof dateStr !== "number") return "";
@@ -293,84 +321,54 @@ export default function AdminBoostPage() {
         </div>
       </div>
 
-      {/* Today's Stats */}
+      {/* Stats with Period Toggle */}
       <Card className="border-orange-500/30 bg-gradient-to-br from-orange-500/5 to-pink-500/5">
         <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Trophy className="h-5 w-5 text-yellow-500" />
-            Today
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Trophy className="h-5 w-5 text-yellow-500" />
+              Stats
+            </CardTitle>
+            <Tabs value={statsPeriod} onValueChange={(v) => setStatsPeriod(v as any)}>
+              <TabsList className="h-8">
+                <TabsTrigger value="today" className="text-xs px-3">Today</TabsTrigger>
+                <TabsTrigger value="monthly" className="text-xs px-3">30D</TabsTrigger>
+                <TabsTrigger value="all" className="text-xs px-3">All</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
             <div className="text-center p-4 rounded-lg bg-gradient-to-r from-orange-500/10 to-pink-500/10 border border-orange-500/20">
               <Users className="h-5 w-5 mx-auto mb-2 text-blue-400" />
-              <p className="text-3xl font-bold text-orange-400">{stats?.todaySessions.toLocaleString()}</p>
+              <p className="text-3xl font-bold text-orange-400">{stats?.[statsPeriod]?.sessions.toLocaleString() ?? 0}</p>
               <p className="text-sm text-muted-foreground">Players</p>
             </div>
             <div className="text-center p-4 rounded-lg bg-gradient-to-r from-orange-500/10 to-pink-500/10 border border-orange-500/20">
               <UserPlus className="h-5 w-5 mx-auto mb-2 text-green-400" />
-              <p className="text-3xl font-bold text-orange-400">{stats?.todaySignedIn.toLocaleString()}</p>
+              <p className="text-3xl font-bold text-orange-400">{stats?.[statsPeriod]?.signedIn.toLocaleString() ?? 0}</p>
               <p className="text-sm text-muted-foreground">Signed In</p>
             </div>
             <div className="text-center p-4 rounded-lg bg-gradient-to-r from-orange-500/10 to-pink-500/10 border border-orange-500/20">
               <Eye className="h-5 w-5 mx-auto mb-2 text-purple-400" />
-              <p className="text-3xl font-bold text-orange-400">{((stats?.todaySessions || 0) - (stats?.todaySignedIn || 0)).toLocaleString()}</p>
+              <p className="text-3xl font-bold text-orange-400">{((stats?.[statsPeriod]?.sessions || 0) - (stats?.[statsPeriod]?.signedIn || 0)).toLocaleString()}</p>
               <p className="text-sm text-muted-foreground">Anonymous</p>
             </div>
             <div className="text-center p-4 rounded-lg bg-gradient-to-r from-orange-500/10 to-pink-500/10 border border-orange-500/20">
               <ThumbsUp className="h-5 w-5 mx-auto mb-2 text-pink-400" />
-              <p className="text-3xl font-bold text-orange-400">{stats?.todayVotes.toLocaleString()}</p>
+              <p className="text-3xl font-bold text-orange-400">{stats?.[statsPeriod]?.votes.toLocaleString() ?? 0}</p>
               <p className="text-sm text-muted-foreground">Votes</p>
             </div>
             <div className="text-center p-4 rounded-lg bg-gradient-to-r from-orange-500/10 to-pink-500/10 border border-orange-500/20">
+              <Heart className="h-5 w-5 mx-auto mb-2 text-red-400" />
+              <p className="text-3xl font-bold text-orange-400">{stats?.[statsPeriod]?.likes.toLocaleString() ?? 0}</p>
+              <p className="text-sm text-muted-foreground">Likes</p>
+            </div>
+            <div className="text-center p-4 rounded-lg bg-gradient-to-r from-orange-500/10 to-pink-500/10 border border-orange-500/20">
               <Flame className="h-5 w-5 mx-auto mb-2 text-orange-400" />
-              <p className="text-3xl font-bold text-orange-400">{stats?.todayBoosts.toLocaleString()}</p>
+              <p className="text-3xl font-bold text-orange-400">{stats?.[statsPeriod]?.boosts.toLocaleString() ?? 0}</p>
               <p className="text-sm text-muted-foreground">Boosts</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* All-Time Stats */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <TrendingUp className="h-5 w-5 text-blue-500" />
-            All Time
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
-            <div className="text-center p-3 rounded-lg bg-white/5">
-              <Users className="h-4 w-4 mx-auto mb-1 text-blue-400" />
-              <p className="text-2xl font-bold">{stats?.totalSessions.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground">Players</p>
-            </div>
-            <div className="text-center p-3 rounded-lg bg-white/5">
-              <UserPlus className="h-4 w-4 mx-auto mb-1 text-green-400" />
-              <p className="text-2xl font-bold">{stats?.signedInSessions.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground">Signed In</p>
-            </div>
-            <div className="text-center p-3 rounded-lg bg-white/5">
-              <Eye className="h-4 w-4 mx-auto mb-1 text-purple-400" />
-              <p className="text-2xl font-bold">{((stats?.totalSessions || 0) - (stats?.signedInSessions || 0)).toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground">Anonymous</p>
-            </div>
-            <div className="text-center p-3 rounded-lg bg-white/5">
-              <ThumbsUp className="h-4 w-4 mx-auto mb-1 text-pink-400" />
-              <p className="text-2xl font-bold">{stats?.totalVotes.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground">Votes</p>
-            </div>
-            <div className="text-center p-3 rounded-lg bg-white/5">
-              <Heart className="h-4 w-4 mx-auto mb-1 text-red-400" />
-              <p className="text-2xl font-bold">{stats?.totalLikes.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground">Likes</p>
-            </div>
-            <div className="text-center p-3 rounded-lg bg-white/5">
-              <Flame className="h-4 w-4 mx-auto mb-1 text-orange-400" />
-              <p className="text-2xl font-bold">{stats?.totalBoosts.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground">Boosts</p>
             </div>
           </div>
         </CardContent>
@@ -383,7 +381,7 @@ export default function AdminBoostPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">Daily Activity</CardTitle>
-              <Tabs value={period} onValueChange={(v) => setPeriod(v as any)}>
+              <Tabs value={chartPeriod} onValueChange={(v) => setChartPeriod(v as any)}>
                 <TabsList className="h-8">
                   <TabsTrigger value="7d" className="text-xs px-2">7D</TabsTrigger>
                   <TabsTrigger value="30d" className="text-xs px-2">30D</TabsTrigger>
