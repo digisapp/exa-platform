@@ -143,11 +143,11 @@ export interface FalPrediction {
   error?: string;
 }
 
-// Step 1: Start base image generation with Flux Pro
+// Step 1: Generate base image with Flux Pro (synchronous - waits for result)
 export async function startGeneration(
   faceImageUrl: string,
   scenarioId: ScenarioId
-): Promise<{ requestId: string; statusUrl: string; responseUrl: string; faceImageUrl: string } | { error: string }> {
+): Promise<{ requestId: string; baseImageUrl: string; faceImageUrl: string } | { error: string }> {
   if (!FAL_KEY) {
     return { error: "fal.ai API key not configured" };
   }
@@ -158,12 +158,12 @@ export async function startGeneration(
   }
 
   try {
-    console.log("[fal.ai] Starting Flux base image generation");
+    console.log("[fal.ai] Starting Flux base image generation (sync mode)");
     console.log("[fal.ai] Scenario:", scenarioId);
     console.log("[fal.ai] Face image (for later swap):", faceImageUrl);
 
-    // Use fal.ai queue API for async generation with Flux Pro
-    const apiUrl = `https://queue.fal.run/${FLUX_MODEL}`;
+    // Use fal.ai synchronous API (fal.run instead of queue.fal.run)
+    const apiUrl = `https://fal.run/${FLUX_MODEL}`;
     console.log("[fal.ai] API URL:", apiUrl);
 
     // Flux Pro prompt - describe a model in the scene (face will be swapped later)
@@ -191,19 +191,25 @@ export async function startGeneration(
       const errorText = await response.text();
       console.error("[fal.ai] Flux API error:", response.status, response.statusText);
       console.error("[fal.ai] Error body:", errorText);
-      return { error: `Failed to start generation: ${response.status} - ${errorText}` };
+      return { error: `Failed to generate image: ${response.status} - ${errorText}` };
     }
 
     const result = await response.json();
-    console.log("[fal.ai] Flux generation queued:", result.request_id);
-    console.log("[fal.ai] Status URL:", result.status_url);
-    console.log("[fal.ai] Response URL:", result.response_url);
+    console.log("[fal.ai] Flux generation complete!");
+    console.log("[fal.ai] Result:", JSON.stringify(result).slice(0, 500));
 
-    // Return the request ID, URLs from fal.ai, and the face URL (needed for step 2)
+    // Synchronous API returns the images directly
+    if (!result.images || result.images.length === 0) {
+      return { error: "No image generated" };
+    }
+
+    const baseImageUrl = result.images[0].url;
+    console.log("[fal.ai] Base image URL:", baseImageUrl);
+
+    // Return the base image URL directly (no need for status polling)
     return {
-      requestId: result.request_id,
-      statusUrl: result.status_url,
-      responseUrl: result.response_url,
+      requestId: `sync-${Date.now()}`, // Generate a fake ID for tracking
+      baseImageUrl,
       faceImageUrl
     };
   } catch (error) {

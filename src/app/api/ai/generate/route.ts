@@ -1,8 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { startGeneration, AI_SCENARIOS, AI_GENERATION_COST, type ScenarioId } from "@/lib/fal";
+import { startGeneration, faceSwap, AI_SCENARIOS, AI_GENERATION_COST, type ScenarioId } from "@/lib/fal";
 
-// POST - Start a new AI generation
+// Allow longer timeout for full generation + face swap
+export const maxDuration = 60;
+
+// Download image from URL and return as buffer
+async function downloadImage(url: string): Promise<Buffer | null> {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    const arrayBuffer = await response.arrayBuffer();
+    return Buffer.from(arrayBuffer);
+  } catch (error) {
+    console.error("[AI Generate] Failed to download image:", error);
+    return null;
+  }
+}
+
+// POST - Generate AI image (synchronous - does everything in one call)
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -55,14 +71,7 @@ export async function POST(request: NextRequest) {
       }, { status: 402 });
     }
 
-    // Start the generation on fal.ai
-    const result = await startGeneration(sourceImageUrl, scenarioId);
-
-    if ("error" in result) {
-      return NextResponse.json({ error: result.error }, { status: 500 });
-    }
-
-    // Deduct coins
+    // Deduct coins first
     const { error: coinError } = await supabase
       .from("models")
       .update({ coin_balance: coinBalance - AI_GENERATION_COST })
@@ -70,34 +79,99 @@ export async function POST(request: NextRequest) {
 
     if (coinError) {
       console.error("[AI Generate] Failed to deduct coins:", coinError);
-      // Continue anyway - we'll handle this manually if needed
     }
 
-    // Create generation record (store fal request_id in replicate_prediction_id field for compatibility)
+    // Step 1: Generate base image with Flux (synchronous - waits for result)
+    console.log("[AI Generate] Step 1: Generating base image with Flux...");
+    const fluxResult = await startGeneration(sourceImageUrl, scenarioId);
+
+    if ("error" in fluxResult) {
+      // Refund coins on error
+      await supabase
+        .from("models")
+        .update({ coin_balance: coinBalance })
+        .eq("id", model.id);
+      return NextResponse.json({ error: fluxResult.error }, { status: 500 });
+    }
+
+    console.log("[AI Generate] Step 1 complete! Base image:", fluxResult.baseImageUrl.slice(0, 50));
+
+    // Step 2: Face swap with Replicate/Easel
+    console.log("[AI Generate] Step 2: Face swapping...");
+    const swapResult = await faceSwap(fluxResult.baseImageUrl, sourceImageUrl);
+
+    if ("error" in swapResult) {
+      // Refund coins on error
+      await supabase
+        .from("models")
+        .update({ coin_balance: coinBalance })
+        .eq("id", model.id);
+      return NextResponse.json({ error: swapResult.error }, { status: 500 });
+    }
+
+    if (!swapResult.images || swapResult.images.length === 0) {
+      await supabase
+        .from("models")
+        .update({ coin_balance: coinBalance })
+        .eq("id", model.id);
+      return NextResponse.json({ error: "Face swap returned no image" }, { status: 500 });
+    }
+
+    console.log("[AI Generate] Step 2 complete! Saving to storage...");
+
+    // Step 3: Save to permanent storage
+    const generationId = crypto.randomUUID();
+    const outputUrl = swapResult.images[0].url;
+    const buffer = await downloadImage(outputUrl);
+
+    let permanentUrl = outputUrl; // Fallback to original URL
+    if (buffer) {
+      const filename = `${model.id}/ai-${generationId}-0.webp`;
+      const { error: uploadError } = await supabase.storage
+        .from("portfolio")
+        .upload(filename, buffer, {
+          contentType: "image/webp",
+          upsert: true,
+        });
+
+      if (!uploadError) {
+        const { data: { publicUrl } } = supabase.storage
+          .from("portfolio")
+          .getPublicUrl(filename);
+        permanentUrl = publicUrl;
+      }
+    }
+
+    // Create generation record
     const { data: generation, error: insertError } = await supabase
       .from("ai_generations")
       .insert({
+        id: generationId,
         model_id: model.id,
         source_image_url: sourceImageUrl,
         scenario_id: scenarioId,
         scenario_name: scenario.name,
         prompt: scenario.prompt,
-        status: "processing",
-        replicate_prediction_id: result.requestId, // Using same field for fal.ai request_id
+        status: "completed",
+        result_urls: [permanentUrl],
         coins_spent: AI_GENERATION_COST,
+        completed_at: new Date().toISOString(),
       })
       .select()
       .single();
 
     if (insertError) {
       console.error("[AI Generate] Failed to create record:", insertError);
-      return NextResponse.json({ error: "Failed to save generation" }, { status: 500 });
+      // Don't fail - the image was generated successfully
     }
+
+    console.log("[AI Generate] Complete! Image saved:", permanentUrl.slice(0, 50));
 
     return NextResponse.json({
       success: true,
-      generationId: generation.id,
-      requestId: result.requestId,
+      generationId: generation?.id || generationId,
+      status: "completed",
+      resultUrls: [permanentUrl],
       coinsSpent: AI_GENERATION_COST,
       newBalance: coinBalance - AI_GENERATION_COST,
     });
