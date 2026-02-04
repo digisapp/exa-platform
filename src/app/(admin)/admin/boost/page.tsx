@@ -249,7 +249,8 @@ export default function AdminBoostPage() {
     fetchStats();
   }, [period]);
 
-  const formatDate = (dateStr: string | number) => {
+  const formatDate = (dateStr: unknown) => {
+    if (typeof dateStr !== "string" && typeof dateStr !== "number") return "";
     const date = new Date(dateStr);
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   };
