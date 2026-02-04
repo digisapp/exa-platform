@@ -119,8 +119,19 @@ export default function AdminBoostPage() {
         supabase.from("top_model_sessions").select("created_at").gte("created_at", startDate.toISOString()).order("created_at", { ascending: true }),
         // Votes for chart
         supabase.from("top_model_votes").select("created_at, is_boosted").gte("created_at", startDate.toISOString()).order("created_at", { ascending: true }),
-        // Top models by votes
-        supabase.from("top_model_votes").select("model_id, vote_type, is_boosted"),
+        // Top models from leaderboard (matches public /boost page)
+        (supabase as any).from("top_model_leaderboard").select(`
+          model_id,
+          total_points,
+          total_likes,
+          total_boosts,
+          models!inner (
+            id,
+            first_name,
+            username,
+            profile_photo_url
+          )
+        `).gt("total_points", 0).order("total_points", { ascending: false }).limit(10),
         // Recent sessions
         supabase.from("top_model_sessions").select("id, user_id, created_at, completed_at, models_shown, total_votes").order("created_at", { ascending: false }).limit(20),
       ]);
@@ -147,41 +158,16 @@ export default function AdminBoostPage() {
         .map(([date, data]) => ({ date, ...data }))
         .sort((a, b) => a.date.localeCompare(b.date));
 
-      // Process top models
-      const modelVotes = new Map<string, { likes: number; dislikes: number; boosts: number }>();
-      (topModelsData || []).forEach((v: any) => {
-        const existing = modelVotes.get(v.model_id) || { likes: 0, dislikes: 0, boosts: 0 };
-        if (v.vote_type === "like") existing.likes++;
-        if (v.vote_type === "dislike") existing.dislikes++;
-        if (v.is_boosted) existing.boosts++;
-        modelVotes.set(v.model_id, existing);
-      });
-
-      // Get model details for top 10
-      const modelIds = Array.from(modelVotes.entries())
-        .sort((a, b) => (b[1].likes + b[1].boosts * 2) - (a[1].likes + a[1].boosts * 2))
-        .slice(0, 10)
-        .map(([id]) => id);
-
-      let topModels: BoostStats["topModels"] = [];
-      if (modelIds.length > 0) {
-        const { data: modelsInfo } = await supabase
-          .from("models")
-          .select("id, username, first_name, profile_photo_url")
-          .in("id", modelIds);
-
-        topModels = modelIds.map(id => {
-          const model = (modelsInfo || []).find((m: any) => m.id === id);
-          const votes = modelVotes.get(id) || { likes: 0, dislikes: 0, boosts: 0 };
-          return {
-            model_id: id,
-            username: model?.username || "Unknown",
-            first_name: model?.first_name || null,
-            profile_photo_url: model?.profile_photo_url || null,
-            ...votes,
-          };
-        });
-      }
+      // Process top models from leaderboard (already sorted by total_points)
+      const topModels: BoostStats["topModels"] = (topModelsData || []).map((entry: any) => ({
+        model_id: entry.model_id,
+        username: entry.models?.username || "Unknown",
+        first_name: entry.models?.first_name || null,
+        profile_photo_url: entry.models?.profile_photo_url || null,
+        likes: entry.total_likes || 0,
+        dislikes: 0, // Leaderboard doesn't track dislikes
+        boosts: entry.total_boosts || 0,
+      }));
 
       // Get fan names for recent sessions
       const userIds = (recentSessionsData || [])
