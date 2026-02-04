@@ -57,11 +57,42 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
   const [fingerprint, setFingerprint] = useState<string | null>(null);
   const [showWelcome, setShowWelcome] = useState(false);
 
+  // Session stats tracking
+  const [sessionStats, setSessionStats] = useState({
+    likes: 0,
+    passes: 0,
+    boosts: 0,
+    pointsGiven: 0,
+  });
+  const [streak, setStreak] = useState(0);
+
   // Check if first visit
   useEffect(() => {
     const hasSeenWelcome = localStorage.getItem("topModelsWelcomeSeen");
     if (!hasSeenWelcome) {
       setShowWelcome(true);
+    }
+  }, []);
+
+  // Load and update streak
+  useEffect(() => {
+    const today = new Date().toDateString();
+    const lastPlayDate = localStorage.getItem("boostLastPlayDate");
+    const savedStreak = parseInt(localStorage.getItem("boostStreak") || "0");
+
+    if (lastPlayDate === today) {
+      // Already played today, keep current streak
+      setStreak(savedStreak);
+    } else {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      if (lastPlayDate === yesterday.toDateString()) {
+        // Played yesterday, streak continues
+        setStreak(savedStreak);
+      } else {
+        // Streak broken, reset to 0 (will become 1 when they complete)
+        setStreak(0);
+      }
     }
   }, []);
 
@@ -135,6 +166,14 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
   const handleSwipe = async (modelId: string, direction: "left" | "right") => {
     const voteType = direction === "right" ? "like" : "pass";
 
+    // Update session stats
+    setSessionStats((prev) => ({
+      ...prev,
+      likes: voteType === "like" ? prev.likes + 1 : prev.likes,
+      passes: voteType === "pass" ? prev.passes + 1 : prev.passes,
+      pointsGiven: voteType === "like" ? prev.pointsGiven + 1 : prev.pointsGiven,
+    }));
+
     try {
       const res = await fetch("/api/games/boost/vote", {
         method: "POST",
@@ -186,6 +225,15 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
         throw new Error(data.error);
       }
 
+      // Update session stats with boost
+      const boostPoints = type === "super" ? 25 : 5;
+      setSessionStats((prev) => ({
+        ...prev,
+        likes: prev.likes + 1,
+        boosts: prev.boosts + 1,
+        pointsGiven: prev.pointsGiven + boostPoints,
+      }));
+
       // Update coin balance
       if (data.new_balance !== undefined) {
         setCoinBalance(data.new_balance);
@@ -205,6 +253,22 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
 
   // Handle empty stack
   const handleEmpty = () => {
+    // Update streak when game completes
+    const today = new Date().toDateString();
+    const lastPlayDate = localStorage.getItem("boostLastPlayDate");
+    const savedStreak = parseInt(localStorage.getItem("boostStreak") || "0");
+
+    if (lastPlayDate !== today) {
+      // First completion today
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const newStreak = lastPlayDate === yesterday.toDateString() ? savedStreak + 1 : 1;
+
+      localStorage.setItem("boostLastPlayDate", today);
+      localStorage.setItem("boostStreak", newStreak.toString());
+      setStreak(newStreak);
+    }
+
     setGameComplete(true);
   };
 
@@ -264,6 +328,8 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
               nextResetAt={session?.nextResetAt || null}
               totalSwiped={session?.modelsSwiped || 0}
               onPlayAgain={handlePlayAgain}
+              sessionStats={sessionStats}
+              streak={streak}
             />
           ) : models.length > 0 ? (
             <SwipeStack

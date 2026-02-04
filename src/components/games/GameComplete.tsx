@@ -2,15 +2,30 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Trophy, Clock, RotateCcw, Sparkles, Star } from "lucide-react";
+import { Trophy, Clock, RotateCcw, Sparkles, Star, Heart, X, Flame, Zap } from "lucide-react";
+
+interface SessionStats {
+  likes: number;
+  passes: number;
+  boosts: number;
+  pointsGiven: number;
+}
 
 interface GameCompleteProps {
   nextResetAt: string | null;
   totalSwiped: number;
   onPlayAgain?: () => void;
+  sessionStats?: SessionStats;
+  streak?: number;
 }
 
-export function GameComplete({ nextResetAt, totalSwiped, onPlayAgain }: GameCompleteProps) {
+export function GameComplete({
+  nextResetAt,
+  totalSwiped,
+  onPlayAgain,
+  sessionStats,
+  streak = 0,
+}: GameCompleteProps) {
   const [timeRemaining, setTimeRemaining] = useState<string>("");
 
   useEffect(() => {
@@ -47,26 +62,21 @@ export function GameComplete({ nextResetAt, totalSwiped, onPlayAgain }: GameComp
       <div className="absolute inset-0 bg-gradient-to-br from-pink-500/10 via-purple-500/5 to-orange-500/10 rounded-3xl pointer-events-none" />
 
       {/* Trophy Animation */}
-      <div className="relative mb-6">
+      <div className="relative mb-4">
         {/* Animated glow ring */}
         <div className="absolute inset-0 rounded-full bg-gradient-to-r from-yellow-400 via-orange-500 to-pink-500 blur-xl opacity-60 animate-pulse scale-110" />
 
-        <div className="relative w-28 h-28 rounded-full bg-gradient-to-br from-yellow-400 via-orange-500 to-pink-500 flex items-center justify-center shadow-2xl shadow-orange-500/30">
-          <Trophy className="h-14 w-14 text-white drop-shadow-lg" />
+        <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-yellow-400 via-orange-500 to-pink-500 flex items-center justify-center shadow-2xl shadow-orange-500/30">
+          <Trophy className="h-12 w-12 text-white drop-shadow-lg" />
 
           {/* Floating sparkles */}
           <Sparkles className="absolute -top-2 -left-2 h-5 w-5 text-yellow-300 animate-pulse" />
           <Star className="absolute -top-1 -right-3 h-4 w-4 text-pink-300 animate-pulse" style={{ animationDelay: '0.5s' }} />
           <Sparkles className="absolute -bottom-1 -right-1 h-4 w-4 text-purple-300 animate-pulse" style={{ animationDelay: '1s' }} />
         </div>
-
-        {/* Count badge */}
-        <div className="absolute -top-2 -right-2 w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold shadow-lg shadow-pink-500/40 border-2 border-white/20">
-          {totalSwiped}
-        </div>
       </div>
 
-      <h2 className="text-2xl font-bold mb-2 relative">
+      <h2 className="text-2xl font-bold mb-1 relative">
         {canPlayAgain ? (
           <span className="bg-gradient-to-r from-green-400 to-emerald-400 text-transparent bg-clip-text">
             Ready to Play Again!
@@ -79,14 +89,68 @@ export function GameComplete({ nextResetAt, totalSwiped, onPlayAgain }: GameComp
       </h2>
 
       {canPlayAgain && (
-        <p className="text-muted-foreground mb-6 relative">
+        <p className="text-muted-foreground mb-4 relative">
           New models are waiting for you.
         </p>
       )}
 
+      {/* Session Stats */}
+      {sessionStats && (sessionStats.likes > 0 || sessionStats.passes > 0) && (
+        <div className="grid grid-cols-3 gap-3 w-full mb-4 relative">
+          <div className="bg-white/5 rounded-xl p-3 border border-white/10">
+            <div className="flex items-center justify-center gap-1 text-green-400 mb-1">
+              <Heart className="h-4 w-4" />
+            </div>
+            <p className="text-xl font-bold text-white">{sessionStats.likes}</p>
+            <p className="text-xs text-muted-foreground">Likes</p>
+          </div>
+          <div className="bg-white/5 rounded-xl p-3 border border-white/10">
+            <div className="flex items-center justify-center gap-1 text-red-400 mb-1">
+              <X className="h-4 w-4" />
+            </div>
+            <p className="text-xl font-bold text-white">{sessionStats.passes}</p>
+            <p className="text-xs text-muted-foreground">Passes</p>
+          </div>
+          <div className="bg-white/5 rounded-xl p-3 border border-white/10">
+            <div className="flex items-center justify-center gap-1 text-orange-400 mb-1">
+              <Flame className="h-4 w-4" />
+            </div>
+            <p className="text-xl font-bold text-white">{sessionStats.boosts}</p>
+            <p className="text-xs text-muted-foreground">Boosts</p>
+          </div>
+        </div>
+      )}
+
+      {/* Points Given */}
+      {sessionStats && sessionStats.pointsGiven > 0 && (
+        <div className="bg-gradient-to-r from-pink-500/10 to-purple-500/10 rounded-xl p-3 mb-4 w-full border border-pink-500/20 relative">
+          <div className="flex items-center justify-center gap-2">
+            <Zap className="h-5 w-5 text-yellow-400" />
+            <span className="text-lg font-bold bg-gradient-to-r from-pink-400 to-purple-400 text-transparent bg-clip-text">
+              {sessionStats.pointsGiven} points given!
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Daily Streak */}
+      {streak > 0 && (
+        <div className="bg-gradient-to-r from-orange-500/10 to-red-500/10 rounded-xl p-3 mb-4 w-full border border-orange-500/20 relative">
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-2xl">🔥</span>
+            <span className="text-lg font-bold text-orange-400">
+              {streak}-day streak!
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Come back tomorrow to keep it going
+          </p>
+        </div>
+      )}
+
       {/* Countdown Timer */}
       {!canPlayAgain && nextResetAt && (
-        <div className="bg-gradient-to-r from-white/5 to-white/10 rounded-2xl p-5 mb-6 w-full border border-white/10 relative overflow-hidden">
+        <div className="bg-gradient-to-r from-white/5 to-white/10 rounded-2xl p-5 mb-4 w-full border border-white/10 relative overflow-hidden">
           {/* Subtle animated background */}
           <div className="absolute inset-0 bg-gradient-to-r from-pink-500/5 via-purple-500/5 to-orange-500/5 animate-pulse" />
 
