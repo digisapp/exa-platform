@@ -43,7 +43,7 @@ export function TopModelsLeaderboard({
     const fetchLeaderboard = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/games/boost/leaderboard?period=${period}&limit=10`);
+        const res = await fetch(`/api/games/boost/leaderboard?period=${period}&limit=30`);
         if (res.ok) {
           const data = await res.json();
           setLeaderboard(data.leaderboard || []);
@@ -140,7 +140,7 @@ export function TopModelsLeaderboard({
       <div className="space-y-2">
         {loading ? (
           // Enhanced loading skeleton
-          Array.from({ length: compact ? 5 : 10 }).map((_, i) => (
+          Array.from({ length: compact ? 5 : 30 }).map((_, i) => (
             <div
               key={i}
               className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 animate-pulse"
@@ -168,7 +168,7 @@ export function TopModelsLeaderboard({
             </div>
           </div>
         ) : (
-          leaderboard.slice(0, compact ? 5 : 10).map((entry, index) => (
+          leaderboard.slice(0, compact ? 5 : 30).map((entry, index) => (
             <Link
               href={`/${entry.model?.username}`}
               key={entry.modelId}

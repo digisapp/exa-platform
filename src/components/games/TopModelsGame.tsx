@@ -352,17 +352,15 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
         </div>
       </div>
 
-      {/* Mobile Leaderboard - Collapsible */}
+      {/* Mobile Leaderboard - Always visible */}
       <div className="lg:hidden mt-8">
-        <details className="bg-white/5 rounded-xl" open>
-          <summary className="p-4 cursor-pointer flex items-center gap-2 font-medium">
+        <div className="bg-white/5 rounded-xl p-4">
+          <div className="flex items-center gap-2 font-medium mb-4">
             <Trophy className="h-5 w-5 text-yellow-400" />
-            Leaderboard
-          </summary>
-          <div className="p-4 pt-0 max-h-[400px] overflow-y-auto scrollbar-hide">
-            <TopModelsLeaderboard compact={false} />
+            <span>Top 30 Leaderboard</span>
           </div>
-        </details>
+          <TopModelsLeaderboard compact={false} />
+        </div>
       </div>
 
       {/* Boost Modal */}
