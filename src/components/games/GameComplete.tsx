@@ -1,10 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Trophy, Clock, Share2, RotateCcw, Sparkles, Star, Crown } from "lucide-react";
-import { toast } from "sonner";
+import { Trophy, Clock, RotateCcw, Sparkles, Star } from "lucide-react";
 
 interface GameCompleteProps {
   nextResetAt: string | null;
@@ -40,22 +38,6 @@ export function GameComplete({ nextResetAt, totalSwiped, onPlayAgain }: GameComp
 
     return () => clearInterval(interval);
   }, [nextResetAt]);
-
-  const handleShare = async () => {
-    const text = `I just swiped through ${totalSwiped} models on EXA Boost! Can you beat my record? Play now:`;
-    const url = typeof window !== "undefined" ? `${window.location.origin}/boost` : "";
-
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: "EXA Boost", text, url });
-      } catch {
-        // User cancelled share
-      }
-    } else {
-      await navigator.clipboard.writeText(`${text} ${url}`);
-      toast.success("Link copied!");
-    }
-  };
 
   const canPlayAgain = timeRemaining === "Ready!" || !nextResetAt;
 
@@ -96,11 +78,11 @@ export function GameComplete({ nextResetAt, totalSwiped, onPlayAgain }: GameComp
         )}
       </h2>
 
-      <p className="text-muted-foreground mb-6 relative">
-        {canPlayAgain
-          ? "New models are waiting for you."
-          : `You've swiped through all ${totalSwiped} models. Come back later!`}
-      </p>
+      {canPlayAgain && (
+        <p className="text-muted-foreground mb-6 relative">
+          New models are waiting for you.
+        </p>
+      )}
 
       {/* Countdown Timer */}
       {!canPlayAgain && nextResetAt && (
@@ -110,7 +92,7 @@ export function GameComplete({ nextResetAt, totalSwiped, onPlayAgain }: GameComp
 
           <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-2 relative">
             <Clock className="h-4 w-4 text-pink-400" />
-            <span>Next session available in</span>
+            <span>Play again in</span>
           </div>
           <div className="text-4xl font-mono font-bold bg-gradient-to-r from-pink-400 via-purple-400 to-orange-400 text-transparent bg-clip-text relative">
             {timeRemaining}
@@ -129,35 +111,6 @@ export function GameComplete({ nextResetAt, totalSwiped, onPlayAgain }: GameComp
             Play Again
           </Button>
         )}
-
-        <Button
-          onClick={handleShare}
-          variant="outline"
-          className="w-full h-11 border-white/20 bg-white/5 hover:bg-white/10"
-        >
-          <Share2 className="h-4 w-4 mr-2" />
-          Share Your Score
-        </Button>
-
-        <Link href="/models" className="w-full">
-          <Button variant="ghost" className="w-full h-11 hover:bg-white/5">
-            Browse All Models
-          </Button>
-        </Link>
-      </div>
-
-      {/* Stats Preview */}
-      <div className="mt-8 pt-6 border-t border-white/10 w-full relative">
-        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-3">
-          <Crown className="h-4 w-4 text-yellow-400" />
-          <span>Check out who&apos;s leading today</span>
-        </div>
-        <Link href="#leaderboard">
-          <Button variant="link" className="text-pink-400 hover:text-pink-300">
-            <Trophy className="h-4 w-4 mr-1" />
-            View Full Leaderboard
-          </Button>
-        </Link>
       </div>
     </div>
   );

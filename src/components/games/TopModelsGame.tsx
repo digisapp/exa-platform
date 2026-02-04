@@ -5,7 +5,7 @@ import { SwipeStack } from "./SwipeStack";
 import { TopModelsLeaderboard } from "./TopModelsLeaderboard";
 import { BoostModal } from "./BoostModal";
 import { GameComplete } from "./GameComplete";
-import { Loader2, Sparkles, Trophy, Heart, X, HelpCircle, Flame, Share2 } from "lucide-react";
+import { Loader2, Sparkles, Heart, X, HelpCircle, Flame, Share2 } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -355,10 +355,6 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
       {/* Mobile Leaderboard - Always visible */}
       <div className="lg:hidden mt-8">
         <div className="bg-white/5 rounded-xl p-4">
-          <div className="flex items-center gap-2 font-medium mb-4">
-            <Trophy className="h-5 w-5 text-yellow-400" />
-            <span>Top 30 Leaderboard</span>
-          </div>
           <TopModelsLeaderboard compact={false} />
         </div>
       </div>
