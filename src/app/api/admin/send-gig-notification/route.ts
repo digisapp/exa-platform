@@ -42,6 +42,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Only send notifications for accepted applications
+    // Rejections/cancellations are handled silently
+    if (action !== "accepted") {
+      return NextResponse.json({ success: true, skipped: true });
+    }
+
     // Use admin client to bypass RLS
     const adminClient = createSupabaseClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
