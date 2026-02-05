@@ -66,6 +66,7 @@ export default function AdminBoostPage() {
   const [statsPeriod, setStatsPeriod] = useState<"today" | "monthly" | "all">("today");
   const [sessionsPage, setSessionsPage] = useState(1);
   const [totalSessions, setTotalSessions] = useState(0);
+  const [activeModelCards, setActiveModelCards] = useState(0);
   const sessionsPageSize = 20;
   const supabase = createClient();
 
@@ -114,6 +115,8 @@ export default function AdminBoostPage() {
         { data: votesData },
         { data: topModelsData },
         { data: recentSessionsData },
+        // Active model cards count
+        { count: activeCardsCount },
       ] = await Promise.all([
         // All-time counts
         supabase.from("top_model_sessions").select("*", { count: "exact", head: true }),
@@ -152,9 +155,12 @@ export default function AdminBoostPage() {
         `).gt("total_points", 0).order("total_points", { ascending: false }).limit(10),
         // Recent sessions with pagination
         supabase.from("top_model_sessions").select("id, user_id, created_at, completed_at, models_swiped").order("created_at", { ascending: false }).range((sessionsPage - 1) * sessionsPageSize, sessionsPage * sessionsPageSize - 1),
+        // Count of active model cards (approved models with profile pictures)
+        supabase.from("models").select("*", { count: "exact", head: true }).eq("is_approved", true).not("profile_photo_url", "is", null),
       ]);
 
       setTotalSessions(totalSessionsCount || 0);
+      setActiveModelCards(activeCardsCount || 0);
 
       // Process daily data - first aggregate the raw data
       const dailyMap = new Map<string, { sessions: number; votes: number; boosts: number }>();
@@ -386,6 +392,27 @@ export default function AdminBoostPage() {
           </Button>
         </div>
       </div>
+
+      {/* Active Model Cards */}
+      <Card className="border-cyan-500/30 bg-gradient-to-r from-cyan-500/10 to-blue-500/10">
+        <CardContent className="py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-cyan-500/20">
+                <Users className="h-5 w-5 text-cyan-400" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Active Model Cards</p>
+                <p className="text-sm text-muted-foreground">Approved models with profile pictures showing in the game</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-4xl font-bold text-cyan-400">{activeModelCards.toLocaleString()}</p>
+              <p className="text-sm text-muted-foreground">models</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Stats with Period Toggle */}
       <Card className="border-orange-500/30 bg-gradient-to-br from-orange-500/5 to-pink-500/5">
