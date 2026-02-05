@@ -1,5 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
+
+// Bot/crawler patterns to filter out
+const BOT_PATTERNS = /bot|crawler|spider|googlebot|bingbot|slurp|duckduckbot|baiduspider|yandexbot|facebookexternalhit|twitterbot|linkedinbot|embedly|quora|pinterest|redditbot|applebot|semrushbot|ahrefsbot|mj12bot|dotbot|petalbot|bytespider|gptbot|claudebot|anthropic|openai|ccbot|scrapy|wget|curl|python-requests|go-http-client|java|libwww|lwp|httpclient/i;
 
 // Detect device type from user agent
 function getDeviceType(userAgent: string): string {
@@ -75,6 +79,19 @@ export async function POST(request: NextRequest) {
 
     // Get user agent and IP info from headers
     const userAgent = request.headers.get("user-agent") || "";
+
+    // Filter out bots and crawlers
+    if (BOT_PATTERNS.test(userAgent)) {
+      return NextResponse.json({ success: true }); // Silently ignore bots
+    }
+
+    // Rate limit check (60 requests per minute per visitor)
+    const rateLimitResponse = await checkEndpointRateLimit(request, "analytics", visitorId);
+    if (rateLimitResponse) {
+      // Return success to prevent client-side errors, but don't record
+      return NextResponse.json({ success: true });
+    }
+
     const forwardedFor = request.headers.get("x-forwarded-for");
     const realIp = request.headers.get("x-real-ip");
     const ip = forwardedFor?.split(",")[0] || realIp || "unknown";

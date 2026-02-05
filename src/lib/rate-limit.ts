@@ -240,6 +240,9 @@ export const EndpointLimits = {
 
   // General API - 200 per minute (fallback)
   general: { limit: 200, windowSeconds: 60 },
+
+  // Analytics tracking - 60 per minute (generous but prevents abuse)
+  analytics: { limit: 60, windowSeconds: 60 },
 } as const;
 
 export type EndpointType = keyof typeof EndpointLimits;
