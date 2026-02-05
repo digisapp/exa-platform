@@ -58,7 +58,7 @@ function SuccessContent() {
 
           <CardTitle className="text-2xl">Welcome to the Program!</CardTitle>
           <CardDescription>
-            Your payment was successful. We&apos;re excited to work with you!
+            Your subscription is active. We&apos;re excited to work with you!
           </CardDescription>
         </CardHeader>
 
@@ -87,7 +87,7 @@ function SuccessContent() {
                   <Waves className="h-3.5 w-3.5 text-cyan-500" />
                 </div>
                 <span className="text-muted-foreground">
-                  Your $1,500 credits toward Miami Swim Week ($3,000 package)
+                  Each $500 payment credits toward Miami Swim Week ($3,000 package)
                 </span>
               </li>
             </ul>
@@ -95,10 +95,10 @@ function SuccessContent() {
 
           <div className="text-center p-4 rounded-lg bg-white/5 border border-white/10">
             <p className="text-2xl font-bold bg-gradient-to-r from-pink-400 to-violet-400 text-transparent bg-clip-text">
-              $1,500 Paid
+              $500/month
             </p>
             <p className="text-sm text-muted-foreground">
-              3-month program • 10 videos + 50 photos/month
+              Monthly subscription • 10 videos + 50 photos/month
             </p>
           </div>
         </CardContent>

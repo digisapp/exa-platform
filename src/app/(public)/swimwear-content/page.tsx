@@ -107,7 +107,7 @@ export default function SwimwearContentPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-12">
           <StatCard icon={<Video className="h-5 w-5 text-pink-500" />} label="10 Video Clips" sublabel="per month" />
           <StatCard icon={<ImageIcon className="h-5 w-5 text-violet-500" />} label="50 Pro Photos" sublabel="per month" />
-          <StatCard icon={<DollarSign className="h-5 w-5 text-green-500" />} label="$500/month" sublabel="3-month commitment" />
+          <StatCard icon={<DollarSign className="h-5 w-5 text-green-500" />} label="$500/month" sublabel="cancel anytime" />
           <StatCard icon={<Sun className="h-5 w-5 text-amber-500" />} label="Swim Week Credits" sublabel="toward $3,000 package" />
         </div>
 
@@ -116,7 +116,7 @@ export default function SwimwearContentPage() {
           <div className="text-center mb-6">
             <h2 className="text-2xl font-bold mb-2">Join the Program</h2>
             <p className="text-muted-foreground">
-              All brands accepted • Pay $1,500 for 3 months of content
+              All brands accepted • $500/month • Cancel anytime
             </p>
           </div>
 
@@ -178,12 +178,12 @@ export default function SwimwearContentPage() {
                 ) : (
                   <>
                     <CreditCard className="mr-2 h-5 w-5" />
-                    Pay $1,500 Now
+                    Subscribe $500/month
                   </>
                 )}
               </Button>
               <p className="text-xs text-center text-muted-foreground mt-3">
-                Secure payment via Stripe • 3-month content program
+                Secure payment via Stripe • Cancel anytime
               </p>
             </div>
           </div>
@@ -286,21 +286,21 @@ export default function SwimwearContentPage() {
           </h2>
           <Card className="p-8 bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20">
             <div className="text-center mb-6">
-              <p className="text-5xl font-bold text-green-500 mb-2">$1,500</p>
-              <p className="text-muted-foreground">3-month content program (one-time payment)</p>
+              <p className="text-5xl font-bold text-green-500 mb-2">$500<span className="text-2xl">/month</span></p>
+              <p className="text-muted-foreground">Monthly subscription • Cancel anytime</p>
             </div>
             <div className="max-w-md mx-auto">
               <div className="flex items-center justify-between p-4 bg-background/50 rounded-lg mb-4">
-                <span className="text-muted-foreground">Monthly Content Value</span>
-                <span className="font-bold">$500/month × 3</span>
+                <span className="text-muted-foreground">Monthly Content</span>
+                <span className="font-bold">10 videos + 50 photos</span>
               </div>
               <div className="flex items-center justify-between p-4 bg-background/50 rounded-lg mb-4">
-                <span className="text-muted-foreground">Total Program Cost</span>
-                <span className="font-bold">$1,500</span>
+                <span className="text-muted-foreground">Billing</span>
+                <span className="font-bold">$500/month recurring</span>
               </div>
               <div className="flex items-center justify-between p-4 bg-cyan-500/10 rounded-lg border border-cyan-500/20">
-                <span className="text-cyan-400">Credited to Swim Week</span>
-                <span className="font-bold text-cyan-400">$1,500</span>
+                <span className="text-cyan-400">Each payment credits toward Swim Week</span>
+                <span className="font-bold text-cyan-400">$500</span>
               </div>
             </div>
           </Card>
@@ -316,52 +316,22 @@ export default function SwimwearContentPage() {
             <div className="flex flex-col md:flex-row items-center gap-8">
               <div className="flex-1">
                 <h3 className="text-xl font-bold mb-4 text-cyan-400">
-                  Your Content Investment = Swim Week Credits
+                  Every Payment = Swim Week Credits
                 </h3>
                 <p className="text-muted-foreground mb-4">
                   The Miami Swim Week package is <span className="text-white font-bold">$3,000</span>.
-                  Your $1,500 payment is credited toward your Swim Week balance.
+                  Each $500 monthly payment is credited toward your Swim Week balance.
                 </p>
                 <p className="text-muted-foreground">
-                  After the program, you&apos;ll have <span className="text-cyan-400 font-bold">$1,500</span> already
-                  credited — plus a complete content library and months of brand exposure!
+                  Subscribe for 6 months and you&apos;ll have <span className="text-cyan-400 font-bold">$3,000</span> in
+                  credits — enough to cover your entire Swim Week package, plus a complete content library!
                 </p>
               </div>
               <div className="flex-shrink-0">
-                <div className="relative w-40 h-40">
-                  {/* Progress ring visual */}
-                  <svg className="w-40 h-40 transform -rotate-90">
-                    <circle
-                      cx="80"
-                      cy="80"
-                      r="70"
-                      stroke="currentColor"
-                      strokeWidth="12"
-                      fill="none"
-                      className="text-muted/20"
-                    />
-                    <circle
-                      cx="80"
-                      cy="80"
-                      r="70"
-                      stroke="url(#gradient)"
-                      strokeWidth="12"
-                      fill="none"
-                      strokeDasharray={440}
-                      strokeDashoffset={220}
-                      strokeLinecap="round"
-                    />
-                    <defs>
-                      <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="#06b6d4" />
-                        <stop offset="100%" stopColor="#ec4899" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-bold">50%</span>
-                    <span className="text-xs text-muted-foreground">credited</span>
-                  </div>
+                <div className="text-center p-6 bg-background/50 rounded-xl">
+                  <p className="text-sm text-muted-foreground mb-2">Example: 6 months</p>
+                  <p className="text-3xl font-bold text-cyan-400">$3,000</p>
+                  <p className="text-sm text-muted-foreground">credited to Swim Week</p>
                 </div>
               </div>
             </div>
@@ -370,30 +340,30 @@ export default function SwimwearContentPage() {
 
         {/* Timeline */}
         <div className="mb-12">
-          <h2 className="text-2xl font-bold mb-6">Program Timeline</h2>
+          <h2 className="text-2xl font-bold mb-6">How Your Credits Build</h2>
           <div className="space-y-4">
             <TimelineItem
               month="Month 1"
-              title="Kickoff Shoot"
-              description="First collection shoot, 10 videos + 50 photos delivered"
-              credit="$500 value"
+              title="First Content Drop"
+              description="10 videos + 50 photos delivered"
+              credit="$500 credited"
             />
             <TimelineItem
               month="Month 2"
-              title="Content Momentum"
-              description="Second shoot, Instagram exposure begins"
-              credit="$1,000 value"
+              title="Building Momentum"
+              description="Fresh content for social, brand exposure grows"
+              credit="$1,000 total"
             />
             <TimelineItem
-              month="Month 3"
-              title="Pre-Show Content"
-              description="Final content package, Swim Week preparation"
-              credit="$1,500 value"
+              month="Month 3+"
+              title="Continuous Content"
+              description="Keep creating, credits keep building"
+              credit="$1,500+ total"
             />
             <TimelineItem
               month="May 26, 2026"
               title="Miami Swim Week"
-              description="Only $1,500 remaining for full Swim Week package"
+              description="Use your accumulated credits toward the $3,000 package"
               credit="$3,000 package"
               highlight
             />
@@ -404,10 +374,10 @@ export default function SwimwearContentPage() {
         <div className="mb-12">
           <h2 className="text-2xl font-bold mb-6">How It Works</h2>
           <div className="grid md:grid-cols-4 gap-4">
-            <StepCard number={1} title="Pay" description="Complete your $1,500 payment securely" />
+            <StepCard number={1} title="Subscribe" description="Start your $500/month subscription" />
             <StepCard number={2} title="Send Collection" description="Ship your swimwear pieces to our Miami studio" />
             <StepCard number={3} title="We Shoot" description="Professional models bring your designs to life" />
-            <StepCard number={4} title="Receive Content" description="Get your videos and photos monthly" />
+            <StepCard number={4} title="Receive Content" description="Get 10 videos + 50 photos each month" />
           </div>
         </div>
 
@@ -415,8 +385,8 @@ export default function SwimwearContentPage() {
         <Card className="p-8 text-center bg-gradient-to-br from-pink-500/20 via-violet-500/20 to-cyan-500/20 border-pink-500/30 mb-12">
           <h2 className="text-2xl font-bold mb-4">Ready to Join?</h2>
           <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
-            Get months of professional content and exposure leading up to Miami Swim Week.
-            All brands accepted — just fill in your details and pay.
+            Get professional content and exposure leading up to Miami Swim Week.
+            $500/month • Cancel anytime • All payments credit toward Swim Week.
           </p>
           <div className="max-w-md mx-auto space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -454,7 +424,7 @@ export default function SwimwearContentPage() {
               ) : (
                 <>
                   <CreditCard className="mr-2 h-5 w-5" />
-                  Pay $1,500 Now
+                  Subscribe $500/month
                 </>
               )}
             </Button>
@@ -483,7 +453,11 @@ export default function SwimwearContentPage() {
             />
             <FAQItem
               question="What's included in the Swim Week package?"
-              answer="The $3,000 Swim Week package includes runway presence, show content, backstage access, and post-event deliverables. Your $1,500 payment credits directly toward this."
+              answer="The $3,000 Swim Week package includes runway presence, show content, backstage access, and post-event deliverables. Every $500 monthly payment credits directly toward this total."
+            />
+            <FAQItem
+              question="Can I cancel anytime?"
+              answer="Yes! This is a month-to-month subscription with no commitment. Cancel anytime and keep all your accumulated Swim Week credits."
             />
           </div>
         </div>

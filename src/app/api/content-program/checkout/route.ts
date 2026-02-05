@@ -8,10 +8,8 @@ const adminClient = createSupabaseClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// Content Program pricing
+// Content Program pricing - $500/month subscription
 const MONTHLY_RATE_CENTS = 50000; // $500
-const COMMITMENT_MONTHS = 3;
-const TOTAL_AMOUNT_CENTS = MONTHLY_RATE_CENTS * COMMITMENT_MONTHS; // $1,500
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,7 +32,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create Stripe checkout session
+    // Create or retrieve Stripe customer
+    const customers = await stripe.customers.list({ email: email.toLowerCase(), limit: 1 });
+    let customer = customers.data[0];
+
+    if (!customer) {
+      customer = await stripe.customers.create({
+        email: email.toLowerCase(),
+        name: contactName,
+        metadata: {
+          brand_name: brandName,
+          type: "content_program",
+        },
+      });
+    }
+
+    // Create Stripe checkout session for subscription
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: [
@@ -43,31 +56,39 @@ export async function POST(request: NextRequest) {
             currency: "usd",
             product_data: {
               name: "Swimwear Content Program",
-              description: `3-month content program for ${brandName} - 10 videos + 50 photos per month. Credits toward $3,000 Miami Swim Week package.`,
+              description: `Monthly content program for ${brandName} - 10 videos + 50 photos per month. Each payment credits toward $3,000 Miami Swim Week package.`,
             },
-            unit_amount: TOTAL_AMOUNT_CENTS,
+            unit_amount: MONTHLY_RATE_CENTS,
+            recurring: {
+              interval: "month",
+            },
           },
           quantity: 1,
         },
       ],
-      mode: "payment",
+      mode: "subscription",
       success_url: `${process.env.NEXT_PUBLIC_APP_URL}/swimwear-content/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/swimwear-content?cancelled=true`,
-      customer_email: email,
+      customer: customer.id,
+      subscription_data: {
+        metadata: {
+          type: "content_program",
+          brand_name: brandName,
+          contact_name: contactName,
+          email: email.toLowerCase(),
+          phone: phone || "",
+          website_url: website || "",
+          instagram_handle: instagram || "",
+        },
+      },
       metadata: {
-        type: "content_program",
+        type: "content_program_subscription",
         brand_name: brandName,
         contact_name: contactName,
         email: email.toLowerCase(),
         phone: phone || "",
         website_url: website || "",
         instagram_handle: instagram || "",
-      },
-      payment_intent_data: {
-        metadata: {
-          type: "content_program",
-          brand_name: brandName,
-        },
       },
     });
 
@@ -82,8 +103,8 @@ export async function POST(request: NextRequest) {
         website_url: website?.trim() || null,
         instagram_handle: instagram?.trim() || null,
         stripe_checkout_session_id: session.id,
+        stripe_customer_id: customer.id,
         start_date: new Date().toISOString().split("T")[0],
-        commitment_months: COMMITMENT_MONTHS,
         monthly_rate: MONTHLY_RATE_CENTS / 100,
         swim_week_package_cost: 3000.00,
         swim_week_target_date: "2026-05-26",
