@@ -58,9 +58,7 @@ import {
   Image as ImageIcon,
   Video,
   Lock,
-  Download,
-  CheckSquare,
-  Square,
+  ArrowRight,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ApproveRejectButtons } from "@/components/admin/AdminActions";
@@ -462,18 +460,9 @@ export default function AdminCommunityPage() {
   const [sendingInvites, setSendingInvites] = useState(false);
   const [inviteProgress, setInviteProgress] = useState({ sent: 0, total: 0 });
 
-  // Models state
-  const [models, setModels] = useState<Model[]>([]);
-  const [modelsLoading, setModelsLoading] = useState(true);
-  const [modelsTotalCount, setModelsTotalCount] = useState(0);
-  const [modelsPage, setModelsPage] = useState(1);
-  const [modelsSearch, setModelsSearch] = useState("");
-  const [modelsStateFilter, setModelsStateFilter] = useState<string>("all");
-  const [modelsApprovalFilter, setModelsApprovalFilter] = useState<string>("all");
-  const [modelsRatingFilter, setModelsRatingFilter] = useState<string>("all");
-  const [modelsClaimFilter, setModelsClaimFilter] = useState<string>("all");
-  const [modelsSortField, setModelsSortField] = useState<ModelSortField>("joined_at");
-  const [modelsSortDirection, setModelsSortDirection] = useState<SortDirection>("desc");
+  // Models preview state (full table moved to /admin/models)
+  const [recentModels, setRecentModels] = useState<Model[]>([]);
+  const [recentModelsLoading, setRecentModelsLoading] = useState(true);
 
   // Fans state
   const [fans, setFans] = useState<Fan[]>([]);
@@ -496,123 +485,7 @@ export default function AdminCommunityPage() {
   const [modelApps, setModelApps] = useState<ModelApplication[]>([]);
   const [modelAppsLoading, setModelAppsLoading] = useState(true);
 
-  // Bulk selection state
-  const [selectedModels, setSelectedModels] = useState<Set<string>>(new Set());
-  const [bulkActionLoading, setBulkActionLoading] = useState(false);
-
-  // Toggle single model selection
-  const toggleModelSelection = (modelId: string) => {
-    setSelectedModels(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(modelId)) {
-        newSet.delete(modelId);
-      } else {
-        newSet.add(modelId);
-      }
-      return newSet;
-    });
-  };
-
-  // Toggle all models on current page
-  const toggleAllModels = () => {
-    if (selectedModels.size === models.length) {
-      setSelectedModels(new Set());
-    } else {
-      setSelectedModels(new Set(models.map(m => m.id)));
-    }
-  };
-
-  // Bulk approve selected models
-  const bulkApproveModels = async () => {
-    if (selectedModels.size === 0) return;
-    setBulkActionLoading(true);
-    try {
-      const promises = Array.from(selectedModels).map(id =>
-        fetch(`/api/admin/models/${id}/approve`, { method: "POST" })
-      );
-      await Promise.all(promises);
-      toast.success(`Approved ${selectedModels.size} models`);
-      setSelectedModels(new Set());
-      loadModels();
-      loadStats();
-    } catch {
-      toast.error("Failed to approve some models");
-    } finally {
-      setBulkActionLoading(false);
-    }
-  };
-
-  // Bulk reject selected models
-  const bulkRejectModels = async () => {
-    if (selectedModels.size === 0) return;
-    const confirmed = window.confirm(`Are you sure you want to reject ${selectedModels.size} models?`);
-    if (!confirmed) return;
-    setBulkActionLoading(true);
-    try {
-      const promises = Array.from(selectedModels).map(id =>
-        fetch(`/api/admin/models/${id}/reject`, { method: "POST" })
-      );
-      await Promise.all(promises);
-      toast.success(`Rejected ${selectedModels.size} models`);
-      setSelectedModels(new Set());
-      loadModels();
-      loadStats();
-    } catch {
-      toast.error("Failed to reject some models");
-    } finally {
-      setBulkActionLoading(false);
-    }
-  };
-
-  // Export models to CSV
-  const exportModelsToCSV = () => {
-    if (models.length === 0) {
-      toast.error("No models to export");
-      return;
-    }
-
-    const headers = [
-      "Username", "First Name", "Last Name", "Email", "City", "State",
-      "Approved", "Instagram", "IG Followers", "Rating", "Profile Views",
-      "Followers", "Pics", "Videos", "PPV", "Earned", "Referrals", "Joined"
-    ];
-
-    const rows = models.map(m => [
-      m.username,
-      m.first_name || "",
-      m.last_name || "",
-      m.email || "",
-      m.city || "",
-      m.state || "",
-      m.is_approved ? "Yes" : "No",
-      m.instagram_name || "",
-      m.instagram_followers || 0,
-      m.admin_rating || "",
-      m.profile_views || 0,
-      m.followers_count || 0,
-      m.image_count || 0,
-      m.video_count || 0,
-      m.ppv_count || 0,
-      m.total_earned || 0,
-      m.referral_count || 0,
-      m.joined_at || m.created_at || "",
-    ]);
-
-    const csvContent = [
-      headers.join(","),
-      ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))
-    ].join("\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `models-export-${new Date().toISOString().split("T")[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success(`Exported ${models.length} models to CSV`);
-  };
+  // Bulk selection and CSV export moved to dedicated /admin/models page
 
   // Load stats
   const loadStats = useCallback(async () => {
@@ -729,7 +602,7 @@ export default function AdminCommunityPage() {
         toast.success(`Successfully sent ${totalSent} invite emails!`);
       }
       await loadInviteStats();
-      await loadModels();
+      await loadRecentModels();
     } catch (error) {
       console.error("Failed to send invites:", error);
       toast.error("Failed to send invites");
@@ -738,35 +611,29 @@ export default function AdminCommunityPage() {
     }
   };
 
-  // Load models via optimized API route
-  const loadModels = useCallback(async () => {
-    setModelsLoading(true);
+  // Load recent models preview (10 most recent)
+  const loadRecentModels = useCallback(async () => {
+    setRecentModelsLoading(true);
 
     try {
       const params = new URLSearchParams({
-        page: modelsPage.toString(),
-        pageSize: pageSize.toString(),
-        search: modelsSearch,
-        state: modelsStateFilter,
-        approval: modelsApprovalFilter,
-        rating: modelsRatingFilter,
-        claim: modelsClaimFilter,
-        sortField: modelsSortField,
-        sortDirection: modelsSortDirection,
+        page: "1",
+        pageSize: "10",
+        sortField: "joined_at",
+        sortDirection: "desc",
       });
 
       const res = await fetch(`/api/admin/models?${params}`);
       if (!res.ok) throw new Error("Failed to fetch models");
 
-      const { models: data, total } = await res.json();
-      setModels(data || []);
-      setModelsTotalCount(total || 0);
+      const { models: data } = await res.json();
+      setRecentModels(data || []);
     } catch (error) {
-      console.error("Failed to load models:", error);
+      console.error("Failed to load recent models:", error);
     } finally {
-      setModelsLoading(false);
+      setRecentModelsLoading(false);
     }
-  }, [modelsSearch, modelsStateFilter, modelsApprovalFilter, modelsRatingFilter, modelsClaimFilter, modelsSortField, modelsSortDirection, modelsPage]);
+  }, []);
 
   // Load fans
   const loadFans = useCallback(async () => {
@@ -903,11 +770,11 @@ export default function AdminCommunityPage() {
 
   useEffect(() => {
     if (activeTab === "models") {
-      void loadModels();
+      void loadRecentModels();
       void loadModelApps(); // Also load model apps for the alert
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, modelsSearch, modelsStateFilter, modelsApprovalFilter, modelsRatingFilter, modelsClaimFilter, modelsSortField, modelsSortDirection, modelsPage]);
+  }, [activeTab]);
 
   useEffect(() => {
     if (activeTab === "fans") void loadFans();
@@ -920,23 +787,11 @@ export default function AdminCommunityPage() {
   }, [activeTab, brandsFilter]);
 
   const handleRatingChange = (modelId: string, rating: number | null) => {
-    setModels(prev => prev.map(m => m.id === modelId ? { ...m, admin_rating: rating } : m));
+    setRecentModels(prev => prev.map(m => m.id === modelId ? { ...m, admin_rating: rating } : m));
   };
 
   const handleNewFaceToggle = (modelId: string, newFace: boolean) => {
-    setModels(prev => prev.map(m => m.id === modelId ? { ...m, new_face: newFace } : m));
-  };
-
-  const handleModelSort = (field: ModelSortField) => {
-    // Set loading immediately to show visual feedback
-    setModelsLoading(true);
-    if (modelsSortField === field) {
-      setModelsSortDirection(d => d === "asc" ? "desc" : "asc");
-    } else {
-      setModelsSortField(field);
-      setModelsSortDirection("desc");
-    }
-    setModelsPage(1);
+    setRecentModels(prev => prev.map(m => m.id === modelId ? { ...m, new_face: newFace } : m));
   };
 
   const handleFanSort = (field: FanSortField) => {
@@ -945,30 +800,38 @@ export default function AdminCommunityPage() {
     setFansPage(1);
   };
 
-  const modelsTotalPages = Math.ceil(modelsTotalCount / pageSize);
   const fansTotalPages = Math.ceil(fansTotalCount / pageSize);
 
   return (
     <div className="container px-8 md:px-16 py-8 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
             <Link href="/admin"><ArrowLeft className="h-5 w-5" /></Link>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold">Community</h1>
+            <h1 className="text-3xl font-bold">Community Dashboard</h1>
             <p className="text-muted-foreground">
               Manage {stats.totalModels.toLocaleString()} models and {stats.totalFans.toLocaleString()} fans
             </p>
           </div>
         </div>
-        <Button asChild className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600">
-          <Link href="/admin/rate">
-            <Star className="h-4 w-4 mr-2" />
-            Quick Rate Models
-          </Link>
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button asChild variant="outline">
+            <Link href="/admin/rate">
+              <Star className="h-4 w-4 mr-2" />
+              Quick Rate
+            </Link>
+          </Button>
+          <Button asChild className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600">
+            <Link href="/admin/models">
+              <Users className="h-4 w-4 mr-2" />
+              View All Models
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -1184,264 +1047,103 @@ export default function AdminCommunityPage() {
             </Card>
           )}
 
-          {/* Filters */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex flex-wrap gap-4">
-                <div className="flex-1 min-w-[200px]">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search by name, username, or email..."
-                      value={modelsSearch}
-                      onChange={(e) => { setModelsSearch(e.target.value); setModelsPage(1); }}
-                      className="pl-9"
-                    />
-                  </div>
-                </div>
-                <Select value={modelsStateFilter} onValueChange={(v) => { setModelsStateFilter(v); setModelsPage(1); }}>
-                  <SelectTrigger className="w-[180px]"><SelectValue placeholder="Filter by state" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All States</SelectItem>
-                    {US_STATES.map((state) => (<SelectItem key={state.abbr} value={state.abbr}>{state.name}</SelectItem>))}
-                  </SelectContent>
-                </Select>
-                <Select value={modelsApprovalFilter} onValueChange={(v) => { setModelsApprovalFilter(v); setModelsPage(1); }}>
-                  <SelectTrigger className="w-[180px]"><SelectValue placeholder="Filter by status" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="approved">Approved</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={modelsRatingFilter} onValueChange={(v) => { setModelsRatingFilter(v); setModelsPage(1); }}>
-                  <SelectTrigger className="w-[180px]"><SelectValue placeholder="Filter by rating" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Ratings</SelectItem>
-                    <SelectItem value="5">5 stars</SelectItem>
-                    <SelectItem value="4">4+ stars</SelectItem>
-                    <SelectItem value="3">3+ stars</SelectItem>
-                    <SelectItem value="rated">Rated Only</SelectItem>
-                    <SelectItem value="unrated">Unrated Only</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={modelsClaimFilter} onValueChange={(v) => { setModelsClaimFilter(v); setModelsPage(1); }}>
-                  <SelectTrigger className="w-[180px]"><SelectValue placeholder="Filter by claim" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Models</SelectItem>
-                    <SelectItem value="claimed">Claimed (Has Login)</SelectItem>
-                    <SelectItem value="unclaimed">Unclaimed (Needs Invite)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Models Table */}
+          {/* Recent Models Preview */}
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Models</CardTitle>
+                  <CardTitle>Recent Models</CardTitle>
                   <CardDescription>
-                    {modelsTotalCount > 0
-                      ? `Showing ${((modelsPage - 1) * pageSize) + 1} - ${Math.min(modelsPage * pageSize, modelsTotalCount)} of ${modelsTotalCount.toLocaleString()}`
-                      : "No models found"}
-                    {selectedModels.size > 0 && (
-                      <span className="ml-2 text-pink-500 font-medium">
-                        ({selectedModels.size} selected)
-                      </span>
-                    )}
+                    Most recently joined models - View the full list for advanced filtering, sorting, and bulk actions
                   </CardDescription>
                 </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  {/* Bulk Actions */}
-                  {selectedModels.size > 0 && (
-                    <>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={bulkApproveModels}
-                        disabled={bulkActionLoading}
-                        className="text-green-500 border-green-500/50 hover:bg-green-500/10"
-                      >
-                        {bulkActionLoading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <CheckCircle className="h-4 w-4 mr-1" />}
-                        Approve ({selectedModels.size})
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={bulkRejectModels}
-                        disabled={bulkActionLoading}
-                        className="text-red-500 border-red-500/50 hover:bg-red-500/10"
-                      >
-                        Reject ({selectedModels.size})
-                      </Button>
-                    </>
-                  )}
-                  {/* Export Button */}
-                  <Button variant="outline" size="sm" onClick={exportModelsToCSV} title="Export to CSV">
-                    <Download className="h-4 w-4 mr-1" />
-                    Export
-                  </Button>
-                  {/* Pagination */}
-                  <Button variant="outline" size="sm" onClick={() => setModelsPage(p => Math.max(1, p - 1))} disabled={modelsPage === 1}>
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <span className="text-sm text-muted-foreground">Page {modelsPage} of {modelsTotalPages}</span>
-                  <Button variant="outline" size="sm" onClick={() => setModelsPage(p => Math.min(modelsTotalPages, p + 1))} disabled={modelsPage === modelsTotalPages}>
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
+                <Button asChild className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600">
+                  <Link href="/admin/models">
+                    View All {stats.totalModels.toLocaleString()} Models
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Link>
+                </Button>
               </div>
             </CardHeader>
             <CardContent>
-              {modelsLoading ? (
-                <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
-              ) : models.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground"><Users className="h-12 w-12 mx-auto mb-4 opacity-50" /><p>No models found</p></div>
+              {recentModelsLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : recentModels.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No models found</p>
+                </div>
               ) : (
-                <div className="overflow-x-auto max-h-[70vh] overflow-y-auto">
-                  <Table>
-                    <TableHeader className="sticky top-0 bg-background z-10 shadow-sm">
-                      <TableRow>
-                        {/* Checkbox for bulk selection */}
-                        <TableHead className="w-[40px]">
-                          <button
-                            onClick={toggleAllModels}
-                            className="p-1 hover:bg-muted rounded transition-colors"
-                            title={selectedModels.size === models.length ? "Deselect all" : "Select all"}
+                <div className="space-y-3">
+                  {recentModels.map((model) => (
+                    <div key={model.id} className="p-3 rounded-lg bg-muted/50 flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <Link href={`/admin/models/${model.id}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity min-w-0">
+                          <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-pink-500/20 to-violet-500/20 flex-shrink-0">
+                            {model.profile_photo_url ? (
+                              <Image src={model.profile_photo_url} alt={model.username} width={80} height={80} className="w-full h-full object-cover" unoptimized={model.profile_photo_url.includes('cdninstagram.com')} />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-sm font-bold">
+                                {model.first_name?.charAt(0) || model.username?.charAt(0)?.toUpperCase() || "?"}
+                              </div>
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-medium truncate text-pink-500 hover:text-pink-400">
+                              {model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username}
+                            </p>
+                            <p className="text-sm text-muted-foreground truncate">@{model.username}</p>
+                          </div>
+                        </Link>
+                        {model.instagram_name && (
+                          <a
+                            href={`https://instagram.com/${model.instagram_name.replace('@', '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hidden sm:flex items-center gap-1 text-pink-500 hover:text-pink-400 text-sm"
                           >
-                            {selectedModels.size === models.length && models.length > 0 ? (
-                              <CheckSquare className="h-4 w-4 text-pink-500" />
-                            ) : (
-                              <Square className="h-4 w-4 text-muted-foreground" />
-                            )}
-                          </button>
-                        </TableHead>
-                        <TableHead className="w-[100px] cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("admin_rating")}>
-                          <div className="flex items-center"><Star className="h-4 w-4 mr-1" />Rating<SortIndicator active={modelsSortField === "admin_rating"} direction={modelsSortDirection} /></div>
-                        </TableHead>
-                        <TableHead className="w-[180px]">Model</TableHead>
-                        <TableHead className="w-[90px] cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("instagram_followers")}>
-                          <div className="flex items-center"><Instagram className="h-4 w-4 mr-1" />IG<SortIndicator active={modelsSortField === "instagram_followers"} direction={modelsSortDirection} /></div>
-                        </TableHead>
-                        <TableHead className="w-[80px]">State</TableHead>
-                        <TableHead>Actions</TableHead>
-                        <TableHead>Invite</TableHead>
-                        <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("joined_at")}>
-                          <div className="flex items-center"><UserPlus className="h-4 w-4 mr-1" />Joined<SortIndicator active={modelsSortField === "joined_at"} direction={modelsSortDirection} /></div>
-                        </TableHead>
-                        <TableHead>
-                          <div className="flex items-center"><Sparkles className="h-4 w-4 mr-1" />New Face</div>
-                        </TableHead>
-                        <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("image_count")}>
-                          <div className="flex items-center"><ImageIcon className="h-4 w-4 mr-1" />Pics<SortIndicator active={modelsSortField === "image_count"} direction={modelsSortDirection} /></div>
-                        </TableHead>
-                        <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("video_count")}>
-                          <div className="flex items-center"><Video className="h-4 w-4 mr-1" />Vids<SortIndicator active={modelsSortField === "video_count"} direction={modelsSortDirection} /></div>
-                        </TableHead>
-                        <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("ppv_count")}>
-                          <div className="flex items-center"><Lock className="h-4 w-4 mr-1" />PPV<SortIndicator active={modelsSortField === "ppv_count"} direction={modelsSortDirection} /></div>
-                        </TableHead>
-                        <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("profile_views")}>
-                          <div className="flex items-center"><Eye className="h-4 w-4 mr-1" />Views<SortIndicator active={modelsSortField === "profile_views"} direction={modelsSortDirection} /></div>
-                        </TableHead>
-                        <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("followers_count")}>
-                          <div className="flex items-center"><Heart className="h-4 w-4 mr-1" />Favorites<SortIndicator active={modelsSortField === "followers_count"} direction={modelsSortDirection} /></div>
-                        </TableHead>
-                        <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("total_earned")}>
-                          <div className="flex items-center"><Coins className="h-4 w-4 mr-1" />Earned<SortIndicator active={modelsSortField === "total_earned"} direction={modelsSortDirection} /></div>
-                        </TableHead>
-                        <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("referral_count")}>
-                          <div className="flex items-center"><Users className="h-4 w-4 mr-1" />Referrals<SortIndicator active={modelsSortField === "referral_count"} direction={modelsSortDirection} /></div>
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {models.map((model) => (
-                        <TableRow key={model.id} className={selectedModels.has(model.id) ? "bg-pink-500/5" : ""}>
-                          {/* Checkbox */}
-                          <TableCell>
-                            <button
-                              onClick={() => toggleModelSelection(model.id)}
-                              className="p-1 hover:bg-muted rounded transition-colors"
-                            >
-                              {selectedModels.has(model.id) ? (
-                                <CheckSquare className="h-4 w-4 text-pink-500" />
-                              ) : (
-                                <Square className="h-4 w-4 text-muted-foreground" />
-                              )}
-                            </button>
-                          </TableCell>
-                          <TableCell><RatingStars modelId={model.id} currentRating={model.admin_rating} onRatingChange={handleRatingChange} /></TableCell>
-                          <TableCell>
-                            <Link href={`/admin/models/${model.id}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-                              <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-pink-500/20 to-violet-500/20 flex-shrink-0">
-                                {model.profile_photo_url ? (
-                                  <Image src={model.profile_photo_url} alt={model.username} width={80} height={80} className="w-full h-full object-cover" unoptimized={model.profile_photo_url.includes('cdninstagram.com')} />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center text-sm font-bold">{model.first_name?.charAt(0) || model.username?.charAt(0)?.toUpperCase() || "?"}</div>
-                                )}
-                              </div>
-                              <div className="min-w-0">
-                                <p className="font-medium truncate text-pink-500 hover:text-pink-400">{model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username}</p>
-                                <p className="text-sm text-muted-foreground truncate">@{model.username}</p>
-                              </div>
-                            </Link>
-                          </TableCell>
-                          <TableCell>
-                            {model.instagram_name ? (
-                              <div className="flex flex-col">
-                                <a href={`https://instagram.com/${model.instagram_name.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-pink-500 hover:text-pink-400 transition-colors text-sm">{model.instagram_name.replace('@', '')}</a>
-                                {model.instagram_followers ? (
-                                  <span className="text-xs text-muted-foreground">{(model.instagram_followers / 1000).toFixed(1)}K</span>
-                                ) : null}
-                              </div>
-                            ) : <span className="text-muted-foreground text-sm">-</span>}
-                          </TableCell>
-                          <TableCell><span className="text-sm text-muted-foreground">{model.state || "-"}</span></TableCell>
-                          <TableCell><ModelActionsDropdown id={model.id} modelName={model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username} isApproved={model.is_approved} onAction={loadModels} /></TableCell>
-                          <TableCell>
-                            {model.user_id ? (
-                              <span className="inline-flex items-center gap-1 text-green-500 text-sm">
-                                <UserCheck className="h-4 w-4" />
-                                Active
-                              </span>
-                            ) : model.invite_token ? (
-                              <div className="flex items-center gap-2">
-                                <span className="inline-flex items-center gap-1 text-amber-500 text-sm">
-                                  <Clock className="h-4 w-4" />
-                                  Pending
-                                </span>
-                                <CopyInviteButton token={model.invite_token} />
-                                {model.email && (
-                                  <CreateLoginButton modelId={model.id} onSuccess={loadModels} />
-                                )}
-                              </div>
-                            ) : model.email ? (
-                              <CreateLoginButton modelId={model.id} onSuccess={loadModels} />
-                            ) : (
-                              <span className="text-muted-foreground text-sm">No email</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-sm text-muted-foreground">
-                              {(model.joined_at || model.claimed_at || model.created_at) ? new Date(model.joined_at || model.claimed_at || model.created_at).toLocaleDateString() : "-"}
-                            </span>
-                          </TableCell>
-                          <TableCell><NewFaceToggle modelId={model.id} isNewFace={model.new_face || false} onToggle={handleNewFaceToggle} /></TableCell>
-                          <TableCell><span className={`font-medium ${(model.image_count || 0) > 0 ? "text-blue-500" : "text-muted-foreground"}`}>{(model.image_count || 0).toLocaleString()}</span></TableCell>
-                          <TableCell><span className={`font-medium ${(model.video_count || 0) > 0 ? "text-purple-500" : "text-muted-foreground"}`}>{(model.video_count || 0).toLocaleString()}</span></TableCell>
-                          <TableCell><span className={`font-medium ${(model.ppv_count || 0) > 0 ? "text-amber-500" : "text-muted-foreground"}`}>{(model.ppv_count || 0).toLocaleString()}</span></TableCell>
-                          <TableCell><span className={`font-medium ${model.profile_views > 100 ? "text-purple-500" : ""}`}>{(model.profile_views || 0).toLocaleString()}</span></TableCell>
-                          <TableCell><span className={`font-medium ${(model.followers_count || 0) > 0 ? "text-pink-500" : ""}`}>{(model.followers_count || 0).toLocaleString()}</span></TableCell>
-                          <TableCell><span className={`font-medium ${(model.total_earned || 0) > 0 ? "text-yellow-500" : ""}`}>{(model.total_earned || 0).toLocaleString()}</span></TableCell>
-                          <TableCell><span className={`font-medium ${(model.referral_count || 0) > 0 ? "text-green-500" : ""}`}>{(model.referral_count || 0).toLocaleString()}</span></TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                            <Instagram className="h-4 w-4" />
+                            {model.instagram_followers ? `${(model.instagram_followers / 1000).toFixed(1)}K` : model.instagram_name.replace('@', '')}
+                          </a>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <RatingStars modelId={model.id} currentRating={model.admin_rating} onRatingChange={handleRatingChange} />
+                        <NewFaceToggle modelId={model.id} isNewFace={model.new_face || false} onToggle={handleNewFaceToggle} />
+                        {model.is_approved ? (
+                          <Badge className="bg-green-500/10 text-green-500 border-green-500/50">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Approved
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/50">
+                            <Clock className="h-3 w-3 mr-1" />
+                            Pending
+                          </Badge>
+                        )}
+                        <ModelActionsDropdown
+                          id={model.id}
+                          modelName={model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username}
+                          isApproved={model.is_approved}
+                          onAction={loadRecentModels}
+                        />
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* View All Link */}
+                  <div className="pt-4 border-t">
+                    <Link
+                      href="/admin/models"
+                      className="flex items-center justify-center gap-2 p-3 rounded-lg bg-gradient-to-r from-pink-500/10 to-violet-500/10 hover:from-pink-500/20 hover:to-violet-500/20 text-pink-500 font-medium transition-all"
+                    >
+                      <Users className="h-5 w-5" />
+                      Manage All {stats.totalModels.toLocaleString()} Models
+                      <ArrowRight className="h-5 w-5" />
+                    </Link>
+                  </div>
                 </div>
               )}
             </CardContent>
