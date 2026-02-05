@@ -1,9 +1,12 @@
-import { createClient } from "@/lib/supabase/server";
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
-import { Navbar } from "@/components/layout/navbar";
-import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 import {
   Camera,
   Video,
@@ -11,73 +14,74 @@ import {
   Calendar,
   DollarSign,
   CheckCircle,
-  ArrowRight,
   Sparkles,
   Sun,
   Waves,
+  Loader2,
+  CreditCard,
+  Mail,
+  User,
+  Building,
 } from "lucide-react";
-import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "Swimwear Brand Content Program | EXA Models",
-  description: "Professional swimwear content creation for designers. 10 video clips + 50 photos monthly. Credits toward Miami Swim Week package.",
-};
+export default function SwimwearContentPage() {
+  const [loading, setLoading] = useState(false);
+  const [brandName, setBrandName] = useState("");
+  const [contactName, setContactName] = useState("");
+  const [email, setEmail] = useState("");
 
-export default async function SwimwearContentPage() {
-  const supabase = await createClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
-  let actorType: "model" | "fan" | "brand" | "admin" | null = null;
-  let profileData: any = null;
-  let coinBalance = 0;
-
-  if (user) {
-    const { data: actor } = await supabase
-      .from("actors")
-      .select("id, type")
-      .eq("user_id", user.id)
-      .single() as { data: { id: string; type: "admin" | "model" | "brand" | "fan" } | null };
-
-    actorType = actor?.type || null;
-
-    if (actor?.type === "model" || actor?.type === "admin") {
-      const { data: model } = await supabase
-        .from("models")
-        .select("id, username, first_name, last_name, profile_photo_url, coin_balance")
-        .eq("user_id", user.id)
-        .single() as { data: any };
-      profileData = model;
-      coinBalance = model?.coin_balance ?? 0;
-    } else if (actor?.type === "fan") {
-      const { data } = await supabase
-        .from("fans")
-        .select("display_name, avatar_url, coin_balance")
-        .eq("id", actor.id)
-        .single() as { data: any };
-      profileData = data;
-      coinBalance = data?.coin_balance ?? 0;
+  const handlePayNow = async () => {
+    if (!brandName.trim() || !contactName.trim() || !email.trim()) {
+      toast.error("Please fill in all required fields");
+      return;
     }
-  }
 
-  const displayName = actorType === "fan"
-    ? profileData?.display_name
-    : profileData?.first_name
-      ? `${profileData.first_name} ${profileData.last_name || ""}`.trim()
-      : profileData?.username || undefined;
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/content-program/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          brandName: brandName.trim(),
+          contactName: contactName.trim(),
+          email: email.trim().toLowerCase(),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to create checkout");
+      }
+
+      // Redirect to Stripe
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Something went wrong");
+      setLoading(false);
+    }
+  };
 
   return (
-    <CoinBalanceProvider initialBalance={coinBalance}>
     <div className="min-h-screen bg-background">
-      <Navbar
-        user={user ? {
-          id: user.id,
-          email: user.email || "",
-          avatar_url: profileData?.profile_photo_url || profileData?.avatar_url || undefined,
-          name: displayName,
-          username: profileData?.username || undefined,
-        } : undefined}
-        actorType={actorType}
-      />
+      <nav className="border-b">
+        <div className="container flex items-center justify-between h-16 px-4">
+          <Link href="/" className="font-bold text-xl">EXA</Link>
+          <Link href="/models" className="text-sm text-muted-foreground hover:text-foreground">
+            Browse Models
+          </Link>
+        </div>
+      </nav>
 
       <main className="container px-4 md:px-8 py-12 max-w-4xl mx-auto">
         {/* Hero */}
@@ -106,6 +110,84 @@ export default async function SwimwearContentPage() {
           <StatCard icon={<DollarSign className="h-5 w-5 text-green-500" />} label="$500/month" sublabel="3-month commitment" />
           <StatCard icon={<Sun className="h-5 w-5 text-amber-500" />} label="Swim Week Credits" sublabel="toward $3,000 package" />
         </div>
+
+        {/* Payment Form - Prominent Position */}
+        <Card className="p-8 mb-12 bg-gradient-to-br from-pink-500/20 via-violet-500/20 to-cyan-500/20 border-pink-500/30">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold mb-2">Join the Program</h2>
+            <p className="text-muted-foreground">
+              All brands accepted • Pay $1,500 for 3 months of content
+            </p>
+          </div>
+
+          <div className="max-w-md mx-auto space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="brandName" className="flex items-center gap-2">
+                <Building className="h-4 w-4" />
+                Brand Name *
+              </Label>
+              <Input
+                id="brandName"
+                placeholder="Your swimwear brand name"
+                value={brandName}
+                onChange={(e) => setBrandName(e.target.value)}
+                disabled={loading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="contactName" className="flex items-center gap-2">
+                <User className="h-4 w-4" />
+                Your Name *
+              </Label>
+              <Input
+                id="contactName"
+                placeholder="Contact person name"
+                value={contactName}
+                onChange={(e) => setContactName(e.target.value)}
+                disabled={loading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email" className="flex items-center gap-2">
+                <Mail className="h-4 w-4" />
+                Email *
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="you@yourbrand.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={loading}
+              />
+            </div>
+
+            <div className="pt-4">
+              <Button
+                onClick={handlePayNow}
+                disabled={loading || !brandName.trim() || !contactName.trim() || !email.trim()}
+                className="w-full h-14 text-lg bg-gradient-to-r from-cyan-500 via-pink-500 to-violet-500 hover:from-cyan-600 hover:via-pink-600 hover:to-violet-600"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Redirecting to payment...
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="mr-2 h-5 w-5" />
+                    Pay $1,500 Now
+                  </>
+                )}
+              </Button>
+              <p className="text-xs text-center text-muted-foreground mt-3">
+                Secure payment via Stripe • 3-month content program
+              </p>
+            </div>
+          </div>
+        </Card>
 
         {/* Main Value Prop */}
         <Card className="p-8 mb-12 bg-gradient-to-br from-cyan-500/10 via-pink-500/10 to-violet-500/10 border-pink-500/20">
@@ -204,17 +286,17 @@ export default async function SwimwearContentPage() {
           </h2>
           <Card className="p-8 bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20">
             <div className="text-center mb-6">
-              <p className="text-5xl font-bold text-green-500 mb-2">$500</p>
-              <p className="text-muted-foreground">per month (3-month commitment)</p>
+              <p className="text-5xl font-bold text-green-500 mb-2">$1,500</p>
+              <p className="text-muted-foreground">3-month content program (one-time payment)</p>
             </div>
             <div className="max-w-md mx-auto">
               <div className="flex items-center justify-between p-4 bg-background/50 rounded-lg mb-4">
-                <span className="text-muted-foreground">Monthly Content Package</span>
-                <span className="font-bold">$500</span>
+                <span className="text-muted-foreground">Monthly Content Value</span>
+                <span className="font-bold">$500/month × 3</span>
               </div>
               <div className="flex items-center justify-between p-4 bg-background/50 rounded-lg mb-4">
-                <span className="text-muted-foreground">3-Month Commitment</span>
-                <span className="font-bold">$1,500 total</span>
+                <span className="text-muted-foreground">Total Program Cost</span>
+                <span className="font-bold">$1,500</span>
               </div>
               <div className="flex items-center justify-between p-4 bg-cyan-500/10 rounded-lg border border-cyan-500/20">
                 <span className="text-cyan-400">Credited to Swim Week</span>
@@ -238,10 +320,10 @@ export default async function SwimwearContentPage() {
                 </h3>
                 <p className="text-muted-foreground mb-4">
                   The Miami Swim Week package is <span className="text-white font-bold">$3,000</span>.
-                  Each $500 monthly payment is credited toward your final Swim Week balance.
+                  Your $1,500 payment is credited toward your Swim Week balance.
                 </p>
                 <p className="text-muted-foreground">
-                  After 3 months, you&apos;ll have <span className="text-cyan-400 font-bold">$1,500</span> already
+                  After the program, you&apos;ll have <span className="text-cyan-400 font-bold">$1,500</span> already
                   credited — plus a complete content library and months of brand exposure!
                 </p>
               </div>
@@ -294,19 +376,19 @@ export default async function SwimwearContentPage() {
               month="Month 1"
               title="Kickoff Shoot"
               description="First collection shoot, 10 videos + 50 photos delivered"
-              credit="$500 credited"
+              credit="$500 value"
             />
             <TimelineItem
               month="Month 2"
               title="Content Momentum"
               description="Second shoot, Instagram exposure begins"
-              credit="$1,000 total credited"
+              credit="$1,000 value"
             />
             <TimelineItem
               month="Month 3"
               title="Pre-Show Content"
               description="Final content package, Swim Week preparation"
-              credit="$1,500 total credited"
+              credit="$1,500 value"
             />
             <TimelineItem
               month="May 26, 2026"
@@ -322,25 +404,61 @@ export default async function SwimwearContentPage() {
         <div className="mb-12">
           <h2 className="text-2xl font-bold mb-6">How It Works</h2>
           <div className="grid md:grid-cols-4 gap-4">
-            <StepCard number={1} title="Apply" description="Submit your brand info and collection details" />
+            <StepCard number={1} title="Pay" description="Complete your $1,500 payment securely" />
             <StepCard number={2} title="Send Collection" description="Ship your swimwear pieces to our Miami studio" />
             <StepCard number={3} title="We Shoot" description="Professional models bring your designs to life" />
             <StepCard number={4} title="Receive Content" description="Get your videos and photos monthly" />
           </div>
         </div>
 
-        {/* CTA */}
+        {/* Second Payment Form */}
         <Card className="p-8 text-center bg-gradient-to-br from-pink-500/20 via-violet-500/20 to-cyan-500/20 border-pink-500/30 mb-12">
           <h2 className="text-2xl font-bold mb-4">Ready to Join?</h2>
           <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
             Get months of professional content and exposure leading up to Miami Swim Week.
-            Limited spots available for the 2026 program.
+            All brands accepted — just fill in your details and pay.
           </p>
-          <Button asChild size="lg" className="bg-gradient-to-r from-cyan-500 via-pink-500 to-violet-500 hover:from-cyan-600 hover:via-pink-600 hover:to-violet-600 text-lg px-8">
-            <Link href="/swimwear-content/apply">
-              Apply Now <ArrowRight className="ml-2 h-5 w-5" />
-            </Link>
-          </Button>
+          <div className="max-w-md mx-auto space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                placeholder="Brand Name *"
+                value={brandName}
+                onChange={(e) => setBrandName(e.target.value)}
+                disabled={loading}
+              />
+              <Input
+                placeholder="Your Name *"
+                value={contactName}
+                onChange={(e) => setContactName(e.target.value)}
+                disabled={loading}
+              />
+            </div>
+            <Input
+              type="email"
+              placeholder="Email *"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={loading}
+            />
+            <Button
+              onClick={handlePayNow}
+              disabled={loading || !brandName.trim() || !contactName.trim() || !email.trim()}
+              size="lg"
+              className="w-full bg-gradient-to-r from-cyan-500 via-pink-500 to-violet-500 hover:from-cyan-600 hover:via-pink-600 hover:to-violet-600 text-lg"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <CreditCard className="mr-2 h-5 w-5" />
+                  Pay $1,500 Now
+                </>
+              )}
+            </Button>
+          </div>
         </Card>
 
         {/* FAQ */}
@@ -353,7 +471,7 @@ export default async function SwimwearContentPage() {
             />
             <FAQItem
               question="How do I send my collection?"
-              answer="After approval, we'll provide a shipping address for our Miami studio. We recommend sending 5-10 pieces per month for variety."
+              answer="After payment, we'll email you a shipping address for our Miami studio. We recommend sending 5-10 pieces per month for variety."
             />
             <FAQItem
               question="What happens to my pieces after shooting?"
@@ -365,7 +483,7 @@ export default async function SwimwearContentPage() {
             />
             <FAQItem
               question="What's included in the Swim Week package?"
-              answer="The $3,000 Swim Week package includes runway presence, show content, backstage access, and post-event deliverables. Your content program payments credit directly toward this."
+              answer="The $3,000 Swim Week package includes runway presence, show content, backstage access, and post-event deliverables. Your $1,500 payment credits directly toward this."
             />
           </div>
         </div>
@@ -373,18 +491,11 @@ export default async function SwimwearContentPage() {
         {/* Final CTA */}
         <div className="text-center">
           <p className="text-muted-foreground mb-4">Questions? Reach out to us</p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild size="lg" className="bg-gradient-to-r from-cyan-500 to-pink-500 hover:from-cyan-600 hover:to-pink-600 text-lg px-8">
-              <Link href="/swimwear-content/apply">
-                Apply Now
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="text-lg px-8">
-              <Link href="mailto:hello@examodels.com">
-                Contact Us
-              </Link>
-            </Button>
-          </div>
+          <Button asChild size="lg" variant="outline" className="text-lg px-8">
+            <Link href="mailto:hello@examodels.com">
+              Contact Us
+            </Link>
+          </Button>
         </div>
       </main>
 
@@ -392,7 +503,6 @@ export default async function SwimwearContentPage() {
         <p>&copy; {new Date().getFullYear()} EXA Models. All rights reserved.</p>
       </footer>
     </div>
-    </CoinBalanceProvider>
   );
 }
 

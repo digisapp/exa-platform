@@ -60,6 +60,12 @@ export async function POST(request: NextRequest) {
           break;
         }
 
+        // Check if this is a content program payment
+        if (session.metadata?.type === "content_program") {
+          await handleContentProgramPayment(session);
+          break;
+        }
+
         // Check if this is a shop order
         if (session.metadata?.order_id) {
           await handleShopOrderPayment(session);
@@ -717,6 +723,63 @@ async function handleShopOrderPayment(session: Stripe.Checkout.Session) {
   }
 
   console.log("Shop order payment successful:", { orderId, orderNumber, total: order?.total });
+}
+
+async function handleContentProgramPayment(session: Stripe.Checkout.Session) {
+  const brandName = session.metadata?.brand_name;
+  const contactName = session.metadata?.contact_name;
+  const email = session.metadata?.email;
+
+  if (!brandName || !email) {
+    console.error("Missing content program payment metadata:", session.id);
+    return;
+  }
+
+  const paymentIntentId = typeof session.payment_intent === "string"
+    ? session.payment_intent
+    : session.payment_intent?.id;
+
+  // Update enrollment to active
+  const { error: updateError } = await (supabaseAdmin as any)
+    .from("content_program_enrollments")
+    .update({
+      status: "active",
+      stripe_payment_intent_id: paymentIntentId,
+      paid_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("stripe_checkout_session_id", session.id);
+
+  if (updateError) {
+    console.error("Error updating content program enrollment:", updateError);
+    // Try to create the enrollment if it doesn't exist
+    const { error: insertError } = await (supabaseAdmin as any)
+      .from("content_program_enrollments")
+      .insert({
+        brand_name: brandName,
+        contact_email: email,
+        contact_name: contactName || null,
+        phone: session.metadata?.phone || null,
+        website_url: session.metadata?.website_url || null,
+        instagram_handle: session.metadata?.instagram_handle || null,
+        stripe_checkout_session_id: session.id,
+        stripe_payment_intent_id: paymentIntentId,
+        start_date: new Date().toISOString().split("T")[0],
+        commitment_months: 3,
+        monthly_rate: 500.00,
+        swim_week_package_cost: 3000.00,
+        swim_week_target_date: "2026-05-26",
+        status: "active",
+        paid_at: new Date().toISOString(),
+      });
+
+    if (insertError) {
+      console.error("Error creating content program enrollment:", insertError);
+      return;
+    }
+  }
+
+  console.log("Content program payment successful:", { brandName, email, amount: session.amount_total });
 }
 
 // Disable body parsing for webhook signature verification
