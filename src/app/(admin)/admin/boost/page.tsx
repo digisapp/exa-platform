@@ -197,7 +197,7 @@ export default function AdminBoostPage() {
         boosts: entry.total_boosts || 0,
       }));
 
-      // Get fan names for recent sessions
+      // Get user names for recent sessions (could be fans or models)
       const userIds = (recentSessionsData || [])
         .filter((s: any) => s.user_id)
         .map((s: any) => s.user_id);
@@ -207,29 +207,57 @@ export default function AdminBoostPage() {
         // Get actor IDs from user IDs
         const { data: actors } = await supabase
           .from("actors")
-          .select("id, user_id")
+          .select("id, user_id, type")
           .in("user_id", userIds);
 
         const actorIds = (actors || []).map((a: any) => a.id);
-        const userToActor = new Map((actors || []).map((a: any) => [a.user_id, a.id]));
+        const userToActor = new Map((actors || []).map((a: any) => [a.user_id, { id: a.id, type: a.type }]));
 
         if (actorIds.length > 0) {
+          // Look up fans (fans.id = actors.id)
           const { data: fans } = await supabase
             .from("fans")
-            .select("id, display_name, email, username")
+            .select("id, display_name, username")
             .in("id", actorIds);
 
-          (fans || []).forEach((f: any) => {
-            // Find the user_id for this actor
-            for (const [userId, actorId] of userToActor) {
-              if (actorId === f.id) {
-                // Use username first, then display_name as fallback
-                const name = f.username || f.display_name;
-                fanNames.set(userId, name || "Fan");
-                break;
+          const fanLookup = new Map((fans || []).map((f: any) => [f.id, f]));
+
+          // Also look up models (models.user_id = actors.user_id)
+          const { data: models } = await supabase
+            .from("models")
+            .select("user_id, first_name, username")
+            .in("user_id", userIds);
+
+          const modelLookup = new Map((models || []).map((m: any) => [m.user_id, m]));
+
+          // For each user, determine their display name
+          for (const [userId, actorInfo] of userToActor) {
+            const actorId = actorInfo.id;
+            const actorType = actorInfo.type;
+
+            // Check if they're a model first
+            const model = modelLookup.get(userId);
+            if (model || actorType === "model") {
+              const name = model?.username || model?.first_name;
+              if (name) {
+                fanNames.set(userId, name);
+                continue;
               }
             }
-          });
+
+            // Check if they're a fan
+            const fan = fanLookup.get(actorId);
+            if (fan || actorType === "fan") {
+              const name = fan?.username || fan?.display_name;
+              if (name) {
+                fanNames.set(userId, name);
+                continue;
+              }
+            }
+
+            // Fallback based on actor type
+            fanNames.set(userId, actorType === "model" ? "Model" : "Fan");
+          }
         }
       }
 
