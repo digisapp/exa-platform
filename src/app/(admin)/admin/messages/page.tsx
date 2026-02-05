@@ -199,7 +199,7 @@ export default function AdminMessagesPage() {
         return;
       }
 
-      // Get participant details
+      // Get participant details - first get actors to find user_ids
       const actorIds = new Set<string>();
       (convos || []).forEach((c: any) => {
         c.conversation_participants?.forEach((p: any) => {
@@ -207,19 +207,29 @@ export default function AdminMessagesPage() {
         });
       });
 
-      // Get fan details
+      // Look up actors to get user_id and type
+      const { data: actors } = await supabase
+        .from("actors")
+        .select("id, user_id, type")
+        .in("id", Array.from(actorIds));
+
+      // Create actor lookup map (actor_id -> { user_id, type })
+      const actorLookup = new Map((actors || []).map((a: any) => [a.id, a]));
+      const userIds = [...new Set((actors || []).map((a: any) => a.user_id).filter(Boolean))];
+
+      // Get fan details by user_id
       const { data: fans } = await supabase
         .from("fans")
         .select("id, display_name, avatar_url")
-        .in("id", Array.from(actorIds));
+        .in("id", userIds);
 
-      // Get model details
+      // Get model details by user_id
       const { data: models } = await supabase
         .from("models")
         .select("id, first_name, last_name, username, profile_photo_url")
-        .in("id", Array.from(actorIds));
+        .in("id", userIds);
 
-      // Create lookup maps
+      // Create lookup maps by user_id
       const fanMap = new Map((fans || []).map((f: any) => [f.id, { ...f, type: "fan" as const }]));
       const modelMap = new Map((models || []).map((m: any) => [m.id, { ...m, type: "model" as const }]));
 
@@ -253,30 +263,37 @@ export default function AdminMessagesPage() {
       // Build conversations with full details
       const enrichedConversations: Conversation[] = (convos || []).map((c: any) => {
         const participants: Participant[] = (c.conversation_participants || []).map((p: any) => {
-          const fan = fanMap.get(p.actor_id);
-          const model = modelMap.get(p.actor_id);
-          if (fan) {
+          // Get actor info to find user_id
+          const actor = actorLookup.get(p.actor_id);
+          const userId = actor?.user_id;
+          const actorType = actor?.type;
+
+          // Look up by user_id
+          const fan = userId ? fanMap.get(userId) : null;
+          const model = userId ? modelMap.get(userId) : null;
+
+          if (model || actorType === "model") {
             return {
               actor_id: p.actor_id,
-              display_name: fan.display_name || "Fan",
-              type: "fan" as const,
-              avatar_url: fan.avatar_url,
-              username: null,
+              display_name: model?.first_name || model?.username || "Model",
+              type: "model" as const,
+              avatar_url: model?.profile_photo_url || null,
+              username: model?.username || null,
             };
           }
-          if (model) {
+          if (fan || actorType === "fan") {
             return {
               actor_id: p.actor_id,
-              display_name: model.first_name || model.username || "Model",
-              type: "model" as const,
-              avatar_url: model.profile_photo_url,
-              username: model.username,
+              display_name: fan?.display_name || "Fan",
+              type: "fan" as const,
+              avatar_url: fan?.avatar_url || null,
+              username: null,
             };
           }
           return {
             actor_id: p.actor_id,
-            display_name: "Unknown",
-            type: "fan" as const,
+            display_name: actorType === "admin" ? "EXA Team" : "Unknown",
+            type: actorType === "admin" ? "model" as const : "fan" as const,
             avatar_url: null,
             username: null,
           };
@@ -318,34 +335,54 @@ export default function AdminMessagesPage() {
         return;
       }
 
-      // Get sender details
-      const senderIds = new Set((msgs || []).map((m: any) => m.sender_id));
+      // Get sender details - first look up actors to get user_ids
+      const senderIds = [...new Set((msgs || []).map((m: any) => m.sender_id).filter(Boolean))];
+
+      // Look up actors to get user_id and type
+      const { data: senderActors } = await supabase
+        .from("actors")
+        .select("id, user_id, type")
+        .in("id", senderIds);
+
+      const actorLookup = new Map((senderActors || []).map((a: any) => [a.id, a]));
+      const userIds = [...new Set((senderActors || []).map((a: any) => a.user_id).filter(Boolean))];
 
       const { data: fans } = await supabase
         .from("fans")
         .select("id, display_name, avatar_url")
-        .in("id", Array.from(senderIds));
+        .in("id", userIds);
 
       const { data: models } = await supabase
         .from("models")
         .select("id, first_name, username, profile_photo_url")
-        .in("id", Array.from(senderIds));
+        .in("id", userIds);
 
       const fanMap = new Map((fans || []).map((f: any) => [f.id, f]));
       const modelMap = new Map((models || []).map((m: any) => [m.id, m]));
 
       const enrichedMessages: Message[] = (msgs || []).map((m: any) => {
-        const fan = fanMap.get(m.sender_id);
-        const model = modelMap.get(m.sender_id);
+        const actor = actorLookup.get(m.sender_id);
+        const userId = actor?.user_id;
+        const actorType = actor?.type;
+
+        const fan = userId ? fanMap.get(userId) : null;
+        const model = userId ? modelMap.get(userId) : null;
+
         let senderName = "Unknown";
         let senderAvatar = null;
+        let senderType = m.sender_type || actorType;
 
-        if (fan) {
-          senderName = fan.display_name || "Fan";
-          senderAvatar = fan.avatar_url;
-        } else if (model) {
-          senderName = model.first_name || model.username || "Model";
-          senderAvatar = model.profile_photo_url;
+        if (model || actorType === "model") {
+          senderName = model?.first_name || model?.username || "Model";
+          senderAvatar = model?.profile_photo_url || null;
+          senderType = "model";
+        } else if (fan || actorType === "fan") {
+          senderName = fan?.display_name || "Fan";
+          senderAvatar = fan?.avatar_url || null;
+          senderType = "fan";
+        } else if (actorType === "admin") {
+          senderName = "EXA Team";
+          senderType = "admin";
         }
 
         return {
@@ -353,7 +390,7 @@ export default function AdminMessagesPage() {
           content: m.content,
           created_at: m.created_at,
           sender_id: m.sender_id,
-          sender_type: m.sender_type,
+          sender_type: senderType,
           sender_name: senderName,
           sender_avatar: senderAvatar,
           is_system: m.is_system || false,
