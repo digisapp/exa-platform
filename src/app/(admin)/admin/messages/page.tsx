@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -84,7 +83,6 @@ export default function AdminMessagesPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const pageSize = 30;
-  const supabase = createClient();
 
   // Stats
   const [stats, setStats] = useState({
@@ -95,336 +93,56 @@ export default function AdminMessagesPage() {
   });
 
   const loadStats = useCallback(async () => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const [
-      { count: totalConvos },
-      { count: totalMsgs },
-      { count: flagged },
-      { count: activeToday },
-    ] = await Promise.all([
-      supabase.from("conversations").select("*", { count: "exact", head: true }),
-      supabase.from("messages").select("*", { count: "exact", head: true }),
-      supabase.from("messages").select("*", { count: "exact", head: true }).eq("is_flagged", true),
-      supabase.from("conversations").select("*", { count: "exact", head: true }).gte("updated_at", today.toISOString()),
-    ]);
-
-    setStats({
-      totalConversations: totalConvos || 0,
-      totalMessages: totalMsgs || 0,
-      flaggedMessages: flagged || 0,
-      activeToday: activeToday || 0,
-    });
-  }, [supabase]);
+    try {
+      const res = await fetch("/api/admin/messages?action=stats");
+      if (res.ok) {
+        const data = await res.json();
+        setStats(data);
+      }
+    } catch (error) {
+      console.error("Failed to load stats:", error);
+    }
+  }, []);
 
   const loadConversations = useCallback(async () => {
     setLoading(true);
     try {
-      let targetConversationIds: string[] | null = null;
-
-      // If searching, first find matching fans/models, then their conversations
+      const params = new URLSearchParams({
+        action: "conversations",
+        page: page.toString(),
+        pageSize: pageSize.toString(),
+      });
       if (search) {
-        const searchPattern = `%${search}%`;
-
-        // Search fans by display_name - fans.id IS the actor_id directly
-        const { data: matchingFans } = await supabase
-          .from("fans")
-          .select("id")
-          .ilike("display_name", searchPattern);
-
-        // Search models by first_name or username - need user_id to find actor
-        const { data: matchingModels } = await supabase
-          .from("models")
-          .select("user_id")
-          .or(`first_name.ilike.${searchPattern},username.ilike.${searchPattern}`);
-
-        // For fans, we already have actor_ids directly (fans.id = actors.id)
-        const fanActorIds = (matchingFans || []).map((f: any) => f.id);
-
-        // For models, look up actors by user_id to get actor_ids
-        const modelUserIds = (matchingModels || []).map((m: any) => m.user_id).filter(Boolean);
-        let modelActorIds: string[] = [];
-        if (modelUserIds.length > 0) {
-          const { data: modelActors } = await supabase
-            .from("actors")
-            .select("id")
-            .in("user_id", modelUserIds);
-          modelActorIds = (modelActors || []).map((a: any) => a.id);
-        }
-
-        const matchingActorIds = [...fanActorIds, ...modelActorIds];
-
-        if (matchingActorIds.length === 0) {
-          setConversations([]);
-          setTotalCount(0);
-          setLoading(false);
-          return;
-        }
-
-        // Find conversations with these actors
-        const { data: participantConvos } = await supabase
-          .from("conversation_participants")
-          .select("conversation_id")
-          .in("actor_id", matchingActorIds);
-
-        targetConversationIds = [...new Set((participantConvos || []).map((p: any) => p.conversation_id))];
-
-        if (targetConversationIds.length === 0) {
-          setConversations([]);
-          setTotalCount(0);
-          setLoading(false);
-          return;
-        }
+        params.set("search", search);
       }
 
-      // Get conversations (filtered by search results if applicable)
-      let query = supabase
-        .from("conversations")
-        .select(`
-          id,
-          created_at,
-          updated_at,
-          conversation_participants (
-            actor_id
-          )
-        `)
-        .order("updated_at", { ascending: false });
-
-      if (targetConversationIds) {
-        query = query.in("id", targetConversationIds);
-        setTotalCount(targetConversationIds.length);
-      } else {
-        // Get count for non-search queries
-        const { count } = await supabase
-          .from("conversations")
-          .select("*", { count: "exact", head: true });
-        setTotalCount(count || 0);
+      const res = await fetch(`/api/admin/messages?${params}`);
+      if (res.ok) {
+        const data = await res.json();
+        setConversations(data.conversations || []);
+        setTotalCount(data.totalCount || 0);
       }
-
-      // Apply pagination
-      const { data: convos, error } = await query.range((page - 1) * pageSize, page * pageSize - 1);
-
-      if (error) {
-        console.error("Error loading conversations:", error);
-        return;
-      }
-
-      // Get participant details - first get actors to find user_ids
-      const actorIds = new Set<string>();
-      (convos || []).forEach((c: any) => {
-        c.conversation_participants?.forEach((p: any) => {
-          actorIds.add(p.actor_id);
-        });
-      });
-
-      // Look up actors to get user_id and type
-      const actorIdArray = Array.from(actorIds);
-      const { data: actors } = await supabase
-        .from("actors")
-        .select("id, user_id, type")
-        .in("id", actorIdArray);
-
-      // Create actor lookup map (actor_id -> { user_id, type })
-      const actorLookup = new Map((actors || []).map((a: any) => [a.id, a]));
-      const userIds = [...new Set((actors || []).map((a: any) => a.user_id).filter(Boolean))];
-
-      // Get fan details - fans.id = actors.id (query by actor_id, not user_id!)
-      const { data: fans } = await supabase
-        .from("fans")
-        .select("id, display_name, avatar_url")
-        .in("id", actorIdArray);
-
-      // Get model details - models.user_id = actors.user_id (query by user_id)
-      const { data: models } = await supabase
-        .from("models")
-        .select("user_id, first_name, last_name, username, profile_photo_url")
-        .in("user_id", userIds);
-
-      // Create lookup maps - fans by actor_id, models by user_id
-      const fanMap = new Map((fans || []).map((f: any) => [f.id, { ...f, type: "fan" as const }]));
-      const modelMap = new Map((models || []).map((m: any) => [m.user_id, { ...m, type: "model" as const }]));
-
-      // Get last message for each conversation
-      const convoIds = (convos || []).map((c: any) => c.id);
-      const { data: lastMessages } = await supabase
-        .from("messages")
-        .select("conversation_id, content, created_at")
-        .in("conversation_id", convoIds)
-        .order("created_at", { ascending: false });
-
-      // Create last message map (first occurrence for each conversation is the latest)
-      const lastMessageMap = new Map<string, { content: string | null; created_at: string }>();
-      (lastMessages || []).forEach((m: any) => {
-        if (!lastMessageMap.has(m.conversation_id)) {
-          lastMessageMap.set(m.conversation_id, { content: m.content, created_at: m.created_at });
-        }
-      });
-
-      // Get message counts
-      const { data: messageCounts } = await supabase
-        .from("messages")
-        .select("conversation_id")
-        .in("conversation_id", convoIds);
-
-      const messageCountMap = new Map<string, number>();
-      (messageCounts || []).forEach((m: any) => {
-        messageCountMap.set(m.conversation_id, (messageCountMap.get(m.conversation_id) || 0) + 1);
-      });
-
-      // Build conversations with full details
-      const enrichedConversations: Conversation[] = (convos || []).map((c: any) => {
-        const participants: Participant[] = (c.conversation_participants || []).map((p: any) => {
-          // Get actor info to find user_id and type
-          const actor = actorLookup.get(p.actor_id);
-          const userId = actor?.user_id;
-          const actorType = actor?.type;
-
-          // For fans: look up by actor_id (fans.id = actors.id)
-          // For models: look up by user_id (models.user_id = actors.user_id)
-          const fan = fanMap.get(p.actor_id);
-          const model = userId ? modelMap.get(userId) : null;
-
-          if (model || actorType === "model") {
-            return {
-              actor_id: p.actor_id,
-              display_name: model?.first_name || model?.username || "Model",
-              type: "model" as const,
-              avatar_url: model?.profile_photo_url || null,
-              username: model?.username || null,
-            };
-          }
-          if (fan || actorType === "fan") {
-            return {
-              actor_id: p.actor_id,
-              display_name: fan?.display_name || "Fan",
-              type: "fan" as const,
-              avatar_url: fan?.avatar_url || null,
-              username: null,
-            };
-          }
-          return {
-            actor_id: p.actor_id,
-            display_name: actorType === "admin" ? "EXA Team" : "Unknown",
-            type: actorType === "admin" ? "model" as const : "fan" as const,
-            avatar_url: null,
-            username: null,
-          };
-        });
-
-        const lastMsg = lastMessageMap.get(c.id);
-
-        return {
-          id: c.id,
-          created_at: c.created_at,
-          updated_at: c.updated_at,
-          participants,
-          last_message: lastMsg?.content || null,
-          last_message_at: lastMsg?.created_at || null,
-          message_count: messageCountMap.get(c.id) || 0,
-        };
-      });
-
-      setConversations(enrichedConversations);
     } catch (error) {
       console.error("Failed to load conversations:", error);
     } finally {
       setLoading(false);
     }
-  }, [supabase, page, search]);
+  }, [page, search]);
 
   const loadMessages = useCallback(async (conversationId: string) => {
     setLoadingMessages(true);
     try {
-      const { data: msgs, error } = await supabase
-        .from("messages")
-        .select("id, content, created_at, sender_id, sender_type, is_system, is_flagged, flagged_reason, media_type, media_url")
-        .eq("conversation_id", conversationId)
-        .order("created_at", { ascending: true })
-        .limit(200);
-
-      if (error) {
-        console.error("Error loading messages:", error);
-        return;
+      const res = await fetch(`/api/admin/messages?action=messages&conversationId=${conversationId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setMessages(data.messages || []);
       }
-
-      // Get sender details - first look up actors to get user_ids
-      const senderIds = [...new Set((msgs || []).map((m: any) => m.sender_id).filter(Boolean))];
-
-      // Look up actors to get user_id and type
-      const { data: senderActors } = await supabase
-        .from("actors")
-        .select("id, user_id, type")
-        .in("id", senderIds);
-
-      const actorLookup = new Map((senderActors || []).map((a: any) => [a.id, a]));
-      const userIds = [...new Set((senderActors || []).map((a: any) => a.user_id).filter(Boolean))];
-
-      // Get fan details - fans.id = actors.id (query by actor_id)
-      const { data: fans } = await supabase
-        .from("fans")
-        .select("id, display_name, avatar_url")
-        .in("id", senderIds);
-
-      // Get model details - models.user_id = actors.user_id (query by user_id)
-      const { data: models } = await supabase
-        .from("models")
-        .select("user_id, first_name, username, profile_photo_url")
-        .in("user_id", userIds);
-
-      // Create lookup maps - fans by actor_id, models by user_id
-      const fanMap = new Map((fans || []).map((f: any) => [f.id, f]));
-      const modelMap = new Map((models || []).map((m: any) => [m.user_id, m]));
-
-      const enrichedMessages: Message[] = (msgs || []).map((m: any) => {
-        const actor = actorLookup.get(m.sender_id);
-        const userId = actor?.user_id;
-        const actorType = actor?.type;
-
-        // For fans: look up by sender_id (actor_id), for models: look up by user_id
-        const fan = fanMap.get(m.sender_id);
-        const model = userId ? modelMap.get(userId) : null;
-
-        let senderName = "Unknown";
-        let senderAvatar = null;
-        let senderType = m.sender_type || actorType;
-
-        if (model || actorType === "model") {
-          senderName = model?.first_name || model?.username || "Model";
-          senderAvatar = model?.profile_photo_url || null;
-          senderType = "model";
-        } else if (fan || actorType === "fan") {
-          senderName = fan?.display_name || "Fan";
-          senderAvatar = fan?.avatar_url || null;
-          senderType = "fan";
-        } else if (actorType === "admin") {
-          senderName = "EXA Team";
-          senderType = "admin";
-        }
-
-        return {
-          id: m.id,
-          content: m.content,
-          created_at: m.created_at,
-          sender_id: m.sender_id,
-          sender_type: senderType,
-          sender_name: senderName,
-          sender_avatar: senderAvatar,
-          is_system: m.is_system || false,
-          is_flagged: m.is_flagged || false,
-          flagged_reason: m.flagged_reason,
-          media_type: m.media_type,
-          media_url: m.media_url,
-        };
-      });
-
-      setMessages(enrichedMessages);
     } catch (error) {
       console.error("Failed to load messages:", error);
     } finally {
       setLoadingMessages(false);
     }
-  }, [supabase]);
+  }, []);
 
   useEffect(() => {
     loadStats();
