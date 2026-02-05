@@ -121,8 +121,54 @@ export default function AdminMessagesPage() {
   const loadConversations = useCallback(async () => {
     setLoading(true);
     try {
-      // Get conversations with their participants
-      const query = supabase
+      let targetConversationIds: string[] | null = null;
+
+      // If searching, first find matching fans/models, then their conversations
+      if (search) {
+        const searchPattern = `%${search}%`;
+
+        // Search fans by display_name
+        const { data: matchingFans } = await supabase
+          .from("fans")
+          .select("id")
+          .ilike("display_name", searchPattern);
+
+        // Search models by first_name or username
+        const { data: matchingModels } = await supabase
+          .from("models")
+          .select("id")
+          .or(`first_name.ilike.${searchPattern},username.ilike.${searchPattern}`);
+
+        const matchingActorIds = [
+          ...(matchingFans || []).map((f: any) => f.id),
+          ...(matchingModels || []).map((m: any) => m.id),
+        ];
+
+        if (matchingActorIds.length === 0) {
+          setConversations([]);
+          setTotalCount(0);
+          setLoading(false);
+          return;
+        }
+
+        // Find conversations with these actors
+        const { data: participantConvos } = await supabase
+          .from("conversation_participants")
+          .select("conversation_id")
+          .in("actor_id", matchingActorIds);
+
+        targetConversationIds = [...new Set((participantConvos || []).map((p: any) => p.conversation_id))];
+
+        if (targetConversationIds.length === 0) {
+          setConversations([]);
+          setTotalCount(0);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Get conversations (filtered by search results if applicable)
+      let query = supabase
         .from("conversations")
         .select(`
           id,
@@ -132,22 +178,26 @@ export default function AdminMessagesPage() {
             actor_id
           )
         `)
-        .order("updated_at", { ascending: false })
-        .range((page - 1) * pageSize, page * pageSize - 1);
+        .order("updated_at", { ascending: false });
 
-      const { data: convos, error } = await query;
+      if (targetConversationIds) {
+        query = query.in("id", targetConversationIds);
+        setTotalCount(targetConversationIds.length);
+      } else {
+        // Get count for non-search queries
+        const { count } = await supabase
+          .from("conversations")
+          .select("*", { count: "exact", head: true });
+        setTotalCount(count || 0);
+      }
+
+      // Apply pagination
+      const { data: convos, error } = await query.range((page - 1) * pageSize, page * pageSize - 1);
 
       if (error) {
         console.error("Error loading conversations:", error);
         return;
       }
-
-      // Get count
-      const { count } = await supabase
-        .from("conversations")
-        .select("*", { count: "exact", head: true });
-
-      setTotalCount(count || 0);
 
       // Get participant details
       const actorIds = new Set<string>();
@@ -245,19 +295,7 @@ export default function AdminMessagesPage() {
         };
       });
 
-      // Filter by search
-      let filtered = enrichedConversations;
-      if (search) {
-        const searchLower = search.toLowerCase();
-        filtered = enrichedConversations.filter((c) =>
-          c.participants.some((p) =>
-            p.display_name?.toLowerCase().includes(searchLower) ||
-            p.username?.toLowerCase().includes(searchLower)
-          )
-        );
-      }
-
-      setConversations(filtered);
+      setConversations(enrichedConversations);
     } catch (error) {
       console.error("Failed to load conversations:", error);
     } finally {
