@@ -29,6 +29,8 @@ import {
   RefreshCw,
   Calendar,
   ExternalLink,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import {
   AreaChart,
@@ -62,6 +64,9 @@ export default function AdminBoostPage() {
   const [loading, setLoading] = useState(true);
   const [chartPeriod, setChartPeriod] = useState<"7d" | "30d" | "all">("7d");
   const [statsPeriod, setStatsPeriod] = useState<"today" | "monthly" | "all">("today");
+  const [sessionsPage, setSessionsPage] = useState(1);
+  const [totalSessions, setTotalSessions] = useState(0);
+  const sessionsPageSize = 20;
   const supabase = createClient();
 
   const fetchStats = useCallback(async () => {
@@ -87,7 +92,7 @@ export default function AdminBoostPage() {
       // Fetch all stats in parallel
       const [
         // All-time counts
-        { count: totalSessions },
+        { count: totalSessionsCount },
         { count: totalSignedIn },
         { count: totalVotes },
         { count: totalLikes },
@@ -145,9 +150,11 @@ export default function AdminBoostPage() {
             profile_photo_url
           )
         `).gt("total_points", 0).order("total_points", { ascending: false }).limit(10),
-        // Recent sessions
-        supabase.from("top_model_sessions").select("id, user_id, created_at, completed_at, models_swiped").order("created_at", { ascending: false }).limit(20),
+        // Recent sessions with pagination
+        supabase.from("top_model_sessions").select("id, user_id, created_at, completed_at, models_swiped").order("created_at", { ascending: false }).range((sessionsPage - 1) * sessionsPageSize, sessionsPage * sessionsPageSize - 1),
       ]);
+
+      setTotalSessions(totalSessionsCount || 0);
 
       // Process daily data - first aggregate the raw data
       const dailyMap = new Map<string, { sessions: number; votes: number; boosts: number }>();
@@ -301,7 +308,7 @@ export default function AdminBoostPage() {
           boosts: monthlyBoosts || 0,
         },
         all: {
-          sessions: totalSessions || 0,
+          sessions: totalSessionsCount || 0,
           signedIn: totalSignedIn || 0,
           votes: totalVotes || 0,
           likes: totalLikes || 0,
@@ -316,7 +323,7 @@ export default function AdminBoostPage() {
     } finally {
       setLoading(false);
     }
-  }, [chartPeriod, supabase]);
+  }, [chartPeriod, sessionsPage, sessionsPageSize, supabase]);
 
   useEffect(() => {
     fetchStats();
@@ -607,6 +614,33 @@ export default function AdminBoostPage() {
               )}
             </TableBody>
           </Table>
+
+          {/* Pagination */}
+          {totalSessions > sessionsPageSize && (
+            <div className="flex items-center justify-between mt-4 pt-4 border-t">
+              <p className="text-sm text-muted-foreground">
+                Page {sessionsPage} of {Math.ceil(totalSessions / sessionsPageSize)} ({totalSessions.toLocaleString()} total sessions)
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSessionsPage((p) => Math.max(1, p - 1))}
+                  disabled={sessionsPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSessionsPage((p) => Math.min(Math.ceil(totalSessions / sessionsPageSize), p + 1))}
+                  disabled={sessionsPage === Math.ceil(totalSessions / sessionsPageSize)}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
