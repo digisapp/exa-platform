@@ -79,7 +79,7 @@ function SuccessContent() {
                   <Camera className="h-3.5 w-3.5 text-violet-500" />
                 </div>
                 <span className="text-muted-foreground">
-                  Ship your collection to our Miami studio (address will be emailed)
+                  Ship your collection to our EXA Studio (address will be emailed)
                 </span>
               </li>
               <li className="flex items-start gap-3">

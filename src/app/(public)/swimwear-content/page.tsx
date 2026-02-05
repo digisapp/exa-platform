@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -76,7 +77,15 @@ export default function SwimwearContentPage() {
     <div className="min-h-screen bg-background">
       <nav className="border-b">
         <div className="container flex items-center justify-between h-16 px-4">
-          <Link href="/" className="font-bold text-xl">EXA</Link>
+          <Link href="/">
+            <Image
+              src="/exa-logo-white.png"
+              alt="EXA"
+              width={80}
+              height={32}
+              className="h-8 w-auto"
+            />
+          </Link>
           <Link href="/models" className="text-sm text-muted-foreground hover:text-foreground">
             Browse Models
           </Link>
@@ -338,44 +347,12 @@ export default function SwimwearContentPage() {
           </Card>
         </div>
 
-        {/* Timeline */}
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold mb-6">How Your Credits Build</h2>
-          <div className="space-y-4">
-            <TimelineItem
-              month="Month 1"
-              title="First Content Drop"
-              description="10 videos + 50 photos delivered"
-              credit="$500 credited"
-            />
-            <TimelineItem
-              month="Month 2"
-              title="Building Momentum"
-              description="Fresh content for social, brand exposure grows"
-              credit="$1,000 total"
-            />
-            <TimelineItem
-              month="Month 3+"
-              title="Continuous Content"
-              description="Keep creating, credits keep building"
-              credit="$1,500+ total"
-            />
-            <TimelineItem
-              month="May 26, 2026"
-              title="Miami Swim Week"
-              description="Use your accumulated credits toward the $3,000 package"
-              credit="$3,000 package"
-              highlight
-            />
-          </div>
-        </div>
-
         {/* How It Works */}
         <div className="mb-12">
           <h2 className="text-2xl font-bold mb-6">How It Works</h2>
           <div className="grid md:grid-cols-4 gap-4">
             <StepCard number={1} title="Subscribe" description="Start your $500/month subscription" />
-            <StepCard number={2} title="Send Collection" description="Ship your swimwear pieces to our Miami studio" />
+            <StepCard number={2} title="Send Collection" description="Ship your swimwear pieces to our EXA Studio" />
             <StepCard number={3} title="We Shoot" description="Professional models bring your designs to life" />
             <StepCard number={4} title="Receive Content" description="Get 10 videos + 50 photos each month" />
           </div>
@@ -441,19 +418,15 @@ export default function SwimwearContentPage() {
             />
             <FAQItem
               question="How do I send my collection?"
-              answer="After payment, we'll email you a shipping address for our Miami studio. We recommend sending 5-10 pieces per month for variety."
+              answer="After payment, we'll email you a shipping address for our EXA Studio. We recommend sending a minimum of 5 pieces per month for variety."
             />
             <FAQItem
               question="What happens to my pieces after shooting?"
               answer="We can return your collection after each shoot, or hold items for the full program duration — your choice."
             />
             <FAQItem
-              question="Can I provide creative direction?"
-              answer="Absolutely! Share your brand guidelines, mood boards, and preferences. We'll collaborate to capture your vision."
-            />
-            <FAQItem
-              question="What's included in the Swim Week package?"
-              answer="The $3,000 Swim Week package includes runway presence, show content, backstage access, and post-event deliverables. Every $500 monthly payment credits directly toward this total."
+              question="How much is the cost of your Miami Swim Week Show?"
+              answer="The Miami Swim Week package is $3,000, which includes runway presence, show content, backstage access, and post-event deliverables. Every $500 monthly payment credits directly toward this total."
             />
             <FAQItem
               question="Can I cancel anytime?"
@@ -496,23 +469,6 @@ function BenefitCard({ icon, title, description }: { icon: React.ReactNode; titl
       <div className="flex justify-center mb-2 text-pink-500">{icon}</div>
       <h3 className="font-bold mb-1">{title}</h3>
       <p className="text-sm text-muted-foreground">{description}</p>
-    </div>
-  );
-}
-
-function TimelineItem({ month, title, description, credit, highlight = false }: { month: string; title: string; description: string; credit: string; highlight?: boolean }) {
-  return (
-    <div className={`flex gap-4 p-4 rounded-lg ${highlight ? 'bg-cyan-500/10 border border-cyan-500/20' : 'bg-muted/30'}`}>
-      <div className={`flex-shrink-0 w-24 text-sm font-bold ${highlight ? 'text-cyan-400' : 'text-pink-500'}`}>
-        {month}
-      </div>
-      <div className="flex-1">
-        <h3 className="font-bold">{title}</h3>
-        <p className="text-sm text-muted-foreground">{description}</p>
-      </div>
-      <div className={`flex-shrink-0 text-sm font-bold ${highlight ? 'text-cyan-400' : 'text-green-500'}`}>
-        {credit}
-      </div>
     </div>
   );
 }
