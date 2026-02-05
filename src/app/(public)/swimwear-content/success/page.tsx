@@ -103,15 +103,12 @@ function SuccessContent() {
           </div>
         </CardContent>
 
-        <CardFooter className="flex flex-col gap-3">
+        <CardFooter>
           <Button asChild className="w-full bg-gradient-to-r from-cyan-500 via-pink-500 to-violet-500 hover:from-cyan-600 hover:via-pink-600 hover:to-violet-600">
-            <Link href="/models">
-              Browse Our Models
+            <Link href="/">
+              Back to Home
               <ArrowRight className="h-4 w-4 ml-2" />
             </Link>
-          </Button>
-          <Button asChild variant="outline" className="w-full">
-            <Link href="/">Back to Home</Link>
           </Button>
         </CardFooter>
       </Card>

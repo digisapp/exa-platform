@@ -86,9 +86,6 @@ export default function SwimwearContentPage() {
               className="h-8 w-auto"
             />
           </Link>
-          <Link href="/models" className="text-sm text-muted-foreground hover:text-foreground">
-            Browse Models
-          </Link>
         </div>
       </nav>
 
