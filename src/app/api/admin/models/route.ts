@@ -1,5 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+
+// Admin client for efficient RPC calls
+const getAdminClient = () => createSupabaseClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 async function isAdmin(supabase: any, userId: string) {
   const { data: actor } = await supabase
@@ -8,6 +15,28 @@ async function isAdmin(supabase: any, userId: string) {
     .eq("user_id", userId)
     .single();
   return actor?.type === "admin";
+}
+
+// Batch size for chunked queries to avoid memory issues
+const BATCH_SIZE = 500;
+const MAX_COMPUTED_SORT_MODELS = 2000; // Cap for computed field sorting
+
+// Helper to run queries in batches and aggregate results
+async function batchQuery<T>(
+  ids: string[],
+  queryFn: (batchIds: string[]) => Promise<{ data: T[] | null; error: any }>
+): Promise<T[]> {
+  const results: T[] = [];
+  for (let i = 0; i < ids.length; i += BATCH_SIZE) {
+    const batch = ids.slice(i, i + BATCH_SIZE);
+    const { data, error } = await queryFn(batch);
+    if (error) {
+      console.error("Batch query error:", error);
+      continue;
+    }
+    if (data) results.push(...data);
+  }
+  return results;
 }
 
 export async function GET(request: NextRequest) {
@@ -73,18 +102,18 @@ export async function GET(request: NextRequest) {
 
     let models: any[];
     let totalCount: number;
+    const adminClient = getAdminClient();
 
     if (isSortingByComputedField) {
-      // For computed field sorting: fetch ALL model IDs first, compute values, sort, then paginate
-      // Note: Supabase has a default limit of 1000 rows, so we need to explicitly set a higher limit
+      // For computed field sorting: fetch model IDs first with a reasonable limit
       let allModelsQuery = (supabase.from("models") as any)
         .select("id, user_id, created_at, claimed_at, last_active_at", { count: "exact" });
       allModelsQuery = applyFilters(allModelsQuery);
-      allModelsQuery = allModelsQuery.range(0, 9999); // Fetch up to 10000 models - apply range AFTER filters
+      allModelsQuery = allModelsQuery.range(0, MAX_COMPUTED_SORT_MODELS - 1);
 
       const { data: allModels, count, error: allError } = await allModelsQuery;
       if (allError) {
-        console.error("Error fetching all models for computed sort:", allError);
+        console.error("Error fetching models for computed sort:", allError);
         throw allError;
       }
 
@@ -96,119 +125,123 @@ export async function GET(request: NextRequest) {
       const allModelIds = allModels.map((m: any) => m.id);
       const allUserIds = allModels.map((m: any) => m.user_id).filter(Boolean);
 
-      console.log(`[Admin Models] Sorting by ${sortField}, fetched ${allModels.length} models, ${allUserIds.length} with user_ids`);
+      console.log(`[Admin Models] Sorting by ${sortField}, processing ${allModels.length} models (capped at ${MAX_COMPUTED_SORT_MODELS})`);
 
-      // Get computed data for ALL models
-      // Note: Increased range limits to handle large datasets (5000+ models with many assets each)
+      // Get actors for user_ids (small dataset, single query is fine)
+      const { data: allActors } = allUserIds.length > 0
+        ? await adminClient.from("actors").select("id, user_id").in("user_id", allUserIds)
+        : { data: [] };
+
+      const allActorToUser = new Map((allActors || []).map((a: any) => [a.user_id, a.id]));
+      const allActorIds = (allActors || []).map((a: any) => a.id);
+
+      // Use batched queries for large datasets
       const [
-        allActorsResult,
-        allImageCountsResult,
-        allVideoCountsResult,
-        allPpvCountsResult,
-        allLastPremiumResult,
-        allLastMediaResult,
+        imageData,
+        videoData,
+        ppvData,
+        lastPremiumData,
+        lastMediaData,
+        followData,
+        earningsData,
+        conversationData,
+        referralData,
       ] = await Promise.all([
-        allUserIds.length > 0
-          ? (supabase.from("actors") as any).select("id, user_id").in("user_id", allUserIds).range(0, 19999)
-          : Promise.resolve({ data: [], error: null }),
-        (supabase.from("media_assets") as any).select("model_id").in("model_id", allModelIds).eq("type", "photo").range(0, 199999),
-        (supabase.from("media_assets") as any).select("model_id").in("model_id", allModelIds).eq("type", "video").range(0, 199999),
-        (supabase.from("premium_content") as any).select("model_id").in("model_id", allModelIds).range(0, 199999),
-        (supabase.from("premium_content") as any).select("model_id, created_at").in("model_id", allModelIds).range(0, 199999),
-        (supabase.from("media_assets") as any).select("model_id, created_at").in("model_id", allModelIds).range(0, 199999),
+        // Image counts - batch query
+        batchQuery(allModelIds, async (batch) =>
+          adminClient.from("media_assets").select("model_id").in("model_id", batch).eq("type", "photo")
+        ),
+        // Video counts - batch query
+        batchQuery(allModelIds, async (batch) =>
+          adminClient.from("media_assets").select("model_id").in("model_id", batch).eq("type", "video")
+        ),
+        // PPV counts - batch query
+        batchQuery(allModelIds, async (batch) =>
+          adminClient.from("premium_content").select("model_id").in("model_id", batch)
+        ),
+        // Last premium content - batch query
+        batchQuery(allModelIds, async (batch) =>
+          adminClient.from("premium_content").select("model_id, created_at").in("model_id", batch)
+        ),
+        // Last media - batch query
+        batchQuery(allModelIds, async (batch) =>
+          adminClient.from("media_assets").select("model_id, created_at").in("model_id", batch)
+        ),
+        // Followers - batch query on actor_ids
+        allActorIds.length > 0
+          ? batchQuery(allActorIds, async (batch) =>
+              adminClient.from("follows").select("following_id").in("following_id", batch)
+            )
+          : Promise.resolve([]),
+        // Earnings - batch query on actor_ids (only get totals, not individual transactions)
+        allActorIds.length > 0
+          ? batchQuery(allActorIds, async (batch) =>
+              adminClient.from("coin_transactions")
+                .select("actor_id, amount")
+                .in("actor_id", batch)
+                .gt("amount", 0)
+                .neq("action", "purchase")
+            )
+          : Promise.resolve([]),
+        // Conversations - batch query on actor_ids
+        allActorIds.length > 0
+          ? batchQuery(allActorIds, async (batch) =>
+              adminClient.from("conversation_participants")
+                .select("actor_id, conversation_id")
+                .in("actor_id", batch)
+            )
+          : Promise.resolve([]),
+        // Referrals - batch query on model_ids
+        batchQuery(allModelIds, async (batch) =>
+          adminClient.from("fans").select("referred_by_model_id").in("referred_by_model_id", batch)
+        ),
       ]);
-
-      // Log any errors from the queries
-      if (allActorsResult.error) console.error("Actors query error:", allActorsResult.error);
-      if (allImageCountsResult.error) console.error("Image counts query error:", allImageCountsResult.error);
-      if (allVideoCountsResult.error) console.error("Video counts query error:", allVideoCountsResult.error);
-      if (allPpvCountsResult.error) console.error("PPV counts query error:", allPpvCountsResult.error);
-
-      console.log(`[Admin Models] Fetched ${(allImageCountsResult.data || []).length} image records, ${(allVideoCountsResult.data || []).length} video records`);
-
-      const allActors = allActorsResult.data || [];
-      const allActorToUser = new Map(allActors.map((a: any) => [a.user_id, a.id]));
-      const allActorIds = allActors.map((a: any) => a.id);
-
-      // Get actor-dependent data for sorting fields that need it
-      // Increased range limits to handle large datasets
-      const [
-        allFollowCountsResult,
-        allEarningsResult,
-        allConversationsResult,
-        allReferralsResult,
-      ] = await Promise.all([
-        allActorIds.length > 0
-          ? (supabase.from("follows") as any).select("following_id").in("following_id", allActorIds).range(0, 199999)
-          : { data: [] },
-        allActorIds.length > 0
-          ? (supabase.from("coin_transactions") as any)
-              .select("actor_id, amount")
-              .in("actor_id", allActorIds)
-              .gt("amount", 0)
-              .neq("action", "purchase")
-              .range(0, 499999)
-          : { data: [] },
-        allActorIds.length > 0
-          ? (supabase.from("conversation_participants") as any)
-              .select("actor_id, conversation_id")
-              .in("actor_id", allActorIds)
-              .range(0, 199999)
-          : { data: [] },
-        (supabase.from("fans") as any)
-          .select("referred_by_model_id")
-          .in("referred_by_model_id", allModelIds)
-          .range(0, 99999),
-      ]);
-
-      // Log referral data for debugging
-      console.log(`[Admin Models] Referrals query returned ${(allReferralsResult.data || []).length} records`);
 
       // Build maps for computed values
       const imageMap = new Map<string, number>();
-      (allImageCountsResult.data || []).forEach((c: any) => {
+      imageData.forEach((c: any) => {
         imageMap.set(c.model_id, (imageMap.get(c.model_id) || 0) + 1);
       });
 
       const videoMap = new Map<string, number>();
-      (allVideoCountsResult.data || []).forEach((c: any) => {
+      videoData.forEach((c: any) => {
         videoMap.set(c.model_id, (videoMap.get(c.model_id) || 0) + 1);
       });
 
       const ppvMap = new Map<string, number>();
-      (allPpvCountsResult.data || []).forEach((c: any) => {
+      ppvData.forEach((c: any) => {
         ppvMap.set(c.model_id, (ppvMap.get(c.model_id) || 0) + 1);
       });
 
       const lastPostMap = new Map<string, string>();
-      (allLastPremiumResult.data || []).forEach((p: any) => {
+      lastPremiumData.forEach((p: any) => {
         if (!lastPostMap.has(p.model_id) || new Date(p.created_at) > new Date(lastPostMap.get(p.model_id)!)) {
           lastPostMap.set(p.model_id, p.created_at);
         }
       });
-      (allLastMediaResult.data || []).forEach((m: any) => {
+      lastMediaData.forEach((m: any) => {
         if (!lastPostMap.has(m.model_id) || new Date(m.created_at) > new Date(lastPostMap.get(m.model_id)!)) {
           lastPostMap.set(m.model_id, m.created_at);
         }
       });
 
       const followerMap = new Map<string, number>();
-      (allFollowCountsResult.data || []).forEach((f: any) => {
+      followData.forEach((f: any) => {
         followerMap.set(f.following_id, (followerMap.get(f.following_id) || 0) + 1);
       });
 
       const earningsMap = new Map<string, number>();
-      (allEarningsResult.data || []).forEach((tx: any) => {
+      earningsData.forEach((tx: any) => {
         earningsMap.set(tx.actor_id, (earningsMap.get(tx.actor_id) || 0) + tx.amount);
       });
 
       const messageMap = new Map<string, number>();
-      (allConversationsResult.data || []).forEach((c: any) => {
+      conversationData.forEach((c: any) => {
         messageMap.set(c.actor_id, (messageMap.get(c.actor_id) || 0) + 1);
       });
 
       const referralMap = new Map<string, number>();
-      (allReferralsResult.data || []).forEach((f: any) => {
+      referralData.forEach((f: any) => {
         referralMap.set(f.referred_by_model_id, (referralMap.get(f.referred_by_model_id) || 0) + 1);
       });
 
@@ -250,11 +283,6 @@ export async function GET(request: NextRequest) {
 
         return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
       });
-
-      // Log top 5 results for debugging
-      const top5 = modelsWithComputedValues.slice(0, 5);
-      console.log(`[Admin Models] Top 5 after sorting by ${sortField} ${sortDirection}:`,
-        top5.map((m: any) => ({ id: m.id.slice(0, 8), [sortField]: m[sortField] })));
 
       // Paginate
       const from = (page - 1) * pageSize;
@@ -322,7 +350,7 @@ export async function GET(request: NextRequest) {
     const modelIds = models.map((m: any) => m.id);
     const userIds = models.map((m: any) => m.user_id).filter(Boolean);
 
-    // Run all aggregation queries in parallel
+    // Run all aggregation queries in parallel using admin client for consistent access
     const [
       actorsResult,
       premiumCountsResult,
@@ -333,21 +361,21 @@ export async function GET(request: NextRequest) {
     ] = await Promise.all([
       // Get actors for user_ids
       userIds.length > 0
-        ? (supabase.from("actors") as any).select("id, user_id").in("user_id", userIds)
+        ? adminClient.from("actors").select("id, user_id").in("user_id", userIds)
         : { data: [] },
       // Get premium content (PPV) counts
-      (supabase.from("premium_content") as any).select("model_id").in("model_id", modelIds),
+      adminClient.from("premium_content").select("model_id").in("model_id", modelIds),
       // Get image counts from media_assets (type = "photo" for images)
-      (supabase.from("media_assets") as any).select("model_id").in("model_id", modelIds).eq("type", "photo"),
+      adminClient.from("media_assets").select("model_id").in("model_id", modelIds).eq("type", "photo"),
       // Get video counts from media_assets
-      (supabase.from("media_assets") as any).select("model_id").in("model_id", modelIds).eq("type", "video"),
+      adminClient.from("media_assets").select("model_id").in("model_id", modelIds).eq("type", "video"),
       // Get last premium content dates
-      (supabase.from("premium_content") as any)
+      adminClient.from("premium_content")
         .select("model_id, created_at")
         .in("model_id", modelIds)
         .order("created_at", { ascending: false }),
       // Get last media asset dates
-      (supabase.from("media_assets") as any)
+      adminClient.from("media_assets")
         .select("model_id, created_at")
         .in("model_id", modelIds)
         .order("created_at", { ascending: false }),
@@ -366,11 +394,11 @@ export async function GET(request: NextRequest) {
     ] = await Promise.all([
       // Get follower counts
       actorIds.length > 0
-        ? (supabase.from("follows") as any).select("following_id").in("following_id", actorIds)
+        ? adminClient.from("follows").select("following_id").in("following_id", actorIds)
         : { data: [] },
       // Get earnings (exclude purchases - only count actual earnings from fans)
       actorIds.length > 0
-        ? (supabase.from("coin_transactions") as any)
+        ? adminClient.from("coin_transactions")
             .select("actor_id, amount")
             .in("actor_id", actorIds)
             .gt("amount", 0)
@@ -378,13 +406,13 @@ export async function GET(request: NextRequest) {
         : { data: [] },
       // Get conversation counts
       actorIds.length > 0
-        ? (supabase.from("conversation_participants") as any)
+        ? adminClient.from("conversation_participants")
             .select("actor_id, conversation_id")
             .in("actor_id", actorIds)
         : { data: [] },
       // Get referral counts (fans who signed up from viewing this model's profile)
       modelIds.length > 0
-        ? (supabase.from("fans") as any)
+        ? adminClient.from("fans")
             .select("referred_by_model_id")
             .in("referred_by_model_id", modelIds)
         : { data: [] },

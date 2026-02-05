@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import Image from "next/image";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -68,268 +67,41 @@ export default function AdminBoostPage() {
   const [totalSessions, setTotalSessions] = useState(0);
   const [activeModelCards, setActiveModelCards] = useState(0);
   const sessionsPageSize = 20;
-  const supabase = createClient();
 
   const fetchStats = useCallback(async () => {
     setLoading(true);
     try {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      // Calculate monthly date (30 days ago)
-      const monthlyDate = new Date();
-      monthlyDate.setDate(monthlyDate.getDate() - 30);
-
-      // Calculate date range based on chart period
-      const startDate = new Date();
-      if (chartPeriod === "7d") {
-        startDate.setDate(startDate.getDate() - 7);
-      } else if (chartPeriod === "30d") {
-        startDate.setDate(startDate.getDate() - 30);
-      } else {
-        startDate.setFullYear(2020); // Far back for "all"
-      }
-
-      // Fetch all stats in parallel
-      const [
-        // All-time counts
-        { count: totalSessionsCount },
-        { count: totalSignedIn },
-        { count: totalVotes },
-        { count: totalLikes },
-        { count: totalBoosts },
-        // Today counts
-        { count: todaySessions },
-        { count: todaySignedIn },
-        { count: todayVotes },
-        { count: todayLikes },
-        { count: todayBoosts },
-        // Monthly counts
-        { count: monthlySessions },
-        { count: monthlySignedIn },
-        { count: monthlyVotes },
-        { count: monthlyLikes },
-        { count: monthlyBoosts },
-        // Chart and other data
-        { data: sessionsData },
-        { data: votesData },
-        { data: topModelsData },
-        { data: recentSessionsData },
-        // Active model cards count
-        { count: activeCardsCount },
-      ] = await Promise.all([
-        // All-time counts
-        supabase.from("top_model_sessions").select("*", { count: "exact", head: true }),
-        supabase.from("top_model_sessions").select("*", { count: "exact", head: true }).not("user_id", "is", null),
-        supabase.from("top_model_votes").select("*", { count: "exact", head: true }),
-        supabase.from("top_model_votes").select("*", { count: "exact", head: true }).eq("vote_type", "like"),
-        supabase.from("top_model_votes").select("*", { count: "exact", head: true }).eq("is_boosted", true),
-        // Today counts
-        supabase.from("top_model_sessions").select("*", { count: "exact", head: true }).gte("created_at", today.toISOString()),
-        supabase.from("top_model_sessions").select("*", { count: "exact", head: true }).gte("created_at", today.toISOString()).not("user_id", "is", null),
-        supabase.from("top_model_votes").select("*", { count: "exact", head: true }).gte("created_at", today.toISOString()),
-        supabase.from("top_model_votes").select("*", { count: "exact", head: true }).gte("created_at", today.toISOString()).eq("vote_type", "like"),
-        supabase.from("top_model_votes").select("*", { count: "exact", head: true }).gte("created_at", today.toISOString()).eq("is_boosted", true),
-        // Monthly counts
-        supabase.from("top_model_sessions").select("*", { count: "exact", head: true }).gte("created_at", monthlyDate.toISOString()),
-        supabase.from("top_model_sessions").select("*", { count: "exact", head: true }).gte("created_at", monthlyDate.toISOString()).not("user_id", "is", null),
-        supabase.from("top_model_votes").select("*", { count: "exact", head: true }).gte("created_at", monthlyDate.toISOString()),
-        supabase.from("top_model_votes").select("*", { count: "exact", head: true }).gte("created_at", monthlyDate.toISOString()).eq("vote_type", "like"),
-        supabase.from("top_model_votes").select("*", { count: "exact", head: true }).gte("created_at", monthlyDate.toISOString()).eq("is_boosted", true),
-        // Sessions for chart
-        supabase.from("top_model_sessions").select("created_at").gte("created_at", startDate.toISOString()).order("created_at", { ascending: true }),
-        // Votes for chart
-        supabase.from("top_model_votes").select("created_at, is_boosted").gte("created_at", startDate.toISOString()).order("created_at", { ascending: true }),
-        // Top models from leaderboard (matches public /boost page)
-        (supabase as any).from("top_model_leaderboard").select(`
-          model_id,
-          total_points,
-          total_likes,
-          total_boosts,
-          models!inner (
-            id,
-            first_name,
-            username,
-            profile_photo_url
-          )
-        `).gt("total_points", 0).order("total_points", { ascending: false }).limit(10),
-        // Recent sessions with pagination
-        supabase.from("top_model_sessions").select("id, user_id, created_at, completed_at, models_swiped").order("created_at", { ascending: false }).range((sessionsPage - 1) * sessionsPageSize, sessionsPage * sessionsPageSize - 1),
-        // Count of active model cards (approved models with profile pictures)
-        supabase.from("models").select("*", { count: "exact", head: true }).eq("is_approved", true).not("profile_photo_url", "is", null),
-      ]);
-
-      setTotalSessions(totalSessionsCount || 0);
-      setActiveModelCards(activeCardsCount || 0);
-
-      // Process daily data - first aggregate the raw data
-      const dailyMap = new Map<string, { sessions: number; votes: number; boosts: number }>();
-
-      (sessionsData || []).forEach((s: any) => {
-        const date = new Date(s.created_at).toISOString().split("T")[0];
-        const existing = dailyMap.get(date) || { sessions: 0, votes: 0, boosts: 0 };
-        existing.sessions++;
-        dailyMap.set(date, existing);
+      // Use the optimized API endpoint instead of client-side queries
+      const params = new URLSearchParams({
+        chartPeriod,
+        sessionsPage: sessionsPage.toString(),
+        sessionsPageSize: sessionsPageSize.toString(),
       });
 
-      (votesData || []).forEach((v: any) => {
-        const date = new Date(v.created_at).toISOString().split("T")[0];
-        const existing = dailyMap.get(date) || { sessions: 0, votes: 0, boosts: 0 };
-        existing.votes++;
-        if (v.is_boosted) existing.boosts++;
-        dailyMap.set(date, existing);
-      });
-
-      // Fill in all days in the range (including days with zero activity)
-      const dailyData: { date: string; sessions: number; votes: number; boosts: number }[] = [];
-      const endDate = new Date();
-      endDate.setHours(0, 0, 0, 0);
-      const currentDate = new Date(startDate);
-      currentDate.setHours(0, 0, 0, 0);
-
-      while (currentDate <= endDate) {
-        const dateStr = currentDate.toISOString().split("T")[0];
-        const existing = dailyMap.get(dateStr);
-        dailyData.push({
-          date: dateStr,
-          sessions: existing?.sessions || 0,
-          votes: existing?.votes || 0,
-          boosts: existing?.boosts || 0,
-        });
-        currentDate.setDate(currentDate.getDate() + 1);
+      const response = await fetch(`/api/admin/boost-stats?${params}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch stats");
       }
 
-      // Process top models from leaderboard (already sorted by total_points)
-      const topModels: BoostStats["topModels"] = (topModelsData || []).map((entry: any) => ({
-        model_id: entry.model_id,
-        username: entry.models?.username || "Unknown",
-        first_name: entry.models?.first_name || null,
-        profile_photo_url: entry.models?.profile_photo_url || null,
-        points: entry.total_points || 0,
-        likes: entry.total_likes || 0,
-        boosts: entry.total_boosts || 0,
-      }));
+      const data = await response.json();
 
-      // Get user names for recent sessions (could be fans or models)
-      const userIds = (recentSessionsData || [])
-        .filter((s: any) => s.user_id)
-        .map((s: any) => s.user_id);
-
-      const fanNames = new Map<string, string>();
-      if (userIds.length > 0) {
-        // Get actor IDs from user IDs
-        const { data: actors } = await supabase
-          .from("actors")
-          .select("id, user_id, type")
-          .in("user_id", userIds);
-
-        const actorIds = (actors || []).map((a: any) => a.id);
-        const userToActor = new Map((actors || []).map((a: any) => [a.user_id, { id: a.id, type: a.type }]));
-
-        if (actorIds.length > 0) {
-          // Look up fans (fans.id = actors.id)
-          const { data: fans } = await supabase
-            .from("fans")
-            .select("id, display_name, username")
-            .in("id", actorIds);
-
-          const fanLookup = new Map((fans || []).map((f: any) => [f.id, f]));
-
-          // Also look up models (models.user_id = actors.user_id)
-          const { data: models } = await supabase
-            .from("models")
-            .select("user_id, first_name, username")
-            .in("user_id", userIds);
-
-          const modelLookup = new Map((models || []).map((m: any) => [m.user_id, m]));
-
-          // For each user, determine their display name
-          for (const [userId, actorInfo] of userToActor) {
-            const actorId = actorInfo.id;
-            const actorType = actorInfo.type;
-
-            // Check if they're a model first
-            const model = modelLookup.get(userId);
-            if (model || actorType === "model") {
-              const name = model?.username || model?.first_name;
-              if (name) {
-                fanNames.set(userId, name);
-                continue;
-              }
-            }
-
-            // Check if they're a fan
-            const fan = fanLookup.get(actorId);
-            if (fan || actorType === "fan") {
-              const name = fan?.username || fan?.display_name;
-              if (name) {
-                fanNames.set(userId, name);
-                continue;
-              }
-            }
-
-            // Fallback based on actor type
-            fanNames.set(userId, actorType === "model" ? "Model" : "Fan");
-          }
-        }
-      }
-
-      // Get vote counts for each session
-      const sessionIds = (recentSessionsData || []).map((s: any) => s.id);
-      const sessionVoteCounts = new Map<string, number>();
-      if (sessionIds.length > 0) {
-        const { data: voteCounts } = await supabase
-          .from("top_model_votes")
-          .select("session_id")
-          .in("session_id", sessionIds);
-
-        (voteCounts || []).forEach((v: any) => {
-          sessionVoteCounts.set(v.session_id, (sessionVoteCounts.get(v.session_id) || 0) + 1);
-        });
-      }
-
-      const recentSessions = (recentSessionsData || []).map((s: any) => ({
-        id: s.id,
-        user_id: s.user_id,
-        created_at: s.created_at,
-        completed_at: s.completed_at,
-        models_swiped: Array.isArray(s.models_swiped) ? s.models_swiped.length : 0,
-        total_votes: sessionVoteCounts.get(s.id) || 0,
-        fan_display_name: s.user_id ? fanNames.get(s.user_id) || "Signed In" : null,
-      }));
+      setTotalSessions(data.totalSessions || 0);
+      setActiveModelCards(data.activeModelCards || 0);
 
       setStats({
-        today: {
-          sessions: todaySessions || 0,
-          signedIn: todaySignedIn || 0,
-          votes: todayVotes || 0,
-          likes: todayLikes || 0,
-          boosts: todayBoosts || 0,
-        },
-        monthly: {
-          sessions: monthlySessions || 0,
-          signedIn: monthlySignedIn || 0,
-          votes: monthlyVotes || 0,
-          likes: monthlyLikes || 0,
-          boosts: monthlyBoosts || 0,
-        },
-        all: {
-          sessions: totalSessionsCount || 0,
-          signedIn: totalSignedIn || 0,
-          votes: totalVotes || 0,
-          likes: totalLikes || 0,
-          boosts: totalBoosts || 0,
-        },
-        dailyData,
-        topModels,
-        recentSessions,
+        today: data.today,
+        monthly: data.monthly,
+        all: data.all,
+        dailyData: data.dailyData,
+        topModels: data.topModels,
+        recentSessions: data.recentSessions,
       });
     } catch (error) {
       console.error("Failed to fetch boost stats:", error);
     } finally {
       setLoading(false);
     }
-  }, [chartPeriod, sessionsPage, sessionsPageSize, supabase]);
+  }, [chartPeriod, sessionsPage, sessionsPageSize]);
 
   useEffect(() => {
     fetchStats();
