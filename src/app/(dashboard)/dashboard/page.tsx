@@ -783,10 +783,9 @@ async function FanDashboard({ actorId }: { actorId: string }) {
                 </div>
                 <h3 className="font-semibold">Direct Chat</h3>
               </div>
-              <p className="text-sm text-muted-foreground mb-3">
+              <p className="text-sm text-muted-foreground">
                 Message models directly and get personal responses. Build real connections.
               </p>
-              <p className="text-xs text-blue-500 font-medium">Starting at 10 coins/message</p>
             </div>
 
             {/* Video Call Feature */}
@@ -799,10 +798,9 @@ async function FanDashboard({ actorId }: { actorId: string }) {
                 </div>
                 <h3 className="font-semibold">Video Calls</h3>
               </div>
-              <p className="text-sm text-muted-foreground mb-3">
+              <p className="text-sm text-muted-foreground">
                 Face-to-face conversations with models. Get styling tips, advice, or just hang out.
               </p>
-              <p className="text-xs text-violet-500 font-medium">5 coins/minute</p>
             </div>
 
             {/* Tips Feature */}
@@ -813,10 +811,9 @@ async function FanDashboard({ actorId }: { actorId: string }) {
                 </div>
                 <h3 className="font-semibold">Send Tips</h3>
               </div>
-              <p className="text-sm text-muted-foreground mb-3">
+              <p className="text-sm text-muted-foreground">
                 Show appreciation and support your favorite models. They&apos;ll love you for it!
               </p>
-              <p className="text-xs text-pink-500 font-medium">Any amount you choose</p>
             </div>
           </div>
 
