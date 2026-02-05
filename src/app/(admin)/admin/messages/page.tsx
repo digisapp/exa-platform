@@ -127,22 +127,37 @@ export default function AdminMessagesPage() {
       if (search) {
         const searchPattern = `%${search}%`;
 
-        // Search fans by display_name
+        // Search fans by display_name (returns user_ids)
         const { data: matchingFans } = await supabase
           .from("fans")
           .select("id")
           .ilike("display_name", searchPattern);
 
-        // Search models by first_name or username
+        // Search models by first_name or username (returns user_ids)
         const { data: matchingModels } = await supabase
           .from("models")
           .select("id")
           .or(`first_name.ilike.${searchPattern},username.ilike.${searchPattern}`);
 
-        const matchingActorIds = [
+        const matchingUserIds = [
           ...(matchingFans || []).map((f: any) => f.id),
           ...(matchingModels || []).map((m: any) => m.id),
         ];
+
+        if (matchingUserIds.length === 0) {
+          setConversations([]);
+          setTotalCount(0);
+          setLoading(false);
+          return;
+        }
+
+        // Look up actors by user_id to get actor_ids
+        const { data: matchingActors } = await supabase
+          .from("actors")
+          .select("id")
+          .in("user_id", matchingUserIds);
+
+        const matchingActorIds = (matchingActors || []).map((a: any) => a.id);
 
         if (matchingActorIds.length === 0) {
           setConversations([]);
