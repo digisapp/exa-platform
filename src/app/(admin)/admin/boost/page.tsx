@@ -149,7 +149,7 @@ export default function AdminBoostPage() {
         supabase.from("top_model_sessions").select("id, user_id, created_at, completed_at, models_shown, total_votes").order("created_at", { ascending: false }).limit(20),
       ]);
 
-      // Process daily data
+      // Process daily data - first aggregate the raw data
       const dailyMap = new Map<string, { sessions: number; votes: number; boosts: number }>();
 
       (sessionsData || []).forEach((s: any) => {
@@ -167,9 +167,24 @@ export default function AdminBoostPage() {
         dailyMap.set(date, existing);
       });
 
-      const dailyData = Array.from(dailyMap.entries())
-        .map(([date, data]) => ({ date, ...data }))
-        .sort((a, b) => a.date.localeCompare(b.date));
+      // Fill in all days in the range (including days with zero activity)
+      const dailyData: { date: string; sessions: number; votes: number; boosts: number }[] = [];
+      const endDate = new Date();
+      endDate.setHours(0, 0, 0, 0);
+      const currentDate = new Date(startDate);
+      currentDate.setHours(0, 0, 0, 0);
+
+      while (currentDate <= endDate) {
+        const dateStr = currentDate.toISOString().split("T")[0];
+        const existing = dailyMap.get(dateStr);
+        dailyData.push({
+          date: dateStr,
+          sessions: existing?.sessions || 0,
+          votes: existing?.votes || 0,
+          boosts: existing?.boosts || 0,
+        });
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
 
       // Process top models from leaderboard (already sorted by total_points)
       const topModels: BoostStats["topModels"] = (topModelsData || []).map((entry: any) => ({

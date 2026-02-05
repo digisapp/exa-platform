@@ -55,8 +55,8 @@ export function MessageReactions({
           );
           setLocalReactions(reactionsArray);
         }
-      } catch {
-        console.error("Failed to fetch reactions:", error);
+      } catch (err) {
+        console.error("Failed to fetch reactions:", err);
       }
     }
 

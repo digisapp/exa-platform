@@ -48,9 +48,9 @@ export function PortfolioGallery({
 
       onDelete(photo.id);
       toast.success("Photo deleted");
-    } catch {
+    } catch (err) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to delete photo"
+        err instanceof Error ? err.message : "Failed to delete photo"
       );
     } finally {
       setDeletingId(null);

@@ -262,9 +262,9 @@ export function MessageInput({
 
       const typeLabel = type === "video" ? "Video" : type === "audio" ? "Voice message" : "Photo";
       toast.success(`${typeLabel} attached`);
-    } catch {
+    } catch (err) {
       const typeLabel = type === "video" ? "video" : type === "audio" ? "voice message" : "photo";
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
 
       // Provide user-friendly error messages
       if (errorMessage.includes("too large") || errorMessage.includes("413")) {

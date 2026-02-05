@@ -182,8 +182,8 @@ export default function ProfilePage() {
 
       setModel((prev) => prev ? { ...prev, profile_photo_url: data.url } : prev);
       toast.success("Profile picture updated!");
-    } catch {
-      toast.error(error instanceof Error ? error.message : "Upload failed");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setUploadingAvatar(false);
       if (avatarInputRef.current) avatarInputRef.current.value = "";
