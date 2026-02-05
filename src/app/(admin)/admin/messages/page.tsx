@@ -127,37 +127,33 @@ export default function AdminMessagesPage() {
       if (search) {
         const searchPattern = `%${search}%`;
 
-        // Search fans by display_name (returns user_ids)
+        // Search fans by display_name - fans.id IS the actor_id directly
         const { data: matchingFans } = await supabase
           .from("fans")
           .select("id")
           .ilike("display_name", searchPattern);
 
-        // Search models by first_name or username (returns user_ids)
+        // Search models by first_name or username - need user_id to find actor
         const { data: matchingModels } = await supabase
           .from("models")
-          .select("id")
+          .select("user_id")
           .or(`first_name.ilike.${searchPattern},username.ilike.${searchPattern}`);
 
-        const matchingUserIds = [
-          ...(matchingFans || []).map((f: any) => f.id),
-          ...(matchingModels || []).map((m: any) => m.id),
-        ];
+        // For fans, we already have actor_ids directly (fans.id = actors.id)
+        const fanActorIds = (matchingFans || []).map((f: any) => f.id);
 
-        if (matchingUserIds.length === 0) {
-          setConversations([]);
-          setTotalCount(0);
-          setLoading(false);
-          return;
+        // For models, look up actors by user_id to get actor_ids
+        const modelUserIds = (matchingModels || []).map((m: any) => m.user_id).filter(Boolean);
+        let modelActorIds: string[] = [];
+        if (modelUserIds.length > 0) {
+          const { data: modelActors } = await supabase
+            .from("actors")
+            .select("id")
+            .in("user_id", modelUserIds);
+          modelActorIds = (modelActors || []).map((a: any) => a.id);
         }
 
-        // Look up actors by user_id to get actor_ids
-        const { data: matchingActors } = await supabase
-          .from("actors")
-          .select("id")
-          .in("user_id", matchingUserIds);
-
-        const matchingActorIds = (matchingActors || []).map((a: any) => a.id);
+        const matchingActorIds = [...fanActorIds, ...modelActorIds];
 
         if (matchingActorIds.length === 0) {
           setConversations([]);
@@ -223,30 +219,31 @@ export default function AdminMessagesPage() {
       });
 
       // Look up actors to get user_id and type
+      const actorIdArray = Array.from(actorIds);
       const { data: actors } = await supabase
         .from("actors")
         .select("id, user_id, type")
-        .in("id", Array.from(actorIds));
+        .in("id", actorIdArray);
 
       // Create actor lookup map (actor_id -> { user_id, type })
       const actorLookup = new Map((actors || []).map((a: any) => [a.id, a]));
       const userIds = [...new Set((actors || []).map((a: any) => a.user_id).filter(Boolean))];
 
-      // Get fan details by user_id
+      // Get fan details - fans.id = actors.id (query by actor_id, not user_id!)
       const { data: fans } = await supabase
         .from("fans")
         .select("id, display_name, avatar_url")
-        .in("id", userIds);
+        .in("id", actorIdArray);
 
-      // Get model details by user_id
+      // Get model details - models.user_id = actors.user_id (query by user_id)
       const { data: models } = await supabase
         .from("models")
-        .select("id, first_name, last_name, username, profile_photo_url")
-        .in("id", userIds);
+        .select("user_id, first_name, last_name, username, profile_photo_url")
+        .in("user_id", userIds);
 
-      // Create lookup maps by user_id
+      // Create lookup maps - fans by actor_id, models by user_id
       const fanMap = new Map((fans || []).map((f: any) => [f.id, { ...f, type: "fan" as const }]));
-      const modelMap = new Map((models || []).map((m: any) => [m.id, { ...m, type: "model" as const }]));
+      const modelMap = new Map((models || []).map((m: any) => [m.user_id, { ...m, type: "model" as const }]));
 
       // Get last message for each conversation
       const convoIds = (convos || []).map((c: any) => c.id);
@@ -278,13 +275,14 @@ export default function AdminMessagesPage() {
       // Build conversations with full details
       const enrichedConversations: Conversation[] = (convos || []).map((c: any) => {
         const participants: Participant[] = (c.conversation_participants || []).map((p: any) => {
-          // Get actor info to find user_id
+          // Get actor info to find user_id and type
           const actor = actorLookup.get(p.actor_id);
           const userId = actor?.user_id;
           const actorType = actor?.type;
 
-          // Look up by user_id
-          const fan = userId ? fanMap.get(userId) : null;
+          // For fans: look up by actor_id (fans.id = actors.id)
+          // For models: look up by user_id (models.user_id = actors.user_id)
+          const fan = fanMap.get(p.actor_id);
           const model = userId ? modelMap.get(userId) : null;
 
           if (model || actorType === "model") {
@@ -362,25 +360,29 @@ export default function AdminMessagesPage() {
       const actorLookup = new Map((senderActors || []).map((a: any) => [a.id, a]));
       const userIds = [...new Set((senderActors || []).map((a: any) => a.user_id).filter(Boolean))];
 
+      // Get fan details - fans.id = actors.id (query by actor_id)
       const { data: fans } = await supabase
         .from("fans")
         .select("id, display_name, avatar_url")
-        .in("id", userIds);
+        .in("id", senderIds);
 
+      // Get model details - models.user_id = actors.user_id (query by user_id)
       const { data: models } = await supabase
         .from("models")
-        .select("id, first_name, username, profile_photo_url")
-        .in("id", userIds);
+        .select("user_id, first_name, username, profile_photo_url")
+        .in("user_id", userIds);
 
+      // Create lookup maps - fans by actor_id, models by user_id
       const fanMap = new Map((fans || []).map((f: any) => [f.id, f]));
-      const modelMap = new Map((models || []).map((m: any) => [m.id, m]));
+      const modelMap = new Map((models || []).map((m: any) => [m.user_id, m]));
 
       const enrichedMessages: Message[] = (msgs || []).map((m: any) => {
         const actor = actorLookup.get(m.sender_id);
         const userId = actor?.user_id;
         const actorType = actor?.type;
 
-        const fan = userId ? fanMap.get(userId) : null;
+        // For fans: look up by sender_id (actor_id), for models: look up by user_id
+        const fan = fanMap.get(m.sender_id);
         const model = userId ? modelMap.get(userId) : null;
 
         let senderName = "Unknown";

@@ -216,14 +216,16 @@ export default function AdminBoostPage() {
         if (actorIds.length > 0) {
           const { data: fans } = await supabase
             .from("fans")
-            .select("id, display_name")
+            .select("id, display_name, email, username")
             .in("id", actorIds);
 
           (fans || []).forEach((f: any) => {
             // Find the user_id for this actor
             for (const [userId, actorId] of userToActor) {
               if (actorId === f.id) {
-                fanNames.set(userId, f.display_name || "Fan");
+                // Use username first, then display_name as fallback
+                const name = f.username || f.display_name;
+                fanNames.set(userId, name || "Fan");
                 break;
               }
             }
