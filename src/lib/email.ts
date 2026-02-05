@@ -2994,3 +2994,470 @@ export async function sendNewGigAnnouncementEmail({
     return { success: false, error };
   }
 }
+
+// ============================================
+// CONTENT PROGRAM EMAILS
+// ============================================
+
+export async function sendContentProgramOutreachEmail({
+  to,
+  brandName,
+  contactName,
+}: {
+  to: string;
+  brandName: string;
+  contactName: string;
+}) {
+  try {
+    if (await isEmailUnsubscribed(to, "marketing")) {
+      console.log(`Email ${to} is unsubscribed, skipping`);
+      return { success: true, skipped: true };
+    }
+
+    const resend = getResendClient();
+    const unsubscribeToken = await getUnsubscribeToken(to);
+    const applyUrl = `${BASE_URL}/swimwear-content/apply`;
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      subject: `${brandName} - Exclusive Swimwear Content Program Invitation`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header with gradient -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #06b6d4 0%, #ec4899 50%, #8b5cf6 100%); padding: 40px 30px; text-align: center;">
+              <h1 style="margin: 0; color: white; font-size: 28px; font-weight: bold;">
+                Swimwear Content Program
+              </h1>
+              <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
+                Miami Swim Week 2026
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
+                Hey ${contactName},
+              </p>
+              <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                EXA Models is launching an exclusive content program for swimwear brands like ${brandName}.
+              </p>
+              <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                Get months of professional content and exposure leading up to Miami Swim Week.
+              </p>
+
+              <!-- Benefits Box -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px; background-color: #262626; border-radius: 12px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 15px; color: #ffffff; font-weight: 600;">Monthly Deliverables:</p>
+                    <p style="margin: 0 0 10px; color: #a1a1aa;">🎬 10 professional video clips</p>
+                    <p style="margin: 0 0 10px; color: #a1a1aa;">📸 50 high-quality photos</p>
+                    <p style="margin: 0 0 10px; color: #a1a1aa;">🏖️ Studio + beach locations</p>
+                    <p style="margin: 0 0 10px; color: #a1a1aa;">📱 Instagram story exposure</p>
+                    <p style="margin: 0; color: #10b981; font-weight: 600;">$500/month with 3-month commitment</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Swim Week Credit -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px; background-color: #052e16; border-radius: 12px; border: 1px solid #10b981;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 10px; color: #4ade80; font-weight: 600;">🌴 Miami Swim Week Bonus</p>
+                    <p style="margin: 0; color: #86efac; font-size: 14px;">
+                      Every $500 payment credits toward our $3,000 Miami Swim Week package. Build content AND reduce your Swim Week investment!
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="${applyUrl}" style="display: inline-block; background: linear-gradient(135deg, #06b6d4 0%, #ec4899 100%); color: white; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                      Apply Now
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 30px 0 0; color: #71717a; font-size: 14px; text-align: center;">
+                Limited spots available for the 2026 program
+              </p>
+            </td>
+          </tr>
+
+          ${generateEmailFooter(unsubscribeToken)}
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      console.error("Resend error:", error);
+      return { success: false, error };
+    }
+    return { success: true, data };
+  } catch (error) {
+    console.error("Email send error:", error);
+    return { success: false, error };
+  }
+}
+
+export async function sendContentProgramApplicationEmail({
+  to,
+  brandName,
+  contactName,
+}: {
+  to: string;
+  brandName: string;
+  contactName: string;
+}) {
+  try {
+    const resend = getResendClient();
+    const unsubscribeToken = await getUnsubscribeToken(to);
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      subject: `Application Received - ${brandName}`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #06b6d4 0%, #ec4899 100%); padding: 40px 30px; text-align: center;">
+              <p style="margin: 0 0 10px; font-size: 48px;">📬</p>
+              <h1 style="margin: 0; color: white; font-size: 28px; font-weight: bold;">
+                Application Received!
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
+                Hey ${contactName},
+              </p>
+              <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                Thank you for applying to the EXA Models Swimwear Content Program with <strong style="color: #ffffff;">${brandName}</strong>.
+              </p>
+              <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                Our team will review your application and get back to you within 48 hours.
+              </p>
+
+              <!-- What's Next -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px; background-color: #262626; border-radius: 12px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 15px; color: #ffffff; font-weight: 600;">What happens next?</p>
+                    <p style="margin: 0 0 10px; color: #a1a1aa;">1️⃣ We review your brand and collection details</p>
+                    <p style="margin: 0 0 10px; color: #a1a1aa;">2️⃣ A team member will reach out to discuss</p>
+                    <p style="margin: 0; color: #a1a1aa;">3️⃣ We'll coordinate shipping and scheduling</p>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0; color: #71717a; font-size: 14px; text-align: center;">
+                Questions? Reply to this email anytime.
+              </p>
+            </td>
+          </tr>
+
+          ${generateEmailFooter(unsubscribeToken)}
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      console.error("Resend error:", error);
+      return { success: false, error };
+    }
+    return { success: true, data };
+  } catch (error) {
+    console.error("Email send error:", error);
+    return { success: false, error };
+  }
+}
+
+export async function sendContentProgramApprovedEmail({
+  to,
+  brandName,
+  contactName,
+}: {
+  to: string;
+  brandName: string;
+  contactName: string;
+}) {
+  try {
+    const resend = getResendClient();
+    const unsubscribeToken = await getUnsubscribeToken(to);
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      subject: `Welcome to the Program - ${brandName} Approved!`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 40px 30px; text-align: center;">
+              <p style="margin: 0 0 10px; font-size: 48px;">🎉</p>
+              <h1 style="margin: 0; color: white; font-size: 28px; font-weight: bold;">
+                You're In!
+              </h1>
+              <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
+                Welcome to the Content Program
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
+                Hey ${contactName},
+              </p>
+              <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                Great news! <strong style="color: #ffffff;">${brandName}</strong> has been approved for the EXA Models Swimwear Content Program.
+              </p>
+              <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                We're excited to create amazing content for your collection leading up to Miami Swim Week 2026!
+              </p>
+
+              <!-- Next Steps -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px; background-color: #262626; border-radius: 12px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 15px; color: #ffffff; font-weight: 600;">Next Steps:</p>
+                    <p style="margin: 0 0 10px; color: #a1a1aa;">📦 Ship your collection to our Miami studio</p>
+                    <p style="margin: 0 0 10px; color: #a1a1aa;">💳 Complete your first month's payment ($500)</p>
+                    <p style="margin: 0 0 10px; color: #a1a1aa;">📅 We'll schedule your first shoot</p>
+                    <p style="margin: 0; color: #a1a1aa;">🎬 Receive your content within 2 weeks</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Shipping Address -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px; background-color: #1e3a5f; border-radius: 12px; border: 1px solid #3b82f6;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 10px; color: #60a5fa; font-weight: 600;">📍 Shipping Address</p>
+                    <p style="margin: 0; color: #93c5fd; font-size: 14px;">
+                      A team member will reach out with shipping details shortly.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0; color: #71717a; font-size: 14px; text-align: center;">
+                Looking forward to creating together!
+              </p>
+            </td>
+          </tr>
+
+          ${generateEmailFooter(unsubscribeToken)}
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      console.error("Resend error:", error);
+      return { success: false, error };
+    }
+    return { success: true, data };
+  } catch (error) {
+    console.error("Email send error:", error);
+    return { success: false, error };
+  }
+}
+
+export async function sendContentProgramPaymentReminderEmail({
+  to,
+  brandName,
+  contactName,
+  paymentMonth,
+  amount,
+  dueDate,
+  swimWeekCredits,
+}: {
+  to: string;
+  brandName: string;
+  contactName: string;
+  paymentMonth: number;
+  amount: number;
+  dueDate: string;
+  swimWeekCredits: number;
+}) {
+  try {
+    const resend = getResendClient();
+    const unsubscribeToken = await getUnsubscribeToken(to);
+    const remainingBalance = 3000 - swimWeekCredits;
+    const progressPercent = Math.round((swimWeekCredits / 3000) * 100);
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      subject: `Month ${paymentMonth} Payment Due - ${brandName}`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 40px 30px; text-align: center;">
+              <p style="margin: 0 0 10px; font-size: 48px;">📅</p>
+              <h1 style="margin: 0; color: white; font-size: 28px; font-weight: bold;">
+                Month ${paymentMonth} Payment Due
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
+                Hey ${contactName},
+              </p>
+              <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                Your Month ${paymentMonth} payment for <strong style="color: #ffffff;">${brandName}</strong> is due.
+              </p>
+
+              <!-- Payment Details -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px; background-color: #262626; border-radius: 12px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="color: #a1a1aa; padding: 8px 0;">Amount Due:</td>
+                        <td style="color: #ffffff; font-weight: bold; text-align: right; padding: 8px 0;">$${amount}</td>
+                      </tr>
+                      <tr>
+                        <td style="color: #a1a1aa; padding: 8px 0;">Due Date:</td>
+                        <td style="color: #ffffff; text-align: right; padding: 8px 0;">${dueDate}</td>
+                      </tr>
+                      <tr>
+                        <td style="color: #a1a1aa; padding: 8px 0;">Payment Month:</td>
+                        <td style="color: #ffffff; text-align: right; padding: 8px 0;">${paymentMonth} of 3</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Swim Week Progress -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px; background-color: #052e16; border-radius: 12px; border: 1px solid #10b981;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 15px; color: #4ade80; font-weight: 600;">🌴 Swim Week Progress</p>
+
+                    <!-- Progress Bar -->
+                    <div style="background-color: #1a1a1a; border-radius: 8px; height: 24px; margin-bottom: 15px; overflow: hidden;">
+                      <div style="background: linear-gradient(90deg, #06b6d4 0%, #ec4899 100%); height: 100%; width: ${progressPercent}%; border-radius: 8px;"></div>
+                    </div>
+
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="color: #86efac; font-size: 14px;">Total Credited:</td>
+                        <td style="color: #4ade80; font-weight: bold; text-align: right; font-size: 14px;">$${swimWeekCredits}</td>
+                      </tr>
+                      <tr>
+                        <td style="color: #86efac; font-size: 14px;">Remaining Balance:</td>
+                        <td style="color: #ffffff; text-align: right; font-size: 14px;">$${remainingBalance}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0; color: #71717a; font-size: 14px; text-align: center;">
+                Reply to this email for payment instructions.
+              </p>
+            </td>
+          </tr>
+
+          ${generateEmailFooter(unsubscribeToken)}
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      console.error("Resend error:", error);
+      return { success: false, error };
+    }
+    return { success: true, data };
+  } catch (error) {
+    console.error("Email send error:", error);
+    return { success: false, error };
+  }
+}
