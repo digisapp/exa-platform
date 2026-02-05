@@ -312,14 +312,13 @@ export default function SwimwearContentPage() {
                   Each $500 monthly payment is credited toward your Swim Week balance.
                 </p>
                 <p className="text-muted-foreground">
-                  Subscribe for 6 months and you&apos;ll have <span className="text-cyan-400 font-bold">$3,000</span> in
-                  credits — enough to cover your entire Swim Week package, plus a complete content library!
+                  Subscribe now and start building credits toward your Swim Week package while getting monthly content for your brand!
                 </p>
               </div>
               <div className="flex-shrink-0">
                 <div className="text-center p-6 bg-background/50 rounded-xl">
-                  <p className="text-sm text-muted-foreground mb-2">Example: 6 months</p>
-                  <p className="text-3xl font-bold text-cyan-400">$3,000</p>
+                  <p className="text-sm text-muted-foreground mb-2">Each month</p>
+                  <p className="text-3xl font-bold text-cyan-400">$500</p>
                   <p className="text-sm text-muted-foreground">credited to Swim Week</p>
                 </div>
               </div>
