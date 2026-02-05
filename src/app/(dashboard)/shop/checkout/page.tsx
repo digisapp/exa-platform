@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -63,11 +63,7 @@ export default function CheckoutPage() {
   const [state, setState] = useState("");
   const [postalCode, setPostalCode] = useState("");
 
-  useEffect(() => {
-    fetchCart();
-  }, []);
-
-  const fetchCart = async () => {
+  const fetchCart = useCallback(async () => {
     try {
       const sessionId = localStorage.getItem("shop_session_id");
       const response = await fetch("/api/shop/cart", {
@@ -85,13 +81,17 @@ export default function CheckoutPage() {
           subtotal: data.subtotal,
         });
       }
-    } catch (error) {
-      console.error("Failed to fetch cart:", error);
+    } catch (err) {
+      console.error("Failed to fetch cart:", err);
       router.push("/shop/cart");
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    fetchCart();
+  }, [fetchCart]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

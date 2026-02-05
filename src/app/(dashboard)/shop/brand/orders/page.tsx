@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -84,11 +84,7 @@ export default function BrandOrdersPage() {
   const [trackingCarrier, setTrackingCarrier] = useState("USPS");
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    fetchOrders();
-  }, [statusFilter]);
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       const params = new URLSearchParams();
       if (statusFilter) params.set("status", statusFilter);
@@ -99,12 +95,16 @@ export default function BrandOrdersPage() {
         setOrders(data.orders || []);
         setStats(data.stats);
       }
-    } catch (error) {
-      console.error("Failed to fetch orders:", error);
+    } catch (err) {
+      console.error("Failed to fetch orders:", err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [statusFilter]);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
   const updateTracking = async () => {
     if (!selectedItem || !trackingNumber) {

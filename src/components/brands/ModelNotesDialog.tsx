@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { StickyNote, X, Plus, Loader2 } from "lucide-react";
 import {
@@ -51,15 +51,7 @@ export function ModelNotesDialog({
   const [newTag, setNewTag] = useState("");
   const [existingTags, setExistingTags] = useState<string[]>([]);
 
-  // Fetch notes when dialog opens
-  useEffect(() => {
-    if (open) {
-      fetchNotes();
-      fetchExistingTags();
-    }
-  }, [open, modelId]);
-
-  const fetchNotes = async () => {
+  const fetchNotes = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch(`/api/brands/model-notes/${modelId}`);
@@ -67,24 +59,32 @@ export function ModelNotesDialog({
       const data = await res.json();
       setNotes(data.notes || "");
       setTags(data.tags || []);
-    } catch (error) {
-      console.error("Error fetching notes:", error);
+    } catch (err) {
+      console.error("Error fetching notes:", err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [modelId]);
 
-  const fetchExistingTags = async () => {
+  const fetchExistingTags = useCallback(async () => {
     try {
       const res = await fetch("/api/brands/tags");
       if (res.ok) {
         const data = await res.json();
         setExistingTags(data.tags?.map((t: { tag: string }) => t.tag) || []);
       }
-    } catch (error) {
-      console.error("Error fetching tags:", error);
+    } catch (err) {
+      console.error("Error fetching tags:", err);
     }
-  };
+  }, []);
+
+  // Fetch notes when dialog opens
+  useEffect(() => {
+    if (open) {
+      fetchNotes();
+      fetchExistingTags();
+    }
+  }, [open, fetchNotes, fetchExistingTags]);
 
   const handleSave = async () => {
     setSaving(true);

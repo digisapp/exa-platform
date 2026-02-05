@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -74,11 +74,7 @@ export function CampaignOffers({ campaignId }: CampaignOffersProps) {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [expandedOffer, setExpandedOffer] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchOffers();
-  }, [campaignId]);
-
-  async function fetchOffers() {
+  const fetchOffers = useCallback(async () => {
     try {
       const res = await fetch(`/api/offers?campaignId=${campaignId}`);
       if (!res.ok) throw new Error("Failed to fetch offers");
@@ -88,12 +84,16 @@ export function CampaignOffers({ campaignId }: CampaignOffersProps) {
       if (data.offers?.length > 0) {
         setExpandedOffer(data.offers[0].id);
       }
-    } catch (error) {
-      console.error("Error fetching offers:", error);
+    } catch (err) {
+      console.error("Error fetching offers:", err);
     } finally {
       setLoading(false);
     }
-  }
+  }, [campaignId]);
+
+  useEffect(() => {
+    fetchOffers();
+  }, [fetchOffers]);
 
   async function handleCheckin(offerId: string, responseId: string, action: "checkin" | "noshow") {
     try {
@@ -105,7 +105,7 @@ export function CampaignOffers({ campaignId }: CampaignOffersProps) {
       if (!res.ok) throw new Error("Failed to update");
       toast.success(action === "checkin" ? "Marked as checked in!" : "Marked as no-show");
       fetchOffers();
-    } catch (error) {
+    } catch {
       toast.error("Failed to update check-in status");
     }
   }
@@ -122,7 +122,7 @@ export function CampaignOffers({ campaignId }: CampaignOffersProps) {
       if (!res.ok) throw new Error("Failed to update");
       toast.success(status === "confirmed" ? "Model confirmed!" : "Status updated");
       fetchOffers();
-    } catch (error) {
+    } catch {
       toast.error("Failed to update status");
     }
   }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -68,11 +68,7 @@ export default function CartPage() {
 
   const cancelled = searchParams.get("cancelled") === "true";
 
-  useEffect(() => {
-    fetchCart();
-  }, []);
-
-  const fetchCart = async () => {
+  const fetchCart = useCallback(async () => {
     try {
       const sessionId = localStorage.getItem("shop_session_id");
       const response = await fetch("/api/shop/cart", {
@@ -89,12 +85,16 @@ export default function CartPage() {
           itemCount: data.itemCount || 0,
         });
       }
-    } catch (error) {
-      console.error("Failed to fetch cart:", error);
+    } catch (err) {
+      console.error("Failed to fetch cart:", err);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchCart();
+  }, [fetchCart]);
 
   const updateQuantity = async (itemId: string, newQuantity: number) => {
     setUpdating(itemId);

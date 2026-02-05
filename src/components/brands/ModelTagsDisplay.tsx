@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { StickyNote } from "lucide-react";
 import { ModelNotesDialog } from "./ModelNotesDialog";
 import { cn } from "@/lib/utils";
@@ -15,11 +15,7 @@ export function ModelTagsDisplay({ modelId, modelName }: ModelTagsDisplayProps) 
   const [tags, setTags] = useState<string[]>([]);
   const [loaded, setLoaded] = useState(false);
 
-  useEffect(() => {
-    fetchNotes();
-  }, [modelId]);
-
-  const fetchNotes = async () => {
+  const fetchNotes = useCallback(async () => {
     try {
       const res = await fetch(`/api/brands/model-notes/${modelId}`);
       if (res.ok) {
@@ -27,12 +23,16 @@ export function ModelTagsDisplay({ modelId, modelName }: ModelTagsDisplayProps) 
         setNotes(data.notes || "");
         setTags(data.tags || []);
       }
-    } catch (error) {
-      console.error("Error fetching notes:", error);
+    } catch (err) {
+      console.error("Error fetching notes:", err);
     } finally {
       setLoaded(true);
     }
-  };
+  }, [modelId]);
+
+  useEffect(() => {
+    fetchNotes();
+  }, [fetchNotes]);
 
   const hasNotes = notes.length > 0 || tags.length > 0;
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -83,11 +83,7 @@ export default function AdminShopOrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
 
-  useEffect(() => {
-    fetchOrders();
-  }, [statusFilter, paymentFilter]);
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     const supabase = createClient();
     setLoading(true);
 
@@ -116,13 +112,17 @@ export default function AdminShopOrdersPage() {
 
       if (error) throw error;
       setOrders(data || []);
-    } catch (error) {
-      console.error("Failed to fetch orders:", error);
+    } catch (err) {
+      console.error("Failed to fetch orders:", err);
       toast.error("Failed to load orders");
     } finally {
       setLoading(false);
     }
-  };
+  }, [statusFilter, paymentFilter]);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
   const updateOrderStatus = async (orderId: string, status: string) => {
     const supabase = createClient();
@@ -136,7 +136,7 @@ export default function AdminShopOrdersPage() {
       if (error) throw error;
       toast.success("Order status updated");
       fetchOrders();
-    } catch (error) {
+    } catch {
       toast.error("Failed to update order status");
     }
   };
@@ -159,7 +159,7 @@ export default function AdminShopOrdersPage() {
       if (error) throw error;
       toast.success("Item updated");
       fetchOrders();
-    } catch (error) {
+    } catch {
       toast.error("Failed to update item");
     }
   };

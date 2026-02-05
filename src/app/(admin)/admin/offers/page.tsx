@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -114,20 +114,7 @@ export default function AdminOffersPage() {
     recurrence_end_date: "",
   });
 
-  useEffect(() => {
-    loadOffers();
-    loadBrands();
-  }, []);
-
-  useEffect(() => {
-    if (selectedBrandId) {
-      loadCampaigns(selectedBrandId);
-    } else {
-      setCampaigns([]);
-    }
-  }, [selectedBrandId]);
-
-  async function loadOffers() {
+  const loadOffers = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch("/api/offers");
@@ -135,23 +122,23 @@ export default function AdminOffersPage() {
       if (data.offers) {
         setOffers(data.offers);
       }
-    } catch (error) {
-      console.error("Error loading offers:", error);
+    } catch (err) {
+      console.error("Error loading offers:", err);
       toast.error("Failed to load offers");
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
-  async function loadBrands() {
+  const loadBrands = useCallback(async () => {
     const { data } = await (supabase
       .from("brands") as any)
       .select("id, company_name, logo_url")
       .order("company_name");
     setBrands(data || []);
-  }
+  }, [supabase]);
 
-  async function loadCampaigns(brandId: string) {
+  const loadCampaigns = useCallback(async (brandId: string) => {
     // Get the actor id for this brand
     const { data: actor } = await (supabase
       .from("actors") as any)
@@ -181,7 +168,20 @@ export default function AdminOffersPage() {
     }));
 
     setCampaigns(campaignsWithCount);
-  }
+  }, [supabase]);
+
+  useEffect(() => {
+    loadOffers();
+    loadBrands();
+  }, [loadOffers, loadBrands]);
+
+  useEffect(() => {
+    if (selectedBrandId) {
+      loadCampaigns(selectedBrandId);
+    } else {
+      setCampaigns([]);
+    }
+  }, [selectedBrandId, loadCampaigns]);
 
   function resetForm() {
     setFormData({

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -85,27 +85,27 @@ export default function BrandOffersPage() {
   const [selectedOffer, setSelectedOffer] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "open" | "closed">("all");
 
-  useEffect(() => {
-    fetchOffers();
-  }, []);
-
-  async function fetchOffers() {
+  const fetchOffers = useCallback(async () => {
     try {
       const res = await fetch("/api/offers");
       if (!res.ok) throw new Error("Failed to fetch offers");
       const data = await res.json();
       setOffers(data.offers || []);
       // Auto-select first offer if exists
-      if (data.offers?.length > 0 && !selectedOffer) {
-        setSelectedOffer(data.offers[0].id);
+      if (data.offers?.length > 0) {
+        setSelectedOffer((prev) => prev ?? data.offers[0].id);
       }
-    } catch (error) {
-      console.error("Error fetching offers:", error);
+    } catch (err) {
+      console.error("Error fetching offers:", err);
       toast.error("Failed to load offers");
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    fetchOffers();
+  }, [fetchOffers]);
 
   async function updateOfferStatus(offerId: string, status: string) {
     try {
@@ -117,7 +117,7 @@ export default function BrandOffersPage() {
       if (!res.ok) throw new Error("Failed to update offer");
       toast.success(`Offer ${status === "closed" ? "closed" : "reopened"}`);
       fetchOffers();
-    } catch (error) {
+    } catch {
       toast.error("Failed to update offer");
     }
   }
@@ -135,7 +135,7 @@ export default function BrandOffersPage() {
       if (!res.ok) throw new Error("Failed to update");
       toast.success(status === "confirmed" ? "Model confirmed!" : "Status updated");
       fetchOffers();
-    } catch (error) {
+    } catch {
       toast.error("Failed to update status");
     }
   }
@@ -150,7 +150,7 @@ export default function BrandOffersPage() {
       if (!res.ok) throw new Error("Failed to update");
       toast.success(action === "checkin" ? "Marked as checked in!" : "Marked as no-show");
       fetchOffers();
-    } catch (error) {
+    } catch {
       toast.error("Failed to update check-in status");
     }
   }
