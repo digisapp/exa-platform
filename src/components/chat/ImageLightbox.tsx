@@ -79,7 +79,7 @@ export function ImageLightbox({ src, alt = "Image", isOpen, onClose }: ImageLigh
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-    } catch (error) {
+    } catch {
       // Fallback: open in new tab
       window.open(src, "_blank");
     }

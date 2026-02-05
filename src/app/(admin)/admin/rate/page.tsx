@@ -139,7 +139,7 @@ export default function AdminRatePage() {
 
       setTotalUnrated(unratedCount || 0);
       setTotalRated(ratedCount || 0);
-    } catch (error) {
+    } catch {
       console.error("Failed to load models:", error);
       toast.error("Failed to load models");
     } finally {
@@ -169,7 +169,7 @@ export default function AdminRatePage() {
       setSessionRated((prev) => prev + 1);
       toast.success(`Rated ${rating} star${rating > 1 ? "s" : ""}`);
       nextModel();
-    } catch (error) {
+    } catch {
       toast.error("Failed to rate model");
     } finally {
       setUpdating(false);

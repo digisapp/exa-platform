@@ -28,7 +28,7 @@ export function RemoveFromCampaignButton({ campaignId, modelId, modelName }: Rem
 
       toast.success(`Removed ${modelName} from campaign`);
       router.refresh();
-    } catch (error) {
+    } catch {
       toast.error("Failed to remove from campaign");
     } finally {
       setLoading(false);

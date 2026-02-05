@@ -59,7 +59,7 @@ export function MessageInput({
       if (savedDraft) {
         setContent(savedDraft);
       }
-    } catch (error) {
+    } catch {
       // localStorage might be unavailable
     }
   }, [draftKey]);
@@ -75,7 +75,7 @@ export function MessageInput({
         } else {
           localStorage.removeItem(draftKey);
         }
-      } catch (error) {
+      } catch {
         // localStorage might be unavailable or full
       }
     }, 500); // Debounce 500ms
@@ -88,7 +88,7 @@ export function MessageInput({
     if (!draftKey) return;
     try {
       localStorage.removeItem(draftKey);
-    } catch (error) {
+    } catch {
       // Ignore
     }
   }, [draftKey]);
@@ -116,7 +116,7 @@ export function MessageInput({
     try {
       await onSend(messageContent, mediaUrl, mediaType);
       clearDraft(); // Clear draft on successful send
-    } catch (error) {
+    } catch {
       hapticFeedback("error");
       setContent(messageContent);
       if (mediaUrl && mediaType) {
@@ -262,7 +262,7 @@ export function MessageInput({
 
       const typeLabel = type === "video" ? "Video" : type === "audio" ? "Voice message" : "Photo";
       toast.success(`${typeLabel} attached`);
-    } catch (error) {
+    } catch {
       const typeLabel = type === "video" ? "video" : type === "audio" ? "voice message" : "photo";
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
 

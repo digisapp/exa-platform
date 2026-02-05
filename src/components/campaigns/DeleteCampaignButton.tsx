@@ -39,7 +39,7 @@ export function DeleteCampaignButton({ campaignId, campaignName }: DeleteCampaig
 
       toast.success(`Deleted "${campaignName}" campaign`);
       router.refresh();
-    } catch (error) {
+    } catch {
       toast.error("Failed to delete campaign");
     } finally {
       setLoading(false);

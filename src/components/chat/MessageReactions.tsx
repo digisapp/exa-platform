@@ -55,7 +55,7 @@ export function MessageReactions({
           );
           setLocalReactions(reactionsArray);
         }
-      } catch (error) {
+      } catch {
         console.error("Failed to fetch reactions:", error);
       }
     }
@@ -114,7 +114,7 @@ export function MessageReactions({
       }
 
       onReactionChange?.();
-    } catch (error) {
+    } catch {
       // Refetch reactions on error to get accurate state
       try {
         const response = await fetch(`/api/messages/react?messageId=${messageId}`);

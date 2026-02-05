@@ -73,7 +73,7 @@ export function TipDialog({
       if (onTipSuccess) {
         onTipSuccess(selectedAmount, data.newBalance);
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to send tip");
     } finally {
       setLoading(false);

@@ -58,7 +58,7 @@ export function BulkAddModelsDialog({ campaignId, campaignName, existingModelIds
           );
           setModels(filtered);
         }
-      } catch (error) {
+      } catch {
         // Silent fail for search
       } finally {
         setSearching(false);
@@ -100,7 +100,7 @@ export function BulkAddModelsDialog({ campaignId, campaignName, existingModelIds
       setSelectedIds(new Set());
       setSearchQuery("");
       router.refresh();
-    } catch (error) {
+    } catch {
       toast.error("Failed to add models to campaign");
     } finally {
       setAdding(false);

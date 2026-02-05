@@ -48,7 +48,7 @@ export function PortfolioGallery({
 
       onDelete(photo.id);
       toast.success("Photo deleted");
-    } catch (error) {
+    } catch {
       toast.error(
         error instanceof Error ? error.message : "Failed to delete photo"
       );
@@ -67,7 +67,7 @@ export function PortfolioGallery({
       // For now, we'll just call the callback
       onSetPrimary(photoId);
       toast.success("Primary photo updated");
-    } catch (error) {
+    } catch {
       toast.error("Failed to set primary photo");
     } finally {
       setSettingPrimary(null);

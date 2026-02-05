@@ -72,7 +72,7 @@ export function MessageBubble({
       setIsDeleted(true);
       onDelete?.(message.id);
       toast.success("Message deleted");
-    } catch (error) {
+    } catch {
       toast.error("Failed to delete message");
     } finally {
       setIsDeleting(false);

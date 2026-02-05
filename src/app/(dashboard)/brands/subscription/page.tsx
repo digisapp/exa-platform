@@ -95,7 +95,7 @@ export default function BrandSubscriptionPage() {
       } else {
         toast.error(data.error || "Failed to start checkout");
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to start checkout");
     } finally {
       setUpgrading(null);
@@ -119,7 +119,7 @@ export default function BrandSubscriptionPage() {
       } else {
         toast.error(data.error || "Failed to cancel subscription");
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to cancel subscription");
     } finally {
       setCancelling(false);
@@ -139,7 +139,7 @@ export default function BrandSubscriptionPage() {
       } else {
         toast.error(data.error || "Failed to open billing portal");
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to open billing portal");
     }
   };

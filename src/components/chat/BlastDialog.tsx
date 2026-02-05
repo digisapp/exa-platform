@@ -65,7 +65,7 @@ export function BlastDialog({ fanCount, brandCount }: BlastDialogProps) {
       setOpen(false);
       setMessage("");
       toast.success(`Blast sent to ${data.sentCount} ${recipientType === "all" ? "people" : recipientType}!`);
-    } catch (error) {
+    } catch {
       toast.error("Failed to send blast");
     } finally {
       setLoading(false);

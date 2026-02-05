@@ -26,7 +26,7 @@ export function ActivityTracker() {
       // Update activity
       try {
         await fetch("/api/activity", { method: "POST" });
-      } catch (error) {
+      } catch {
         // Silently fail - activity tracking is not critical
       }
     };

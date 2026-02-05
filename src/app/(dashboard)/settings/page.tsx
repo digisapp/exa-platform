@@ -182,7 +182,7 @@ export default function ProfilePage() {
 
       setModel((prev) => prev ? { ...prev, profile_photo_url: data.url } : prev);
       toast.success("Profile picture updated!");
-    } catch (error) {
+    } catch {
       toast.error(error instanceof Error ? error.message : "Upload failed");
     } finally {
       setUploadingAvatar(false);
@@ -401,7 +401,7 @@ export default function ProfilePage() {
       }).filter(Boolean);
 
       setFollowers(enrichedFollowers);
-    } catch (error) {
+    } catch {
       toast.error("Failed to load followers");
     } finally {
       setFollowersLoading(false);

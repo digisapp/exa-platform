@@ -100,7 +100,7 @@ export function ModelNotesDialog({
       toast.success("Notes saved");
       onNotesChange?.(notes.length > 0 || tags.length > 0, tags);
       setOpen(false);
-    } catch (error) {
+    } catch {
       toast.error("Failed to save notes");
     } finally {
       setSaving(false);
