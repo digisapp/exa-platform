@@ -795,8 +795,8 @@ export default function AdminGigsPage() {
       const toastMessage = action === "accepted"
         ? "Model accepted and notified!"
         : action === "cancelled"
-        ? "Model cancelled and notified"
-        : "Application declined and model notified";
+        ? "Model cancelled"
+        : "Application declined";
       toast.success(toastMessage);
       loadApplications(app.gig_id);
     } catch (error) {
