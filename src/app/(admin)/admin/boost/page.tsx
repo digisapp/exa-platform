@@ -54,7 +54,7 @@ interface BoostStats {
   all: PeriodStats;
   dailyData: { date: string; sessions: number; votes: number; boosts: number }[];
   topModels: { model_id: string; username: string; first_name: string | null; profile_photo_url: string | null; points: number; likes: number; boosts: number }[];
-  recentSessions: { id: string; user_id: string | null; created_at: string; completed_at: string | null; models_shown: number; total_votes: number; fan_display_name: string | null }[];
+  recentSessions: { id: string; user_id: string | null; created_at: string; completed_at: string | null; models_swiped: number; total_votes: number; fan_display_name: string | null }[];
 }
 
 export default function AdminBoostPage() {
@@ -146,7 +146,7 @@ export default function AdminBoostPage() {
           )
         `).gt("total_points", 0).order("total_points", { ascending: false }).limit(10),
         // Recent sessions
-        supabase.from("top_model_sessions").select("id, user_id, created_at, completed_at, models_shown, total_votes").order("created_at", { ascending: false }).limit(20),
+        supabase.from("top_model_sessions").select("id, user_id, created_at, completed_at, models_swiped").order("created_at", { ascending: false }).limit(20),
       ]);
 
       // Process daily data - first aggregate the raw data
@@ -231,8 +231,27 @@ export default function AdminBoostPage() {
         }
       }
 
+      // Get vote counts for each session
+      const sessionIds = (recentSessionsData || []).map((s: any) => s.id);
+      const sessionVoteCounts = new Map<string, number>();
+      if (sessionIds.length > 0) {
+        const { data: voteCounts } = await supabase
+          .from("top_model_votes")
+          .select("session_id")
+          .in("session_id", sessionIds);
+
+        (voteCounts || []).forEach((v: any) => {
+          sessionVoteCounts.set(v.session_id, (sessionVoteCounts.get(v.session_id) || 0) + 1);
+        });
+      }
+
       const recentSessions = (recentSessionsData || []).map((s: any) => ({
-        ...s,
+        id: s.id,
+        user_id: s.user_id,
+        created_at: s.created_at,
+        completed_at: s.completed_at,
+        models_swiped: Array.isArray(s.models_swiped) ? s.models_swiped.length : 0,
+        total_votes: sessionVoteCounts.get(s.id) || 0,
         fan_display_name: s.user_id ? fanNames.get(s.user_id) || "Signed In" : null,
       }));
 
@@ -508,7 +527,7 @@ export default function AdminBoostPage() {
                 <TableHead>Player</TableHead>
                 <TableHead>Started</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="text-right">Models Shown</TableHead>
+                <TableHead className="text-right">Models Swiped</TableHead>
                 <TableHead className="text-right">Votes</TableHead>
               </TableRow>
             </TableHeader>
@@ -545,7 +564,7 @@ export default function AdminBoostPage() {
                       </Badge>
                     )}
                   </TableCell>
-                  <TableCell className="text-right">{session.models_shown}</TableCell>
+                  <TableCell className="text-right">{session.models_swiped}</TableCell>
                   <TableCell className="text-right">{session.total_votes}</TableCell>
                 </TableRow>
               ))}
