@@ -393,27 +393,6 @@ export default function AdminBoostPage() {
         </div>
       </div>
 
-      {/* Active Model Cards */}
-      <Card className="border-cyan-500/30 bg-gradient-to-r from-cyan-500/10 to-blue-500/10">
-        <CardContent className="py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-cyan-500/20">
-                <Users className="h-5 w-5 text-cyan-400" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Active Model Cards</p>
-                <p className="text-sm text-muted-foreground">Approved models with profile pictures showing in the game</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-4xl font-bold text-cyan-400">{activeModelCards.toLocaleString()}</p>
-              <p className="text-sm text-muted-foreground">models</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Stats with Period Toggle */}
       <Card className="border-orange-500/30 bg-gradient-to-br from-orange-500/5 to-pink-500/5">
         <CardHeader className="pb-2">
@@ -432,7 +411,12 @@ export default function AdminBoostPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-7 gap-4">
+            <div className="text-center p-4 rounded-lg bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20">
+              <Users className="h-5 w-5 mx-auto mb-2 text-cyan-400" />
+              <p className="text-3xl font-bold text-cyan-400">{activeModelCards.toLocaleString()}</p>
+              <p className="text-sm text-muted-foreground">Models</p>
+            </div>
             <div className="text-center p-4 rounded-lg bg-gradient-to-r from-orange-500/10 to-pink-500/10 border border-orange-500/20">
               <Users className="h-5 w-5 mx-auto mb-2 text-blue-400" />
               <p className="text-3xl font-bold text-orange-400">{stats?.[statsPeriod]?.sessions.toLocaleString() ?? 0}</p>
