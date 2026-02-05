@@ -765,29 +765,6 @@ async function FanDashboard({ actorId }: { actorId: string }) {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* Welcome + Coin Balance Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">
-            {fanName ? `Hey ${fanName}!` : "Welcome back!"}
-          </h1>
-          <p className="text-muted-foreground">Connect with your favorite models</p>
-        </div>
-        <Link
-          href="/coins"
-          className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border border-amber-500/20 hover:border-amber-500/40 transition-colors group"
-        >
-          <div className="p-2 rounded-full bg-amber-500/20 group-hover:bg-amber-500/30 transition-colors">
-            <Coins className="h-5 w-5 text-amber-500" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Your Balance</p>
-            <p className="text-xl font-bold text-amber-500">{coinBalance.toLocaleString()} coins</p>
-          </div>
-          <ArrowRight className="h-4 w-4 text-muted-foreground ml-2" />
-        </Link>
-      </div>
-
       {/* What You Can Do - Feature Cards */}
       <Card className="border-pink-500/20 bg-gradient-to-br from-pink-500/5 via-violet-500/5 to-cyan-500/5 overflow-hidden">
         <CardHeader>
