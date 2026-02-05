@@ -120,6 +120,17 @@ export default function SwimwearContentPage() {
           <StatCard icon={<Sun className="h-5 w-5 text-amber-500" />} label="Swim Week Credits" sublabel="toward $3,000 package" />
         </div>
 
+        {/* How It Works */}
+        <div className="mb-12">
+          <h2 className="text-2xl font-bold mb-6">How It Works</h2>
+          <div className="grid md:grid-cols-4 gap-4">
+            <StepCard number={1} title="Subscribe" description="Start your $500/month subscription" />
+            <StepCard number={2} title="Send Collection" description="Ship your swimwear pieces to our EXA Studio" />
+            <StepCard number={3} title="We Shoot" description="Professional models bring your designs to life" />
+            <StepCard number={4} title="Receive Content" description="Get 10 videos + 50 photos each month" />
+          </div>
+        </div>
+
         {/* Payment Form - Prominent Position */}
         <Card className="p-8 mb-12 bg-gradient-to-br from-pink-500/20 via-violet-500/20 to-cyan-500/20 border-pink-500/30">
           <div className="text-center mb-6">
@@ -287,34 +298,6 @@ export default function SwimwearContentPage() {
           </div>
         </div>
 
-        {/* Pricing */}
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-            <DollarSign className="h-6 w-6 text-green-500" />
-            Investment
-          </h2>
-          <Card className="p-8 bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20">
-            <div className="text-center mb-6">
-              <p className="text-5xl font-bold text-green-500 mb-2">$500<span className="text-2xl">/month</span></p>
-              <p className="text-muted-foreground">Monthly subscription • Cancel anytime</p>
-            </div>
-            <div className="max-w-md mx-auto">
-              <div className="flex items-center justify-between p-4 bg-background/50 rounded-lg mb-4">
-                <span className="text-muted-foreground">Monthly Content</span>
-                <span className="font-bold">10 videos + 50 photos</span>
-              </div>
-              <div className="flex items-center justify-between p-4 bg-background/50 rounded-lg mb-4">
-                <span className="text-muted-foreground">Billing</span>
-                <span className="font-bold">$500/month recurring</span>
-              </div>
-              <div className="flex items-center justify-between p-4 bg-cyan-500/10 rounded-lg border border-cyan-500/20">
-                <span className="text-cyan-400">Each payment credits toward Swim Week</span>
-                <span className="font-bold text-cyan-400">$500</span>
-              </div>
-            </div>
-          </Card>
-        </div>
-
         {/* Swim Week Credit */}
         <div className="mb-12">
           <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
@@ -345,17 +328,6 @@ export default function SwimwearContentPage() {
               </div>
             </div>
           </Card>
-        </div>
-
-        {/* How It Works */}
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold mb-6">How It Works</h2>
-          <div className="grid md:grid-cols-4 gap-4">
-            <StepCard number={1} title="Subscribe" description="Start your $500/month subscription" />
-            <StepCard number={2} title="Send Collection" description="Ship your swimwear pieces to our EXA Studio" />
-            <StepCard number={3} title="We Shoot" description="Professional models bring your designs to life" />
-            <StepCard number={4} title="Receive Content" description="Get 10 videos + 50 photos each month" />
-          </div>
         </div>
 
         {/* Second Payment Form */}
