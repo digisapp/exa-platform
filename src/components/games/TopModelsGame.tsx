@@ -16,6 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useGameSounds } from "@/hooks/useGameSounds";
+import { useCoinBalanceOptional } from "@/contexts/CoinBalanceContext";
 
 interface Model {
   id: string;
@@ -64,6 +65,9 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
   const [showWelcome, setShowWelcome] = useState(false);
   const sounds = useGameSounds();
 
+  // Get global coin balance context (for updating navbar balance)
+  const coinBalanceContext = useCoinBalanceOptional();
+
   // Session stats tracking
   const [sessionStats, setSessionStats] = useState({
     likes: 0,
@@ -74,16 +78,20 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
   const [streak, setStreak] = useState(0);
   const [hasSpunToday, setHasSpunToday] = useState(false);
 
-  // Handle spin completion - update coin balance
+  // Handle spin completion - update coin balance (both local and global context)
   const handleSpinComplete = (coins: number, newBalance?: number) => {
     // Use server's new balance if provided, otherwise calculate locally
     if (newBalance !== undefined) {
       setCoinBalance(newBalance);
+      // Also update global context so navbar reflects the new balance
+      coinBalanceContext?.setBalance(newBalance);
     } else {
       setCoinBalance((prev) => prev + coins);
+      // Also update global context
+      coinBalanceContext?.addCoins(coins);
     }
     setHasSpunToday(true);
-    toast.success(`You won ${coins} coins!`);
+    toast.success(`You won ${coins} coins! Check your wallet.`);
   };
 
   // Check if first visit
@@ -264,9 +272,11 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
         pointsGiven: prev.pointsGiven + boostPoints,
       }));
 
-      // Update coin balance
+      // Update coin balance (both local and global context)
       if (data.new_balance !== undefined) {
         setCoinBalance(data.new_balance);
+        // Also update global context so navbar reflects the new balance
+        coinBalanceContext?.setBalance(data.new_balance);
       }
 
       const title = type === "reveal" ? "Boosted & Revealed!" : "Boosted!";
