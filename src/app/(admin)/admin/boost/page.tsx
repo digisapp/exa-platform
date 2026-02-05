@@ -53,7 +53,7 @@ interface BoostStats {
   monthly: PeriodStats;
   all: PeriodStats;
   dailyData: { date: string; sessions: number; votes: number; boosts: number }[];
-  topModels: { model_id: string; username: string; first_name: string | null; profile_photo_url: string | null; likes: number; dislikes: number; boosts: number }[];
+  topModels: { model_id: string; username: string; first_name: string | null; profile_photo_url: string | null; points: number; likes: number; boosts: number }[];
   recentSessions: { id: string; user_id: string | null; created_at: string; completed_at: string | null; models_shown: number; total_votes: number; fan_display_name: string | null }[];
 }
 
@@ -192,8 +192,8 @@ export default function AdminBoostPage() {
         username: entry.models?.username || "Unknown",
         first_name: entry.models?.first_name || null,
         profile_photo_url: entry.models?.profile_photo_url || null,
+        points: entry.total_points || 0,
         likes: entry.total_likes || 0,
-        dislikes: 0, // Leaderboard doesn't track dislikes
         boosts: entry.total_boosts || 0,
       }));
 
@@ -469,11 +469,15 @@ export default function AdminBoostPage() {
                     <p className="text-xs text-muted-foreground">@{model.username}</p>
                   </div>
                   <div className="flex items-center gap-3 text-sm">
-                    <span className="flex items-center gap-1 text-pink-400">
+                    <span className="flex items-center gap-1 text-yellow-400 font-semibold">
+                      <Trophy className="h-3 w-3" />
+                      {model.points} pts
+                    </span>
+                    <span className="flex items-center gap-1 text-pink-400 text-xs">
                       <Heart className="h-3 w-3" />
                       {model.likes}
                     </span>
-                    <span className="flex items-center gap-1 text-orange-400">
+                    <span className="flex items-center gap-1 text-orange-400 text-xs">
                       <Flame className="h-3 w-3" />
                       {model.boosts}
                     </span>
