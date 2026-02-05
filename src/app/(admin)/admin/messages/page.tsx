@@ -29,7 +29,6 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
-  User,
   Users,
   Clock,
   Eye,
@@ -123,7 +122,7 @@ export default function AdminMessagesPage() {
     setLoading(true);
     try {
       // Get conversations with their participants
-      let query = supabase
+      const query = supabase
         .from("conversations")
         .select(`
           id,
