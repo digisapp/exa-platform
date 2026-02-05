@@ -99,7 +99,7 @@ export async function GET(request: NextRequest) {
       console.log(`[Admin Models] Sorting by ${sortField}, fetched ${allModels.length} models, ${allUserIds.length} with user_ids`);
 
       // Get computed data for ALL models
-      // Note: Add range to ensure we get all rows (Supabase default limit is 1000)
+      // Note: Increased range limits to handle large datasets (5000+ models with many assets each)
       const [
         allActorsResult,
         allImageCountsResult,
@@ -109,13 +109,13 @@ export async function GET(request: NextRequest) {
         allLastMediaResult,
       ] = await Promise.all([
         allUserIds.length > 0
-          ? (supabase.from("actors") as any).select("id, user_id").in("user_id", allUserIds).range(0, 9999)
+          ? (supabase.from("actors") as any).select("id, user_id").in("user_id", allUserIds).range(0, 19999)
           : Promise.resolve({ data: [], error: null }),
-        (supabase.from("media_assets") as any).select("model_id").in("model_id", allModelIds).eq("type", "photo").range(0, 49999),
-        (supabase.from("media_assets") as any).select("model_id").in("model_id", allModelIds).eq("type", "video").range(0, 49999),
-        (supabase.from("premium_content") as any).select("model_id").in("model_id", allModelIds).range(0, 49999),
-        (supabase.from("premium_content") as any).select("model_id, created_at").in("model_id", allModelIds).range(0, 49999),
-        (supabase.from("media_assets") as any).select("model_id, created_at").in("model_id", allModelIds).range(0, 49999),
+        (supabase.from("media_assets") as any).select("model_id").in("model_id", allModelIds).eq("type", "photo").range(0, 199999),
+        (supabase.from("media_assets") as any).select("model_id").in("model_id", allModelIds).eq("type", "video").range(0, 199999),
+        (supabase.from("premium_content") as any).select("model_id").in("model_id", allModelIds).range(0, 199999),
+        (supabase.from("premium_content") as any).select("model_id, created_at").in("model_id", allModelIds).range(0, 199999),
+        (supabase.from("media_assets") as any).select("model_id, created_at").in("model_id", allModelIds).range(0, 199999),
       ]);
 
       // Log any errors from the queries
@@ -131,6 +131,7 @@ export async function GET(request: NextRequest) {
       const allActorIds = allActors.map((a: any) => a.id);
 
       // Get actor-dependent data for sorting fields that need it
+      // Increased range limits to handle large datasets
       const [
         allFollowCountsResult,
         allEarningsResult,
@@ -138,7 +139,7 @@ export async function GET(request: NextRequest) {
         allReferralsResult,
       ] = await Promise.all([
         allActorIds.length > 0
-          ? (supabase.from("follows") as any).select("following_id").in("following_id", allActorIds).range(0, 49999)
+          ? (supabase.from("follows") as any).select("following_id").in("following_id", allActorIds).range(0, 199999)
           : { data: [] },
         allActorIds.length > 0
           ? (supabase.from("coin_transactions") as any)
@@ -146,19 +147,22 @@ export async function GET(request: NextRequest) {
               .in("actor_id", allActorIds)
               .gt("amount", 0)
               .neq("action", "purchase")
-              .range(0, 99999)
+              .range(0, 499999)
           : { data: [] },
         allActorIds.length > 0
           ? (supabase.from("conversation_participants") as any)
               .select("actor_id, conversation_id")
               .in("actor_id", allActorIds)
-              .range(0, 49999)
+              .range(0, 199999)
           : { data: [] },
         (supabase.from("fans") as any)
           .select("referred_by_model_id")
           .in("referred_by_model_id", allModelIds)
-          .range(0, 49999),
+          .range(0, 99999),
       ]);
+
+      // Log referral data for debugging
+      console.log(`[Admin Models] Referrals query returned ${(allReferralsResult.data || []).length} records`);
 
       // Build maps for computed values
       const imageMap = new Map<string, number>();

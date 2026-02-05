@@ -58,6 +58,9 @@ import {
   Image as ImageIcon,
   Video,
   Lock,
+  Download,
+  CheckSquare,
+  Square,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ApproveRejectButtons } from "@/components/admin/AdminActions";
@@ -67,8 +70,8 @@ import { ModelActionsDropdown, FanActionsDropdown } from "@/components/admin/Adm
 function SortIndicator({ active, direction }: { active: boolean; direction: "asc" | "desc" }) {
   if (!active) return <ArrowUpDown className="h-4 w-4 ml-1 opacity-50" />;
   return direction === "asc"
-    ? <ArrowUp className="h-4 w-4 ml-1" />
-    : <ArrowDown className="h-4 w-4 ml-1" />;
+    ? <ArrowUp className="h-4 w-4 ml-1 text-pink-500" />
+    : <ArrowDown className="h-4 w-4 ml-1 text-pink-500" />;
 }
 
 function RatingStars({ modelId, currentRating, onRatingChange }: {
@@ -493,6 +496,124 @@ export default function AdminCommunityPage() {
   const [modelApps, setModelApps] = useState<ModelApplication[]>([]);
   const [modelAppsLoading, setModelAppsLoading] = useState(true);
 
+  // Bulk selection state
+  const [selectedModels, setSelectedModels] = useState<Set<string>>(new Set());
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
+
+  // Toggle single model selection
+  const toggleModelSelection = (modelId: string) => {
+    setSelectedModels(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(modelId)) {
+        newSet.delete(modelId);
+      } else {
+        newSet.add(modelId);
+      }
+      return newSet;
+    });
+  };
+
+  // Toggle all models on current page
+  const toggleAllModels = () => {
+    if (selectedModels.size === models.length) {
+      setSelectedModels(new Set());
+    } else {
+      setSelectedModels(new Set(models.map(m => m.id)));
+    }
+  };
+
+  // Bulk approve selected models
+  const bulkApproveModels = async () => {
+    if (selectedModels.size === 0) return;
+    setBulkActionLoading(true);
+    try {
+      const promises = Array.from(selectedModels).map(id =>
+        fetch(`/api/admin/models/${id}/approve`, { method: "POST" })
+      );
+      await Promise.all(promises);
+      toast.success(`Approved ${selectedModels.size} models`);
+      setSelectedModels(new Set());
+      loadModels();
+      loadStats();
+    } catch {
+      toast.error("Failed to approve some models");
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  // Bulk reject selected models
+  const bulkRejectModels = async () => {
+    if (selectedModels.size === 0) return;
+    const confirmed = window.confirm(`Are you sure you want to reject ${selectedModels.size} models?`);
+    if (!confirmed) return;
+    setBulkActionLoading(true);
+    try {
+      const promises = Array.from(selectedModels).map(id =>
+        fetch(`/api/admin/models/${id}/reject`, { method: "POST" })
+      );
+      await Promise.all(promises);
+      toast.success(`Rejected ${selectedModels.size} models`);
+      setSelectedModels(new Set());
+      loadModels();
+      loadStats();
+    } catch {
+      toast.error("Failed to reject some models");
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  // Export models to CSV
+  const exportModelsToCSV = () => {
+    if (models.length === 0) {
+      toast.error("No models to export");
+      return;
+    }
+
+    const headers = [
+      "Username", "First Name", "Last Name", "Email", "City", "State",
+      "Approved", "Instagram", "IG Followers", "Rating", "Profile Views",
+      "Followers", "Pics", "Videos", "PPV", "Earned", "Referrals", "Joined"
+    ];
+
+    const rows = models.map(m => [
+      m.username,
+      m.first_name || "",
+      m.last_name || "",
+      m.email || "",
+      m.city || "",
+      m.state || "",
+      m.is_approved ? "Yes" : "No",
+      m.instagram_name || "",
+      m.instagram_followers || 0,
+      m.admin_rating || "",
+      m.profile_views || 0,
+      m.followers_count || 0,
+      m.image_count || 0,
+      m.video_count || 0,
+      m.ppv_count || 0,
+      m.total_earned || 0,
+      m.referral_count || 0,
+      m.joined_at || m.created_at || "",
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `models-export-${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success(`Exported ${models.length} models to CSV`);
+  };
+
   // Load stats
   const loadStats = useCallback(async () => {
     const [
@@ -807,8 +928,14 @@ export default function AdminCommunityPage() {
   };
 
   const handleModelSort = (field: ModelSortField) => {
-    if (modelsSortField === field) setModelsSortDirection(d => d === "asc" ? "desc" : "asc");
-    else { setModelsSortField(field); setModelsSortDirection("desc"); }
+    // Set loading immediately to show visual feedback
+    setModelsLoading(true);
+    if (modelsSortField === field) {
+      setModelsSortDirection(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setModelsSortField(field);
+      setModelsSortDirection("desc");
+    }
     setModelsPage(1);
   };
 
@@ -1113,16 +1240,51 @@ export default function AdminCommunityPage() {
           {/* Models Table */}
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between flex-wrap gap-4">
                 <div>
                   <CardTitle>Models</CardTitle>
                   <CardDescription>
                     {modelsTotalCount > 0
                       ? `Showing ${((modelsPage - 1) * pageSize) + 1} - ${Math.min(modelsPage * pageSize, modelsTotalCount)} of ${modelsTotalCount.toLocaleString()}`
                       : "No models found"}
+                    {selectedModels.size > 0 && (
+                      <span className="ml-2 text-pink-500 font-medium">
+                        ({selectedModels.size} selected)
+                      </span>
+                    )}
                   </CardDescription>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  {/* Bulk Actions */}
+                  {selectedModels.size > 0 && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={bulkApproveModels}
+                        disabled={bulkActionLoading}
+                        className="text-green-500 border-green-500/50 hover:bg-green-500/10"
+                      >
+                        {bulkActionLoading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <CheckCircle className="h-4 w-4 mr-1" />}
+                        Approve ({selectedModels.size})
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={bulkRejectModels}
+                        disabled={bulkActionLoading}
+                        className="text-red-500 border-red-500/50 hover:bg-red-500/10"
+                      >
+                        Reject ({selectedModels.size})
+                      </Button>
+                    </>
+                  )}
+                  {/* Export Button */}
+                  <Button variant="outline" size="sm" onClick={exportModelsToCSV} title="Export to CSV">
+                    <Download className="h-4 w-4 mr-1" />
+                    Export
+                  </Button>
+                  {/* Pagination */}
                   <Button variant="outline" size="sm" onClick={() => setModelsPage(p => Math.max(1, p - 1))} disabled={modelsPage === 1}>
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
@@ -1139,15 +1301,31 @@ export default function AdminCommunityPage() {
               ) : models.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground"><Users className="h-12 w-12 mx-auto mb-4 opacity-50" /><p>No models found</p></div>
               ) : (
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto max-h-[70vh] overflow-y-auto">
                   <Table>
-                    <TableHeader>
+                    <TableHeader className="sticky top-0 bg-background z-10 shadow-sm">
                       <TableRow>
+                        {/* Checkbox for bulk selection */}
+                        <TableHead className="w-[40px]">
+                          <button
+                            onClick={toggleAllModels}
+                            className="p-1 hover:bg-muted rounded transition-colors"
+                            title={selectedModels.size === models.length ? "Deselect all" : "Select all"}
+                          >
+                            {selectedModels.size === models.length && models.length > 0 ? (
+                              <CheckSquare className="h-4 w-4 text-pink-500" />
+                            ) : (
+                              <Square className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </button>
+                        </TableHead>
                         <TableHead className="w-[100px] cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("admin_rating")}>
                           <div className="flex items-center"><Star className="h-4 w-4 mr-1" />Rating<SortIndicator active={modelsSortField === "admin_rating"} direction={modelsSortDirection} /></div>
                         </TableHead>
                         <TableHead className="w-[180px]">Model</TableHead>
-                        <TableHead className="w-[90px]">Instagram</TableHead>
+                        <TableHead className="w-[90px] cursor-pointer hover:bg-muted/50" onClick={() => handleModelSort("instagram_followers")}>
+                          <div className="flex items-center"><Instagram className="h-4 w-4 mr-1" />IG<SortIndicator active={modelsSortField === "instagram_followers"} direction={modelsSortDirection} /></div>
+                        </TableHead>
                         <TableHead className="w-[80px]">State</TableHead>
                         <TableHead>Actions</TableHead>
                         <TableHead>Invite</TableHead>
@@ -1182,7 +1360,20 @@ export default function AdminCommunityPage() {
                     </TableHeader>
                     <TableBody>
                       {models.map((model) => (
-                        <TableRow key={model.id}>
+                        <TableRow key={model.id} className={selectedModels.has(model.id) ? "bg-pink-500/5" : ""}>
+                          {/* Checkbox */}
+                          <TableCell>
+                            <button
+                              onClick={() => toggleModelSelection(model.id)}
+                              className="p-1 hover:bg-muted rounded transition-colors"
+                            >
+                              {selectedModels.has(model.id) ? (
+                                <CheckSquare className="h-4 w-4 text-pink-500" />
+                              ) : (
+                                <Square className="h-4 w-4 text-muted-foreground" />
+                              )}
+                            </button>
+                          </TableCell>
                           <TableCell><RatingStars modelId={model.id} currentRating={model.admin_rating} onRatingChange={handleRatingChange} /></TableCell>
                           <TableCell>
                             <Link href={`/admin/models/${model.id}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
@@ -1201,7 +1392,12 @@ export default function AdminCommunityPage() {
                           </TableCell>
                           <TableCell>
                             {model.instagram_name ? (
-                              <a href={`https://instagram.com/${model.instagram_name.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-pink-500 hover:text-pink-400 transition-colors text-sm">{model.instagram_name.replace('@', '')}</a>
+                              <div className="flex flex-col">
+                                <a href={`https://instagram.com/${model.instagram_name.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-pink-500 hover:text-pink-400 transition-colors text-sm">{model.instagram_name.replace('@', '')}</a>
+                                {model.instagram_followers ? (
+                                  <span className="text-xs text-muted-foreground">{(model.instagram_followers / 1000).toFixed(1)}K</span>
+                                ) : null}
+                              </div>
                             ) : <span className="text-muted-foreground text-sm">-</span>}
                           </TableCell>
                           <TableCell><span className="text-sm text-muted-foreground">{model.state || "-"}</span></TableCell>
