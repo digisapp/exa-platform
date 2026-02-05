@@ -3,6 +3,14 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { BRAND_SUBSCRIPTION_TIERS, BrandTier } from "@/lib/stripe-config";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { z } from "zod";
+
+// Zod schema for campaign creation validation
+const createCampaignSchema = z.object({
+  name: z.string().min(1, "Campaign name is required").max(100, "Campaign name is too long").trim(),
+  description: z.string().max(500, "Description is too long").optional().nullable(),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Invalid color format").optional().default("#ec4899"),
+});
 
 // GET /api/campaigns - Get all campaigns for current brand
 export async function GET(request: NextRequest) {
@@ -59,12 +67,18 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/campaigns - Create new campaign
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Rate limit check
+  const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+  if (rateLimitResponse) {
+    return rateLimitResponse;
   }
 
   // Get actor and verify it's a brand
@@ -110,20 +124,27 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { name, description, color } = body;
 
-  if (!name || name.trim().length === 0) {
-    return NextResponse.json({ error: "Campaign name is required" }, { status: 400 });
+  // Validate request body with Zod schema
+  const validationResult = createCampaignSchema.safeParse(body);
+  if (!validationResult.success) {
+    const firstError = validationResult.error.issues[0];
+    return NextResponse.json(
+      { error: firstError.message },
+      { status: 400 }
+    );
   }
+
+  const { name, description, color } = validationResult.data;
 
   // Create the campaign
   const { data: campaign, error } = await (adminClient
     .from("campaigns") as any)
     .insert({
       brand_id: actor.id,
-      name: name.trim(),
-      description: description?.trim() || null,
-      color: color || "#ec4899",
+      name,
+      description: description || null,
+      color,
     })
     .select()
     .single();

@@ -1,6 +1,18 @@
 import { createClient } from "@/lib/supabase/server";
 import { getActorId, getActorInfo, getModelId } from "@/lib/ids";
 import { NextRequest, NextResponse } from "next/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { z } from "zod";
+
+// Zod schema for content creation validation
+const createContentSchema = z.object({
+  title: z.string().max(200, "Title is too long").optional().nullable(),
+  description: z.string().max(1000, "Description is too long").optional().nullable(),
+  mediaUrl: z.string().url("Invalid media URL"),
+  mediaType: z.enum(["image", "video"], { message: "Media type must be image or video" }),
+  previewUrl: z.string().url("Invalid preview URL").optional().nullable(),
+  coinPrice: z.number().int("Price must be a whole number").min(0, "Price cannot be negative").max(10000, "Price is too high"),
+});
 
 // Get premium content for a model
 export async function GET(request: NextRequest) {
@@ -20,6 +32,12 @@ export async function GET(request: NextRequest) {
     const {
       data: { user },
     } = await supabase.auth.getUser();
+
+    // Rate limit check (use IP for unauthenticated, user ID for authenticated)
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user?.id);
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
 
     // Use helper to get actor ID
     const actorId = user ? await getActorId(supabase, user.id) : null;
@@ -120,6 +138,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Rate limit check
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+
     // Use helpers to get actor info and model ID
     const actorInfo = await getActorInfo(supabase, user.id);
 
@@ -140,22 +164,18 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { title, description, mediaUrl, mediaType, previewUrl, coinPrice } = body;
 
-    if (!mediaUrl || !mediaType) {
+    // Validate request body with Zod schema
+    const validationResult = createContentSchema.safeParse(body);
+    if (!validationResult.success) {
+      const firstError = validationResult.error.issues[0];
       return NextResponse.json(
-        { error: "Media URL and type required" },
+        { error: firstError.message },
         { status: 400 }
       );
     }
 
-    // Allow free content (coinPrice = 0) or paid content (coinPrice >= 1)
-    if (coinPrice < 0) {
-      return NextResponse.json(
-        { error: "Price cannot be negative" },
-        { status: 400 }
-      );
-    }
+    const { title, description, mediaUrl, mediaType, previewUrl, coinPrice } = validationResult.data;
 
     // Use media URL as preview if no preview provided (will be blurred by frontend)
     const finalPreviewUrl = previewUrl || mediaUrl;
@@ -183,8 +203,8 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ content });
-  } catch (error) {
-    console.error("Content creation error:", error);
+  } catch (err) {
+    console.error("Content creation error:", err);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -203,6 +223,12 @@ export async function DELETE(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Rate limit check
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) {
+      return rateLimitResponse;
     }
 
     const { searchParams } = new URL(request.url);

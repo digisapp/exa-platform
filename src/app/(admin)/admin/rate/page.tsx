@@ -139,8 +139,8 @@ export default function AdminRatePage() {
 
       setTotalUnrated(unratedCount || 0);
       setTotalRated(ratedCount || 0);
-    } catch {
-      console.error("Failed to load models:", error);
+    } catch (err) {
+      console.error("Failed to load models:", err);
       toast.error("Failed to load models");
     } finally {
       setLoading(false);
