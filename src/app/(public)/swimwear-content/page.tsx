@@ -133,7 +133,7 @@ export default function SwimwearContentPage() {
           <div className="text-center mb-6">
             <h2 className="text-2xl font-bold mb-2">Join the Program</h2>
             <p className="text-muted-foreground">
-              All brands accepted • $500/month • Cancel anytime
+              $500/month • Cancel anytime
             </p>
           </div>
 
