@@ -680,8 +680,8 @@ export default async function DashboardPage() {
 async function FanDashboard({ actorId }: { actorId: string }) {
   const supabase = await createClient();
 
-  // Query favorites and featured models in parallel
-  const [{ data: follows }, { data: allFeaturedModels }] = await Promise.all([
+  // Query favorites, featured models, and coin balance in parallel
+  const [{ data: follows }, { data: allFeaturedModels }, { data: fanData }] = await Promise.all([
     // Get followed models
     (supabase.from("follows") as any)
       .select(`
@@ -711,7 +711,15 @@ async function FanDashboard({ actorId }: { actorId: string }) {
       .not("profile_photo_url", "ilike", "%cdninstagram.com%")
       .not("profile_photo_url", "ilike", "%instagram%")
       .limit(100),
+    // Get fan's coin balance
+    (supabase.from("fans") as any)
+      .select("coin_balance, display_name")
+      .eq("id", actorId)
+      .single(),
   ]);
+
+  const coinBalance = fanData?.coin_balance ?? 0;
+  const fanName = fanData?.display_name;
 
   // Get the user_ids from the followed actors
   const followedUserIds = follows?.map((f: any) => f.actors?.user_id).filter(Boolean) || [];
@@ -757,12 +765,111 @@ async function FanDashboard({ actorId }: { actorId: string }) {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
+      {/* Welcome + Coin Balance Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">
+            {fanName ? `Hey ${fanName}!` : "Welcome back!"}
+          </h1>
+          <p className="text-muted-foreground">Connect with your favorite models</p>
+        </div>
+        <Link
+          href="/coins"
+          className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border border-amber-500/20 hover:border-amber-500/40 transition-colors group"
+        >
+          <div className="p-2 rounded-full bg-amber-500/20 group-hover:bg-amber-500/30 transition-colors">
+            <Coins className="h-5 w-5 text-amber-500" />
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Your Balance</p>
+            <p className="text-xl font-bold text-amber-500">{coinBalance.toLocaleString()} coins</p>
+          </div>
+          <ArrowRight className="h-4 w-4 text-muted-foreground ml-2" />
+        </Link>
+      </div>
+
+      {/* What You Can Do - Feature Cards */}
+      <Card className="border-pink-500/20 bg-gradient-to-br from-pink-500/5 via-violet-500/5 to-cyan-500/5 overflow-hidden">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-pink-500" />
+            Connect With Models
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Chat Feature */}
+            <div className="p-4 rounded-xl bg-white/50 dark:bg-muted/30 border border-blue-500/20 hover:border-blue-500/40 transition-colors">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2.5 rounded-full bg-blue-500/10">
+                  <MessageCircle className="h-5 w-5 text-blue-500" />
+                </div>
+                <h3 className="font-semibold">Direct Chat</h3>
+              </div>
+              <p className="text-sm text-muted-foreground mb-3">
+                Message models directly and get personal responses. Build real connections.
+              </p>
+              <p className="text-xs text-blue-500 font-medium">Starting at 10 coins/message</p>
+            </div>
+
+            {/* Video Call Feature */}
+            <div className="p-4 rounded-xl bg-white/50 dark:bg-muted/30 border border-violet-500/20 hover:border-violet-500/40 transition-colors">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2.5 rounded-full bg-violet-500/10">
+                  <svg className="h-5 w-5 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <h3 className="font-semibold">Video Calls</h3>
+              </div>
+              <p className="text-sm text-muted-foreground mb-3">
+                Face-to-face conversations with models. Get styling tips, advice, or just hang out.
+              </p>
+              <p className="text-xs text-violet-500 font-medium">5 coins/minute</p>
+            </div>
+
+            {/* Tips Feature */}
+            <div className="p-4 rounded-xl bg-white/50 dark:bg-muted/30 border border-pink-500/20 hover:border-pink-500/40 transition-colors">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2.5 rounded-full bg-pink-500/10">
+                  <Heart className="h-5 w-5 text-pink-500" />
+                </div>
+                <h3 className="font-semibold">Send Tips</h3>
+              </div>
+              <p className="text-sm text-muted-foreground mb-3">
+                Show appreciation and support your favorite models. They&apos;ll love you for it!
+              </p>
+              <p className="text-xs text-pink-500 font-medium">Any amount you choose</p>
+            </div>
+          </div>
+
+          {/* Get Coins CTA */}
+          {coinBalance < 20 && (
+            <div className="mt-4 p-4 rounded-xl bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border border-amber-500/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <Coins className="h-6 w-6 text-amber-500" />
+                <div>
+                  <p className="font-medium">Get coins to start connecting</p>
+                  <p className="text-sm text-muted-foreground">Packages start at just $3.99</p>
+                </div>
+              </div>
+              <Button asChild className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-semibold">
+                <Link href="/coins">
+                  <Coins className="mr-2 h-4 w-4" />
+                  Get Coins
+                </Link>
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Favorites - Horizontal scrolling gallery */}
       {favoriteModels.length > 0 && (
         <div>
           <h3 className="flex items-center gap-2 text-lg font-semibold mb-4">
             <Heart className="h-5 w-5 text-pink-500 fill-pink-500" />
-            Favorites
+            Your Favorites
           </h3>
           <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
             {favoriteModels.map((model: any) => (
@@ -798,12 +905,35 @@ async function FanDashboard({ actorId }: { actorId: string }) {
         </div>
       )}
 
+      {/* Browse All Models CTA */}
+      <Card className="border-cyan-500/20 bg-gradient-to-r from-cyan-500/5 to-blue-500/5">
+        <CardContent className="pt-6">
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <div className="p-3 rounded-full bg-cyan-500/10">
+              <Users className="h-7 w-7 text-cyan-500" />
+            </div>
+            <div className="flex-1 text-center sm:text-left">
+              <h3 className="font-semibold text-lg">Discover Thousands of Models</h3>
+              <p className="text-sm text-muted-foreground">
+                Browse our full directory with advanced filters. Find models by location, style, measurements, and more.
+              </p>
+            </div>
+            <Button asChild size="lg" className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700">
+              <Link href="/models">
+                <Search className="mr-2 h-4 w-4" />
+                Browse All Models
+              </Link>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Featured Models */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-pink-500" />
-            Models
+            Featured Models
           </CardTitle>
           <Button variant="ghost" size="sm" asChild>
             <Link href="/models" className="text-pink-500">
@@ -832,6 +962,44 @@ async function FanDashboard({ actorId }: { actorId: string }) {
               </Button>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* How It Works - Bottom Section */}
+      <Card className="border-violet-500/20">
+        <CardHeader>
+          <CardTitle className="text-center">How EXA Works</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="text-center">
+              <div className="w-12 h-12 rounded-full bg-pink-500/10 flex items-center justify-center mx-auto mb-3">
+                <span className="text-xl font-bold text-pink-500">1</span>
+              </div>
+              <h4 className="font-semibold mb-1">Browse & Follow</h4>
+              <p className="text-sm text-muted-foreground">
+                Discover models and follow your favorites to stay updated
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="w-12 h-12 rounded-full bg-violet-500/10 flex items-center justify-center mx-auto mb-3">
+                <span className="text-xl font-bold text-violet-500">2</span>
+              </div>
+              <h4 className="font-semibold mb-1">Get Coins</h4>
+              <p className="text-sm text-muted-foreground">
+                Purchase coins to unlock messaging, video calls, and more
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="w-12 h-12 rounded-full bg-cyan-500/10 flex items-center justify-center mx-auto mb-3">
+                <span className="text-xl font-bold text-cyan-500">3</span>
+              </div>
+              <h4 className="font-semibold mb-1">Connect</h4>
+              <p className="text-sm text-muted-foreground">
+                Chat, video call, and support models you love
+              </p>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

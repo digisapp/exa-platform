@@ -654,175 +654,216 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Profile Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="display_name">Display Name</Label>
-              <Input
-                id="display_name"
-                value={fan.display_name || ""}
-                onChange={(e) => setFan({ ...fan, display_name: e.target.value })}
-                placeholder="Your display name"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <div className="relative">
-                <Input
-                  id="username"
-                  value={fan.username || ""}
-                  onChange={(e) => {
-                    const value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "");
-                    setFan({ ...fan, username: value });
-                    checkUsernameAvailability(value);
-                  }}
-                  placeholder="username"
-                  className={fan.username ? (
-                    usernameStatus.available === true ? "pr-10 border-green-500 focus-visible:ring-green-500" :
-                    usernameStatus.available === false ? "pr-10 border-red-500 focus-visible:ring-red-500" : "pr-10"
-                  ) : ""}
-                />
-                {fan.username && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    {usernameStatus.checking ? (
-                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                    ) : usernameStatus.available === true ? (
-                      <svg className="h-4 w-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                    ) : usernameStatus.available === false ? (
-                      <svg className="h-4 w-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    ) : null}
+        <Tabs defaultValue="profile" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="profile" className="flex items-center gap-2">
+              <User className="h-4 w-4" />
+              Profile
+            </TabsTrigger>
+            <TabsTrigger value="account" className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4" />
+              Account
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="profile" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Profile Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="display_name">Display Name</Label>
+                  <Input
+                    id="display_name"
+                    value={fan.display_name || ""}
+                    onChange={(e) => setFan({ ...fan, display_name: e.target.value })}
+                    placeholder="Your display name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="username">Username</Label>
+                  <div className="relative">
+                    <Input
+                      id="username"
+                      value={fan.username || ""}
+                      onChange={(e) => {
+                        const value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "");
+                        setFan({ ...fan, username: value });
+                        checkUsernameAvailability(value);
+                      }}
+                      placeholder="username"
+                      className={fan.username ? (
+                        usernameStatus.available === true ? "pr-10 border-green-500 focus-visible:ring-green-500" :
+                        usernameStatus.available === false ? "pr-10 border-red-500 focus-visible:ring-red-500" : "pr-10"
+                      ) : ""}
+                    />
+                    {fan.username && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {usernameStatus.checking ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        ) : usernameStatus.available === true ? (
+                          <svg className="h-4 w-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        ) : usernameStatus.available === false ? (
+                          <svg className="h-4 w-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        ) : null}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-              {fan.username && usernameStatus.available === true && (
-                <p className="text-xs text-green-500">Username is available!</p>
-              )}
-              {fan.username && usernameStatus.available === false && usernameStatus.reason && (
-                <p className="text-xs text-red-500">{usernameStatus.reason}</p>
-              )}
-              {(!fan.username || usernameStatus.available === null) && !usernameStatus.checking && (
-                <p className="text-xs text-muted-foreground">
-                  Letters, numbers, and underscores only
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                  {fan.username && usernameStatus.available === true && (
+                    <p className="text-xs text-green-500">Username is available!</p>
+                  )}
+                  {fan.username && usernameStatus.available === false && usernameStatus.reason && (
+                    <p className="text-xs text-red-500">{usernameStatus.reason}</p>
+                  )}
+                  {(!fan.username || usernameStatus.available === null) && !usernameStatus.checking && (
+                    <p className="text-xs text-muted-foreground">
+                      Letters, numbers, and underscores only
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Contact Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={userEmail}
-                disabled
-                className="bg-muted"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
-              <Input
-                id="phone"
-                type="tel"
-                value={fan.phone || ""}
-                onChange={(e) => setFan({ ...fan, phone: e.target.value })}
-                placeholder="+1 (555) 000-0000"
-              />
-            </div>
-          </CardContent>
-        </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Contact Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={userEmail}
+                    disabled
+                    className="bg-muted"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={fan.phone || ""}
+                    onChange={(e) => setFan({ ...fan, phone: e.target.value })}
+                    placeholder="+1 (555) 000-0000"
+                  />
+                </div>
+              </CardContent>
+            </Card>
 
-        <Button
-          onClick={handleFanSave}
-          disabled={saving}
-          className="w-full bg-gradient-to-r from-pink-500 to-violet-500"
-        >
-          {saving ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            "Save Changes"
-          )}
-        </Button>
+            <Button
+              onClick={handleFanSave}
+              disabled={saving}
+              className="w-full bg-gradient-to-r from-pink-500 to-violet-500"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Changes"
+              )}
+            </Button>
+          </TabsContent>
 
-        {/* Danger Zone */}
-        <Card className="border-red-500/20">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-red-500">
-              <AlertTriangle className="h-5 w-5" />
-              Danger Zone
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">Delete Account</p>
-                <p className="text-sm text-muted-foreground">
-                  Permanently delete your account and all data
-                </p>
-              </div>
-              <AlertDialog onOpenChange={(open) => !open && setDeleteConfirmation("")}>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" disabled={deleting}>
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete Account
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription className="space-y-3">
-                      <span className="block">
-                        This action cannot be undone. This will permanently delete your
-                        account, all your data, coin balance, and remove your access to EXA.
-                      </span>
-                      <span className="block font-medium text-foreground">
-                        Type DELETE to confirm:
-                      </span>
-                      <Input
-                        value={deleteConfirmation}
-                        onChange={(e) => setDeleteConfirmation(e.target.value)}
-                        placeholder="Type DELETE"
-                        className="mt-2"
-                      />
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={handleDeleteAccount}
-                      className="bg-red-500 hover:bg-red-600"
-                      disabled={deleting || deleteConfirmation !== "DELETE"}
-                    >
-                      {deleting ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Deleting...
-                        </>
-                      ) : (
-                        "Delete Account"
-                      )}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          </CardContent>
-        </Card>
+          <TabsContent value="account" className="space-y-6">
+            {/* Sign Out */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <LogOut className="h-5 w-5" />
+                  Session
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Sign Out</p>
+                    <p className="text-sm text-muted-foreground">
+                      Sign out of your account on this device
+                    </p>
+                  </div>
+                  <LogoutButton />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Danger Zone */}
+            <Card className="border-red-500/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-red-500">
+                  <AlertTriangle className="h-5 w-5" />
+                  Danger Zone
+                </CardTitle>
+                <CardDescription>
+                  Irreversible actions that affect your account
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Delete Account</p>
+                    <p className="text-sm text-muted-foreground">
+                      Permanently delete your account and all data
+                    </p>
+                  </div>
+                  <AlertDialog onOpenChange={(open) => !open && setDeleteConfirmation("")}>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" disabled={deleting}>
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete Account
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription className="space-y-3">
+                          <span className="block">
+                            This action cannot be undone. This will permanently delete your
+                            account, all your data, coin balance, and remove your access to EXA.
+                          </span>
+                          <span className="block font-medium text-foreground">
+                            Type DELETE to confirm:
+                          </span>
+                          <Input
+                            value={deleteConfirmation}
+                            onChange={(e) => setDeleteConfirmation(e.target.value)}
+                            placeholder="Type DELETE"
+                            className="mt-2"
+                          />
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleDeleteAccount}
+                          className="bg-red-500 hover:bg-red-600"
+                          disabled={deleting || deleteConfirmation !== "DELETE"}
+                        >
+                          {deleting ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Deleting...
+                            </>
+                          ) : (
+                            "Delete Account"
+                          )}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     );
   }
