@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
-import { sendGigApplicationAcceptedEmail, sendGigApplicationRejectedEmail } from "@/lib/email";
+import { sendGigApplicationAcceptedEmail, sendGigApplicationRejectedEmail, sendCreatorHouseAcceptedEmail } from "@/lib/email";
 
 // Send gig application notification (chat message + email) - server-side only
 export async function POST(request: NextRequest) {
@@ -32,7 +32,12 @@ export async function POST(request: NextRequest) {
       gigTitle,
       gigDate,
       gigLocation,
-      eventName
+      eventName,
+      // Creator House specific fields
+      isCreatorHouse,
+      applicationId,
+      gigId,
+      gigSlug,
     } = body;
 
     if (!action || !modelId) {
@@ -140,14 +145,29 @@ export async function POST(request: NextRequest) {
       const modelName = modelRecord.first_name || modelRecord.username || "Model";
 
       if (action === "accepted") {
-        await sendGigApplicationAcceptedEmail({
-          to: modelRecord.email,
-          modelName,
-          gigTitle: gigTitle || "a gig",
-          gigDate,
-          gigLocation,
-          eventName,
-        });
+        // Check if this is a Creator House gig
+        if (isCreatorHouse && applicationId && gigId && gigSlug) {
+          await sendCreatorHouseAcceptedEmail({
+            to: modelRecord.email,
+            modelName,
+            gigTitle: gigTitle || "Models Creator House",
+            gigDate,
+            gigLocation,
+            applicationId,
+            gigId,
+            modelId,
+            gigSlug,
+          });
+        } else {
+          await sendGigApplicationAcceptedEmail({
+            to: modelRecord.email,
+            modelName,
+            gigTitle: gigTitle || "a gig",
+            gigDate,
+            gigLocation,
+            eventName,
+          });
+        }
       } else if (action === "rejected") {
         await sendGigApplicationRejectedEmail({
           to: modelRecord.email,

@@ -54,6 +54,12 @@ export async function POST(request: NextRequest) {
           break;
         }
 
+        // Check if this is a Creator House payment
+        if (session.metadata?.type === "creator_house_payment") {
+          await handleCreatorHousePayment(session);
+          break;
+        }
+
         // Check if this is a ticket purchase
         if (session.metadata?.type === "ticket_purchase") {
           await handleTicketPurchase(session);
@@ -368,6 +374,38 @@ async function handleTripPayment(session: Stripe.Checkout.Session) {
   }
 
   console.log("Trip payment successful:", { gigId, modelId, tripNumber });
+}
+
+async function handleCreatorHousePayment(session: Stripe.Checkout.Session) {
+  const applicationId = session.metadata?.application_id;
+  const gigId = session.metadata?.gig_id;
+  const modelId = session.metadata?.model_id;
+
+  if (!applicationId || !gigId || !modelId) {
+    console.error("Missing Creator House payment metadata:", session.id);
+    return;
+  }
+
+  const paymentIntentId = typeof session.payment_intent === "string"
+    ? session.payment_intent
+    : session.payment_intent?.id;
+
+  // Update the gig application with payment success
+  const { error } = await supabaseAdmin
+    .from("gig_applications")
+    .update({
+      payment_status: "paid",
+      stripe_payment_intent_id: paymentIntentId,
+      amount_paid: session.amount_total,
+    })
+    .eq("id", applicationId);
+
+  if (error) {
+    console.error("Error updating Creator House payment:", error);
+    return;
+  }
+
+  console.log("Creator House payment successful:", { applicationId, gigId, modelId, amount: session.amount_total });
 }
 
 async function handleTicketPurchase(session: Stripe.Checkout.Session) {

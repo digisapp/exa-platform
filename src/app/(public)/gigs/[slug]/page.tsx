@@ -21,6 +21,7 @@ import {
 import { formatDistanceToNow, format } from "date-fns";
 import { ApplyButton } from "@/components/gigs/ApplyButton";
 import { TripApplicationForm } from "@/components/gigs/TripApplicationForm";
+import { CreatorHousePaymentButton } from "@/components/gigs/CreatorHousePaymentButton";
 import type { Metadata } from "next";
 
 interface Props {
@@ -248,31 +249,45 @@ export default async function GigDetailPage({ params }: Props) {
                 <CardContent className="pt-6 space-y-4">
                   {/* Status */}
                   {existingApplication ? (
-                    <div className="p-4 rounded-lg bg-muted text-center">
-                      <p className="font-medium mb-1">Application Status</p>
-                      <Badge
-                        variant={
-                          existingApplication.status === "accepted" || existingApplication.status === "approved"
-                            ? "default"
-                            : existingApplication.status === "rejected"
-                            ? "destructive"
-                            : "secondary"
-                        }
-                        className={`capitalize ${
-                          existingApplication.status === "accepted" || existingApplication.status === "approved"
-                            ? "bg-green-500"
-                            : ""
-                        }`}
-                      >
-                        {existingApplication.status === "approved" ? "Confirmed" : existingApplication.status}
-                      </Badge>
-                      {existingApplication.payment_status === "paid" && (
-                        <p className="text-xs text-green-500 mt-2">Payment received</p>
-                      )}
-                      {existingApplication.trip_number && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Trip {existingApplication.trip_number}
-                        </p>
+                    <div className="space-y-4">
+                      <div className="p-4 rounded-lg bg-muted text-center">
+                        <p className="font-medium mb-1">Application Status</p>
+                        <Badge
+                          variant={
+                            existingApplication.status === "accepted" || existingApplication.status === "approved"
+                              ? "default"
+                              : existingApplication.status === "rejected"
+                              ? "destructive"
+                              : "secondary"
+                          }
+                          className={`capitalize ${
+                            existingApplication.status === "accepted" || existingApplication.status === "approved"
+                              ? "bg-green-500"
+                              : ""
+                          }`}
+                        >
+                          {existingApplication.status === "approved" ? "Confirmed" : existingApplication.status}
+                        </Badge>
+                        {existingApplication.payment_status === "paid" && (
+                          <p className="text-xs text-green-500 mt-2">Payment received</p>
+                        )}
+                        {existingApplication.trip_number && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Trip {existingApplication.trip_number}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Show payment button for Creator House gigs that are accepted but not paid */}
+                      {gig.title?.toLowerCase().includes("creator house") &&
+                       existingApplication.status === "accepted" &&
+                       existingApplication.payment_status !== "paid" &&
+                       modelId && (
+                        <CreatorHousePaymentButton
+                          applicationId={existingApplication.id}
+                          gigId={gig.id}
+                          modelId={modelId}
+                        />
                       )}
                     </div>
                   ) : gig.type === "travel" && canApply ? (

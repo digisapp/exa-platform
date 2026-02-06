@@ -774,6 +774,9 @@ export default function AdminGigsPage() {
             }
           }
 
+          // Check if this is a Creator House gig
+          const isCreatorHouse = gig?.title?.toLowerCase().includes("creator house");
+
           await fetch("/api/admin/send-gig-notification", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -784,6 +787,11 @@ export default function AdminGigsPage() {
               gigDate: gig?.start_at ? new Date(gig.start_at).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" }) : undefined,
               gigLocation: gig?.location_city && gig?.location_state ? `${gig.location_city}, ${gig.location_state}` : undefined,
               eventName,
+              // Creator House specific fields
+              isCreatorHouse,
+              applicationId: app.id,
+              gigId: gig?.id,
+              gigSlug: gig?.slug,
             }),
           });
         } catch (notifyError) {
