@@ -422,7 +422,7 @@ export default async function EventPage({ params, searchParams }: Props) {
           {/* Sidebar */}
           <div className="lg:col-span-1">
             <div className="sticky top-24 space-y-4">
-              {/* Ticket Card - Internal or External */}
+              {/* Ticket Button with Popup */}
               {hasInternalTickets ? (
                 <TicketCheckout
                   tiers={ticketTiers}
@@ -433,54 +433,27 @@ export default async function EventPage({ params, searchParams }: Props) {
                       : undefined
                   }
                 />
+              ) : ticketUrl ? (
+                <Button
+                  asChild
+                  size="lg"
+                  className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-lg py-6 rounded-xl shadow-lg shadow-pink-500/25"
+                >
+                  <a href={ticketUrl} target="_blank" rel="noopener noreferrer">
+                    <Ticket className="h-6 w-6 mr-2" />
+                    Get Tickets
+                    <ExternalLink className="h-4 w-4 ml-2" />
+                  </a>
+                </Button>
               ) : (
-                <Card className="overflow-hidden">
-                  <div className="bg-gradient-to-r from-pink-500 to-violet-500 p-6 text-white text-center">
-                    <Ticket className="h-12 w-12 mx-auto mb-3" />
-                    <h3 className="text-xl font-bold mb-1">Get Tickets</h3>
-                    <p className="text-white/80 text-sm">
-                      Don&apos;t miss this amazing event
-                    </p>
-                  </div>
-                  <CardContent className="p-6 space-y-4">
-                    {event.ticket_price_cents && (
-                      <div className="text-center">
-                        <p className="text-sm text-muted-foreground">Starting from</p>
-                        <p className="text-3xl font-bold">
-                          ${(event.ticket_price_cents / 100).toFixed(0)}
-                        </p>
-                      </div>
-                    )}
-
-                    {ticketUrl ? (
-                      <Button
-                        asChild
-                        className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
-                        size="lg"
-                      >
-                        <a href={ticketUrl} target="_blank" rel="noopener noreferrer">
-                          <Ticket className="h-5 w-5 mr-2" />
-                          Buy Tickets
-                          <ExternalLink className="h-4 w-4 ml-2" />
-                        </a>
-                      </Button>
-                    ) : (
-                      <Button
-                        disabled
-                        className="w-full"
-                        size="lg"
-                      >
-                        Tickets Coming Soon
-                      </Button>
-                    )}
-
-                    <p className="text-xs text-center text-muted-foreground">
-                      {referringModel
-                        ? `Your purchase supports ${referringModel.first_name || referringModel.username}!`
-                        : "Support your favorite models by using their referral link"}
-                    </p>
-                  </CardContent>
-                </Card>
+                <Button
+                  disabled
+                  size="lg"
+                  className="w-full text-lg py-6 rounded-xl"
+                >
+                  <Ticket className="h-6 w-6 mr-2" />
+                  Tickets Coming Soon
+                </Button>
               )}
 
               {/* Event Details Card */}

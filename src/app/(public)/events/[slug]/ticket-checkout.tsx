@@ -2,9 +2,15 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Ticket,
   Loader2,
@@ -12,6 +18,7 @@ import {
   Plus,
   CheckCircle,
   AlertCircle,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -39,6 +46,7 @@ export function TicketCheckout({
   eventName,
   referringModelName,
 }: TicketCheckoutProps) {
+  const [isOpen, setIsOpen] = useState(false);
   const [selectedTier, setSelectedTier] = useState<TicketTier | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [buyerEmail, setBuyerEmail] = useState("");
@@ -101,177 +109,201 @@ export function TicketCheckout({
     }
   };
 
+  // Get the lowest price for the button display
+  const lowestPrice = Math.min(...tiers.map(t => t.price_cents)) / 100;
+
   return (
-    <Card className="overflow-hidden">
-      <div className="bg-gradient-to-r from-pink-500 to-violet-500 p-6 text-white text-center">
-        <Ticket className="h-12 w-12 mx-auto mb-3" />
-        <h3 className="text-xl font-bold mb-1">Get Tickets</h3>
-        <p className="text-white/80 text-sm">Secure your spot at {eventName}</p>
-      </div>
-
-      <CardContent className="p-6 space-y-6">
-        {/* Tier Selection */}
-        <div className="space-y-3">
-          <Label className="text-sm font-medium">Select Ticket Type</Label>
-          {tiers.map((tier) => (
-            <button
-              key={tier.id}
-              onClick={() => {
-                if (!tier.isSoldOut && tier.isSaleActive) {
-                  setSelectedTier(tier);
-                  setQuantity(1);
-                }
-              }}
-              disabled={tier.isSoldOut || !tier.isSaleActive}
-              className={cn(
-                "w-full p-4 rounded-xl border-2 text-left transition-all",
-                selectedTier?.id === tier.id
-                  ? "border-pink-500 bg-pink-500/10"
-                  : "border-border hover:border-pink-500/50",
-                (tier.isSoldOut || !tier.isSaleActive) &&
-                  "opacity-50 cursor-not-allowed"
-              )}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-semibold">{tier.name}</p>
-                  {tier.description && (
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {tier.description}
-                    </p>
-                  )}
-                </div>
-                <div className="text-right">
-                  <p className="text-lg font-bold">
-                    ${(tier.price_cents / 100).toFixed(2)}
-                  </p>
-                  {tier.isSoldOut ? (
-                    <p className="text-xs text-red-500 font-medium">Sold Out</p>
-                  ) : tier.available !== null ? (
-                    <p className="text-xs text-muted-foreground">
-                      {tier.available} left
-                    </p>
-                  ) : null}
-                </div>
-              </div>
-              {selectedTier?.id === tier.id && (
-                <CheckCircle className="absolute top-4 right-4 h-5 w-5 text-pink-500" />
-              )}
-            </button>
-          ))}
-        </div>
-
-        {/* Quantity Selector */}
-        {selectedTier && (
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Quantity</Label>
-            <div className="flex items-center gap-4">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => handleQuantityChange(-1)}
-                disabled={quantity <= 1}
-              >
-                <Minus className="h-4 w-4" />
-              </Button>
-              <span className="text-2xl font-bold w-12 text-center">
-                {quantity}
-              </span>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => handleQuantityChange(1)}
-                disabled={
-                  quantity >= 10 ||
-                  (selectedTier.available !== null &&
-                    quantity >= selectedTier.available)
-                }
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* Buyer Info */}
-        {selectedTier && (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address *</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={buyerEmail}
-                onChange={(e) => setBuyerEmail(e.target.value)}
-                required
-              />
-              <p className="text-xs text-muted-foreground">
-                Your tickets will be sent to this email
-              </p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name (Optional)</Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="Your name"
-                value={buyerName}
-                onChange={(e) => setBuyerName(e.target.value)}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Total */}
-        {selectedTier && (
-          <div className="pt-4 border-t">
-            <div className="flex items-center justify-between text-lg">
-              <span className="font-medium">Total</span>
-              <span className="font-bold text-2xl">
-                ${totalPrice.toFixed(2)}
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* Error */}
-        {error && (
-          <div className="flex items-center gap-2 text-red-500 text-sm">
-            <AlertCircle className="h-4 w-4" />
-            {error}
-          </div>
-        )}
-
-        {/* Checkout Button */}
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
         <Button
-          onClick={handleCheckout}
-          disabled={!selectedTier || isLoading}
-          className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
           size="lg"
+          className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-lg py-6 rounded-xl shadow-lg shadow-pink-500/25"
         >
-          {isLoading ? (
-            <>
-              <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-              Processing...
-            </>
-          ) : (
-            <>
-              <Ticket className="h-5 w-5 mr-2" />
-              {selectedTier
-                ? `Buy ${quantity} Ticket${quantity > 1 ? "s" : ""}`
-                : "Select a Ticket"}
-            </>
-          )}
+          <Ticket className="h-6 w-6 mr-2" />
+          Get Tickets - From ${lowestPrice.toFixed(0)}
         </Button>
+      </DialogTrigger>
 
-        {/* Affiliate Message */}
-        <p className="text-xs text-center text-muted-foreground">
-          {referringModelName
-            ? `Your purchase supports ${referringModelName}!`
-            : "Support your favorite models by using their referral link"}
-        </p>
-      </CardContent>
-    </Card>
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-center">
+            <div className="flex flex-col items-center gap-2">
+              <div className="p-3 rounded-full bg-gradient-to-r from-pink-500 to-violet-500">
+                <Ticket className="h-6 w-6 text-white" />
+              </div>
+              <span className="text-xl">Get Tickets</span>
+              <span className="text-sm font-normal text-muted-foreground">
+                {eventName}
+              </span>
+            </div>
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-6 py-4">
+          {/* Tier Selection */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">Select Ticket Type</Label>
+            {tiers.map((tier) => (
+              <button
+                key={tier.id}
+                onClick={() => {
+                  if (!tier.isSoldOut && tier.isSaleActive) {
+                    setSelectedTier(tier);
+                    setQuantity(1);
+                    setError(null);
+                  }
+                }}
+                disabled={tier.isSoldOut || !tier.isSaleActive}
+                className={cn(
+                  "w-full p-4 rounded-xl border-2 text-left transition-all relative",
+                  selectedTier?.id === tier.id
+                    ? "border-pink-500 bg-pink-500/10"
+                    : "border-border hover:border-pink-500/50",
+                  (tier.isSoldOut || !tier.isSaleActive) &&
+                    "opacity-50 cursor-not-allowed"
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="pr-4">
+                    <p className="font-semibold">{tier.name}</p>
+                    {tier.description && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {tier.description}
+                      </p>
+                    )}
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-lg font-bold">
+                      ${(tier.price_cents / 100).toFixed(0)}
+                    </p>
+                    {tier.isSoldOut ? (
+                      <p className="text-xs text-red-500 font-medium">Sold Out</p>
+                    ) : tier.available !== null ? (
+                      <p className="text-xs text-muted-foreground">
+                        {tier.available} left
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+                {selectedTier?.id === tier.id && (
+                  <CheckCircle className="absolute top-4 right-4 h-5 w-5 text-pink-500" />
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Quantity Selector */}
+          {selectedTier && (
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Quantity</Label>
+              <div className="flex items-center gap-4">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handleQuantityChange(-1)}
+                  disabled={quantity <= 1}
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
+                <span className="text-2xl font-bold w-12 text-center">
+                  {quantity}
+                </span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handleQuantityChange(1)}
+                  disabled={
+                    quantity >= 10 ||
+                    (selectedTier.available !== null &&
+                      quantity >= selectedTier.available)
+                  }
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Buyer Info */}
+          {selectedTier && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={buyerEmail}
+                  onChange={(e) => setBuyerEmail(e.target.value)}
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  Your tickets will be sent to this email
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="name">Full Name (Optional)</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="Your name"
+                  value={buyerName}
+                  onChange={(e) => setBuyerName(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Total */}
+          {selectedTier && (
+            <div className="pt-4 border-t">
+              <div className="flex items-center justify-between text-lg">
+                <span className="font-medium">Total</span>
+                <span className="font-bold text-2xl">
+                  ${totalPrice.toFixed(2)}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Error */}
+          {error && (
+            <div className="flex items-center gap-2 text-red-500 text-sm">
+              <AlertCircle className="h-4 w-4" />
+              {error}
+            </div>
+          )}
+
+          {/* Checkout Button */}
+          <Button
+            onClick={handleCheckout}
+            disabled={!selectedTier || isLoading}
+            className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
+            size="lg"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              <>
+                <Ticket className="h-5 w-5 mr-2" />
+                {selectedTier
+                  ? `Buy ${quantity} Ticket${quantity > 1 ? "s" : ""}`
+                  : "Select a Ticket"}
+              </>
+            )}
+          </Button>
+
+          {/* Affiliate Message */}
+          <p className="text-xs text-center text-muted-foreground">
+            {referringModelName
+              ? `Your purchase supports ${referringModelName}!`
+              : "Support your favorite models by using their referral link"}
+          </p>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
