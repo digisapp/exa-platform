@@ -172,38 +172,6 @@ export default async function TravelPage() {
           )}
         </main>
 
-        {/* Stats Section */}
-        <section className="py-12 border-y border-border/50 bg-muted/30">
-          <div className="container px-8 md:px-16">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              <div className="text-center">
-                <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-pink-500 to-violet-500 bg-clip-text text-transparent">
-                  {(travelGigs?.length || 0)}
-                </div>
-                <div className="text-sm text-muted-foreground mt-1">Upcoming Trips</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-pink-500 to-violet-500 bg-clip-text text-transparent">
-                  5+
-                </div>
-                <div className="text-sm text-muted-foreground mt-1">Destinations</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-pink-500 to-violet-500 bg-clip-text text-transparent">
-                  50+
-                </div>
-                <div className="text-sm text-muted-foreground mt-1">Photos Per Trip</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-pink-500 to-violet-500 bg-clip-text text-transparent">
-                  10+
-                </div>
-                <div className="text-sm text-muted-foreground mt-1">Videos Per Trip</div>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* Trips Section */}
         <section id="trips" className="py-16 md:py-24 bg-muted/30">
           <div className="container px-8 md:px-16">
