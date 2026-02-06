@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
           await sendCreatorHouseAcceptedEmail({
             to: modelRecord.email,
             modelName,
-            gigTitle: gigTitle || "Models Creator House",
+            gigTitle: gigTitle || "EXA Models Creator House",
             gigDate,
             gigLocation,
             applicationId,

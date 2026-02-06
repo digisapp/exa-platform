@@ -1674,7 +1674,7 @@ export async function sendCreatorHouseAcceptedEmail({
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
       to: [to],
-      subject: `You're in! Models Creator House - Complete Your Payment`,
+      subject: `You're in! EXA Models Creator House - Complete Your Payment`,
       html: `
 <!DOCTYPE html>
 <html>
@@ -1696,7 +1696,7 @@ export async function sendCreatorHouseAcceptedEmail({
                 You're Accepted!
               </h1>
               <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
-                Models Creator House
+                EXA Models Creator House
               </p>
             </td>
           </tr>
@@ -1708,7 +1708,7 @@ export async function sendCreatorHouseAcceptedEmail({
                 Hey ${modelName}! 🎉
               </p>
               <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
-                Congratulations! You've been <strong style="color: #ec4899;">accepted</strong> to the Models Creator House! We're excited to have you join us.
+                Congratulations! You've been <strong style="color: #ec4899;">accepted</strong> to the EXA Models Creator House! We're excited to have you join us.
               </p>
 
               <!-- Gig Details -->
