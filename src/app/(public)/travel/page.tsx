@@ -139,7 +139,7 @@ export default async function TravelPage() {
                 EXA Travel
               </Badge>
               <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 drop-shadow-lg">
-                Shoot in Paradise with EXA
+                Shoot in Paradise
               </h1>
               <p className="text-lg md:text-xl text-white/80 mb-6 max-w-2xl">
                 Designer swimwear photoshoots in the most exotic tropical locations. Shoot stunning content
@@ -165,7 +165,7 @@ export default async function TravelPage() {
           {/* CTA Buttons */}
           {!user && (
             <div className="flex flex-wrap justify-center gap-4 mb-12">
-              <Button size="lg" variant="outline" asChild>
+              <Button size="lg" className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white font-semibold px-8 shadow-lg shadow-pink-500/25" asChild>
                 <Link href="/signin?redirect=/travel">Sign In to Apply</Link>
               </Button>
             </div>
