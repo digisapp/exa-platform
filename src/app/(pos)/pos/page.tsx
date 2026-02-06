@@ -21,22 +21,55 @@ import {
   Loader2,
   User,
   LogOut,
+  Bell,
+  Upload,
+  Settings,
 } from "lucide-react";
 import { BarcodeScanner } from "@/components/pos/barcode-scanner";
 import { PaymentModal } from "@/components/pos/payment-modal";
 import { ReceiptModal } from "@/components/pos/receipt-modal";
+import { StaffLogin } from "@/components/pos/staff-login";
+import { CashDrawer } from "@/components/pos/cash-drawer";
+import { LowStockAlert, LowStockBadge } from "@/components/pos/low-stock-alert";
+import { CSVImport } from "@/components/pos/csv-import";
 import type { Product, ProductVariant, CartItem, CompletedSale } from "@/types/pos";
 
+interface Staff {
+  id: string;
+  name: string;
+  role: "cashier" | "manager" | "admin";
+}
+
+interface DrawerSession {
+  id: string;
+  opened_at: string;
+  opening_cash: number;
+  total_cash_sales: number;
+  total_card_sales: number;
+  total_transactions: number;
+  expected_cash: number;
+}
+
 export default function POSPage() {
+  // Auth & Session
+  const [staff, setStaff] = useState<Staff | null>(null);
+  const [drawerSession, setDrawerSession] = useState<DrawerSession | null>(null);
+  const [showDrawer, setShowDrawer] = useState(false);
+
+  // Cart
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+
+  // Modals
   const [showScanner, setShowScanner] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
   const [showReceipt, setShowReceipt] = useState(false);
+  const [showLowStock, setShowLowStock] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+
   const [completedSale, setCompletedSale] = useState<CompletedSale | null>(null);
-  const [staffPin, setStaffPin] = useState<string | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Calculate totals
@@ -102,7 +135,6 @@ export default function POSPage() {
     );
 
     if (existingIndex >= 0) {
-      // Check stock
       if (cart[existingIndex].quantity >= variant.stock_quantity) {
         toast.error("Not enough stock");
         return;
@@ -128,7 +160,6 @@ export default function POSPage() {
       ]);
     }
 
-    // Clear search
     setSearchQuery("");
     setSearchResults([]);
     searchInputRef.current?.focus();
@@ -173,6 +204,26 @@ export default function POSPage() {
     setShowPayment(false);
     setShowReceipt(true);
     setCart([]);
+
+    // Update drawer session totals
+    if (drawerSession) {
+      setDrawerSession({
+        ...drawerSession,
+        total_transactions: drawerSession.total_transactions + 1,
+        total_cash_sales:
+          sale.paymentMethod === "cash"
+            ? drawerSession.total_cash_sales + sale.total
+            : drawerSession.total_cash_sales,
+        total_card_sales:
+          sale.paymentMethod === "card"
+            ? drawerSession.total_card_sales + sale.total
+            : drawerSession.total_card_sales,
+        expected_cash:
+          sale.paymentMethod === "cash"
+            ? drawerSession.expected_cash + sale.total
+            : drawerSession.expected_cash,
+      });
+    }
   };
 
   // Close receipt and reset
@@ -181,6 +232,57 @@ export default function POSPage() {
     setCompletedSale(null);
     searchInputRef.current?.focus();
   };
+
+  // Handle logout
+  const handleLogout = () => {
+    if (drawerSession) {
+      toast.error("Please close the cash drawer before logging out");
+      setShowDrawer(true);
+      return;
+    }
+    setStaff(null);
+  };
+
+  // If not logged in, show login screen
+  if (!staff) {
+    return <StaffLogin onLogin={(s) => setStaff(s)} />;
+  }
+
+  // If drawer not opened, show drawer screen
+  if (!drawerSession && !showDrawer) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <Image
+              src="/exa-logo-white.png"
+              alt="EXA"
+              width={100}
+              height={40}
+              className="h-10 w-auto mx-auto mb-4"
+            />
+            <h1 className="text-2xl font-bold">Welcome, {staff.name}</h1>
+            <p className="text-muted-foreground">Open cash drawer to start selling</p>
+          </div>
+          <CashDrawer
+            staffId={staff.id}
+            staffName={staff.name}
+            currentSession={null}
+            onSessionStart={(session) => setDrawerSession(session)}
+            onSessionEnd={() => setDrawerSession(null)}
+          />
+          <Button
+            variant="ghost"
+            className="w-full mt-4"
+            onClick={() => setStaff(null)}
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Switch Staff
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col bg-background">
@@ -198,12 +300,38 @@ export default function POSPage() {
             POS Terminal
           </Badge>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2">
+          {/* Low Stock Alert */}
+          <LowStockBadge onClick={() => setShowLowStock(true)} />
+
+          {/* Import Button (manager/admin only) */}
+          {(staff.role === "manager" || staff.role === "admin") && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowImport(true)}
+            >
+              <Upload className="h-4 w-4" />
+            </Button>
+          )}
+
+          {/* Drawer Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowDrawer(true)}
+          >
+            <Settings className="h-4 w-4" />
+          </Button>
+
+          {/* Staff Info */}
+          <div className="flex items-center gap-2 text-sm text-muted-foreground px-2">
             <User className="h-4 w-4" />
-            <span>Staff</span>
+            <span>{staff.name}</span>
           </div>
-          <Button variant="ghost" size="sm">
+
+          {/* Logout */}
+          <Button variant="ghost" size="sm" onClick={handleLogout}>
             <LogOut className="h-4 w-4" />
           </Button>
         </div>
@@ -269,7 +397,6 @@ export default function POSPage() {
                       ${product.retail_price.toFixed(2)}
                     </p>
 
-                    {/* Variant buttons */}
                     <div className="flex flex-wrap gap-1 mt-2">
                       {product.variants.map((variant) => (
                         <Button
@@ -441,7 +568,7 @@ export default function POSPage() {
         </div>
       </div>
 
-      {/* Barcode Scanner Modal */}
+      {/* Modals */}
       {showScanner && (
         <BarcodeScanner
           onScan={handleBarcodeScan}
@@ -449,7 +576,6 @@ export default function POSPage() {
         />
       )}
 
-      {/* Payment Modal */}
       {showPayment && (
         <PaymentModal
           cart={cart}
@@ -461,12 +587,52 @@ export default function POSPage() {
         />
       )}
 
-      {/* Receipt Modal */}
       {showReceipt && completedSale && (
         <ReceiptModal
           sale={completedSale}
           onClose={handleReceiptClose}
         />
+      )}
+
+      {showLowStock && (
+        <LowStockAlert onClose={() => setShowLowStock(false)} />
+      )}
+
+      {showImport && (
+        <CSVImport
+          onClose={() => setShowImport(false)}
+          onComplete={() => {
+            setShowImport(false);
+            toast.success("Products imported!");
+          }}
+        />
+      )}
+
+      {showDrawer && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+          <div className="w-full max-w-md">
+            <CashDrawer
+              staffId={staff.id}
+              staffName={staff.name}
+              currentSession={drawerSession}
+              onSessionStart={(session) => {
+                setDrawerSession(session);
+                setShowDrawer(false);
+              }}
+              onSessionEnd={() => {
+                setDrawerSession(null);
+                setShowDrawer(false);
+              }}
+            />
+            <Button
+              variant="ghost"
+              className="w-full mt-4 text-white"
+              onClick={() => setShowDrawer(false)}
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
       )}
     </div>
   );
