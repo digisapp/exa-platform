@@ -162,18 +162,10 @@ export default async function TravelPage() {
             </div>
           </div>
 
-          {/* CTA Buttons */}
-          {!user && (
-            <div className="flex flex-wrap justify-center gap-4 mb-12">
-              <Button size="lg" className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white font-semibold px-8 shadow-lg shadow-pink-500/25" asChild>
-                <Link href="/signin?redirect=/travel">Sign In to Apply</Link>
-              </Button>
-            </div>
-          )}
         </main>
 
         {/* Trips Section */}
-        <section id="trips" className="py-16 md:py-24 bg-muted/30">
+        <section id="trips" className="py-8 md:py-12 bg-muted/30">
           <div className="container px-8 md:px-16">
             {/* Open Trips */}
             {openTrips.length > 0 && (
