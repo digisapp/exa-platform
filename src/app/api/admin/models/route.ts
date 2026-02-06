@@ -295,7 +295,7 @@ export async function GET(request: NextRequest) {
       // Fetch full model data for paginated IDs
       const { data: fullModels, error: fullError } = await (supabase.from("models") as any)
         .select(`
-          id, username, first_name, last_name, email, city, state, is_approved,
+          id, username, first_name, last_name, email, phone, city, state, is_approved,
           profile_photo_url, profile_views, coin_balance, instagram_name,
           instagram_followers, admin_rating, new_face, created_at, user_id, invite_token,
           claimed_at, last_active_at
@@ -316,7 +316,7 @@ export async function GET(request: NextRequest) {
       // For DB-sortable fields: use standard pagination
       let query = (supabase.from("models") as any)
         .select(`
-          id, username, first_name, last_name, email, city, state, is_approved,
+          id, username, first_name, last_name, email, phone, city, state, is_approved,
           profile_photo_url, profile_views, coin_balance, instagram_name,
           instagram_followers, admin_rating, new_face, created_at, user_id, invite_token,
           claimed_at, last_active_at

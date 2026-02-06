@@ -44,9 +44,12 @@ import {
   KeyRound,
   Copy,
   Check,
+  MessageSquare,
+  Phone,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ModelActionsDropdown } from "@/components/admin/AdminActions";
+import { SMSBroadcastModal } from "@/components/admin/SMSBroadcastModal";
 
 function SortIndicator({ active, direction }: { active: boolean; direction: "asc" | "desc" }) {
   if (!active) return <ArrowUpDown className="h-4 w-4 ml-1 opacity-50" />;
@@ -206,6 +209,7 @@ interface Model {
   first_name: string | null;
   last_name: string | null;
   email: string | null;
+  phone: string | null;
   city: string | null;
   state: string | null;
   is_approved: boolean;
@@ -276,6 +280,7 @@ export default function AdminModelsPage() {
   // Bulk selection state
   const [selectedModels, setSelectedModels] = useState<Set<string>>(new Set());
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
+  const [showSMSModal, setShowSMSModal] = useState(false);
 
   // Toggle single model selection
   const toggleModelSelection = (modelId: string) => {
@@ -337,6 +342,33 @@ export default function AdminModelsPage() {
     } finally {
       setBulkActionLoading(false);
     }
+  };
+
+  // Copy phone numbers of selected models
+  const copyPhoneNumbers = () => {
+    const selectedModelsList = models.filter(m => selectedModels.has(m.id));
+    const phoneNumbers = selectedModelsList
+      .map(m => m.phone)
+      .filter((phone): phone is string => !!phone);
+
+    if (phoneNumbers.length === 0) {
+      toast.error("No phone numbers found for selected models");
+      return;
+    }
+
+    navigator.clipboard.writeText(phoneNumbers.join("\n"));
+    toast.success(`Copied ${phoneNumbers.length} phone numbers to clipboard`);
+  };
+
+  // Get selected models with phone numbers for SMS
+  const getSelectedModelsWithPhones = () => {
+    return models
+      .filter(m => selectedModels.has(m.id) && m.phone)
+      .map(m => ({
+        id: m.id,
+        name: m.first_name ? `${m.first_name} ${m.last_name || ''}`.trim() : m.username,
+        phone: m.phone!,
+      }));
   };
 
   // Export models to CSV
@@ -562,6 +594,24 @@ export default function AdminModelsPage() {
                   >
                     Reject ({selectedModels.size})
                   </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={copyPhoneNumbers}
+                    className="text-blue-500 border-blue-500/50 hover:bg-blue-500/10"
+                  >
+                    <Phone className="h-4 w-4 mr-1" />
+                    Copy Phones
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowSMSModal(true)}
+                    className="text-purple-500 border-purple-500/50 hover:bg-purple-500/10"
+                  >
+                    <MessageSquare className="h-4 w-4 mr-1" />
+                    Send SMS
+                  </Button>
                 </>
               )}
               {/* Export Button */}
@@ -713,6 +763,13 @@ export default function AdminModelsPage() {
           <Button variant="outline" onClick={() => setPage(totalPages)} disabled={page === totalPages}>Last</Button>
         </div>
       )}
+
+      {/* SMS Broadcast Modal */}
+      <SMSBroadcastModal
+        isOpen={showSMSModal}
+        onClose={() => setShowSMSModal(false)}
+        recipients={getSelectedModelsWithPhones()}
+      />
     </div>
   );
 }

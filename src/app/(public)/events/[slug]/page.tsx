@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Navbar } from "@/components/layout/navbar";
 import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +14,8 @@ import {
   Ticket,
   ArrowLeft,
   ExternalLink,
+  Instagram,
+  Sparkles,
 } from "lucide-react";
 import { format } from "date-fns";
 import type { Metadata } from "next";
@@ -109,7 +112,13 @@ export default async function EventPage({ params, searchParams }: Props) {
         profile_photo_url,
         city,
         state,
-        affiliate_code
+        affiliate_code,
+        instagram_name,
+        instagram_followers,
+        height,
+        focus_tags,
+        is_verified,
+        is_featured
       ),
       gigs!inner (
         event_id
@@ -220,45 +229,49 @@ export default async function EventPage({ params, searchParams }: Props) {
         {/* Hero Section */}
         <div className="relative rounded-3xl overflow-hidden mb-8">
           {event.cover_image_url ? (
-            <div className="aspect-[21/9] relative">
-              <img
+            <div className="aspect-[21/9] md:aspect-[21/7] relative">
+              <Image
                 src={event.cover_image_url}
                 alt={event.name}
-                className="w-full h-full object-cover"
+                fill
+                className="object-cover"
+                priority
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/20" />
             </div>
           ) : (
-            <div className="aspect-[21/9] bg-gradient-to-br from-pink-500/30 via-violet-500/30 to-cyan-500/30" />
+            <div className="aspect-[21/9] md:aspect-[21/7] bg-gradient-to-br from-pink-500/30 via-violet-500/30 to-cyan-500/30 relative">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+            </div>
           )}
 
           {/* Event Info Overlay */}
-          <div className="absolute bottom-0 left-0 right-0 p-8">
-            <Badge className="mb-3 bg-pink-500/80 text-white border-0">
+          <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
+            <Badge className="mb-4 bg-gradient-to-r from-pink-500 to-violet-500 text-white border-0 px-4 py-1.5 text-sm font-semibold">
               {event.short_name} {event.year}
             </Badge>
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 drop-shadow-lg">
               {event.name}
             </h1>
-            <div className="flex flex-wrap gap-4 text-white/90">
+            <div className="flex flex-wrap gap-4 md:gap-6 text-white/90">
               {(event.location_city || event.location_state) && (
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-5 w-5" />
-                  <span>
+                <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
+                  <MapPin className="h-5 w-5 text-pink-400" />
+                  <span className="font-medium">
                     {event.location_city && event.location_state
                       ? `${event.location_city}, ${event.location_state}`
                       : event.location_city || event.location_state}
                   </span>
                 </div>
               )}
-              <div className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                <span>{dateDisplay}</span>
+              <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
+                <Calendar className="h-5 w-5 text-cyan-400" />
+                <span className="font-medium">{dateDisplay}</span>
               </div>
               {uniqueModels.length > 0 && (
-                <div className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  <span>{uniqueModels.length} Confirmed Models</span>
+                <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
+                  <Users className="h-5 w-5 text-violet-400" />
+                  <span className="font-medium">{uniqueModels.length} Confirmed Models</span>
                 </div>
               )}
             </div>
@@ -283,12 +296,14 @@ export default async function EventPage({ params, searchParams }: Props) {
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="lg:col-span-2 space-y-10">
             {/* Description */}
             {event.description && (
-              <div>
-                <h2 className="text-2xl font-bold mb-4">About This Event</h2>
-                <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">
+              <div className="glass-card rounded-2xl p-6 md:p-8">
+                <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+                  <span className="text-3xl">🌴</span> About This Event
+                </h2>
+                <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed text-lg">
                   {event.description}
                 </p>
               </div>
@@ -297,43 +312,114 @@ export default async function EventPage({ params, searchParams }: Props) {
             {/* Confirmed Models */}
             {uniqueModels.length > 0 && (
               <div>
-                <h2 className="text-2xl font-bold mb-4">Confirmed Models</h2>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-2 rounded-xl bg-gradient-to-br from-pink-500/20 to-violet-500/20">
+                    <Sparkles className="h-6 w-6 text-pink-500" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold">Confirmed Models</h2>
+                    <p className="text-sm text-muted-foreground">{uniqueModels.length} models walking the runway</p>
+                  </div>
+                </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                  {uniqueModels.map((model: any) => (
-                    <Link
-                      key={model.id}
-                      href={`/${model.username}`}
-                      className="group"
-                    >
-                      <Card className="overflow-hidden transition-all group-hover:ring-2 group-hover:ring-pink-500/50 group-hover:shadow-lg group-hover:shadow-pink-500/10">
-                        <div className="aspect-square relative bg-gradient-to-br from-pink-500/20 to-violet-500/20">
-                          {model.profile_photo_url ? (
-                            <img
-                              src={model.profile_photo_url}
-                              alt={model.first_name || model.username}
-                              className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-4xl">
-                              👤
+                  {uniqueModels.map((model: any) => {
+                    const displayName = model.first_name || model.username;
+                    const focusLabels: Record<string, string> = {
+                      fashion: "Fashion", commercial: "Commercial", fitness: "Fitness", athlete: "Athlete",
+                      swimwear: "Swimwear", beauty: "Beauty", editorial: "Editorial",
+                      ecommerce: "E-Comm", promo: "Promo", luxury: "Luxury", lifestyle: "Lifestyle"
+                    };
+
+                    return (
+                      <Link
+                        key={model.id}
+                        href={`/${model.username}`}
+                        className="group"
+                      >
+                        <div className="glass-card rounded-2xl overflow-hidden hover:scale-[1.02] transition-all h-full">
+                          {/* Image with Hover Overlay */}
+                          <div className="aspect-[3/4] relative bg-gradient-to-br from-[#FF69B4]/20 to-[#9400D3]/20 overflow-hidden">
+                            {model.profile_photo_url ? (
+                              <Image
+                                src={model.profile_photo_url}
+                                alt={displayName}
+                                fill
+                                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                                className="object-cover group-hover:scale-110 transition-transform duration-300"
+                                unoptimized={model.profile_photo_url.includes('cdninstagram.com')}
+                              />
+                            ) : (
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <span className="text-6xl">👤</span>
+                              </div>
+                            )}
+
+                            {/* Level Badge */}
+                            {(model.is_verified || model.is_featured) && (
+                              <div className="absolute top-3 right-3">
+                                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                  model.is_verified ? "level-verified" : "level-pro"
+                                }`}>
+                                  {model.is_verified ? "✓ Verified" : "⭐ Featured"}
+                                </span>
+                              </div>
+                            )}
+
+                            {/* Bottom Name Bar - Always Visible */}
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-3 pt-8">
+                              <h3 className="font-semibold text-white truncate">{displayName}</h3>
+                              <p className="text-sm text-[#00BFFF]">@{model.username}</p>
                             </div>
-                          )}
+
+                            {/* Hover Overlay with Details */}
+                            <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-4">
+                              <div className="space-y-2">
+                                <h3 className="font-semibold text-white text-lg">{displayName}</h3>
+                                <p className="text-sm text-[#00BFFF]">@{model.username}</p>
+
+                                {(model.city || model.state) && (
+                                  <div className="flex items-center gap-1 text-sm text-white/80">
+                                    <MapPin className="h-3.5 w-3.5 text-[#FF69B4]" />
+                                    {model.city && model.state ? `${model.city}, ${model.state}` : model.city || model.state}
+                                  </div>
+                                )}
+
+                                {model.instagram_name && (
+                                  <div className="flex items-center gap-1 text-sm text-white/80">
+                                    <Instagram className="h-3.5 w-3.5" />
+                                    @{model.instagram_name}
+                                    {model.instagram_followers && (
+                                      <span className="text-white/60 ml-1">
+                                        ({(model.instagram_followers / 1000).toFixed(1)}K)
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+
+                                {model.height && (
+                                  <p className="text-sm text-white/80">{model.height}</p>
+                                )}
+
+                                {/* Focus Tags */}
+                                {model.focus_tags && model.focus_tags.length > 0 && (
+                                  <div className="flex flex-wrap gap-1.5 pt-1">
+                                    {model.focus_tags.slice(0, 3).map((tag: string) => (
+                                      <span
+                                        key={tag}
+                                        className="px-2 py-0.5 text-xs font-medium rounded-full bg-gradient-to-r from-pink-500/30 to-violet-500/30 text-white border border-white/20"
+                                      >
+                                        {focusLabels[tag] || tag}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                        <CardContent className="p-3">
-                          <p className="font-medium truncate">
-                            {model.first_name
-                              ? `${model.first_name} ${model.last_name || ""}`.trim()
-                              : model.username}
-                          </p>
-                          {model.city && model.state && (
-                            <p className="text-xs text-muted-foreground truncate">
-                              {model.city}, {model.state}
-                            </p>
-                          )}
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  ))}
+                      </Link>
+                    );
+                  })}
                 </div>
               </div>
             )}
