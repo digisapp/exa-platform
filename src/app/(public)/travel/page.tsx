@@ -21,8 +21,8 @@ import {
 import { format } from "date-fns";
 
 export const metadata: Metadata = {
-  title: "Travel with EXA | Model Travel Opportunities",
-  description: "Join EXA Models on exclusive travel trips to destinations like Dominican Republic, Miami, and more. Create content, network with creators, and explore the world.",
+  title: "Model Travel Trips | Designer Swimwear Photoshoots in Paradise",
+  description: "Exclusive travel trips for models. Designer swimwear photoshoots in exotic tropical locations. Shoot alongside top models in Dominican Republic, Miami, and more. 50+ photos, 10+ videos per trip.",
   robots: { index: true, follow: true },
 };
 
@@ -118,54 +118,59 @@ export default async function TravelPage() {
           actorType={actorType}
         />
 
-        {/* Video Banner */}
-        <section className="relative">
-          <div className="aspect-[21/9] md:aspect-[3/1] relative overflow-hidden">
-            <iframe
-              src="https://www.youtube.com/embed/LP5uPoIgGOA?autoplay=1&mute=1&loop=1&playlist=LP5uPoIgGOA&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1"
-              title="EXA Travel"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-              style={{ border: 0 }}
-            />
-            {/* Gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-background/80" />
-          </div>
-        </section>
+        {/* Hero Section with Full-Screen Video */}
+        <main className="container px-8 md:px-16 py-8">
+          <div className="relative rounded-3xl overflow-hidden mb-8">
+            <div className="aspect-video relative">
+              <iframe
+                src="https://www.youtube.com/embed/LP5uPoIgGOA?autoplay=1&mute=1&loop=1&playlist=LP5uPoIgGOA&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1"
+                title="EXA Travel"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="absolute inset-0 w-full h-full"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent pointer-events-none" />
+            </div>
 
-        {/* Hero Content */}
-        <section className="relative -mt-32 md:-mt-40 pb-12">
-          <div className="container relative px-8 md:px-16">
-            <div className="max-w-3xl mx-auto text-center">
-              <Badge className="mb-6 bg-gradient-to-r from-pink-500 to-violet-500 text-white border-0 px-4 py-1">
+            {/* Content Overlay */}
+            <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 pointer-events-none">
+              <Badge className="mb-4 bg-gradient-to-r from-pink-500 to-violet-500 text-white border-0 px-4 py-1.5 text-sm font-semibold">
                 <Plane className="h-4 w-4 mr-2" />
                 EXA Travel
               </Badge>
-              <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-white via-pink-200 to-violet-200 bg-clip-text text-transparent">
-                Travel the World with EXA Models
+              <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 drop-shadow-lg">
+                Shoot in Paradise with Top Models
               </h1>
-              <p className="text-lg md:text-xl text-muted-foreground mb-8">
-                Join exclusive trips to stunning destinations. Create content, network with creators,
-                and build your portfolio while exploring the world.
+              <p className="text-lg md:text-xl text-white/80 mb-6 max-w-2xl">
+                Designer swimwear photoshoots in the most exotic tropical locations. Shoot stunning content
+                alongside other top models and gain massive exposure for your portfolio.
               </p>
-              <div className="flex flex-wrap justify-center gap-4">
-                <Button size="lg" className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600">
-                  <a href="#trips" className="flex items-center">
-                    View Upcoming Trips
-                    <ArrowRight className="h-5 w-5 ml-2" />
-                  </a>
-                </Button>
-                {!user && (
-                  <Button size="lg" variant="outline" asChild>
-                    <Link href="/signin?redirect=/travel">Sign In to Apply</Link>
-                  </Button>
-                )}
+              <div className="flex flex-wrap gap-4 md:gap-6 text-white/90">
+                <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
+                  <Camera className="h-5 w-5 text-pink-400" />
+                  <span className="font-medium">Designer Swimwear Shoots</span>
+                </div>
+                <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
+                  <Globe className="h-5 w-5 text-cyan-400" />
+                  <span className="font-medium">Exotic Locations</span>
+                </div>
+                <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
+                  <Users className="h-5 w-5 text-violet-400" />
+                  <span className="font-medium">Top Model Network</span>
+                </div>
               </div>
             </div>
           </div>
-        </section>
+
+          {/* CTA Buttons */}
+          {!user && (
+            <div className="flex flex-wrap justify-center gap-4 mb-12">
+              <Button size="lg" variant="outline" asChild>
+                <Link href="/signin?redirect=/travel">Sign In to Apply</Link>
+              </Button>
+            </div>
+          )}
+        </main>
 
         {/* Stats Section */}
         <section className="py-12 border-y border-border/50 bg-muted/30">
@@ -199,53 +204,6 @@ export default async function TravelPage() {
           </div>
         </section>
 
-        {/* What's Included Section */}
-        <section className="py-16 md:py-24">
-          <div className="container px-8 md:px-16">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4">What&apos;s Included</h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
-                Each trip is designed to give you an unforgettable experience while building your portfolio
-              </p>
-            </div>
-            <div className="grid md:grid-cols-3 gap-6">
-              <Card className="glass-card border-pink-500/20 hover:border-pink-500/40 transition-colors">
-                <CardContent className="pt-6">
-                  <div className="h-12 w-12 rounded-full bg-pink-500/10 flex items-center justify-center mb-4">
-                    <Camera className="h-6 w-6 text-pink-500" />
-                  </div>
-                  <h3 className="font-semibold text-lg mb-2">Professional Content</h3>
-                  <p className="text-muted-foreground text-sm">
-                    50+ photos and 10+ video clips professionally shot and edited for your portfolio
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="glass-card border-violet-500/20 hover:border-violet-500/40 transition-colors">
-                <CardContent className="pt-6">
-                  <div className="h-12 w-12 rounded-full bg-violet-500/10 flex items-center justify-center mb-4">
-                    <Users className="h-6 w-6 text-violet-500" />
-                  </div>
-                  <h3 className="font-semibold text-lg mb-2">Creator Networking</h3>
-                  <p className="text-muted-foreground text-sm">
-                    Connect with other models and creators, build lasting relationships and collaborate
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="glass-card border-cyan-500/20 hover:border-cyan-500/40 transition-colors">
-                <CardContent className="pt-6">
-                  <div className="h-12 w-12 rounded-full bg-cyan-500/10 flex items-center justify-center mb-4">
-                    <Palmtree className="h-6 w-6 text-cyan-500" />
-                  </div>
-                  <h3 className="font-semibold text-lg mb-2">Curated Experiences</h3>
-                  <p className="text-muted-foreground text-sm">
-                    Handpicked locations, accommodations, and experiences at each destination
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </section>
-
         {/* Trips Section */}
         <section id="trips" className="py-16 md:py-24 bg-muted/30">
           <div className="container px-8 md:px-16">
@@ -257,7 +215,7 @@ export default async function TravelPage() {
                     <Plane className="h-5 w-5 text-green-500" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-bold">Open for Applications</h2>
+                    <h2 className="text-2xl font-bold">Upcoming Trips</h2>
                     <p className="text-muted-foreground text-sm">Apply now to secure your spot</p>
                   </div>
                 </div>
@@ -310,19 +268,66 @@ export default async function TravelPage() {
           </div>
         </section>
 
+        {/* What's Included Section */}
+        <section className="py-16 md:py-24">
+          <div className="container px-8 md:px-16">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold mb-4">What&apos;s Included</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Everything you need to create viral content and level up your modeling career
+              </p>
+            </div>
+            <div className="grid md:grid-cols-3 gap-6">
+              <Card className="glass-card border-pink-500/20 hover:border-pink-500/40 transition-colors">
+                <CardContent className="pt-6">
+                  <div className="h-12 w-12 rounded-full bg-pink-500/10 flex items-center justify-center mb-4">
+                    <Camera className="h-6 w-6 text-pink-500" />
+                  </div>
+                  <h3 className="font-semibold text-lg mb-2">Designer Swimwear Shoots</h3>
+                  <p className="text-muted-foreground text-sm">
+                    50+ professional photos and 10+ video clips wearing designer swimwear from top brands
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="glass-card border-violet-500/20 hover:border-violet-500/40 transition-colors">
+                <CardContent className="pt-6">
+                  <div className="h-12 w-12 rounded-full bg-violet-500/10 flex items-center justify-center mb-4">
+                    <Users className="h-6 w-6 text-violet-500" />
+                  </div>
+                  <h3 className="font-semibold text-lg mb-2">Shoot with Top Models</h3>
+                  <p className="text-muted-foreground text-sm">
+                    Create stunning group content with other top EXA models and expand your network
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="glass-card border-cyan-500/20 hover:border-cyan-500/40 transition-colors">
+                <CardContent className="pt-6">
+                  <div className="h-12 w-12 rounded-full bg-cyan-500/10 flex items-center justify-center mb-4">
+                    <Palmtree className="h-6 w-6 text-cyan-500" />
+                  </div>
+                  <h3 className="font-semibold text-lg mb-2">Exotic Paradise Locations</h3>
+                  <p className="text-muted-foreground text-sm">
+                    Crystal clear waters, pristine beaches, and jaw-dropping backdrops for your content
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </section>
+
         {/* CTA Section */}
         <section className="py-20 md:py-32 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-pink-500/10 to-violet-500/10" />
           <div className="container relative px-8 md:px-16 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready for Your Next Adventure?</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Take Your Modeling Career Global?</h2>
             <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Join EXA Models and get access to exclusive travel opportunities, professional content creation,
-              and a community of amazing creators.
+              Join EXA Models and get exclusive access to international photoshoots, designer swimwear,
+              and opportunities to shoot alongside top models in paradise.
             </p>
             {!user ? (
               <div className="flex flex-wrap justify-center gap-4">
                 <Button size="lg" className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600" asChild>
-                  <Link href="/apply">Apply to Join EXA</Link>
+                  <Link href="/apply">Apply as a Model</Link>
                 </Button>
                 <Button size="lg" variant="outline" asChild>
                   <Link href="/signin?redirect=/travel">Sign In</Link>
