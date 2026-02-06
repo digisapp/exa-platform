@@ -226,27 +226,21 @@ export default async function EventPage({ params, searchParams }: Props) {
           Back to Home
         </Link>
 
-        {/* Hero Section */}
+        {/* Hero Section with YouTube Video */}
         <div className="relative rounded-3xl overflow-hidden mb-8">
-          {event.cover_image_url ? (
-            <div className="aspect-[21/9] md:aspect-[21/7] relative">
-              <Image
-                src={event.cover_image_url}
-                alt={event.name}
-                fill
-                className="object-cover"
-                priority
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/20" />
-            </div>
-          ) : (
-            <div className="aspect-[21/9] md:aspect-[21/7] bg-gradient-to-br from-pink-500/30 via-violet-500/30 to-cyan-500/30 relative">
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-            </div>
-          )}
+          <div className="aspect-video relative">
+            <iframe
+              src="https://www.youtube.com/embed/Iu68o0MCuvw?autoplay=1&mute=1&loop=1&playlist=Iu68o0MCuvw&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1"
+              title={event.name}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="absolute inset-0 w-full h-full"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent pointer-events-none" />
+          </div>
 
           {/* Event Info Overlay */}
-          <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
+          <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 pointer-events-none">
             <Badge className="mb-4 bg-gradient-to-r from-pink-500 to-violet-500 text-white border-0 px-4 py-1.5 text-sm font-semibold">
               {event.short_name} {event.year}
             </Badge>
