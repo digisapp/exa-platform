@@ -142,7 +142,7 @@ export function CreatorHousePaymentButton({
           {/* Flight Warning */}
           <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
             <p className="text-sm text-amber-500">
-              <strong>Before booking flights:</strong> DM us on Instagram{" "}
+              <strong>Flights not included, before Booking Flights:</strong> DM us on Instagram{" "}
               <a
                 href="https://instagram.com/examodels"
                 target="_blank"

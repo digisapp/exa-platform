@@ -1691,7 +1691,7 @@ export async function sendCreatorHouseAcceptedEmail({
           <!-- Header -->
           <tr>
             <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 40px 30px; text-align: center;">
-              <p style="margin: 0; font-size: 48px;">🏠✨</p>
+              <p style="margin: 0; font-size: 48px;">📸🏝️✨</p>
               <h1 style="margin: 10px 0 0; color: white; font-size: 28px; font-weight: bold;">
                 You're Accepted!
               </h1>
@@ -1789,7 +1789,7 @@ export async function sendCreatorHouseAcceptedEmail({
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
                 <tr>
                   <td style="padding: 15px; background-color: #422006; border-radius: 8px; border-left: 3px solid #f59e0b;">
-                    <p style="margin: 0 0 8px; color: #fbbf24; font-size: 14px; font-weight: 600;">✈️ Important: Before Booking Flights</p>
+                    <p style="margin: 0 0 8px; color: #fbbf24; font-size: 14px; font-weight: 600;">✈️ Important: Flights not included, before Booking Flights</p>
                     <p style="margin: 0; color: #fcd34d; font-size: 14px;">
                       Please DM us on Instagram <a href="https://instagram.com/examodels" style="color: #ec4899; font-weight: bold;">@examodels</a> to confirm your flights before booking!
                     </p>
