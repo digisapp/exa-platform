@@ -118,23 +118,25 @@ export default async function TravelPage() {
           actorType={actorType}
         />
 
-        {/* Hero Section */}
-        <section className="relative overflow-hidden py-20 md:py-32">
-          {/* Background gradient */}
-          <div className="absolute inset-0 bg-gradient-to-br from-violet-600/20 via-pink-500/10 to-cyan-500/20" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-violet-500/30 via-transparent to-transparent" />
+        {/* Video Banner */}
+        <section className="relative">
+          <div className="aspect-[21/9] md:aspect-[3/1] relative overflow-hidden">
+            <iframe
+              src="https://www.youtube.com/embed/LP5uPoIgGOA?autoplay=1&mute=1&loop=1&playlist=LP5uPoIgGOA&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1"
+              title="EXA Travel"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+              style={{ border: 0 }}
+            />
+            {/* Gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-background/80" />
+          </div>
+        </section>
 
-          {/* Floating icons */}
-          <div className="absolute top-20 left-10 animate-float opacity-20">
-            <Plane className="h-16 w-16 text-pink-500 rotate-12" />
-          </div>
-          <div className="absolute bottom-20 right-10 animate-float-delayed opacity-20">
-            <Globe className="h-20 w-20 text-violet-500" />
-          </div>
-          <div className="absolute top-40 right-1/4 animate-float opacity-20">
-            <Palmtree className="h-14 w-14 text-cyan-500" />
-          </div>
-
+        {/* Hero Content */}
+        <section className="relative -mt-32 md:-mt-40 pb-12">
           <div className="container relative px-8 md:px-16">
             <div className="max-w-3xl mx-auto text-center">
               <Badge className="mb-6 bg-gradient-to-r from-pink-500 to-violet-500 text-white border-0 px-4 py-1">
