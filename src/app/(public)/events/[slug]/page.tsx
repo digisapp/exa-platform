@@ -99,33 +99,41 @@ export default async function EventPage({ params, searchParams }: Props) {
   const hasInternalTickets = event.tickets_enabled && ticketTiers.length > 0;
 
   // Get confirmed models for this event
-  const { data: confirmedModels } = await supabase
-    .from("gig_applications")
-    .select(`
-      model_id,
-      reviewed_at,
-      models!inner (
-        id,
-        username,
-        first_name,
-        last_name,
-        profile_photo_url,
-        city,
-        state,
-        affiliate_code,
-        instagram_name,
-        instagram_followers,
-        height,
-        focus_tags,
-        is_verified,
-        is_featured
-      ),
-      gigs!inner (
-        event_id
-      )
-    `)
-    .eq("status", "accepted")
-    .eq("gigs.event_id", event.id) as { data: any[] | null };
+  // First, get gigs linked to this event (by event_id or by title match)
+  const { data: eventGigs } = await supabase
+    .from("gigs")
+    .select("id")
+    .or(`event_id.eq.${event.id},title.ilike.%${event.short_name || event.name}%`) as { data: { id: string }[] | null };
+
+  const gigIds = eventGigs?.map(g => g.id) || [];
+
+  // Then get accepted applications for those gigs
+  const { data: confirmedModels } = gigIds.length > 0
+    ? await supabase
+        .from("gig_applications")
+        .select(`
+          model_id,
+          reviewed_at,
+          models!inner (
+            id,
+            username,
+            first_name,
+            last_name,
+            profile_photo_url,
+            city,
+            state,
+            affiliate_code,
+            instagram_name,
+            instagram_followers,
+            height,
+            focus_tags,
+            is_verified,
+            is_featured
+          )
+        `)
+        .eq("status", "accepted")
+        .in("gig_id", gigIds) as { data: any[] | null }
+    : { data: null };
 
   // If there's a referral code (ref), track the affiliate click
   let referringModel = null;
