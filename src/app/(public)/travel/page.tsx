@@ -119,8 +119,8 @@ export default async function TravelPage() {
         />
 
         {/* Hero Section with Full-Screen Video */}
-        <main className="container px-8 md:px-16 py-8">
-          <div className="relative rounded-3xl overflow-hidden mb-8">
+        <main className="container px-4 md:px-16 py-4 md:py-8">
+          <div className="relative rounded-2xl md:rounded-3xl overflow-hidden mb-4 md:mb-8">
             <div className="aspect-video relative">
               <iframe
                 src="https://www.youtube.com/embed/LP5uPoIgGOA?autoplay=1&mute=1&loop=1&playlist=LP5uPoIgGOA&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1"
@@ -132,20 +132,22 @@ export default async function TravelPage() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent pointer-events-none" />
             </div>
 
-            {/* Content Overlay */}
-            <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 pointer-events-none">
-              <Badge className="mb-4 bg-gradient-to-r from-pink-500 to-violet-500 text-white border-0 px-4 py-1.5 text-sm font-semibold">
-                <Plane className="h-4 w-4 mr-2" />
+            {/* Content Overlay - Minimal on mobile, full on desktop */}
+            <div className="absolute bottom-0 left-0 right-0 p-4 md:p-10 pointer-events-none">
+              <Badge className="mb-2 md:mb-4 bg-gradient-to-r from-pink-500 to-violet-500 text-white border-0 px-3 md:px-4 py-1 md:py-1.5 text-xs md:text-sm font-semibold">
+                <Plane className="h-3 w-3 md:h-4 md:w-4 mr-1.5 md:mr-2" />
                 EXA Travel
               </Badge>
-              <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 drop-shadow-lg">
+              <h1 className="text-2xl md:text-5xl lg:text-6xl font-bold text-white mb-2 md:mb-4 drop-shadow-lg">
                 Shoot in Paradise
               </h1>
-              <p className="text-lg md:text-xl text-white/80 mb-6 max-w-2xl">
+              {/* Description - hidden on mobile */}
+              <p className="hidden md:block text-lg md:text-xl text-white/80 mb-6 max-w-2xl">
                 Designer swimwear photoshoots in the most exotic tropical locations. Shoot stunning content
                 alongside other top models and gain massive exposure for your portfolio.
               </p>
-              <div className="flex flex-wrap gap-4 md:gap-6 text-white/90">
+              {/* Feature pills - hidden on mobile */}
+              <div className="hidden md:flex flex-wrap gap-4 md:gap-6 text-white/90">
                 <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
                   <Camera className="h-5 w-5 text-pink-400" />
                   <span className="font-medium">Designer Swimwear Shoots</span>
