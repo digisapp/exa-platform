@@ -139,7 +139,7 @@ export default async function TravelPage() {
                 EXA Travel
               </Badge>
               <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 drop-shadow-lg">
-                Shoot in Paradise with Top Models
+                Shoot in Paradise with EXA
               </h1>
               <p className="text-lg md:text-xl text-white/80 mb-6 max-w-2xl">
                 Designer swimwear photoshoots in the most exotic tropical locations. Shoot stunning content
