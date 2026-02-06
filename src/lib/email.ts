@@ -3461,3 +3461,121 @@ export async function sendContentProgramPaymentReminderEmail({
     return { success: false, error };
   }
 }
+
+/**
+ * Send brand outreach email for Swim Week partnerships
+ */
+export async function sendBrandOutreachEmail({
+  to,
+  brandName,
+  contactName,
+  subject,
+  bodyText,
+}: {
+  to: string;
+  brandName: string;
+  contactName: string | null;
+  subject: string;
+  bodyText: string;
+}) {
+  try {
+    const resend = getResendClient();
+
+    // Replace template variables
+    const personalizedBody = bodyText
+      .replace(/\{\{brand_name\}\}/g, brandName)
+      .replace(/\{\{contact_name\}\}/g, contactName || "there");
+
+    // Convert line breaks to HTML
+    const htmlBody = personalizedBody
+      .split("\n")
+      .map((line) => (line.trim() === "" ? "<br/>" : `<p style="margin: 0 0 16px; color: #e5e5e5; font-size: 16px; line-height: 1.6;">${line}</p>`))
+      .join("\n");
+
+    const { data, error } = await resend.emails.send({
+      from: "EXA Models Partnerships <partnerships@examodels.com>",
+      to: [to],
+      subject: subject,
+      replyTo: "partnerships@examodels.com",
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 30px; text-align: center;">
+              <h1 style="margin: 0; color: white; font-size: 24px; font-weight: bold;">
+                EXA Models
+              </h1>
+              <p style="margin: 8px 0 0; color: rgba(255,255,255,0.9); font-size: 14px;">
+                Miami Swim Week 2026 Partnerships
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              ${htmlBody}
+            </td>
+          </tr>
+
+          <!-- CTA -->
+          <tr>
+            <td style="padding: 0 30px 40px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="${BASE_URL}/models" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                      View Our Models
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 30px; border-top: 1px solid #262626; text-align: center;">
+              <p style="margin: 0 0 10px; color: #a1a1aa; font-size: 14px;">
+                Reply directly to this email to connect with our team
+              </p>
+              <p style="margin: 0 0 10px; color: #71717a; font-size: 12px;">
+                EXA Models - Miami Swim Week 2026
+              </p>
+              <p style="margin: 0; color: #71717a; font-size: 12px;">
+                <a href="${BASE_URL}" style="color: #ec4899; text-decoration: none;">examodels.com</a> |
+                <a href="https://instagram.com/examodels" style="color: #ec4899; text-decoration: none;">@examodels</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      console.error("Resend error:", error);
+      return { success: false, error, messageId: null };
+    }
+    return { success: true, data, messageId: data?.id || null };
+  } catch (error) {
+    console.error("Email send error:", error);
+    return { success: false, error, messageId: null };
+  }
+}
