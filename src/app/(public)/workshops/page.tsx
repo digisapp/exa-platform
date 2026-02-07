@@ -13,7 +13,6 @@ import {
   Users,
   ArrowRight,
   Sparkles,
-  DollarSign,
 } from "lucide-react";
 import { format } from "date-fns";
 import type { Metadata } from "next";

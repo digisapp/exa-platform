@@ -27,7 +27,6 @@ interface GameCompleteProps {
 
 export function GameComplete({
   nextResetAt,
-  totalSwiped,
   onPlayAgain,
   sessionStats,
   streak = 0,

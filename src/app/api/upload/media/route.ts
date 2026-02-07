@@ -35,7 +35,6 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData();
     const file = formData.get("file") as File;
-    const uploadType = (formData.get("type") as string) || "portfolio";
     const title = (formData.get("title") as string) || null;
 
     if (!file) {

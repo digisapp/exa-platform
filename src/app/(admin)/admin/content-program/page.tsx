@@ -126,7 +126,7 @@ export default function ContentProgramPage() {
 
       toast.success(`${app.brand_name} approved and enrolled!`);
       fetchData();
-    } catch (error) {
+    } catch {
       toast.error("Failed to approve application");
     } finally {
       setActionLoading(false);
@@ -153,7 +153,7 @@ export default function ContentProgramPage() {
       setSelectedApp(null);
       setRejectReason("");
       fetchData();
-    } catch (error) {
+    } catch {
       toast.error("Failed to reject application");
     } finally {
       setActionLoading(false);
@@ -176,7 +176,7 @@ export default function ContentProgramPage() {
 
       toast.success("Payment marked as paid");
       fetchData();
-    } catch (error) {
+    } catch {
       toast.error("Failed to update payment");
     } finally {
       setActionLoading(false);

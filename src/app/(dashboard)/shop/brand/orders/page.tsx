@@ -134,7 +134,7 @@ export default function BrandOrdersPage() {
         const error = await response.json();
         toast.error(error.error || "Failed to update");
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to update");
     } finally {
       setSaving(false);
@@ -156,7 +156,7 @@ export default function BrandOrdersPage() {
         toast.success("Marked as delivered");
         fetchOrders();
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to update");
     }
   };

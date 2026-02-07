@@ -13,7 +13,6 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
 
     const from = formData.get("From") as string;
-    const to = formData.get("To") as string;
     const body = formData.get("Body") as string;
     const messageSid = formData.get("MessageSid") as string;
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,6 @@ import {
   Loader2,
   Check,
   X,
-  AlertTriangle,
   Clock,
   Banknote,
   CreditCard,
@@ -106,7 +105,7 @@ export function CashDrawer({
       const { session } = await res.json();
       toast.success("Cash drawer opened");
       onSessionStart(session);
-    } catch (error) {
+    } catch {
       toast.error("Failed to open drawer");
     } finally {
       setIsLoading(false);
@@ -136,7 +135,7 @@ export function CashDrawer({
 
       if (!res.ok) throw new Error("Failed to close drawer");
 
-      const { summary } = await res.json();
+      await res.json();
 
       const difference = amount - currentSession.expected_cash;
       if (Math.abs(difference) > 0.01) {
@@ -150,7 +149,7 @@ export function CashDrawer({
       }
 
       onSessionEnd();
-    } catch (error) {
+    } catch {
       toast.error("Failed to close drawer");
     } finally {
       setIsLoading(false);

@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
 }
 
 // GET - Get affiliate stats for a model
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();

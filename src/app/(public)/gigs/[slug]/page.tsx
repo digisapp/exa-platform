@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Navbar } from "@/components/layout/navbar";
 import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
@@ -15,8 +15,6 @@ import {
   Clock,
   ArrowLeft,
   CheckCircle,
-  XCircle,
-  Loader2,
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { ApplyButton } from "@/components/gigs/ApplyButton";

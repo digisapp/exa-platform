@@ -6,8 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Lock, Coins, Users, MessageCircle, Calendar, Check, Sparkles, X } from "lucide-react";
-import { BRAND_SUBSCRIPTION_TIERS } from "@/lib/stripe-config";
+import { Lock, Coins, Users, MessageCircle, Calendar, Check, Sparkles } from "lucide-react";
 
 interface BrandPaywallProps {
   isOpen?: boolean;

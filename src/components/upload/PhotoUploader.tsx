@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import type { MediaAsset } from "@/types/database";
 import { ImageCropper } from "./ImageCropper";
-import { createClient } from "@/lib/supabase/client";
 
 interface PhotoUploaderProps {
   type: "portfolio" | "message" | "avatar";
@@ -312,6 +311,7 @@ export function PhotoUploader({
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       handleFileSelect(e.dataTransfer.files[0]);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const cancelUpload = () => {

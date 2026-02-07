@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -64,7 +63,6 @@ interface PremiumContent {
 }
 
 export default function ContentPage() {
-  const router = useRouter();
   const supabase = createClient();
 
   const [content, setContent] = useState<PremiumContent[]>([]);
@@ -74,7 +72,6 @@ export default function ContentPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [modelId, setModelId] = useState<string | null>(null);
   const [modelUsername, setModelUsername] = useState<string | null>(null);
-  const [actorId, setActorId] = useState<string | null>(null);
   const [totalEarnings, setTotalEarnings] = useState(0);
   const [activeTab, setActiveTab] = useState("portfolio");
 
@@ -98,8 +95,6 @@ export default function ContentPage() {
       .single() as { data: { id: string; type: string } | null };
 
     if (!actor || (actor.type !== "model" && actor.type !== "admin")) return;
-
-    setActorId(actor.id);
 
     const { data: model } = await supabase
       .from("models")

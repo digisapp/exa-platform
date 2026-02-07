@@ -1,11 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { sendCoinBalanceReminderEmail } from "@/lib/email";
 
 const MINIMUM_COIN_BALANCE = 500; // $50 USD minimum (500 coins * $0.10)
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     const supabase = await createClient();
 
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
 }
 
 // GET endpoint to preview which models would receive the email
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const supabase = await createClient();
 

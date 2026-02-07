@@ -87,7 +87,6 @@ export async function POST(request: NextRequest) {
         // Handle regular coin purchase
         const actorId = session.metadata?.actor_id;
         const coinsStr = session.metadata?.coins;
-        const userId = session.metadata?.user_id;
 
         if (!actorId || !coinsStr) {
           console.error("Missing metadata in checkout session:", session.id, { actorId, coinsStr });
@@ -671,7 +670,8 @@ async function handleShopOrderPayment(session: Stripe.Checkout.Session) {
     .update({ fulfillment_status: "confirmed" })
     .eq("order_id", orderId);
 
-  // Decrease stock for purchased items
+  // Stock was already reserved atomically at checkout time via reserve_stock()
+  // Just increment total_sold counters on the products
   const { data: orderItems } = await supabaseAdmin
     .from("shop_order_items")
     .select("variant_id, quantity")
@@ -679,23 +679,6 @@ async function handleShopOrderPayment(session: Stripe.Checkout.Session) {
 
   if (orderItems) {
     for (const item of orderItems) {
-      // Get current stock
-      const { data: variant } = await supabaseAdmin
-        .from("shop_product_variants")
-        .select("stock_quantity")
-        .eq("id", item.variant_id)
-        .single();
-
-      if (variant) {
-        await supabaseAdmin
-          .from("shop_product_variants")
-          .update({
-            stock_quantity: Math.max(0, (variant.stock_quantity || 0) - item.quantity),
-          })
-          .eq("id", item.variant_id);
-      }
-
-      // Increment total_sold on product
       const { data: variantData } = await supabaseAdmin
         .from("shop_product_variants")
         .select("product_id")

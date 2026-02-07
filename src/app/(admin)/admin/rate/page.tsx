@@ -264,6 +264,7 @@ export default function AdminRatePage() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIndex, models, updating]);
 
   const currentModel = models[currentIndex];

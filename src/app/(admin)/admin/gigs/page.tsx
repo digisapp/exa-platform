@@ -221,6 +221,7 @@ export default function AdminGigsPage() {
   useEffect(() => {
     loadGigs();
     loadEvents();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -232,6 +233,7 @@ export default function AdminGigsPage() {
       setSpotTypeFilter("all");
       setModelSearch("");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedGig]);
 
   async function loadGigs() {

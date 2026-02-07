@@ -67,10 +67,12 @@ export default function MyContentPage() {
       fetchMyContent();
     }
     checkAuth();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     fetchMyContent();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
   async function fetchMyContent() {

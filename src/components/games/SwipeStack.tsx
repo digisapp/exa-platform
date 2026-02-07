@@ -28,7 +28,7 @@ interface SwipeStackProps {
   modelsSwiped?: number;
 }
 
-export function SwipeStack({ models, onSwipe, onBoost, onEmpty, totalModels, modelsSwiped = 0 }: SwipeStackProps) {
+export function SwipeStack({ models, onSwipe, onBoost, onEmpty }: SwipeStackProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [exitDirection, setExitDirection] = useState<"left" | "right" | null>(null);
 

@@ -37,7 +37,6 @@ export default async function TravelPage() {
   let actorType: "model" | "fan" | "brand" | "admin" | null = null;
   let profileData: any = null;
   let coinBalance = 0;
-  let modelId: string | null = null;
   let myApplications: any[] = [];
 
   if (user) {
@@ -58,7 +57,6 @@ export default async function TravelPage() {
         .eq("user_id", user.id)
         .single() as { data: any };
       profileData = data;
-      modelId = data?.id || null;
       coinBalance = data?.coin_balance ?? 0;
 
       // Get model's travel applications
@@ -100,7 +98,6 @@ export default async function TravelPage() {
       : profileData?.username || undefined;
 
   // Separate current/open trips from upcoming
-  const now = new Date();
   const openTrips = travelGigs?.filter(g => g.status === "open") || [];
   const upcomingTrips = travelGigs?.filter(g => g.status === "upcoming") || [];
 

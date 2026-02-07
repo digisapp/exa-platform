@@ -81,6 +81,7 @@ export default function AdminShopAffiliatesPage() {
 
   useEffect(() => {
     fetchAffiliates();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter]);
 
   const fetchAffiliates = async () => {
@@ -150,7 +151,7 @@ export default function AdminShopAffiliatesPage() {
       if (error) throw error;
       toast.success(affiliate.is_active ? "Affiliate deactivated" : "Affiliate activated");
       fetchAffiliates();
-    } catch (error) {
+    } catch {
       toast.error("Failed to update affiliate status");
     }
   };

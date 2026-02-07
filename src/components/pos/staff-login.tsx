@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { User, Loader2, Lock } from "lucide-react";
+import { Loader2, Lock } from "lucide-react";
 import Image from "next/image";
 
 interface StaffMember {

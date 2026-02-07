@@ -33,7 +33,6 @@ interface SwipeCardProps {
 export function SwipeCard({
   model,
   onSwipe,
-  onBoost,
   isTop = false,
   style,
 }: SwipeCardProps) {

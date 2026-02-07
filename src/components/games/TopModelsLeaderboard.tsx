@@ -168,7 +168,7 @@ export function TopModelsLeaderboard({
             </div>
           </div>
         ) : (
-          leaderboard.slice(0, compact ? 5 : 30).map((entry, index) => (
+          leaderboard.slice(0, compact ? 5 : 30).map((entry) => (
             <Link
               href={`/${entry.model?.username}`}
               key={entry.modelId}

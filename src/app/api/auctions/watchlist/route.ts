@@ -9,7 +9,7 @@ const addWatchlistSchema = z.object({
 });
 
 // GET - Get user's watchlist
-export async function GET(_request: NextRequest) {
+export async function GET() {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();

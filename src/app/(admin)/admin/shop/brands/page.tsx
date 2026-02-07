@@ -81,6 +81,7 @@ export default function AdminShopBrandsPage() {
 
   useEffect(() => {
     fetchBrands();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter]);
 
   const fetchBrands = async () => {

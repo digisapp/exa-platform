@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { stripe } from "@/lib/stripe";
 import { TICKET_CONFIG } from "@/lib/ticket-config";
@@ -166,7 +165,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Create pending purchase record
-    const { data: purchase, error: purchaseError } = await adminClient
+    const { error: purchaseError } = await adminClient
       .from("ticket_purchases")
       .insert({
         ticket_tier_id: tierId,

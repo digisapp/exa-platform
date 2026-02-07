@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Coins, Users, MessageCircle, Phone, Check, Sparkles } from "lucide-react";
+import { Coins, Check, Sparkles } from "lucide-react";
 
 const MIN_COINS_REQUIRED = 50;
 

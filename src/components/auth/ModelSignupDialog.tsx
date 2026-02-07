@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -75,7 +74,7 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
         setIsImportedModel(false);
         setImportedModelInfo(null);
       }
-    } catch (error) {
+    } catch {
       // Silently fail - not critical
       setIsImportedModel(false);
       setImportedModelInfo(null);

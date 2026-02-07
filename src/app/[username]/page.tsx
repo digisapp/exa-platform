@@ -209,7 +209,6 @@ export default async function ModelProfilePage({ params }: Props) {
     .gt("coin_price", 0);
 
   // Get current user's actor info
-  let currentActorId: string | null = null;
   let coinBalance = 0;
   let isBrand = false;
 
@@ -221,7 +220,6 @@ export default async function ModelProfilePage({ params }: Props) {
       .single() as { data: { id: string; type: string } | null };
 
     if (actor) {
-      currentActorId = actor.id;
       isBrand = actor.type === "brand";
 
       if (actor.type === "fan") {

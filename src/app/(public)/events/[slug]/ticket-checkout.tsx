@@ -18,7 +18,6 @@ import {
   Plus,
   CheckCircle,
   AlertCircle,
-  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 

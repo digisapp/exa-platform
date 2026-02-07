@@ -54,7 +54,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { COIN_PACKAGES } from "@/lib/stripe-config";
 import { COIN_USD_RATE, MIN_WITHDRAWAL_COINS, coinsToUsd, formatUsd } from "@/lib/coin-config";
-import { PAYONEER_PREFERRED_COUNTRIES, DUAL_PAYOUT_COUNTRIES, shouldUsePayoneer, supportsBothPayoutMethods } from "@/lib/payoneer";
+import { PAYONEER_PREFERRED_COUNTRIES, DUAL_PAYOUT_COUNTRIES } from "@/lib/payoneer";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -151,7 +151,7 @@ export default function WalletPage() {
 
   // Payoneer state
   const [payoneerAccount, setPayoneerAccount] = useState<PayoneerAccount | null>(null);
-  const [modelCountryCode, setModelCountryCode] = useState<string | null>(null);
+  const [, setModelCountryCode] = useState<string | null>(null);
   const [showPayoneerDialog, setShowPayoneerDialog] = useState(false);
   const [registeringPayoneer, setRegisteringPayoneer] = useState(false);
   const [selectedPayoutMethod, setSelectedPayoutMethod] = useState<'bank' | 'payoneer'>('bank');

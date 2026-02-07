@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { stripe } from "@/lib/stripe";
+
+// Service role client for atomic stock operations
+const supabaseAdmin = createSupabaseClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 interface ShippingAddress {
   line1: string;
@@ -144,6 +151,34 @@ export async function POST(request: Request) {
       });
     }
 
+    // Atomically reserve stock for all items using database-level locking
+    // This prevents race conditions where two users buy the last item simultaneously
+    const reservedVariants: { variantId: string; quantity: number }[] = [];
+    for (const item of lineItems) {
+      const { data: reserved, error: reserveError } = await supabaseAdmin.rpc(
+        "reserve_stock",
+        { p_variant_id: item.variantId, p_quantity: item.quantity }
+      );
+
+      if (reserveError || !reserved) {
+        // Rollback previously reserved stock
+        for (const r of reservedVariants) {
+          await supabaseAdmin.rpc("release_stock", {
+            p_variant_id: r.variantId,
+            p_quantity: r.quantity,
+          });
+        }
+        return NextResponse.json(
+          {
+            error: `Not enough stock for ${item.productName} (${item.variantSize})`,
+          },
+          { status: 409 }
+        );
+      }
+
+      reservedVariants.push({ variantId: item.variantId, quantity: item.quantity });
+    }
+
     // TODO: Calculate shipping and tax based on address
     const shippingCost = 0; // Free shipping for now
     const taxAmount = 0; // Would integrate with tax calculation service
@@ -196,6 +231,13 @@ export async function POST(request: Request) {
 
     if (orderError || !order) {
       console.error("Order creation error:", orderError);
+      // Rollback reserved stock
+      for (const r of reservedVariants) {
+        await supabaseAdmin.rpc("release_stock", {
+          p_variant_id: r.variantId,
+          p_quantity: r.quantity,
+        });
+      }
       return NextResponse.json(
         { error: "Failed to create order" },
         { status: 500 }
@@ -223,12 +265,17 @@ export async function POST(request: Request) {
 
     if (itemsError) {
       console.error("Order items error:", itemsError);
-      // Rollback order
+      // Rollback order and reserved stock
       await (supabase as any)
         .from("shop_orders")
         .delete()
         .eq("id", order.id);
-
+      for (const r of reservedVariants) {
+        await supabaseAdmin.rpc("release_stock", {
+          p_variant_id: r.variantId,
+          p_quantity: r.quantity,
+        });
+      }
       return NextResponse.json(
         { error: "Failed to create order items" },
         { status: 500 }

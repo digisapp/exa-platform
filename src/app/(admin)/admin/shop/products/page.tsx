@@ -124,6 +124,7 @@ export default function AdminShopProductsPage() {
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [brandFilter, statusFilter]);
 
   const fetchData = async () => {

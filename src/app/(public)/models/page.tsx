@@ -19,6 +19,7 @@ interface SearchParams {
   sort?: string;
   focus?: string;
   height?: string;
+  page?: string;
 }
 
 export default async function ModelsPage({
@@ -107,10 +108,26 @@ export default async function ModelsPage({
       query = query.order("created_at", { ascending: false });
   }
 
-  // Limit
-  query = query.limit(500);
+  // Pagination
+  const PAGE_SIZE = 40;
+  const currentPage = Math.max(1, parseInt(params.page || "1", 10) || 1);
+  const offset = (currentPage - 1) * PAGE_SIZE;
 
-  const { data: models, error } = await query as { data: any[] | null; error: any };
+  // Get total count for pagination
+  const countQuery = supabase
+    .from("models")
+    .select("*", { count: "exact", head: true })
+    .eq("is_approved", true)
+    .not("profile_photo_url", "is", null);
+
+  const { count: totalCount } = await countQuery;
+
+  query = query.range(offset, offset + PAGE_SIZE - 1);
+
+  const { data: models } = await query as { data: any[] | null; error: any };
+  const totalPages = Math.ceil((totalCount || 0) / PAGE_SIZE);
+  const hasNextPage = currentPage < totalPages;
+  const hasPrevPage = currentPage > 1;
 
   // Get featured models (only with profile pictures)
   const { data: featured } = await supabase
@@ -252,7 +269,12 @@ export default async function ModelsPage({
         <div className="mt-6">
           <div className="flex items-center justify-between mb-4">
             <p className="text-muted-foreground">
-              {models?.length || 0} models found
+              {totalCount || 0} models found
+              {totalPages > 1 && (
+                <span className="ml-1">
+                  (page {currentPage} of {totalPages})
+                </span>
+              )}
             </p>
           </div>
 
@@ -262,6 +284,70 @@ export default async function ModelsPage({
             favoriteModelIds={favoriteModelIds}
             actorType={actorType}
           />
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-3 mt-8">
+              {hasPrevPage && (
+                <a
+                  href={`/models?${new URLSearchParams({
+                    ...Object.fromEntries(
+                      Object.entries(params).filter(([, v]) => v !== undefined) as [string, string][]
+                    ),
+                    page: String(currentPage - 1),
+                  }).toString()}`}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border bg-background hover:bg-muted transition-colors text-sm font-medium"
+                >
+                  Previous
+                </a>
+              )}
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+                  let pageNum: number;
+                  if (totalPages <= 7) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 4) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 3) {
+                    pageNum = totalPages - 6 + i;
+                  } else {
+                    pageNum = currentPage - 3 + i;
+                  }
+                  return (
+                    <a
+                      key={pageNum}
+                      href={`/models?${new URLSearchParams({
+                        ...Object.fromEntries(
+                          Object.entries(params).filter(([, v]) => v !== undefined) as [string, string][]
+                        ),
+                        page: String(pageNum),
+                      }).toString()}`}
+                      className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${
+                        pageNum === currentPage
+                          ? "bg-pink-500 text-white"
+                          : "hover:bg-muted"
+                      }`}
+                    >
+                      {pageNum}
+                    </a>
+                  );
+                })}
+              </div>
+              {hasNextPage && (
+                <a
+                  href={`/models?${new URLSearchParams({
+                    ...Object.fromEntries(
+                      Object.entries(params).filter(([, v]) => v !== undefined) as [string, string][]
+                    ),
+                    page: String(currentPage + 1),
+                  }).toString()}`}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border bg-background hover:bg-muted transition-colors text-sm font-medium"
+                >
+                  Next
+                </a>
+              )}
+            </div>
+          )}
         </div>
       </main>
     </div>

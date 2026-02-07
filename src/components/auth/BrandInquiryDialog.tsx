@@ -31,7 +31,7 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
   const [contactName, setContactName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [phone, setPhone] = useState("");
+  const [, setPhone] = useState("");
   const [message, setMessage] = useState("");
 
   const supabase = createClient();

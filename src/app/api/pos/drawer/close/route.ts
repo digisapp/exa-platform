@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     const cashDifference = closing_cash - expectedCash;
 
     // Update session
-    const { data: updatedSession, error: updateError } = await supabase
+    const { error: updateError } = await supabase
       .from("pos_drawer_sessions")
       .update({
         closed_at: new Date().toISOString(),

@@ -21,7 +21,6 @@ import {
   Loader2,
   User,
   LogOut,
-  Bell,
   Upload,
   Settings,
 } from "lucide-react";
@@ -123,7 +122,7 @@ export default function POSPage() {
       } else {
         toast.error("Product not found");
       }
-    } catch (error) {
+    } catch {
       toast.error("Error looking up product");
     }
   };

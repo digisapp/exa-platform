@@ -261,6 +261,7 @@ export function ChatView({
     if (isNearBottom) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages.length]); // Only trigger on message count change, not content
 
   // Subscribe to real-time messages

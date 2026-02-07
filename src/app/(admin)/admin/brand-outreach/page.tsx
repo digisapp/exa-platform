@@ -34,7 +34,6 @@ import {
   ExternalLink,
   Instagram,
   Globe,
-  Phone,
   Search,
   Plus,
   Loader2,
@@ -60,15 +59,6 @@ interface BrandContact {
   status: string;
   last_contacted_at: string | null;
   created_at: string;
-}
-
-interface OutreachEmail {
-  id: string;
-  contact_id: string;
-  subject: string;
-  sent_at: string;
-  email_type: string;
-  status: string;
 }
 
 const statusColors: Record<string, string> = {
@@ -118,6 +108,7 @@ export default function BrandOutreachPage() {
 
   useEffect(() => {
     loadContacts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function loadContacts() {
@@ -294,6 +285,7 @@ www.examodels.com`;
     if (!emailBody) {
       setEmailBody(defaultEmailTemplate);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (loading) {

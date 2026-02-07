@@ -93,6 +93,7 @@ export default function AdminUsernamesPage() {
 
   useEffect(() => {
     fetchUsernames();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchUsernames = async () => {

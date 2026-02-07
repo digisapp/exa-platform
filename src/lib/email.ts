@@ -1653,8 +1653,6 @@ export async function sendCreatorHouseAcceptedEmail({
   gigDate,
   gigLocation,
   applicationId,
-  gigId,
-  modelId,
   gigSlug,
 }: {
   to: string;
@@ -1663,8 +1661,8 @@ export async function sendCreatorHouseAcceptedEmail({
   gigDate?: string;
   gigLocation?: string;
   applicationId: string;
-  gigId: string;
-  modelId: string;
+  gigId?: string;
+  modelId?: string;
   gigSlug: string;
 }) {
   try {
