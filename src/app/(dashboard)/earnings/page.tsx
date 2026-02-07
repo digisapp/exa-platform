@@ -2,8 +2,8 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { Coins, TrendingUp, MessageCircle, Heart, ArrowUpRight, Calendar } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Coins, TrendingUp, MessageCircle, Heart, ArrowUpRight, Calendar, Sparkles } from "lucide-react";
+// Card components no longer used - replaced with custom styled divs
 import type { Actor, Model } from "@/types/database";
 
 interface CoinTransaction {
@@ -113,90 +113,123 @@ export default async function EarningsPage() {
 
   return (
     <div className="container max-w-4xl py-8 space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold">Earnings</h1>
-        <p className="text-muted-foreground mt-1">
-          Track your coin earnings from tips and messages
-        </p>
+      {/* Hero Header */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-pink-600/20 via-violet-500/10 to-transparent border border-pink-500/20 p-6 md:p-8">
+        <div className="absolute -top-24 -right-24 w-48 h-48 bg-pink-500/15 rounded-full blur-3xl" />
+        <div className="absolute -bottom-16 -left-16 w-32 h-32 bg-violet-500/15 rounded-full blur-3xl" />
+        <div className="relative z-10">
+          <div className="flex items-center gap-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-pink-500 to-violet-500 shadow-lg shadow-pink-500/25">
+              <Coins className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold">Earnings</h1>
+              <p className="text-sm text-muted-foreground mt-0.5">Track your coin earnings from tips and messages</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Current Balance */}
-      <Card className="bg-gradient-to-br from-pink-500/10 to-violet-500/10 border-pink-500/20">
-        <CardHeader className="pb-2">
-          <CardDescription>Current Balance</CardDescription>
-          <CardTitle className="text-4xl font-bold flex items-center gap-2">
-            <Coins className="h-8 w-8 text-pink-500" />
-            {model.coin_balance?.toLocaleString() || 0}
-            <span className="text-lg font-normal text-muted-foreground">coins</span>
-          </CardTitle>
-        </CardHeader>
-      </Card>
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-pink-500/10 via-violet-500/10 to-transparent border border-pink-500/20 p-6 md:p-8">
+        <div className="absolute -top-12 -right-12 w-40 h-40 bg-pink-500/10 rounded-full blur-3xl" />
+        <div className="absolute -bottom-8 -left-8 w-28 h-28 bg-violet-500/10 rounded-full blur-3xl" />
+        <div className="relative z-10">
+          <p className="text-sm text-muted-foreground mb-2">Current Balance</p>
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-gradient-to-br from-yellow-400 to-orange-500 shadow-lg shadow-yellow-500/25">
+              <Coins className="h-7 w-7 text-white" />
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-4xl md:text-5xl font-bold tracking-tight">
+                {model.coin_balance?.toLocaleString() || 0}
+              </span>
+              <span className="text-lg font-normal text-muted-foreground">coins</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription className="flex items-center gap-1">
-              <TrendingUp className="h-3 w-3" />
-              Total Earned
-            </CardDescription>
-            <CardTitle className="text-2xl">{totalEarnings.toLocaleString()}</CardTitle>
-          </CardHeader>
-        </Card>
+        <div className="rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/5 to-transparent p-5">
+          <div className="flex items-center gap-1.5 text-muted-foreground text-sm mb-1.5">
+            <div className="p-1 rounded-md bg-violet-500/10">
+              <TrendingUp className="h-3 w-3 text-violet-500" />
+            </div>
+            Total Earned
+          </div>
+          <p className="text-2xl font-bold text-violet-400">{totalEarnings.toLocaleString()}</p>
+        </div>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription className="flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
-              This Month
-            </CardDescription>
-            <CardTitle className="text-2xl">{thisMonthEarnings.toLocaleString()}</CardTitle>
-          </CardHeader>
-        </Card>
+        <div className="rounded-2xl border border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-transparent p-5">
+          <div className="flex items-center gap-1.5 text-muted-foreground text-sm mb-1.5">
+            <div className="p-1 rounded-md bg-blue-500/10">
+              <Calendar className="h-3 w-3 text-blue-500" />
+            </div>
+            This Month
+          </div>
+          <p className="text-2xl font-bold text-blue-400">{thisMonthEarnings.toLocaleString()}</p>
+        </div>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription className="flex items-center gap-1">
-              <Heart className="h-3 w-3" />
-              From Tips
-            </CardDescription>
-            <CardTitle className="text-2xl text-pink-500">{tipEarnings.toLocaleString()}</CardTitle>
-          </CardHeader>
-        </Card>
+        <div className="rounded-2xl border border-pink-500/20 bg-gradient-to-br from-pink-500/5 to-transparent p-5">
+          <div className="flex items-center gap-1.5 text-muted-foreground text-sm mb-1.5">
+            <div className="p-1 rounded-md bg-pink-500/10">
+              <Heart className="h-3 w-3 text-pink-500" />
+            </div>
+            From Tips
+          </div>
+          <p className="text-2xl font-bold text-pink-400">{tipEarnings.toLocaleString()}</p>
+        </div>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription className="flex items-center gap-1">
-              <MessageCircle className="h-3 w-3" />
-              From Messages
-            </CardDescription>
-            <CardTitle className="text-2xl text-blue-500">{messageEarnings.toLocaleString()}</CardTitle>
-          </CardHeader>
-        </Card>
+        <div className="rounded-2xl border border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-transparent p-5">
+          <div className="flex items-center gap-1.5 text-muted-foreground text-sm mb-1.5">
+            <div className="p-1 rounded-md bg-blue-500/10">
+              <MessageCircle className="h-3 w-3 text-blue-500" />
+            </div>
+            From Messages
+          </div>
+          <p className="text-2xl font-bold text-blue-400">{messageEarnings.toLocaleString()}</p>
+        </div>
       </div>
 
       {/* Recent Transactions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Earnings</CardTitle>
-          <CardDescription>Your latest coin earnings</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <div className="rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/5 to-transparent overflow-hidden">
+        <div className="px-6 pt-6 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-gradient-to-br from-violet-500/20 to-pink-500/20">
+              <Sparkles className="h-4 w-4 text-violet-400" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-lg">Recent Earnings</h2>
+              <p className="text-sm text-muted-foreground">Your latest coin earnings</p>
+            </div>
+          </div>
+        </div>
+        <div className="px-6 pb-6">
           {recentTransactions.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Coins className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No earnings yet</p>
-              <p className="text-sm">Start chatting to earn coins from fans!</p>
+            <div className="text-center py-12 text-muted-foreground">
+              <div className="mx-auto mb-4 w-16 h-16 rounded-2xl bg-gradient-to-br from-pink-500/10 via-violet-500/10 to-transparent border border-pink-500/10 flex items-center justify-center">
+                <Coins className="h-8 w-8 text-pink-500/40" />
+              </div>
+              <p className="font-medium">No earnings yet</p>
+              <p className="text-sm mt-1">Start chatting to earn coins from fans!</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-1">
               {recentTransactions.map((transaction) => (
                 <div
                   key={transaction.id}
-                  className="flex items-center justify-between py-3 border-b last:border-0"
+                  className="flex items-center justify-between py-3 px-3 hover:bg-muted/50 rounded-lg transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-full bg-muted">
+                    <div className={`p-2 rounded-full ${
+                      transaction.action === "tip_received"
+                        ? "bg-pink-500/10"
+                        : transaction.action === "message_received"
+                        ? "bg-blue-500/10"
+                        : "bg-muted"
+                    }`}>
                       {getActionIcon(transaction.action)}
                     </div>
                     <div>
@@ -206,16 +239,16 @@ export default async function EarningsPage() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 text-green-500 font-semibold">
-                    <ArrowUpRight className="h-4 w-4" />
+                  <div className="flex items-center gap-1.5 bg-green-500/10 text-green-500 font-semibold px-3 py-1 rounded-full text-sm">
+                    <ArrowUpRight className="h-3.5 w-3.5" />
                     +{transaction.amount}
                   </div>
                 </div>
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

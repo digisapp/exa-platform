@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +22,9 @@ import {
   Loader2,
   CreditCard,
   Lock,
+  Mail,
+  MapPin,
+  Package,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -161,29 +164,54 @@ export default function CheckoutPage() {
     return null;
   }
 
+  const inputClasses = "bg-background/50 border-pink-500/20 focus:border-pink-500/50 transition-colors";
+
   return (
     <div className="max-w-5xl mx-auto">
-      {/* Back Button */}
-      <Link href="/shop/cart" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6">
-        <ArrowLeft className="h-4 w-4" />
-        Back to Cart
-      </Link>
-
-      <h1 className="text-2xl font-bold mb-6 flex items-center gap-3">
-        <CreditCard className="h-7 w-7" />
-        Checkout
-      </h1>
+      {/* Hero Header */}
+      <div className="relative mb-8 overflow-hidden rounded-2xl bg-gradient-to-br from-pink-600/20 via-violet-500/10 to-transparent border border-pink-500/20 p-6">
+        <div className="absolute -top-24 -right-24 w-48 h-48 bg-pink-500/15 rounded-full blur-3xl" />
+        <div className="absolute -bottom-16 -left-16 w-32 h-32 bg-violet-500/15 rounded-full blur-3xl" />
+        <div className="relative">
+          <Link
+            href="/shop/cart"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-3"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Cart
+          </Link>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-pink-500 to-violet-500 shadow-lg shadow-pink-500/20">
+              <CreditCard className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-pink-400 to-violet-400 bg-clip-text text-transparent">
+                Checkout
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                Complete your order in a few simple steps
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <form onSubmit={handleSubmit}>
         <div className="grid md:grid-cols-5 gap-6">
           {/* Shipping Form */}
           <div className="md:col-span-3 space-y-6">
-            {/* Contact */}
-            <Card>
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg">Contact Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            {/* Step 1: Contact */}
+            <div className="rounded-2xl border border-pink-500/20 bg-gradient-to-br from-pink-500/5 to-transparent p-6 space-y-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-violet-500 text-white text-sm font-bold shadow-lg shadow-pink-500/20">
+                  1
+                </div>
+                <div className="flex items-center gap-2">
+                  <Mail className="h-5 w-5 text-pink-400" />
+                  <h2 className="text-lg font-semibold">Contact Information</h2>
+                </div>
+              </div>
+              <div className="space-y-4 pl-11">
                 <div>
                   <Label htmlFor="email">Email *</Label>
                   <Input
@@ -193,6 +221,7 @@ export default function CheckoutPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    className={inputClasses}
                   />
                 </div>
                 <div>
@@ -203,17 +232,24 @@ export default function CheckoutPage() {
                     placeholder="(555) 555-5555"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
+                    className={inputClasses}
                   />
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
-            {/* Shipping Address */}
-            <Card>
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg">Shipping Address</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            {/* Step 2: Shipping Address */}
+            <div className="rounded-2xl border border-pink-500/20 bg-gradient-to-br from-pink-500/5 to-transparent p-6 space-y-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-violet-500 text-white text-sm font-bold shadow-lg shadow-pink-500/20">
+                  2
+                </div>
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5 text-pink-400" />
+                  <h2 className="text-lg font-semibold">Shipping Address</h2>
+                </div>
+              </div>
+              <div className="space-y-4 pl-11">
                 <div>
                   <Label htmlFor="name">Full Name *</Label>
                   <Input
@@ -222,6 +258,7 @@ export default function CheckoutPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
+                    className={inputClasses}
                   />
                 </div>
                 <div>
@@ -232,6 +269,7 @@ export default function CheckoutPage() {
                     value={address1}
                     onChange={(e) => setAddress1(e.target.value)}
                     required
+                    className={inputClasses}
                   />
                 </div>
                 <div>
@@ -241,6 +279,7 @@ export default function CheckoutPage() {
                     placeholder="Apt 4B"
                     value={address2}
                     onChange={(e) => setAddress2(e.target.value)}
+                    className={inputClasses}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -252,12 +291,13 @@ export default function CheckoutPage() {
                       value={city}
                       onChange={(e) => setCity(e.target.value)}
                       required
+                      className={inputClasses}
                     />
                   </div>
                   <div>
                     <Label htmlFor="state">State *</Label>
                     <Select value={state} onValueChange={setState}>
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-background/50 border-pink-500/20">
                         <SelectValue placeholder="Select state" />
                       </SelectTrigger>
                       <SelectContent>
@@ -278,24 +318,28 @@ export default function CheckoutPage() {
                     value={postalCode}
                     onChange={(e) => setPostalCode(e.target.value)}
                     required
+                    className={inputClasses}
                   />
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
 
           {/* Order Summary */}
           <div className="md:col-span-2 space-y-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg">Order Summary</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            <div className="rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/5 to-transparent overflow-hidden">
+              <div className="p-5 pb-3">
+                <div className="flex items-center gap-2">
+                  <Package className="h-5 w-5 text-violet-400" />
+                  <h2 className="text-lg font-semibold">Order Summary</h2>
+                </div>
+              </div>
+              <CardContent className="space-y-4 px-5 pb-5">
                 {/* Items */}
                 <div className="space-y-3 max-h-64 overflow-y-auto">
                   {cart.items.map((item) => (
-                    <div key={item.id} className="flex gap-3">
-                      <div className="relative w-16 h-20 rounded-md overflow-hidden bg-muted flex-shrink-0">
+                    <div key={item.id} className="flex gap-3 p-2 rounded-xl hover:bg-violet-500/5 transition-colors">
+                      <div className="relative w-16 h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0 ring-1 ring-violet-500/10">
                         {item.image ? (
                           <Image
                             src={item.image}
@@ -317,7 +361,7 @@ export default function CheckoutPage() {
                           {item.product.brand.name}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {item.size}{item.color && ` / ${item.color}`} × {item.quantity}
+                          {item.size}{item.color && ` / ${item.color}`} x {item.quantity}
                         </p>
                       </div>
                       <p className="text-sm font-medium">
@@ -327,14 +371,14 @@ export default function CheckoutPage() {
                   ))}
                 </div>
 
-                <div className="border-t pt-4 space-y-2">
+                <div className="border-t border-violet-500/10 pt-4 space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Subtotal</span>
                     <span>{formatPrice(cart.subtotal)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Shipping</span>
-                    <span className="text-green-500">Free</span>
+                    <span className="text-green-500 font-medium">Free</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Tax</span>
@@ -342,17 +386,19 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
-                <div className="border-t pt-4">
-                  <div className="flex justify-between text-lg font-bold">
-                    <span>Estimated Total</span>
-                    <span className="text-pink-500">{formatPrice(cart.subtotal)}</span>
+                <div className="border-t border-violet-500/10 pt-4">
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-lg font-bold">Estimated Total</span>
+                    <span className="text-xl font-bold bg-gradient-to-r from-pink-400 to-violet-400 bg-clip-text text-transparent">
+                      {formatPrice(cart.subtotal)}
+                    </span>
                   </div>
                 </div>
 
                 <Button
                   type="submit"
                   size="lg"
-                  className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
+                  className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 shadow-lg shadow-pink-500/20 transition-shadow hover:shadow-pink-500/30"
                   disabled={submitting}
                 >
                   {submitting ? (
@@ -368,17 +414,18 @@ export default function CheckoutPage() {
                   Secure checkout powered by Stripe
                 </p>
               </CardContent>
-            </Card>
+            </div>
 
             {/* Policies */}
-            <Card>
-              <CardContent className="p-4 text-xs text-muted-foreground space-y-2">
-                <p className="font-medium text-foreground">Shop Policies</p>
-                <p>• Items ship directly from brands (3-7 business days)</p>
-                <p>• Store credit only for returns due to EXA errors</p>
-                <p>• Contact support@examodels.com for issues</p>
-              </CardContent>
-            </Card>
+            <div className="rounded-2xl border border-muted bg-muted/30 p-4 text-xs text-muted-foreground space-y-2">
+              <p className="font-medium text-foreground flex items-center gap-1.5">
+                <ShoppingBag className="h-3.5 w-3.5 text-violet-400" />
+                Shop Policies
+              </p>
+              <p>- Items ship directly from brands (3-7 business days)</p>
+              <p>- Store credit only for returns due to EXA errors</p>
+              <p>- Contact support@examodels.com for issues</p>
+            </div>
           </div>
         </div>
       </form>

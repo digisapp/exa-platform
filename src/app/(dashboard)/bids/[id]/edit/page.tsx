@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { coinsToUsd, formatUsd } from "@/lib/coin-config";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
@@ -23,6 +23,11 @@ import {
   Zap,
   Shield,
   Info,
+  ImagePlus,
+  FileText,
+  Tag,
+  Timer,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AUCTION_CATEGORIES } from "@/types/auctions";
@@ -264,7 +269,7 @@ export default function EditBidPage({ params }: { params: Promise<{ id: string }
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
       </div>
     );
   }
@@ -274,117 +279,147 @@ export default function EditBidPage({ params }: { params: Promise<{ id: string }
   const parsedBuyNowPrice = parseInt(buyNowPrice) || 0;
 
   return (
-    <div className="max-w-2xl mx-auto space-y-8">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/bids/manage">
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold">Edit Auction</h1>
-          <p className="text-muted-foreground">
-            Update your draft auction details
-          </p>
+    <div className="max-w-2xl mx-auto pb-8">
+      {/* Hero Header */}
+      <div className="relative mb-8 overflow-hidden rounded-2xl bg-gradient-to-br from-violet-600/20 via-pink-500/10 to-transparent border border-violet-500/20 p-6 md:p-8">
+        <div className="absolute -top-24 -right-24 w-48 h-48 bg-violet-500/15 rounded-full blur-3xl" />
+        <div className="absolute -bottom-16 -left-16 w-32 h-32 bg-pink-500/15 rounded-full blur-3xl" />
+        <div className="relative z-10">
+          <div className="flex items-center gap-4 mb-4">
+            <Button variant="ghost" size="icon" asChild className="hover:bg-white/10">
+              <Link href="/bids/manage">
+                <ArrowLeft className="h-5 w-5" />
+              </Link>
+            </Button>
+            <div className="p-3 rounded-xl bg-gradient-to-br from-pink-500 to-violet-500 shadow-lg shadow-violet-500/25">
+              <Gavel className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold">Edit EXA Bid</h1>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                Update your draft auction details before publishing
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Form */}
       <div className="space-y-6">
-        {/* Cover Image */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Cover Image</CardTitle>
-            <CardDescription>Add an eye-catching image for your auction</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {coverImageUrl ? (
-                <div className="relative aspect-[3/4] max-w-xs mx-auto rounded-lg overflow-hidden bg-zinc-800">
-                  <Image
-                    src={coverImageUrl}
-                    alt="Cover"
-                    fill
-                    className="object-cover"
-                  />
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="absolute bottom-2 right-2"
-                    onClick={() => setCoverImageUrl(null)}
-                  >
-                    Remove
-                  </Button>
-                </div>
-              ) : (
-                <label className="flex flex-col items-center justify-center aspect-[3/4] max-w-xs mx-auto rounded-lg border-2 border-dashed border-zinc-700 hover:border-zinc-600 cursor-pointer transition-colors">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                    disabled={uploading}
-                  />
-                  {uploading ? (
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                  ) : (
-                    <>
-                      <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                      <span className="text-sm text-muted-foreground">
-                        Click to upload an image
-                      </span>
-                    </>
-                  )}
-                </label>
-              )}
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Basic Info */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Auction Details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        {/* Step 1: Cover Image */}
+        <div className="rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/5 to-transparent overflow-hidden">
+          <div className="flex items-center gap-3 px-6 py-4 border-b border-violet-500/10">
+            <div className="flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-pink-500 to-violet-500 text-white text-xs font-bold">
+              1
+            </div>
+            <div className="flex items-center gap-2">
+              <ImagePlus className="h-4 w-4 text-violet-400" />
+              <span className="font-semibold">Cover Image</span>
+            </div>
+            <Badge variant="outline" className="ml-auto border-violet-500/30 text-violet-400 text-xs">
+              Recommended
+            </Badge>
+          </div>
+          <div className="p-6">
+            {coverImageUrl ? (
+              <div className="relative aspect-[3/4] max-w-[240px] mx-auto rounded-xl overflow-hidden bg-zinc-800 ring-2 ring-violet-500/30 shadow-lg shadow-violet-500/10">
+                <Image
+                  src={coverImageUrl}
+                  alt="Cover"
+                  fill
+                  className="object-cover"
+                />
+                <button
+                  onClick={() => setCoverImageUrl(null)}
+                  className="absolute top-2 right-2 p-1.5 rounded-full bg-black/60 hover:bg-black/80 text-white transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <label className="group flex flex-col items-center justify-center aspect-[3/4] max-w-[240px] mx-auto rounded-xl border-2 border-dashed border-violet-500/30 hover:border-violet-500/60 bg-violet-500/5 hover:bg-violet-500/10 cursor-pointer transition-all">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  disabled={uploading}
+                />
+                {uploading ? (
+                  <Loader2 className="h-8 w-8 animate-spin text-violet-400" />
+                ) : (
+                  <>
+                    <div className="p-3 rounded-full bg-violet-500/10 group-hover:bg-violet-500/20 transition-colors mb-3">
+                      <Upload className="h-6 w-6 text-violet-400" />
+                    </div>
+                    <span className="text-sm font-medium text-violet-400">
+                      Upload cover photo
+                    </span>
+                    <span className="text-xs text-muted-foreground mt-1">
+                      Portrait format, max 10MB
+                    </span>
+                  </>
+                )}
+              </label>
+            )}
+          </div>
+        </div>
+
+        {/* Step 2: Details */}
+        <div className="rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/5 to-transparent overflow-hidden">
+          <div className="flex items-center gap-3 px-6 py-4 border-b border-violet-500/10">
+            <div className="flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-pink-500 to-violet-500 text-white text-xs font-bold">
+              2
+            </div>
+            <div className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-violet-400" />
+              <span className="font-semibold">Bid Details</span>
+            </div>
+          </div>
+          <div className="p-6 space-y-5">
             <div>
-              <Label htmlFor="title">Title *</Label>
+              <Label htmlFor="title" className="text-sm font-medium">
+                Title <span className="text-pink-500">*</span>
+              </Label>
               <Input
                 id="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g., Exclusive Video Call + Custom Content"
-                className="mt-1.5"
+                className="mt-1.5 bg-background/50 border-violet-500/20 focus:border-violet-500/50"
               />
             </div>
 
             <div>
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description" className="text-sm font-medium">Description</Label>
               <Textarea
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Describe what makes this auction special..."
-                className="mt-1.5 min-h-[100px]"
+                className="mt-1.5 min-h-[100px] bg-background/50 border-violet-500/20 focus:border-violet-500/50"
               />
             </div>
 
             <div>
-              <Label htmlFor="deliverables">What the winner gets</Label>
+              <Label htmlFor="deliverables" className="text-sm font-medium">What the winner gets</Label>
               <Textarea
                 id="deliverables"
                 value={deliverables}
                 onChange={(e) => setDeliverables(e.target.value)}
                 placeholder="List what the winner will receive..."
-                className="mt-1.5 min-h-[80px]"
+                className="mt-1.5 min-h-[80px] bg-background/50 border-violet-500/20 focus:border-violet-500/50"
               />
             </div>
 
             <div>
-              <Label htmlFor="category">Category</Label>
+              <Label htmlFor="category" className="text-sm font-medium flex items-center gap-2">
+                <Tag className="h-3.5 w-3.5 text-violet-400" />
+                Category
+              </Label>
               <Select value={category} onValueChange={(v) => setCategory(v as AuctionCategory)}>
-                <SelectTrigger className="mt-1.5">
+                <SelectTrigger className="mt-1.5 bg-background/50 border-violet-500/20">
                   <SelectValue placeholder="Select a category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -396,20 +431,25 @@ export default function EditBidPage({ params }: { params: Promise<{ id: string }
                 </SelectContent>
               </Select>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        {/* Pricing */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Coins className="h-5 w-5 text-amber-400" />
-              Pricing
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        {/* Step 3: Pricing */}
+        <div className="rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-transparent overflow-hidden">
+          <div className="flex items-center gap-3 px-6 py-4 border-b border-amber-500/10">
+            <div className="flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-white text-xs font-bold">
+              3
+            </div>
+            <div className="flex items-center gap-2">
+              <Coins className="h-4 w-4 text-amber-400" />
+              <span className="font-semibold">Pricing</span>
+            </div>
+          </div>
+          <div className="p-6 space-y-5">
             <div>
-              <Label htmlFor="starting-price">Starting Price (coins) *</Label>
+              <Label htmlFor="starting-price" className="text-sm font-medium">
+                Starting Price <span className="text-pink-500">*</span>
+              </Label>
               <div className="relative mt-1.5">
                 <Coins className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-400" />
                 <Input
@@ -419,130 +459,155 @@ export default function EditBidPage({ params }: { params: Promise<{ id: string }
                   step="10"
                   value={startingPrice}
                   onChange={(e) => setStartingPrice(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 bg-background/50 border-amber-500/20 focus:border-amber-500/50"
                 />
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                = {formatUsd(coinsToUsd(parsedStartingPrice))}
+              <p className="text-xs text-muted-foreground mt-1.5">
+                {formatUsd(coinsToUsd(parsedStartingPrice))} USD
               </p>
             </div>
 
-            <div>
-              <Label htmlFor="reserve-price" className="flex items-center gap-2">
-                <Shield className="h-4 w-4 text-violet-400" />
-                Reserve Price (optional)
-              </Label>
-              <div className="relative mt-1.5">
-                <Coins className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-400" />
-                <Input
-                  id="reserve-price"
-                  type="number"
-                  min={parsedStartingPrice + 1}
-                  step="10"
-                  value={reservePrice}
-                  onChange={(e) => setReservePrice(e.target.value)}
-                  placeholder="Minimum price to sell"
-                  className="pl-10"
-                />
-              </div>
-              {parsedReservePrice > 0 && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  = {formatUsd(coinsToUsd(parsedReservePrice))}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div>
+                <Label htmlFor="reserve-price" className="text-sm font-medium flex items-center gap-1.5">
+                  <Shield className="h-3.5 w-3.5 text-violet-400" />
+                  Reserve Price
+                </Label>
+                <div className="relative mt-1.5">
+                  <Coins className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-400" />
+                  <Input
+                    id="reserve-price"
+                    type="number"
+                    min={parsedStartingPrice + 1}
+                    step="10"
+                    value={reservePrice}
+                    onChange={(e) => setReservePrice(e.target.value)}
+                    placeholder="Optional"
+                    className="pl-10 bg-background/50 border-amber-500/20 focus:border-amber-500/50"
+                  />
+                </div>
+                {parsedReservePrice > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {formatUsd(coinsToUsd(parsedReservePrice))} USD
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground mt-1.5 flex items-start gap-1">
+                  <Info className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                  Won&apos;t sell below this amount
                 </p>
-              )}
-              <p className="text-xs text-muted-foreground mt-1 flex items-start gap-1">
-                <Info className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                Auction won&apos;t sell unless bidding reaches this amount
-              </p>
-            </div>
-
-            <div>
-              <Label htmlFor="buy-now-price" className="flex items-center gap-2">
-                <Zap className="h-4 w-4 text-amber-400" />
-                Buy Now Price (optional)
-              </Label>
-              <div className="relative mt-1.5">
-                <Coins className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-400" />
-                <Input
-                  id="buy-now-price"
-                  type="number"
-                  min={parsedStartingPrice + 1}
-                  step="10"
-                  value={buyNowPrice}
-                  onChange={(e) => setBuyNowPrice(e.target.value)}
-                  placeholder="Instant purchase price"
-                  className="pl-10"
-                />
               </div>
-              {parsedBuyNowPrice > 0 && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  = {formatUsd(coinsToUsd(parsedBuyNowPrice))}
-                </p>
-              )}
-              <p className="text-xs text-muted-foreground mt-1 flex items-start gap-1">
-                <Info className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                Allow fans to win instantly at this price
-              </p>
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Timing */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Clock className="h-5 w-5 text-violet-400" />
-              Duration
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="buy-now-price" className="text-sm font-medium flex items-center gap-1.5">
+                  <Zap className="h-3.5 w-3.5 text-amber-400" />
+                  Buy Now Price
+                </Label>
+                <div className="relative mt-1.5">
+                  <Coins className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-400" />
+                  <Input
+                    id="buy-now-price"
+                    type="number"
+                    min={parsedStartingPrice + 1}
+                    step="10"
+                    value={buyNowPrice}
+                    onChange={(e) => setBuyNowPrice(e.target.value)}
+                    placeholder="Optional"
+                    className="pl-10 bg-background/50 border-amber-500/20 focus:border-amber-500/50"
+                  />
+                </div>
+                {parsedBuyNowPrice > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {formatUsd(coinsToUsd(parsedBuyNowPrice))} USD
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground mt-1.5 flex items-start gap-1">
+                  <Info className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                  Fans can win instantly at this price
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Step 4: Duration & Settings */}
+        <div className="rounded-2xl border border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-transparent overflow-hidden">
+          <div className="flex items-center gap-3 px-6 py-4 border-b border-blue-500/10">
+            <div className="flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-blue-400 to-violet-500 text-white text-xs font-bold">
+              4
+            </div>
+            <div className="flex items-center gap-2">
+              <Timer className="h-4 w-4 text-blue-400" />
+              <span className="font-semibold">Duration & Settings</span>
+            </div>
+          </div>
+          <div className="p-6 space-y-5">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="end-date">End Date *</Label>
+                <Label htmlFor="end-date" className="text-sm font-medium">
+                  End Date <span className="text-pink-500">*</span>
+                </Label>
                 <Input
                   id="end-date"
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
                   min={new Date().toISOString().split("T")[0]}
-                  className="mt-1.5"
+                  className="mt-1.5 bg-background/50 border-blue-500/20 focus:border-blue-500/50"
                 />
               </div>
               <div>
-                <Label htmlFor="end-time">End Time *</Label>
+                <Label htmlFor="end-time" className="text-sm font-medium">
+                  End Time <span className="text-pink-500">*</span>
+                </Label>
                 <Input
                   id="end-time"
                   type="time"
                   value={endTime}
                   onChange={(e) => setEndTime(e.target.value)}
-                  className="mt-1.5"
+                  className="mt-1.5 bg-background/50 border-blue-500/20 focus:border-blue-500/50"
                 />
               </div>
             </div>
 
-            <div>
-              <Label htmlFor="anti-snipe">Anti-Sniping (minutes)</Label>
-              <Input
-                id="anti-snipe"
-                type="number"
-                min="0"
-                max="10"
-                value={antiSnipeMinutes}
-                onChange={(e) => setAntiSnipeMinutes(e.target.value)}
-                className="mt-1.5 w-24"
-              />
-              <p className="text-xs text-muted-foreground mt-1 flex items-start gap-1">
-                <Info className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                Extend auction if bid placed in final minutes (0 to disable)
-              </p>
+            <div className="h-px bg-gradient-to-r from-transparent via-blue-500/20 to-transparent" />
+
+            <div className="flex items-center justify-between p-4 rounded-xl bg-blue-500/5 border border-blue-500/10">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-blue-500/10">
+                  <Clock className="h-4 w-4 text-blue-400" />
+                </div>
+                <div>
+                  <Label htmlFor="anti-snipe" className="text-sm font-medium">Anti-Sniping</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Extend auction if bid in final minutes
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="anti-snipe"
+                  type="number"
+                  min="0"
+                  max="10"
+                  value={antiSnipeMinutes}
+                  onChange={(e) => setAntiSnipeMinutes(e.target.value)}
+                  className="w-20 text-center bg-background/50 border-blue-500/20"
+                />
+                <span className="text-xs text-muted-foreground">min</span>
+              </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="allow-auto-bid">Allow Auto-Bidding</Label>
-                <p className="text-xs text-muted-foreground">
-                  Let bidders set a maximum amount to bid automatically
-                </p>
+            <div className="flex items-center justify-between p-4 rounded-xl bg-blue-500/5 border border-blue-500/10">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-violet-500/10">
+                  <Zap className="h-4 w-4 text-violet-400" />
+                </div>
+                <div>
+                  <Label htmlFor="allow-auto-bid" className="text-sm font-medium">Auto-Bidding</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Let bidders set a max amount to bid automatically
+                  </p>
+                </div>
               </div>
               <Switch
                 id="allow-auto-bid"
@@ -550,34 +615,36 @@ export default function EditBidPage({ params }: { params: Promise<{ id: string }
                 onCheckedChange={setAllowAutoBid}
               />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            onClick={() => handleSubmit(false)}
-            disabled={submitting}
-            className="flex-1"
-          >
-            {submitting ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : null}
-            Save Draft
-          </Button>
-          <Button
-            onClick={() => handleSubmit(true)}
-            disabled={submitting}
-            className="flex-1 bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
-          >
-            {submitting ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Gavel className="h-4 w-4 mr-2" />
-            )}
-            Save & Publish
-          </Button>
+        <div className="sticky bottom-4 z-10">
+          <div className="flex items-center gap-3 p-4 rounded-2xl bg-background/80 backdrop-blur-xl border border-violet-500/20 shadow-lg shadow-black/20">
+            <Button
+              variant="outline"
+              onClick={() => handleSubmit(false)}
+              disabled={submitting}
+              className="flex-1 border-violet-500/30 hover:bg-violet-500/10"
+            >
+              {submitting ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : null}
+              Update EXA Bid
+            </Button>
+            <Button
+              onClick={() => handleSubmit(true)}
+              disabled={submitting}
+              className="flex-1 bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white shadow-lg shadow-violet-500/25"
+            >
+              {submitting ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Gavel className="h-4 w-4 mr-2" />
+              )}
+              Update & Publish
+            </Button>
+          </div>
         </div>
       </div>
     </div>

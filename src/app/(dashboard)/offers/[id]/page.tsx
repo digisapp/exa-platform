@@ -3,7 +3,7 @@
 import { useEffect, useState, use } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,8 +18,8 @@ import {
   Users,
   FileText,
   MessageCircle,
+  ArrowLeft,
 } from "lucide-react";
-import { PageHeader } from "@/components/ui/page-header";
 
 interface Offer {
   id: string;
@@ -161,17 +161,26 @@ export default function OfferDetailPage({
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <PageHeader
-        backHref="/offers"
-        backLabel="Back to Offers"
-        title="Offer Details"
-      />
+      {/* Hero Header */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600/20 via-cyan-500/10 to-transparent border border-blue-500/20 p-6">
+        <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-500/15 rounded-full blur-3xl" />
+        <div className="absolute -bottom-16 -left-16 w-32 h-32 bg-cyan-500/15 rounded-full blur-3xl" />
 
-      {/* Main Card */}
-      <Card>
-        <CardHeader className="pb-4">
+        <div className="relative z-10 space-y-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            asChild
+            className="gap-1.5 text-muted-foreground hover:text-foreground -ml-2"
+          >
+            <Link href="/offers">
+              <ArrowLeft className="h-4 w-4" />
+              Back to Offers
+            </Link>
+          </Button>
+
           <div className="flex items-start gap-4">
-            <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center overflow-hidden flex-shrink-0">
+            <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-500/10 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-lg shadow-blue-500/10">
               {logoUrl ? (
                 <Image
                   src={logoUrl}
@@ -185,9 +194,9 @@ export default function OfferDetailPage({
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <CardTitle className="text-xl">{offer.title}</CardTitle>
-              <p className="text-muted-foreground mt-1">{brandName}</p>
-              <div className="flex items-center gap-2 mt-2">
+              <h1 className="text-xl font-semibold tracking-tight">{offer.title}</h1>
+              <p className="text-muted-foreground mt-0.5">{brandName}</p>
+              <div className="flex items-center gap-2 mt-2.5">
                 {isPending && (
                   <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/30">
                     <Clock className="h-3 w-3 mr-1" />
@@ -206,138 +215,162 @@ export default function OfferDetailPage({
                     Declined
                   </Badge>
                 )}
+                {offer.status === "open" ? (
+                  <Badge variant="outline" className="bg-green-500/5 text-green-600 border-green-500/20">
+                    Open
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-muted-foreground">
+                    {offer.status.charAt(0).toUpperCase() + offer.status.slice(1)}
+                  </Badge>
+                )}
               </div>
             </div>
           </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Event Details */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {offer.event_date && (
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-                <Calendar className="h-5 w-5 text-blue-500 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium">Date & Time</p>
-                  <p className="text-sm text-muted-foreground">
-                    {new Date(offer.event_date).toLocaleDateString("en-US", {
-                      weekday: "long",
-                      month: "long",
-                      day: "numeric",
-                    })}
-                    {offer.event_time && ` at ${offer.event_time}`}
-                  </p>
-                </div>
-              </div>
-            )}
-            {location && (
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-                <MapPin className="h-5 w-5 text-blue-500 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium">Location</p>
-                  <p className="text-sm text-muted-foreground">{location}</p>
-                </div>
-              </div>
-            )}
-            {compensation && (
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-                <DollarSign className="h-5 w-5 text-green-500 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium">Compensation</p>
-                  <p className="text-sm text-muted-foreground">{compensation}</p>
-                </div>
-              </div>
-            )}
-            <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-              <Users className="h-5 w-5 text-blue-500 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium">Spots</p>
-                <p className="text-sm text-muted-foreground">
-                  {spotsAvailable > 0
-                    ? `${spotsAvailable} of ${offer.spots} available`
-                    : "All spots filled"}
-                </p>
-              </div>
-            </div>
-          </div>
+        </div>
+      </div>
 
-          {/* Description */}
-          {offer.description && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <FileText className="h-4 w-4 text-muted-foreground" />
-                <p className="text-sm font-medium">Description</p>
-              </div>
-              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                {offer.description}
+      {/* Details Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {offer.event_date && (
+          <div className="flex items-start gap-3 p-4 rounded-xl border border-blue-500/10 bg-blue-500/5">
+            <div className="p-2 rounded-lg bg-blue-500/10">
+              <Calendar className="h-5 w-5 text-blue-500" />
+            </div>
+            <div>
+              <p className="text-sm font-medium">Date & Time</p>
+              <p className="text-sm text-muted-foreground">
+                {new Date(offer.event_date).toLocaleDateString("en-US", {
+                  weekday: "long",
+                  month: "long",
+                  day: "numeric",
+                })}
+                {offer.event_time && ` at ${offer.event_time}`}
               </p>
             </div>
-          )}
+          </div>
+        )}
+        {location && (
+          <div className="flex items-start gap-3 p-4 rounded-xl border border-blue-500/10 bg-blue-500/5">
+            <div className="p-2 rounded-lg bg-blue-500/10">
+              <MapPin className="h-5 w-5 text-blue-500" />
+            </div>
+            <div>
+              <p className="text-sm font-medium">Location</p>
+              <p className="text-sm text-muted-foreground">{location}</p>
+            </div>
+          </div>
+        )}
+        {compensation && (
+          <div className="flex items-start gap-3 p-4 rounded-xl border border-green-500/10 bg-green-500/5">
+            <div className="p-2 rounded-lg bg-green-500/10">
+              <DollarSign className="h-5 w-5 text-green-500" />
+            </div>
+            <div>
+              <p className="text-sm font-medium">Compensation</p>
+              <p className="text-sm text-muted-foreground">{compensation}</p>
+            </div>
+          </div>
+        )}
+        <div className="flex items-start gap-3 p-4 rounded-xl border border-blue-500/10 bg-blue-500/5">
+          <div className="p-2 rounded-lg bg-blue-500/10">
+            <Users className="h-5 w-5 text-blue-500" />
+          </div>
+          <div>
+            <p className="text-sm font-medium">Spots</p>
+            <p className="text-sm text-muted-foreground">
+              {spotsAvailable > 0
+                ? `${spotsAvailable} of ${offer.spots} available`
+                : "All spots filled"}
+            </p>
+          </div>
+        </div>
+      </div>
 
-          {/* Response Section */}
-          {isPending && offer.status === "open" && (
-            <div className="border-t pt-6 space-y-4">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <MessageCircle className="h-4 w-4 text-muted-foreground" />
-                  <p className="text-sm font-medium">Add a note (optional)</p>
-                </div>
-                <Textarea
-                  placeholder="Any message for the brand..."
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  rows={3}
-                />
+      {/* Description */}
+      {offer.description && (
+        <div className="rounded-xl border border-muted/50 bg-muted/30 p-4 space-y-2">
+          <div className="flex items-center gap-2">
+            <FileText className="h-4 w-4 text-muted-foreground" />
+            <p className="text-sm font-medium">Description</p>
+          </div>
+          <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
+            {offer.description}
+          </p>
+        </div>
+      )}
+
+      {/* Response Section */}
+      {isPending && offer.status === "open" && (
+        <div className="rounded-2xl border border-green-500/20 bg-gradient-to-br from-green-500/5 to-transparent p-6 space-y-4">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <MessageCircle className="h-4 w-4 text-muted-foreground" />
+              <p className="text-sm font-medium">Add a note (optional)</p>
+            </div>
+            <Textarea
+              placeholder="Any message for the brand..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={3}
+              className="bg-background/50 border-blue-500/20 focus:border-blue-500/40"
+            />
+          </div>
+          <div className="flex gap-3">
+            <Button
+              onClick={() => handleRespond("accepted")}
+              disabled={submitting || spotsAvailable === 0}
+              className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 shadow-lg shadow-green-500/25 text-white border-0"
+            >
+              <CheckCircle2 className="h-4 w-4 mr-2" />
+              Accept Offer
+            </Button>
+            <Button
+              onClick={() => handleRespond("declined")}
+              disabled={submitting}
+              variant="outline"
+              className="flex-1 border-red-500/30 hover:bg-red-500/10 hover:text-red-500 transition-colors"
+            >
+              <XCircle className="h-4 w-4 mr-2" />
+              Decline
+            </Button>
+          </div>
+          {spotsAvailable === 0 && (
+            <p className="text-sm text-amber-600 text-center">
+              All spots have been filled for this offer
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Already Responded */}
+      {!isPending && (
+        <>
+          {isAccepted ? (
+            <div className="rounded-xl bg-green-500/10 border border-green-500/20 p-4">
+              <div className="flex items-center gap-2 text-sm">
+                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                <span className="text-green-600 font-medium">
+                  You accepted this offer
+                  {myResponse?.responded_at &&
+                    ` on ${new Date(myResponse.responded_at).toLocaleDateString()}`}
+                </span>
               </div>
-              <div className="flex gap-3">
-                <Button
-                  onClick={() => handleRespond("accepted")}
-                  disabled={submitting || spotsAvailable === 0}
-                  className="flex-1 bg-green-500 hover:bg-green-600"
-                >
-                  <CheckCircle2 className="h-4 w-4 mr-2" />
-                  Accept Offer
-                </Button>
-                <Button
-                  onClick={() => handleRespond("declined")}
-                  disabled={submitting}
-                  variant="outline"
-                  className="flex-1"
-                >
-                  <XCircle className="h-4 w-4 mr-2" />
-                  Decline
-                </Button>
-              </div>
-              {spotsAvailable === 0 && (
-                <p className="text-sm text-amber-600 text-center">
-                  All spots have been filled for this offer
+              {myResponse?.notes && (
+                <p className="text-sm text-muted-foreground mt-2 pl-6">
+                  Your note: &quot;{myResponse.notes}&quot;
                 </p>
               )}
             </div>
-          )}
-
-          {/* Already Responded */}
-          {!isPending && (
-            <div className="border-t pt-6">
+          ) : (
+            <div className="rounded-xl bg-muted/50 border p-4">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                {isAccepted ? (
-                  <>
-                    <CheckCircle2 className="h-4 w-4 text-green-500" />
-                    <span>
-                      You accepted this offer
-                      {myResponse?.responded_at &&
-                        ` on ${new Date(myResponse.responded_at).toLocaleDateString()}`}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <XCircle className="h-4 w-4 text-muted-foreground" />
-                    <span>
-                      You declined this offer
-                      {myResponse?.responded_at &&
-                        ` on ${new Date(myResponse.responded_at).toLocaleDateString()}`}
-                    </span>
-                  </>
-                )}
+                <XCircle className="h-4 w-4 text-muted-foreground" />
+                <span>
+                  You declined this offer
+                  {myResponse?.responded_at &&
+                    ` on ${new Date(myResponse.responded_at).toLocaleDateString()}`}
+                </span>
               </div>
               {myResponse?.notes && (
                 <p className="text-sm text-muted-foreground mt-2 pl-6">
@@ -346,16 +379,16 @@ export default function OfferDetailPage({
               )}
             </div>
           )}
+        </>
+      )}
 
-          {offer.status !== "open" && isPending && (
-            <div className="border-t pt-6">
-              <p className="text-sm text-muted-foreground text-center">
-                This offer is no longer accepting responses
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {offer.status !== "open" && isPending && (
+        <div className="rounded-xl border border-muted/50 bg-muted/30 p-4">
+          <p className="text-sm text-muted-foreground text-center">
+            This offer is no longer accepting responses
+          </p>
+        </div>
+      )}
     </div>
   );
 }
