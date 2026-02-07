@@ -17,7 +17,6 @@ export async function GET(
         name,
         slug,
         description,
-        wholesale_price,
         retail_price,
         compare_at_price,
         images,

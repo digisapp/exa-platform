@@ -81,16 +81,19 @@ export async function GET(request: NextRequest) {
       })
       .map((item: { id: string }) => item.id);
 
-    // Batch fetch all media_urls for unlocked content in a single query
+    // Batch fetch media_urls via secure RPC (only returns URLs for unlocked/owned content)
     const mediaUrlMap = new Map<string, string>();
     if (unlockedContentIds.length > 0) {
-      const { data: mediaUrls } = await supabase
-        .from("premium_content")
-        .select("id, media_url")
-        .in("id", unlockedContentIds);
+      const { data: mediaUrls } = await (supabase.rpc as any)(
+        "get_unlocked_media_urls",
+        {
+          p_content_ids: unlockedContentIds,
+          p_buyer_id: actorId,
+        }
+      );
 
-      mediaUrls?.forEach((item: { id: string; media_url: string }) => {
-        mediaUrlMap.set(item.id, item.media_url);
+      (mediaUrls || []).forEach((item: { content_id: string; media_url: string }) => {
+        mediaUrlMap.set(item.content_id, item.media_url);
       });
     }
 

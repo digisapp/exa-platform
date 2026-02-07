@@ -10,8 +10,16 @@ export async function GET(
     const { data: { user } } = await supabase.auth.getUser();
     const { orderNumber } = await params;
 
-    // Get order - allow access if user owns it OR by order number for success page
-    let orderQuery = (supabase as any)
+    // Require authentication to view order details
+    if (!user) {
+      return NextResponse.json(
+        { error: "Authentication required to view order details" },
+        { status: 401 }
+      );
+    }
+
+    // Get order - verify ownership
+    const orderQuery = (supabase as any)
       .from("shop_orders")
       .select(`
         id,
@@ -67,12 +75,8 @@ export async function GET(
           )
         )
       `)
-      .eq("order_number", orderNumber);
-
-    // If user is logged in, verify ownership
-    if (user) {
-      orderQuery = orderQuery.eq("user_id", user.id);
-    }
+      .eq("order_number", orderNumber)
+      .eq("user_id", user.id);
 
     const { data: order, error } = await orderQuery.single();
 

@@ -2,14 +2,11 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 
-// Generate a secure but readable password
+import crypto from "crypto";
+
+// Generate a cryptographically secure password
 function generatePassword(): string {
-  const adjectives = ['Happy', 'Sunny', 'Lucky', 'Bright', 'Swift', 'Cool', 'Star', 'Blue', 'Pink', 'Gold'];
-  const nouns = ['Model', 'Star', 'Light', 'Wave', 'Cloud', 'Dream', 'Spark', 'Glow', 'Rose', 'Sky'];
-  const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
-  const noun = nouns[Math.floor(Math.random() * nouns.length)];
-  const number = Math.floor(Math.random() * 9000) + 1000; // 4 digit number
-  return `${adjective}${noun}${number}!`;
+  return crypto.randomBytes(18).toString("base64url");
 }
 
 export async function POST(
@@ -168,7 +165,7 @@ export async function POST(
     return NextResponse.json({
       success: true,
       email: model.email,
-      password,
+      message: "Login created. Password has been set — share it securely with the model.",
     });
   } catch (error) {
     console.error("Create login error:", error);

@@ -1,3 +1,4 @@
+import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendMiamiSwimWeekProfileReminderEmail } from "@/lib/email";
@@ -8,12 +9,21 @@ const adminClient = createServiceRoleClient();
 // to models without profile photos
 export async function POST(request: NextRequest) {
   try {
-    // Verify cron secret or admin auth
-    const authHeader = request.headers.get("authorization");
-    const cronSecret = process.env.CRON_SECRET;
-
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    // Verify admin auth
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { data: actor } = await supabase
+      .from("actors")
+      .select("id, type")
+      .eq("user_id", user.id)
+      .single() as { data: { id: string; type: string } | null };
+
+    if (!actor || actor.type !== "admin") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     // Get optional parameters from body

@@ -1,8 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import crypto from "crypto";
+
+// Server-side spin result based on weighted probability
+function determineSpinReward(): number {
+  const rand = crypto.randomInt(1000); // 0-999
+  // Weighted distribution: higher rewards are rarer
+  if (rand < 300) return 1;    // 30% chance
+  if (rand < 550) return 2;    // 25% chance
+  if (rand < 730) return 3;    // 18% chance
+  if (rand < 850) return 5;    // 12% chance
+  if (rand < 930) return 8;    // 8% chance
+  if (rand < 975) return 10;   // 4.5% chance
+  if (rand < 995) return 15;   // 2% chance
+  return 25;                    // 0.5% chance
+}
 
 // POST - Claim daily spin reward
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -14,15 +29,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { coins } = await request.json();
-
-    // Validate coins amount (1-25 range based on wheel segments)
-    if (!coins || coins < 1 || coins > 25) {
-      return NextResponse.json(
-        { error: "Invalid coins amount" },
-        { status: 400 }
-      );
-    }
+    // Determine reward server-side (ignore any client-provided amount)
+    const coins = determineSpinReward();
 
     // Call the claim_daily_spin function
     const { data, error } = await (supabase as any).rpc(

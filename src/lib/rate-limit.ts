@@ -130,29 +130,6 @@ interface RateLimitResult {
 }
 
 /**
- * Check if a request should be rate limited
- * Uses Upstash Redis in production, falls back to in-memory for local dev
- *
- * @param identifier - Unique identifier (e.g., IP address, user ID)
- * @param options - Rate limit configuration
- */
-export function rateLimit(
-  identifier: string,
-  options: RateLimitOptions
-): RateLimitResult {
-  const redisClient = getRedisClient();
-
-  // Fall back to in-memory if Redis not configured
-  if (!redisClient) {
-    return inMemoryRateLimit(identifier, options.limit, options.windowSeconds);
-  }
-
-  // Use Upstash rate limiter (synchronous check with cached result)
-  // Note: For true async rate limiting, use rateLimitAsync below
-  return inMemoryRateLimit(identifier, options.limit, options.windowSeconds);
-}
-
-/**
  * Async rate limit check using Upstash Redis
  * Preferred method for API routes
  */
