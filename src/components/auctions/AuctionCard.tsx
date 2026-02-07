@@ -5,9 +5,18 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CountdownTimer } from "./CountdownTimer";
-import { Gavel, Eye, Coins, Zap } from "lucide-react";
+import { Gavel, Eye, Coins, Zap, Video, Pen, Users, Megaphone, Star, MoreHorizontal } from "lucide-react";
 import { coinsToUsd, formatUsd, formatCoins } from "@/lib/coin-config";
-import type { AuctionWithModel } from "@/types/auctions";
+import type { AuctionWithModel, AuctionCategory } from "@/types/auctions";
+
+const CATEGORY_CONFIG: Record<AuctionCategory, { label: string; icon: typeof Video; color: string }> = {
+  video_call: { label: "Video Call", icon: Video, color: "bg-blue-500/80 text-white" },
+  custom_content: { label: "Custom Content", icon: Pen, color: "bg-purple-500/80 text-white" },
+  meet_greet: { label: "Meet & Greet", icon: Users, color: "bg-emerald-500/80 text-white" },
+  shoutout: { label: "Shoutout", icon: Megaphone, color: "bg-orange-500/80 text-white" },
+  experience: { label: "Experience", icon: Star, color: "bg-pink-500/80 text-white" },
+  other: { label: "Other", icon: MoreHorizontal, color: "bg-zinc-500/80 text-white" },
+};
 
 interface AuctionCardProps {
   auction: AuctionWithModel;
@@ -54,27 +63,40 @@ export function AuctionCard({ auction, isWatching, onAuctionEnd }: AuctionCardPr
             </div>
           )}
 
-          {/* Buy Now Badge */}
-          {auction.buy_now_price && !hasEnded && (
-            <Badge className="absolute top-3 right-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
-              <Zap className="h-3 w-3 mr-1" />
-              Buy Now
-            </Badge>
-          )}
+          {/* Top-right badges */}
+          <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5">
+            {/* Buy Now Badge */}
+            {auction.buy_now_price && !hasEnded && (
+              <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
+                <Zap className="h-3 w-3 mr-1" />
+                Buy Now
+              </Badge>
+            )}
 
-          {/* Ended Badge */}
-          {hasEnded && (
-            <Badge className="absolute top-3 right-3 bg-zinc-700 text-white border-0">
-              {auction.status === "sold" ? "Sold" : auction.status === "no_sale" ? "No Sale" : "Ended"}
-            </Badge>
-          )}
+            {/* Ended Badge */}
+            {hasEnded && (
+              <Badge className="bg-zinc-700 text-white border-0">
+                {auction.status === "sold" ? "Sold" : auction.status === "no_sale" ? "No Sale" : "Ended"}
+              </Badge>
+            )}
 
-          {/* Watching indicator */}
-          {isWatching && (
-            <div className="absolute top-3 right-3">
+            {/* Category Badge */}
+            {auction.category && auction.category !== "other" && (() => {
+              const cat = CATEGORY_CONFIG[auction.category];
+              const CatIcon = cat.icon;
+              return (
+                <Badge className={`${cat.color} border-0 text-[11px]`}>
+                  <CatIcon className="h-3 w-3 mr-1" />
+                  {cat.label}
+                </Badge>
+              );
+            })()}
+
+            {/* Watching indicator */}
+            {isWatching && (
               <Eye className="h-5 w-5 text-pink-400 drop-shadow-lg" />
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Bottom Title Bar - Always Visible */}
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-4 pt-12">

@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { coinsToUsd, formatUsd } from "@/lib/coin-config";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Gavel,
   ArrowLeft,
@@ -24,6 +25,8 @@ import {
   Info,
 } from "lucide-react";
 import { toast } from "sonner";
+import { AUCTION_CATEGORIES } from "@/types/auctions";
+import type { AuctionCategory } from "@/types/auctions";
 
 export default function NewBidPage() {
   const router = useRouter();
@@ -43,6 +46,7 @@ export default function NewBidPage() {
   const [buyNowPrice, setBuyNowPrice] = useState("");
   const [endDate, setEndDate] = useState("");
   const [endTime, setEndTime] = useState("");
+  const [category, setCategory] = useState<AuctionCategory>("other");
   const [allowAutoBid, setAllowAutoBid] = useState(true);
   const [antiSnipeMinutes, setAntiSnipeMinutes] = useState("2");
 
@@ -184,6 +188,7 @@ export default function NewBidPage() {
           description: description.trim() || undefined,
           deliverables: deliverables.trim() || undefined,
           cover_image_url: coverImageUrl || undefined,
+          category,
           starting_price: parsedStartingPrice,
           reserve_price: parsedReservePrice || undefined,
           buy_now_price: parsedBuyNowPrice || undefined,
@@ -343,6 +348,22 @@ export default function NewBidPage() {
                 placeholder="List what the winner will receive..."
                 className="mt-1.5 min-h-[80px]"
               />
+            </div>
+
+            <div>
+              <Label htmlFor="category">Category</Label>
+              <Select value={category} onValueChange={(v) => setCategory(v as AuctionCategory)}>
+                <SelectTrigger className="mt-1.5">
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {AUCTION_CATEGORIES.map((cat) => (
+                    <SelectItem key={cat.value} value={cat.value}>
+                      {cat.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>

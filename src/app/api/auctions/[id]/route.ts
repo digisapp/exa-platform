@@ -9,6 +9,7 @@ const updateAuctionSchema = z.object({
   description: z.string().max(5000).optional(),
   deliverables: z.string().max(2000).optional(),
   cover_image_url: z.string().url().optional().nullable(),
+  category: z.enum(["video_call", "custom_content", "meet_greet", "shoutout", "experience", "other"]).optional(),
   starting_price: z.number().int().min(10).optional(),
   reserve_price: z.number().int().min(10).optional().nullable(),
   buy_now_price: z.number().int().min(10).optional().nullable(),
@@ -194,6 +195,7 @@ export async function PATCH(
     if (data.description !== undefined) updateData.description = data.description;
     if (data.deliverables !== undefined) updateData.deliverables = data.deliverables;
     if (data.cover_image_url !== undefined) updateData.cover_image_url = data.cover_image_url;
+    if (data.category !== undefined) updateData.category = data.category;
     if (data.starting_price !== undefined) updateData.starting_price = data.starting_price;
     if (data.reserve_price !== undefined) updateData.reserve_price = data.reserve_price;
     if (data.buy_now_price !== undefined) updateData.buy_now_price = data.buy_now_price;

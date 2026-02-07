@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { coinsToUsd, formatUsd } from "@/lib/coin-config";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Gavel,
   ArrowLeft,
@@ -24,6 +25,8 @@ import {
   Info,
 } from "lucide-react";
 import { toast } from "sonner";
+import { AUCTION_CATEGORIES } from "@/types/auctions";
+import type { AuctionCategory } from "@/types/auctions";
 
 export default function EditBidPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -44,6 +47,7 @@ export default function EditBidPage({ params }: { params: Promise<{ id: string }
   const [buyNowPrice, setBuyNowPrice] = useState("");
   const [endDate, setEndDate] = useState("");
   const [endTime, setEndTime] = useState("");
+  const [category, setCategory] = useState<AuctionCategory>("other");
   const [allowAutoBid, setAllowAutoBid] = useState(true);
   const [antiSnipeMinutes, setAntiSnipeMinutes] = useState("2");
 
@@ -98,6 +102,7 @@ export default function EditBidPage({ params }: { params: Promise<{ id: string }
       setDescription(auction.description || "");
       setDeliverables(auction.deliverables || "");
       setCoverImageUrl(auction.cover_image_url || null);
+      setCategory(auction.category || "other");
       setStartingPrice(auction.starting_price?.toString() || "100");
       setReservePrice(auction.reserve_price?.toString() || "");
       setBuyNowPrice(auction.buy_now_price?.toString() || "");
@@ -216,6 +221,7 @@ export default function EditBidPage({ params }: { params: Promise<{ id: string }
           description: description.trim() || undefined,
           deliverables: deliverables.trim() || undefined,
           cover_image_url: coverImageUrl || null,
+          category,
           starting_price: parsedStartingPrice,
           reserve_price: parsedReservePrice,
           buy_now_price: parsedBuyNowPrice,
@@ -373,6 +379,22 @@ export default function EditBidPage({ params }: { params: Promise<{ id: string }
                 placeholder="List what the winner will receive..."
                 className="mt-1.5 min-h-[80px]"
               />
+            </div>
+
+            <div>
+              <Label htmlFor="category">Category</Label>
+              <Select value={category} onValueChange={(v) => setCategory(v as AuctionCategory)}>
+                <SelectTrigger className="mt-1.5">
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {AUCTION_CATEGORIES.map((cat) => (
+                    <SelectItem key={cat.value} value={cat.value}>
+                      {cat.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>

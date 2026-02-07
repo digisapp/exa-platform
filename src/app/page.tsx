@@ -99,10 +99,22 @@ export default async function HomePage() {
     .order("ends_at", { ascending: true })
     .limit(4);
 
-  // Get top boosted models for leaderboard preview (sorted by profile_views)
-  const leaderboardModels = [...(topModelsData || [])]
-    .sort((a: any, b: any) => (b.profile_views || 0) - (a.profile_views || 0))
-    .slice(0, 5);
+  // Get actual EXA Boost leaderboard from top_model_leaderboard table
+  const { data: leaderboardModels } = await (supabase as any)
+    .from("top_model_leaderboard")
+    .select(`
+      model_id,
+      today_points,
+      total_points,
+      total_likes,
+      total_boosts,
+      models!inner (
+        id, first_name, username, profile_photo_url
+      )
+    `)
+    .gt("total_points", 0)
+    .order("total_points", { ascending: false })
+    .limit(5);
 
   return (
     <div className="min-h-screen relative">
@@ -260,7 +272,7 @@ export default async function HomePage() {
                         EXA Bids
                       </h3>
                       <p className="text-white/60 text-xs md:text-sm">
-                        Bid on exclusive experiences!
+                        Live auctions from top models
                       </p>
                     </div>
                   </div>
@@ -336,24 +348,24 @@ export default async function HomePage() {
                   </div>
 
                   {/* Leaderboard Preview */}
-                  {leaderboardModels.length > 0 && (
+                  {(leaderboardModels?.length ?? 0) > 0 && (
                     <div className="space-y-2 mb-5">
-                      {leaderboardModels.map((model: any, i: number) => (
-                        <div key={model.id} className="flex items-center gap-3 p-2 rounded-xl bg-white/5">
+                      {(leaderboardModels || []).map((entry: any, i: number) => (
+                        <div key={entry.model_id} className="flex items-center gap-3 p-2 rounded-xl bg-white/5">
                           <span className="w-5 text-center text-xs font-bold text-white/50">
                             {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}`}
                           </span>
                           <Avatar className="h-8 w-8 border border-orange-500/30">
-                            <AvatarImage src={model.profile_photo_url} />
+                            <AvatarImage src={entry.models?.profile_photo_url} />
                             <AvatarFallback className="bg-orange-500/20 text-orange-300 text-xs">
-                              {model.first_name?.[0] || "?"}
+                              {entry.models?.first_name?.[0] || "?"}
                             </AvatarFallback>
                           </Avatar>
                           <span className="text-sm text-white font-medium truncate flex-1">
-                            {model.first_name || model.username}
+                            {entry.models?.first_name || entry.models?.username}
                           </span>
                           <span className="text-xs text-white/40">
-                            {(model.profile_views || 0).toLocaleString()} views
+                            {(entry.total_points || 0).toLocaleString()} pts
                           </span>
                         </div>
                       ))}

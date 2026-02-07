@@ -2,6 +2,16 @@
 
 export type AuctionStatus = 'draft' | 'active' | 'ended' | 'sold' | 'cancelled' | 'no_sale';
 export type BidStatus = 'active' | 'outbid' | 'winning' | 'won' | 'lost' | 'refunded';
+export type AuctionCategory = 'video_call' | 'custom_content' | 'meet_greet' | 'shoutout' | 'experience' | 'other';
+
+export const AUCTION_CATEGORIES: { value: AuctionCategory; label: string }[] = [
+  { value: 'video_call', label: 'Video Call' },
+  { value: 'custom_content', label: 'Custom Content' },
+  { value: 'meet_greet', label: 'Meet & Greet' },
+  { value: 'shoutout', label: 'Shoutout' },
+  { value: 'experience', label: 'Experience' },
+  { value: 'other', label: 'Other' },
+];
 
 export interface Auction {
   id: string;
@@ -10,6 +20,7 @@ export interface Auction {
   description: string | null;
   deliverables: string | null;
   cover_image_url: string | null;
+  category: AuctionCategory;
   starting_price: number;
   reserve_price: number | null;
   buy_now_price: number | null;
@@ -83,6 +94,7 @@ export interface CreateAuctionRequest {
   description?: string;
   deliverables?: string;
   cover_image_url?: string;
+  category?: AuctionCategory;
   starting_price: number;
   reserve_price?: number;
   buy_now_price?: number;
@@ -96,6 +108,7 @@ export interface UpdateAuctionRequest {
   description?: string;
   deliverables?: string;
   cover_image_url?: string;
+  category?: AuctionCategory;
   starting_price?: number;
   reserve_price?: number;
   buy_now_price?: number;
