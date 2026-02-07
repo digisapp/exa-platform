@@ -1,7 +1,11 @@
 import { AccessToken } from "livekit-server-sdk";
 
-const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY!;
-const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET!;
+const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY;
+const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET;
+
+if (!LIVEKIT_API_KEY || !LIVEKIT_API_SECRET) {
+  throw new Error("Missing LIVEKIT_API_KEY or LIVEKIT_API_SECRET environment variables");
+}
 
 /**
  * Generate a unique room name for a video call session

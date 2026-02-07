@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
@@ -242,7 +243,7 @@ export async function POST(request: NextRequest) {
 
     // Step 1: Create new auth user
     const supabase = await createClient();
-    const tempPassword = Math.random().toString(36).slice(-12) + "Aa1!";
+    const tempPassword = crypto.randomBytes(16).toString("base64url") + "Aa1!";
 
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: normalizedEmail,

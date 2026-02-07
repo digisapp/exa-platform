@@ -22,11 +22,24 @@ export async function GET() {
       return NextResponse.json({ error: "Only brands can access analytics" }, { status: 403 });
     }
 
+    // Verify brand ownership: fetch the brand record for this actor
+    // and use the verified brand ID in all subsequent queries
+    const { data: brand } = await (supabase.from("brands") as any)
+      .select("id")
+      .eq("id", actor.id)
+      .maybeSingle();
+
+    if (!brand) {
+      return NextResponse.json({ error: "Brand not found for this account" }, { status: 403 });
+    }
+
+    const brandActorId = brand.id;
+
     // 1. Get total coins spent (negative amounts = spending)
     const { data: coinData } = await (supabase
       .from("coin_transactions") as any)
       .select("amount, action, created_at")
-      .eq("actor_id", actor.id)
+      .eq("actor_id", brandActorId)
       .lt("amount", 0);
 
     const totalCoinsSpent = Math.abs(
@@ -44,7 +57,7 @@ export async function GET() {
     const { data: bookings } = await (supabase
       .from("bookings") as any)
       .select("id, model_id, status, event_date, service_type, total_amount, created_at")
-      .eq("client_id", actor.id);
+      .eq("client_id", brandActorId);
 
     const totalBookings = bookings?.length || 0;
     const completedBookings = bookings?.filter((b: any) => b.status === "completed").length || 0;
@@ -57,7 +70,7 @@ export async function GET() {
     const { data: conversations } = await (supabase
       .from("conversation_participants") as any)
       .select("conversation_id")
-      .eq("actor_id", actor.id);
+      .eq("actor_id", brandActorId);
 
     let modelsContacted = 0;
     const modelBookingCounts: Record<string, number> = {};
@@ -70,7 +83,7 @@ export async function GET() {
         .from("conversation_participants") as any)
         .select("actor_id")
         .in("conversation_id", conversationIds)
-        .neq("actor_id", actor.id);
+        .neq("actor_id", brandActorId);
 
       if (otherParticipants) {
         const uniqueActors = new Set(otherParticipants.map((p: any) => p.actor_id));

@@ -31,6 +31,16 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Get actor for authorization check
+    const { data: actor } = await (supabase.from("actors") as any)
+      .select("id, type")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (!actor) {
+      return NextResponse.json({ error: "Actor not found" }, { status: 404 });
+    }
+
     // Get booking
     const { data: booking, error } = await (supabase.from("bookings") as any)
       .select("*")
@@ -44,6 +54,24 @@ export async function GET(
 
     if (!booking) {
       return NextResponse.json({ error: "Booking not found" }, { status: 404 });
+    }
+
+    // Authorization check: verify the user is the client, the model, or an admin
+    const isClient = booking.client_id === actor.id;
+    const isAdmin = actor.type === "admin";
+
+    // Check if user is the model (model's user_id matches authenticated user)
+    let isModel = false;
+    if (booking.model_id) {
+      const { data: modelRecord } = await (supabase.from("models") as any)
+        .select("user_id")
+        .eq("id", booking.model_id)
+        .maybeSingle();
+      isModel = modelRecord?.user_id === user.id;
+    }
+
+    if (!isClient && !isModel && !isAdmin) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     // Get model info separately

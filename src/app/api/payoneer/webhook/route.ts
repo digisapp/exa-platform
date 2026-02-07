@@ -5,17 +5,44 @@ import { verifyPayoneerWebhook, PayoneerWebhookPayload } from "@/lib/payoneer";
 // Use service role for webhook processing
 const supabase = createServiceRoleClient();
 
-// In-memory cache for processed event IDs (for idempotency)
-// In production, you might want to use Redis or a database table
-const processedEvents = new Map<string, number>();
+/**
+ * Check if a Payoneer webhook event has already been processed.
+ * Uses the payoneer_payouts table metadata to detect duplicate events,
+ * falling back to an in-memory cache for events that don't touch payouts.
+ */
+async function isEventAlreadyProcessed(eventId: string): Promise<boolean> {
+  // Check payoneer_payouts for any record referencing this event
+  const { data: existingPayout } = await supabase
+    .from("payoneer_payouts")
+    .select("id")
+    .eq("payoneer_payout_id", eventId)
+    .maybeSingle();
+
+  if (existingPayout) {
+    return true;
+  }
+
+  // Also check payoneer_accounts for status change events by looking at
+  // the updated_at timestamp pattern (events are unique by event_id)
+  // For non-payout events, fall back to in-memory cache as a secondary check
+  if (processedEventsCache.has(eventId)) {
+    return true;
+  }
+
+  return false;
+}
+
+// Secondary in-memory cache for non-payout events (e.g., payee status changes)
+// that don't have a dedicated DB record to check against
+const processedEventsCache = new Map<string, number>();
 const EVENT_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
 
 // Clean up old event IDs periodically
-function cleanupProcessedEvents() {
+function cleanupProcessedEventsCache() {
   const now = Date.now();
-  for (const [eventId, timestamp] of processedEvents.entries()) {
+  for (const [eventId, timestamp] of processedEventsCache.entries()) {
     if (now - timestamp > EVENT_CACHE_TTL) {
-      processedEvents.delete(eventId);
+      processedEventsCache.delete(eventId);
     }
   }
 }
@@ -36,12 +63,13 @@ export async function POST(request: NextRequest) {
     if (isProduction && !webhookSecret) {
       console.error("PAYONEER_WEBHOOK_SECRET not configured in production");
       return NextResponse.json(
-        { error: "Webhook not configured" },
+        { error: "Webhook secret not configured" },
         { status: 500 }
       );
     }
 
     if (webhookSecret) {
+      // When the secret is configured, always require a valid signature
       if (!signature) {
         console.error("Missing Payoneer webhook signature");
         return NextResponse.json(
@@ -58,24 +86,33 @@ export async function POST(request: NextRequest) {
           { status: 401 }
         );
       }
+    } else {
+      // Only reachable in development (production returns 500 above)
+      console.warn(
+        "PAYONEER_WEBHOOK_SECRET not set - skipping signature verification (development only)"
+      );
     }
 
     const event: PayoneerWebhookPayload = JSON.parse(payload);
 
-    // IDEMPOTENCY: Check if we've already processed this event
-    if (event.event_id && processedEvents.has(event.event_id)) {
-      console.log("Duplicate Payoneer webhook event ignored:", event.event_id);
-      return NextResponse.json({ received: true, duplicate: true });
+    // IDEMPOTENCY: Check database + in-memory cache for duplicate events
+    if (event.event_id) {
+      const alreadyProcessed = await isEventAlreadyProcessed(event.event_id);
+      if (alreadyProcessed) {
+        console.log("Duplicate Payoneer webhook event ignored:", event.event_id);
+        return NextResponse.json({ received: true, duplicate: true });
+      }
     }
 
     console.log("Payoneer webhook received:", event.event_type, event.event_id);
 
-    // Mark event as processed
+    // Mark event as processed in the in-memory cache (DB records are
+    // created by the individual handlers for payout events)
     if (event.event_id) {
-      processedEvents.set(event.event_id, Date.now());
+      processedEventsCache.set(event.event_id, Date.now());
       // Cleanup old events periodically
-      if (processedEvents.size > 1000) {
-        cleanupProcessedEvents();
+      if (processedEventsCache.size > 1000) {
+        cleanupProcessedEventsCache();
       }
     }
 

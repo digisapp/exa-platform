@@ -10,7 +10,23 @@ const supabaseAdmin: any = createServiceRoleClient();
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
-  const signature = request.headers.get("stripe-signature")!;
+  const signature = request.headers.get("stripe-signature");
+
+  if (!signature) {
+    return NextResponse.json(
+      { error: "Missing stripe-signature header" },
+      { status: 400 }
+    );
+  }
+
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!webhookSecret) {
+    console.error("STRIPE_WEBHOOK_SECRET environment variable is not configured");
+    return NextResponse.json(
+      { error: "Webhook secret not configured" },
+      { status: 500 }
+    );
+  }
 
   let event: Stripe.Event;
 
@@ -18,7 +34,7 @@ export async function POST(request: NextRequest) {
     event = stripe.webhooks.constructEvent(
       body,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET!
+      webhookSecret
     );
   } catch (err) {
     console.error("Webhook signature verification failed:", err);
@@ -722,18 +738,16 @@ async function handleShopOrderPayment(session: Stripe.Checkout.Session) {
     .eq("order_id", orderId);
 
   // Stock was already reserved atomically at checkout time via reserve_stock()
-  // Just increment total_sold counters on the products
+  // Increment total_sold counters on the products using atomic RPC
   const { data: orderItems } = await supabaseAdmin
     .from("shop_order_items")
     .select("variant_id, quantity")
     .eq("order_id", orderId);
 
-  // TODO: Replace this read-then-write pattern with an atomic RPC call
-  // (e.g., increment_total_sold(p_product_id, p_quantity)) to avoid race conditions
-  // when multiple orders complete concurrently for the same product.
   if (orderItems) {
     for (const item of orderItems) {
       try {
+        // Look up the product_id for this variant
         const { data: variantData, error: variantError } = await supabaseAdmin
           .from("shop_product_variants")
           .select("product_id")
@@ -746,24 +760,14 @@ async function handleShopOrderPayment(session: Stripe.Checkout.Session) {
         }
 
         if (variantData?.product_id) {
-          const { data: product, error: productError } = await supabaseAdmin
-            .from("shop_products")
-            .select("total_sold")
-            .eq("id", variantData.product_id)
-            .single();
+          // Use atomic RPC to increment total_sold, avoiding read-then-write race conditions
+          const { error: rpcError } = await supabaseAdmin.rpc("increment_total_sold", {
+            p_product_id: variantData.product_id,
+            p_quantity: item.quantity,
+          });
 
-          if (productError) {
-            console.error("Error fetching product for total_sold update:", productError, { product_id: variantData.product_id });
-            continue;
-          }
-
-          const { error: updateError } = await supabaseAdmin
-            .from("shop_products")
-            .update({ total_sold: (product?.total_sold || 0) + item.quantity })
-            .eq("id", variantData.product_id);
-
-          if (updateError) {
-            console.error("Error updating total_sold:", updateError, { product_id: variantData.product_id });
+          if (rpcError) {
+            console.error("Error updating total_sold via RPC:", rpcError, { product_id: variantData.product_id });
           }
         }
       } catch (err) {

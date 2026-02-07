@@ -54,7 +54,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function EventPage({ params, searchParams }: Props) {
   const { slug } = await params;
-  const { ref } = await searchParams;
+  const { ref: rawRef } = await searchParams;
+  // Sanitize ref to prevent XSS - affiliate codes should only be alphanumeric with underscores/hyphens
+  const ref = rawRef?.replace(/[^a-zA-Z0-9_-]/g, '') || undefined;
   const supabase = await createClient();
 
   // Get event
@@ -500,7 +502,7 @@ export default async function EventPage({ params, searchParams }: Props) {
         </div>
       </main>
 
-      {/* Affiliate Tracking Script */}
+      {/* Affiliate Tracking Script - ref is sanitized at top of component to alphanumeric/underscore/hyphen only */}
       {ref && (
         <script
           dangerouslySetInnerHTML={{
@@ -511,8 +513,8 @@ export default async function EventPage({ params, searchParams }: Props) {
                   headers: { 'Content-Type': 'application/json' },
                   credentials: 'same-origin',
                   body: JSON.stringify({
-                    affiliateCode: '${ref}',
-                    eventId: '${event.id}',
+                    affiliateCode: ${JSON.stringify(ref)},
+                    eventId: ${JSON.stringify(event.id)},
                     source: 'event_page'
                   })
                 });

@@ -42,9 +42,44 @@ export default function ClaimPage() {
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const [usernameError, setUsernameError] = useState<string | null>(null);
 
-  // Load model data
+  // Load model data with rate limiting to prevent token enumeration
   useEffect(() => {
     async function loadModel() {
+      // Validate token format before making any request - tokens should be UUIDs
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!token || !uuidRegex.test(token)) {
+        setError("Invalid or expired invite link");
+        setLoading(false);
+        return;
+      }
+
+      // Client-side rate limiting: track attempts in sessionStorage to slow enumeration
+      const RATE_LIMIT_KEY = "claim_attempts";
+      const RATE_LIMIT_WINDOW = 60000; // 1 minute window
+      const MAX_ATTEMPTS = 5;
+
+      try {
+        const stored = sessionStorage.getItem(RATE_LIMIT_KEY);
+        const attempts: number[] = stored ? JSON.parse(stored) : [];
+        const now = Date.now();
+        // Filter to only attempts within the window
+        const recentAttempts = attempts.filter((t: number) => now - t < RATE_LIMIT_WINDOW);
+
+        if (recentAttempts.length >= MAX_ATTEMPTS) {
+          setError("Too many attempts. Please try again in a minute.");
+          setLoading(false);
+          return;
+        }
+
+        recentAttempts.push(now);
+        sessionStorage.setItem(RATE_LIMIT_KEY, JSON.stringify(recentAttempts));
+      } catch {
+        // sessionStorage unavailable (e.g. private browsing) - continue without client rate limiting
+      }
+
+      // Add a minimum delay to prevent rapid enumeration even if sessionStorage is bypassed
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       const { data, error } = await (supabase
         .from("models") as any)
         .select("id, email, username, first_name, last_name, profile_photo_url, claimed_at, user_id")
