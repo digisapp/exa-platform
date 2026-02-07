@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendBookingAcceptedEmail, sendBookingDeclinedEmail } from "@/lib/email";
 
@@ -103,10 +103,7 @@ export async function PATCH(
     const supabase = await createClient();
 
     // Use service role client to bypass RLS for all operations
-    const adminClient = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const adminClient = createServiceRoleClient();
 
     // Auth check
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -138,8 +135,8 @@ export async function PATCH(
     debugInfo.actor = actor;
 
     // Get existing booking
-    const { data: booking, error: bookingError } = await adminClient
-      .from("bookings")
+    const { data: booking, error: bookingError } = await (adminClient
+      .from("bookings") as any)
       .select("*")
       .eq("id", id)
       .maybeSingle();
@@ -227,7 +224,7 @@ export async function PATCH(
               .eq("id", id);
 
             // Notify client
-            await adminClient.from("notifications").insert({
+            await (adminClient.from("notifications") as any).insert({
               actor_id: booking.client_id,
               type: "booking_declined",
               title: "Booking Declined - Insufficient Funds",
@@ -256,7 +253,7 @@ export async function PATCH(
             }
 
             // Log escrow transaction
-            const { error: escrowLogError } = await adminClient.from("coin_transactions").insert({
+            const { error: escrowLogError } = await (adminClient.from("coin_transactions") as any).insert({
               actor_id: clientActor.id,
               amount: -escrowAmount,
               action: "booking_escrow",
@@ -390,7 +387,7 @@ export async function PATCH(
           }
 
           // Log escrow transaction
-          const { error: counterEscrowLogError } = await adminClient.from("coin_transactions").insert({
+          const { error: counterEscrowLogError } = await (adminClient.from("coin_transactions") as any).insert({
             actor_id: actor.id,
             amount: -counterEscrowAmount,
             action: "booking_escrow",
@@ -617,7 +614,7 @@ export async function PATCH(
           .maybeSingle();
 
         if (modelActor && !modelCreditError) {
-          const { error: paymentLogError } = await adminClient.from("coin_transactions").insert({
+          const { error: paymentLogError } = await (adminClient.from("coin_transactions") as any).insert({
             actor_id: modelActor.id,
             amount: escrowAmount,
             action: "booking_payment",
@@ -661,7 +658,7 @@ export async function PATCH(
               }
 
               if (!refundCreditError) {
-                const { error: refundLogError } = await adminClient.from("coin_transactions").insert({
+                const { error: refundLogError } = await (adminClient.from("coin_transactions") as any).insert({
                   actor_id: clientActor.id,
                   amount: escrowAmount,
                   action: "booking_refund",
@@ -689,7 +686,7 @@ export async function PATCH(
     // Send notification (don't fail if this errors)
     if (notificationData) {
       try {
-        await adminClient.from("notifications").insert(notificationData);
+        await (adminClient.from("notifications") as any).insert(notificationData);
       } catch (notifError) {
         console.error("Failed to send notification:", notifError);
       }
@@ -714,7 +711,7 @@ export async function PATCH(
             .select("email, display_name")
             .eq("id", clientActorInfo.id)
             .maybeSingle();
-          clientEmail = fan?.email;
+          clientEmail = fan?.email ?? null;
           clientName = fan?.display_name || "there";
         } else if (clientActorInfo?.type === "brand") {
           const { data: brand } = await adminClient
@@ -722,7 +719,7 @@ export async function PATCH(
             .select("email, company_name, contact_name")
             .eq("id", clientActorInfo.id)
             .maybeSingle();
-          clientEmail = brand?.email;
+          clientEmail = brand?.email ?? null;
           clientName = brand?.company_name || brand?.contact_name || "there";
         }
 
@@ -800,10 +797,7 @@ export async function DELETE(
     }
 
     // Use service role client to bypass RLS
-    const adminClient = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const adminClient = createServiceRoleClient();
 
     // Get booking
     const { data: booking, error: fetchError } = await adminClient

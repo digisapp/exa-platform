@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 import { sendCoinBalanceReminderEmail } from "@/lib/email";
 
@@ -27,10 +27,7 @@ export async function POST() {
     }
 
     // Use service role client to bypass RLS
-    const adminClient = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const adminClient = createServiceRoleClient();
 
     // Get all models with coin_balance >= 500
     const { data: models, error: modelsError } = await adminClient
@@ -53,12 +50,12 @@ export async function POST() {
 
     // Get model coin balances from actors table
     const userIds = models.map(m => m.user_id).filter(Boolean);
-    const { data: actors } = await adminClient
-      .from("actors")
+    const { data: actors } = await (adminClient
+      .from("actors") as any)
       .select("user_id, coin_balance")
       .in("user_id", userIds);
 
-    const actorBalances = new Map(actors?.map(a => [a.user_id, a.coin_balance]) || []);
+    const actorBalances = new Map(actors?.map((a: any) => [a.user_id, a.coin_balance]) || []);
 
     // Get user emails
     const { data: usersData } = await adminClient.auth.admin.listUsers();
@@ -75,7 +72,7 @@ export async function POST() {
     // Send emails to each qualifying model
     for (const model of models) {
       const email = model.user_id ? userEmails.get(model.user_id) : null;
-      const coinBalance = model.user_id ? actorBalances.get(model.user_id) : 0;
+      const coinBalance = model.user_id ? (Number(actorBalances.get(model.user_id)) || 0) : 0;
 
       if (!email) {
         skipped.push(`${model.username} (no email)`);
@@ -90,7 +87,7 @@ export async function POST() {
       try {
         const result = await sendCoinBalanceReminderEmail({
           to: email,
-          modelName: model.first_name || model.username,
+          modelName: model.first_name || model.username || "Model",
           coinBalance,
         });
 
@@ -142,10 +139,7 @@ export async function GET() {
     }
 
     // Use service role client to bypass RLS
-    const adminClient = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const adminClient = createServiceRoleClient();
 
     // Get all models with coin_balance >= 500
     const { data: models } = await adminClient
@@ -165,20 +159,23 @@ export async function GET() {
 
     // Get actor coin balances (the authoritative source)
     const userIds = models.map(m => m.user_id).filter(Boolean);
-    const { data: actors } = await adminClient
-      .from("actors")
+    const { data: actors } = await (adminClient
+      .from("actors") as any)
       .select("user_id, coin_balance")
       .in("user_id", userIds);
 
-    const actorBalances = new Map(actors?.map(a => [a.user_id, a.coin_balance]) || []);
+    const actorBalances = new Map(actors?.map((a: any) => [a.user_id, a.coin_balance]) || []);
 
-    const modelsWithBalance = models.map(m => ({
-      id: m.id,
-      name: `${m.first_name || ""} ${m.last_name || ""}`.trim() || m.username,
-      username: m.username,
-      coinBalance: m.user_id ? actorBalances.get(m.user_id) || 0 : 0,
-      usdValue: `$${((m.user_id ? actorBalances.get(m.user_id) || 0 : 0) * 0.10).toFixed(2)}`,
-    })).filter(m => m.coinBalance >= MINIMUM_COIN_BALANCE);
+    const modelsWithBalance = models.map(m => {
+      const bal = m.user_id ? (Number(actorBalances.get(m.user_id)) || 0) : 0;
+      return {
+        id: m.id,
+        name: `${m.first_name || ""} ${m.last_name || ""}`.trim() || m.username,
+        username: m.username,
+        coinBalance: bal,
+        usdValue: `$${(bal * 0.10).toFixed(2)}`,
+      };
+    }).filter(m => m.coinBalance >= MINIMUM_COIN_BALANCE);
 
     const totalCoins = modelsWithBalance.reduce((sum, m) => sum + m.coinBalance, 0);
 

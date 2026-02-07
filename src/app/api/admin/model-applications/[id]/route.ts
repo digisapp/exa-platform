@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendModelApprovalEmail } from "@/lib/email";
 import { escapeIlike } from "@/lib/utils";
@@ -71,10 +71,7 @@ export async function PATCH(
     // If approved, convert fan to model
     if (status === "approved") {
       // Use admin client to bypass RLS for actor updates
-      const adminClient = createSupabaseClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!
-      );
+      const adminClient = createServiceRoleClient();
 
       // Check if model already exists by user_id
       const { data: existingModelByUser } = await (adminClient.from("models") as any)
@@ -360,10 +357,7 @@ export async function DELETE(
     }
 
     // Use service role client to bypass RLS for delete
-    const adminClient = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const adminClient = createServiceRoleClient();
 
     // Delete the application
     const { error: deleteError } = await adminClient

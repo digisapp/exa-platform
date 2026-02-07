@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
@@ -35,10 +35,7 @@ export async function PATCH(
     }
 
     // Use service role client to bypass RLS
-    const adminClient = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const adminClient = createServiceRoleClient();
 
     // Get the application with gig and event info
     const { data: application, error: fetchError } = await adminClient

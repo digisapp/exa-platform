@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 
 // GET /api/campaigns/model/[modelId] - Get all campaigns and whether this model is in each
@@ -100,10 +100,7 @@ export async function POST(
   }
 
   // Use service role client to bypass RLS for insert/delete
-  const adminClient = createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const adminClient = createServiceRoleClient();
 
   if (add) {
     // Add model to campaign

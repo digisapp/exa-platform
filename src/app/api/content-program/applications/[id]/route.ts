@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
@@ -37,10 +37,7 @@ export async function PATCH(
     }
 
     // Use admin client for the update
-    const adminClient = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const adminClient = createServiceRoleClient();
 
     // Build update object
     const updateData: any = {
@@ -59,7 +56,7 @@ export async function PATCH(
       updateData.rejection_reason = rejection_reason;
     }
 
-    const { data: application, error } = await adminClient
+    const { data: application, error } = await (adminClient as any)
       .from("content_program_applications")
       .update(updateData)
       .eq("id", id)
@@ -74,7 +71,7 @@ export async function PATCH(
     // If approved, create enrollment
     if (status === "approved" && application) {
       // Check if enrollment already exists
-      const { data: existingEnrollment } = await adminClient
+      const { data: existingEnrollment } = await (adminClient as any)
         .from("content_program_enrollments")
         .select("id")
         .eq("application_id", id)
@@ -83,7 +80,7 @@ export async function PATCH(
       if (!existingEnrollment) {
         // Create enrollment with 3 payments
         const startDate = new Date();
-        const { data: enrollment, error: enrollError } = await adminClient
+        const { data: enrollment, error: enrollError } = await (adminClient as any)
           .from("content_program_enrollments")
           .insert({
             application_id: id,
@@ -117,7 +114,7 @@ export async function PATCH(
             });
           }
 
-          const { error: paymentsError } = await adminClient
+          const { error: paymentsError } = await (adminClient as any)
             .from("content_program_payments")
             .insert(payments);
 
@@ -126,7 +123,7 @@ export async function PATCH(
           }
 
           // Update application status to enrolled
-          await adminClient
+          await (adminClient as any)
             .from("content_program_applications")
             .update({ status: "enrolled" })
             .eq("id", id);
@@ -177,12 +174,9 @@ export async function DELETE(
     }
 
     // Use admin client for the delete
-    const adminClient = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const adminClient = createServiceRoleClient();
 
-    const { error } = await adminClient
+    const { error } = await (adminClient as any)
       .from("content_program_applications")
       .delete()
       .eq("id", id);

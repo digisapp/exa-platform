@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendNewGigAnnouncementEmail } from "@/lib/email";
 import { format } from "date-fns";
@@ -37,10 +37,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Use admin client to bypass RLS
-    const adminClient = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const adminClient = createServiceRoleClient();
 
     // Get gig details
     const { data: gig } = await (adminClient

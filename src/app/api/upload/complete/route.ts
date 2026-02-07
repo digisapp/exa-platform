@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { getModelId } from "@/lib/ids";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -17,10 +17,7 @@ const uploadCompleteSchema = z.object({
 });
 
 // Admin client for verifying uploads exist
-const adminClient = createSupabaseClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const adminClient = createServiceRoleClient();
 
 // POST - Complete the upload by creating the media asset record
 export async function POST(request: NextRequest) {

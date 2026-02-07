@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendBookingRequestEmail } from "@/lib/email";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
@@ -32,10 +32,7 @@ const createBookingSchema = z.object({
 });
 
 // Admin client for bypassing RLS on specific queries
-const adminClient = createSupabaseClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const adminClient = createServiceRoleClient();
 
 // Service type to rate field mapping
 const SERVICE_RATE_FIELDS: Record<string, string> = {

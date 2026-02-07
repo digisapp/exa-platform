@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 
 /**
@@ -29,10 +29,7 @@ export async function POST() {
     }
 
     // Use admin client to bypass RLS
-    const adminClient = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const adminClient = createServiceRoleClient();
 
     // Find all models who have user_id but aren't approved
     const { data: stuckModels, error: fetchError } = await adminClient
@@ -118,10 +115,7 @@ export async function GET() {
     }
 
     // Use admin client to bypass RLS
-    const adminClient = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const adminClient = createServiceRoleClient();
 
     // Find all models who have user_id but aren't approved
     const { data: stuckModels, error: fetchError } = await adminClient

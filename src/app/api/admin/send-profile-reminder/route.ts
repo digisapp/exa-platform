@@ -1,11 +1,8 @@
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendMiamiSwimWeekProfileReminderEmail } from "@/lib/email";
 
-const adminClient = createSupabaseClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const adminClient = createServiceRoleClient();
 
 // POST /api/admin/send-profile-reminder - Send Miami Swim Week profile reminder emails
 // to models without profile photos

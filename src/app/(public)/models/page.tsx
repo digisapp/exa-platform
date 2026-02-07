@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -9,6 +10,15 @@ import { ModelsGrid } from "@/components/models/models-grid";
 import { BrandPaywallWrapper } from "@/components/brands/BrandPaywallWrapper";
 import { FanCoinGateWrapper } from "@/components/fans/FanCoinGate";
 import { escapeIlike } from "@/lib/utils";
+
+export const metadata: Metadata = {
+  title: "Browse Models",
+  description: "Browse and book professional models for photoshoots, events, and brand collaborations on EXA Models.",
+  openGraph: {
+    title: "Browse Models",
+    description: "Browse and book professional models for photoshoots, events, and brand collaborations on EXA Models.",
+  },
+};
 
 // Cache model list for 2 minutes - balance between freshness and performance
 export const revalidate = 120;

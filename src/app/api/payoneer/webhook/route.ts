@@ -1,12 +1,9 @@
-import { createClient } from "@supabase/supabase-js";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { verifyPayoneerWebhook, PayoneerWebhookPayload } from "@/lib/payoneer";
 
 // Use service role for webhook processing
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const supabase = createServiceRoleClient();
 
 // In-memory cache for processed event IDs (for idempotency)
 // In production, you might want to use Redis or a database table

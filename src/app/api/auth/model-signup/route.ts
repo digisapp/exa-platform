@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { createClient as createAdminClient } from "@supabase/supabase-js";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendPasswordResetEmail as sendCustomPasswordResetEmail } from "@/lib/email";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
@@ -21,10 +21,7 @@ const modelSignupSchema = z.object({
 );
 
 // Admin client to bypass RLS
-const adminClient = createAdminClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const adminClient = createServiceRoleClient();
 
 // Helper to extract Instagram username from URL or handle
 function extractInstagramUsername(input: string | null | undefined): string | null {

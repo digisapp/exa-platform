@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 
-const supabase = createSupabaseClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const supabase: any = createServiceRoleClient();
 
 export async function POST(request: NextRequest) {
   try {
@@ -42,7 +39,7 @@ export async function POST(request: NextRequest) {
     let totalTransactions = 0;
 
     if (transactions) {
-      transactions.forEach((t) => {
+      transactions.forEach((t: any) => {
         totalTransactions++;
         if (t.payment_method === "cash") {
           totalCashSales += t.amount;

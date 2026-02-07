@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendOfferReceivedEmail } from "@/lib/email";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
@@ -25,10 +25,7 @@ const createOfferSchema = z.object({
   recurrence_end_date: z.string().optional().nullable(),
 });
 
-const adminClient = createSupabaseClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const adminClient = createServiceRoleClient();
 
 // GET /api/offers - Get offers
 // For models: offers sent to campaigns they're in

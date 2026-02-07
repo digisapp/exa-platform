@@ -1,4 +1,4 @@
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 
 // POST - Record a commission (called by ticket system webhook)
@@ -27,10 +27,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Use admin client
-    const adminClient = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const adminClient = createServiceRoleClient();
 
     // Find the model by affiliate code
     const { data: model } = await adminClient
@@ -151,10 +148,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Use admin client
-    const adminClient = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const adminClient = createServiceRoleClient();
 
     const updateData: Record<string, any> = {
       status,

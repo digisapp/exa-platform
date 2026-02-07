@@ -1,11 +1,8 @@
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendOfferReceivedEmail } from "@/lib/email";
 
-const adminClient = createSupabaseClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const adminClient: any = createServiceRoleClient();
 
 // Helper to calculate next occurrence date
 function getNextOccurrence(currentDate: string, pattern: string): Date {
@@ -163,7 +160,7 @@ export async function GET(request: NextRequest) {
             // Get user emails
             const userIds = models.map((m: any) => m.user_id);
             const { data: users } = await adminClient.auth.admin.listUsers();
-            const userEmails = new Map(
+            const userEmails = new Map<string, string>(
               users?.users?.filter((u: any) => userIds.includes(u.id)).map((u: any) => [u.id, u.email]) || []
             );
 

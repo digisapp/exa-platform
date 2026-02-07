@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 import { BRAND_SUBSCRIPTION_TIERS, BrandTier } from "@/lib/stripe-config";
 
@@ -28,10 +28,7 @@ export async function POST(
   }
 
   // Use service role client to bypass RLS
-  const adminClient = createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const adminClient = createServiceRoleClient();
 
   // Verify the campaign belongs to this brand
   const { data: campaign } = await (supabase
@@ -143,10 +140,7 @@ export async function DELETE(
   }
 
   // Use service role client to bypass RLS for delete
-  const adminClient = createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const adminClient = createServiceRoleClient();
 
   // Remove model from campaign
   const { error } = await (adminClient

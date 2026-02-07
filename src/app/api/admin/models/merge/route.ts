@@ -1,11 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
-import { createClient as createAdminClient } from "@supabase/supabase-js";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 
-const adminClient = createAdminClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const adminClient = createServiceRoleClient();
 
 async function isAdmin(supabase: any, userId: string) {
   const { data: actor } = await supabase
@@ -38,14 +35,14 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch both models
-    const { data: keepModel } = await adminClient
-      .from("models")
+    const { data: keepModel } = await (adminClient
+      .from("models") as any)
       .select("*, actors:user_id(id, type)")
       .eq("username", keepUsername)
       .single();
 
-    const { data: deleteModel } = await adminClient
-      .from("models")
+    const { data: deleteModel } = await (adminClient
+      .from("models") as any)
       .select("*, actors:user_id(id, type)")
       .eq("username", deleteUsername)
       .single();

@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -120,10 +120,7 @@ export async function PUT(
   if (color !== undefined) updates.color = color;
 
   // Use service role client to bypass RLS for update
-  const adminClient = createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const adminClient = createServiceRoleClient();
 
   const { data: campaign, error } = await (adminClient
     .from("campaigns") as any)
@@ -172,10 +169,7 @@ export async function DELETE(
   }
 
   // Use service role client to bypass RLS for delete
-  const adminClient = createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const adminClient = createServiceRoleClient();
 
   const { error } = await (adminClient
     .from("campaigns") as any)

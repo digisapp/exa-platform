@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 
 async function isAdmin(supabase: any, userId: string) {
@@ -32,10 +32,7 @@ export async function PATCH(
     const { is_verified } = body;
 
     // Use service role client to bypass RLS for brand updates
-    const adminClient = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const adminClient = createServiceRoleClient();
 
     const { error } = await adminClient
       .from("brands")
@@ -72,10 +69,7 @@ export async function DELETE(
     }
 
     // Use service role client to bypass RLS for brand deletes
-    const adminClient = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const adminClient = createServiceRoleClient();
 
     const { error } = await adminClient
       .from("brands")

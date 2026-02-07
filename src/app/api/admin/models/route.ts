@@ -1,13 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { escapeIlike } from "@/lib/utils";
 
 // Admin client for efficient RPC calls
-const getAdminClient = () => createSupabaseClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const getAdminClient = () => createServiceRoleClient();
 
 async function isAdmin(supabase: any, userId: string) {
   const { data: actor } = await supabase

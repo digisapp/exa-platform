@@ -1,4 +1,4 @@
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 import { rateLimitAsync, getClientIP } from "@/lib/rate-limit";
 import { sendPasswordResetEmail } from "@/lib/email";
@@ -32,10 +32,7 @@ export async function POST(request: Request) {
     const normalizedEmail = email.toLowerCase().trim();
 
     // Use admin client for generating the reset link
-    const adminClient = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const adminClient = createServiceRoleClient();
 
     // Always use production URL for redirect
     const redirectUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://www.examodels.com"}/auth/reset-password`;

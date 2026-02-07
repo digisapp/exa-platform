@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 
-const supabase = createSupabaseClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const supabase: any = createServiceRoleClient();
 
 interface CheckoutItem {
   variant_id: string;
@@ -63,7 +60,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      if (variant.stock_quantity < item.quantity) {
+      if ((variant.stock_quantity ?? 0) < item.quantity) {
         return NextResponse.json(
           { error: `Insufficient stock for ${variant.sku}` },
           { status: 400 }

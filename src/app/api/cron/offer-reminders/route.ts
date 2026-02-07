@@ -1,11 +1,8 @@
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendOfferReminderEmail } from "@/lib/email";
 
-const adminClient = createSupabaseClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const adminClient = createServiceRoleClient();
 
 // GET /api/cron/offer-reminders - Send reminder emails to confirmed models
 // Runs twice daily (8 AM and 6 PM) via Vercel cron

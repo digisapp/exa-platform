@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 
 // Generate a secure but readable password
@@ -60,12 +61,7 @@ export async function POST(
     const password = generatePassword();
 
     // Create auth user using service role
-    const { createClient: createServiceClient } = await import("@supabase/supabase-js");
-    const serviceSupabase = createServiceClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      { auth: { autoRefreshToken: false, persistSession: false } }
-    );
+    const serviceSupabase = createServiceRoleClient();
 
     // Check if user already exists in auth
     const { data: existingUsers } = await serviceSupabase.auth.admin.listUsers();
