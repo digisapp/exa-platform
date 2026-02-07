@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { stripe } from "@/lib/stripe";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 // Service role client for atomic stock operations
 const supabaseAdmin: any = createServiceRoleClient();
@@ -28,6 +29,9 @@ export async function POST(request: Request) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
+
+    const rateLimitResponse = await checkEndpointRateLimit(request, "financial", user?.id);
+    if (rateLimitResponse) return rateLimitResponse;
 
     const sessionId = request.headers.get("x-session-id");
     const body: CheckoutRequest = await request.json();

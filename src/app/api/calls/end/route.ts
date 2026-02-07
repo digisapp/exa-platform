@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { calculateCallCost } from "@/lib/livekit";
 import { z } from "zod";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 const endCallSchema = z.object({
   sessionId: z.string().uuid(),
@@ -15,6 +16,9 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
 
     const body = await request.json();
     const parsed = endCallSchema.safeParse(body);

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 // GET - Fetch current cart
 export async function GET(request: Request) {
@@ -119,6 +120,9 @@ export async function POST(request: Request) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
+
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user?.id);
+    if (rateLimitResponse) return rateLimitResponse;
 
     const sessionId = request.headers.get("x-session-id");
     const { variantId, quantity = 1, affiliateCode } = await request.json();

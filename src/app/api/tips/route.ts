@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendTipReceivedEmail } from "@/lib/email";
 import { z } from "zod";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 // Zod schema for tip validation
 const tipSchema = z.object({
@@ -26,6 +27,9 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const rateLimitResponse = await checkEndpointRateLimit(request, "financial", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
 
     const body = await request.json();
 

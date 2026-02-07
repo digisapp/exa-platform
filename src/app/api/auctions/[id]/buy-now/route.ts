@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import type { BuyNowResponse } from "@/types/auctions";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 // POST - Buy now on an auction
 export async function POST(
@@ -15,6 +16,9 @@ export async function POST(
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const rateLimitResponse = await checkEndpointRateLimit(request, "financial", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
 
     // Get actor
     const { data: actor } = await supabase

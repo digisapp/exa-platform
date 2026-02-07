@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 import { rateLimitAsync, getClientIP } from "@/lib/rate-limit";
 
@@ -66,8 +67,9 @@ export async function DELETE(request: Request) {
     // Delete actor record
     await supabase.from("actors").delete().eq("id", actor.id);
 
-    // Delete auth user using admin API
-    const { error: deleteError } = await supabase.auth.admin.deleteUser(user.id);
+    // Delete auth user using admin API (requires service role key)
+    const serviceClient = createServiceRoleClient();
+    const { error: deleteError } = await serviceClient.auth.admin.deleteUser(user.id);
 
     if (deleteError) {
       // If admin delete fails, try signing out at least

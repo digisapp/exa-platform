@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { notifyAdminNewCallRequest, sendCallRequestConfirmation } from "@/lib/sms";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 // POST - Create a new call request (public or authenticated)
 export async function POST(request: Request) {
   try {
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general");
+    if (rateLimitResponse) return rateLimitResponse;
+
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     const body = await request.json();

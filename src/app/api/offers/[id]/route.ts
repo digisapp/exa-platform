@@ -121,7 +121,7 @@ export async function PATCH(
       .eq("id", id)
       .single();
 
-    if (!offer || offer.brand_id !== actor.id) {
+    if (!offer || (actor.type !== "admin" && offer.brand_id !== actor.id)) {
       return NextResponse.json({ error: "Offer not found" }, { status: 404 });
     }
 

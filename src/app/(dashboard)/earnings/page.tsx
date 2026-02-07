@@ -47,7 +47,7 @@ export default async function EarningsPage() {
 
   if (!model) redirect("/fan/signup");
 
-  // Get all earnings transactions (positive amounts from tips and messages)
+  // Get recent transactions for display (limited to 50)
   const { data: transactions } = (await supabase
     .from("coin_transactions")
     .select("*")
@@ -56,9 +56,16 @@ export default async function EarningsPage() {
     .order("created_at", { ascending: false })
     .limit(50)) as { data: CoinTransaction[] | null };
 
-  // Calculate totals
-  const allTransactions = transactions || [];
+  // Get ALL transactions (no limit) for accurate totals
+  const { data: allTransactionsData } = (await supabase
+    .from("coin_transactions")
+    .select("amount, action, created_at")
+    .eq("actor_id", actor.id)
+    .gt("amount", 0)) as { data: Pick<CoinTransaction, "amount" | "action" | "created_at">[] | null };
 
+  const allTransactions = allTransactionsData || [];
+
+  // Calculate totals from the full dataset
   const tipEarnings = allTransactions
     .filter(t => t.action === "tip_received")
     .reduce((sum, t) => sum + t.amount, 0);
@@ -69,10 +76,10 @@ export default async function EarningsPage() {
 
   const totalEarnings = tipEarnings + messageEarnings;
 
-  // Get recent transactions for display
-  const recentTransactions = allTransactions.slice(0, 20);
+  // Get recent transactions for display from the limited query
+  const recentTransactions = (transactions || []).slice(0, 20);
 
-  // Calculate this month's earnings
+  // Calculate this month's earnings from the full dataset
   const oneMonthAgo = new Date();
   oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
   const thisMonthEarnings = allTransactions

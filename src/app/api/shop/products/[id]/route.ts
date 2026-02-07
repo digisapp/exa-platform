@@ -65,7 +65,7 @@ export async function GET(
       );
     }
 
-    // Increment view count (fire and forget)
+    // Fire-and-forget view count increment (minor race condition acceptable for analytics)
     (supabase as any)
       .from("shop_products")
       .update({ view_count: (product.view_count || 0) + 1 })

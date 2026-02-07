@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 const BOOST_COST = 5;
 const REVEAL_COST = 10;
@@ -12,6 +13,10 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
+
+    const rateLimitResponse = await checkEndpointRateLimit(request, "financial", user?.id);
+    if (rateLimitResponse) return rateLimitResponse;
+
     const body = await request.json();
 
     const {

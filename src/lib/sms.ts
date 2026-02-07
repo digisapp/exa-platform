@@ -5,6 +5,10 @@
 // TWILIO_PHONE_NUMBER
 // ADMIN_PHONE_NUMBER (for notifications)
 
+function sanitizeSmsInput(input: string, maxLength: number = 100): string {
+  return input.replace(/[\x00-\x1f]/g, "").trim().slice(0, maxLength);
+}
+
 interface SendSMSParams {
   to: string;
   message: string;
@@ -115,13 +119,18 @@ export async function notifyAdminNewCallRequest(request: {
     return;
   }
 
+  const safeName = sanitizeSmsInput(request.name);
+  const safePhone = sanitizeSmsInput(request.phone, 20);
+  const safeIg = request.instagram_handle ? sanitizeSmsInput(request.instagram_handle, 50) : undefined;
+  const safeSource = request.source ? sanitizeSmsInput(request.source, 50) : undefined;
+
   const scheduledInfo = request.scheduled_at
     ? `\nScheduled: ${formatScheduledTime(request.scheduled_at)}`
     : "";
 
   const message = request.scheduled_at
-    ? `New EXA Call BOOKED!\n\nName: ${request.name}\nPhone: ${request.phone}${request.instagram_handle ? `\nIG: @${request.instagram_handle}` : ""}${scheduledInfo}${request.source ? `\nSource: ${request.source}` : ""}`
-    : `New EXA Call Request!\n\nName: ${request.name}\nPhone: ${request.phone}${request.instagram_handle ? `\nIG: @${request.instagram_handle}` : ""}${request.source ? `\nSource: ${request.source}` : ""}\n\nCall them back!`;
+    ? `New EXA Call BOOKED!\n\nName: ${safeName}\nPhone: ${safePhone}${safeIg ? `\nIG: @${safeIg}` : ""}${scheduledInfo}${safeSource ? `\nSource: ${safeSource}` : ""}`
+    : `New EXA Call Request!\n\nName: ${safeName}\nPhone: ${safePhone}${safeIg ? `\nIG: @${safeIg}` : ""}${safeSource ? `\nSource: ${safeSource}` : ""}\n\nCall them back!`;
 
   await sendSMS({ to: adminPhone, message });
 }
@@ -132,7 +141,7 @@ export async function sendCallRequestConfirmation(
   name: string,
   scheduledAt?: string | null
 ): Promise<void> {
-  const firstName = name.split(" ")[0];
+  const firstName = sanitizeSmsInput(name.split(" ")[0], 50);
 
   const message = scheduledAt
     ? `Hi ${firstName}! Your call with EXA is confirmed for ${formatScheduledTime(scheduledAt)}. We'll call you then! - The EXA Team`

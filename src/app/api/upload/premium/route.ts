@@ -57,8 +57,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate unique filename
-    const ext = file.name.split(".").pop() || (isImage ? "jpg" : "mp4");
+    // Generate unique filename - derive extension from validated MIME type, not user filename
+    const MIME_TO_EXT: Record<string, string> = {
+      "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif",
+      "video/mp4": "mp4", "video/quicktime": "mov", "video/webm": "webm",
+    };
+    const ext = MIME_TO_EXT[file.type] || (isImage ? "jpg" : "mp4");
     const timestamp = Date.now();
     const filename = `${model.id}/${timestamp}.${ext}`;
 

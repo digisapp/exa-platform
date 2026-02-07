@@ -122,6 +122,16 @@ export async function POST(request: NextRequest) {
           },
         });
 
+        // Set idempotency_key on the transaction for DB-level duplicate prevention
+        if (!creditError) {
+          await supabaseAdmin
+            .from("coin_transactions")
+            .update({ idempotency_key: session.id })
+            .eq("actor_id", actorId)
+            .eq("action", "purchase")
+            .contains("metadata", { stripe_session_id: session.id });
+        }
+
         if (creditError) {
           console.error("Error crediting coins:", creditError);
           return NextResponse.json({ error: "Failed to credit coins" }, { status: 500 });
@@ -224,6 +234,20 @@ async function handleSubscriptionCheckout(session: Stripe.Checkout.Session) {
 
   // Grant initial coins
   if (monthlyCoins > 0 && actorId) {
+    // IDEMPOTENCY CHECK: Prevent duplicate coin grants from webhook retries
+    const { data: existingGrant } = await supabaseAdmin
+      .from("coin_transactions")
+      .select("id")
+      .eq("actor_id", actorId)
+      .eq("action", "subscription_grant")
+      .contains("metadata", { stripe_subscription_id: subscriptionId })
+      .maybeSingle();
+
+    if (existingGrant) {
+      console.log("Duplicate webhook ignored - subscription coins already granted for:", subscriptionId);
+      return;
+    }
+
     const { error: coinError } = await supabaseAdmin.rpc("add_coins", {
       p_actor_id: actorId,
       p_amount: monthlyCoins,
@@ -237,6 +261,14 @@ async function handleSubscriptionCheckout(session: Stripe.Checkout.Session) {
 
     if (coinError) {
       console.error("Error granting subscription coins:", coinError);
+    } else {
+      // Set idempotency_key for DB-level duplicate prevention
+      await supabaseAdmin
+        .from("coin_transactions")
+        .update({ idempotency_key: `sub_${subscriptionId}` })
+        .eq("actor_id", actorId)
+        .eq("action", "subscription_grant")
+        .contains("metadata", { stripe_subscription_id: subscriptionId });
     }
   }
 }
@@ -303,6 +335,20 @@ async function grantMonthlyCoins(invoice: Stripe.Invoice) {
   const tierConfig = BRAND_SUBSCRIPTION_TIERS[tier];
   if (!tierConfig || tierConfig.monthlyCoins <= 0) return;
 
+  // IDEMPOTENCY CHECK: Prevent duplicate coin grants from webhook retries
+  const { data: existingRenewal } = await supabaseAdmin
+    .from("coin_transactions")
+    .select("id")
+    .eq("actor_id", actorId)
+    .eq("action", "subscription_renewal")
+    .contains("metadata", { invoice_id: invoice.id })
+    .maybeSingle();
+
+  if (existingRenewal) {
+    console.log("Duplicate webhook ignored - renewal coins already granted for invoice:", invoice.id);
+    return;
+  }
+
   // Grant monthly coins
   const { error } = await supabaseAdmin.rpc("add_coins", {
     p_actor_id: actorId,
@@ -317,6 +363,14 @@ async function grantMonthlyCoins(invoice: Stripe.Invoice) {
 
   if (error) {
     console.error("Error granting renewal coins:", error);
+  } else {
+    // Set idempotency_key for DB-level duplicate prevention
+    await supabaseAdmin
+      .from("coin_transactions")
+      .update({ idempotency_key: `renewal_${invoice.id}` })
+      .eq("actor_id", actorId)
+      .eq("action", "subscription_renewal")
+      .contains("metadata", { invoice_id: invoice.id });
   }
 
   // Update coins_granted_at
@@ -674,25 +728,46 @@ async function handleShopOrderPayment(session: Stripe.Checkout.Session) {
     .select("variant_id, quantity")
     .eq("order_id", orderId);
 
+  // TODO: Replace this read-then-write pattern with an atomic RPC call
+  // (e.g., increment_total_sold(p_product_id, p_quantity)) to avoid race conditions
+  // when multiple orders complete concurrently for the same product.
   if (orderItems) {
     for (const item of orderItems) {
-      const { data: variantData } = await supabaseAdmin
-        .from("shop_product_variants")
-        .select("product_id")
-        .eq("id", item.variant_id)
-        .single();
-
-      if (variantData?.product_id) {
-        const { data: product } = await supabaseAdmin
-          .from("shop_products")
-          .select("total_sold")
-          .eq("id", variantData.product_id)
+      try {
+        const { data: variantData, error: variantError } = await supabaseAdmin
+          .from("shop_product_variants")
+          .select("product_id")
+          .eq("id", item.variant_id)
           .single();
 
-        await supabaseAdmin
-          .from("shop_products")
-          .update({ total_sold: (product?.total_sold || 0) + item.quantity })
-          .eq("id", variantData.product_id);
+        if (variantError) {
+          console.error("Error fetching variant for total_sold update:", variantError, { variant_id: item.variant_id });
+          continue;
+        }
+
+        if (variantData?.product_id) {
+          const { data: product, error: productError } = await supabaseAdmin
+            .from("shop_products")
+            .select("total_sold")
+            .eq("id", variantData.product_id)
+            .single();
+
+          if (productError) {
+            console.error("Error fetching product for total_sold update:", productError, { product_id: variantData.product_id });
+            continue;
+          }
+
+          const { error: updateError } = await supabaseAdmin
+            .from("shop_products")
+            .update({ total_sold: (product?.total_sold || 0) + item.quantity })
+            .eq("id", variantData.product_id);
+
+          if (updateError) {
+            console.error("Error updating total_sold:", updateError, { product_id: variantData.product_id });
+          }
+        }
+      } catch (err) {
+        console.error("Unexpected error updating total_sold for variant:", item.variant_id, err);
       }
     }
   }
@@ -868,9 +943,3 @@ async function handleContentProgramSubscription(session: Stripe.Checkout.Session
   console.log("Content program subscription started:", { brandName, email, subscriptionId });
 }
 
-// Disable body parsing for webhook signature verification
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};

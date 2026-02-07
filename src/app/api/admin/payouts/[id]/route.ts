@@ -1,6 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { logAdminAction, AdminActions } from "@/lib/admin-audit";
+import { z } from "zod";
+
+const payoutSchema = z.object({
+  status: z.enum(["completed", "failed", "processing"]),
+  notes: z.string().optional(),
+});
 
 export async function PATCH(
   request: Request,
@@ -28,7 +34,14 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { status, notes } = body;
+    const parsed = payoutSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+    const { status, notes } = parsed.data;
 
     // Use database functions for proper accounting
     if (status === "completed") {

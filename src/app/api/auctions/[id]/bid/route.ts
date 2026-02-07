@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { enrichBidsWithBidderInfo } from "@/lib/auction-utils";
 import type { PlaceBidResponse } from "@/types/auctions";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 const placeBidSchema = z.object({
   amount: z.number().int().min(10),
@@ -22,6 +23,9 @@ export async function POST(
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const rateLimitResponse = await checkEndpointRateLimit(request, "financial", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
 
     // Get actor
     const { data: actor } = await supabase

@@ -63,9 +63,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate unique filename with proper extension fallback
+    // Generate unique filename - derive extension from validated MIME type, not user filename
+    const MIME_TO_EXT: Record<string, string> = {
+      "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif",
+      "video/mp4": "mp4", "video/quicktime": "mov", "video/webm": "webm",
+      "audio/webm": "webm", "audio/mp4": "m4a", "audio/mpeg": "mp3", "audio/ogg": "ogg", "audio/wav": "wav",
+    };
     const defaultExt = isVideo ? "mp4" : isAudio ? "webm" : "jpg";
-    const ext = fileName.split(".").pop() || defaultExt;
+    const ext = MIME_TO_EXT[fileType] || defaultExt;
     const timestamp = Date.now();
     const storagePath = `${modelId}/${timestamp}.${ext}`;
     const bucket = "portfolio";

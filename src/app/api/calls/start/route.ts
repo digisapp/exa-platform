@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateRoomName, generateToken } from "@/lib/livekit";
 import { sendVideoCallRequestEmail } from "@/lib/email";
 import { z } from "zod";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 export type CallType = "video" | "voice";
 
@@ -20,6 +21,9 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
 
     const body = await request.json();
     const parsed = startCallSchema.safeParse(body);

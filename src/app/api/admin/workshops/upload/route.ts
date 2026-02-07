@@ -54,9 +54,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing filename or contentType" }, { status: 400 });
     }
 
-    // Generate unique path
+    // Validate file type
+    const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "video/mp4", "video/quicktime"];
+    if (!ALLOWED_TYPES.includes(contentType)) {
+      return NextResponse.json({ error: "File type not allowed" }, { status: 400 });
+    }
+
+    // Generate unique path - derive extension from validated MIME type, not user filename
+    const MIME_TO_EXT: Record<string, string> = {
+      "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif",
+      "video/mp4": "mp4", "video/quicktime": "mov",
+    };
     const timestamp = Date.now();
-    const ext = filename.split(".").pop() || "jpg";
+    const ext = MIME_TO_EXT[contentType] || "jpg";
     const path = `workshops/${timestamp}.${ext}`;
 
     // Create signed upload URL using admin client - store in gigs bucket (already exists)

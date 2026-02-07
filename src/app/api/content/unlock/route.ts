@@ -1,6 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { sendContentPurchaseEmail } from "@/lib/email";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { z } from "zod";
+
+const unlockSchema = z.object({
+  contentId: z.string().uuid(),
+});
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,15 +21,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { contentId } = body;
+    const rateLimitResponse = await checkEndpointRateLimit(request, "financial", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
 
-    if (!contentId) {
+    const body = await request.json();
+    const parsed = unlockSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Content ID required" },
+        { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
+    const { contentId } = parsed.data;
 
     // Get buyer's actor info
     const { data: actor } = await supabase
