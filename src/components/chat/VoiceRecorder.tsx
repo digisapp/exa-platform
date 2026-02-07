@@ -88,10 +88,16 @@ export function VoiceRecorder({
 
         mediaRecorder.onstop = () => {
           const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+          // Revoke previous blob URL before creating a new one
+          if (state.audioUrl) {
+            URL.revokeObjectURL(state.audioUrl);
+          }
           const url = URL.createObjectURL(blob);
           stream.getTracks().forEach((track) => track.stop());
           if (mountedRef.current) {
             dispatch({ type: "STOP_RECORDING", audioBlob: blob, audioUrl: url });
+          } else {
+            URL.revokeObjectURL(url);
           }
         };
 

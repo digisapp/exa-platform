@@ -5,6 +5,10 @@
 -- Recipients see the media blurred and must pay to unlock.
 -- Coins transfer atomically from buyer to model.
 
+-- 0. Add PPV columns to messages table if they don't exist
+ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS media_price int;
+ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS media_viewed_by uuid[] DEFAULT ARRAY[]::uuid[];
+
 -- 1. Update send_message_with_coins to accept media_price
 CREATE OR REPLACE FUNCTION public.send_message_with_coins(
   p_conversation_id uuid,
@@ -77,10 +81,12 @@ BEGIN
       WHERE id = p_sender_id;
     END IF;
 
-    -- Credit to recipient (model)
-    UPDATE public.models
-    SET coin_balance = coin_balance + p_coin_amount
-    WHERE id = p_recipient_id;
+    -- Credit to recipient (model) - only if recipient exists
+    IF p_recipient_id IS NOT NULL THEN
+      UPDATE public.models
+      SET coin_balance = coin_balance + p_coin_amount
+      WHERE id = p_recipient_id;
+    END IF;
 
     -- Record sender transaction
     INSERT INTO public.coin_transactions (actor_id, amount, action, metadata)
@@ -139,11 +145,12 @@ DECLARE
   sender_model_id uuid;
   conversation_id_var uuid;
 BEGIN
-  -- Get message details (include conversation_id for auth check)
+  -- Get message details with row lock to prevent race conditions
   SELECT m.id, m.sender_id, m.conversation_id, m.media_url, m.media_price, m.media_viewed_by
   INTO msg_record
   FROM public.messages m
-  WHERE m.id = p_message_id;
+  WHERE m.id = p_message_id
+  FOR UPDATE;
 
   IF msg_record IS NULL THEN
     RETURN jsonb_build_object('success', false, 'error', 'Message not found');

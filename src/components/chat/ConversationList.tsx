@@ -89,8 +89,6 @@ export function ConversationList({ conversations: initialConversations, actorTyp
     if (!currentActorId) return;
 
     const supabase = createClient();
-    const conversationIds = conversations.map((c) => c.conversation_id);
-    if (conversationIds.length === 0) return;
 
     const channel = supabase
       .channel("conversation-list-updates")
@@ -103,10 +101,11 @@ export function ConversationList({ conversations: initialConversations, actorTyp
         },
         (payload) => {
           const msg = payload.new as any;
-          // Only update if this message belongs to one of our conversations
-          if (!conversationIds.includes(msg.conversation_id)) return;
 
           setConversations((prev) => {
+            // Only update if this message belongs to one of our conversations
+            if (!prev.some((c) => c.conversation_id === msg.conversation_id)) return prev;
+
             const updated = prev.map((conv) => {
               if (conv.conversation_id !== msg.conversation_id) return conv;
               return {
@@ -135,9 +134,7 @@ export function ConversationList({ conversations: initialConversations, actorTyp
     return () => {
       channel.unsubscribe();
     };
-    // Only re-subscribe when the conversation list fundamentally changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentActorId, conversations.length]);
+  }, [currentActorId]);
 
   // Helper to get message preview text
   const getMessagePreview = (message: Conversation["lastMessage"]) => {

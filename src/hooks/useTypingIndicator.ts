@@ -12,6 +12,7 @@ interface UseTypingIndicatorProps {
 interface TypingUser {
   actorId: string;
   name: string;
+  lastSeen: number;
 }
 
 export function useTypingIndicator({
@@ -93,11 +94,15 @@ export function useTypingIndicator({
 
         setTypingUsers((prev) => {
           if (isTyping) {
-            // Add user if not already in list
-            if (!prev.some((u) => u.actorId === actorId)) {
-              return [...prev, { actorId, name }];
+            const now = Date.now();
+            // Update timestamp if already in list, otherwise add
+            const exists = prev.some((u) => u.actorId === actorId);
+            if (exists) {
+              return prev.map((u) =>
+                u.actorId === actorId ? { ...u, lastSeen: now } : u
+              );
             }
-            return prev;
+            return [...prev, { actorId, name, lastSeen: now }];
           } else {
             // Remove user from typing list
             return prev.filter((u) => u.actorId !== actorId);
@@ -114,16 +119,20 @@ export function useTypingIndicator({
     };
   }, [conversationId, currentActorId, supabase]);
 
-  // Auto-clear typing users after 5 seconds (in case stop event is missed)
+  // Auto-clear stale typing users every 2 seconds (per-user, based on lastSeen)
   useEffect(() => {
     if (typingUsers.length === 0) return;
 
-    const timeout = setTimeout(() => {
-      setTypingUsers([]);
-    }, 5000);
+    const interval = setInterval(() => {
+      const now = Date.now();
+      setTypingUsers((prev) => {
+        const active = prev.filter((u) => now - u.lastSeen < 5000);
+        return active.length !== prev.length ? active : prev;
+      });
+    }, 2000);
 
-    return () => clearTimeout(timeout);
-  }, [typingUsers]);
+    return () => clearInterval(interval);
+  }, [typingUsers.length]);
 
   return {
     typingUsers,

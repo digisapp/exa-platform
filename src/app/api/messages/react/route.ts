@@ -149,6 +149,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Rate limit check
+    const rateLimitResponse = await checkEndpointRateLimit(request, "messages", user.id);
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+
     const { searchParams } = new URL(request.url);
     const messageId = searchParams.get("messageId");
 

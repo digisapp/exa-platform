@@ -486,6 +486,7 @@ export function MessageInput({
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           disabled={disabled || sending || uploading}
+          maxLength={5000}
           className="min-h-[44px] max-h-32 resize-none"
           rows={1}
         />

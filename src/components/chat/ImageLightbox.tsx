@@ -69,20 +69,22 @@ export function ImageLightbox({ src, alt = "Image", isOpen, onClose }: ImageLigh
   }, []);
 
   const handleDownload = useCallback(async () => {
+    let url: string | null = null;
     try {
       const response = await fetch(src);
       const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
+      url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
       a.download = `image-${Date.now()}.jpg`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
     } catch {
       // Fallback: open in new tab
       window.open(src, "_blank");
+    } finally {
+      if (url) URL.revokeObjectURL(url);
     }
   }, [src]);
 
