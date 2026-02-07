@@ -80,6 +80,21 @@ export function useAuctionRealtime<T extends Auction>({
             ...newData,
           }));
           onAuctionUpdate?.(newData);
+
+          // Detect auction ending
+          if (newData.status && ["ended", "sold", "no_sale", "cancelled"].includes(newData.status)) {
+            if (newData.status === "sold") {
+              toast.info("This auction has been sold!", {
+                description: "The winning bidder has been determined.",
+              });
+            } else if (newData.status === "no_sale") {
+              toast.info("Auction ended without a sale", {
+                description: "The reserve price was not met.",
+              });
+            } else {
+              toast.info("This auction has ended");
+            }
+          }
         }
       )
       // Subscribe to new bids

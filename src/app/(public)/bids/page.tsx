@@ -5,6 +5,7 @@ import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 import { AuctionCard } from "@/components/auctions/AuctionCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
 import { Gavel, Clock, Sparkles, Zap, Eye } from "lucide-react";
 import type { AuctionWithModel } from "@/types/auctions";
 
@@ -235,9 +236,27 @@ interface AuctionGridProps {
 function AuctionGrid({ auctions, watchedIds, emptyMessage }: AuctionGridProps) {
   if (auctions.length === 0) {
     return (
-      <div className="text-center py-16">
-        <Gavel className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+      <div className="text-center py-16 space-y-4">
+        <div className="p-4 bg-gradient-to-br from-pink-500/10 to-violet-500/10 rounded-2xl inline-block">
+          <Gavel className="h-12 w-12 text-muted-foreground/40" />
+        </div>
         <p className="text-muted-foreground">{emptyMessage}</p>
+        <div className="flex items-center justify-center gap-3 pt-2">
+          <Link
+            href="/models"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-zinc-800 hover:bg-zinc-700 text-white transition-colors"
+          >
+            <Eye className="h-4 w-4" />
+            Browse Models
+          </Link>
+          <Link
+            href="/coins"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white transition-colors"
+          >
+            <Sparkles className="h-4 w-4" />
+            Get Coins
+          </Link>
+        </div>
       </div>
     );
   }

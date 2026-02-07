@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { enrichBidsWithBidderInfo } from "@/lib/auction-utils";
 import type { PlaceBidResponse } from "@/types/auctions";
 
 const placeBidSchema = z.object({
@@ -95,14 +96,15 @@ export async function POST(
       p_actor_id: actor.id,
     });
 
+    // Map RPC field names to API response format
     const response: PlaceBidResponse = {
       success: true,
       bid_id: result.bid_id,
-      final_amount: result.final_amount,
-      escrow_deducted: result.escrow_deducted,
+      final_amount: result.final_amount ?? result.amount ?? amount,
+      escrow_deducted: result.escrow_deducted ?? 0,
       new_balance: balanceResult || 0,
-      is_winning: result.is_winning,
-      auction_extended: result.auction_extended,
+      is_winning: result.is_winning ?? true,
+      auction_extended: result.auction_extended ?? result.extended ?? false,
       new_end_time: result.new_end_time,
     };
 
@@ -147,57 +149,8 @@ export async function GET(
       throw error;
     }
 
-    // Enhance bids with bidder info
-    const enhancedBids = await Promise.all(
-      (bids || []).map(async (bid: any) => {
-        let bidderInfo = null;
-
-        if (bid.bidder) {
-          if (bid.bidder.type === "model") {
-            const { data: model } = await (supabase as any)
-              .from("models")
-              .select("first_name, last_name, profile_photo_url")
-              .eq("id", bid.bidder.id)
-              .single();
-
-            if (model) {
-              bidderInfo = {
-                id: bid.bidder.id,
-                display_name: model.first_name
-                  ? `${model.first_name} ${model.last_name || ""}`.trim()
-                  : "Anonymous",
-                profile_image_url: model.profile_photo_url,
-                type: "model",
-              };
-            }
-          } else if (bid.bidder.type === "fan") {
-            const { data: fan } = await (supabase as any)
-              .from("fans")
-              .select("display_name, username, profile_photo_url")
-              .eq("id", bid.bidder.id)
-              .single();
-
-            if (fan) {
-              bidderInfo = {
-                id: bid.bidder.id,
-                display_name: fan.display_name || fan.username || "Anonymous",
-                profile_image_url: fan.profile_photo_url,
-                type: "fan",
-              };
-            }
-          }
-        }
-
-        return {
-          id: bid.id,
-          amount: bid.amount,
-          status: bid.status,
-          is_buy_now: bid.is_buy_now,
-          created_at: bid.created_at,
-          bidder: bidderInfo,
-        };
-      })
-    );
+    // Batch-enrich bids with bidder info (2 queries instead of N+1)
+    const enhancedBids = await enrichBidsWithBidderInfo(supabase, bids || []);
 
     return NextResponse.json({ bids: enhancedBids });
   } catch (error) {

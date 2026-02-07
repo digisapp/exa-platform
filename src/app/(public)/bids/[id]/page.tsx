@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 import { Navbar } from "@/components/layout/navbar";
 import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 import { AuctionDetailClient } from "./AuctionDetailClient";
-import type { AuctionWithDetails, BidWithBidder } from "@/types/auctions";
+import { enrichBidsWithBidderInfo } from "@/lib/auction-utils";
+import type { AuctionWithDetails } from "@/types/auctions";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -125,53 +126,8 @@ export default async function AuctionDetailPage({ params }: PageProps) {
     .order("created_at", { ascending: false })
     .limit(50);
 
-  // Enhance bids with bidder info
-  const enhancedBids: BidWithBidder[] = await Promise.all(
-    (bids || []).map(async (bid: any) => {
-      let bidderInfo = null;
-
-      if (bid.bidder) {
-        if (bid.bidder.type === "model") {
-          const { data: model } = await (supabase as any)
-            .from("models")
-            .select("first_name, last_name, profile_photo_url")
-            .eq("id", bid.bidder_id)
-            .single();
-
-          if (model) {
-            bidderInfo = {
-              id: bid.bidder_id,
-              display_name: model.first_name
-                ? `${model.first_name} ${model.last_name || ""}`.trim()
-                : null,
-              profile_image_url: model.profile_photo_url,
-              type: "model",
-            };
-          }
-        } else if (bid.bidder.type === "fan") {
-          const { data: fan } = await (supabase as any)
-            .from("fans")
-            .select("display_name, username, profile_photo_url")
-            .eq("id", bid.bidder_id)
-            .single();
-
-          if (fan) {
-            bidderInfo = {
-              id: bid.bidder_id,
-              display_name: fan.display_name || fan.username,
-              profile_image_url: fan.profile_photo_url,
-              type: "fan",
-            };
-          }
-        }
-      }
-
-      return {
-        ...bid,
-        bidder: bidderInfo,
-      };
-    })
-  );
+  // Batch-enrich bids with bidder info (2 queries instead of N+1)
+  const enhancedBids = await enrichBidsWithBidderInfo(supabase, bids || []);
 
   // Format auction with details
   const auctionWithDetails: AuctionWithDetails = {

@@ -43,7 +43,9 @@ export async function GET(request: NextRequest) {
       `, { count: "exact" });
 
     // Filter by status
-    if (status === "active") {
+    if (status === "all") {
+      query = query.neq("status", "draft");
+    } else if (status === "active") {
       query = query.eq("status", "active");
     } else if (status === "ending_soon") {
       query = query

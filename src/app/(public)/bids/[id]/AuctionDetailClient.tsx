@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -38,15 +39,21 @@ export function AuctionDetailClient({
   currentUserId,
 }: AuctionDetailClientProps) {
   const router = useRouter();
+  const [localEnded, setLocalEnded] = useState(false);
 
   const { auction, bids, isConnected } = useAuctionRealtime({
     auctionId: initialAuction.id,
     initialAuction,
     initialBids,
     currentUserId,
+    onAuctionUpdate: (update) => {
+      if (update.status && ["ended", "sold", "no_sale", "cancelled"].includes(update.status)) {
+        setLocalEnded(true);
+      }
+    },
   });
 
-  const hasEnded = new Date(auction.ends_at) <= new Date() || auction.status !== "active";
+  const hasEnded = localEnded || new Date(auction.ends_at) <= new Date() || auction.status !== "active";
   const currentPrice = auction.current_bid || auction.starting_price;
 
   return (
@@ -164,7 +171,7 @@ export function AuctionDetailClient({
                 </p>
                 <CountdownTimer
                   endsAt={auction.ends_at}
-                  onEnd={() => router.refresh()}
+                  onEnd={() => setLocalEnded(true)}
                 />
               </div>
             )}
@@ -218,8 +225,6 @@ export function AuctionDetailClient({
                   auction={auction}
                   disabled={hasEnded}
                   isOwner={isOwner}
-                  onBidPlaced={() => router.refresh()}
-                  onBuyNow={() => router.refresh()}
                 />
               </div>
             ) : (
