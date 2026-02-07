@@ -81,11 +81,15 @@ CREATE TRIGGER update_brands_updated_at
 -- column but no auto-update trigger.
 -- =============================================
 
-DROP TRIGGER IF EXISTS update_brand_lists_updated_at ON public.brand_lists;
-CREATE TRIGGER update_brand_lists_updated_at
-  BEFORE UPDATE ON public.brand_lists
-  FOR EACH ROW
-  EXECUTE FUNCTION public.update_updated_at_column();
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'brand_lists') THEN
+    DROP TRIGGER IF EXISTS update_brand_lists_updated_at ON public.brand_lists;
+    CREATE TRIGGER update_brand_lists_updated_at
+      BEFORE UPDATE ON public.brand_lists
+      FOR EACH ROW
+      EXECUTE FUNCTION public.update_updated_at_column();
+  END IF;
+END $$;
 
 
 -- =============================================

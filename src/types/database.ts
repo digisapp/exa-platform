@@ -333,6 +333,207 @@ export type Database = {
           },
         ]
       }
+      auction_bids: {
+        Row: {
+          amount: number
+          auction_id: string
+          bidder_id: string
+          created_at: string | null
+          escrow_amount: number
+          escrow_released_at: string | null
+          id: string
+          is_buy_now: boolean | null
+          max_auto_bid: number | null
+          status: string
+        }
+        Insert: {
+          amount: number
+          auction_id: string
+          bidder_id: string
+          created_at?: string | null
+          escrow_amount?: number
+          escrow_released_at?: string | null
+          id?: string
+          is_buy_now?: boolean | null
+          max_auto_bid?: number | null
+          status?: string
+        }
+        Update: {
+          amount?: number
+          auction_id?: string
+          bidder_id?: string
+          created_at?: string | null
+          escrow_amount?: number
+          escrow_released_at?: string | null
+          id?: string
+          is_buy_now?: boolean | null
+          max_auto_bid?: number | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auction_bids_auction_id_fkey"
+            columns: ["auction_id"]
+            isOneToOne: false
+            referencedRelation: "auctions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auction_bids_bidder_id_fkey"
+            columns: ["bidder_id"]
+            isOneToOne: false
+            referencedRelation: "actors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auction_bids_bidder_id_fkey"
+            columns: ["bidder_id"]
+            isOneToOne: false
+            referencedRelation: "public_model_actors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      auction_watchlist: {
+        Row: {
+          actor_id: string
+          auction_id: string
+          created_at: string | null
+          id: string
+          notify_ending: boolean | null
+          notify_outbid: boolean | null
+        }
+        Insert: {
+          actor_id: string
+          auction_id: string
+          created_at?: string | null
+          id?: string
+          notify_ending?: boolean | null
+          notify_outbid?: boolean | null
+        }
+        Update: {
+          actor_id?: string
+          auction_id?: string
+          created_at?: string | null
+          id?: string
+          notify_ending?: boolean | null
+          notify_outbid?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auction_watchlist_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "actors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auction_watchlist_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "public_model_actors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auction_watchlist_auction_id_fkey"
+            columns: ["auction_id"]
+            isOneToOne: false
+            referencedRelation: "auctions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      auctions: {
+        Row: {
+          allow_auto_bid: boolean | null
+          anti_snipe_minutes: number | null
+          bid_count: number | null
+          buy_now_price: number | null
+          category: string | null
+          cover_image_url: string | null
+          created_at: string | null
+          current_bid: number | null
+          deliverables: string | null
+          description: string | null
+          ends_at: string
+          id: string
+          model_id: string
+          original_end_at: string
+          reserve_price: number | null
+          starting_price: number
+          status: string
+          title: string
+          updated_at: string | null
+          winner_id: string | null
+        }
+        Insert: {
+          allow_auto_bid?: boolean | null
+          anti_snipe_minutes?: number | null
+          bid_count?: number | null
+          buy_now_price?: number | null
+          category?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          current_bid?: number | null
+          deliverables?: string | null
+          description?: string | null
+          ends_at: string
+          id?: string
+          model_id: string
+          original_end_at: string
+          reserve_price?: number | null
+          starting_price?: number
+          status?: string
+          title: string
+          updated_at?: string | null
+          winner_id?: string | null
+        }
+        Update: {
+          allow_auto_bid?: boolean | null
+          anti_snipe_minutes?: number | null
+          bid_count?: number | null
+          buy_now_price?: number | null
+          category?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          current_bid?: number | null
+          deliverables?: string | null
+          description?: string | null
+          ends_at?: string
+          id?: string
+          model_id?: string
+          original_end_at?: string
+          reserve_price?: number | null
+          starting_price?: number
+          status?: string
+          title?: string
+          updated_at?: string | null
+          winner_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auctions_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auctions_winner_id_fkey"
+            columns: ["winner_id"]
+            isOneToOne: false
+            referencedRelation: "actors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auctions_winner_id_fkey"
+            columns: ["winner_id"]
+            isOneToOne: false
+            referencedRelation: "public_model_actors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       availability_slots: {
         Row: {
           booked_by: string | null
@@ -1423,6 +1624,7 @@ export type Database = {
           amount: number
           created_at: string | null
           id: string
+          idempotency_key: string | null
           message_id: string | null
           metadata: Json | null
         }
@@ -1432,6 +1634,7 @@ export type Database = {
           amount: number
           created_at?: string | null
           id?: string
+          idempotency_key?: string | null
           message_id?: string | null
           metadata?: Json | null
         }
@@ -1441,6 +1644,7 @@ export type Database = {
           amount?: number
           created_at?: string | null
           id?: string
+          idempotency_key?: string | null
           message_id?: string | null
           metadata?: Json | null
         }
@@ -4833,6 +5037,30 @@ export type Database = {
           },
         ]
       }
+      payoneer_webhook_events: {
+        Row: {
+          event_id: string
+          event_type: string | null
+          id: string
+          payload: Json | null
+          processed_at: string
+        }
+        Insert: {
+          event_id: string
+          event_type?: string | null
+          id?: string
+          payload?: Json | null
+          processed_at?: string
+        }
+        Update: {
+          event_id?: string
+          event_type?: string | null
+          id?: string
+          payload?: Json | null
+          processed_at?: string
+        }
+        Relationships: []
+      }
       platform_statistics: {
         Row: {
           active_clients: number | null
@@ -7584,6 +7812,10 @@ export type Database = {
       }
     }
     Functions: {
+      accept_offer_spot: {
+        Args: { p_offer_id: string; p_response_id: string }
+        Returns: Json
+      }
       add_coins: {
         Args: {
           p_action: string
@@ -7612,6 +7844,10 @@ export type Database = {
       }
       block_user: {
         Args: { p_blocked_id: string; p_blocker_id: string; p_reason?: string }
+        Returns: Json
+      }
+      buy_now_auction: {
+        Args: { p_auction_id: string; p_buyer_id: string }
         Returns: Json
       }
       calculate_model_reliability_score: {
@@ -7729,15 +7965,29 @@ export type Database = {
         Args: { quantity: number; variant_id: string }
         Returns: undefined
       }
-      deduct_coins: {
+      deduct_coins:
+        | { Args: { p_actor_id: string; p_amount: number }; Returns: boolean }
+        | {
+            Args: {
+              p_action: string
+              p_actor_id: string
+              p_amount: number
+              p_message_id?: string
+              p_metadata?: Json
+            }
+            Returns: boolean
+          }
+      end_auction: { Args: { p_auction_id: string }; Returns: Json }
+      end_call_transfer: {
         Args: {
-          p_action: string
-          p_actor_id: string
-          p_amount: number
-          p_message_id?: string
-          p_metadata?: Json
+          p_call_type: string
+          p_caller_fan_id: string
+          p_coins: number
+          p_duration_seconds: number
+          p_recipient_model_user_id: string
+          p_session_id: string
         }
-        Returns: boolean
+        Returns: Json
       }
       generate_affiliate_code: { Args: { p_username: string }; Returns: string }
       generate_booking_number: { Args: never; Returns: string }
@@ -7754,6 +8004,11 @@ export type Database = {
           starts_at: string
           user_id: string
         }[]
+      }
+      get_actor_coin_balance: { Args: { p_actor_id: string }; Returns: number }
+      get_actor_coin_balance_locked: {
+        Args: { p_actor_id: string }
+        Returns: number
       }
       get_actor_id: { Args: never; Returns: string }
       get_actor_type: { Args: never; Returns: string }
@@ -7917,6 +8172,13 @@ export type Database = {
           page_type: string
         }[]
       }
+      get_unlocked_media_urls: {
+        Args: { p_buyer_id: string; p_content_ids: string[] }
+        Returns: {
+          content_id: string
+          media_url: string
+        }[]
+      }
       get_unread_count: { Args: { p_user_id: string }; Returns: number }
       get_unread_message_count: { Args: { p_user_id: string }; Returns: number }
       get_weekly_leaderboard: {
@@ -7949,6 +8211,14 @@ export type Database = {
       increment_link_clicks: { Args: { link_id: string }; Returns: undefined }
       increment_offer_spots_filled: {
         Args: { p_offer_id: string }
+        Returns: undefined
+      }
+      increment_product_total_sold: {
+        Args: { p_product_id: string; p_quantity: number }
+        Returns: undefined
+      }
+      increment_total_sold: {
+        Args: { p_product_id: string; p_quantity: number }
         Returns: undefined
       }
       is_admin: { Args: never; Returns: boolean }
@@ -7999,6 +8269,15 @@ export type Database = {
         Args: { p_notification_id: string }
         Returns: boolean
       }
+      place_auction_bid: {
+        Args: {
+          p_amount: number
+          p_auction_id: string
+          p_bidder_id: string
+          p_max_auto_bid?: number
+        }
+        Returns: Json
+      }
       purchase_model_spotlight: {
         Args: {
           p_duration: string
@@ -8035,6 +8314,10 @@ export type Database = {
           p_voter_id: string
         }
         Returns: Json
+      }
+      refund_auction_escrows: {
+        Args: { p_auction_id: string; p_exclude_bidder_id?: string }
+        Returns: undefined
       }
       refund_escrow: { Args: { p_escrow_id: string }; Returns: Json }
       release_escrow_to_model: {
@@ -8080,18 +8363,32 @@ export type Database = {
         }
         Returns: Json
       }
-      send_message_with_coins: {
-        Args: {
-          p_coin_amount?: number
-          p_content: string
-          p_conversation_id: string
-          p_media_type?: string
-          p_media_url?: string
-          p_recipient_id: string
-          p_sender_id: string
-        }
-        Returns: Json
-      }
+      send_message_with_coins:
+        | {
+            Args: {
+              p_coin_amount?: number
+              p_content: string
+              p_conversation_id: string
+              p_media_type?: string
+              p_media_url?: string
+              p_recipient_id: string
+              p_sender_id: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_coin_amount?: number
+              p_content: string
+              p_conversation_id: string
+              p_media_price?: number
+              p_media_type?: string
+              p_media_url?: string
+              p_recipient_id: string
+              p_sender_id: string
+            }
+            Returns: Json
+          }
       send_tip: {
         Args: {
           p_amount: number
@@ -8154,9 +8451,17 @@ export type Database = {
         Args: { p_message_id: string; p_user_id: string }
         Returns: Json
       }
+      unlock_message_media: {
+        Args: { p_buyer_id: string; p_message_id: string }
+        Returns: Json
+      }
       unsubscribe_email: {
         Args: { p_token: string; p_unsubscribe_all?: boolean }
         Returns: Json
+      }
+      update_actor_coin_balance: {
+        Args: { p_actor_id: string; p_amount: number }
+        Returns: undefined
       }
       update_display_name: {
         Args: { p_display_name: string; p_user_id: string }
