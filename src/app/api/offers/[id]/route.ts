@@ -1,8 +1,28 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 const adminClient = createServiceRoleClient();
+
+const offerPatchSchema = z.object({
+  update_response: z.object({
+    id: z.string().uuid(),
+    status: z.string(),
+  }).optional(),
+  title: z.string().min(1).max(200).optional(),
+  description: z.string().max(5000).optional(),
+  location_name: z.string().max(200).optional(),
+  location_city: z.string().max(100).optional(),
+  location_state: z.string().max(100).optional(),
+  event_date: z.string().optional(),
+  event_time: z.string().optional(),
+  compensation_type: z.string().optional(),
+  compensation_amount: z.number().min(0).optional(),
+  compensation_description: z.string().max(2000).optional(),
+  spots: z.number().int().min(1).optional(),
+  status: z.enum(["open", "closed", "cancelled"]).optional(),
+}).strict();
 
 // GET /api/offers/[id] - Get single offer with responses
 export async function GET(
@@ -125,7 +145,15 @@ export async function PATCH(
       return NextResponse.json({ error: "Offer not found" }, { status: 404 });
     }
 
-    const body = await request.json();
+    const rawBody = await request.json();
+    const parsed = offerPatchSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+    const body = parsed.data;
 
     // Handle response status update
     if (body.update_response) {
@@ -181,9 +209,10 @@ export async function PATCH(
     ];
 
     const updates: Record<string, any> = {};
+    const validatedBody = body as Record<string, unknown>;
     for (const field of allowedFields) {
-      if (body[field] !== undefined) {
-        updates[field] = body[field];
+      if (validatedBody[field] !== undefined) {
+        updates[field] = validatedBody[field];
       }
     }
 

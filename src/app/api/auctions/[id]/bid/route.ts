@@ -6,8 +6,8 @@ import type { PlaceBidResponse } from "@/types/auctions";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 const placeBidSchema = z.object({
-  amount: z.number().int().min(10),
-  max_auto_bid: z.number().int().min(10).optional(),
+  amount: z.number().int().min(10).max(1000000),
+  max_auto_bid: z.number().int().min(10).max(1000000).optional(),
 });
 
 // POST - Place a bid on an auction

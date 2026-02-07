@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { logAdminAction, AdminActions } from "@/lib/admin-audit";
 
 async function isAdmin(supabase: any, userId: string) {
   const { data: actor } = await supabase
@@ -86,6 +87,17 @@ export async function POST(
       console.error("Error deleting model:", deleteError);
       throw deleteError;
     }
+
+    // Log the admin action
+    await logAdminAction({
+      supabase,
+      adminUserId: user.id,
+      action: AdminActions.MODEL_CONVERTED_TO_FAN,
+      targetType: "model",
+      targetId: modelId,
+      oldValues: { type: "model", user_id: model.user_id, email: model.email },
+      newValues: { type: "fan" },
+    });
 
     return NextResponse.json({
       success: true,

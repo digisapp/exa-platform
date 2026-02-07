@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
+import { logAdminAction, AdminActions } from "@/lib/admin-audit";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 async function isAdmin(supabase: any, userId: string) {
   const { data: actor } = await supabase
@@ -23,6 +25,9 @@ export async function PATCH(
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
 
     if (!(await isAdmin(supabase, user.id))) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -64,6 +69,9 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
+
     if (!(await isAdmin(supabase, user.id))) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -77,6 +85,15 @@ export async function DELETE(
       .eq("id", id);
 
     if (error) throw error;
+
+    // Log the admin action
+    await logAdminAction({
+      supabase,
+      adminUserId: user.id,
+      action: AdminActions.BRAND_DELETED,
+      targetType: "brand",
+      targetId: id,
+    });
 
     return NextResponse.json({ success: true });
   } catch (error: unknown) {

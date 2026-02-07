@@ -61,9 +61,19 @@ export const AdminActions = {
   // Fan actions
   FAN_CONVERTED_TO_MODEL: "fan_converted_to_model",
   FAN_UPDATED: "fan_updated",
+  FAN_SUSPENDED: "fan_suspended",
+  FAN_UNSUSPENDED: "fan_unsuspended",
+  FAN_DELETED: "fan_deleted",
 
   // Brand actions
   BRAND_UPDATED: "brand_updated",
+  BRAND_DELETED: "brand_deleted",
+
+  // Model merge actions
+  MODELS_MERGED: "models_merged",
+
+  // Gig application actions
+  GIG_APPLICATION_UPDATED: "gig_application_updated",
 
   // Payout actions
   PAYOUT_APPROVED: "payout_approved",

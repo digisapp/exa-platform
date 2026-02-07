@@ -4,6 +4,15 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 const FROM_EMAIL = "EXA Models <noreply@examodels.com>";
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.examodels.com";
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 function getResendClient() {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
@@ -134,7 +143,7 @@ export async function sendModelApprovalEmail({
           <tr>
             <td style="padding: 40px 30px;">
               <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
-                Hey ${modelName},
+                Hey ${escapeHtml(modelName)},
               </p>
               <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
                 Great news! Your model application has been approved. You're now part of the EXA community and your profile is live!
@@ -310,7 +319,7 @@ export async function sendModelInviteEmail({
           <tr>
             <td style="padding: 40px 30px;">
               <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
-                Hey ${modelName}!
+                Hey ${escapeHtml(modelName)}!
               </p>
               <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
                 Great news - your profile has been created on EXA Models! We've imported your info and you're ready to start connecting with brands, getting booked for gigs, and growing your modeling career.
@@ -447,7 +456,7 @@ export async function sendModelRejectionEmail({
           <tr>
             <td style="padding: 40px 30px;">
               <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
-                Hey ${modelName},
+                Hey ${escapeHtml(modelName)},
               </p>
               <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
                 Thank you for your interest in joining EXA Models. After reviewing your application, we're unable to approve it at this time.
@@ -543,10 +552,10 @@ export async function sendContentPurchaseEmail({
           <tr>
             <td style="padding: 40px 30px;">
               <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
-                Hey ${modelName}! 🎉
+                Hey ${escapeHtml(modelName)}! 🎉
               </p>
               <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
-                <strong style="color: #ffffff;">${buyerName}</strong> just unlocked your exclusive content!
+                <strong style="color: #ffffff;">${escapeHtml(buyerName)}</strong> just unlocked your exclusive content!
               </p>
 
               <!-- Content Details -->
@@ -554,7 +563,7 @@ export async function sendContentPurchaseEmail({
                 <tr>
                   <td style="padding: 20px;">
                     <p style="margin: 0 0 8px; color: #71717a; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Content</p>
-                    <p style="margin: 0 0 20px; color: #ffffff; font-size: 16px; font-weight: 500;">${contentTitle}</p>
+                    <p style="margin: 0 0 20px; color: #ffffff; font-size: 16px; font-weight: 500;">${escapeHtml(contentTitle)}</p>
                     <p style="margin: 0 0 8px; color: #71717a; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">You Earned</p>
                     <p style="margin: 0; color: #10b981; font-size: 28px; font-weight: bold;">${coinsEarned} coins</p>
                   </td>
@@ -626,8 +635,8 @@ export async function sendTipReceivedEmail({
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
                 <tr>
                   <td style="padding: 15px; background-color: #262626; border-radius: 8px; border-left: 3px solid #ec4899;">
-                    <p style="margin: 0 0 5px; color: #71717a; font-size: 12px;">Message from ${tipperName}:</p>
-                    <p style="margin: 0; color: #ffffff; font-size: 14px; font-style: italic;">"${message}"</p>
+                    <p style="margin: 0 0 5px; color: #71717a; font-size: 12px;">Message from ${escapeHtml(tipperName)}:</p>
+                    <p style="margin: 0; color: #ffffff; font-size: 14px; font-style: italic;">"${escapeHtml(message)}"</p>
                   </td>
                 </tr>
               </table>`
@@ -664,10 +673,10 @@ export async function sendTipReceivedEmail({
           <tr>
             <td style="padding: 40px 30px;">
               <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
-                Hey ${modelName}!
+                Hey ${escapeHtml(modelName)}!
               </p>
               <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
-                <strong style="color: #ffffff;">${tipperName}</strong> just sent you a tip!
+                <strong style="color: #ffffff;">${escapeHtml(tipperName)}</strong> just sent you a tip!
               </p>
 
               <!-- Tip Amount -->
@@ -776,10 +785,10 @@ export async function sendPPVUnlockedEmail({
           <tr>
             <td style="padding: 40px 30px;">
               <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
-                Hey ${modelName}!
+                Hey ${escapeHtml(modelName)}!
               </p>
               <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
-                <strong style="color: #ffffff;">${buyerName}</strong> just unlocked your pay-per-view message!
+                <strong style="color: #ffffff;">${escapeHtml(buyerName)}</strong> just unlocked your pay-per-view message!
               </p>
 
               <!-- Amount -->
@@ -900,10 +909,10 @@ export async function sendBookingRequestEmail({
           <tr>
             <td style="padding: 40px 30px;">
               <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
-                Hey ${modelName}!
+                Hey ${escapeHtml(modelName)}!
               </p>
               <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
-                You have a new booking request from <strong style="color: #ffffff;">${clientName}</strong>${clientType === "brand" ? " (Brand)" : ""}.
+                You have a new booking request from <strong style="color: #ffffff;">${escapeHtml(clientName)}</strong>${clientType === "brand" ? " (Brand)" : ""}.
               </p>
 
               <!-- Booking Details -->
@@ -914,13 +923,13 @@ export async function sendBookingRequestEmail({
                       <tr>
                         <td style="padding-bottom: 15px; border-bottom: 1px solid #404040;">
                           <p style="margin: 0 0 5px; color: #71717a; font-size: 12px; text-transform: uppercase;">Booking #</p>
-                          <p style="margin: 0; color: #ffffff; font-size: 14px;">${bookingNumber}</p>
+                          <p style="margin: 0; color: #ffffff; font-size: 14px;">${escapeHtml(bookingNumber)}</p>
                         </td>
                       </tr>
                       <tr>
                         <td style="padding: 15px 0; border-bottom: 1px solid #404040;">
                           <p style="margin: 0 0 5px; color: #71717a; font-size: 12px; text-transform: uppercase;">Service</p>
-                          <p style="margin: 0; color: #ffffff; font-size: 16px; font-weight: 500;">${serviceType}</p>
+                          <p style="margin: 0; color: #ffffff; font-size: 16px; font-weight: 500;">${escapeHtml(serviceType)}</p>
                         </td>
                       </tr>
                       <tr>

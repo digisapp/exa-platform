@@ -53,6 +53,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Call session not found" }, { status: 404 });
     }
 
+    // Idempotency: if call already ended, return existing data
+    if (session.status === "ended") {
+      return NextResponse.json({
+        success: true,
+        duration: session.duration_seconds || 0,
+        coinsCharged: session.coins_charged || 0,
+        message: "Call already ended",
+      });
+    }
+
     // Calculate duration
     const now = new Date();
     const startedAt = session.started_at ? new Date(session.started_at) : now;

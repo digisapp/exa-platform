@@ -154,8 +154,8 @@ export async function rateLimitAsync(
       resetAt: result.reset,
     };
   } catch (error) {
-    console.error("Upstash rate limit error, falling back to in-memory:", error);
-    return inMemoryRateLimit(identifier, options.limit, options.windowSeconds);
+    console.error("Upstash rate limit error, denying request:", error);
+    return { success: false, remaining: 0, resetAt: Date.now() + 60000 };
   }
 }
 

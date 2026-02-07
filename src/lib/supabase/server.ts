@@ -18,8 +18,8 @@ export async function createClient() {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, {
                 ...options,
-                // Extend cookie lifetime to 1 year
-                maxAge: 60 * 60 * 24 * 365,
+                // Extend cookie lifetime to 30 days
+                maxAge: 60 * 60 * 24 * 30,
                 sameSite: 'lax',
                 secure: process.env.NODE_ENV === 'production',
               })

@@ -216,6 +216,15 @@ export async function PATCH(request: Request) {
       );
     }
 
+    // Validate fulfillmentStatus
+    const allowedFulfillmentStatuses = ["pending", "confirmed", "shipped", "delivered", "cancelled"];
+    if (fulfillmentStatus && !allowedFulfillmentStatuses.includes(fulfillmentStatus)) {
+      return NextResponse.json(
+        { error: `Invalid fulfillment status. Must be one of: ${allowedFulfillmentStatuses.join(", ")}` },
+        { status: 400 }
+      );
+    }
+
     // Build update object
     const updateData: any = {};
 

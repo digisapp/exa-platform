@@ -60,8 +60,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid account number" }, { status: 400 });
     }
 
-    // Encrypt the account number
+    // Encrypt the account number and routing number
     const encryptedAccountNumber = encryptBankAccount(accountNumber);
+    const encryptedRoutingNumber = encryptBankAccount(routingNumber);
 
     // Check if model already has a bank account
     const { data: existingAccounts } = await (supabase
@@ -78,7 +79,7 @@ export async function POST(request: Request) {
         model_id: model.id,
         account_holder_name: accountHolderName,
         bank_name: bankName,
-        routing_number: routingNumber,
+        routing_number: encryptedRoutingNumber,
         account_number_encrypted: encryptedAccountNumber,
         account_number_last4: accountNumber.slice(-4),
         account_type: accountType,
@@ -102,7 +103,7 @@ export async function POST(request: Request) {
       account_holder_name: bankAccount.account_holder_name,
       bank_name: bankAccount.bank_name,
       account_number_last4: bankAccount.account_number_last4,
-      routing_number: bankAccount.routing_number,
+      routing_number_last4: routingNumber.slice(-4),
       account_type: bankAccount.account_type,
       is_primary: bankAccount.is_primary,
     });

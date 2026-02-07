@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     const modelId = searchParams.get("model_id");
     const sort = searchParams.get("sort") as AuctionSortOption || "ending_soon";
     const page = parseInt(searchParams.get("page") || "1");
-    const pageSize = parseInt(searchParams.get("pageSize") || "20");
+    const pageSize = Math.min(parseInt(searchParams.get("pageSize") || "20"), 100);
     const hasBuyNow = searchParams.get("has_buy_now") === "true";
 
     let query = (supabase as any)

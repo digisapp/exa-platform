@@ -3,9 +3,28 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { stripe } from "@/lib/stripe";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { z } from "zod";
 
 // Service role client for atomic stock operations
 const supabaseAdmin: any = createServiceRoleClient();
+
+const shippingAddressSchema = z.object({
+  line1: z.string().min(1).max(500),
+  line2: z.string().max(500).optional(),
+  city: z.string().min(1).max(200),
+  state: z.string().min(1).max(200),
+  postalCode: z.string().min(1).max(20),
+  country: z.string().min(1).max(10),
+});
+
+const checkoutSchema = z.object({
+  email: z.string().email().max(320),
+  name: z.string().min(1).max(200),
+  phone: z.string().max(30).optional(),
+  shippingAddress: shippingAddressSchema,
+  billingAddress: shippingAddressSchema.optional(),
+  billingSameAsShipping: z.boolean().optional().default(true),
+});
 
 interface ShippingAddress {
   line1: string;
@@ -34,7 +53,15 @@ export async function POST(request: Request) {
     if (rateLimitResponse) return rateLimitResponse;
 
     const sessionId = request.headers.get("x-session-id");
-    const body: CheckoutRequest = await request.json();
+    const rawBody = await request.json();
+
+    const parsed = checkoutSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
 
     const {
       email,
@@ -43,15 +70,7 @@ export async function POST(request: Request) {
       shippingAddress,
       billingAddress,
       billingSameAsShipping = true,
-    } = body;
-
-    // Validate required fields
-    if (!email || !name || !shippingAddress) {
-      return NextResponse.json(
-        { error: "Email, name, and shipping address are required" },
-        { status: 400 }
-      );
-    }
+    } = parsed.data;
 
     // Find cart
     let cartQuery = (supabase as any)

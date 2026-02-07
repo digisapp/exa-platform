@@ -119,8 +119,8 @@ export default function ClaimPage() {
 
     if (!model) return;
 
-    if (password.length < 6) {
-      toast.error("Password must be at least 6 characters");
+    if (password.length < 8) {
+      toast.error("Password must be at least 8 characters");
       return;
     }
 
@@ -350,7 +350,7 @@ export default function ClaimPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="pr-10"
-                    placeholder="At least 6 characters"
+                    placeholder="At least 8 characters"
                     disabled={submitting}
                   />
                   <button

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
+import { logAdminAction, AdminActions } from "@/lib/admin-audit";
 
 export async function PATCH(
   request: NextRequest,
@@ -151,6 +152,17 @@ export async function PATCH(
         }
       }
     }
+
+    // Log the admin action
+    await logAdminAction({
+      supabase,
+      adminUserId: user.id,
+      action: AdminActions.GIG_APPLICATION_UPDATED,
+      targetType: "gig_application",
+      targetId: id,
+      oldValues: { status: application.status },
+      newValues: { status, gig_id: application.gig_id, model_id: application.model_id },
+    });
 
     return NextResponse.json({
       success: true,

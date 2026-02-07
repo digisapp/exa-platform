@@ -32,12 +32,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Skip rate limit for AI uploads (they're time-sensitive)
-    if (uploadType !== "ai-source") {
-      const rateLimitResponse = await checkEndpointRateLimit(request, "uploads", user.id);
-      if (rateLimitResponse) {
-        return rateLimitResponse;
-      }
+    // Rate limit all upload types
+    const rateLimitResponse = await checkEndpointRateLimit(request, "uploads", user.id);
+    if (rateLimitResponse) {
+      return rateLimitResponse;
     }
 
     // Get actor

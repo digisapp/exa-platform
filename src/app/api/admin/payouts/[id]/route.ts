@@ -43,6 +43,34 @@ export async function PATCH(
     }
     const { status, notes } = parsed.data;
 
+    // Validate status transition
+    const { data: currentWithdrawal, error: fetchError } = await (supabase
+      .from("withdrawal_requests") as any)
+      .select("status")
+      .eq("id", id)
+      .single();
+
+    if (fetchError || !currentWithdrawal) {
+      return NextResponse.json({ error: "Withdrawal not found" }, { status: 404 });
+    }
+
+    const allowedTransitions: Record<string, string[]> = {
+      pending: ["processing", "completed", "failed"],
+      processing: ["completed", "failed"],
+      completed: [],
+      failed: ["processing"],
+    };
+
+    const currentStatus = currentWithdrawal.status as string;
+    const allowed = allowedTransitions[currentStatus] || [];
+
+    if (!allowed.includes(status)) {
+      return NextResponse.json(
+        { error: `Cannot transition from "${currentStatus}" to "${status}". Allowed transitions: ${allowed.length > 0 ? allowed.join(", ") : "none"}` },
+        { status: 400 }
+      );
+    }
+
     // Use database functions for proper accounting
     if (status === "completed") {
       // Complete withdrawal - removes from withheld balance

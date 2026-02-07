@@ -68,8 +68,8 @@ export async function updateSession(request: NextRequest) {
           cookiesToSet.forEach(({ name, value, options }) => {
             response.cookies.set(name, value, {
               ...options,
-              // Extend cookie lifetime to 1 year (in seconds)
-              maxAge: 60 * 60 * 24 * 365,
+              // Extend cookie lifetime to 30 days (in seconds)
+              maxAge: 60 * 60 * 24 * 30,
               // Ensure cookies persist across browser sessions
               sameSite: 'lax',
               secure: process.env.NODE_ENV === 'production',

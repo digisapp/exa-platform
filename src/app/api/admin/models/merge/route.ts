@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
+import { logAdminAction, AdminActions } from "@/lib/admin-audit";
 
 const adminClient = createServiceRoleClient();
 
@@ -246,6 +247,20 @@ export async function POST(request: NextRequest) {
 
       actions.push(`Deleted duplicate model: ${deleteUsername}`);
     }
+
+    // Log the admin action
+    await logAdminAction({
+      supabase,
+      adminUserId: user.id,
+      action: AdminActions.MODELS_MERGED,
+      targetType: "model",
+      targetId: keepModel.id,
+      oldValues: {
+        kept_model: { id: keepModel.id, username: keepUsername },
+        deleted_model: { id: deleteModel.id, username: deleteUsername },
+      },
+      newValues: { actions },
+    });
 
     return NextResponse.json({
       success: true,

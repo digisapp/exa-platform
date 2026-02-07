@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { logAdminAction, AdminActions } from "@/lib/admin-audit";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 async function isAdmin(supabase: any, userId: string) {
   const { data: actor } = await supabase
@@ -24,6 +26,9 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
+
     if (!(await isAdmin(supabase, user.id))) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -40,6 +45,16 @@ export async function PATCH(
       console.error("Error updating fan:", error);
       throw error;
     }
+
+    // Log the admin action
+    await logAdminAction({
+      supabase,
+      adminUserId: user.id,
+      action: is_suspended ? AdminActions.FAN_SUSPENDED : AdminActions.FAN_UNSUSPENDED,
+      targetType: "fan",
+      targetId: fanId,
+      newValues: { is_suspended },
+    });
 
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
@@ -62,6 +77,9 @@ export async function DELETE(
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
 
     if (!(await isAdmin(supabase, user.id))) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -97,6 +115,16 @@ export async function DELETE(
         .eq("user_id", fan.user_id)
         .eq("type", "fan");
     }
+
+    // Log the admin action
+    await logAdminAction({
+      supabase,
+      adminUserId: user.id,
+      action: AdminActions.FAN_DELETED,
+      targetType: "fan",
+      targetId: fanId,
+      oldValues: { user_id: fan.user_id },
+    });
 
     return NextResponse.json({
       success: true,

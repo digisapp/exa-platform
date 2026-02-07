@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { sendModelApprovalEmail } from "@/lib/email";
 import { logAdminAction, AdminActions } from "@/lib/admin-audit";
 import { z } from "zod";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 const modelPatchSchema = z.object({
   is_approved: z.boolean(),
@@ -29,6 +30,9 @@ export async function PATCH(
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
 
     if (!(await isAdmin(supabase, user.id))) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });

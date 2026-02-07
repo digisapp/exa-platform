@@ -23,8 +23,8 @@ export async function generateToken(
   const at = new AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET, {
     identity: participantIdentity,
     name: participantName,
-    // Token expires in 2 hours
-    ttl: "2h",
+    // Token expires in 30 minutes
+    ttl: "30m",
   });
 
   at.addGrant({
