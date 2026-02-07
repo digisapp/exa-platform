@@ -489,7 +489,6 @@ function ApplicationCard({ application }: { application: any }) {
             alt={gig.title}
             fill
             className="object-cover group-hover:scale-110 transition-transform duration-300"
-            unoptimized
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
@@ -645,7 +644,6 @@ function OfferCard({ offer }: { offer: any }) {
               width={96}
               height={96}
               className="w-24 h-24 object-contain opacity-30"
-              unoptimized
             />
           ) : (
             <Building2 className="h-20 w-20 text-muted-foreground/30" />

@@ -122,10 +122,13 @@ export default async function MessagesPage({ searchParams }: PageProps) {
       return { convId, message: data };
     });
 
-    const results = await Promise.all(messagePromises);
-    results.forEach(({ convId, message }) => {
-      if (message) {
-        lastMessageMap.set(convId, message);
+    const results = await Promise.allSettled(messagePromises);
+    results.forEach((result) => {
+      if (result.status === "fulfilled") {
+        const { convId, message } = result.value;
+        if (message) {
+          lastMessageMap.set(convId, message);
+        }
       }
     });
   }

@@ -182,7 +182,6 @@ export function TopModelsCarousel({ models, showRank = true, showCategories = fa
                       alt={model.first_name || model.username}
                       fill
                       className="object-cover"
-                      unoptimized={model.profile_photo_url.includes("cdninstagram.com")}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-4xl font-bold text-white/30">
@@ -251,7 +250,6 @@ export function TopModelsCarousel({ models, showRank = true, showCategories = fa
                     width={96}
                     height={96}
                     className="object-cover w-full h-full"
-                    unoptimized={selectedModel.profile_photo_url.includes("cdninstagram.com")}
                   />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-pink-500/20 to-violet-500/20 flex items-center justify-center text-2xl font-bold">

@@ -101,7 +101,6 @@ export function BoostModal({
                   fill
                   className="object-cover"
                   sizes="112px"
-                  unoptimized={model.profile_photo_url?.includes("cdninstagram.com")}
                 />
               </div>
               {/* Flame badge */}

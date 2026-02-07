@@ -403,7 +403,6 @@ export default function AdminModelDetailPage() {
                     width={400}
                     height={400}
                     className="w-full h-full object-cover"
-                    unoptimized={profilePhoto.includes('cdninstagram.com')}
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">

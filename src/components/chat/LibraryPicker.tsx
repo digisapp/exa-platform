@@ -165,7 +165,6 @@ export function LibraryPicker({
                 alt="Photo thumbnail"
                 fill
                 className="object-cover"
-                unoptimized
               />
             )}
 

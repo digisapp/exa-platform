@@ -510,7 +510,6 @@ export function ProfileContentTabs({
                   alt="Blurred background"
                   fill
                   className="object-cover scale-110 blur-3xl opacity-40"
-                  unoptimized
                 />
                 <div className="absolute inset-0 bg-black/80" />
               </div>
@@ -603,7 +602,6 @@ export function ProfileContentTabs({
                     "select-none"
                   )}
                   draggable={false}
-                  unoptimized
                 />
               ) : (
                 <div className="relative">

@@ -1245,7 +1245,6 @@ export default function AdminGigsPage() {
                         width={128}
                         height={160}
                         className="w-32 h-40 object-cover rounded-lg border"
-                        unoptimized
                       />
                       <Button
                         type="button"
@@ -1296,7 +1295,6 @@ export default function AdminGigsPage() {
                         width={96}
                         height={96}
                         className="w-24 h-24 object-cover rounded-lg border"
-                        unoptimized
                       />
                       <Button
                         type="button"
@@ -1874,7 +1872,6 @@ export default function AdminGigsPage() {
                           width={48}
                           height={48}
                           className="w-full h-full object-cover"
-                          unoptimized
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-xl">
@@ -2172,7 +2169,6 @@ export default function AdminGigsPage() {
                         width={128}
                         height={176}
                         className="w-32 h-44 object-cover rounded-lg border"
-                        unoptimized
                       />
                       <Button
                         type="button"
@@ -2481,7 +2477,6 @@ export default function AdminGigsPage() {
                   alt={formData.title}
                   fill
                   className="object-cover"
-                  unoptimized
                 />
               </div>
             )}
@@ -2502,7 +2497,6 @@ export default function AdminGigsPage() {
                         alt={`Gallery ${index + 1}`}
                         fill
                         className="object-cover"
-                        unoptimized
                       />
                     </div>
                   ))}
@@ -2650,7 +2644,6 @@ export default function AdminGigsPage() {
                 width={1200}
                 height={900}
                 className="w-full h-auto max-h-[85vh] object-contain rounded-lg"
-                unoptimized
               />
             )}
           </div>

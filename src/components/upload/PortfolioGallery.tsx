@@ -110,7 +110,6 @@ export function PortfolioGallery({
               alt="Portfolio photo"
               fill
               className="object-cover transition-transform group-hover:scale-105"
-              unoptimized
             />
 
             {/* Overlay on hover */}
@@ -184,7 +183,6 @@ export function PortfolioGallery({
                 width={400}
                 height={192}
                 className="max-h-48 mx-auto rounded-lg"
-                unoptimized
               />
             </div>
           )}

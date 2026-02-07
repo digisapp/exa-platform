@@ -198,7 +198,6 @@ export function ImageLightbox({ src, alt = "Image", isOpen, onClose }: ImageLigh
             e.stopPropagation();
           }}
           draggable={false}
-          unoptimized
         />
       </div>
 

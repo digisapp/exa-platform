@@ -83,7 +83,6 @@ export function SwipeCard({
           sizes="(max-width: 640px) calc(100vw - 32px), 400px"
           quality={90}
           priority={isTop}
-          unoptimized={model.profile_photo_url?.includes("cdninstagram.com")}
         />
 
         {/* Gradient Overlay */}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -38,6 +38,24 @@ export function IncomingCallDialog({
   const [timeLeft, setTimeLeft] = useState(30);
   const [callType] = useState<"video" | "voice">(initialCallType);
 
+  // Use refs for values needed in the timer callback to avoid stale closures
+  const sessionIdRef = useRef(sessionId);
+  const onCloseRef = useRef(onClose);
+  useEffect(() => { sessionIdRef.current = sessionId; }, [sessionId]);
+  useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
+
+  const handleMissed = useCallback(async () => {
+    setIsDeclining(true);
+    try {
+      await fetch(`/api/calls/join?sessionId=${sessionIdRef.current}&reason=missed`, {
+        method: "DELETE",
+      });
+    } catch (error) {
+      console.error("Error marking call as missed:", error);
+    }
+    onCloseRef.current();
+  }, []);
+
   // Auto-miss after 30 seconds (timeout = missed, not declined)
   useEffect(() => {
     if (timeLeft <= 0) {
@@ -50,8 +68,7 @@ export function IncomingCallDialog({
     }, 1000);
 
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeLeft]);
+  }, [timeLeft, handleMissed]);
 
   const handleAccept = async () => {
     setIsJoining(true);
@@ -92,18 +109,6 @@ export function IncomingCallDialog({
       });
     } catch (error) {
       console.error("Error declining call:", error);
-    }
-    onClose();
-  };
-
-  const handleMissed = async () => {
-    setIsDeclining(true);
-    try {
-      await fetch(`/api/calls/join?sessionId=${sessionId}&reason=missed`, {
-        method: "DELETE",
-      });
-    } catch (error) {
-      console.error("Error marking call as missed:", error);
     }
     onClose();
   };

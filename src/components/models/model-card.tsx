@@ -90,7 +90,6 @@ export const ModelCard = memo(function ModelCard({
                   width={48}
                   height={48}
                   className="w-12 h-12 object-cover rounded-full"
-                  unoptimized={model.profile_photo_url.includes('cdninstagram.com')}
                 />
               ) : (
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#1a0033] to-[#2d1b69] flex items-center justify-center">
@@ -127,7 +126,6 @@ export const ModelCard = memo(function ModelCard({
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               className="object-cover group-hover:scale-110 transition-transform duration-300"
-              unoptimized={model.profile_photo_url.includes('cdninstagram.com')}
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center">

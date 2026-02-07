@@ -383,7 +383,6 @@ export default function AdminRatePage() {
                         alt={currentModel.username || "Model"}
                         fill
                         className="object-cover"
-                        unoptimized={currentModel.profile_photo_url.includes("cdninstagram.com")}
                         priority
                       />
                     ) : (

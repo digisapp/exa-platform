@@ -268,7 +268,6 @@ export const MessageBubble = memo(function MessageBubble({
                     height={256}
                     className="max-w-full max-h-64 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                     onClick={() => setLightboxOpen(true)}
-                    unoptimized
                   />
                   <ImageLightbox
                     src={message.media_url!}

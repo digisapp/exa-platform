@@ -184,7 +184,6 @@ export default async function RatesPage({ searchParams }: Props) {
                             alt={displayName}
                             fill
                             className="object-cover"
-                            unoptimized={model.profile_photo_url.includes("cdninstagram.com")}
                           />
                         ) : (
                           <div className="absolute inset-0 bg-gradient-to-br from-pink-500/20 to-violet-500/20 flex items-center justify-center">

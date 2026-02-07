@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError) {
       console.error("Auth error:", authError);
-      return NextResponse.json({ error: "Auth error", details: authError.message }, { status: 401 });
+      return NextResponse.json({ error: "Authentication failed" }, { status: 401 });
     }
 
     if (!user) {
@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
 
     if (actorError) {
       console.error("Actor fetch error:", actorError);
-      return NextResponse.json({ error: "Failed to get actor", details: actorError.message }, { status: 500 });
+      return NextResponse.json({ error: "An unexpected error occurred" }, { status: 500 });
     }
 
     if (!actor) {
@@ -125,7 +125,7 @@ export async function GET(request: NextRequest) {
 
       if (error) {
         console.error("Bookings query error (model):", error);
-        return NextResponse.json({ error: "Failed to fetch bookings", details: error.message }, { status: 500 });
+        return NextResponse.json({ error: "Failed to fetch bookings" }, { status: 500 });
       }
       bookings = data || [];
     } else {
@@ -136,7 +136,7 @@ export async function GET(request: NextRequest) {
 
       if (error) {
         console.error("Bookings query error (client):", error);
-        return NextResponse.json({ error: "Failed to fetch bookings", details: error.message }, { status: 500 });
+        return NextResponse.json({ error: "Failed to fetch bookings" }, { status: 500 });
       }
       bookings = data || [];
     }
@@ -218,12 +218,9 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({ bookings, serviceLabels: SERVICE_LABELS });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Bookings fetch error:", error);
-    return NextResponse.json({
-      error: "Failed to fetch bookings",
-      message: error?.message || "Unknown error"
-    }, { status: 500 });
+    return NextResponse.json({ error: "Failed to fetch bookings" }, { status: 500 });
   }
 }
 
@@ -419,11 +416,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error("Failed to create booking:", error);
-      return NextResponse.json({
-        error: error.message || "Failed to create booking",
-        details: error.details || null,
-        hint: error.hint || null
-      }, { status: 500 });
+      return NextResponse.json({ error: "Failed to create booking" }, { status: 500 });
     }
 
     // Create notification for model (don't fail if this errors)

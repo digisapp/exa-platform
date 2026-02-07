@@ -202,7 +202,6 @@ export function TopModelsLeaderboard({
                     fill
                     className="object-cover"
                     sizes="44px"
-                    unoptimized={entry.model.profilePhotoUrl?.includes("cdninstagram.com")}
                   />
                 )}
               </div>

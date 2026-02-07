@@ -164,7 +164,6 @@ export default async function GigDetailPage({ params }: Props) {
                   alt={gig.title}
                   fill
                   className="object-cover"
-                  unoptimized
                 />
               </div>
             )}

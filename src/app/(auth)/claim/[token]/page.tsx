@@ -316,7 +316,6 @@ export default function ClaimPage() {
                   width={96}
                   height={96}
                   className="w-full h-full object-cover"
-                  unoptimized
                 />
               </div>
             ) : (

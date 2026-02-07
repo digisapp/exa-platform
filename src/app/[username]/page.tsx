@@ -363,7 +363,6 @@ export default async function ModelProfilePage({ params }: Props) {
                         height={160}
                         className="w-full h-full object-cover"
                         priority
-                        unoptimized={model.profile_photo_url.includes("cdninstagram.com")}
                       />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-[#1a0033] to-[#2d1b69] flex items-center justify-center">
@@ -399,7 +398,6 @@ export default async function ModelProfilePage({ params }: Props) {
                       height={160}
                       className="w-full h-full object-cover"
                       priority
-                      unoptimized={model.profile_photo_url.includes("cdninstagram.com")}
                     />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-[#1a0033] to-[#2d1b69] flex items-center justify-center">

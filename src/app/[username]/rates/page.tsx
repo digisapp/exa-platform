@@ -152,7 +152,6 @@ export default async function ModelRatesPage({ params }: Props) {
                   alt={displayName}
                   fill
                   className="object-cover"
-                  unoptimized={model.profile_photo_url.includes("cdninstagram.com")}
                 />
               ) : (
                 <div className="w-full h-full bg-gradient-to-br from-[#1a0033] to-[#2d1b69] flex items-center justify-center">

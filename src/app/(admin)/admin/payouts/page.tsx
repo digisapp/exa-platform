@@ -145,7 +145,7 @@ export default async function PayoutsPage() {
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center text-white font-bold text-lg overflow-hidden">
               {model?.profile_photo_url ? (
-                <Image src={model.profile_photo_url} alt={displayName} width={48} height={48} className="w-full h-full object-cover" unoptimized />
+                <Image src={model.profile_photo_url} alt={displayName} width={48} height={48} className="w-full h-full object-cover" />
               ) : (
                 displayName.charAt(0).toUpperCase()
               )}

@@ -2,7 +2,10 @@ import { Resend } from "resend";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 
 const FROM_EMAIL = "EXA Models <noreply@examodels.com>";
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.examodels.com";
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || (() => {
+  console.warn("NEXT_PUBLIC_APP_URL not set, falling back to production URL");
+  return "https://www.examodels.com";
+})();
 
 function escapeHtml(str: string): string {
   return str
