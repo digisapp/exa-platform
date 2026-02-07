@@ -48,29 +48,36 @@ ALTER TABLE brand_outreach_contacts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE brand_outreach_emails ENABLE ROW LEVEL SECURITY;
 
 -- Admin-only access for contacts
-CREATE POLICY "Admins can manage brand outreach contacts"
-  ON brand_outreach_contacts FOR ALL
-  USING (
-    EXISTS (
-      SELECT 1 FROM actors
-      WHERE actors.user_id = auth.uid()
-      AND actors.type = 'admin'
-    )
-  );
+DO $$ BEGIN
+  CREATE POLICY "Admins can manage brand outreach contacts"
+    ON brand_outreach_contacts FOR ALL
+    USING (
+      EXISTS (
+        SELECT 1 FROM actors
+        WHERE actors.user_id = auth.uid()
+        AND actors.type = 'admin'
+      )
+    );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Admin-only access for emails
-CREATE POLICY "Admins can manage brand outreach emails"
-  ON brand_outreach_emails FOR ALL
-  USING (
-    EXISTS (
-      SELECT 1 FROM actors
-      WHERE actors.user_id = auth.uid()
-      AND actors.type = 'admin'
-    )
-  );
+DO $$ BEGIN
+  CREATE POLICY "Admins can manage brand outreach emails"
+    ON brand_outreach_emails FOR ALL
+    USING (
+      EXISTS (
+        SELECT 1 FROM actors
+        WHERE actors.user_id = auth.uid()
+        AND actors.type = 'admin'
+      )
+    );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- Insert initial swimwear brand contacts from research
-INSERT INTO brand_outreach_contacts (brand_name, contact_name, email, email_type, website_url, instagram_handle, category, location_city, location_country, notes) VALUES
+-- Insert initial swimwear brand contacts from research (skip if already inserted)
+INSERT INTO brand_outreach_contacts (brand_name, contact_name, email, email_type, website_url, instagram_handle, category, location_city, location_country, notes)
+SELECT * FROM (VALUES
 -- Brands with dedicated PR emails
 ('Luli Fama', 'Christy', 'christy@lulifama.com', 'pr', 'https://www.lulifama.com', 'lulifamaswimwear', 'swimwear', 'Miami', 'USA', 'Major Miami swimwear brand, regular at Swim Week'),
 ('Maaji', 'Paulina Madrid', 'paulinam@maaji.co', 'pr', 'https://www.maaji.co', 'maaji', 'swimwear', 'Colombia', 'Colombia', 'B Corp certified, available at Nordstrom, Revolve'),
@@ -106,4 +113,6 @@ INSERT INTO brand_outreach_contacts (brand_name, contact_name, email, email_type
 ('Hunza G', NULL, 'info@hunzag.com', 'general', 'https://hunzag.com', 'hunzag', 'swimwear', 'London', 'UK', 'Retro-inspired crinkle swimwear'),
 ('Oséree', NULL, 'info@oseree.com', 'general', 'https://oseree.com', 'osereeswimwear', 'swimwear', 'Italy', 'Italy', 'Made in Italy luxury swimwear'),
 ('Norma Kamali', NULL, 'customerservice@normakamali.com', 'general', 'https://www.normakamali.com', 'normakamali', 'swimwear', 'New York', 'USA', 'Iconic designer, famous for swimwear'),
-('Marysia', NULL, 'info@marysia.com', 'general', 'https://marysia.com', 'marysiaswim', 'swimwear', 'Los Angeles', 'USA', 'Scalloped edge signature swimwear');
+('Marysia', NULL, 'info@marysia.com', 'general', 'https://marysia.com', 'marysiaswim', 'swimwear', 'Los Angeles', 'USA', 'Scalloped edge signature swimwear')
+) AS v(brand_name, contact_name, email, email_type, website_url, instagram_handle, category, location_city, location_country, notes)
+WHERE NOT EXISTS (SELECT 1 FROM brand_outreach_contacts LIMIT 1);
