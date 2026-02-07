@@ -128,6 +128,7 @@ export function MessageReactions({
           key={reaction.emoji}
           onClick={() => handleReact(reaction.emoji)}
           disabled={isLoading}
+          aria-label={`${reaction.hasReacted ? "Remove" : "Add"} ${reaction.emoji} reaction (${reaction.count})`}
           className={cn(
             "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs transition-all",
             reaction.hasReacted
@@ -171,6 +172,7 @@ export function MessageReactions({
               <button
                 key={emoji}
                 onClick={() => handleReact(emoji)}
+                aria-label={`React with ${emoji}`}
                 className="p-2 hover:bg-muted rounded-lg transition-colors text-lg"
               >
                 {emoji}

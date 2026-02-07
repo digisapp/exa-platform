@@ -173,21 +173,26 @@ export function ChatView({
     messagesEndRef.current?.scrollIntoView({ behavior: smooth ? "smooth" : "auto" });
   }, []);
 
-  // Handle scroll to detect position
+  // Handle scroll to detect position (debounced via requestAnimationFrame)
+  const scrollRafRef = useRef<number | null>(null);
   const handleScroll = useCallback(() => {
-    const container = messagesContainerRef.current;
-    if (!container) return;
+    if (scrollRafRef.current) return;
+    scrollRafRef.current = requestAnimationFrame(() => {
+      scrollRafRef.current = null;
+      const container = messagesContainerRef.current;
+      if (!container) return;
 
-    // Load more when scrolled near the top (within 100px)
-    if (container.scrollTop < 100 && hasMore && !loadingMore) {
-      loadMoreMessages();
-    }
+      // Load more when scrolled near the top (within 100px)
+      if (container.scrollTop < 100 && hasMore && !loadingMore) {
+        loadMoreMessages();
+      }
 
-    // Check if near bottom (within 150px)
-    const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
-    const nearBottom = distanceFromBottom < 150;
-    setIsNearBottom(nearBottom);
-    setShowScrollButton(!nearBottom && messages.length > 5);
+      // Check if near bottom (within 150px)
+      const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+      const nearBottom = distanceFromBottom < 150;
+      setIsNearBottom(nearBottom);
+      setShowScrollButton(!nearBottom && messages.length > 5);
+    });
   }, [hasMore, loadingMore, loadMoreMessages, messages.length]);
 
   // Get other participant's display info based on their type (memoized)
@@ -324,11 +329,15 @@ export function ChatView({
   // Mark messages as read
   useEffect(() => {
     async function markAsRead() {
-      await (supabase
-        .from("conversation_participants") as any)
-        .update({ last_read_at: new Date().toISOString() })
-        .eq("conversation_id", conversation.id)
-        .eq("actor_id", currentActor.id);
+      try {
+        await (supabase
+          .from("conversation_participants") as any)
+          .update({ last_read_at: new Date().toISOString() })
+          .eq("conversation_id", conversation.id)
+          .eq("actor_id", currentActor.id);
+      } catch (err) {
+        console.error("Failed to mark messages as read:", err);
+      }
     }
     markAsRead();
   }, [conversation.id, currentActor.id, supabase]);
