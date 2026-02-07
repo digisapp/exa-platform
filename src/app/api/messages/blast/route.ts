@@ -1,6 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { rateLimitAsync } from "@/lib/rate-limit";
+import { z } from "zod";
+
+const blastSchema = z.object({
+  message: z.string().min(1, "Message content required").max(5000, "Message is too long"),
+  recipientType: z.enum(["fans", "brands", "all"], { message: "Invalid recipient type" }),
+});
 
 // Strict rate limit for blasts: 1 per hour
 const BLAST_LIMIT = { limit: 1, windowSeconds: 3600 };
@@ -35,7 +41,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Rate limit check - 1 blast per hour per model
+    // Validate body BEFORE consuming rate limit token
+    const body = await request.json();
+    const validationResult = blastSchema.safeParse(body);
+    if (!validationResult.success) {
+      const firstError = validationResult.error.issues[0];
+      return NextResponse.json(
+        { error: firstError.message },
+        { status: 400 }
+      );
+    }
+
+    const { message, recipientType } = validationResult.data;
+
+    // Rate limit check - 1 blast per hour per model (after validation)
     const rateLimitResult = await rateLimitAsync(`blast:${actor.id}`, BLAST_LIMIT);
     if (!rateLimitResult.success) {
       const minutesRemaining = Math.ceil((rateLimitResult.resetAt - Date.now()) / 60000);
@@ -45,23 +64,6 @@ export async function POST(request: NextRequest) {
           resetAt: rateLimitResult.resetAt,
         },
         { status: 429 }
-      );
-    }
-
-    const body = await request.json();
-    const { message, recipientType } = body;
-
-    if (!message?.trim()) {
-      return NextResponse.json(
-        { error: "Message content required" },
-        { status: 400 }
-      );
-    }
-
-    if (!["fans", "brands", "all"].includes(recipientType)) {
-      return NextResponse.json(
-        { error: "Invalid recipient type" },
-        { status: 400 }
       );
     }
 

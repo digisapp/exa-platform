@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
-import { MoreVertical, Trash2 } from "lucide-react";
+import { MoreVertical, Trash2, Lock, Coins, Loader2 as Spinner } from "lucide-react";
 import { toast } from "sonner";
 import { ImageLightbox } from "./ImageLightbox";
 import { MessageReactions } from "./MessageReactions";
@@ -35,9 +35,10 @@ interface MessageBubbleProps {
   reactions?: Reaction[];
   currentActorId?: string;
   onReactionChange?: () => void;
+  onUnlock?: (messageId: string, price: number) => Promise<void>;
 }
 
-export function MessageBubble({
+export const MessageBubble = memo(function MessageBubble({
   message,
   isOwn,
   senderName = "User",
@@ -48,10 +49,31 @@ export function MessageBubble({
   reactions = [],
   currentActorId,
   onReactionChange,
+  onUnlock,
 }: MessageBubbleProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDeleted, setIsDeleted] = useState(!!(message as any).deleted_at);
+  const [isUnlocking, setIsUnlocking] = useState(false);
+
+  // PPV: determine if media is locked
+  const hasMediaPrice = (message.media_price ?? 0) > 0;
+  const isMediaUnlocked = isOwn || (
+    hasMediaPrice && currentActorId
+      ? (message.media_viewed_by ?? []).includes(currentActorId)
+      : false
+  );
+  const isMediaLocked = hasMediaPrice && !isMediaUnlocked;
+
+  const handleUnlock = async () => {
+    if (!onUnlock || isUnlocking || !message.media_price) return;
+    setIsUnlocking(true);
+    try {
+      await onUnlock(message.id, message.media_price);
+    } finally {
+      setIsUnlocking(false);
+    }
+  };
 
   const handleDelete = async () => {
     if (isDeleting) return;
@@ -67,13 +89,15 @@ export function MessageBubble({
       if (!response.ok) {
         const data = await response.json();
         toast.error(data.error || "Failed to delete message");
-        return;
+        return; // Don't set isDeleted on failure
       }
 
+      // Only mark as deleted after successful API response
       setIsDeleted(true);
       onDelete?.(message.id);
       toast.success("Message deleted");
     } catch {
+      // Explicitly do NOT set isDeleted here - the message still exists
       toast.error("Failed to delete message");
     } finally {
       setIsDeleting(false);
@@ -203,7 +227,39 @@ export function MessageBubble({
 
           {message.media_url && (
             <div className={cn("mt-2", !message.content && "-mt-0")}>
-              {message.media_type?.startsWith("image/") ? (
+              {isMediaLocked ? (
+                /* Locked PPV media overlay -- uses gradient placeholder, never the real URL */
+                <div className="relative rounded-lg overflow-hidden">
+                  <div className={cn(
+                    "w-full h-48 rounded-lg",
+                    message.media_type?.startsWith("image/")
+                      ? "bg-gradient-to-br from-pink-900/40 via-gray-800 to-violet-900/40"
+                      : "bg-gradient-to-br from-gray-800 to-gray-900"
+                  )} />
+                  {/* Overlay */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/30 rounded-lg">
+                    <Lock className="h-8 w-8 text-white/80 mb-2" />
+                    <p className="text-white/90 text-sm font-medium mb-3">
+                      {message.media_type?.startsWith("video/") ? "Locked Video" : "Locked Photo"}
+                    </p>
+                    <Button
+                      onClick={handleUnlock}
+                      disabled={isUnlocking}
+                      size="sm"
+                      className="bg-gradient-to-r from-pink-500 to-violet-500 text-white gap-1.5"
+                    >
+                      {isUnlocking ? (
+                        <Spinner className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Coins className="h-3.5 w-3.5" />
+                          Unlock for {message.media_price} coins
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              ) : message.media_type?.startsWith("image/") ? (
                 <>
                   <Image
                     src={message.media_url}
@@ -263,6 +319,14 @@ export function MessageBubble({
                   View attachment
                 </a>
               )}
+
+              {/* PPV price badge for sender */}
+              {hasMediaPrice && isOwn && (
+                <div className="flex items-center gap-1 mt-1 text-xs text-white/70">
+                  <Lock className="h-3 w-3" />
+                  <span>PPV: {message.media_price} coins</span>
+                </div>
+              )}
             </div>
           )}
 
@@ -291,4 +355,4 @@ export function MessageBubble({
       )}
     </div>
   );
-}
+});

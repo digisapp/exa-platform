@@ -38,30 +38,12 @@ export function MessageReactions({
   const [isLoading, setIsLoading] = useState(false);
   const [localReactions, setLocalReactions] = useState<Reaction[]>(reactions);
 
-  // Fetch reactions on mount
+  // Sync from props when they change (batch-fetched from parent)
   useEffect(() => {
-    async function fetchReactions() {
-      try {
-        const response = await fetch(`/api/messages/react?messageId=${messageId}`);
-        if (response.ok) {
-          const data = await response.json();
-          // Convert API response to Reaction[] format
-          const reactionsArray: Reaction[] = Object.entries(data.reactions || {}).map(
-            ([emoji, info]: [string, any]) => ({
-              emoji,
-              count: info.count,
-              hasReacted: info.actorIds.includes(currentActorId),
-            })
-          );
-          setLocalReactions(reactionsArray);
-        }
-      } catch (err) {
-        console.error("Failed to fetch reactions:", err);
-      }
+    if (reactions.length > 0) {
+      setLocalReactions(reactions);
     }
-
-    fetchReactions();
-  }, [messageId, currentActorId]);
+  }, [reactions]);
 
   const handleReact = async (emoji: string) => {
     if (isLoading) return;

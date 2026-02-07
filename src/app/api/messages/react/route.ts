@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 
 // Allowed emojis for reactions
@@ -20,6 +21,12 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Rate limit check
+    const rateLimitResponse = await checkEndpointRateLimit(request, "messages", user.id);
+    if (rateLimitResponse) {
+      return rateLimitResponse;
     }
 
     const body = await request.json();
@@ -145,10 +152,54 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const messageId = searchParams.get("messageId");
 
-    if (!messageId) {
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!messageId || !uuidRegex.test(messageId)) {
       return NextResponse.json(
-        { error: "Message ID required" },
+        { error: "Valid message ID required" },
         { status: 400 }
+      );
+    }
+
+    // Get actor for authorization
+    const { data: actor } = await supabase
+      .from("actors")
+      .select("id")
+      .eq("user_id", user.id)
+      .single() as { data: { id: string } | null };
+
+    if (!actor) {
+      return NextResponse.json(
+        { error: "Actor not found" },
+        { status: 400 }
+      );
+    }
+
+    // Verify user is a participant in the message's conversation
+    const { data: message } = await (supabase
+      .from("messages") as any)
+      .select("conversation_id")
+      .eq("id", messageId)
+      .single();
+
+    if (!message) {
+      return NextResponse.json(
+        { error: "Message not found" },
+        { status: 404 }
+      );
+    }
+
+    const { data: participation } = await supabase
+      .from("conversation_participants")
+      .select("actor_id")
+      .eq("conversation_id", message.conversation_id)
+      .eq("actor_id", actor.id)
+      .single();
+
+    if (!participation) {
+      return NextResponse.json(
+        { error: "Not a participant in this conversation" },
+        { status: 403 }
       );
     }
 

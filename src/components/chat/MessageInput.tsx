@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback, KeyboardEvent } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Loader2, Coins, X, Video, Mic, Camera } from "lucide-react";
+import { Send, Loader2, Coins, X, Video, Mic, Camera, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { AttachmentMenu } from "./AttachmentMenu";
@@ -15,7 +15,7 @@ import { hapticFeedback } from "@/hooks/useHapticFeedback";
 const DRAFT_PREFIX = "chat_draft_";
 
 interface MessageInputProps {
-  onSend: (content: string, mediaUrl?: string, mediaType?: string) => Promise<void>;
+  onSend: (content: string, mediaUrl?: string, mediaType?: string, mediaPrice?: number) => Promise<void>;
   disabled?: boolean;
   coinCost?: number;
   coinBalance?: number;
@@ -49,6 +49,8 @@ export function MessageInput({
     type: string;
     preview?: string;
   } | null>(null);
+  const [mediaPrice, setMediaPrice] = useState<number | null>(null);
+  const [showPriceInput, setShowPriceInput] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const draftKey = conversationId ? `${DRAFT_PREFIX}${conversationId}` : null;
 
@@ -106,22 +108,35 @@ export function MessageInput({
     const messageContent = content.trim();
     const mediaUrl = attachedMedia?.url;
     const mediaType = attachedMedia?.type;
+    const mediaPreview = attachedMedia?.preview;
+    const currentMediaPrice = mediaPrice ?? undefined;
+
+    // Revoke blob URL to prevent memory leak
+    if (mediaPreview) {
+      URL.revokeObjectURL(mediaPreview);
+    }
 
     setContent("");
     setAttachedMedia(null);
+    setMediaPrice(null);
+    setShowPriceInput(false);
     setSending(true);
 
     // Stop typing indicator when sending
     onStopTyping?.();
 
     try {
-      await onSend(messageContent, mediaUrl, mediaType);
+      await onSend(messageContent, mediaUrl, mediaType, currentMediaPrice);
       clearDraft(); // Clear draft on successful send
     } catch {
       hapticFeedback("error");
       setContent(messageContent);
       if (mediaUrl && mediaType) {
         setAttachedMedia({ url: mediaUrl, type: mediaType });
+      }
+      if (currentMediaPrice) {
+        setMediaPrice(currentMediaPrice);
+        setShowPriceInput(true);
       }
     } finally {
       setSending(false);
@@ -327,6 +342,8 @@ export function MessageInput({
       URL.revokeObjectURL(attachedMedia.preview);
     }
     setAttachedMedia(null);
+    setMediaPrice(null);
+    setShowPriceInput(false);
   };
 
   // Voice recording mode
@@ -402,6 +419,50 @@ export function MessageInput({
           >
             <X className="h-3 w-3" />
           </button>
+        </div>
+      )}
+
+      {/* PPV price toggle for models with media attached */}
+      {isModel && attachedMedia && !attachedMedia.type.startsWith("audio") && (
+        <div className="mb-3 flex items-center gap-2">
+          <button
+            onClick={() => {
+              if (showPriceInput) {
+                setShowPriceInput(false);
+                setMediaPrice(null);
+              } else {
+                setShowPriceInput(true);
+                setMediaPrice(10);
+              }
+            }}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors",
+              showPriceInput
+                ? "bg-pink-500/20 text-pink-400 border border-pink-500/30"
+                : "bg-muted text-muted-foreground hover:bg-muted/80 border border-transparent"
+            )}
+          >
+            <Lock className="h-3 w-3" />
+            {showPriceInput ? "PPV On" : "Set Price"}
+          </button>
+          {showPriceInput && (
+            <div className="flex items-center gap-1.5">
+              <Coins className="h-3.5 w-3.5 text-yellow-500" />
+              <input
+                type="number"
+                min={10}
+                max={10000}
+                value={mediaPrice ?? 10}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value);
+                  setMediaPrice(isNaN(val) ? null : Math.max(10, Math.min(10000, val)));
+                }}
+                className="w-20 h-7 px-2 text-xs rounded-md border bg-background text-foreground"
+                placeholder="10"
+              />
+              <span className="text-xs text-muted-foreground">coins</span>
+            </div>
+          )}
         </div>
       )}
 

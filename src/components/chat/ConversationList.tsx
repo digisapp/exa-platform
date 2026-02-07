@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -48,6 +49,7 @@ interface ConversationListProps {
   conversations: Conversation[];
   actorType?: string;
   compact?: boolean;
+  currentActorId?: string;
 }
 
 type FilterType = "all" | "fans" | "brands";
@@ -70,11 +72,72 @@ function formatMessageTime(dateStr: string): string {
   return format(date, "MMM d"); // "Jan 15"
 }
 
-export function ConversationList({ conversations, actorType, compact }: ConversationListProps) {
+export function ConversationList({ conversations: initialConversations, actorType, compact, currentActorId }: ConversationListProps) {
   const pathname = usePathname();
   const selectedId = pathname.startsWith("/chats/") ? pathname.split("/chats/")[1] : null;
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
+  const [conversations, setConversations] = useState(initialConversations);
+
+  // Sync from props when initial data changes (navigation)
+  useEffect(() => {
+    setConversations(initialConversations);
+  }, [initialConversations]);
+
+  // Real-time subscription: update last message + sort order when new messages arrive
+  useEffect(() => {
+    if (!currentActorId) return;
+
+    const supabase = createClient();
+    const conversationIds = conversations.map((c) => c.conversation_id);
+    if (conversationIds.length === 0) return;
+
+    const channel = supabase
+      .channel("conversation-list-updates")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+        },
+        (payload) => {
+          const msg = payload.new as any;
+          // Only update if this message belongs to one of our conversations
+          if (!conversationIds.includes(msg.conversation_id)) return;
+
+          setConversations((prev) => {
+            const updated = prev.map((conv) => {
+              if (conv.conversation_id !== msg.conversation_id) return conv;
+              return {
+                ...conv,
+                lastMessage: {
+                  content: msg.content,
+                  created_at: msg.created_at,
+                  sender_id: msg.sender_id,
+                  media_url: msg.media_url,
+                  media_type: msg.media_type,
+                  is_system: msg.is_system,
+                },
+              };
+            });
+            // Re-sort by latest message
+            return [...updated].sort((a, b) => {
+              const aTime = a.lastMessage?.created_at || "";
+              const bTime = b.lastMessage?.created_at || "";
+              return bTime.localeCompare(aTime);
+            });
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
+    // Only re-subscribe when the conversation list fundamentally changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentActorId, conversations.length]);
 
   // Helper to get message preview text
   const getMessagePreview = (message: Conversation["lastMessage"]) => {

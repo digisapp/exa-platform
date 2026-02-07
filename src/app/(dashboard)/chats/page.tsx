@@ -233,7 +233,7 @@ export default async function MessagesPage({ searchParams }: PageProps) {
             )}
           </div>
         </div>
-        <ConversationList conversations={conversations} actorType={actor.type} />
+        <ConversationList conversations={conversations} actorType={actor.type} currentActorId={actor.id} />
       </div>
 
       {/* Desktop: empty state (sidebar is in layout) */}

@@ -11,6 +11,7 @@ const sendMessageSchema = z.object({
   content: z.string().max(5000, "Message is too long").optional().nullable(),
   mediaUrl: z.string().url("Invalid media URL").max(2048, "URL is too long").optional().nullable(),
   mediaType: z.enum(["image", "video", "audio"]).optional().nullable(),
+  mediaPrice: z.number().int().min(10, "Minimum price is 10 coins").max(10000, "Maximum price is 10,000 coins").optional().nullable(),
 }).refine(
   (data) => data.content?.trim() || data.mediaUrl,
   { message: "Message content or media required", path: ["content"] }
@@ -46,7 +47,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { conversationId, content, mediaUrl, mediaType } = validationResult.data;
+    const { conversationId, content, mediaUrl, mediaType, mediaPrice } = validationResult.data;
 
     // Get sender's actor info
     const { data: sender } = await supabase
@@ -58,6 +59,14 @@ export async function POST(request: NextRequest) {
     if (!sender) {
       return NextResponse.json(
         { error: "Sender not found" },
+        { status: 400 }
+      );
+    }
+
+    // Only models can set a media price, and only when media is attached
+    if (mediaPrice && (sender.type !== "model" || !mediaUrl)) {
+      return NextResponse.json(
+        { error: "Only models can set a price on media messages" },
         { status: 400 }
       );
     }
@@ -170,6 +179,7 @@ export async function POST(request: NextRequest) {
         p_media_url: mediaUrl || null,
         p_media_type: mediaType || null,
         p_coin_amount: coinsRequired,
+        p_media_price: mediaPrice || null,
       }
     );
 

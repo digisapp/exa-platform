@@ -200,6 +200,7 @@ export default async function ChatsLayout({ children }: LayoutProps) {
               conversations={conversations}
               actorType={actor.type}
               compact
+              currentActorId={actor.id}
             />
           </div>
         </div>

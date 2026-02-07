@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { MessageBubble } from "./MessageBubble";
 import { MessageInput } from "./MessageInput";
@@ -63,6 +63,7 @@ export function ChatView({
   hasMoreMessages = false,
 }: ChatViewProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [reactionsMap, setReactionsMap] = useState<Record<string, { emoji: string; actor_id: string }[]>>({});
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(hasMoreMessages);
@@ -147,6 +148,11 @@ export function ChatView({
         setMessages((prev) => [...data.messages, ...prev]);
         setHasMore(data.hasMore);
 
+        // Merge reactions from the response
+        if (data.reactions) {
+          setReactionsMap((prev) => ({ ...prev, ...data.reactions }));
+        }
+
         // Restore scroll position after messages are prepended
         requestAnimationFrame(() => {
           if (container) {
@@ -184,8 +190,8 @@ export function ChatView({
     setShowScrollButton(!nearBottom && messages.length > 5);
   }, [hasMore, loadingMore, loadMoreMessages, messages.length]);
 
-  // Get other participant's display info based on their type
-  const getOtherParticipantInfo = () => {
+  // Get other participant's display info based on their type (memoized)
+  const otherInfo = useMemo(() => {
     const { actor, model, fan, brand } = otherParticipant;
 
     if (actor.type === "model" && model) {
@@ -220,7 +226,7 @@ export function ChatView({
       };
     }
 
-    // Fallback - shouldn't happen but provides safety
+    // Fallback
     return {
       name: "User",
       avatar: null,
@@ -228,17 +234,18 @@ export function ChatView({
       type: actor.type as "fan" | "brand" | "model",
       lastActive: null,
     };
-  };
+  }, [otherParticipant]);
 
-  const otherInfo = getOtherParticipantInfo();
   const otherName = otherInfo.name;
   const otherAvatar = otherInfo.avatar;
-  const otherInitials = otherName
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2) || "U";
+  const otherInitials = useMemo(() =>
+    otherName
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) || "U"
+  , [otherName]);
 
   // Determine if messages cost coins
   // Models chat free with each other, fans/brands pay the model's rate (minimum 10)
@@ -277,7 +284,15 @@ export function ChatView({
           filter: `conversation_id=eq.${conversation.id}`,
         },
         (payload) => {
-          const newMessage = payload.new as Message & { is_system?: boolean };
+          let newMessage = payload.new as Message & { is_system?: boolean };
+          // Strip media_url from locked PPV messages to prevent URL inspection
+          if (
+            (newMessage.media_price ?? 0) > 0 &&
+            newMessage.sender_id !== currentActor.id &&
+            !(newMessage.media_viewed_by ?? []).includes(currentActor.id)
+          ) {
+            newMessage = { ...newMessage, media_url: null };
+          }
           // Only add if not already in the list (avoid duplicates from optimistic updates)
           setMessages((prev) => {
             if (prev.some((m) => m.id === newMessage.id)) {
@@ -356,10 +371,62 @@ export function ChatView({
     };
   }, [currentActor.id, conversation.id, otherName, otherAvatar, supabase]);
 
+  const handleUnlockMedia = async (messageId: string, _price: number) => {
+    try {
+      const response = await fetch("/api/messages/unlock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messageId }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 402) {
+          toast.error(
+            `Insufficient coins. Need ${data.required}, have ${data.balance}`
+          );
+        } else {
+          toast.error(data.error || "Failed to unlock");
+        }
+        throw new Error(data.error);
+      }
+
+      // Update message in local state: restore media_url and mark as unlocked
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === messageId
+            ? {
+                ...m,
+                media_url: data.mediaUrl || m.media_url,
+                media_viewed_by: [
+                  ...(m.media_viewed_by ?? []),
+                  currentActor.id,
+                ],
+              }
+            : m
+        )
+      );
+
+      // Update coin balance
+      if (data.amountPaid > 0) {
+        setLocalCoinBalance((prev) => Math.max(0, prev - data.amountPaid));
+        coinBalanceContext?.deductCoins(data.amountPaid);
+      }
+
+      if (!data.alreadyUnlocked) {
+        toast.success("Media unlocked!");
+      }
+    } catch {
+      // Error already shown via toast above
+    }
+  };
+
   const handleSendMessage = async (
     content: string,
     mediaUrl?: string,
-    mediaType?: string
+    mediaType?: string,
+    mediaPrice?: number,
   ) => {
     setLoading(true);
 
@@ -372,6 +439,7 @@ export function ChatView({
           content,
           mediaUrl,
           mediaType,
+          mediaPrice: mediaPrice || undefined,
         }),
       });
 
@@ -649,6 +717,24 @@ export function ChatView({
               (new Date(nextMessage.created_at).getTime() - new Date(message.created_at).getTime() > 5 * 60 * 1000));
             const showTimestamp = isLastMessage || isDifferentSender || hasTimeGap;
 
+            // Build reactions from batch-fetched data
+            const rawReactions = reactionsMap[message.id] || [];
+            const reactionsByEmoji: Record<string, { count: number; hasReacted: boolean }> = {};
+            for (const r of rawReactions) {
+              if (!reactionsByEmoji[r.emoji]) {
+                reactionsByEmoji[r.emoji] = { count: 0, hasReacted: false };
+              }
+              reactionsByEmoji[r.emoji].count++;
+              if (r.actor_id === currentActor.id) {
+                reactionsByEmoji[r.emoji].hasReacted = true;
+              }
+            }
+            const reactions = Object.entries(reactionsByEmoji).map(([emoji, info]) => ({
+              emoji,
+              count: info.count,
+              hasReacted: info.hasReacted,
+            }));
+
             return (
               <MessageBubble
                 key={message.id}
@@ -667,6 +753,8 @@ export function ChatView({
                 showAvatar={showAvatar}
                 showTimestamp={showTimestamp}
                 currentActorId={currentActor.id}
+                reactions={reactions}
+                onUnlock={handleUnlockMedia}
               />
             );
           })

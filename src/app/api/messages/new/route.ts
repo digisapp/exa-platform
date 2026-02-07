@@ -1,8 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { z } from "zod";
 
 const DEFAULT_MESSAGE_COST = 10; // Default coins if model hasn't set a rate
+
+const newConversationSchema = z.object({
+  recipientId: z.string().uuid("Invalid recipient ID"),
+  initialMessage: z.string().max(5000, "Message is too long").optional().nullable(),
+});
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,14 +27,16 @@ export async function POST(request: NextRequest) {
     if (rateLimitResult) return rateLimitResult;
 
     const body = await request.json();
-    const { recipientId, initialMessage } = body;
-
-    if (!recipientId) {
+    const validationResult = newConversationSchema.safeParse(body);
+    if (!validationResult.success) {
+      const firstError = validationResult.error.issues[0];
       return NextResponse.json(
-        { error: "Recipient ID required" },
+        { error: firstError.message },
         { status: 400 }
       );
     }
+
+    const { recipientId, initialMessage } = validationResult.data;
 
     // Get sender's actor info
     const { data: sender } = await supabase
@@ -172,92 +180,77 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // If initial message provided, send it
+    // If initial message provided, send it using atomic RPC
     if (initialMessage) {
-      // Determine coin cost
+      // Determine coin cost and recipient model ID
       let coinsRequired = 0;
-      if (sender.type !== "model" && recipient.type === "model") {
-        // Look up the model's actual message rate
-        const { data: recipientModel } = await supabase
-          .from("models")
-          .select("message_rate")
-          .eq("id", recipientId)
-          .single() as { data: { message_rate: number | null } | null };
+      let recipientModelId: string | null = null;
 
-        // Use model's rate or default, with minimum of DEFAULT_MESSAGE_COST
-        const modelRate = recipientModel?.message_rate ?? DEFAULT_MESSAGE_COST;
-        coinsRequired = Math.max(DEFAULT_MESSAGE_COST, modelRate);
+      if (sender.type !== "model" && recipient.type === "model") {
+        // Look up the model's actual ID and message rate using user_id
+        const { data: recipientActor } = await supabase
+          .from("actors")
+          .select("user_id")
+          .eq("id", recipientId)
+          .single() as { data: { user_id: string } | null };
+
+        if (recipientActor) {
+          const { data: recipientModel } = await supabase
+            .from("models")
+            .select("id, message_rate")
+            .eq("user_id", recipientActor.user_id)
+            .maybeSingle() as { data: { id: string; message_rate: number | null } | null };
+
+          if (recipientModel) {
+            recipientModelId = recipientModel.id;
+            const modelRate = recipientModel.message_rate ?? DEFAULT_MESSAGE_COST;
+            coinsRequired = Math.max(DEFAULT_MESSAGE_COST, modelRate);
+          }
+        }
       }
 
-      // Check balance if coins required
-      if (coinsRequired > 0) {
-        // Get balance based on actor type
-        let balance = 0;
-
-        if (sender.type === "fan") {
-          const { data: senderFan } = await supabase
-            .from("fans")
-            .select("coin_balance")
-            .eq("id", sender.id)
-            .single() as { data: { coin_balance: number } | null };
-          balance = senderFan?.coin_balance || 0;
-        } else {
-          const { data: senderModel } = await supabase
-            .from("models")
-            .select("coin_balance")
-            .eq("id", sender.id)
-            .single() as { data: { coin_balance: number } | null };
-          balance = senderModel?.coin_balance || 0;
+      // Use atomic RPC for message + coin transfer
+      const { data: result, error: rpcError } = await (supabase.rpc as any)(
+        "send_message_with_coins",
+        {
+          p_conversation_id: conversation.id,
+          p_sender_id: sender.id,
+          p_recipient_id: recipientModelId,
+          p_content: initialMessage,
+          p_media_url: null,
+          p_media_type: null,
+          p_coin_amount: coinsRequired,
         }
+      );
 
-        if (balance < coinsRequired) {
-          // Delete the conversation since we can't send the message
-          await supabase
-            .from("conversations")
-            .delete()
-            .eq("id", conversation.id);
+      if (rpcError) {
+        // Cleanup conversation on failure
+        await supabase.from("conversations").delete().eq("id", conversation.id);
+        return NextResponse.json(
+          { error: "Failed to send message" },
+          { status: 500 }
+        );
+      }
 
+      if (!result.success) {
+        // Cleanup conversation on failure
+        await supabase.from("conversations").delete().eq("id", conversation.id);
+
+        if (result.error === "Insufficient coins") {
           return NextResponse.json(
             {
               error: "Insufficient coins to send message",
-              required: coinsRequired,
-              balance: balance,
+              required: result.required,
+              balance: result.balance,
             },
             { status: 402 }
           );
         }
-
-        // Deduct coins (handles both fans and models)
-        await (supabase.rpc as any)("deduct_coins", {
-          p_actor_id: sender.id,
-          p_amount: coinsRequired,
-          p_action: "message_sent",
-          p_metadata: { conversation_id: conversation.id },
-        });
-
-        // Credit coins to the model
-        await (supabase.rpc as any)("add_coins", {
-          p_actor_id: recipientId,
-          p_amount: coinsRequired,
-          p_action: "message_received",
-          p_metadata: { conversation_id: conversation.id, from_actor_id: sender.id },
-        });
+        return NextResponse.json(
+          { error: result.error || "Failed to send message" },
+          { status: 500 }
+        );
       }
-
-      // Send the message
-      await (supabase.from("messages") as any).insert({
-        conversation_id: conversation.id,
-        sender_id: sender.id,
-        content: initialMessage,
-        is_system: false,
-      });
-
-      // Update sender's last_read_at
-      await (supabase
-        .from("conversation_participants") as any)
-        .update({ last_read_at: new Date().toISOString() })
-        .eq("conversation_id", conversation.id)
-        .eq("actor_id", sender.id);
     }
 
     return NextResponse.json({

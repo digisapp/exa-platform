@@ -1,7 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { z } from "zod";
 
 const PAGE_SIZE = 50;
+
+const listParamsSchema = z.object({
+  conversationId: z.string().uuid("Invalid conversation ID"),
+  before: z.string().uuid("Invalid message ID").optional(),
+});
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,16 +22,27 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { searchParams } = new URL(request.url);
-    const conversationId = searchParams.get("conversationId");
-    const before = searchParams.get("before"); // Message ID to fetch before
+    // Rate limit check
+    const rateLimitResponse = await checkEndpointRateLimit(request, "messages", user.id);
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
 
-    if (!conversationId) {
+    const { searchParams } = new URL(request.url);
+    const params = listParamsSchema.safeParse({
+      conversationId: searchParams.get("conversationId") || undefined,
+      before: searchParams.get("before") || undefined,
+    });
+
+    if (!params.success) {
+      const firstError = params.error.issues[0];
       return NextResponse.json(
-        { error: "Conversation ID required" },
+        { error: firstError.message },
         { status: 400 }
       );
     }
+
+    const { conversationId, before } = params.data;
 
     // Get sender's actor info
     const { data: sender } = await supabase
@@ -55,11 +73,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Build query
+    // Build query - filter out soft-deleted messages
     let query = supabase
       .from("messages")
       .select("*")
       .eq("conversation_id", conversationId)
+      .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .limit(PAGE_SIZE + 1); // Fetch one extra to check if there are more
 
@@ -91,8 +110,41 @@ export async function GET(request: NextRequest) {
     // Reverse to get chronological order (oldest first)
     const sortedMessages = (resultMessages || []).reverse();
 
+    // Strip media_url from locked PPV messages (prevent client-side URL inspection)
+    const sanitizedMessages = sortedMessages.map((msg: any) => {
+      if (
+        msg.media_price > 0 &&
+        msg.sender_id !== sender.id &&
+        !(msg.media_viewed_by ?? []).includes(sender.id)
+      ) {
+        return { ...msg, media_url: null };
+      }
+      return msg;
+    });
+
+    // Batch-fetch reactions for all messages
+    const messageIds = sanitizedMessages.map((m: any) => m.id);
+    const reactionsMap: Record<string, any[]> = {};
+
+    if (messageIds.length > 0) {
+      const { data: allReactions } = await (supabase
+        .from("message_reactions") as any)
+        .select("message_id, emoji, actor_id")
+        .in("message_id", messageIds);
+
+      if (allReactions) {
+        for (const reaction of allReactions) {
+          if (!reactionsMap[reaction.message_id]) {
+            reactionsMap[reaction.message_id] = [];
+          }
+          reactionsMap[reaction.message_id].push(reaction);
+        }
+      }
+    }
+
     return NextResponse.json({
-      messages: sortedMessages,
+      messages: sanitizedMessages,
+      reactions: reactionsMap,
       hasMore,
     });
   } catch (error) {
