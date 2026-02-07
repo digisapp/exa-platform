@@ -185,7 +185,7 @@ export async function POST(request: NextRequest) {
 
     // Create tip message in conversation
     if (finalConversationId) {
-      const tipMessage = `💝 ${senderName} sent a ${amount} coin tip!`;
+      const tipMessage = `💝 ${senderName.replace(/[<>]/g, "")} sent a ${amount} coin tip!`;
       const { error: msgError } = await adminClient
         .from("messages")
         .insert({

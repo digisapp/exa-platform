@@ -7,8 +7,8 @@ const brandProfileSchema = z.object({
   company_name: z.string().min(1, "Company name is required"),
   contact_name: z.string().nullish(),
   username: z.string().min(3).max(30).nullish(),
-  bio: z.string().nullish(),
-  website: z.string().nullish(),
+  bio: z.string().max(5000).nullish(),
+  website: z.string().url().nullish(),
   phone: z.string().nullish(),
 });
 

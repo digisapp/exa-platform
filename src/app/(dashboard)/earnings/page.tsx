@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { Coins, TrendingUp, MessageCircle, Heart, ArrowUpRight, Calendar, Sparkles } from "lucide-react";
+import { Coins, TrendingUp, MessageCircle, Heart, ArrowUpRight, Calendar, Sparkles, Video, Phone, ShoppingBag, Gavel } from "lucide-react";
 // Card components no longer used - replaced with custom styled divs
 import type { Actor, Model } from "@/types/database";
 
@@ -74,7 +74,23 @@ export default async function EarningsPage() {
     .filter(t => t.action === "message_received")
     .reduce((sum, t) => sum + t.amount, 0);
 
-  const totalEarnings = tipEarnings + messageEarnings;
+  const contentEarnings = allTransactions
+    .filter(t => t.action === "content_unlock_received")
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  const ppvEarnings = allTransactions
+    .filter(t => t.action === "ppv_sale")
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  const callEarnings = allTransactions
+    .filter(t => t.action === "video_call_received" || t.action === "voice_call_received")
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  const auctionEarnings = allTransactions
+    .filter(t => t.action === "auction_sale")
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  const totalEarnings = tipEarnings + messageEarnings + contentEarnings + ppvEarnings + callEarnings + auctionEarnings;
 
   // Get recent transactions for display from the limited query
   const recentTransactions = (transactions || []).slice(0, 20);
@@ -102,6 +118,16 @@ export default async function EarningsPage() {
         return "Tip";
       case "message_received":
         return "Message";
+      case "content_unlock_received":
+        return "Content Sale";
+      case "ppv_sale":
+        return "PPV Unlock";
+      case "video_call_received":
+        return "Video Call";
+      case "voice_call_received":
+        return "Voice Call";
+      case "auction_sale":
+        return "Auction Sale";
       default:
         return action;
     }
@@ -113,6 +139,16 @@ export default async function EarningsPage() {
         return <Heart className="h-4 w-4 text-pink-500" />;
       case "message_received":
         return <MessageCircle className="h-4 w-4 text-blue-500" />;
+      case "content_unlock_received":
+        return <ShoppingBag className="h-4 w-4 text-green-500" />;
+      case "ppv_sale":
+        return <Coins className="h-4 w-4 text-orange-500" />;
+      case "video_call_received":
+        return <Video className="h-4 w-4 text-purple-500" />;
+      case "voice_call_received":
+        return <Phone className="h-4 w-4 text-indigo-500" />;
+      case "auction_sale":
+        return <Gavel className="h-4 w-4 text-amber-500" />;
       default:
         return <Coins className="h-4 w-4 text-yellow-500" />;
     }
@@ -131,7 +167,7 @@ export default async function EarningsPage() {
             </div>
             <div>
               <h1 className="text-2xl md:text-3xl font-bold">Earnings</h1>
-              <p className="text-sm text-muted-foreground mt-0.5">Track your coin earnings from tips and messages</p>
+              <p className="text-sm text-muted-foreground mt-0.5">Track your coin earnings from tips, messages, content, calls, and auctions</p>
             </div>
           </div>
         </div>
@@ -235,6 +271,16 @@ export default async function EarningsPage() {
                         ? "bg-pink-500/10"
                         : transaction.action === "message_received"
                         ? "bg-blue-500/10"
+                        : transaction.action === "content_unlock_received"
+                        ? "bg-green-500/10"
+                        : transaction.action === "ppv_sale"
+                        ? "bg-orange-500/10"
+                        : transaction.action === "video_call_received"
+                        ? "bg-purple-500/10"
+                        : transaction.action === "voice_call_received"
+                        ? "bg-indigo-500/10"
+                        : transaction.action === "auction_sale"
+                        ? "bg-amber-500/10"
                         : "bg-muted"
                     }`}>
                       {getActionIcon(transaction.action)}

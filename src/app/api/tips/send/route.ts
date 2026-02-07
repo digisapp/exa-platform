@@ -189,7 +189,7 @@ export async function POST(request: NextRequest) {
           .insert({
             conversation_id: conversationId,
             sender_id: sender.id,
-            content: `💝 ${senderName} sent a ${amount} coin tip!`,
+            content: `💝 ${senderName.replace(/[<>]/g, "")} sent a ${amount} coin tip!`,
             is_system: true,
           });
 
