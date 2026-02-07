@@ -17,7 +17,7 @@ const createContentSchema = z.object({
 // Get premium content for a model
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase: any = await createClient();
     const { searchParams } = new URL(request.url);
     const modelId = searchParams.get("modelId");
 
@@ -131,7 +131,8 @@ export async function GET(request: NextRequest) {
 // Create new premium content (models only)
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    // as any needed: RPC functions not fully in generated types
+    const supabase: any = await createClient();
 
     const {
       data: { user },
@@ -218,7 +219,8 @@ export async function POST(request: NextRequest) {
 // Delete premium content (models only)
 export async function DELETE(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    // as any needed: RPC functions not fully in generated types
+    const supabase: any = await createClient();
 
     const {
       data: { user },

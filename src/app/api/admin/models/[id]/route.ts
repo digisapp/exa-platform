@@ -85,15 +85,16 @@ export async function PATCH(
 
     // Send approval email only (never send rejection emails)
     if (statusChanged && is_approved && model.email) {
-      const modelName = model.first_name
+      const email = model.email;
+      const modelName: string = model.first_name
         ? `${model.first_name}${model.last_name ? ' ' + model.last_name : ''}`
-        : model.username;
+        : model.username || "Model";
 
       try {
         await sendModelApprovalEmail({
-          to: model.email,
+          to: email,
           modelName,
-          username: model.username,
+          username: model.username || "",
         });
       } catch (emailError) {
         // Log email error but don't fail the request

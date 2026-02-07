@@ -60,8 +60,8 @@ export async function POST(
       .replace(/[^a-z0-9]/g, "")
       .slice(0, 20) + Math.random().toString(36).slice(2, 6);
 
-    const { error: modelError } = await supabase
-      .from("models")
+    const modelsTable = supabase.from("models") as any;
+    const { error: modelError } = await modelsTable
       .insert({
         user_id: fanUserId,
         email: fan.email,

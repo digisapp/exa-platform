@@ -227,7 +227,7 @@ export async function GET(request: NextRequest) {
 // POST - Create a new booking request
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase: any = await createClient();
 
     // Auth check
     const { data: { user } } = await supabase.auth.getUser();
@@ -330,8 +330,8 @@ export async function POST(request: NextRequest) {
     const rateField = SERVICE_RATE_FIELDS[serviceType];
     let quotedRate = 0;
 
-    if (rateField && model[rateField]) {
-      quotedRate = model[rateField];
+    if (rateField && (model as any)[rateField]) {
+      quotedRate = (model as any)[rateField];
     } else if (serviceType === "other") {
       // For "other" service type, use lowest hourly rate or 0
       quotedRate = Math.min(
@@ -372,7 +372,7 @@ export async function POST(request: NextRequest) {
       .in("status", ["pending", "counter", "accepted"]);
 
     const pendingTotal = (pendingBookings || []).reduce(
-      (sum: number, b: { total_amount: number }) => sum + (b.total_amount || 0),
+      (sum: number, b: any) => sum + (b.total_amount || 0),
       0
     );
 

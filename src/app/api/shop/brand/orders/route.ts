@@ -4,7 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 // GET - Get brand's orders
 export async function GET(request: Request) {
   try {
-    const supabase = await createClient();
+    // as any needed: shop tables not fully in generated types
+    const supabase: any = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -172,7 +173,8 @@ export async function GET(request: Request) {
 // PATCH - Update order item (add tracking, mark shipped)
 export async function PATCH(request: Request) {
   try {
-    const supabase = await createClient();
+    // as any needed: shop tables not fully in generated types
+    const supabase: any = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {

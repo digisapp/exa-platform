@@ -12,7 +12,8 @@ const newConversationSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    // as any needed: RPC functions and nullable fields not fully in generated types
+    const supabase: any = await createClient();
 
     // Auth check
     const {

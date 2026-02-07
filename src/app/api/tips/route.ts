@@ -17,7 +17,8 @@ const adminClient = createServiceRoleClient();
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    // as any needed: RPC functions and nullable fields not fully in generated types
+    const supabase: any = await createClient();
 
     // Auth check
     const {
@@ -147,7 +148,7 @@ export async function POST(request: NextRequest) {
         .eq("actor_id", sender.id);
 
       if (senderParticipations && senderParticipations.length > 0) {
-        const conversationIds = senderParticipations.map(p => p.conversation_id);
+        const conversationIds = senderParticipations.map((p: any) => p.conversation_id);
 
         // Check if recipient is in any of these conversations
         const { data: recipientParticipation } = await adminClient

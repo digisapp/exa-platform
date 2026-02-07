@@ -10,7 +10,7 @@ const endCallSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase: any = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -76,10 +76,13 @@ export async function POST(request: NextRequest) {
       .single() as { data: { user_id: string } | null };
 
     // Get call rates from recipient model
-    const { data: recipientModel } = await supabase.from("models")
-      .select("video_call_rate, voice_call_rate, user_id")
-      .eq("user_id", recipientActorData?.user_id)
-      .single();
+    const recipientUserId = recipientActorData?.user_id;
+    const { data: recipientModel } = recipientUserId
+      ? await supabase.from("models")
+          .select("video_call_rate, voice_call_rate, user_id")
+          .eq("user_id", recipientUserId)
+          .single()
+      : { data: null };
 
     // Use appropriate rate based on call type
     const callType = session.call_type || "video";
@@ -98,7 +101,8 @@ export async function POST(request: NextRequest) {
         .single() as { data: { type: string } | null };
 
       if (callerActor?.type === "fan" && recipientModel?.user_id) {
-        const { data: transferResult, error: transferError } = await supabase.rpc(
+        // as any needed: end_call_transfer not in generated types
+        const { data: transferResult, error: transferError } = await (supabase as any).rpc(
           "end_call_transfer",
           {
             p_session_id: sessionId,
@@ -112,8 +116,8 @@ export async function POST(request: NextRequest) {
 
         if (transferError) {
           console.error("Call coin transfer RPC failed:", transferError);
-        } else if (transferResult && !transferResult.success) {
-          console.error("Call coin transfer failed:", transferResult.error);
+        } else if (transferResult && !(transferResult as any).success) {
+          console.error("Call coin transfer failed:", (transferResult as any).error);
         }
       }
     }

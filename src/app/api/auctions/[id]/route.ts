@@ -25,7 +25,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const supabase = await createClient();
+    const supabase: any = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     // Get auction with model info
@@ -129,7 +129,7 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params;
-    const supabase = await createClient();
+    const supabase: any = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -237,7 +237,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const supabase = await createClient();
+    const supabase: any = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {

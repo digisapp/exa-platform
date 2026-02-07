@@ -5,7 +5,8 @@ import { checkEndpointRateLimit } from "@/lib/rate-limit";
 // POST - Block a user
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    // as any needed: RPC functions not fully in generated types
+    const supabase: any = await createClient();
 
     const {
       data: { user },
@@ -74,7 +75,8 @@ export async function POST(request: NextRequest) {
 // DELETE - Unblock a user
 export async function DELETE(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    // as any needed: RPC functions not fully in generated types
+    const supabase: any = await createClient();
 
     const {
       data: { user },
@@ -139,7 +141,8 @@ export async function DELETE(request: NextRequest) {
 // GET - Get list of blocked users
 export async function GET() {
   try {
-    const supabase = await createClient();
+    // as any needed: RPC functions not fully in generated types
+    const supabase: any = await createClient();
 
     const {
       data: { user },

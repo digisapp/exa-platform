@@ -10,7 +10,7 @@ export async function POST(
 ) {
   try {
     const { id: auctionId } = await params;
-    const supabase = await createClient();
+    const supabase: any = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -32,7 +32,8 @@ export async function POST(
     }
 
     // Call the RPC function to buy now
-    const { data: result, error } = await supabase.rpc("buy_now_auction", {
+    // as any needed: buy_now_auction not in generated types
+    const { data: result, error } = await (supabase as any).rpc("buy_now_auction", {
       p_auction_id: auctionId,
       p_buyer_id: actor.id,
     });
@@ -64,7 +65,8 @@ export async function POST(
     }
 
     // Get updated balance
-    const { data: balanceResult } = await supabase.rpc("get_actor_coin_balance", {
+    // as any needed: get_actor_coin_balance not in generated types
+    const { data: balanceResult } = await (supabase as any).rpc("get_actor_coin_balance", {
       p_actor_id: actor.id,
     });
 

@@ -5,7 +5,8 @@ import { checkEndpointRateLimit } from "@/lib/rate-limit";
 // GET - Fetch current cart
 export async function GET(request: Request) {
   try {
-    const supabase = await createClient();
+    // as any needed: shop tables and nullable fields not fully in generated types
+    const supabase: any = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     // Get session ID from cookie for guest carts
@@ -118,7 +119,8 @@ export async function GET(request: Request) {
 // POST - Add item to cart
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient();
+    // as any needed: shop tables and nullable fields not fully in generated types
+    const supabase: any = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     const rateLimitResponse = await checkEndpointRateLimit(request, "general", user?.id);
@@ -281,7 +283,8 @@ export async function POST(request: Request) {
 // PATCH - Update item quantity
 export async function PATCH(request: Request) {
   try {
-    const supabase = await createClient();
+    // as any needed: shop tables and nullable fields not fully in generated types
+    const supabase: any = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     const sessionId = request.headers.get("x-session-id");
@@ -355,7 +358,8 @@ export async function PATCH(request: Request) {
 // DELETE - Remove item from cart
 export async function DELETE(request: Request) {
   try {
-    const supabase = await createClient();
+    // as any needed: shop tables and nullable fields not fully in generated types
+    const supabase: any = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     const sessionId = request.headers.get("x-session-id");

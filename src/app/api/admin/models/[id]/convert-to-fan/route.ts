@@ -35,7 +35,7 @@ export async function POST(
       .eq("id", modelId)
       .single();
 
-    if (modelError || !model) {
+    if (modelError || !model || !model.user_id) {
       return NextResponse.json({ error: "Model not found" }, { status: 404 });
     }
 

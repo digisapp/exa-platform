@@ -9,7 +9,8 @@ export async function POST(request: NextRequest) {
     const rateLimitResponse = await checkEndpointRateLimit(request, "general");
     if (rateLimitResponse) return rateLimitResponse;
 
-    const supabase = await createClient();
+    // as any needed: game tables not fully in generated types
+    const supabase: any = await createClient();
     const { sessionId } = await request.json();
 
     if (!sessionId) {

@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
-const supabase = createServiceRoleClient();
+// as any needed: POS tables not fully in generated types
+const supabase: any = createServiceRoleClient();
 
 interface CheckoutItem {
   variant_id: string;

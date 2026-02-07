@@ -15,7 +15,7 @@ const startCallSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase: any = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     }
 
     let recipientActor: { id: string } | null = null;
-    let recipientModel: { id: string; username: string; first_name: string; user_id: string; video_call_rate: number; voice_call_rate: number; email?: string | null } | null = null;
+    let recipientModel: { id: string; username: string | null; first_name: string | null; user_id: string | null; video_call_rate: number | null; voice_call_rate: number | null; email?: string | null } | null = null;
     let conversationId: string | null = providedConversationId || null;
 
     // If conversationId provided, get recipient from conversation
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
           };
         }
       }
-    } else {
+    } else if (recipientUsername) {
       // Use recipientUsername to find recipient
       const { data: model } = await supabase
         .from("models")

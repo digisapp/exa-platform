@@ -13,7 +13,8 @@ const workshopCheckoutSchema = z.object({
 });
 
 // Admin client for bypassing RLS
-const adminClient = createServiceRoleClient();
+// as any needed: workshop tables not fully in generated types
+const adminClient: any = createServiceRoleClient();
 
 const MAX_QUANTITY_PER_ORDER = 5;
 

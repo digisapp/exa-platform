@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     const rateLimitResponse = await checkEndpointRateLimit(request, "general");
     if (rateLimitResponse) return rateLimitResponse;
 
-    const supabase = await createClient();
+    const supabase: any = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     const body = await request.json();
 

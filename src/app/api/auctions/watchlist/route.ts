@@ -11,7 +11,7 @@ const addWatchlistSchema = z.object({
 // GET - Get user's watchlist
 export async function GET() {
   try {
-    const supabase = await createClient();
+    const supabase: any = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -98,7 +98,7 @@ export async function GET() {
 // POST - Add to watchlist
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase: any = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -192,7 +192,7 @@ export async function POST(request: NextRequest) {
 // DELETE - Remove from watchlist
 export async function DELETE(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase: any = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {

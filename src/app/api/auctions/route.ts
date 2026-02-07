@@ -20,7 +20,7 @@ const createAuctionSchema = z.object({
 // GET - List auctions with filters
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase: any = await createClient();
     const { searchParams } = new URL(request.url);
 
     const status = searchParams.get("status") as AuctionFilters["status"] || "active";
@@ -131,7 +131,7 @@ export async function GET(request: NextRequest) {
 // POST - Create a new auction (models only)
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    const supabase: any = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {

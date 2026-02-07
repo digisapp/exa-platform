@@ -94,11 +94,11 @@ export async function GET(
     }
 
     // Get client info
-    const { data: clientActor } = await supabase
+    const { data: clientActor } = booking.client_id ? await supabase
       .from("actors")
       .select("id, type, user_id")
       .eq("id", booking.client_id)
-      .maybeSingle();
+      .maybeSingle() : { data: null };
 
     if (clientActor) {
       if (clientActor.type === "fan") {
@@ -117,7 +117,7 @@ export async function GET(
           .eq("id", clientActor.id)
           .maybeSingle();
         if (brand) {
-          bookingData.client = { ...brand, type: "brand" };
+          bookingData.client = { ...(brand as Record<string, any>), type: "brand" };
         }
       }
     }
@@ -141,7 +141,7 @@ export async function PATCH(
     const supabase = await createClient();
 
     // Use service role client to bypass RLS for all operations
-    const adminClient = createServiceRoleClient();
+    const adminClient: any = createServiceRoleClient();
 
     // Auth check
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -193,20 +193,22 @@ export async function PATCH(
     if (!booking) {
       return NextResponse.json({ error: "Booking not found" }, { status: 404 });
     }
+    const bookingClientId = booking.client_id ?? "";
     debugInfo.bookingStatus = booking.status;
 
-    // Get model info separately
+    // Get model info separately - cast to any for dynamic property assignment
+    const bookingRecord: any = { ...booking };
     if (booking.model_id) {
       const { data: model } = await adminClient
         .from("models")
         .select("id, user_id, username, first_name, last_name")
         .eq("id", booking.model_id)
         .maybeSingle();
-      booking.model = model;
+      bookingRecord.model = model;
     }
 
     // Check permissions
-    const isModel = booking.model?.user_id === user.id;
+    const isModel = bookingRecord.model?.user_id === user.id;
     const isClient = booking.client_id === actor.id;
     const isAdmin = actor.type === "admin";
 
@@ -231,12 +233,13 @@ export async function PATCH(
 
         // Check if client has enough coins and escrow them
         const escrowAmount = booking.total_amount || 0;
-        if (escrowAmount > 0) {
+        const clientId = booking.client_id;
+        if (escrowAmount > 0 && clientId) {
           // Get client's actor and balance
           const { data: clientActor } = await adminClient
             .from("actors")
             .select("id, type")
-            .eq("id", booking.client_id)
+            .eq("id", clientId)
             .maybeSingle();
 
           let clientBalance = 0;
@@ -272,7 +275,7 @@ export async function PATCH(
               actor_id: booking.client_id,
               type: "booking_declined",
               title: "Booking Declined - Insufficient Funds",
-              body: `Your booking with ${booking.model?.first_name || booking.model?.username} was declined because you don't have enough coins. You need ${escrowAmount.toLocaleString()} coins but only have ${clientBalance.toLocaleString()}.`,
+              body: `Your booking with ${bookingRecord.model?.first_name || bookingRecord.model?.username} was declined because you don't have enough coins. You need ${escrowAmount.toLocaleString()} coins but only have ${clientBalance.toLocaleString()}.`,
               data: { booking_id: id, booking_number: booking.booking_number },
             });
 
@@ -329,7 +332,7 @@ export async function PATCH(
           actor_id: booking.client_id,
           type: "booking_accepted",
           title: "Booking Accepted!",
-          body: `${booking.model?.first_name || booking.model?.username} accepted your booking request for ${new Date(booking.event_date).toLocaleDateString()}`,
+          body: `${bookingRecord.model?.first_name || bookingRecord.model?.username} accepted your booking request for ${new Date(booking.event_date).toLocaleDateString()}`,
           data: { booking_id: id, booking_number: booking.booking_number },
         };
         break;
@@ -350,7 +353,7 @@ export async function PATCH(
           actor_id: booking.client_id,
           type: "booking_declined",
           title: "Booking Declined",
-          body: `${booking.model?.first_name || booking.model?.username} declined your booking request`,
+          body: `${bookingRecord.model?.first_name || bookingRecord.model?.username} declined your booking request`,
           data: { booking_id: id, booking_number: booking.booking_number },
         };
         break;
@@ -376,7 +379,7 @@ export async function PATCH(
           actor_id: booking.client_id,
           type: "booking_counter",
           title: "Counter Offer Received",
-          body: `${booking.model?.first_name || booking.model?.username} sent a counter offer of ${counterAmount.toLocaleString()} coins`,
+          body: `${bookingRecord.model?.first_name || bookingRecord.model?.username} sent a counter offer of ${counterAmount.toLocaleString()} coins`,
           data: { booking_id: id, booking_number: booking.booking_number, counter_amount: counterAmount },
         };
         break;
@@ -459,11 +462,11 @@ export async function PATCH(
           total_amount: booking.counter_amount,
         };
         // Notify model
-        if (booking.model?.user_id) {
+        if (bookingRecord.model?.user_id) {
           const { data: modelActor } = await adminClient
             .from("actors")
             .select("id")
-            .eq("user_id", booking.model.user_id)
+            .eq("user_id", bookingRecord.model.user_id)
             .maybeSingle();
           if (modelActor) {
             notificationData = {
@@ -499,11 +502,11 @@ export async function PATCH(
         };
         // Notify the other party
         const notifyActorId = isModel ? booking.client_id : null;
-        if (isClient && booking.model?.user_id) {
+        if (isClient && bookingRecord.model?.user_id) {
           const { data: modelActor } = await adminClient
             .from("actors")
             .select("id")
-            .eq("user_id", booking.model.user_id)
+            .eq("user_id", bookingRecord.model.user_id)
             .maybeSingle();
           if (modelActor) {
             notificationData = {
@@ -519,7 +522,7 @@ export async function PATCH(
             actor_id: notifyActorId,
             type: "booking_cancelled",
             title: "Booking Cancelled",
-            body: `${booking.model?.first_name || booking.model?.username} cancelled the booking`,
+            body: `${bookingRecord.model?.first_name || bookingRecord.model?.username} cancelled the booking`,
             data: { booking_id: id, booking_number: booking.booking_number },
           };
         }
@@ -572,11 +575,11 @@ export async function PATCH(
       // ROLLBACK: If escrow was taken during accept/accept_counter, refund the client
       if (action === "accept") {
         const rollbackAmount = booking.total_amount || 0;
-        if (rollbackAmount > 0) {
+        if (rollbackAmount > 0 && bookingClientId) {
           const { data: rollbackClientActor } = await adminClient
             .from("actors")
             .select("id, type")
-            .eq("id", booking.client_id)
+            .eq("id", bookingClientId)
             .maybeSingle();
 
           if (rollbackClientActor) {
@@ -654,7 +657,7 @@ export async function PATCH(
         const { data: modelActor } = await adminClient
           .from("actors")
           .select("id")
-          .eq("user_id", booking.model?.user_id)
+          .eq("user_id", bookingRecord.model?.user_id)
           .maybeSingle();
 
         if (modelActor && !modelCreditError) {
@@ -677,11 +680,11 @@ export async function PATCH(
       } else if (action === "cancel" && wasEscrowed) {
         // Only refund if coins were already escrowed (booking was accepted/confirmed)
         try {
-          const { data: clientActor } = await adminClient
+          const { data: clientActor } = bookingClientId ? await adminClient
             .from("actors")
             .select("id, type")
-            .eq("id", booking.client_id)
-            .maybeSingle();
+            .eq("id", bookingClientId)
+            .maybeSingle() : { data: null };
 
           if (clientActor) {
             const refundTable = clientActor.type === "fan" ? "fans" : "brands";
@@ -740,11 +743,11 @@ export async function PATCH(
     if (action === "accept" || action === "decline") {
       try {
         // Get client info and email
-        const { data: clientActorInfo } = await adminClient
+        const { data: clientActorInfo } = bookingClientId ? await adminClient
           .from("actors")
           .select("id, type")
-          .eq("id", booking.client_id)
-          .maybeSingle();
+          .eq("id", bookingClientId)
+          .maybeSingle() : { data: null };
 
         let clientEmail: string | null = null;
         let clientName = "there";
@@ -768,8 +771,8 @@ export async function PATCH(
         }
 
         if (clientEmail) {
-          const modelName = booking.model?.first_name || booking.model?.username || "The model";
-          const modelUsername = booking.model?.username || "";
+          const modelName = bookingRecord.model?.first_name || bookingRecord.model?.username || "The model";
+          const modelUsername = bookingRecord.model?.username || "";
 
           if (action === "accept") {
             await sendBookingAcceptedEmail({

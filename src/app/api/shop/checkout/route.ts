@@ -6,7 +6,8 @@ import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 
 // Service role client for atomic stock operations
-const supabaseAdmin = createServiceRoleClient();
+// as any needed: shop tables and nullable fields not fully in generated types
+const supabaseAdmin: any = createServiceRoleClient();
 
 const shippingAddressSchema = z.object({
   line1: z.string().min(1).max(500),
@@ -46,7 +47,7 @@ interface CheckoutRequest {
 
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient();
+    const supabase: any = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     const rateLimitResponse = await checkEndpointRateLimit(request, "financial", user?.id);

@@ -11,7 +11,8 @@ export async function GET(
     const rateLimitResponse = await checkEndpointRateLimit(request, "general");
     if (rateLimitResponse) return rateLimitResponse;
 
-    const supabase = await createClient();
+    // as any needed: shop tables and nullable fields not fully in generated types
+    const supabase: any = await createClient();
     const { username } = await params;
 
     // Get model by username

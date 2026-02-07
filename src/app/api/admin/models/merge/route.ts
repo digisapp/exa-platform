@@ -42,14 +42,15 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch both models
-    const { data: keepModel } = await adminClient
-      .from("models")
+    // as any needed: complex join with * causes deep type instantiation error
+    const { data: keepModel } = await (adminClient
+      .from("models") as any)
       .select("*, actors:user_id(id, type)")
       .eq("username", keepUsername)
       .single();
 
-    const { data: deleteModel } = await adminClient
-      .from("models")
+    const { data: deleteModel } = await (adminClient
+      .from("models") as any)
       .select("*, actors:user_id(id, type)")
       .eq("username", deleteUsername)
       .single();

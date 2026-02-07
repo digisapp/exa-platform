@@ -11,7 +11,8 @@ const SUPER_MULTIPLIER = 10;
 // POST - Record a vote
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    // as any needed: RPC functions and game tables not fully in generated types
+    const supabase: any = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     const rateLimitResponse = await checkEndpointRateLimit(request, "financial", user?.id);

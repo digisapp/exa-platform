@@ -17,13 +17,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = await createClient();
+    // as any needed: nullable fields not fully handled in generated types
+    const supabase: any = await createClient();
 
     // Call the unsubscribe function
     const { data, error } = await supabase.rpc("unsubscribe_email", {
       p_token: token,
       p_unsubscribe_all: true,
-    });
+    }) as { data: any; error: any };
 
     if (error) {
       console.error("Unsubscribe error:", error);
