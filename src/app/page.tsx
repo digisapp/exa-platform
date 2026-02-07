@@ -12,9 +12,14 @@ import {
   Instagram,
   Flame,
   Trophy,
+  Gavel,
+  Coins,
+  Clock,
 } from "lucide-react";
 import { TopModelsCarousel } from "@/components/home/TopModelsCarousel";
 import { UpcomingEventsCarousel } from "@/components/home/UpcomingEventsCarousel";
+import { formatCoins } from "@/lib/coin-config";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 // Cache homepage for 5 minutes - model list changes infrequently
 export const revalidate = 300;
@@ -70,18 +75,6 @@ export default async function HomePage() {
   // Randomize the order
   const topModels = shuffleArray(topModelsData || []) as any[];
 
-  // Fetch new faces (models marked as new_face, signed-in models with self-uploaded photos)
-  const { data: newFaces } = await (supabase
-    .from("models") as any)
-    .select("id, username, first_name, profile_photo_url, state, profile_views")
-    .eq("is_approved", true)
-    .eq("new_face", true)
-    .not("profile_photo_url", "is", null)
-    .not("user_id", "is", null)
-    .ilike("profile_photo_url", "%/avatars/%")
-    .order("created_at", { ascending: false })
-    .limit(50);
-
   // Fetch upcoming events/gigs
   const { data: upcomingEvents, error: eventsError } = await (supabase
     .from("gigs") as any)
@@ -92,6 +85,24 @@ export default async function HomePage() {
     .limit(20);
 
   console.log("[Homepage] Events query - count:", upcomingEvents?.length ?? 0, "error:", eventsError?.message ?? "none");
+
+  // Fetch active auctions for EXA Bids preview
+  const { data: activeAuctions } = await (supabase as any)
+    .from("auctions")
+    .select(`
+      id, title, current_bid, starting_price, bid_count, ends_at, cover_image_url,
+      model:models!auctions_model_id_fkey (
+        first_name, profile_photo_url, username
+      )
+    `)
+    .eq("status", "active")
+    .order("ends_at", { ascending: true })
+    .limit(4);
+
+  // Get top boosted models for leaderboard preview (sorted by profile_views)
+  const leaderboardModels = [...(topModelsData || [])]
+    .sort((a: any, b: any) => (b.profile_views || 0) - (a.profile_views || 0))
+    .slice(0, 5);
 
   return (
     <div className="min-h-screen relative">
@@ -159,10 +170,14 @@ export default async function HomePage() {
                 </span>
 
                 <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-4">
-                  Join Experiences.
+                  Gigs. Bookings.
                   <br />
-                  <span className="exa-gradient-text">Get Discovered.</span>
+                  <span className="exa-gradient-text">Get Paid.</span>
                 </h2>
+
+                <p className="text-sm text-zinc-400 mb-4">
+                  Join experiences, get discovered, and start earning.
+                </p>
 
                 <ModelSignupDialog>
                   <Button size="lg" className="exa-gradient-button text-base px-8 h-12 rounded-full">
@@ -225,43 +240,141 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* EXA Boost Banner */}
+        {/* EXA Boost & EXA Bids Banners */}
         <section className="container px-8 md:px-16 py-8">
-          <Link href="/boost" className="block group">
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-orange-500 via-pink-500 to-purple-600 p-[2px]">
-              <div className="relative rounded-3xl bg-black/90 backdrop-blur-xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
-                {/* Left side - Icon and Text */}
-                <div className="flex items-center gap-4 md:gap-6">
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-pink-500 rounded-2xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity" />
-                    <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center">
-                      <Flame className="h-8 w-8 md:h-10 md:w-10 text-white" />
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* EXA Boost */}
+            <Link href="/boost" className="block group">
+              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-orange-500 via-pink-500 to-purple-600 p-[2px] h-full">
+                <div className="relative rounded-3xl bg-black/90 backdrop-blur-xl p-6 md:p-8 h-full">
+                  {/* Header */}
+                  <div className="flex items-center gap-4 mb-5">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-pink-500 rounded-2xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity" />
+                      <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center">
+                        <Flame className="h-7 w-7 text-white" />
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-xl md:text-2xl font-bold text-white">
+                        EXA Boost
+                      </h3>
+                      <p className="text-white/60 text-xs md:text-sm">
+                        Swipe, like & boost models to the top!
+                      </p>
                     </div>
                   </div>
-                  <div>
-                    <h3 className="text-2xl md:text-3xl font-bold text-white mb-1">
-                      EXA Boost
-                    </h3>
-                    <p className="text-white/70 text-sm md:text-base">
-                      Swipe, like & boost your favorite models to the top!
-                    </p>
-                  </div>
-                </div>
 
-                {/* Right side - CTA */}
-                <div className="flex items-center gap-4">
-                  <div className="hidden md:flex items-center gap-2 text-white/60">
-                    <Trophy className="h-5 w-5 text-yellow-400" />
-                    <span className="text-sm">Live Leaderboard</span>
-                  </div>
-                  <div className="px-6 py-3 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 text-white font-semibold group-hover:scale-105 transition-transform flex items-center gap-2">
-                    Play Now
-                    <ArrowRight className="h-4 w-4" />
+                  {/* Leaderboard Preview */}
+                  {leaderboardModels.length > 0 && (
+                    <div className="space-y-2 mb-5">
+                      {leaderboardModels.map((model: any, i: number) => (
+                        <div key={model.id} className="flex items-center gap-3 p-2 rounded-xl bg-white/5">
+                          <span className="w-5 text-center text-xs font-bold text-white/50">
+                            {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}`}
+                          </span>
+                          <Avatar className="h-8 w-8 border border-orange-500/30">
+                            <AvatarImage src={model.profile_photo_url} />
+                            <AvatarFallback className="bg-orange-500/20 text-orange-300 text-xs">
+                              {model.first_name?.[0] || "?"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm text-white font-medium truncate flex-1">
+                            {model.first_name || model.username}
+                          </span>
+                          <span className="text-xs text-white/40">
+                            {(model.profile_views || 0).toLocaleString()} views
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* CTA */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-white/50">
+                      <Trophy className="h-4 w-4 text-yellow-400" />
+                      <span className="text-xs">Live Leaderboard</span>
+                    </div>
+                    <div className="px-5 py-2.5 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 text-white text-sm font-semibold group-hover:scale-105 transition-transform flex items-center gap-2">
+                      Play Now
+                      <ArrowRight className="h-4 w-4" />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </Link>
+            </Link>
+
+            {/* EXA Bids */}
+            <Link href="/bids" className="block group">
+              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-pink-500 via-violet-500 to-indigo-600 p-[2px] h-full">
+                <div className="relative rounded-3xl bg-black/90 backdrop-blur-xl p-6 md:p-8 h-full">
+                  {/* Header */}
+                  <div className="flex items-center gap-4 mb-5">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-violet-500 rounded-2xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity" />
+                      <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center">
+                        <Gavel className="h-7 w-7 text-white" />
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-xl md:text-2xl font-bold text-white">
+                        EXA Bids
+                      </h3>
+                      <p className="text-white/60 text-xs md:text-sm">
+                        Bid on exclusive experiences!
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Active Auctions Preview */}
+                  {(activeAuctions?.length ?? 0) > 0 ? (
+                    <div className="space-y-2 mb-5">
+                      {(activeAuctions || []).map((auction: any) => (
+                        <div key={auction.id} className="flex items-center gap-3 p-2 rounded-xl bg-white/5">
+                          <Avatar className="h-8 w-8 border border-violet-500/30">
+                            <AvatarImage src={auction.model?.profile_photo_url} />
+                            <AvatarFallback className="bg-violet-500/20 text-violet-300 text-xs">
+                              {auction.model?.first_name?.[0] || "?"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-white font-medium truncate">{auction.title}</p>
+                            <p className="text-xs text-white/40">{auction.model?.first_name}</p>
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                            <div className="flex items-center gap-1 text-amber-400">
+                              <Coins className="h-3 w-3" />
+                              <span className="text-xs font-semibold">
+                                {formatCoins(auction.current_bid || auction.starting_price)}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-white/30">{auction.bid_count} bids</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center py-8 mb-5 rounded-xl bg-white/5">
+                      <p className="text-sm text-white/40">No active auctions right now</p>
+                    </div>
+                  )}
+
+                  {/* CTA */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-white/50">
+                      <Clock className="h-4 w-4 text-violet-400" />
+                      <span className="text-xs">Live Auctions</span>
+                    </div>
+                    <div className="px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 text-white text-sm font-semibold group-hover:scale-105 transition-transform flex items-center gap-2">
+                      Place Bids
+                      <ArrowRight className="h-4 w-4" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          </div>
         </section>
 
         {/* Upcoming Experiences Section */}
@@ -286,18 +399,6 @@ export default async function HomePage() {
           </div>
           <TopModelsCarousel models={topModels || []} showRank={false} showCategories={true} />
         </section>
-
-        {/* New Faces Section */}
-        {(newFaces?.length ?? 0) > 0 && (
-          <section className="py-12">
-            <div className="container px-8 md:px-16 mb-8">
-              <h2 className="text-3xl md:text-4xl font-bold exa-gradient-text">
-                New Faces
-              </h2>
-            </div>
-            <TopModelsCarousel models={newFaces || []} showRank={false} />
-          </section>
-        )}
 
         {/* Footer */}
         <footer className="py-12 border-t border-[#FF69B4]/20">
