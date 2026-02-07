@@ -38,6 +38,24 @@ const MODEL_APPROVED_PATHS = [
 ]
 
 export async function updateSession(request: NextRequest) {
+  // CSRF protection for mutation requests
+  if (["POST", "PATCH", "PUT", "DELETE"].includes(request.method)) {
+    const origin = request.headers.get("origin");
+    const host = request.headers.get("host");
+    // Allow requests with no origin (same-origin, non-browser clients)
+    // But if origin IS present, it must match our host
+    if (origin) {
+      const originHost = new URL(origin).host;
+      if (originHost !== host) {
+        // Allow Stripe and Payoneer webhook callbacks
+        if (!request.nextUrl.pathname.startsWith("/api/webhooks/") &&
+            !request.nextUrl.pathname.startsWith("/api/payoneer/webhook")) {
+          return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+        }
+      }
+    }
+  }
+
   // Create an unmodified response
   let response = NextResponse.next({
     request: {

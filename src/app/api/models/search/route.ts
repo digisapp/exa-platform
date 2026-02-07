@@ -19,8 +19,8 @@ export async function GET(request: NextRequest) {
 
   const url = new URL(request.url);
   const query = url.searchParams.get("q") || "";
-  const limit = Math.min(parseInt(url.searchParams.get("limit") || "20", 10), 100);
-  const offset = parseInt(url.searchParams.get("offset") || "0", 10);
+  const limit = Math.min(Math.max(parseInt(url.searchParams.get("limit") || "20", 10) || 20, 1), 100);
+  const offset = Math.max(parseInt(url.searchParams.get("offset") || "0", 10) || 0, 0);
   const cursor = url.searchParams.get("cursor"); // For cursor-based pagination
 
   let dbQuery = supabase

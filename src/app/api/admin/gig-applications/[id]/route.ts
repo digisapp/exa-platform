@@ -101,8 +101,6 @@ export async function PATCH(
           if (badgeError) {
             console.error("Badge award error:", badgeError);
             // Non-fatal - application was already updated
-          } else {
-            console.log(`Awarded event badge ${badge.id} to model ${application.model_id}`);
           }
         }
       }
@@ -145,8 +143,6 @@ export async function PATCH(
 
             if (badgeError) {
               console.error("Badge removal error:", badgeError);
-            } else {
-              console.log(`Removed event badge ${badge.id} from model ${application.model_id}`);
             }
           }
         }

@@ -123,8 +123,6 @@ export async function GET(request: NextRequest) {
       const allModelIds = allModels.map((m: any) => m.id);
       const allUserIds = allModels.map((m: any) => m.user_id).filter(Boolean);
 
-      console.log(`[Admin Models] Sorting by ${sortField}, processing ${allModels.length} models (capped at ${MAX_COMPUTED_SORT_MODELS})`);
-
       // Get actors for user_ids (small dataset, single query is fine)
       const { data: allActors } = allUserIds.length > 0
         ? await adminClient.from("actors").select("id, user_id").in("user_id", allUserIds)

@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
 
     console.log(`Gig announcement emails: ${emailsSent} sent, ${emailsSkipped} skipped, ${emailsFailed} failed`);
     if (failedEmails.length > 0) {
-      console.log(`Failed emails: ${failedEmails.slice(0, 10).join(', ')}${failedEmails.length > 10 ? '...' : ''}`);
+      console.warn(`Gig announcement: ${failedEmails.length} emails failed to send`);
     }
 
     return NextResponse.json({

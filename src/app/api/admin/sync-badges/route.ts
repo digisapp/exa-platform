@@ -102,8 +102,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Failed to award badges" }, { status: 500 });
     }
 
-    console.log(`Synced ${missingBadges.length} badges for gig ${gig.title}`);
-
     return NextResponse.json({
       awarded: missingBadges.length,
       total: modelIds.length,

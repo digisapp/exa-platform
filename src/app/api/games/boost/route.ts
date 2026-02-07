@@ -1,5 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import crypto from "crypto";
+
+/**
+ * Fisher-Yates shuffle using crypto.randomInt for unbiased randomness.
+ * Returns the first `count` elements from a securely shuffled copy of the array.
+ */
+function secureShufflePop<T>(arr: T[], count: number): T[] {
+  const shuffled = [...arr];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = crypto.randomInt(0, i + 1);
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled.slice(0, count);
+}
 
 // GET - Fetch models for the swipe game
 export async function GET(request: NextRequest) {
@@ -139,8 +153,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Shuffle the models for randomness
-    const shuffledModels = modelsWithPoints.sort(() => Math.random() - 0.5);
+    // Shuffle the models using cryptographically secure randomness
+    const shuffledModels = secureShufflePop(modelsWithPoints, modelsWithPoints.length);
 
     return NextResponse.json({
       models: shuffledModels,

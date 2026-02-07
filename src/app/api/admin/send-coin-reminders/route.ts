@@ -93,7 +93,6 @@ export async function POST() {
 
         if (result.success) {
           sentCount++;
-          console.log(`Sent coin reminder to ${model.username} (${coinBalance} coins)`);
         } else {
           errors.push(`${model.username}: ${result.error}`);
         }

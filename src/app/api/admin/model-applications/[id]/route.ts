@@ -111,8 +111,6 @@ export async function PATCH(
 
       if (existingModel && !existingModelByUser) {
         // Found existing model by Instagram/email - link user_id to it
-        console.log(`Linking user ${application.user_id} to existing model ${existingModel.id} (${existingModel.username})`);
-
         const { error: linkError } = await (adminClient.from("models") as any)
           .update({
             user_id: application.user_id,

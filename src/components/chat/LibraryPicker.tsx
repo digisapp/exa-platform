@@ -162,7 +162,7 @@ export function LibraryPicker({
             ) : (
               <Image
                 src={item.thumbnail || item.url}
-                alt=""
+                alt="Photo thumbnail"
                 fill
                 className="object-cover"
                 unoptimized

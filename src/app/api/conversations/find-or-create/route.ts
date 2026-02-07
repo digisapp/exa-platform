@@ -15,8 +15,6 @@ export async function POST(request: NextRequest) {
       data: { user },
     } = await supabase.auth.getUser();
 
-    console.log("[API find-or-create] Auth check - user:", user?.id ?? "null");
-
     if (!user) {
       console.error("[API find-or-create] No user found - cookie forwarding may have failed");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -47,8 +45,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log("[API find-or-create] Current actor:", actor.id, "type:", actor.type);
-
     // Look up model by username (case-insensitive)
     const { data: targetModel, error: modelError } = await supabase
       .from("models")
@@ -71,8 +67,6 @@ export async function POST(request: NextRequest) {
         { status: 404 }
       );
     }
-
-    console.log("[API find-or-create] Found model:", targetModel.username, "user_id:", targetModel.user_id);
 
     if (!targetModel.user_id) {
       console.error("[API find-or-create] Model has no user_id:", targetModel.username);

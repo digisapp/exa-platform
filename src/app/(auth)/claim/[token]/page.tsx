@@ -128,6 +128,8 @@ export default function ClaimPage() {
       return;
     }
 
+    let cancelled = false;
+
     const timer = setTimeout(async () => {
       setCheckingUsername(true);
       setUsernameError(null);
@@ -139,6 +141,8 @@ export default function ClaimPage() {
         .neq("id", model?.id)
         .single();
 
+      if (cancelled) return;
+
       setCheckingUsername(false);
       setUsernameAvailable(!data);
       if (data) {
@@ -146,7 +150,10 @@ export default function ClaimPage() {
       }
     }, 500);
 
-    return () => clearTimeout(timer);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [username, model, supabase]);
 
   async function handleSubmit(e: React.FormEvent) {

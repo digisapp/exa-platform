@@ -371,7 +371,7 @@ export function ProfileContentTabs({
                     >
                       <ImageWithFallback
                         src={photo.photo_url || photo.url}
-                        alt={photo.title || ""}
+                        alt={photo.title || "Portfolio photo"}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                       />
                       {/* Gradient overlay on hover */}
@@ -507,7 +507,7 @@ export function ProfileContentTabs({
               <div className="absolute inset-0 overflow-hidden">
                 <Image
                   src={selectedItem.photo_url || selectedItem.url || ""}
-                  alt=""
+                  alt="Blurred background"
                   fill
                   className="object-cover scale-110 blur-3xl opacity-40"
                   unoptimized
@@ -594,7 +594,7 @@ export function ProfileContentTabs({
               {selectedType === "photo" ? (
                 <Image
                   src={selectedItem.photo_url || selectedItem.url || ""}
-                  alt={selectedItem.title || ""}
+                  alt={selectedItem.title || "Full size photo"}
                   width={1200}
                   height={900}
                   className={cn(

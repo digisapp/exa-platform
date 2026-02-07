@@ -603,26 +603,22 @@ export default function AdminCommunityPage() {
   useEffect(() => {
     void loadStats();
     void loadInviteStats();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loadStats, loadInviteStats]);
 
   useEffect(() => {
     if (activeTab === "models") {
       void loadRecentModels();
       void loadModelApps(); // Also load model apps for the alert
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
+  }, [activeTab, loadRecentModels, loadModelApps]);
 
   useEffect(() => {
     if (activeTab === "fans") void loadFans();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, fansSearch, fansStateFilter, fansStatusFilter, fansReportsFilter, fansSortField, fansSortDirection, fansPage]);
+  }, [activeTab, fansSearch, fansStateFilter, fansStatusFilter, fansReportsFilter, fansSortField, fansSortDirection, fansPage, loadFans]);
 
   useEffect(() => {
     if (activeTab === "brands") void loadBrands();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, brandsFilter]);
+  }, [activeTab, brandsFilter, loadBrands]);
 
   const handleRatingChange = (modelId: string, rating: number | null) => {
     setRecentModels(prev => prev.map(m => m.id === modelId ? { ...m, admin_rating: rating } : m));

@@ -439,7 +439,6 @@ async function handleTripPayment(session: Stripe.Checkout.Session) {
       .eq("id", gigId);
   }
 
-  console.log("Trip payment successful:", { gigId, modelId, tripNumber });
 }
 
 async function handleCreatorHousePayment(session: Stripe.Checkout.Session) {
@@ -471,7 +470,6 @@ async function handleCreatorHousePayment(session: Stripe.Checkout.Session) {
     return;
   }
 
-  console.log("Creator House payment successful:", { applicationId, gigId, modelId, amount: session.amount_total });
 }
 
 async function handleTicketPurchase(session: Stripe.Checkout.Session) {
@@ -546,7 +544,6 @@ async function handleTicketPurchase(session: Stripe.Checkout.Session) {
     );
   }
 
-  console.log("Ticket purchase successful:", { eventId, tierId, quantity, buyerEmail });
 }
 
 async function processAffiliateCommission(
@@ -626,12 +623,6 @@ async function processAffiliateCommission(
     .update({ affiliate_commission_id: commission?.id })
     .eq("id", purchaseId);
 
-  console.log("Affiliate commission processed:", {
-    modelId,
-    coinsToCredit,
-    commissionCents,
-    saleCents,
-  });
 }
 
 async function handleWorkshopRegistration(session: Stripe.Checkout.Session) {
@@ -685,12 +676,10 @@ async function handleWorkshopRegistration(session: Stripe.Checkout.Session) {
     }
   }
 
-  console.log("Workshop registration successful:", { workshopId, quantity, buyerEmail });
 }
 
 async function handleShopOrderPayment(session: Stripe.Checkout.Session) {
   const orderId = session.metadata?.order_id;
-  const orderNumber = session.metadata?.order_number;
   const affiliateModelId = session.metadata?.affiliate_model_id;
   const affiliateCode = session.metadata?.affiliate_code;
 
@@ -825,7 +814,6 @@ async function handleShopOrderPayment(session: Stripe.Checkout.Session) {
       .eq("user_id", userId);
   }
 
-  console.log("Shop order payment successful:", { orderId, orderNumber, total: order?.total });
 }
 
 async function handleContentProgramPayment(session: Stripe.Checkout.Session) {
@@ -882,7 +870,6 @@ async function handleContentProgramPayment(session: Stripe.Checkout.Session) {
     }
   }
 
-  console.log("Content program payment successful:", { brandName, email, amount: session.amount_total });
 }
 
 async function handleContentProgramSubscription(session: Stripe.Checkout.Session) {
@@ -944,6 +931,5 @@ async function handleContentProgramSubscription(session: Stripe.Checkout.Session
     }
   }
 
-  console.log("Content program subscription started:", { brandName, email, subscriptionId });
 }
 

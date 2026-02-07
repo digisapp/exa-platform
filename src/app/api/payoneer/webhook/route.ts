@@ -180,8 +180,6 @@ async function handlePayeeStatusChanged(event: PayoneerWebhookPayload) {
 
   if (error) {
     console.error("Error updating payee status:", error);
-  } else {
-    console.log(`Payee ${payee_id} status updated to ${newStatus}`);
   }
 }
 
@@ -218,10 +216,6 @@ async function handlePayoutCompleted(event: PayoneerWebhookPayload) {
 
     if (withdrawalError) {
       console.error("Error completing withdrawal:", withdrawalError);
-    } else {
-      console.log(
-        `Withdrawal ${payoneerPayout.withdrawal_request_id} completed via Payoneer`
-      );
     }
   }
 }
@@ -273,9 +267,6 @@ async function handlePayoutFailed(event: PayoneerWebhookPayload) {
       })
       .eq("id", payoneerPayout.withdrawal_request_id);
 
-    console.log(
-      `Withdrawal ${payoneerPayout.withdrawal_request_id} failed: ${failureReason}`
-    );
   }
 }
 
@@ -313,8 +304,5 @@ async function handlePayoutCancelled(event: PayoneerWebhookPayload) {
       console.error("Error cancelling withdrawal:", cancelError);
     }
 
-    console.log(
-      `Withdrawal ${payoneerPayout.withdrawal_request_id} cancelled via Payoneer`
-    );
   }
 }

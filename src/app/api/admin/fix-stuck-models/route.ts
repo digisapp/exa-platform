@@ -63,13 +63,6 @@ export async function POST() {
       return NextResponse.json({ error: "Failed to update models" }, { status: 500 });
     }
 
-    // Log which models were fixed
-    console.log(`Fixed ${stuckModels.length} stuck models:`, stuckModels.map(m => ({
-      id: m.id,
-      username: m.username,
-      email: m.email,
-    })));
-
     return NextResponse.json({
       success: true,
       message: `Fixed ${stuckModels.length} stuck model(s)`,

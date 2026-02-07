@@ -101,7 +101,7 @@ export async function sendModelApprovalEmail({
   try {
     // Check if unsubscribed
     if (await isEmailUnsubscribed(to, "notification")) {
-      console.log(`Email ${to} is unsubscribed, skipping`);
+      // Email is unsubscribed, skipping
       return { success: true, skipped: true };
     }
 
@@ -3048,7 +3048,7 @@ export async function sendMiamiSwimWeekProfileReminderEmail({
   try {
     // Check if unsubscribed
     if (await isEmailUnsubscribed(to, "marketing")) {
-      console.log(`Email ${to} is unsubscribed, skipping`);
+      // Email is unsubscribed, skipping
       return { success: true, skipped: true };
     }
 
@@ -3188,7 +3188,7 @@ export async function sendNewGigAnnouncementEmail({
   try {
     // Check if unsubscribed
     if (await isEmailUnsubscribed(to, "marketing")) {
-      console.log(`Email ${to} is unsubscribed, skipping`);
+      // Email is unsubscribed, skipping
       return { success: true, skipped: true };
     }
 
@@ -3334,7 +3334,7 @@ export async function sendContentProgramOutreachEmail({
 }) {
   try {
     if (await isEmailUnsubscribed(to, "marketing")) {
-      console.log(`Email ${to} is unsubscribed, skipping`);
+      // Email is unsubscribed, skipping
       return { success: true, skipped: true };
     }
 
