@@ -61,8 +61,8 @@ export function FanSignupDialog({ children }: FanSignupDialogProps) {
       return;
     }
 
-    if (password.length < 6) {
-      toast.error("Password must be at least 6 characters");
+    if (password.length < 8) {
+      toast.error("Password must be at least 8 characters");
       return;
     }
 
@@ -227,7 +227,7 @@ export function FanSignupDialog({ children }: FanSignupDialogProps) {
                   </button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Must be at least 6 characters
+                  Must be at least 8 characters
                 </p>
               </div>
 

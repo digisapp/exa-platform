@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 
 const brandProfileSchema = z.object({
@@ -15,12 +16,18 @@ const brandProfileSchema = z.object({
 const adminClient = createServiceRoleClient();
 
 // PUT /api/brands/profile - Update brand profile
-export async function PUT(request: Request) {
+export async function PUT(request: NextRequest) {
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Rate limit check
+  const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+  if (rateLimitResponse) {
+    return rateLimitResponse;
   }
 
   // Get actor and verify it's a brand

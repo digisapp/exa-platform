@@ -59,8 +59,8 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
       return;
     }
 
-    if (password.length < 6) {
-      toast.error("Password must be at least 6 characters");
+    if (password.length < 8) {
+      toast.error("Password must be at least 8 characters");
       return;
     }
 
@@ -282,7 +282,7 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
                   </button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Must be at least 6 characters
+                  Must be at least 8 characters
                 </p>
               </div>
 

@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendBookingAcceptedEmail, sendBookingDeclinedEmail } from "@/lib/email";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 // Service type labels
 const SERVICE_LABELS: Record<string, string> = {
@@ -29,6 +30,12 @@ export async function GET(
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Rate limit check
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) {
+      return rateLimitResponse;
     }
 
     // Get actor for authorization check
@@ -143,6 +150,12 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     debugInfo.userId = user.id;
+
+    // Rate limit check
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
 
     // Get actor
     const { data: actor, error: actorError } = await adminClient
@@ -812,6 +825,12 @@ export async function DELETE(
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Rate limit check
+    const deleteRateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (deleteRateLimitResponse) {
+      return deleteRateLimitResponse;
     }
 
     // Get actor

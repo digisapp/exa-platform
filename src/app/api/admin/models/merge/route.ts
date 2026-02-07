@@ -2,6 +2,12 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { logAdminAction, AdminActions } from "@/lib/admin-audit";
+import { z } from "zod";
+
+const mergeSchema = z.object({
+  keepUsername: z.string().min(1).max(100),
+  deleteUsername: z.string().min(1).max(100),
+}).strict();
 
 const adminClient = createServiceRoleClient();
 
@@ -134,14 +140,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { keepUsername, deleteUsername } = await request.json();
-
-    if (!keepUsername || !deleteUsername) {
+    const body = await request.json();
+    const parsed = mergeSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Both keepUsername and deleteUsername required" },
+        { error: "Invalid input", details: parsed.error.flatten() },
         { status: 400 }
       );
     }
+    const { keepUsername, deleteUsername } = parsed.data;
 
     // Fetch both models
     const { data: keepModel } = await adminClient

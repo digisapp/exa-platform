@@ -1,11 +1,18 @@
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 // Use admin client to check models table
 const adminClient = createServiceRoleClient();
 
 export async function GET(request: NextRequest) {
   try {
+    // IP-based rate limit for unauthenticated endpoint
+    const rateLimitResponse = await checkEndpointRateLimit(request, "auth");
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+
     const { searchParams } = new URL(request.url);
     const email = searchParams.get("email");
 

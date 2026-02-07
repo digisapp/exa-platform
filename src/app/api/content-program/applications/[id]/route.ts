@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { sendContentProgramApprovedEmail } from "@/lib/email";
 
 export async function PATCH(
   request: NextRequest,
@@ -14,6 +16,12 @@ export async function PATCH(
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Rate limit check
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) {
+      return rateLimitResponse;
     }
 
     // Admin check
@@ -130,12 +138,16 @@ export async function PATCH(
         }
       }
 
-      // TODO: Send approval email
-      // await sendContentProgramApprovedEmail({
-      //   to: application.email,
-      //   brandName: application.brand_name,
-      //   contactName: application.contact_name,
-      // });
+      // Send approval email (don't fail the request if email fails)
+      try {
+        await sendContentProgramApprovedEmail({
+          to: application.email,
+          brandName: application.brand_name,
+          contactName: application.contact_name,
+        });
+      } catch (emailError) {
+        console.error("Failed to send content program approval email:", emailError);
+      }
     }
 
     return NextResponse.json({ success: true, application });
@@ -160,6 +172,12 @@ export async function DELETE(
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Rate limit check
+    const deleteRateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (deleteRateLimitResponse) {
+      return deleteRateLimitResponse;
     }
 
     // Admin check

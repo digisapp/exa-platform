@@ -12,6 +12,21 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { toast } from "sonner";
 import { Loader2, ArrowLeft, Eye, EyeOff, Mail, Sparkles } from "lucide-react";
 
+function isSafeRedirect(url: string): boolean {
+  if (!url.startsWith("/")) return false;
+  if (url.startsWith("//")) return false;
+  if (url.startsWith("/\\")) return false;
+  if (url.includes("://")) return false;
+  if (url.toLowerCase().includes("%2f%2f")) return false;
+  try {
+    const parsed = new URL(url, "http://localhost");
+    if (parsed.host !== "localhost") return false;
+  } catch {
+    return false;
+  }
+  return true;
+}
+
 function LoginForm() {
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect");
@@ -45,7 +60,7 @@ function LoginForm() {
         // If there's a redirect parameter, use it (for returning users)
         if (redirectTo && actor) {
           // Validate redirect is a safe internal path
-          if (redirectTo.startsWith("/") && !redirectTo.startsWith("//")) {
+          if (isSafeRedirect(redirectTo)) {
             window.location.href = redirectTo;
             return;
           }

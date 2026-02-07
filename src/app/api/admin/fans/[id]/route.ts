@@ -2,6 +2,9 @@ import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { logAdminAction, AdminActions } from "@/lib/admin-audit";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { z } from "zod";
+
+const fanPatchSchema = z.object({ is_suspended: z.boolean() }).strict();
 
 async function isAdmin(supabase: any, userId: string) {
   const { data: actor } = await supabase
@@ -34,7 +37,14 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { is_suspended } = body;
+    const parsed = fanPatchSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
+    const { is_suspended } = parsed.data;
 
     const { error } = await (supabase
       .from("fans") as any)

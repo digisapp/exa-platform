@@ -55,9 +55,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get withdrawal request with Payoneer account
-    const { data: withdrawal, error: fetchError } = await adminClient
+    // Atomically claim the withdrawal by setting status to "processing"
+    // Only succeeds if the withdrawal is still in "pending" status,
+    // preventing race conditions where two admins process the same payout
+    const { data: withdrawal, error: claimError } = await adminClient
       .from("withdrawal_requests")
+      .update({
+        status: "processing",
+        processed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", withdrawal_request_id)
+      .eq("status", "pending")
       .select(
         `
         id,
@@ -75,26 +84,40 @@ export async function POST(request: NextRequest) {
         )
       `
       )
-      .eq("id", withdrawal_request_id)
       .single();
 
-    if (fetchError || !withdrawal) {
-      return NextResponse.json(
-        { error: "Withdrawal request not found" },
-        { status: 404 }
-      );
-    }
+    if (claimError || !withdrawal) {
+      // Check if the withdrawal exists at all to give a better error message
+      const { data: existing } = await adminClient
+        .from("withdrawal_requests")
+        .select("id, status")
+        .eq("id", withdrawal_request_id)
+        .single();
 
-    // Validate status
-    if (withdrawal.status !== "pending" && withdrawal.status !== "processing") {
+      if (!existing) {
+        return NextResponse.json(
+          { error: "Withdrawal request not found" },
+          { status: 404 }
+        );
+      }
+
       return NextResponse.json(
-        { error: `Cannot process withdrawal with status: ${withdrawal.status}` },
-        { status: 400 }
+        { error: `Cannot process withdrawal: current status is '${existing.status}'. It may already be processing or completed.` },
+        { status: 409 }
       );
     }
 
     // Validate payout method
     if (withdrawal.payout_method !== "payoneer") {
+      // Revert status since this isn't a Payoneer withdrawal
+      await adminClient
+        .from("withdrawal_requests")
+        .update({
+          status: "pending",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", withdrawal_request_id);
+
       return NextResponse.json(
         { error: "This withdrawal is not set for Payoneer payout" },
         { status: 400 }
@@ -104,6 +127,15 @@ export async function POST(request: NextRequest) {
     // Get Payoneer account
     const payoneerAccount = (withdrawal as any).payoneer_accounts;
     if (!payoneerAccount) {
+      // Revert status since we can't process without a Payoneer account
+      await adminClient
+        .from("withdrawal_requests")
+        .update({
+          status: "pending",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", withdrawal_request_id);
+
       return NextResponse.json(
         { error: "No Payoneer account linked to this withdrawal" },
         { status: 400 }
@@ -111,21 +143,20 @@ export async function POST(request: NextRequest) {
     }
 
     if (payoneerAccount.status !== "active" || !payoneerAccount.can_receive_payments) {
+      // Revert status since the Payoneer account can't receive payments
+      await adminClient
+        .from("withdrawal_requests")
+        .update({
+          status: "pending",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", withdrawal_request_id);
+
       return NextResponse.json(
         { error: "Payoneer account is not active or cannot receive payments" },
         { status: 400 }
       );
     }
-
-    // Update withdrawal to processing
-    await adminClient
-      .from("withdrawal_requests")
-      .update({
-        status: "processing",
-        processed_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", withdrawal_request_id);
 
     // Create payout via Payoneer
     const payoneer = getPayoneerClient();

@@ -3,6 +3,9 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { logAdminAction, AdminActions } from "@/lib/admin-audit";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { z } from "zod";
+
+const brandPatchSchema = z.object({ is_verified: z.boolean() }).strict();
 
 async function isAdmin(supabase: any, userId: string) {
   const { data: actor } = await supabase
@@ -34,7 +37,14 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { is_verified } = body;
+    const parsed = brandPatchSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
+    const { is_verified } = parsed.data;
 
     // Use service role client to bypass RLS for brand updates
     const adminClient = createServiceRoleClient();

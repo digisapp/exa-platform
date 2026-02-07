@@ -104,11 +104,11 @@ export async function updateSession(request: NextRequest) {
         if (request.nextUrl.pathname.startsWith('/admin')) {
           const { data: actor } = await supabase
             .from('actors')
-            .select('type')
+            .select('type, user_id')
             .eq('user_id', recoveredUser.id)
             .single()
 
-          if (actor?.type !== 'admin') {
+          if (actor?.type !== 'admin' || actor?.user_id !== recoveredUser.id) {
             return NextResponse.redirect(new URL('/dashboard', request.url))
           }
         }
@@ -135,11 +135,11 @@ export async function updateSession(request: NextRequest) {
   if (user && request.nextUrl.pathname.startsWith('/admin')) {
     const { data: actor } = await supabase
       .from('actors')
-      .select('type')
+      .select('type, user_id')
       .eq('user_id', user.id)
       .single()
 
-    if (actor?.type !== 'admin') {
+    if (actor?.type !== 'admin' || actor?.user_id !== user.id) {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
   }

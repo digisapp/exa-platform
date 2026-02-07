@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 
 const campaignUpdateSchema = z.object({
@@ -11,7 +12,7 @@ const campaignUpdateSchema = z.object({
 
 // GET /api/campaigns/[id] - Get single campaign with models
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
@@ -20,6 +21,12 @@ export async function GET(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Rate limit check
+  const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+  if (rateLimitResponse) {
+    return rateLimitResponse;
   }
 
   // Get actor and verify it's a brand
@@ -82,7 +89,7 @@ export async function GET(
 
 // PUT /api/campaigns/[id] - Update campaign
 export async function PUT(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
@@ -91,6 +98,12 @@ export async function PUT(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Rate limit check
+  const putRateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+  if (putRateLimitResponse) {
+    return putRateLimitResponse;
   }
 
   // Get actor and verify it's a brand
@@ -146,7 +159,7 @@ export async function PUT(
 
 // DELETE /api/campaigns/[id] - Delete campaign
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
@@ -155,6 +168,12 @@ export async function DELETE(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Rate limit check
+  const deleteRateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+  if (deleteRateLimitResponse) {
+    return deleteRateLimitResponse;
   }
 
   // Get actor and verify it's a brand

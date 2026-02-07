@@ -1,8 +1,16 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { sendContentProgramApplicationEmail } from "@/lib/email";
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit - use auth tier since this is a sensitive public endpoint
+    const rateLimitResponse = await checkEndpointRateLimit(request, "auth");
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+
     const supabase = await createClient();
     const body = await request.json();
 
@@ -83,12 +91,16 @@ export async function POST(request: NextRequest) {
       throw error;
     }
 
-    // TODO: Send confirmation email
-    // await sendContentProgramApplicationEmail({
-    //   to: email,
-    //   brandName: brand_name,
-    //   contactName: contact_name,
-    // });
+    // Send confirmation email (don't fail the request if email fails)
+    try {
+      await sendContentProgramApplicationEmail({
+        to: email.trim().toLowerCase(),
+        brandName: brand_name.trim(),
+        contactName: contact_name.trim(),
+      });
+    } catch (emailError) {
+      console.error("Failed to send content program application email:", emailError);
+    }
 
     return NextResponse.json({
       success: true,
