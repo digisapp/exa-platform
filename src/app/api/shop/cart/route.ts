@@ -5,8 +5,7 @@ import { checkEndpointRateLimit } from "@/lib/rate-limit";
 // GET - Fetch current cart
 export async function GET(request: Request) {
   try {
-    // as any needed: shop tables and nullable fields not fully in generated types
-    const supabase: any = await createClient();
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     // Get session ID from cookie for guest carts
@@ -55,7 +54,7 @@ export async function GET(request: Request) {
     if (user) {
       cartQuery = cartQuery.eq("user_id", user.id);
     } else {
-      cartQuery = cartQuery.eq("session_id", sessionId);
+      cartQuery = cartQuery.eq("session_id", sessionId!);
     }
 
     const { data: cart, error } = await cartQuery.single();
@@ -119,8 +118,7 @@ export async function GET(request: Request) {
 // POST - Add item to cart
 export async function POST(request: Request) {
   try {
-    // as any needed: shop tables and nullable fields not fully in generated types
-    const supabase: any = await createClient();
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     const rateLimitResponse = await checkEndpointRateLimit(request, "general", user?.id);
@@ -165,7 +163,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (variant.stock_quantity < quantity) {
+    if ((variant.stock_quantity ?? 0) < quantity) {
       return NextResponse.json(
         { error: "Not enough stock available", available: variant.stock_quantity },
         { status: 400 }
@@ -222,7 +220,7 @@ export async function POST(request: Request) {
           affiliate_model_id: affiliateModelId,
           affiliate_code: affiliateCode?.toUpperCase() || null,
         })
-        .select("id")
+        .select("id, affiliate_code")
         .single();
 
       if (createError) {
@@ -248,7 +246,7 @@ export async function POST(request: Request) {
       // Update quantity
       const newQuantity = existingItem.quantity + quantity;
 
-      if (newQuantity > variant.stock_quantity) {
+      if (newQuantity > (variant.stock_quantity ?? 0)) {
         return NextResponse.json(
           { error: "Not enough stock available", available: variant.stock_quantity },
           { status: 400 }
@@ -283,8 +281,7 @@ export async function POST(request: Request) {
 // PATCH - Update item quantity
 export async function PATCH(request: Request) {
   try {
-    // as any needed: shop tables and nullable fields not fully in generated types
-    const supabase: any = await createClient();
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     const sessionId = request.headers.get("x-session-id");
@@ -331,7 +328,7 @@ export async function PATCH(request: Request) {
         .eq("id", itemId);
     } else {
       // Check stock
-      if (quantity > item.variant.stock_quantity) {
+      if (quantity > (item.variant.stock_quantity ?? 0)) {
         return NextResponse.json(
           { error: "Not enough stock", available: item.variant.stock_quantity },
           { status: 400 }
@@ -358,8 +355,7 @@ export async function PATCH(request: Request) {
 // DELETE - Remove item from cart
 export async function DELETE(request: Request) {
   try {
-    // as any needed: shop tables and nullable fields not fully in generated types
-    const supabase: any = await createClient();
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     const sessionId = request.headers.get("x-session-id");

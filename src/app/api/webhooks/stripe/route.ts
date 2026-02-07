@@ -6,8 +6,7 @@ import { BRAND_SUBSCRIPTION_TIERS, BrandTier } from "@/lib/stripe-config";
 import { TICKET_CONFIG } from "@/lib/ticket-config";
 
 // Create admin client for webhook (no auth context)
-// as any needed: nullable fields and dynamic table access
-const supabaseAdmin: any = createServiceRoleClient();
+const supabaseAdmin = createServiceRoleClient();
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
@@ -133,7 +132,7 @@ export async function POST(request: NextRequest) {
           p_action: "purchase",
           p_metadata: {
             stripe_session_id: session.id,
-            stripe_payment_intent: session.payment_intent,
+            stripe_payment_intent: typeof session.payment_intent === "string" ? session.payment_intent : null,
             amount_paid: session.amount_total,
             currency: session.currency,
           },

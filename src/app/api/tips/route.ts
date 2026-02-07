@@ -17,8 +17,7 @@ const adminClient = createServiceRoleClient();
 
 export async function POST(request: NextRequest) {
   try {
-    // as any needed: RPC functions and nullable fields not fully in generated types
-    const supabase: any = await createClient();
+    const supabase = await createClient();
 
     // Auth check
     const {
@@ -80,7 +79,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Transfer coins using the database function
-    const { data: result, error: transferError } = await supabase.rpc(
+    const { data: rpcData, error: transferError } = await supabase.rpc(
       "transfer_coins",
       {
         p_sender_id: sender.id,
@@ -92,6 +91,7 @@ export async function POST(request: NextRequest) {
         },
       }
     );
+    const result = rpcData as Record<string, any>;
 
     if (transferError) {
       console.error("Transfer error:", transferError);

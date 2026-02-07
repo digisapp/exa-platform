@@ -13,8 +13,7 @@ const workshopCheckoutSchema = z.object({
 });
 
 // Admin client for bypassing RLS
-// as any needed: workshop tables not fully in generated types
-const adminClient: any = createServiceRoleClient();
+const adminClient = createServiceRoleClient();
 
 
 export async function POST(request: NextRequest) {
@@ -48,7 +47,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate workshop is available
-    if (!["upcoming", "active"].includes(workshop.status)) {
+    if (!workshop.status || !["upcoming", "active"].includes(workshop.status)) {
       return NextResponse.json(
         { error: "This workshop is not currently available for registration" },
         { status: 400 }
@@ -57,7 +56,7 @@ export async function POST(request: NextRequest) {
 
     // Check availability
     if (workshop.spots_available !== null) {
-      const spotsLeft = workshop.spots_available - workshop.spots_sold;
+      const spotsLeft = workshop.spots_available - (workshop.spots_sold ?? 0);
       if (spotsLeft < quantity) {
         return NextResponse.json(
           { error: spotsLeft === 0 ? "This workshop is sold out" : `Only ${spotsLeft} spots remaining` },

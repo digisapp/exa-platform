@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
-// as any needed: POS tables not fully in generated types
+// as any needed: POS orders use different field names than typed shop_orders schema
 const supabase: any = createServiceRoleClient();
 
 interface CheckoutItem {

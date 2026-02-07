@@ -5,8 +5,7 @@ import { checkEndpointRateLimit } from "@/lib/rate-limit";
 // POST - Block a user
 export async function POST(request: NextRequest) {
   try {
-    // as any needed: RPC functions not fully in generated types
-    const supabase: any = await createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
@@ -34,18 +33,19 @@ export async function POST(request: NextRequest) {
       .from("actors")
       .select("id")
       .eq("user_id", user.id)
-      .single() as { data: { id: string } | null };
+      .single();
 
     if (!actor) {
       return NextResponse.json({ error: "Actor not found" }, { status: 400 });
     }
 
     // Block the user
-    const { data: result, error } = await supabase.rpc("block_user", {
+    const { data: rpcData, error } = await supabase.rpc("block_user", {
       p_blocker_id: actor.id,
       p_blocked_id: actorId,
-      p_reason: reason || null,
+      p_reason: reason || undefined,
     });
+    const result = rpcData as Record<string, any> | null;
 
     if (error) {
       console.error("Block user error:", error);
@@ -75,8 +75,7 @@ export async function POST(request: NextRequest) {
 // DELETE - Unblock a user
 export async function DELETE(request: NextRequest) {
   try {
-    // as any needed: RPC functions not fully in generated types
-    const supabase: any = await createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
@@ -101,17 +100,18 @@ export async function DELETE(request: NextRequest) {
       .from("actors")
       .select("id")
       .eq("user_id", user.id)
-      .single() as { data: { id: string } | null };
+      .single();
 
     if (!actor) {
       return NextResponse.json({ error: "Actor not found" }, { status: 400 });
     }
 
     // Unblock the user
-    const { data: result, error } = await supabase.rpc("unblock_user", {
+    const { data: rpcData, error } = await supabase.rpc("unblock_user", {
       p_blocker_id: actor.id,
       p_blocked_id: actorId,
     });
+    const result = rpcData as Record<string, any> | null;
 
     if (error) {
       console.error("Unblock user error:", error);
@@ -141,8 +141,7 @@ export async function DELETE(request: NextRequest) {
 // GET - Get list of blocked users
 export async function GET() {
   try {
-    // as any needed: RPC functions not fully in generated types
-    const supabase: any = await createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
@@ -157,7 +156,7 @@ export async function GET() {
       .from("actors")
       .select("id")
       .eq("user_id", user.id)
-      .single() as { data: { id: string } | null };
+      .single();
 
     if (!actor) {
       return NextResponse.json({ error: "Actor not found" }, { status: 400 });

@@ -9,6 +9,7 @@ export async function POST(request: Request) {
     const rateLimitResponse = await checkEndpointRateLimit(request, "general");
     if (rateLimitResponse) return rateLimitResponse;
 
+    // as any needed: call_requests insert uses field names not matching typed schema
     const supabase: any = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     const body = await request.json();
@@ -165,7 +166,8 @@ export async function POST(request: Request) {
 // GET - Get call requests (for authenticated models to see their own)
 export async function GET() {
   try {
-    const supabase = await createClient();
+    // as any needed: call_requests insert uses field names not matching typed schema
+    const supabase: any = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {

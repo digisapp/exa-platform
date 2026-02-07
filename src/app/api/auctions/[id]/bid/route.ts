@@ -17,7 +17,7 @@ export async function POST(
 ) {
   try {
     const { id: auctionId } = await params;
-    const supabase: any = await createClient();
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -32,7 +32,7 @@ export async function POST(
       .from("actors")
       .select("id")
       .eq("user_id", user.id)
-      .single() as { data: { id: string } | null };
+      .single();
 
     if (!actor) {
       return NextResponse.json({ error: "Actor not found" }, { status: 404 });
@@ -59,12 +59,11 @@ export async function POST(
     }
 
     // Call the RPC function to place the bid
-    const rpcClient = supabase as any;
-    const { data: result, error } = await rpcClient.rpc("place_auction_bid", {
+    const { data: result, error } = await supabase.rpc("place_auction_bid", {
       p_auction_id: auctionId,
       p_bidder_id: actor.id,
       p_amount: amount,
-      p_max_auto_bid: max_auto_bid || null,
+      p_max_auto_bid: max_auto_bid || undefined,
     });
 
     if (error) {
@@ -97,21 +96,21 @@ export async function POST(
     }
 
     // Get updated balance
-    // as any needed: get_actor_coin_balance not in generated types
-    const { data: balanceResult } = await (supabase as any).rpc("get_actor_coin_balance", {
+    const { data: balanceResult } = await supabase.rpc("get_actor_coin_balance", {
       p_actor_id: actor.id,
     });
 
     // Map RPC field names to API response format
+    const bidResult = result as Record<string, any>;
     const response: PlaceBidResponse = {
       success: true,
-      bid_id: result.bid_id,
-      final_amount: result.final_amount ?? result.amount ?? amount,
-      escrow_deducted: result.escrow_deducted ?? 0,
+      bid_id: bidResult.bid_id,
+      final_amount: bidResult.final_amount ?? bidResult.amount ?? amount,
+      escrow_deducted: bidResult.escrow_deducted ?? 0,
       new_balance: balanceResult || 0,
-      is_winning: result.is_winning ?? true,
-      auction_extended: result.auction_extended ?? result.extended ?? false,
-      new_end_time: result.new_end_time,
+      is_winning: bidResult.is_winning ?? true,
+      auction_extended: bidResult.auction_extended ?? bidResult.extended ?? false,
+      new_end_time: bidResult.new_end_time,
     };
 
     return NextResponse.json(response);
@@ -131,9 +130,9 @@ export async function GET(
 ) {
   try {
     const { id: auctionId } = await params;
-    const supabase: any = await createClient();
+    const supabase = await createClient();
 
-    const { data: bids, error } = await (supabase as any)
+    const { data: bids, error } = await supabase
       .from("auction_bids")
       .select(`
         id,

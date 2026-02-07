@@ -15,6 +15,7 @@ const startCallSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    // as any needed: nullable field mismatches with typed query results
     const supabase: any = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 

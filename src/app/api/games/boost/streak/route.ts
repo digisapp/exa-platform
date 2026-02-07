@@ -9,8 +9,7 @@ export async function POST(request: NextRequest) {
     const rateLimitResponse = await checkEndpointRateLimit(request, "general");
     if (rateLimitResponse) return rateLimitResponse;
 
-    // as any needed: game tables not fully in generated types
-    const supabase: any = await createClient();
+    const supabase = await createClient();
     const { sessionId } = await request.json();
 
     if (!sessionId) {
@@ -21,10 +20,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Update streak using database function
-    const { data, error } = await supabase.rpc(
+    const { data: rpcData, error } = await supabase.rpc(
       "update_session_streak",
       { p_session_id: sessionId }
     );
+    const data = rpcData as Record<string, any> | null;
 
     if (error) {
       console.error("Streak update error:", error);

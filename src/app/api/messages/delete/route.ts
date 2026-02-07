@@ -9,8 +9,7 @@ const deleteMessageSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    // as any needed: nullable fields not fully in generated types
-    const supabase: any = await createClient();
+    const supabase = await createClient();
 
     // Auth check
     const {
@@ -51,11 +50,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Get the message to verify ownership
-    const { data: message } = await supabase
+    // as any needed: deleted_at column not in typed schema
+    const { data: message } = await (supabase
       .from("messages")
       .select("id, sender_id, conversation_id, deleted_at")
       .eq("id", messageId)
-      .single();
+      .single() as any);
 
     if (!message) {
       return NextResponse.json(
@@ -81,8 +81,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Soft delete the message
-    const { error: deleteError } = await supabase
-      .from("messages")
+    // as any needed: deleted_at column not in typed schema
+    const { error: deleteError } = await (supabase
+      .from("messages") as any)
       .update({
         deleted_at: new Date().toISOString(),
         content: null, // Clear content

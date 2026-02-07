@@ -10,7 +10,7 @@ export async function POST(
 ) {
   try {
     const { id: auctionId } = await params;
-    const supabase: any = await createClient();
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -25,15 +25,14 @@ export async function POST(
       .from("actors")
       .select("id")
       .eq("user_id", user.id)
-      .single() as { data: { id: string } | null };
+      .single();
 
     if (!actor) {
       return NextResponse.json({ error: "Actor not found" }, { status: 404 });
     }
 
     // Call the RPC function to buy now
-    // as any needed: buy_now_auction not in generated types
-    const { data: result, error } = await (supabase as any).rpc("buy_now_auction", {
+    const { data: result, error } = await supabase.rpc("buy_now_auction", {
       p_auction_id: auctionId,
       p_buyer_id: actor.id,
     });
@@ -65,14 +64,14 @@ export async function POST(
     }
 
     // Get updated balance
-    // as any needed: get_actor_coin_balance not in generated types
-    const { data: balanceResult } = await (supabase as any).rpc("get_actor_coin_balance", {
+    const { data: balanceResult } = await supabase.rpc("get_actor_coin_balance", {
       p_actor_id: actor.id,
     });
 
+    const buyResult = result as Record<string, any>;
     const response: BuyNowResponse = {
       success: true,
-      amount: result.amount,
+      amount: buyResult.amount,
       new_balance: balanceResult || 0,
     };
 

@@ -141,6 +141,7 @@ export async function PATCH(
     const supabase = await createClient();
 
     // Use service role client to bypass RLS for all operations
+    // as any needed: notifications table uses actor_id not in typed schema
     const adminClient: any = createServiceRoleClient();
 
     // Auth check

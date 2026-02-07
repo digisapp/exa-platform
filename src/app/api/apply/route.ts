@@ -92,13 +92,12 @@ export async function POST(request: NextRequest) {
                         "Unknown";
 
     // Create application
-    const applicationsTable = supabase.from("model_applications") as any;
-    const { error: insertError } = await applicationsTable
+    const { error: insertError } = await supabase.from("model_applications")
       .insert({
         user_id: user.id,
         fan_id: fan?.id || null,
         display_name: displayName,
-        email: user.email,
+        email: user.email || "",
         instagram_username: instagram_username || null,
         tiktok_username: tiktok_username || null,
         phone: phone || null,

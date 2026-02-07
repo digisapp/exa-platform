@@ -10,7 +10,7 @@ const endCallSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase: any = await createClient();
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -101,8 +101,7 @@ export async function POST(request: NextRequest) {
         .single() as { data: { type: string } | null };
 
       if (callerActor?.type === "fan" && recipientModel?.user_id) {
-        // as any needed: end_call_transfer not in generated types
-        const { data: transferResult, error: transferError } = await (supabase as any).rpc(
+        const { data: transferResult, error: transferError } = await supabase.rpc(
           "end_call_transfer",
           {
             p_session_id: sessionId,
@@ -116,8 +115,8 @@ export async function POST(request: NextRequest) {
 
         if (transferError) {
           console.error("Call coin transfer RPC failed:", transferError);
-        } else if (transferResult && !(transferResult as any).success) {
-          console.error("Call coin transfer failed:", (transferResult as any).error);
+        } else if (transferResult && !(transferResult as Record<string, unknown>).success) {
+          console.error("Call coin transfer failed:", (transferResult as Record<string, unknown>).error);
         }
       }
     }

@@ -12,8 +12,7 @@ const gigApplySchema = z.object({
 // POST - Apply to a gig
 export async function POST(request: NextRequest) {
   try {
-    // as any needed: gig tables not fully in generated types
-    const supabase: any = await createClient();
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -118,8 +117,7 @@ export async function POST(request: NextRequest) {
 // DELETE - Withdraw application (only pending applications)
 export async function DELETE(request: NextRequest) {
   try {
-    // as any needed: gig tables not fully in generated types
-    const supabase: any = await createClient();
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {

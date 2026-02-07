@@ -20,8 +20,7 @@ function determineSpinReward(): number {
 // POST - Claim daily spin reward
 export async function POST(request: NextRequest) {
   try {
-    // as any needed: RPC functions and game tables not fully in generated types
-    const supabase: any = await createClient();
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -39,13 +38,14 @@ export async function POST(request: NextRequest) {
     const coins = determineSpinReward();
 
     // Call the claim_daily_spin function
-    const { data, error } = await supabase.rpc(
+    const { data: rpcData, error } = await supabase.rpc(
       "claim_daily_spin",
       {
         p_user_id: user.id,
         p_coins: coins,
       }
     );
+    const data = rpcData as Record<string, any> | null;
 
     if (error) {
       console.error("Spin claim error:", error);

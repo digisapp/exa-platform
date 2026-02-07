@@ -3,7 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { escapeIlike } from "@/lib/utils";
 
-// as any needed: POS tables not fully in generated types
+// as any needed: import uses field names and values not matching typed shop_brands/shop_products schema
 const supabase: any = createServiceRoleClient();
 
 interface CSVRow {

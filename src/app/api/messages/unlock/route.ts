@@ -10,8 +10,7 @@ const unlockSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    // as any needed: RPC functions and nullable fields not fully in generated types
-    const supabase: any = await createClient();
+    const supabase = await createClient();
 
     // Auth check
     const {
@@ -55,13 +54,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Call atomic unlock RPC
-    const { data: result, error: rpcError } = await supabase.rpc(
+    const { data: rpcData, error: rpcError } = await supabase.rpc(
       "unlock_message_media",
       {
         p_buyer_id: buyer.id,
         p_message_id: messageId,
       }
     );
+    const result = rpcData as Record<string, any>;
 
     if (rpcError) {
       console.error("Unlock RPC error:", rpcError);

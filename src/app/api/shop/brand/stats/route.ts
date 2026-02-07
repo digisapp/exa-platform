@@ -4,8 +4,7 @@ import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 export async function GET(request: NextRequest) {
   try {
-    // as any needed: shop tables not fully in generated types
-    const supabase: any = await createClient();
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -28,7 +27,7 @@ export async function GET(request: NextRequest) {
         status,
         created_at
       `)
-      .eq("contact_email", user.email)
+      .eq("contact_email", user.email || "")
       .single();
 
     if (!shopBrand) {

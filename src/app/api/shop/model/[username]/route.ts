@@ -11,12 +11,12 @@ export async function GET(
     const rateLimitResponse = await checkEndpointRateLimit(request, "general");
     if (rateLimitResponse) return rateLimitResponse;
 
-    // as any needed: shop tables and nullable fields not fully in generated types
-    const supabase: any = await createClient();
+    const supabase = await createClient();
     const { username } = await params;
 
     // Get model by username
-    const { data: model, error: modelError } = await supabase
+    // as any needed: instagram_handle column not in typed models schema
+    const { data: model, error: modelError } = await (supabase
       .from("models")
       .select(`
         id,
@@ -28,7 +28,7 @@ export async function GET(
         instagram_handle
       `)
       .eq("username", username.toLowerCase())
-      .single();
+      .single() as any);
 
     if (modelError || !model) {
       return NextResponse.json(

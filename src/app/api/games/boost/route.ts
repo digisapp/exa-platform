@@ -18,7 +18,7 @@ function secureShufflePop<T>(arr: T[], count: number): T[] {
 // GET - Fetch models for the swipe game
 export async function GET(request: NextRequest) {
   try {
-    // as any needed: game tables not fully in generated types
+    // as any needed: nullable field mismatches with RPC parameters and Json results
     const supabase: any = await createClient();
     const { searchParams } = new URL(request.url);
     const fingerprint = searchParams.get("fingerprint");

@@ -12,8 +12,7 @@ const newConversationSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    // as any needed: RPC functions and nullable fields not fully in generated types
-    const supabase: any = await createClient();
+    const supabase = await createClient();
 
     // Auth check
     const {
@@ -211,18 +210,19 @@ export async function POST(request: NextRequest) {
       }
 
       // Use atomic RPC for message + coin transfer
-      const { data: result, error: rpcError } = await supabase.rpc(
+      const { data: rpcData, error: rpcError } = await supabase.rpc(
         "send_message_with_coins",
         {
           p_conversation_id: conversation.id,
           p_sender_id: sender.id,
-          p_recipient_id: recipientModelId,
+          p_recipient_id: recipientModelId || "",
           p_content: initialMessage,
-          p_media_url: null,
-          p_media_type: null,
+          p_media_url: undefined,
+          p_media_type: undefined,
           p_coin_amount: coinsRequired,
         }
       );
+      const result = rpcData as Record<string, any>;
 
       if (rpcError) {
         // Cleanup conversation on failure

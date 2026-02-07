@@ -60,11 +60,10 @@ export async function POST(
       .replace(/[^a-z0-9]/g, "")
       .slice(0, 20) + Math.random().toString(36).slice(2, 6);
 
-    const modelsTable = supabase.from("models") as any;
-    const { error: modelError } = await modelsTable
+    const { error: modelError } = await supabase.from("models")
       .insert({
-        user_id: fanUserId,
-        email: fan.email,
+        user_id: fanUserId as string,
+        email: fan.email ?? "",
         username: username,
         first_name: fan.display_name || "New",
         last_name: "Model",

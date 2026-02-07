@@ -11,8 +11,7 @@ const SUPER_MULTIPLIER = 10;
 // POST - Record a vote
 export async function POST(request: NextRequest) {
   try {
-    // as any needed: RPC functions and game tables not fully in generated types
-    const supabase: any = await createClient();
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     const rateLimitResponse = await checkEndpointRateLimit(request, "financial", user?.id);
@@ -168,11 +167,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Record the vote
-    const { data: voteResult, error: voteError } = await supabase.rpc(
+    const { data: voteRpcData, error: voteError } = await supabase.rpc(
       "record_top_model_vote",
       {
-        p_voter_id: actorId,
-        p_voter_fingerprint: fingerprint,
+        p_voter_id: actorId || "",
+        p_voter_fingerprint: fingerprint || "",
         p_model_id: model_id,
         p_vote_type: vote_type,
         p_points: points,
@@ -181,6 +180,7 @@ export async function POST(request: NextRequest) {
         p_coins_spent: coinsToSpend,
       }
     );
+    const voteResult = voteRpcData as Record<string, any> | null;
 
     if (voteError) {
       console.error("Vote error:", voteError);
@@ -219,10 +219,10 @@ export async function POST(request: NextRequest) {
       if (actor?.type === "fan") {
         const { data: fan } = await supabase
           .from("fans")
-          .select("name, username")
+          .select("display_name, username")
           .eq("user_id", user.id)
           .single();
-        voterName = fan?.name || fan?.username || "A fan";
+        voterName = fan?.display_name || fan?.username || "A fan";
       } else if (actor?.type === "brand") {
         const { data: brand } = await supabase
           .from("brands")
@@ -252,7 +252,8 @@ export async function POST(request: NextRequest) {
             ? `${voterName} gave you a SUPER BOOST in EXA Boost! You gained ${points} points!`
             : `${voterName} boosted you in EXA Boost! You gained ${points} points.`;
 
-          await supabase.from("notifications").insert({
+          // as any needed: notification uses actor_id/body/data fields and exa_boost type not in typed schema
+          await (supabase.from("notifications") as any).insert({
             actor_id: modelActor.id,
             type: isSuperBoosted ? "exa_boost_super" : "exa_boost",
             title: notificationTitle,

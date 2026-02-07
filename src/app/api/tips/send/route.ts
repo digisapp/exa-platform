@@ -9,8 +9,7 @@ const adminClient = createServiceRoleClient();
 
 export async function POST(request: NextRequest) {
   try {
-    // as any needed: RPC functions and nullable fields not fully in generated types
-    const supabase: any = await createClient();
+    const supabase = await createClient();
 
     // Auth check
     const {
@@ -71,7 +70,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Use atomic RPC function for tip transfer (prevents race conditions)
-    const { data: result, error: rpcError } = await supabase.rpc(
+    const { data: rpcData, error: rpcError } = await supabase.rpc(
       "send_tip",
       {
         p_sender_id: sender.id,
@@ -79,6 +78,7 @@ export async function POST(request: NextRequest) {
         p_amount: amount,
       }
     );
+    const result = rpcData as Record<string, any>;
 
     if (rpcError) {
       console.error("Tip RPC error:", rpcError);

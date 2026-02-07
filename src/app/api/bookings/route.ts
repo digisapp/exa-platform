@@ -227,6 +227,7 @@ export async function GET(request: NextRequest) {
 // POST - Create a new booking request
 export async function POST(request: NextRequest) {
   try {
+    // as any needed: notifications table uses actor_id not in typed schema
     const supabase: any = await createClient();
 
     // Auth check
