@@ -27,23 +27,6 @@ const checkoutSchema = z.object({
   billingSameAsShipping: z.boolean().optional().default(true),
 });
 
-interface ShippingAddress {
-  line1: string;
-  line2?: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  country: string;
-}
-
-interface CheckoutRequest {
-  email: string;
-  name: string;
-  phone?: string;
-  shippingAddress: ShippingAddress;
-  billingAddress?: ShippingAddress;
-  billingSameAsShipping?: boolean;
-}
 
 export async function POST(request: Request) {
   try {

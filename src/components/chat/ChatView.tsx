@@ -380,7 +380,7 @@ export function ChatView({
     };
   }, [currentActor.id, conversation.id, otherName, otherAvatar, supabase]);
 
-  const handleUnlockMedia = async (messageId: string, _price: number) => {
+  const handleUnlockMedia = async (messageId: string) => {
     try {
       const response = await fetch("/api/messages/unlock", {
         method: "POST",
