@@ -502,10 +502,13 @@ export default async function ModelProfilePage({ params }: Props) {
                     className="group relative flex items-center justify-center w-full px-5 py-4 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 hover:border-white/20 transition-all hover:scale-[1.02] active:scale-[0.97] active:opacity-90 hover:shadow-lg hover:shadow-pink-500/10"
                   >
                     {domain && (
-                      <img
+                      <Image
                         src={`https://www.google.com/s2/favicons?domain=${domain}&sz=32`}
                         alt=""
+                        width={24}
+                        height={24}
                         className="absolute left-4 w-6 h-6 rounded"
+                        unoptimized
                       />
                     )}
                     <span className="font-medium text-white">{link.title}</span>

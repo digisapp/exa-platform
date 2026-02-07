@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
             product_data: {
               name: `Models Creator House - ${gig.title}`,
               description: `${dateRange}${location ? ` • ${location}` : ""} • Your spot at the Creator House`,
-              images: ["https://www.examodels.com/og-image.png"],
+              images: [`${process.env.NEXT_PUBLIC_APP_URL || "https://www.examodels.com"}/og-image.png`],
             },
             unit_amount: CREATOR_HOUSE_PRICE_CENTS,
           },

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -204,11 +205,14 @@ export function MessageBubble({
             <div className={cn("mt-2", !message.content && "-mt-0")}>
               {message.media_type?.startsWith("image/") ? (
                 <>
-                  <img
+                  <Image
                     src={message.media_url}
                     alt="Attached image"
+                    width={400}
+                    height={256}
                     className="max-w-full max-h-64 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                     onClick={() => setLightboxOpen(true)}
+                    unoptimized
                   />
                   <ImageLightbox
                     src={message.media_url!}

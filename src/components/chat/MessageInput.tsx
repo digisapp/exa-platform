@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, KeyboardEvent } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Loader2, Coins, X, Video, Mic, Camera } from "lucide-react";
@@ -381,10 +382,13 @@ export function MessageInput({
               </div>
             ) : (
               <div className="relative">
-                <img
+                <Image
                   src={attachedMedia.preview || attachedMedia.url}
                   alt="Attachment"
+                  width={200}
+                  height={96}
                   className="h-24 max-w-[200px] object-cover"
+                  unoptimized
                 />
                 <div className="absolute top-1 left-1 p-1 rounded bg-black/60">
                   <Camera className="h-3 w-3 text-white" />

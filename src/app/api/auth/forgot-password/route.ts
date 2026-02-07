@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     );
 
     // Always use production URL for redirect
-    const redirectUrl = "https://www.examodels.com/auth/reset-password";
+    const redirectUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://www.examodels.com"}/auth/reset-password`;
 
     // Generate the password reset link using admin API
     // This gives us the link without sending Supabase's email

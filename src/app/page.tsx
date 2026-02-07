@@ -110,16 +110,16 @@ export default async function HomePage() {
           <div className="overflow-hidden whitespace-nowrap">
             <div className="inline-block animate-marquee">
               <span className="mx-8 text-sm font-medium text-white inline-flex items-center gap-2">
-                ✨ Join our <img src="/digis-logo-white.png" alt="Digis" className="h-4 w-auto inline-block" /> Community — Live Streams, Virtual Gifts, AI Twin & Chats ✨
+                ✨ Join our <Image src="/digis-logo-white.png" alt="Digis" width={60} height={16} className="h-4 w-auto inline-block" /> Community — Live Streams, Virtual Gifts, AI Twin & Chats ✨
               </span>
               <span className="mx-8 text-sm font-medium text-white inline-flex items-center gap-2">
-                🎁 Join our <img src="/digis-logo-white.png" alt="Digis" className="h-4 w-auto inline-block" /> Community — Live Streams, Virtual Gifts, AI Twin & Chats 🎁
+                🎁 Join our <Image src="/digis-logo-white.png" alt="Digis" width={60} height={16} className="h-4 w-auto inline-block" /> Community — Live Streams, Virtual Gifts, AI Twin & Chats 🎁
               </span>
               <span className="mx-8 text-sm font-medium text-white inline-flex items-center gap-2">
-                ✨ Join our <img src="/digis-logo-white.png" alt="Digis" className="h-4 w-auto inline-block" /> Community — Live Streams, Virtual Gifts, AI Twin & Chats ✨
+                ✨ Join our <Image src="/digis-logo-white.png" alt="Digis" width={60} height={16} className="h-4 w-auto inline-block" /> Community — Live Streams, Virtual Gifts, AI Twin & Chats ✨
               </span>
               <span className="mx-8 text-sm font-medium text-white inline-flex items-center gap-2">
-                🎁 Join our <img src="/digis-logo-white.png" alt="Digis" className="h-4 w-auto inline-block" /> Community — Live Streams, Virtual Gifts, AI Twin & Chats 🎁
+                🎁 Join our <Image src="/digis-logo-white.png" alt="Digis" width={60} height={16} className="h-4 w-auto inline-block" /> Community — Live Streams, Virtual Gifts, AI Twin & Chats 🎁
               </span>
             </div>
           </div>

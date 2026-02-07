@@ -268,10 +268,13 @@ export default function ClaimPage() {
             {/* Profile Preview */}
             {model?.profile_photo_url ? (
               <div className="w-24 h-24 mx-auto rounded-full overflow-hidden border-4 border-pink-500/50 mb-4">
-                <img
+                <Image
                   src={model.profile_photo_url}
                   alt={model.first_name}
+                  width={96}
+                  height={96}
                   className="w-full h-full object-cover"
+                  unoptimized
                 />
               </div>
             ) : (

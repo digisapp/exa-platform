@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Video, Coins, Loader2, Phone, Gift } from "lucide-react";
 import {
@@ -536,9 +537,11 @@ export function ProfileActionButtons({
         <DialogContent className="sm:max-w-md p-0 overflow-hidden">
           {/* Gradient Header */}
           <div className="bg-gradient-to-r from-pink-500 to-violet-500 px-6 py-8 text-white text-center">
-            <img
+            <Image
               src="/exa-logo-white.png"
               alt="EXA"
+              width={100}
+              height={32}
               className="h-8 w-auto mx-auto mb-4"
             />
             <h2 className="text-2xl font-bold">Connect with {modelUsername}</h2>

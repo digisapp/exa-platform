@@ -243,21 +243,20 @@ export async function PATCH(
           }
 
           // Deduct coins from client (escrow)
-          if (clientActor?.type === "fan") {
-            await adminClient
-              .from("fans")
-              .update({ coin_balance: clientBalance - escrowAmount })
-              .eq("id", clientActor.id);
-          } else if (clientActor?.type === "brand") {
-            await adminClient
-              .from("brands")
-              .update({ coin_balance: clientBalance - escrowAmount })
-              .eq("id", clientActor.id);
-          }
-
-          // Log escrow transaction
+          const escrowTable = clientActor?.type === "fan" ? "fans" : "brands";
           if (clientActor) {
-            await adminClient.from("coin_transactions").insert({
+            const { error: escrowDebitError } = await adminClient
+              .from(escrowTable)
+              .update({ coin_balance: clientBalance - escrowAmount })
+              .eq("id", clientActor.id);
+
+            if (escrowDebitError) {
+              console.error("Escrow debit failed:", escrowDebitError);
+              return NextResponse.json({ error: "Failed to escrow coins" }, { status: 500 });
+            }
+
+            // Log escrow transaction
+            const { error: escrowLogError } = await adminClient.from("coin_transactions").insert({
               actor_id: clientActor.id,
               amount: -escrowAmount,
               action: "booking_escrow",
@@ -267,6 +266,16 @@ export async function PATCH(
                 model_id: booking.model_id,
               },
             });
+
+            if (escrowLogError) {
+              // ROLLBACK: Refund the escrow debit since transaction log failed
+              console.error("Escrow transaction log failed, rolling back debit:", escrowLogError);
+              await adminClient
+                .from(escrowTable)
+                .update({ coin_balance: clientBalance })
+                .eq("id", clientActor.id);
+              return NextResponse.json({ error: "Failed to process escrow" }, { status: 500 });
+            }
           }
         }
 
@@ -369,20 +378,19 @@ export async function PATCH(
           }
 
           // Deduct coins from client (escrow)
-          if (actor.type === "fan") {
-            await adminClient
-              .from("fans")
-              .update({ coin_balance: counterClientBalance - counterEscrowAmount })
-              .eq("id", actor.id);
-          } else if (actor.type === "brand") {
-            await adminClient
-              .from("brands")
-              .update({ coin_balance: counterClientBalance - counterEscrowAmount })
-              .eq("id", actor.id);
+          const counterEscrowTable = actor.type === "fan" ? "fans" : "brands";
+          const { error: counterEscrowDebitError } = await adminClient
+            .from(counterEscrowTable)
+            .update({ coin_balance: counterClientBalance - counterEscrowAmount })
+            .eq("id", actor.id);
+
+          if (counterEscrowDebitError) {
+            console.error("Counter escrow debit failed:", counterEscrowDebitError);
+            return NextResponse.json({ error: "Failed to escrow coins for counter offer" }, { status: 500 });
           }
 
           // Log escrow transaction
-          await adminClient.from("coin_transactions").insert({
+          const { error: counterEscrowLogError } = await adminClient.from("coin_transactions").insert({
             actor_id: actor.id,
             amount: -counterEscrowAmount,
             action: "booking_escrow",
@@ -393,6 +401,16 @@ export async function PATCH(
               counter_offer: true,
             },
           });
+
+          if (counterEscrowLogError) {
+            // ROLLBACK: Refund the escrow debit since transaction log failed
+            console.error("Counter escrow transaction log failed, rolling back debit:", counterEscrowLogError);
+            await adminClient
+              .from(counterEscrowTable)
+              .update({ coin_balance: counterClientBalance })
+              .eq("id", actor.id);
+            return NextResponse.json({ error: "Failed to process counter escrow" }, { status: 500 });
+          }
         }
 
         updateData = {
@@ -507,20 +525,60 @@ export async function PATCH(
       .select()
       .single();
 
-    if (error) {
+    if (error || !updatedBooking) {
       console.error("Failed to update booking:", error, "updateData:", updateData);
+
+      // ROLLBACK: If escrow was taken during accept/accept_counter, refund the client
+      if (action === "accept") {
+        const rollbackAmount = booking.total_amount || 0;
+        if (rollbackAmount > 0) {
+          const { data: rollbackClientActor } = await adminClient
+            .from("actors")
+            .select("id, type")
+            .eq("id", booking.client_id)
+            .maybeSingle();
+
+          if (rollbackClientActor) {
+            const rollbackTable = rollbackClientActor.type === "fan" ? "fans" : "brands";
+            const { data: rollbackRecord } = await adminClient
+              .from(rollbackTable)
+              .select("coin_balance")
+              .eq("id", rollbackClientActor.id)
+              .maybeSingle();
+
+            if (rollbackRecord) {
+              console.error("Rolling back escrow debit for accept action, refunding", rollbackAmount, "coins to", rollbackClientActor.id);
+              await adminClient
+                .from(rollbackTable)
+                .update({ coin_balance: (rollbackRecord.coin_balance || 0) + rollbackAmount })
+                .eq("id", rollbackClientActor.id);
+            }
+          }
+        }
+      } else if (action === "accept_counter") {
+        const rollbackCounterAmount = booking.counter_amount || 0;
+        if (rollbackCounterAmount > 0) {
+          const rollbackCounterTable = actor.type === "fan" ? "fans" : "brands";
+          const { data: rollbackCounterRecord } = await adminClient
+            .from(rollbackCounterTable)
+            .select("coin_balance")
+            .eq("id", actor.id)
+            .maybeSingle();
+
+          if (rollbackCounterRecord) {
+            console.error("Rolling back escrow debit for accept_counter action, refunding", rollbackCounterAmount, "coins to", actor.id);
+            await adminClient
+              .from(rollbackCounterTable)
+              .update({ coin_balance: (rollbackCounterRecord.coin_balance || 0) + rollbackCounterAmount })
+              .eq("id", actor.id);
+          }
+        }
+      }
+
       return NextResponse.json({
         error: "Failed to update booking",
-        details: error.message,
-        code: error.code,
-        debug: debugInfo
-      }, { status: 500 });
-    }
-
-    if (!updatedBooking) {
-      console.error("No booking updated");
-      return NextResponse.json({
-        error: "Booking update failed",
+        details: error?.message,
+        code: error?.code,
         debug: debugInfo
       }, { status: 500 });
     }
@@ -540,10 +598,16 @@ export async function PATCH(
           .maybeSingle();
 
         const modelBalance = modelRecord?.coin_balance || 0;
-        await adminClient
+        const { error: modelCreditError } = await adminClient
           .from("models")
           .update({ coin_balance: modelBalance + escrowAmount })
           .eq("id", booking.model_id);
+
+        if (modelCreditError) {
+          // Model credit failed - booking is already marked complete but coins not released
+          // Log for manual resolution since the escrow coins are still held
+          console.error("CRITICAL: Model credit failed after booking completion. Booking:", id, "Model:", booking.model_id, "Amount:", escrowAmount, "Error:", modelCreditError);
+        }
 
         // Get model's actor ID for transaction log
         const { data: modelActor } = await adminClient
@@ -552,8 +616,8 @@ export async function PATCH(
           .eq("user_id", booking.model?.user_id)
           .maybeSingle();
 
-        if (modelActor) {
-          await adminClient.from("coin_transactions").insert({
+        if (modelActor && !modelCreditError) {
+          const { error: paymentLogError } = await adminClient.from("coin_transactions").insert({
             actor_id: modelActor.id,
             amount: escrowAmount,
             action: "booking_payment",
@@ -563,6 +627,11 @@ export async function PATCH(
               client_id: booking.client_id,
             },
           });
+
+          if (paymentLogError) {
+            // Credit succeeded but log failed - coins are correct but transaction log is incomplete
+            console.error("WARNING: Booking payment transaction log failed. Booking:", id, "Model actor:", modelActor.id, "Amount:", escrowAmount, "Error:", paymentLogError);
+          }
         }
       } else if (action === "cancel" && wasEscrowed) {
         // Only refund if coins were already escrowed (booking was accepted/confirmed)
@@ -574,42 +643,40 @@ export async function PATCH(
             .maybeSingle();
 
           if (clientActor) {
-            if (clientActor.type === "fan") {
-              const { data: fan } = await adminClient
-                .from("fans")
-                .select("coin_balance")
-                .eq("id", clientActor.id)
-                .maybeSingle();
-              if (fan) {
-                await adminClient
-                  .from("fans")
-                  .update({ coin_balance: (fan.coin_balance || 0) + escrowAmount })
-                  .eq("id", clientActor.id);
+            const refundTable = clientActor.type === "fan" ? "fans" : "brands";
+            const { data: refundRecord } = await adminClient
+              .from(refundTable)
+              .select("coin_balance")
+              .eq("id", clientActor.id)
+              .maybeSingle();
+
+            if (refundRecord) {
+              const { error: refundCreditError } = await adminClient
+                .from(refundTable)
+                .update({ coin_balance: (refundRecord.coin_balance || 0) + escrowAmount })
+                .eq("id", clientActor.id);
+
+              if (refundCreditError) {
+                console.error("CRITICAL: Refund credit failed after booking cancellation. Booking:", id, "Client:", clientActor.id, "Amount:", escrowAmount, "Error:", refundCreditError);
               }
-            } else if (clientActor.type === "brand") {
-              const { data: brand } = await adminClient
-                .from("brands")
-                .select("coin_balance")
-                .eq("id", clientActor.id)
-                .maybeSingle();
-              if (brand) {
-                await adminClient
-                  .from("brands")
-                  .update({ coin_balance: (brand.coin_balance || 0) + escrowAmount })
-                  .eq("id", clientActor.id);
+
+              if (!refundCreditError) {
+                const { error: refundLogError } = await adminClient.from("coin_transactions").insert({
+                  actor_id: clientActor.id,
+                  amount: escrowAmount,
+                  action: "booking_refund",
+                  metadata: {
+                    booking_id: id,
+                    booking_number: booking.booking_number,
+                    reason: "Booking cancelled",
+                  },
+                });
+
+                if (refundLogError) {
+                  console.error("WARNING: Refund transaction log failed. Booking:", id, "Client:", clientActor.id, "Amount:", escrowAmount, "Error:", refundLogError);
+                }
               }
             }
-
-            await adminClient.from("coin_transactions").insert({
-              actor_id: clientActor.id,
-              amount: escrowAmount,
-              action: "booking_refund",
-              metadata: {
-                booking_id: id,
-                booking_number: booking.booking_number,
-                reason: "Booking cancelled",
-              },
-            });
           }
         } catch (refundError) {
           console.error("Failed to process refund:", refundError);

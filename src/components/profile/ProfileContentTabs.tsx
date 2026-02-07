@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Camera, Video, Lock, X, Play, ImageOff, ChevronLeft, ChevronRight } from "lucide-react";
 import { PremiumContentGrid } from "@/components/content/PremiumContentGrid";
@@ -504,10 +505,12 @@ export function ProfileContentTabs({
             {/* Blurred background image */}
             {selectedType === "photo" && (
               <div className="absolute inset-0 overflow-hidden">
-                <img
-                  src={selectedItem.photo_url || selectedItem.url}
+                <Image
+                  src={selectedItem.photo_url || selectedItem.url || ""}
                   alt=""
-                  className="absolute inset-0 w-full h-full object-cover scale-110 blur-3xl opacity-40"
+                  fill
+                  className="object-cover scale-110 blur-3xl opacity-40"
+                  unoptimized
                 />
                 <div className="absolute inset-0 bg-black/80" />
               </div>
@@ -589,15 +592,18 @@ export function ProfileContentTabs({
               onClick={(e) => e.stopPropagation()}
             >
               {selectedType === "photo" ? (
-                <img
-                  src={selectedItem.photo_url || selectedItem.url}
+                <Image
+                  src={selectedItem.photo_url || selectedItem.url || ""}
                   alt={selectedItem.title || ""}
+                  width={1200}
+                  height={900}
                   className={cn(
                     "max-w-[92vw] max-h-[80vh] md:max-w-[85vw] md:max-h-[85vh]",
                     "object-contain rounded-xl shadow-2xl",
                     "select-none"
                   )}
                   draggable={false}
+                  unoptimized
                 />
               ) : (
                 <div className="relative">

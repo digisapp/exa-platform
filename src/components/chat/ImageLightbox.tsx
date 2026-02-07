@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { X, ZoomIn, ZoomOut, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -177,9 +178,11 @@ export function ImageLightbox({ src, alt = "Image", isOpen, onClose }: ImageLigh
         )}
         onWheel={handleWheel}
       >
-        <img
+        <Image
           src={src}
           alt={alt}
+          width={1200}
+          height={900}
           className="max-w-full max-h-[90vh] object-contain select-none"
           style={{
             transform: `scale(${zoom}) translate(${position.x / zoom}px, ${position.y / zoom}px)`,
@@ -193,6 +196,7 @@ export function ImageLightbox({ src, alt = "Image", isOpen, onClose }: ImageLigh
             e.stopPropagation();
           }}
           draggable={false}
+          unoptimized
         />
       </div>
 

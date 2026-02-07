@@ -484,10 +484,12 @@ function ApplicationCard({ application }: { application: any }) {
       {/* Portrait Image with Overlay */}
       <div className="aspect-[3/4] relative bg-gradient-to-br from-pink-500/20 to-violet-500/20 overflow-hidden">
         {gig.cover_image_url ? (
-          <img
+          <Image
             src={gig.cover_image_url}
             alt={gig.title}
-            className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-300"
+            fill
+            className="object-cover group-hover:scale-110 transition-transform duration-300"
+            unoptimized
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
@@ -637,10 +639,13 @@ function OfferCard({ offer }: { offer: any }) {
         {/* Brand Logo or Gradient Background */}
         <div className="absolute inset-0 flex items-center justify-center">
           {brandLogo ? (
-            <img
+            <Image
               src={brandLogo}
               alt={brandName}
+              width={96}
+              height={96}
               className="w-24 h-24 object-contain opacity-30"
+              unoptimized
             />
           ) : (
             <Building2 className="h-20 w-20 text-muted-foreground/30" />

@@ -75,6 +75,10 @@ export async function POST(request: NextRequest) {
     const coinsToCharge = calculateCallCost(durationSeconds, ratePerMinute);
 
     // Charge coins from caller if they initiated and there's a rate
+    let callerDebited = false;
+    let debitedAmount = 0;
+    let callerFanBalance = 0;
+
     if (coinsToCharge > 0 && session.initiated_by !== session.recipient_id) {
       // Get caller's actor type
       const { data: callerActor } = await supabase
@@ -92,41 +96,69 @@ export async function POST(request: NextRequest) {
           .single() as { data: { coin_balance: number } | null };
 
         if (fan) {
-          await (supabase
+          callerFanBalance = fan.coin_balance;
+          debitedAmount = Math.min(fan.coin_balance, coinsToCharge);
+          const newBalance = Math.max(0, fan.coin_balance - coinsToCharge);
+
+          const { error: debitError } = await (supabase
             .from("fans") as any)
-            .update({ coin_balance: Math.max(0, fan.coin_balance - coinsToCharge) })
+            .update({ coin_balance: newBalance })
             .eq("id", session.initiated_by);
 
-          // Record transaction
-          const actionName = callType === "voice" ? "voice_call" : "video_call";
-          await (supabase.from("coin_transactions") as any).insert({
-            actor_id: session.initiated_by,
-            amount: -coinsToCharge,
-            action: actionName,
-            metadata: { session_id: sessionId, duration_seconds: durationSeconds, call_type: callType },
-          });
+          if (debitError) {
+            console.error("Call coin debit failed:", debitError);
+            // Continue to end the session without charging - coins were not taken
+          } else {
+            callerDebited = true;
+
+            // Record transaction
+            const actionName = callType === "voice" ? "voice_call" : "video_call";
+            const { error: debitLogError } = await (supabase.from("coin_transactions") as any).insert({
+              actor_id: session.initiated_by,
+              amount: -coinsToCharge,
+              action: actionName,
+              metadata: { session_id: sessionId, duration_seconds: durationSeconds, call_type: callType },
+            });
+
+            if (debitLogError) {
+              console.error("WARNING: Call debit transaction log failed:", debitLogError);
+            }
+          }
         }
       }
 
-      // Credit model
-      if (recipientModel) {
-        await (supabase.from("models") as any)
+      // Credit model (only if caller was successfully debited)
+      if (recipientModel && callerDebited) {
+        const { error: creditError } = await (supabase.from("models") as any)
           .update({ coin_balance: (recipientModel.coin_balance || 0) + coinsToCharge })
           .eq("user_id", recipientModel.user_id);
 
-        // Record model earnings
-        const receivedActionName = callType === "voice" ? "voice_call_received" : "video_call_received";
-        await (supabase.from("coin_transactions") as any).insert({
-          actor_id: session.recipient_id,
-          amount: coinsToCharge,
-          action: receivedActionName,
-          metadata: { session_id: sessionId, duration_seconds: durationSeconds, call_type: callType },
-        });
+        if (creditError) {
+          // ROLLBACK: Refund the caller since model credit failed
+          console.error("Call model credit failed, rolling back caller debit:", creditError);
+          await (supabase
+            .from("fans") as any)
+            .update({ coin_balance: callerFanBalance })
+            .eq("id", session.initiated_by);
+        } else {
+          // Record model earnings
+          const receivedActionName = callType === "voice" ? "voice_call_received" : "video_call_received";
+          const { error: creditLogError } = await (supabase.from("coin_transactions") as any).insert({
+            actor_id: session.recipient_id,
+            amount: coinsToCharge,
+            action: receivedActionName,
+            metadata: { session_id: sessionId, duration_seconds: durationSeconds, call_type: callType },
+          });
+
+          if (creditLogError) {
+            console.error("WARNING: Call credit transaction log failed:", creditLogError);
+          }
+        }
       }
     }
 
     // Update session
-    await (supabase.from("video_call_sessions") as any)
+    const { error: sessionUpdateError } = await (supabase.from("video_call_sessions") as any)
       .update({
         status: "ended",
         ended_at: now.toISOString(),
@@ -134,6 +166,10 @@ export async function POST(request: NextRequest) {
         coins_charged: coinsToCharge,
       })
       .eq("id", sessionId);
+
+    if (sessionUpdateError) {
+      console.error("CRITICAL: Session update failed after coin transfer. Session:", sessionId, "Coins charged:", coinsToCharge, "Error:", sessionUpdateError);
+    }
 
     // Add system message to conversation
     const minutes = Math.floor(durationSeconds / 60);

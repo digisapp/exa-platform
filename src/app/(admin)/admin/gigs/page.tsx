@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1238,10 +1239,13 @@ export default function AdminGigsPage() {
                 <div className="flex items-start gap-4">
                   {formData.cover_image_url ? (
                     <div className="relative">
-                      <img
+                      <Image
                         src={formData.cover_image_url}
                         alt="Gig flyer"
+                        width={128}
+                        height={160}
                         className="w-32 h-40 object-cover rounded-lg border"
+                        unoptimized
                       />
                       <Button
                         type="button"
@@ -1286,10 +1290,13 @@ export default function AdminGigsPage() {
                 <div className="flex flex-wrap gap-3">
                   {formData.gallery_images.map((url, index) => (
                     <div key={index} className="relative">
-                      <img
+                      <Image
                         src={url}
                         alt={`Gallery ${index + 1}`}
+                        width={96}
+                        height={96}
                         className="w-24 h-24 object-cover rounded-lg border"
+                        unoptimized
                       />
                       <Button
                         type="button"
@@ -1861,10 +1868,13 @@ export default function AdminGigsPage() {
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-pink-500/20 to-violet-500/20">
                       {app.model?.profile_photo_url ? (
-                        <img
+                        <Image
                           src={app.model.profile_photo_url}
                           alt={app.model.username}
+                          width={48}
+                          height={48}
                           className="w-full h-full object-cover"
+                          unoptimized
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-xl">
@@ -2156,10 +2166,13 @@ export default function AdminGigsPage() {
                 <div className="flex items-start gap-4 mt-2">
                   {workshopFormData.cover_image_url ? (
                     <div className="relative">
-                      <img
+                      <Image
                         src={workshopFormData.cover_image_url}
                         alt="Workshop flyer"
+                        width={128}
+                        height={176}
                         className="w-32 h-44 object-cover rounded-lg border"
+                        unoptimized
                       />
                       <Button
                         type="button"
@@ -2460,13 +2473,15 @@ export default function AdminGigsPage() {
             {/* Cover Image */}
             {formData.cover_image_url && (
               <div
-                className="aspect-[21/9] rounded-2xl overflow-hidden bg-gradient-to-br from-pink-500/20 to-violet-500/20 cursor-pointer hover:opacity-90 transition-opacity"
+                className="relative aspect-[21/9] rounded-2xl overflow-hidden bg-gradient-to-br from-pink-500/20 to-violet-500/20 cursor-pointer hover:opacity-90 transition-opacity"
                 onClick={() => setPreviewExpandedImage(formData.cover_image_url)}
               >
-                <img
+                <Image
                   src={formData.cover_image_url}
                   alt={formData.title}
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
+                  unoptimized
                 />
               </div>
             )}
@@ -2479,13 +2494,15 @@ export default function AdminGigsPage() {
                   {formData.gallery_images.map((url, index) => (
                     <div
                       key={index}
-                      className="aspect-square rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity bg-muted"
+                      className="relative aspect-square rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity bg-muted"
                       onClick={() => setPreviewExpandedImage(url)}
                     >
-                      <img
+                      <Image
                         src={url}
                         alt={`Gallery ${index + 1}`}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
+                        unoptimized
                       />
                     </div>
                   ))}
@@ -2627,10 +2644,13 @@ export default function AdminGigsPage() {
               <X className="h-4 w-4" />
             </Button>
             {previewExpandedImage && (
-              <img
+              <Image
                 src={previewExpandedImage}
                 alt="Expanded view"
+                width={1200}
+                height={900}
                 className="w-full h-auto max-h-[85vh] object-contain rounded-lg"
+                unoptimized
               />
             )}
           </div>

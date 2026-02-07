@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
             product_data: {
               name: `EXA X DIGIS Content Trip - Trip ${tripNumber}`,
               description: `${tripDates} • Las Terrenas, Dominican Republic • Your own bed`,
-              images: ["https://www.examodels.com/og-image.png"],
+              images: [`${process.env.NEXT_PUBLIC_APP_URL || "https://www.examodels.com"}/og-image.png`],
             },
             unit_amount: TRIP_PRICE_CENTS,
           },

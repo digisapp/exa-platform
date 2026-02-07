@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
-    const redirectUrl = "https://www.examodels.com/auth/callback?type=signup";
+    const redirectUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://www.examodels.com"}/auth/callback?type=signup`;
 
     // Use magiclink type to generate a link that will log the user in
     // This works for both confirming email and passwordless login

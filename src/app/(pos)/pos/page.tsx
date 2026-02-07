@@ -375,12 +375,14 @@ export default function POSPage() {
                     key={product.id}
                     className="p-3 cursor-pointer hover:border-primary transition-colors"
                   >
-                    <div className="aspect-square bg-muted rounded-lg mb-2 overflow-hidden">
+                    <div className="aspect-square bg-muted rounded-lg mb-2 overflow-hidden relative">
                       {product.images?.[0] ? (
-                        <img
+                        <Image
                           src={product.images[0]}
                           alt={product.name}
-                          className="w-full h-full object-cover"
+                          fill
+                          className="object-cover"
+                          unoptimized
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
@@ -460,12 +462,14 @@ export default function POSPage() {
               cart.map((item) => (
                 <Card key={item.id} className="p-3">
                   <div className="flex gap-3">
-                    <div className="w-12 h-12 bg-muted rounded overflow-hidden flex-shrink-0">
+                    <div className="relative w-12 h-12 bg-muted rounded overflow-hidden flex-shrink-0">
                       {item.product.images?.[0] ? (
-                        <img
+                        <Image
                           src={item.product.images[0]}
                           alt={item.product.name}
-                          className="w-full h-full object-cover"
+                          fill
+                          className="object-cover"
+                          unoptimized
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">

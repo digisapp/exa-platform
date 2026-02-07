@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
+import Image from "next/image";
 import { Camera, Loader2, X, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -379,10 +380,13 @@ export function PhotoUploader({
       >
         {preview ? (
           <div className="relative inline-block">
-            <img
+            <Image
               src={preview}
               alt="Preview"
+              width={400}
+              height={192}
               className="max-h-48 rounded-lg mx-auto"
+              unoptimized
             />
             {uploading ? (
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 rounded-lg">

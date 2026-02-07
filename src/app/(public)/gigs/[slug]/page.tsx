@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Navbar } from "@/components/layout/navbar";
 import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 import { Badge } from "@/components/ui/badge";
@@ -157,11 +158,13 @@ export default async function GigDetailPage({ params }: Props) {
           <div className="lg:col-span-2 space-y-6">
             {/* Cover Image - Ultra wide banner */}
             {gig.cover_image_url && (
-              <div className="aspect-[21/9] rounded-2xl overflow-hidden bg-gradient-to-br from-pink-500/20 to-violet-500/20">
-                <img
+              <div className="relative aspect-[21/9] rounded-2xl overflow-hidden bg-gradient-to-br from-pink-500/20 to-violet-500/20">
+                <Image
                   src={gig.cover_image_url}
                   alt={gig.title}
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
+                  unoptimized
                 />
               </div>
             )}

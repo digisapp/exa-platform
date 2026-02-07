@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Trash2, Star, Loader2, ImageOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -104,10 +105,12 @@ export function PortfolioGallery({
             key={photo.id}
             className="relative group aspect-square rounded-xl overflow-hidden bg-muted"
           >
-            <img
+            <Image
               src={photo.url || ""}
               alt="Portfolio photo"
-              className="w-full h-full object-cover transition-transform group-hover:scale-105"
+              fill
+              className="object-cover transition-transform group-hover:scale-105"
+              unoptimized
             />
 
             {/* Overlay on hover */}
@@ -175,10 +178,13 @@ export function PortfolioGallery({
 
           {confirmDelete && (
             <div className="my-4">
-              <img
+              <Image
                 src={confirmDelete.url || ""}
                 alt="Photo to delete"
+                width={400}
+                height={192}
                 className="max-h-48 mx-auto rounded-lg"
+                unoptimized
               />
             </div>
           )}

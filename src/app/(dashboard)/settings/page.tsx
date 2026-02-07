@@ -1161,10 +1161,13 @@ export default function ProfilePage() {
               className="relative group"
             >
               {model.profile_photo_url ? (
-                <img
+                <Image
                   src={model.profile_photo_url}
                   alt="Profile"
+                  width={80}
+                  height={80}
                   className="w-20 h-20 rounded-full object-cover border-2 border-pink-500/50 group-hover:border-pink-500 transition-colors"
+                  unoptimized
                 />
               ) : (
                 <div className="w-20 h-20 rounded-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center text-white text-2xl font-bold">

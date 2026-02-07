@@ -2,7 +2,7 @@ import { Resend } from "resend";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 
 const FROM_EMAIL = "EXA Models <noreply@examodels.com>";
-const BASE_URL = "https://www.examodels.com";
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.examodels.com";
 
 function getResendClient() {
   const apiKey = process.env.RESEND_API_KEY;
@@ -510,7 +510,7 @@ export async function sendContentPurchaseEmail({
 }) {
   try {
     const resend = getResendClient();
-    const dashboardUrl = "https://www.examodels.com/earnings";
+    const dashboardUrl = `${BASE_URL}/earnings`;
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
@@ -619,7 +619,7 @@ export async function sendTipReceivedEmail({
 }) {
   try {
     const resend = getResendClient();
-    const dashboardUrl = "https://www.examodels.com/earnings";
+    const dashboardUrl = `${BASE_URL}/earnings`;
 
     const messageHtml = message
       ? `
@@ -751,7 +751,7 @@ export async function sendBookingRequestEmail({
 }) {
   try {
     const resend = getResendClient();
-    const bookingsUrl = "https://www.examodels.com/bookings";
+    const bookingsUrl = `${BASE_URL}/bookings`;
     const formattedDate = new Date(eventDate).toLocaleDateString("en-US", {
       weekday: "long",
       month: "long",
@@ -905,8 +905,8 @@ export async function sendBookingAcceptedEmail({
 }) {
   try {
     const resend = getResendClient();
-    const bookingsUrl = "https://www.examodels.com/bookings";
-    const modelProfileUrl = `https://www.examodels.com/${modelUsername}`;
+    const bookingsUrl = `${BASE_URL}/bookings`;
+    const modelProfileUrl = `${BASE_URL}/${modelUsername}`;
     const formattedDate = new Date(eventDate).toLocaleDateString("en-US", {
       weekday: "long",
       month: "long",
@@ -1072,7 +1072,7 @@ export async function sendBookingDeclinedEmail({
 }) {
   try {
     const resend = getResendClient();
-    const modelsUrl = "https://www.examodels.com/models";
+    const modelsUrl = `${BASE_URL}/models`;
     const formattedDate = new Date(eventDate).toLocaleDateString("en-US", {
       weekday: "long",
       month: "long",
@@ -1233,7 +1233,7 @@ export async function sendVideoCallRequestEmail({
 }) {
   try {
     const resend = getResendClient();
-    const dashboardUrl = "https://www.examodels.com/chats";
+    const dashboardUrl = `${BASE_URL}/chats`;
     const callTypeLabel = callType === "voice" ? "voice" : "video";
     const emoji = callType === "voice" ? "🎙️" : "📱";
 
@@ -1512,7 +1512,7 @@ export async function sendGigApplicationAcceptedEmail({
 }) {
   try {
     const resend = getResendClient();
-    const dashboardUrl = "https://www.examodels.com/dashboard";
+    const dashboardUrl = `${BASE_URL}/dashboard`;
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
@@ -1667,7 +1667,7 @@ export async function sendCreatorHouseAcceptedEmail({
 }) {
   try {
     const resend = getResendClient();
-    const paymentUrl = `https://www.examodels.com/gigs/${gigSlug}?pay=true&application=${applicationId}`;
+    const paymentUrl = `${BASE_URL}/gigs/${gigSlug}?pay=true&application=${applicationId}`;
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
@@ -1811,7 +1811,7 @@ export async function sendCreatorHouseAcceptedEmail({
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center">
-                    <a href="https://www.examodels.com/dashboard" style="display: inline-block; background-color: #262626; color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 14px; border: 1px solid #404040;">
+                    <a href="${BASE_URL}/dashboard" style="display: inline-block; background-color: #262626; color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 14px; border: 1px solid #404040;">
                       View Dashboard
                     </a>
                   </td>
@@ -1861,7 +1861,7 @@ export async function sendGigApplicationRejectedEmail({
 }) {
   try {
     const resend = getResendClient();
-    const gigsUrl = "https://www.examodels.com/gigs";
+    const gigsUrl = `${BASE_URL}/gigs`;
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
@@ -2373,7 +2373,7 @@ export async function sendCoinBalanceReminderEmail({
 }) {
   try {
     const resend = getResendClient();
-    const walletUrl = "https://www.examodels.com/wallet";
+    const walletUrl = `${BASE_URL}/wallet`;
     const usdValue = (coinBalance * 0.10).toFixed(2);
 
     const { data, error } = await resend.emails.send({
@@ -2446,7 +2446,7 @@ export async function sendCoinBalanceReminderEmail({
                           </a>
                         </td>
                         <td style="padding-left: 10px;">
-                          <a href="https://www.examodels.com/messages" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                          <a href="${BASE_URL}/messages" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 16px;">
                             💕 Tip a Model
                           </a>
                         </td>
@@ -2512,8 +2512,8 @@ export async function sendProfileCompletionReminderEmail({
 }) {
   try {
     const resend = getResendClient();
-    const dashboardUrl = "https://www.examodels.com/dashboard";
-    const profileUrl = `https://www.examodels.com/${username}`;
+    const dashboardUrl = `${BASE_URL}/dashboard`;
+    const profileUrl = `${BASE_URL}/${username}`;
 
     const photoMessage = hasPhoto
       ? "We noticed your profile photo could use an upgrade! A high-quality photo helps you stand out to brands and get more bookings."
@@ -2717,8 +2717,8 @@ export async function sendMiamiSwimWeekInviteEmail({
 }) {
   try {
     const resend = getResendClient();
-    const signupUrl = "https://www.examodels.com";
-    const dashboardUrl = "https://www.examodels.com/dashboard";
+    const signupUrl = BASE_URL;
+    const dashboardUrl = `${BASE_URL}/dashboard`;
 
     const greeting = name ? `Hey ${name}!` : "Hey Beautiful!";
 
@@ -2886,7 +2886,7 @@ export async function sendMiamiSwimWeekInviteEmail({
           <tr>
             <td style="padding: 25px 30px; border-top: 1px solid #262626; text-align: center;">
               <p style="margin: 0 0 15px; color: #a1a1aa; font-size: 14px;">
-                <a href="https://www.examodels.com" style="color: #ec4899; text-decoration: none;">Visit EXA Models</a> |
+                <a href="${BASE_URL}" style="color: #ec4899; text-decoration: none;">Visit EXA Models</a> |
                 <a href="https://instagram.com/examodels" style="color: #ec4899; text-decoration: none;">Follow us on Instagram</a>
               </p>
               <p style="margin: 0; color: #71717a; font-size: 12px;">
@@ -2988,7 +2988,7 @@ export async function sendMiamiSwimWeekProfileReminderEmail({
                       Action Required
                     </p>
                     <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 15px; line-height: 1.6;">
-                      Login to your <a href="https://www.examodels.com" style="color: #ec4899; text-decoration: none;">examodels.com</a> account to update your profile settings.
+                      Login to your <a href="${BASE_URL}" style="color: #ec4899; text-decoration: none;">examodels.com</a> account to update your profile settings.
                     </p>
                     <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 15px; line-height: 1.6;">
                       To be considered for Miami Swim Week shows, designers need:

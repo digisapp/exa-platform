@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import {
   Dialog,
   DialogContent,
@@ -159,10 +160,12 @@ export function LibraryPicker({
                 muted
               />
             ) : (
-              <img
+              <Image
                 src={item.thumbnail || item.url}
                 alt=""
-                className="w-full h-full object-cover"
+                fill
+                className="object-cover"
+                unoptimized
               />
             )}
 
