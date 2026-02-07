@@ -243,68 +243,6 @@ export default async function HomePage() {
         {/* EXA Boost & EXA Bids Banners */}
         <section className="container px-8 md:px-16 py-8">
           <div className="grid md:grid-cols-2 gap-6">
-            {/* EXA Boost */}
-            <Link href="/boost" className="block group">
-              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-orange-500 via-pink-500 to-purple-600 p-[2px] h-full">
-                <div className="relative rounded-3xl bg-black/90 backdrop-blur-xl p-6 md:p-8 h-full">
-                  {/* Header */}
-                  <div className="flex items-center gap-4 mb-5">
-                    <div className="relative">
-                      <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-pink-500 rounded-2xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity" />
-                      <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center">
-                        <Flame className="h-7 w-7 text-white" />
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-xl md:text-2xl font-bold text-white">
-                        EXA Boost
-                      </h3>
-                      <p className="text-white/60 text-xs md:text-sm">
-                        Swipe, like & boost models to the top!
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Leaderboard Preview */}
-                  {leaderboardModels.length > 0 && (
-                    <div className="space-y-2 mb-5">
-                      {leaderboardModels.map((model: any, i: number) => (
-                        <div key={model.id} className="flex items-center gap-3 p-2 rounded-xl bg-white/5">
-                          <span className="w-5 text-center text-xs font-bold text-white/50">
-                            {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}`}
-                          </span>
-                          <Avatar className="h-8 w-8 border border-orange-500/30">
-                            <AvatarImage src={model.profile_photo_url} />
-                            <AvatarFallback className="bg-orange-500/20 text-orange-300 text-xs">
-                              {model.first_name?.[0] || "?"}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="text-sm text-white font-medium truncate flex-1">
-                            {model.first_name || model.username}
-                          </span>
-                          <span className="text-xs text-white/40">
-                            {(model.profile_views || 0).toLocaleString()} views
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* CTA */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-white/50">
-                      <Trophy className="h-4 w-4 text-yellow-400" />
-                      <span className="text-xs">Live Leaderboard</span>
-                    </div>
-                    <div className="px-5 py-2.5 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 text-white text-sm font-semibold group-hover:scale-105 transition-transform flex items-center gap-2">
-                      Play Now
-                      <ArrowRight className="h-4 w-4" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Link>
-
             {/* EXA Bids */}
             <Link href="/bids" className="block group">
               <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-pink-500 via-violet-500 to-indigo-600 p-[2px] h-full">
@@ -368,6 +306,68 @@ export default async function HomePage() {
                     </div>
                     <div className="px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 text-white text-sm font-semibold group-hover:scale-105 transition-transform flex items-center gap-2">
                       Place Bids
+                      <ArrowRight className="h-4 w-4" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Link>
+
+            {/* EXA Boost */}
+            <Link href="/boost" className="block group">
+              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-orange-500 via-pink-500 to-purple-600 p-[2px] h-full">
+                <div className="relative rounded-3xl bg-black/90 backdrop-blur-xl p-6 md:p-8 h-full">
+                  {/* Header */}
+                  <div className="flex items-center gap-4 mb-5">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-pink-500 rounded-2xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity" />
+                      <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center">
+                        <Flame className="h-7 w-7 text-white" />
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-xl md:text-2xl font-bold text-white">
+                        EXA Boost
+                      </h3>
+                      <p className="text-white/60 text-xs md:text-sm">
+                        Swipe, like & boost models to the top!
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Leaderboard Preview */}
+                  {leaderboardModels.length > 0 && (
+                    <div className="space-y-2 mb-5">
+                      {leaderboardModels.map((model: any, i: number) => (
+                        <div key={model.id} className="flex items-center gap-3 p-2 rounded-xl bg-white/5">
+                          <span className="w-5 text-center text-xs font-bold text-white/50">
+                            {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}`}
+                          </span>
+                          <Avatar className="h-8 w-8 border border-orange-500/30">
+                            <AvatarImage src={model.profile_photo_url} />
+                            <AvatarFallback className="bg-orange-500/20 text-orange-300 text-xs">
+                              {model.first_name?.[0] || "?"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm text-white font-medium truncate flex-1">
+                            {model.first_name || model.username}
+                          </span>
+                          <span className="text-xs text-white/40">
+                            {(model.profile_views || 0).toLocaleString()} views
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* CTA */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-white/50">
+                      <Trophy className="h-4 w-4 text-yellow-400" />
+                      <span className="text-xs">Live Leaderboard</span>
+                    </div>
+                    <div className="px-5 py-2.5 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 text-white text-sm font-semibold group-hover:scale-105 transition-transform flex items-center gap-2">
+                      Play Now
                       <ArrowRight className="h-4 w-4" />
                     </div>
                   </div>
