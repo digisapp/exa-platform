@@ -6,7 +6,8 @@ import { BRAND_SUBSCRIPTION_TIERS, BrandTier } from "@/lib/stripe-config";
 import { TICKET_CONFIG } from "@/lib/ticket-config";
 
 // Create admin client for webhook (no auth context)
-const supabaseAdmin = createServiceRoleClient();
+// as any needed: nullable fields and dynamic table access
+const supabaseAdmin: any = createServiceRoleClient();
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
@@ -172,7 +173,7 @@ export async function POST(request: NextRequest) {
       case "invoice.paid": {
         const invoice = event.data.object as Stripe.Invoice;
         // Grant monthly coins on successful invoice payment (renewal)
-        const subscriptionId = invoice.subscription;
+        const subscriptionId = (invoice as any).subscription;
         if (subscriptionId && invoice.billing_reason === "subscription_cycle") {
           await grantMonthlyCoins(invoice);
         }
@@ -183,7 +184,7 @@ export async function POST(request: NextRequest) {
         const invoice = event.data.object as Stripe.Invoice;
         console.error("Invoice payment failed:", invoice.id);
         // Update subscription status to past_due
-        const failedSubId = invoice.subscription;
+        const failedSubId = (invoice as any).subscription;
         if (failedSubId) {
           const subscriptionId = typeof failedSubId === "string"
             ? failedSubId
@@ -289,7 +290,7 @@ async function handleSubscriptionCheckout(session: Stripe.Checkout.Session) {
   }
 }
 
-async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
+async function handleSubscriptionUpdate(subscription: Stripe.Subscription & Record<string, any>) {
   const brandId = subscription.metadata?.brand_id;
   if (!brandId) {
     return;
@@ -297,7 +298,7 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
 
   const status = subscription.status;
   const tier = subscription.metadata?.tier as BrandTier;
-  const periodEnd = subscription.current_period_end;
+  const periodEnd = (subscription as any).current_period_end;
 
   await supabaseAdmin
     .from("brands")
@@ -311,7 +312,7 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
     .eq("id", brandId);
 }
 
-async function handleSubscriptionCanceled(subscription: Stripe.Subscription) {
+async function handleSubscriptionCanceled(subscription: Stripe.Subscription & Record<string, any>) {
   const brandId = subscription.metadata?.brand_id;
   if (!brandId) return;
 
@@ -330,7 +331,7 @@ async function handleSubscriptionCanceled(subscription: Stripe.Subscription) {
 }
 
 async function grantMonthlyCoins(invoice: Stripe.Invoice) {
-  const invoiceSubscription = invoice.subscription;
+  const invoiceSubscription = (invoice as any).subscription;
   const subscriptionId = typeof invoiceSubscription === "string"
     ? invoiceSubscription
     : invoiceSubscription?.id;

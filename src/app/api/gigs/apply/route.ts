@@ -12,7 +12,8 @@ const gigApplySchema = z.object({
 // POST - Apply to a gig
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    // as any needed: gig tables not fully in generated types
+    const supabase: any = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "This gig is no longer accepting applications" }, { status: 400 });
     }
 
-    if (gig.spots && gig.spots_filled >= gig.spots) {
+    if (gig.spots && (gig.spots_filled ?? 0) >= gig.spots) {
       return NextResponse.json({ error: "This gig is full" }, { status: 400 });
     }
 
@@ -117,7 +118,8 @@ export async function POST(request: NextRequest) {
 // DELETE - Withdraw application (only pending applications)
 export async function DELETE(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    // as any needed: gig tables not fully in generated types
+    const supabase: any = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {

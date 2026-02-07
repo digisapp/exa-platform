@@ -18,7 +18,8 @@ function secureShufflePop<T>(arr: T[], count: number): T[] {
 // GET - Fetch models for the swipe game
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    // as any needed: game tables not fully in generated types
+    const supabase: any = await createClient();
     const { searchParams } = new URL(request.url);
     const fingerprint = searchParams.get("fingerprint");
 
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
     const { data: sessionData, error: sessionError } = await supabase.rpc(
       "get_or_create_top_model_session",
       {
-        p_user_id: user?.id || null,
+        p_user_id: user?.id ?? "",
         p_fingerprint: fingerprint,
       }
     );
