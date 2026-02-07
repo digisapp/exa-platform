@@ -44,23 +44,27 @@ export async function POST(request: NextRequest) {
     );
 
     // Check if username is taken
-    const { data: existingModel } = await supabase
-      .from("models")
-      .select("id")
-      .eq("username", cleanUsername)
-      .single();
-
-    const { data: existingFan } = await supabase
-      .from("fans")
-      .select("id")
-      .eq("username", cleanUsername)
-      .single();
-
-    const { data: existingBrand } = await supabase
-      .from("brands")
-      .select("id")
-      .eq("username", cleanUsername)
-      .single();
+    const [
+      { data: existingModel },
+      { data: existingFan },
+      { data: existingBrand },
+    ] = await Promise.all([
+      supabase
+        .from("models")
+        .select("id")
+        .eq("username", cleanUsername)
+        .single(),
+      supabase
+        .from("fans")
+        .select("id")
+        .eq("username", cleanUsername)
+        .single(),
+      supabase
+        .from("brands")
+        .select("id")
+        .eq("username", cleanUsername)
+        .single(),
+    ]);
 
     if (existingModel || existingFan || existingBrand) {
       return NextResponse.json(

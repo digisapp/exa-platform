@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+import { escapeIlike } from "@/lib/utils";
 
 // Admin client for bypassing RLS
 const adminClient = createSupabaseClient(
@@ -69,7 +70,7 @@ export async function GET(request: NextRequest) {
 
       // If searching, first find matching fans/models
       if (search) {
-        const searchPattern = `%${search}%`;
+        const searchPattern = `%${escapeIlike(search)}%`;
 
         // Search fans by display_name - fans.id IS the actor_id directly
         const { data: matchingFans } = await adminClient

@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { sendModelApprovalEmail } from "@/lib/email";
+import { escapeIlike } from "@/lib/utils";
 
 // Update model application status (approve/reject)
 export async function PATCH(
@@ -87,7 +88,7 @@ export async function PATCH(
       if (application.instagram_username && !existingModelByUser) {
         const { data: igModel } = await (adminClient.from("models") as any)
           .select("id, username, user_id")
-          .ilike("instagram_name", application.instagram_username)
+          .ilike("instagram_name", escapeIlike(application.instagram_username))
           .single();
 
         if (igModel && !igModel.user_id) {
@@ -100,7 +101,7 @@ export async function PATCH(
       if (!existingModelByUser && !existingModelByInstagram && application.email) {
         const { data: emailModel } = await (adminClient.from("models") as any)
           .select("id, username, user_id")
-          .ilike("email", application.email)
+          .ilike("email", escapeIlike(application.email))
           .single();
 
         if (emailModel && !emailModel.user_id) {

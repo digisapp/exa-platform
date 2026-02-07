@@ -201,28 +201,26 @@ export default function WalletPage() {
         if (model) {
           setModelId(model.id);
 
-          // Load bank accounts
-          const { data: banks } = await supabase
-            .from("bank_accounts")
-            .select("*")
-            .eq("model_id", model.id) as { data: BankAccount[] | null };
+          // Load bank accounts, Payoneer account, and withdrawal requests in parallel
+          const [{ data: banks }, { data: payoneer }, { data: withdrawalData }] = await Promise.all([
+            supabase
+              .from("bank_accounts")
+              .select("*")
+              .eq("model_id", model.id) as unknown as Promise<{ data: BankAccount[] | null }>,
+            supabase
+              .from("payoneer_accounts")
+              .select("id, payee_id, status, can_receive_payments, registration_link, country")
+              .eq("model_id", model.id)
+              .single() as unknown as Promise<{ data: PayoneerAccount | null }>,
+            supabase
+              .from("withdrawal_requests")
+              .select("*")
+              .eq("model_id", model.id)
+              .order("requested_at", { ascending: false })
+              .limit(10) as unknown as Promise<{ data: WithdrawalRequest[] | null }>,
+          ]);
           setBankAccounts(banks || []);
-
-          // Load Payoneer account
-          const { data: payoneer } = await supabase
-            .from("payoneer_accounts")
-            .select("id, payee_id, status, can_receive_payments, registration_link, country")
-            .eq("model_id", model.id)
-            .single() as { data: PayoneerAccount | null };
           setPayoneerAccount(payoneer);
-
-          // Load withdrawal requests
-          const { data: withdrawalData } = await supabase
-            .from("withdrawal_requests")
-            .select("*")
-            .eq("model_id", model.id)
-            .order("requested_at", { ascending: false })
-            .limit(10) as { data: WithdrawalRequest[] | null };
           setWithdrawals(withdrawalData || []);
         }
       } else if (actor.type === "fan") {

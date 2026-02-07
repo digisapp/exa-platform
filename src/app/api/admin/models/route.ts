@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+import { escapeIlike } from "@/lib/utils";
 
 // Admin client for efficient RPC calls
 const getAdminClient = () => createSupabaseClient(
@@ -70,7 +71,7 @@ export async function GET(request: NextRequest) {
     // Helper function to apply filters to a query
     const applyFilters = (q: any) => {
       if (search) {
-        const escapedSearch = search.replace(/[%_\\]/g, "\\$&");
+        const escapedSearch = escapeIlike(search);
         const words = escapedSearch.trim().split(/\s+/).filter(w => w.length > 0);
 
         if (words.length === 1) {

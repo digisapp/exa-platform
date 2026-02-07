@@ -209,27 +209,28 @@ export default async function DashboardPage() {
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-  const { data: recentTips } = await (adminClient
-    .from("coin_transactions") as any)
-    .select("id, amount, created_at, metadata")
-    .eq("actor_id", actor.id)
-    .eq("action", "tip_received")
-    .gte("created_at", sevenDaysAgo.toISOString())
-    .order("created_at", { ascending: false })
-    .limit(10);
-
-  const { data: recentFollowers } = await (adminClient
-    .from("follows") as any)
-    .select("follower_id, created_at")
-    .eq("following_id", actor.id)
-    .gte("created_at", sevenDaysAgo.toISOString())
-    .order("created_at", { ascending: false })
-    .limit(10);
-
-  const { data: modelParticipations } = await (supabase
-    .from("conversation_participants") as any)
-    .select("conversation_id, last_read_at")
-    .eq("actor_id", actor.id);
+  const [
+    { data: recentTips },
+    { data: recentFollowers },
+    { data: modelParticipations },
+  ] = await Promise.all([
+    (adminClient.from("coin_transactions") as any)
+      .select("id, amount, created_at, metadata")
+      .eq("actor_id", actor.id)
+      .eq("action", "tip_received")
+      .gte("created_at", sevenDaysAgo.toISOString())
+      .order("created_at", { ascending: false })
+      .limit(10),
+    (adminClient.from("follows") as any)
+      .select("follower_id, created_at")
+      .eq("following_id", actor.id)
+      .gte("created_at", sevenDaysAgo.toISOString())
+      .order("created_at", { ascending: false })
+      .limit(10),
+    (supabase.from("conversation_participants") as any)
+      .select("conversation_id, last_read_at")
+      .eq("actor_id", actor.id),
+  ]);
 
   const conversationIds = modelParticipations?.map((p: any) => p.conversation_id) || [];
   const lastReadMap = new Map<string, string | null>((modelParticipations || []).map((p: any) => [p.conversation_id, p.last_read_at]));

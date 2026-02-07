@@ -3,6 +3,7 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { getModelId } from "@/lib/ids";
 import { NextRequest, NextResponse } from "next/server";
 import { processImage, isProcessableImage } from "@/lib/image-processing";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 // Admin client for database inserts - bypasses RLS
 const adminClient = createSupabaseClient(
@@ -26,6 +27,10 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    // Rate limit check
+    const rateLimitResult = await checkEndpointRateLimit(request, "uploads", user.id);
+    if (rateLimitResult) return rateLimitResult;
 
     // Get model ID
     const modelId = await getModelId(supabase, user.id);

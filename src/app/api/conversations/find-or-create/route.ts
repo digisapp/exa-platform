@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+import { escapeIlike } from "@/lib/utils";
 
 // Service role client for privileged operations (server-side only)
 const adminClient = createSupabaseClient(
@@ -55,7 +56,7 @@ export async function POST(request: NextRequest) {
     const { data: targetModel, error: modelError } = await supabase
       .from("models")
       .select("id, user_id, username")
-      .ilike("username", modelUsername.toLowerCase())
+      .ilike("username", escapeIlike(modelUsername.toLowerCase()))
       .maybeSingle();
 
     if (modelError) {

@@ -5,6 +5,7 @@ import {
   isPayoneerConfigured,
   PayoneerPayeeRegistration,
 } from "@/lib/payoneer";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 /**
  * POST /api/payoneer/register
@@ -29,6 +30,10 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    // Rate limit check
+    const rateLimitResult = await checkEndpointRateLimit(request, "financial", user.id);
+    if (rateLimitResult) return rateLimitResult;
 
     // Get model
     const { data: model } = (await supabase

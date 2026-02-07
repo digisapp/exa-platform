@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { escapeIlike } from "@/lib/utils";
 
 const supabase = createSupabaseClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -118,7 +119,7 @@ export async function POST(request: NextRequest) {
             const { data: existingBrand } = await supabase
               .from("shop_brands")
               .select("id")
-              .ilike("name", row.brand)
+              .ilike("name", escapeIlike(row.brand))
               .single();
 
             if (existingBrand) {

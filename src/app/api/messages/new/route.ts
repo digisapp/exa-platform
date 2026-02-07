@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 const DEFAULT_MESSAGE_COST = 10; // Default coins if model hasn't set a rate
 
@@ -14,6 +15,10 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    // Rate limit check
+    const rateLimitResult = await checkEndpointRateLimit(request, "messages", user.id);
+    if (rateLimitResult) return rateLimitResult;
 
     const body = await request.json();
     const { recipientId, initialMessage } = body;

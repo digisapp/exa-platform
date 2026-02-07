@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { getPayoneerClient, isPayoneerConfigured } from "@/lib/payoneer";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 // Admin client for bypassing RLS
 const adminClient = createSupabaseClient(
@@ -31,6 +32,10 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    // Rate limit check
+    const rateLimitResult = await checkEndpointRateLimit(request, "financial", user.id);
+    if (rateLimitResult) return rateLimitResult;
 
     // Admin check
     const { data: actor } = (await supabase

@@ -234,18 +234,16 @@ export default function ProfilePage() {
           setModel(modelData);
           setOriginalUsername(modelData.username || "");
 
-          // Fetch page views count
-          const { count: viewCount } = await (supabase
-            .from("page_views") as any)
-            .select("*", { count: "exact", head: true })
-            .eq("model_username", modelData.username);
+          // Fetch page views count and follower count in parallel
+          const [{ count: viewCount }, { count: fCount }] = await Promise.all([
+            (supabase.from("page_views") as any)
+              .select("*", { count: "exact", head: true })
+              .eq("model_username", modelData.username),
+            (supabase.from("follows") as any)
+              .select("*", { count: "exact", head: true })
+              .eq("following_id", actorData.id),
+          ]);
           setPageViews(viewCount || 0);
-
-          // Fetch follower count
-          const { count: fCount } = await (supabase
-            .from("follows") as any)
-            .select("*", { count: "exact", head: true })
-            .eq("following_id", actorData.id);
           setFollowerCount(fCount || 0);
         }
       } else if (actorData.type === "fan") {

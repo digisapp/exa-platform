@@ -18,6 +18,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PenSquare, Search, Loader2, Coins } from "lucide-react";
 import { toast } from "sonner";
 import type { Model } from "@/types/database";
+import { escapeIlike } from "@/lib/utils";
 
 interface NewMessageDialogProps {
   currentActorType?: string;
@@ -57,7 +58,7 @@ export function NewMessageDialog({
           .from("models")
           .select("*")
           .eq("is_approved", true)
-          .or(`username.ilike.%${search}%,first_name.ilike.%${search}%,last_name.ilike.%${search}%`)
+          .or(`username.ilike.%${escapeIlike(search)}%,first_name.ilike.%${escapeIlike(search)}%,last_name.ilike.%${escapeIlike(search)}%`)
           .limit(10);
 
         setModels(data || []);

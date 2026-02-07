@@ -57,25 +57,29 @@ export default async function FollowersPage() {
   // Get follower details based on their type
   const followerActors = follows?.map((f: any) => f.actors).filter(Boolean) || [];
 
-  // Get fan details
+  // Get fan, model, and brand details in parallel
   const fanActorIds = followerActors.filter((a: any) => a.type === "fan").map((a: any) => a.id);
-  const { data: fans } = fanActorIds.length > 0
-    ? await supabase.from("fans").select("id, display_name, avatar_url").in("id", fanActorIds)
-    : { data: [] };
-  const fansMap = new Map((fans || []).map((f: any) => [f.id, f]));
-
-  // Get model details (models following models)
   const modelUserIds = followerActors.filter((a: any) => a.type === "model").map((a: any) => a.user_id);
-  const { data: models } = modelUserIds.length > 0
-    ? await supabase.from("models").select("user_id, username, first_name, last_name, profile_photo_url").in("user_id", modelUserIds)
-    : { data: [] };
-  const modelsMap = new Map((models || []).map((m: any) => [m.user_id, m]));
-
-  // Get brand details
   const brandActorIds = followerActors.filter((a: any) => a.type === "brand").map((a: any) => a.id);
-  const { data: brands } = brandActorIds.length > 0
-    ? await (supabase.from("brands") as any).select("id, company_name, logo_url").in("id", brandActorIds)
-    : { data: [] };
+
+  const [
+    { data: fans },
+    { data: models },
+    { data: brands },
+  ] = await Promise.all([
+    fanActorIds.length > 0
+      ? supabase.from("fans").select("id, display_name, avatar_url").in("id", fanActorIds)
+      : Promise.resolve({ data: [] }),
+    modelUserIds.length > 0
+      ? supabase.from("models").select("user_id, username, first_name, last_name, profile_photo_url").in("user_id", modelUserIds)
+      : Promise.resolve({ data: [] }),
+    brandActorIds.length > 0
+      ? (supabase.from("brands") as any).select("id, company_name, logo_url").in("id", brandActorIds)
+      : Promise.resolve({ data: [] }),
+  ]);
+
+  const fansMap = new Map((fans || []).map((f: any) => [f.id, f]));
+  const modelsMap = new Map((models || []).map((m: any) => [m.user_id, m]));
   const brandsMap = new Map((brands || []).map((b: any) => [b.id, b]));
 
   // Build enriched followers list

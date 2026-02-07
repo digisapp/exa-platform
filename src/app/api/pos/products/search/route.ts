@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { escapeIlike } from "@/lib/utils";
 
 const supabase = createSupabaseClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest) {
         )
       `)
       .eq("is_active", true)
-      .or(`name.ilike.%${query}%,shop_product_variants.sku.ilike.%${query}%`)
+      .or(`name.ilike.%${escapeIlike(query)}%,shop_product_variants.sku.ilike.%${escapeIlike(query)}%`)
       .limit(20);
 
     if (error) {

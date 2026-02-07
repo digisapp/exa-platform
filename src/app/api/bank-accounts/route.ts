@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { encryptBankAccount } from "@/lib/encryption";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 interface BankAccountRow {
   id: string;
@@ -21,6 +22,10 @@ export async function POST(request: Request) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    // Rate limit check
+    const rateLimitResult = await checkEndpointRateLimit(request, "financial", user.id);
+    if (rateLimitResult) return rateLimitResult;
 
     // Get model ID
     const { data: model } = await supabase

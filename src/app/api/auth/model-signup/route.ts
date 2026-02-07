@@ -3,6 +3,7 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { sendPasswordResetEmail as sendCustomPasswordResetEmail } from "@/lib/email";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { escapeIlike } from "@/lib/utils";
 import { z } from "zod";
 
 // Zod schema for model signup validation
@@ -157,7 +158,7 @@ export async function POST(request: NextRequest) {
       const { data: existingModelByInsta } = await (adminClient
         .from("models") as any)
         .select("id, email, user_id")
-        .ilike("instagram_name", normalizedInstagram)
+        .ilike("instagram_name", escapeIlike(normalizedInstagram))
         .not("user_id", "is", null)  // Only check claimed models
         .single();
 
@@ -172,7 +173,7 @@ export async function POST(request: NextRequest) {
       const { data: existingAppByInsta } = await (adminClient
         .from("model_applications") as any)
         .select("id, email")
-        .ilike("instagram_username", normalizedInstagram)
+        .ilike("instagram_username", escapeIlike(normalizedInstagram))
         .eq("status", "pending")
         .single();
 

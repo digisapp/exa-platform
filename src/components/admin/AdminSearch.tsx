@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Search, X, Loader2, Coins } from "lucide-react";
 import Link from "next/link";
+import { escapeIlike } from "@/lib/utils";
 
 interface SearchResult {
   id: string;
@@ -43,7 +44,7 @@ export function AdminSearch({ type, placeholder }: AdminSearchProps) {
       const { data: models } = await supabase
         .from("models")
         .select("id, username, first_name, last_name, email, coin_balance, is_approved, created_at")
-        .or(`username.ilike.%${searchQuery}%,first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`)
+        .or(`username.ilike.%${escapeIlike(searchQuery)}%,first_name.ilike.%${escapeIlike(searchQuery)}%,last_name.ilike.%${escapeIlike(searchQuery)}%,email.ilike.%${escapeIlike(searchQuery)}%`)
         .limit(10) as { data: any[] | null };
 
       if (models) {
@@ -66,7 +67,7 @@ export function AdminSearch({ type, placeholder }: AdminSearchProps) {
       const { data: fans } = await supabase
         .from("fans")
         .select("id, display_name, email, coin_balance, created_at")
-        .or(`display_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`)
+        .or(`display_name.ilike.%${escapeIlike(searchQuery)}%,email.ilike.%${escapeIlike(searchQuery)}%`)
         .limit(10) as { data: any[] | null };
 
       if (fans) {

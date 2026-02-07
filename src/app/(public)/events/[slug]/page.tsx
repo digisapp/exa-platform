@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { escapeIlike } from "@/lib/utils";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -103,7 +104,7 @@ export default async function EventPage({ params, searchParams }: Props) {
   const { data: eventGigs } = await supabase
     .from("gigs")
     .select("id")
-    .or(`event_id.eq.${event.id},title.ilike.%${event.short_name || event.name}%`) as { data: { id: string }[] | null };
+    .or(`event_id.eq.${event.id},title.ilike.%${escapeIlike(event.short_name || event.name)}%`) as { data: { id: string }[] | null };
 
   const gigIds = eventGigs?.map(g => g.id) || [];
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { escapeIlike } from "@/lib/utils";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -479,7 +480,7 @@ export default function AdminCommunityPage() {
     let query = (supabase.from("fans") as any)
       .select(`id, user_id, display_name, email, avatar_url, coin_balance, total_coins_purchased, state, is_suspended, created_at`, { count: "exact" });
 
-    if (fansSearch) query = query.or(`display_name.ilike.%${fansSearch}%,email.ilike.%${fansSearch}%`);
+    if (fansSearch) query = query.or(`display_name.ilike.%${escapeIlike(fansSearch)}%,email.ilike.%${escapeIlike(fansSearch)}%`);
     if (fansStateFilter !== "all") query = query.eq("state", fansStateFilter);
     if (fansStatusFilter !== "all") query = query.eq("is_suspended", fansStatusFilter === "suspended");
 

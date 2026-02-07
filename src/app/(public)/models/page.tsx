@@ -8,6 +8,7 @@ import { ModelCard } from "@/components/models/model-card";
 import { ModelsGrid } from "@/components/models/models-grid";
 import { BrandPaywallWrapper } from "@/components/brands/BrandPaywallWrapper";
 import { FanCoinGateWrapper } from "@/components/fans/FanCoinGate";
+import { escapeIlike } from "@/lib/utils";
 
 // Cache model list for 2 minutes - balance between freshness and performance
 export const revalidate = 120;
@@ -56,7 +57,7 @@ export default async function ModelsPage({
 
   // Search
   if (params.q) {
-    query = query.or(`username.ilike.%${params.q}%,first_name.ilike.%${params.q}%,last_name.ilike.%${params.q}%`);
+    query = query.or(`username.ilike.%${escapeIlike(params.q)}%,first_name.ilike.%${escapeIlike(params.q)}%,last_name.ilike.%${escapeIlike(params.q)}%`);
   }
 
   // Filter by state

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { escapeIlike } from "@/lib/utils";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -140,7 +141,7 @@ export default function AdminFansPage() {
 
     // Apply filters
     if (search) {
-      query = query.or(`display_name.ilike.%${search}%,email.ilike.%${search}%`);
+      query = query.or(`display_name.ilike.%${escapeIlike(search)}%,email.ilike.%${escapeIlike(search)}%`);
     }
 
     if (stateFilter !== "all") {

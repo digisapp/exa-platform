@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { escapeIlike } from "@/lib/utils";
 
 const supabase = createSupabaseClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -45,7 +46,7 @@ export async function GET(
           price_override,
           product_id
         `)
-        .ilike("sku", sku)
+        .ilike("sku", escapeIlike(sku))
         .limit(1)
         .single();
 
