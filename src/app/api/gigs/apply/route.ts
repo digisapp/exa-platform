@@ -2,6 +2,11 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
+
+const gigApplySchema = z.object({
+  gigId: z.string().uuid(),
+});
 
 // POST - Apply to a gig
 export async function POST(request: NextRequest) {
@@ -13,11 +18,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { gigId } = await request.json();
-
-    if (!gigId) {
-      return NextResponse.json({ error: "Gig ID required" }, { status: 400 });
+    const body = await request.json();
+    const parsed = gigApplySchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
     }
+    const { gigId } = parsed.data;
 
     // Get the model's ID (models are linked by user_id, not actor)
     const { data: model } = await (supabase

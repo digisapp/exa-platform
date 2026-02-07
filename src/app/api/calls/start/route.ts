@@ -2,8 +2,15 @@ import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { generateRoomName, generateToken } from "@/lib/livekit";
 import { sendVideoCallRequestEmail } from "@/lib/email";
+import { z } from "zod";
 
 export type CallType = "video" | "voice";
+
+const startCallSchema = z.object({
+  recipientUsername: z.string().min(1).optional(),
+  conversationId: z.string().uuid().optional(),
+  callType: z.enum(["video", "voice"]).optional().default("video"),
+});
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,11 +21,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { recipientUsername, conversationId: providedConversationId, callType = "video" } = await request.json() as {
-      recipientUsername?: string;
-      conversationId?: string;
-      callType?: CallType;
-    };
+    const body = await request.json();
+    const parsed = startCallSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+    const { recipientUsername, conversationId: providedConversationId, callType } = parsed.data;
 
     if (!recipientUsername && !providedConversationId) {
       return NextResponse.json({ error: "Recipient username or conversation ID required" }, { status: 400 });

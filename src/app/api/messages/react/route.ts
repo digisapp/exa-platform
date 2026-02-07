@@ -1,8 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 // Allowed emojis for reactions
-const ALLOWED_EMOJIS = ["❤️", "😂", "😮", "😢", "😡", "👍"];
+const ALLOWED_EMOJIS = ["❤️", "😂", "😮", "😢", "😡", "👍"] as const;
+
+const reactSchema = z.object({
+  messageId: z.string().uuid(),
+  emoji: z.enum(ALLOWED_EMOJIS),
+});
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,22 +23,14 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { messageId, emoji } = body;
-
-    if (!messageId || !emoji) {
+    const parsed = reactSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Message ID and emoji required" },
+        { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
-
-    // Validate emoji
-    if (!ALLOWED_EMOJIS.includes(emoji)) {
-      return NextResponse.json(
-        { error: "Invalid emoji" },
-        { status: 400 }
-      );
-    }
+    const { messageId, emoji } = parsed.data;
 
     // Get actor
     const { data: actor } = await supabase

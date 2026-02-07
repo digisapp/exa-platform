@@ -2,6 +2,11 @@ import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { sendModelApprovalEmail } from "@/lib/email";
 import { logAdminAction, AdminActions } from "@/lib/admin-audit";
+import { z } from "zod";
+
+const modelPatchSchema = z.object({
+  is_approved: z.boolean(),
+});
 
 async function isAdmin(supabase: any, userId: string) {
   const { data: actor } = await supabase
@@ -30,11 +35,14 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { is_approved } = body;
-
-    if (typeof is_approved !== "boolean") {
-      return NextResponse.json({ error: "Invalid is_approved value" }, { status: 400 });
+    const parsed = modelPatchSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
     }
+    const { is_approved } = parsed.data;
 
     // Get current model data before update
     const { data: model } = await (supabase

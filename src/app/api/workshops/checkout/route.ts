@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { stripe } from "@/lib/stripe";
+import { z } from "zod";
+
+const workshopCheckoutSchema = z.object({
+  workshopId: z.string().uuid(),
+  quantity: z.number().int().min(1).max(5),
+  buyerEmail: z.string().email(),
+  buyerName: z.string().min(1),
+  buyerPhone: z.string().optional(),
+});
 
 // Admin client for bypassing RLS
 const adminClient = createSupabaseClient(
@@ -12,22 +21,15 @@ const MAX_QUANTITY_PER_ORDER = 5;
 
 export async function POST(request: NextRequest) {
   try {
-    const { workshopId, quantity, buyerEmail, buyerName, buyerPhone } = await request.json();
-
-    // Validate input
-    if (!workshopId || !quantity || !buyerEmail || !buyerName) {
+    const body = await request.json();
+    const parsed = workshopCheckoutSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Missing required fields: workshopId, quantity, buyerEmail, buyerName" },
+        { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
-
-    if (quantity < 1 || quantity > MAX_QUANTITY_PER_ORDER) {
-      return NextResponse.json(
-        { error: `Quantity must be between 1 and ${MAX_QUANTITY_PER_ORDER}` },
-        { status: 400 }
-      );
-    }
+    const { workshopId, quantity, buyerEmail, buyerName, buyerPhone } = parsed.data;
 
     // Get workshop info
     const { data: workshop, error: workshopError } = await (adminClient

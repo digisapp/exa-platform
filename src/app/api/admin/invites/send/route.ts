@@ -1,6 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { sendModelInviteEmail } from "@/lib/email";
+import { z } from "zod";
+
+const sendInvitesSchema = z.object({
+  modelIds: z.array(z.string().uuid()).optional(),
+  sendAll: z.boolean().optional(),
+});
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.examodels.com";
 
@@ -102,7 +108,14 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { modelIds, sendAll } = body;
+    const parsed = sendInvitesSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+    const { modelIds, sendAll } = parsed.data;
 
     let modelsToInvite: { id: string; email: string; first_name: string; invite_token: string }[] = [];
 

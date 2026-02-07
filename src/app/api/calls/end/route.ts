@@ -1,6 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { calculateCallCost } from "@/lib/livekit";
+import { z } from "zod";
+
+const endCallSchema = z.object({
+  sessionId: z.string().uuid(),
+});
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,11 +16,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { sessionId } = await request.json();
-
-    if (!sessionId) {
-      return NextResponse.json({ error: "Session ID required" }, { status: 400 });
+    const body = await request.json();
+    const parsed = endCallSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
     }
+    const { sessionId } = parsed.data;
 
     // Get user's actor
     const { data: actor } = await supabase

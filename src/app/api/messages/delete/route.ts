@@ -1,5 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+
+const deleteMessageSchema = z.object({
+  messageId: z.string().uuid(),
+});
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,14 +19,14 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { messageId } = body;
-
-    if (!messageId) {
+    const parsed = deleteMessageSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Message ID required" },
+        { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
+    const { messageId } = parsed.data;
 
     // Get sender's actor info
     const { data: sender } = await supabase

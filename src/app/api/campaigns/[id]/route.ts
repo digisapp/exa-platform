@@ -1,6 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { z } from "zod";
+
+const campaignUpdateSchema = z.object({
+  name: z.string().min(1).optional(),
+  description: z.string().nullish(),
+  color: z.string().optional(),
+});
 
 // GET /api/campaigns/[id] - Get single campaign with models
 export async function GET(
@@ -98,7 +105,14 @@ export async function PUT(
   }
 
   const body = await request.json();
-  const { name, description, color } = body;
+  const parsed = campaignUpdateSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
+      { status: 400 }
+    );
+  }
+  const { name, description, color } = parsed.data;
 
   const updates: any = { updated_at: new Date().toISOString() };
   if (name !== undefined) updates.name = name.trim();

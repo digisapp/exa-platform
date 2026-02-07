@@ -1,5 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+
+const reserveUsernameSchema = z.object({
+  username: z.string().min(1),
+  reason: z.string().min(1),
+  reserved_for: z.string().nullish(),
+  notes: z.string().nullish(),
+});
 
 // Reserved paths that conflict with app routes
 const RESERVED_PATHS = [
@@ -127,14 +135,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { username, reason, reserved_for, notes } = await request.json();
-
-    if (!username || !reason) {
+    const body = await request.json();
+    const parsed = reserveUsernameSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Username and reason are required" },
+        { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
+    const { username, reason, reserved_for, notes } = parsed.data;
 
     const { error } = await (supabase
       .from("reserved_usernames") as any)

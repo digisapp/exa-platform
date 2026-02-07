@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { stripe } from "@/lib/stripe";
+import { z } from "zod";
+
+const tripCheckoutSchema = z.object({
+  gigId: z.string().uuid(),
+  modelId: z.string().uuid(),
+  tripNumber: z.union([z.literal(1), z.literal(2)]),
+});
 
 const TRIP_PRICE_CENTS = 140000; // $1,400
 
@@ -14,22 +21,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { gigId, modelId, tripNumber } = await request.json();
-
-    // Validate input
-    if (!gigId || !modelId || !tripNumber) {
+    const body = await request.json();
+    const parsed = tripCheckoutSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
-
-    if (tripNumber !== 1 && tripNumber !== 2) {
-      return NextResponse.json(
-        { error: "Invalid trip number" },
-        { status: 400 }
-      );
-    }
+    const { gigId, modelId, tripNumber } = parsed.data;
 
     // Verify model belongs to user
     const { data: model } = await supabase

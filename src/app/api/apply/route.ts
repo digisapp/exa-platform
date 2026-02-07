@@ -1,5 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+
+const applySchema = z.object({
+  instagram_username: z.string().min(1).nullish(),
+  tiktok_username: z.string().min(1).nullish(),
+  phone: z.string().nullish(),
+  date_of_birth: z.string().nullish(),
+  height: z.string().nullish(),
+});
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,7 +21,14 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { instagram_username, tiktok_username, phone, date_of_birth, height } = body;
+    const parsed = applySchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+    const { instagram_username, tiktok_username, phone, date_of_birth, height } = parsed.data;
 
     // Validate - need at least one social handle
     if (!instagram_username && !tiktok_username) {

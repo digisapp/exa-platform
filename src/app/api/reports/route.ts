@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 const REPORT_REASONS = [
   "harassment",
@@ -36,15 +37,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Only models can submit reports" }, { status: 403 });
     }
 
-    const { reportedActorId, reason, details } = await request.json();
-
-    if (!reportedActorId) {
-      return NextResponse.json({ error: "reportedActorId required" }, { status: 400 });
+    const body = await request.json();
+    const reportSchema = z.object({
+      reportedActorId: z.string().uuid(),
+      reason: z.enum(REPORT_REASONS as [string, ...string[]]),
+      details: z.string().nullish(),
+    });
+    const parsed = reportSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
     }
-
-    if (!reason || !REPORT_REASONS.includes(reason)) {
-      return NextResponse.json({ error: "Valid reason required" }, { status: 400 });
-    }
+    const { reportedActorId, reason, details } = parsed.data;
 
     // Check if reported user exists
     const { data: reportedActor } = await supabase

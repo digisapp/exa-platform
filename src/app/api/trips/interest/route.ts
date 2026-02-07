@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { z } from "zod";
+
+const tripInterestSchema = z.object({
+  gigId: z.string().uuid(),
+  modelId: z.string().uuid(),
+  tripNumber: z.number().int().optional(),
+});
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,15 +18,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { gigId, modelId, tripNumber } = await request.json();
-
-    // Validate input
-    if (!gigId || !modelId) {
+    const body = await request.json();
+    const parsed = tripInterestSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
+    const { gigId, modelId, tripNumber } = parsed.data;
 
     // Verify model belongs to user
     const { data: model } = await supabase

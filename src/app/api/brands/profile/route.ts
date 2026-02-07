@@ -1,6 +1,16 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { z } from "zod";
+
+const brandProfileSchema = z.object({
+  company_name: z.string().min(1, "Company name is required"),
+  contact_name: z.string().nullish(),
+  username: z.string().min(3).max(30).nullish(),
+  bio: z.string().nullish(),
+  website: z.string().nullish(),
+  phone: z.string().nullish(),
+});
 
 const adminClient = createSupabaseClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -28,21 +38,17 @@ export async function PUT(request: Request) {
   }
 
   const body = await request.json();
-  const { company_name, contact_name, username, bio, website, phone } = body;
-
-  // Validate required fields
-  if (!company_name || company_name.trim().length === 0) {
-    return NextResponse.json({ error: "Company name is required" }, { status: 400 });
+  const parsed = brandProfileSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
+      { status: 400 }
+    );
   }
+  const { company_name, contact_name, username, bio, website, phone } = parsed.data;
 
   // Validate username if provided
   if (username) {
-    if (username.length < 3) {
-      return NextResponse.json({ error: "Username must be at least 3 characters" }, { status: 400 });
-    }
-    if (username.length > 30) {
-      return NextResponse.json({ error: "Username must be 30 characters or less" }, { status: 400 });
-    }
 
     // Check if username is taken (by another brand)
     const { data: existingBrand } = await (adminClient

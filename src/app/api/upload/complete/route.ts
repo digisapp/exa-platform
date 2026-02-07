@@ -2,6 +2,19 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { getModelId } from "@/lib/ids";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+
+const uploadCompleteSchema = z.object({
+  storagePath: z.string().min(1),
+  bucket: z.string().min(1),
+  uploadMeta: z.object({
+    isVideo: z.boolean().optional(),
+    isAudio: z.boolean().optional(),
+    title: z.string().nullish(),
+    fileType: z.string().min(1),
+    fileSize: z.number().int().nonnegative(),
+  }),
+});
 
 // Admin client for verifying uploads exist
 const adminClient = createSupabaseClient(
@@ -40,14 +53,15 @@ export async function POST(request: NextRequest) {
 
     const actorId = actor.id;
 
-    const { storagePath, bucket, uploadMeta } = await request.json();
-
-    if (!storagePath || !bucket || !uploadMeta) {
+    const body = await request.json();
+    const parsed = uploadCompleteSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
+    const { storagePath, bucket, uploadMeta } = parsed.data;
 
     // Security: Verify the storage path belongs to this user
     if (!storagePath.startsWith(`${modelId}/`)) {
