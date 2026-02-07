@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
       .from("actors")
       .select("id, type")
       .eq("user_id", user.id)
-      .single() as { data: { id: string; type: string } | null };
+      .single();
 
     if (!actor) {
       return NextResponse.json({ error: "Actor not found" }, { status: 404 });
@@ -63,15 +63,15 @@ export async function GET(request: NextRequest) {
         .from("models")
         .select("id")
         .eq("user_id", user.id)
-        .single() as { data: { id: string } | null };
+        .single();
 
       if (!model) {
         return NextResponse.json({ error: "Model not found" }, { status: 404 });
       }
 
       // Get campaigns the model is in - use adminClient to bypass RLS
-      const { data: campaignItems } = await (adminClient
-        .from("campaign_models") as any)
+      const { data: campaignItems } = await adminClient
+        .from("campaign_models")
         .select("campaign_id")
         .eq("model_id", model.id);
 
@@ -82,8 +82,8 @@ export async function GET(request: NextRequest) {
       }
 
       // Get offers for those campaigns with brand info - use adminClient
-      const { data: offers } = await (adminClient
-        .from("offers") as any)
+      const { data: offers } = await adminClient
+        .from("offers")
         .select(`
           *,
           brand:actors!brand_id(
@@ -100,8 +100,8 @@ export async function GET(request: NextRequest) {
       const offerIds = offers?.map((o: any) => o.id) || [];
       let responses: any[] = [];
       if (offerIds.length > 0) {
-        const { data: respData } = await (adminClient
-          .from("offer_responses") as any)
+        const { data: respData } = await adminClient
+          .from("offer_responses")
           .select("offer_id, status")
           .eq("model_id", model.id)
           .in("offer_id", offerIds);
@@ -120,8 +120,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ offers: offersWithResponse });
     } else if (actor.type === "brand") {
       // Get brand's offers with model responses
-      let query = (supabase
-        .from("offers") as any)
+      let query = supabase
+        .from("offers")
         .select(`
           *,
           campaign:campaigns(id, name),
@@ -147,8 +147,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ offers: offers || [] });
     } else if (actor.type === "admin") {
       // Admins see all
-      const { data: offers } = await (supabase
-        .from("offers") as any)
+      const { data: offers } = await supabase
+        .from("offers")
         .select(`
           *,
           brand:actors!brand_id(
@@ -183,7 +183,7 @@ export async function POST(request: NextRequest) {
       .from("actors")
       .select("id, type")
       .eq("user_id", user.id)
-      .single() as { data: { id: string; type: string } | null };
+      .single();
 
     const isAdmin = actor?.type === "admin";
     const isBrand = actor?.type === "brand";
@@ -194,8 +194,8 @@ export async function POST(request: NextRequest) {
 
     // Check subscription for brands (admins bypass this)
     if (isBrand) {
-      const { data: brand } = await (supabase
-        .from("brands") as any)
+      const { data: brand } = await supabase
+        .from("brands")
         .select("subscription_tier, subscription_status")
         .eq("id", actor.id)
         .single();
@@ -239,8 +239,8 @@ export async function POST(request: NextRequest) {
     } = validationResult.data;
 
     // Get the campaign
-    const { data: campaign } = await (adminClient
-      .from("campaigns") as any)
+    const { data: campaign } = await adminClient
+      .from("campaigns")
       .select("id, name, brand_id")
       .eq("id", campaign_id)
       .single();
@@ -258,8 +258,8 @@ export async function POST(request: NextRequest) {
     const offerBrandId = campaign.brand_id;
 
     // Create the offer
-    const { data: offer, error } = await (adminClient
-      .from("offers") as any)
+    const { data: offer, error } = await adminClient
+      .from("offers")
       .insert({
         brand_id: offerBrandId,
         campaign_id,
@@ -286,8 +286,8 @@ export async function POST(request: NextRequest) {
     if (error) throw error;
 
     // Get models in this campaign to create pending responses
-    const { data: campaignModels } = await (supabase
-      .from("campaign_models") as any)
+    const { data: campaignModels } = await supabase
+      .from("campaign_models")
       .select("model_id")
       .eq("campaign_id", campaign_id);
 
@@ -298,11 +298,11 @@ export async function POST(request: NextRequest) {
         status: "pending",
       }));
 
-      await (adminClient.from("offer_responses") as any).insert(responses);
+      await adminClient.from("offer_responses").insert(responses);
 
       // Get brand name for email
-      const { data: brandData } = await (adminClient
-        .from("brands") as any)
+      const { data: brandData } = await adminClient
+        .from("brands")
         .select("company_name")
         .eq("id", offerBrandId)
         .single();
@@ -310,8 +310,8 @@ export async function POST(request: NextRequest) {
 
       // Get model details for sending emails
       const modelIds = campaignModels.map((item: any) => item.model_id);
-      const { data: models } = await (adminClient
-        .from("models") as any)
+      const { data: models } = await adminClient
+        .from("models")
         .select("id, first_name, username, user_id")
         .in("id", modelIds);
 
@@ -341,7 +341,7 @@ export async function POST(request: NextRequest) {
           if (email) {
             sendOfferReceivedEmail({
               to: email,
-              modelName: model.first_name || model.username,
+              modelName: model.first_name || model.username || "Model",
               brandName,
               offerTitle: title,
               eventDate: event_date ? new Date(event_date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }) : "",

@@ -41,8 +41,8 @@ export async function GET(
   }
 
   // Get campaign with models
-  const { data: campaign, error } = await (supabase
-    .from("campaigns") as any)
+  const { data: campaign, error } = await supabase
+    .from("campaigns")
     .select(`
       *,
       campaign_models (
@@ -135,8 +135,8 @@ export async function PUT(
   // Use service role client to bypass RLS for update
   const adminClient = createServiceRoleClient();
 
-  const { data: campaign, error } = await (adminClient
-    .from("campaigns") as any)
+  const { data: campaign, error } = await adminClient
+    .from("campaigns")
     .update(updates)
     .eq("id", id)
     .eq("brand_id", actor.id)
@@ -190,8 +190,8 @@ export async function DELETE(
   // Use service role client to bypass RLS for delete
   const adminClient = createServiceRoleClient();
 
-  const { error } = await (adminClient
-    .from("campaigns") as any)
+  const { error } = await adminClient
+    .from("campaigns")
     .delete()
     .eq("id", id)
     .eq("brand_id", actor.id);

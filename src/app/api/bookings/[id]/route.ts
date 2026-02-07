@@ -39,7 +39,7 @@ export async function GET(
     }
 
     // Get actor for authorization check
-    const { data: actor } = await (supabase.from("actors") as any)
+    const { data: actor } = await supabase.from("actors")
       .select("id, type")
       .eq("user_id", user.id)
       .maybeSingle();
@@ -49,7 +49,7 @@ export async function GET(
     }
 
     // Get booking
-    const { data: booking, error } = await (supabase.from("bookings") as any)
+    const { data: booking, error } = await supabase.from("bookings")
       .select("*")
       .eq("id", id)
       .maybeSingle();
@@ -70,7 +70,7 @@ export async function GET(
     // Check if user is the model (model's user_id matches authenticated user)
     let isModel = false;
     if (booking.model_id) {
-      const { data: modelRecord } = await (supabase.from("models") as any)
+      const { data: modelRecord } = await supabase.from("models")
         .select("user_id")
         .eq("id", booking.model_id)
         .maybeSingle();
@@ -81,45 +81,48 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Cast to any for dynamic property assignment
+    const bookingData: any = { ...booking };
+
     // Get model info separately
     if (booking.model_id) {
-      const { data: model } = await (supabase.from("models") as any)
+      const { data: model } = await supabase.from("models")
         .select("id, username, first_name, last_name, profile_photo_url, city, state, email, user_id")
         .eq("id", booking.model_id)
         .maybeSingle();
-      booking.model = model;
+      bookingData.model = model;
     }
 
     // Get client info
-    const { data: clientActor } = await (supabase
-      .from("actors") as any)
+    const { data: clientActor } = await supabase
+      .from("actors")
       .select("id, type, user_id")
       .eq("id", booking.client_id)
       .maybeSingle();
 
     if (clientActor) {
       if (clientActor.type === "fan") {
-        const { data: fan } = await (supabase
-          .from("fans") as any)
+        const { data: fan } = await supabase
+          .from("fans")
           .select("display_name, email, avatar_url, phone")
           .eq("id", clientActor.id)
           .maybeSingle();
         if (fan) {
-          booking.client = { ...fan, type: "fan" };
+          bookingData.client = { ...fan, type: "fan" };
         }
       } else if (clientActor.type === "brand") {
-        const { data: brand } = await (supabase
-          .from("brands") as any)
+        const { data: brand } = await supabase
+          .from("brands")
           .select("company_name, contact_name, email, logo_url, phone")
           .eq("id", clientActor.id)
           .maybeSingle();
         if (brand) {
-          booking.client = { ...brand, type: "brand" };
+          bookingData.client = { ...brand, type: "brand" };
         }
       }
     }
 
-    return NextResponse.json({ booking, serviceLabels: SERVICE_LABELS });
+    return NextResponse.json({ booking: bookingData, serviceLabels: SERVICE_LABELS });
   } catch (error) {
     console.error("Booking fetch error:", error);
     return NextResponse.json({ error: "Failed to fetch booking" }, { status: 500 });
@@ -176,8 +179,8 @@ export async function PATCH(
     debugInfo.actor = actor;
 
     // Get existing booking
-    const { data: booking, error: bookingError } = await (adminClient
-      .from("bookings") as any)
+    const { data: booking, error: bookingError } = await adminClient
+      .from("bookings")
       .select("*")
       .eq("id", id)
       .maybeSingle();
@@ -265,7 +268,7 @@ export async function PATCH(
               .eq("id", id);
 
             // Notify client
-            await (adminClient.from("notifications") as any).insert({
+            await adminClient.from("notifications").insert({
               actor_id: booking.client_id,
               type: "booking_declined",
               title: "Booking Declined - Insufficient Funds",
@@ -294,7 +297,7 @@ export async function PATCH(
             }
 
             // Log escrow transaction
-            const { error: escrowLogError } = await (adminClient.from("coin_transactions") as any).insert({
+            const { error: escrowLogError } = await adminClient.from("coin_transactions").insert({
               actor_id: clientActor.id,
               amount: -escrowAmount,
               action: "booking_escrow",
@@ -428,7 +431,7 @@ export async function PATCH(
           }
 
           // Log escrow transaction
-          const { error: counterEscrowLogError } = await (adminClient.from("coin_transactions") as any).insert({
+          const { error: counterEscrowLogError } = await adminClient.from("coin_transactions").insert({
             actor_id: actor.id,
             amount: -counterEscrowAmount,
             action: "booking_escrow",
@@ -655,7 +658,7 @@ export async function PATCH(
           .maybeSingle();
 
         if (modelActor && !modelCreditError) {
-          const { error: paymentLogError } = await (adminClient.from("coin_transactions") as any).insert({
+          const { error: paymentLogError } = await adminClient.from("coin_transactions").insert({
             actor_id: modelActor.id,
             amount: escrowAmount,
             action: "booking_payment",
@@ -699,7 +702,7 @@ export async function PATCH(
               }
 
               if (!refundCreditError) {
-                const { error: refundLogError } = await (adminClient.from("coin_transactions") as any).insert({
+                const { error: refundLogError } = await adminClient.from("coin_transactions").insert({
                   actor_id: clientActor.id,
                   amount: escrowAmount,
                   action: "booking_refund",
@@ -727,7 +730,7 @@ export async function PATCH(
     // Send notification (don't fail if this errors)
     if (notificationData) {
       try {
-        await (adminClient.from("notifications") as any).insert(notificationData);
+        await adminClient.from("notifications").insert(notificationData);
       } catch (notifError) {
         console.error("Failed to send notification:", notifError);
       }
@@ -834,7 +837,7 @@ export async function DELETE(
     }
 
     // Get actor
-    const { data: actor } = await (supabase.from("actors") as any)
+    const { data: actor } = await supabase.from("actors")
       .select("id, type")
       .eq("user_id", user.id)
       .maybeSingle();

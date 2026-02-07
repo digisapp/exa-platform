@@ -22,11 +22,11 @@ export async function POST(
     const { data: { user } } = await supabase.auth.getUser();
 
     // Get model to check ownership
-    const { data: model } = await (supabase
+    const { data: model } = await supabase
       .from("models")
       .select("id, user_id, is_approved, profile_views")
       .eq("id", modelId)
-      .single() as any);
+      .single();
 
     if (!model) {
       return NextResponse.json({ error: "Model not found" }, { status: 404 });
@@ -43,8 +43,8 @@ export async function POST(
     }
 
     // Increment profile views
-    const { error } = await (supabase
-      .from("models") as any)
+    const { error } = await supabase
+      .from("models")
       .update({ profile_views: (model.profile_views || 0) + 1 })
       .eq("id", modelId);
 

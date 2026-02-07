@@ -23,8 +23,8 @@ export async function GET(request: NextRequest) {
     const normalizedEmail = email.toLowerCase().trim();
 
     // Check if there's an imported model with this email (has email but no user_id)
-    const { data: model } = await (adminClient
-      .from("models") as any)
+    const { data: model } = await adminClient
+      .from("models")
       .select("id, first_name, last_name, instagram_name, user_id")
       .eq("email", normalizedEmail)
       .is("user_id", null)

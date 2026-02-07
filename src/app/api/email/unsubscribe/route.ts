@@ -1,8 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit (unauthenticated - IP-based)
+    const rateLimitResponse = await checkEndpointRateLimit(request, "auth");
+    if (rateLimitResponse) return rateLimitResponse;
+
     const { token } = await request.json();
 
     if (!token) {
@@ -15,7 +20,7 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient();
 
     // Call the unsubscribe function
-    const { data, error } = await (supabase.rpc as any)("unsubscribe_email", {
+    const { data, error } = await supabase.rpc("unsubscribe_email", {
       p_token: token,
       p_unsubscribe_all: true,
     });

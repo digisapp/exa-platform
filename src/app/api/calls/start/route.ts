@@ -91,8 +91,8 @@ export async function POST(request: NextRequest) {
 
       if (recipientActorData) {
         // Try to get model info (might be a model or fan)
-        const { data: model } = await (supabase
-          .from("models") as any)
+        const { data: model } = await supabase
+          .from("models")
           .select("id, username, first_name, user_id, video_call_rate, voice_call_rate, email")
           .eq("user_id", recipientActorData.user_id)
           .single();
@@ -113,8 +113,8 @@ export async function POST(request: NextRequest) {
       }
     } else {
       // Use recipientUsername to find recipient
-      const { data: model } = await (supabase
-        .from("models") as any)
+      const { data: model } = await supabase
+        .from("models")
         .select("id, username, first_name, user_id, video_call_rate, voice_call_rate, email")
         .eq("username", recipientUsername)
         .eq("is_approved", true)
@@ -192,11 +192,11 @@ export async function POST(request: NextRequest) {
 
       // Create conversation if doesn't exist
       if (!conversationId) {
-        const { data: newConv, error: convError } = await (supabase
-          .from("conversations") as any)
+        const { data: newConv, error: convError } = await supabase
+          .from("conversations")
           .insert({ type: "direct" })
           .select()
-          .single() as { data: { id: string } | null; error: any };
+          .single();
 
         if (convError || !newConv) {
           throw new Error("Failed to create conversation");
@@ -205,7 +205,7 @@ export async function POST(request: NextRequest) {
         conversationId = newConv.id;
 
         // Add participants
-        await (supabase.from("conversation_participants") as any).insert([
+        await supabase.from("conversation_participants").insert([
           { conversation_id: conversationId, actor_id: callerActor.id },
           { conversation_id: conversationId, actor_id: recipientActor.id },
         ]);
@@ -216,8 +216,8 @@ export async function POST(request: NextRequest) {
     const roomName = generateRoomName();
 
     // Create call session
-    const { data: session, error: sessionError } = await (supabase
-      .from("video_call_sessions") as any)
+    const { data: session, error: sessionError } = await supabase
+      .from("video_call_sessions")
       .insert({
         conversation_id: conversationId,
         room_name: roomName,
@@ -237,7 +237,7 @@ export async function POST(request: NextRequest) {
     // Get caller's display name
     let callerName = "User";
     if (callerActor.type === "model") {
-      const { data: callerModel } = await (supabase.from("models") as any)
+      const { data: callerModel } = await supabase.from("models")
         .select("first_name, username")
         .eq("user_id", user.id)
         .single();

@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Call atomic unlock RPC
-    const { data: result, error: rpcError } = await (supabase.rpc as any)(
+    const { data: result, error: rpcError } = await supabase.rpc(
       "unlock_message_media",
       {
         p_buyer_id: buyer.id,
@@ -90,8 +90,8 @@ export async function POST(request: NextRequest) {
     // Send email notification to model (fire and forget)
     if (!result.already_unlocked) {
       // Get message to find sender info
-      const { data: message } = await (supabase
-        .from("messages") as any)
+      const { data: message } = await supabase
+        .from("messages")
         .select("sender_id")
         .eq("id", messageId)
         .single();
@@ -116,15 +116,15 @@ export async function POST(request: NextRequest) {
           // Get buyer display name
           let buyerName = "Someone";
           if (buyer.type === "fan") {
-            const { data: fan } = await (supabase
-              .from("fans") as any)
+            const { data: fan } = await supabase
+              .from("fans")
               .select("display_name, username")
               .eq("id", buyer.id)
               .single();
             buyerName = fan?.display_name || fan?.username || "A fan";
           } else if (buyer.type === "brand") {
-            const { data: brand } = await (supabase
-              .from("brands") as any)
+            const { data: brand } = await supabase
+              .from("brands")
               .select("company_name")
               .eq("id", buyer.id)
               .single();

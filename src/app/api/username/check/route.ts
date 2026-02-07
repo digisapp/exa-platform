@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 
 const reserveUsernameSchema = z.object({
@@ -21,6 +22,10 @@ const RESERVED_PATHS = [
 
 export async function GET(request: NextRequest) {
   try {
+    // Rate limit (public endpoint, IP-based)
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general");
+    if (rateLimitResponse) return rateLimitResponse;
+
     const { searchParams } = new URL(request.url);
     const username = searchParams.get("username")?.toLowerCase().trim();
 
@@ -64,8 +69,8 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient();
 
     // Check reserved usernames table
-    const { data: reserved } = await (supabase
-      .from("reserved_usernames") as any)
+    const { data: reserved } = await supabase
+      .from("reserved_usernames")
       .select("reason")
       .eq("username", username)
       .single() as { data: { reason: string } | null };
@@ -135,6 +140,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
+
     const body = await request.json();
     const parsed = reserveUsernameSchema.safeParse(body);
     if (!parsed.success) {
@@ -145,8 +154,8 @@ export async function POST(request: NextRequest) {
     }
     const { username, reason, reserved_for, notes } = parsed.data;
 
-    const { error } = await (supabase
-      .from("reserved_usernames") as any)
+    const { error } = await supabase
+      .from("reserved_usernames")
       .insert({
         username: username.toLowerCase().trim(),
         reason,
@@ -197,6 +206,10 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
+
     const { searchParams } = new URL(request.url);
     const username = searchParams.get("username")?.toLowerCase().trim();
 
@@ -207,8 +220,8 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const { error } = await (supabase
-      .from("reserved_usernames") as any)
+    const { error } = await supabase
+      .from("reserved_usernames")
       .delete()
       .eq("username", username);
 

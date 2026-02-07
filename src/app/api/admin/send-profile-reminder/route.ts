@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendMiamiSwimWeekProfileReminderEmail } from "@/lib/email";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 const adminClient = createServiceRoleClient();
 
@@ -25,6 +26,10 @@ export async function POST(request: NextRequest) {
     if (!actor || actor.type !== "admin") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
+
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
 
     // Get optional parameters from body
     let dryRun = false;

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { stripe } from "@/lib/stripe";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 // Admin client for bypassing RLS
 const adminClient = createServiceRoleClient();
@@ -10,6 +11,10 @@ const MONTHLY_RATE_CENTS = 50000; // $500
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit (unauthenticated - IP-based)
+    const rateLimitResponse = await checkEndpointRateLimit(request, "financial");
+    if (rateLimitResponse) return rateLimitResponse;
+
     const { brandName, contactName, email, phone, website, instagram } = await request.json();
 
     // Validate input
@@ -90,7 +95,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Create pending enrollment record
-    const { error: enrollmentError } = await (adminClient as any)
+    const { error: enrollmentError } = await adminClient
       .from("content_program_enrollments")
       .insert({
         brand_name: brandName.trim(),

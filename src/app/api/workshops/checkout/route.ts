@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { stripe } from "@/lib/stripe";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 
 const workshopCheckoutSchema = z.object({
@@ -18,6 +19,10 @@ const MAX_QUANTITY_PER_ORDER = 5;
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit (unauthenticated - IP-based)
+    const rateLimitResponse = await checkEndpointRateLimit(request, "financial");
+    if (rateLimitResponse) return rateLimitResponse;
+
     const body = await request.json();
     const parsed = workshopCheckoutSchema.safeParse(body);
     if (!parsed.success) {
@@ -29,8 +34,8 @@ export async function POST(request: NextRequest) {
     const { workshopId, quantity, buyerEmail, buyerName, buyerPhone } = parsed.data;
 
     // Get workshop info
-    const { data: workshop, error: workshopError } = await (adminClient
-      .from("workshops") as any)
+    const { data: workshop, error: workshopError } = await adminClient
+      .from("workshops")
       .select("*")
       .eq("id", workshopId)
       .single();
@@ -113,8 +118,8 @@ export async function POST(request: NextRequest) {
     });
 
     // Create pending registration record
-    const { error: registrationError } = await (adminClient
-      .from("workshop_registrations") as any)
+    const { error: registrationError } = await adminClient
+      .from("workshop_registrations")
       .insert({
         workshop_id: workshopId,
         buyer_email: buyerEmail,

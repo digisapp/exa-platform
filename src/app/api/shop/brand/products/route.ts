@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 // GET - Get brand's products
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -10,6 +11,10 @@ export async function GET(request: Request) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
 
     // Get brand for this user (brand admin)
     const { data: actor } = await supabase
@@ -29,7 +34,7 @@ export async function GET(request: Request) {
       : null;
 
     // Get shop_brand for this actor
-    let shopBrandQuery = (supabase as any)
+    let shopBrandQuery = supabase
       .from("shop_brands")
       .select("id, name, slug, commission_rate");
 
@@ -50,7 +55,7 @@ export async function GET(request: Request) {
     }
 
     // Get products
-    const { data: products, error } = await (supabase as any)
+    const { data: products, error } = await supabase
       .from("shop_products")
       .select(`
         id,
@@ -138,7 +143,7 @@ export async function GET(request: Request) {
 }
 
 // POST - Create new product
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -147,8 +152,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
+
     // Get shop_brand for this user
-    const { data: shopBrand } = await (supabase as any)
+    const { data: shopBrand } = await supabase
       .from("shop_brands")
       .select("id")
       .eq("contact_email", user.email)
@@ -188,7 +197,7 @@ export async function POST(request: Request) {
       .replace(/(^-|-$)/g, "");
 
     // Create product
-    const { data: product, error: productError } = await (supabase as any)
+    const { data: product, error: productError } = await supabase
       .from("shop_products")
       .insert({
         brand_id: shopBrand.id,
@@ -227,7 +236,7 @@ export async function POST(request: Request) {
         is_active: true,
       }));
 
-      const { error: variantsError } = await (supabase as any)
+      const { error: variantsError } = await supabase
         .from("shop_product_variants")
         .insert(variantRecords);
 

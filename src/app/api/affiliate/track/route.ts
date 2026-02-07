@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { headers } from "next/headers";
 import crypto from "crypto";
 
@@ -12,6 +13,10 @@ function hashIP(ip: string): string {
 // POST - Track affiliate click
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit (public endpoint, IP-based)
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general");
+    if (rateLimitResponse) return rateLimitResponse;
+
     const { affiliateCode, eventId, source } = await request.json();
 
     if (!affiliateCode) {
@@ -105,7 +110,7 @@ export async function POST(request: NextRequest) {
 }
 
 // GET - Get affiliate stats for a model
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -113,6 +118,10 @@ export async function GET() {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
 
     // Get the model's ID
     const { data: model } = await supabase

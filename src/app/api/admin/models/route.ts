@@ -104,7 +104,7 @@ export async function GET(request: NextRequest) {
 
     if (isSortingByComputedField) {
       // For computed field sorting: fetch model IDs first with a reasonable limit
-      let allModelsQuery = (supabase.from("models") as any)
+      let allModelsQuery = supabase.from("models")
         .select("id, user_id, created_at, claimed_at, last_active_at", { count: "exact" });
       allModelsQuery = applyFilters(allModelsQuery);
       allModelsQuery = allModelsQuery.range(0, MAX_COMPUTED_SORT_MODELS - 1);
@@ -289,7 +289,7 @@ export async function GET(request: NextRequest) {
       }
 
       // Fetch full model data for paginated IDs
-      const { data: fullModels, error: fullError } = await (supabase.from("models") as any)
+      const { data: fullModels, error: fullError } = await supabase.from("models")
         .select(`
           id, username, first_name, last_name, email, phone, city, state, is_approved,
           profile_photo_url, profile_views, coin_balance, instagram_name,
@@ -310,7 +310,7 @@ export async function GET(request: NextRequest) {
 
     } else {
       // For DB-sortable fields: use standard pagination
-      let query = (supabase.from("models") as any)
+      let query = supabase.from("models")
         .select(`
           id, username, first_name, last_name, email, phone, city, state, is_approved,
           profile_photo_url, profile_views, coin_balance, instagram_name,

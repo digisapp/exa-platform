@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 // POST - Block a user
 export async function POST(request: NextRequest) {
@@ -13,6 +14,10 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "blocking", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
 
     const { actorId, reason } = await request.json();
 
@@ -35,7 +40,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Block the user
-    const { data: result, error } = await (supabase.rpc as any)("block_user", {
+    const { data: result, error } = await supabase.rpc("block_user", {
       p_blocker_id: actor.id,
       p_blocked_id: actorId,
       p_reason: reason || null,
@@ -101,7 +106,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Unblock the user
-    const { data: result, error } = await (supabase.rpc as any)("unblock_user", {
+    const { data: result, error } = await supabase.rpc("unblock_user", {
       p_blocker_id: actor.id,
       p_blocked_id: actorId,
     });
@@ -156,7 +161,7 @@ export async function GET() {
     }
 
     // Get blocked users
-    const { data: blockedUsers, error } = await (supabase.rpc as any)(
+    const { data: blockedUsers, error } = await supabase.rpc(
       "get_blocked_users",
       { p_actor_id: actor.id }
     );
@@ -185,8 +190,8 @@ export async function GET() {
 
       let modelDetails: any[] = [];
       if (modelActorIds.length > 0) {
-        const { data: models } = await (supabase
-          .from("models") as any)
+        const { data: models } = await supabase
+          .from("models")
           .select("id, username, first_name, last_name, profile_photo_url")
           .in("id", modelActorIds);
         modelDetails = models || [];

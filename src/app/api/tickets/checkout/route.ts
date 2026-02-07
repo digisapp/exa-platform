@@ -2,12 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { stripe } from "@/lib/stripe";
 import { TICKET_CONFIG } from "@/lib/ticket-config";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 // Admin client for bypassing RLS
 const adminClient = createServiceRoleClient();
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit (unauthenticated - IP-based)
+    const rateLimitResponse = await checkEndpointRateLimit(request, "financial");
+    if (rateLimitResponse) return rateLimitResponse;
+
     const { tierId, quantity, buyerEmail, buyerName, buyerPhone } = await request.json();
 
     // Validate input

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 import crypto from "crypto";
 
@@ -34,9 +35,13 @@ export async function POST(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
+
     // Get model
-    const { data: model } = await (supabase
-      .from("models") as any)
+    const { data: model } = await supabase
+      .from("models")
       .select("id, email, user_id, first_name, last_name, username")
       .eq("id", id)
       .single();

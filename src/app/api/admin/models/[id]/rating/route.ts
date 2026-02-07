@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 async function isAdmin(supabase: any, userId: string) {
   const { data: actor } = await supabase
@@ -27,6 +28,10 @@ export async function PATCH(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
+
     const body = await request.json();
     const { rating } = body;
 
@@ -35,8 +40,8 @@ export async function PATCH(
       return NextResponse.json({ error: "Rating must be 1-5 or null" }, { status: 400 });
     }
 
-    const { error } = await (supabase
-      .from("models") as any)
+    const { error } = await supabase
+      .from("models")
       .update({ admin_rating: rating, updated_at: new Date().toISOString() })
       .eq("id", id);
 

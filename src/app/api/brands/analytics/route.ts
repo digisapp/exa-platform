@@ -24,7 +24,7 @@ export async function GET() {
 
     // Verify brand ownership: fetch the brand record for this actor
     // and use the verified brand ID in all subsequent queries
-    const { data: brand } = await (supabase.from("brands") as any)
+    const { data: brand } = await supabase.from("brands")
       .select("id")
       .eq("id", actor.id)
       .maybeSingle();
@@ -36,8 +36,8 @@ export async function GET() {
     const brandActorId = brand.id;
 
     // 1. Get total coins spent (negative amounts = spending)
-    const { data: coinData } = await (supabase
-      .from("coin_transactions") as any)
+    const { data: coinData } = await supabase
+      .from("coin_transactions")
       .select("amount, action, created_at")
       .eq("actor_id", brandActorId)
       .lt("amount", 0);
@@ -54,8 +54,8 @@ export async function GET() {
     });
 
     // 2. Get bookings data
-    const { data: bookings } = await (supabase
-      .from("bookings") as any)
+    const { data: bookings } = await supabase
+      .from("bookings")
       .select("id, model_id, status, event_date, service_type, total_amount, created_at")
       .eq("client_id", brandActorId);
 
@@ -67,8 +67,8 @@ export async function GET() {
     ) || [];
 
     // 3. Get unique models contacted (from conversations)
-    const { data: conversations } = await (supabase
-      .from("conversation_participants") as any)
+    const { data: conversations } = await supabase
+      .from("conversation_participants")
       .select("conversation_id")
       .eq("actor_id", brandActorId);
 
@@ -79,8 +79,8 @@ export async function GET() {
       const conversationIds = conversations.map((c: any) => c.conversation_id);
 
       // Get other participants in these conversations (the models)
-      const { data: otherParticipants } = await (supabase
-        .from("conversation_participants") as any)
+      const { data: otherParticipants } = await supabase
+        .from("conversation_participants")
         .select("actor_id")
         .in("conversation_id", conversationIds)
         .neq("actor_id", brandActorId);

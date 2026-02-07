@@ -1,8 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 // POST - Update user's last active timestamp
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
 
@@ -12,9 +13,13 @@ export async function POST() {
       return NextResponse.json({ success: false }, { status: 401 });
     }
 
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
+
     // Get actor type to only update the relevant table
-    const { data: actor } = await (supabase
-      .from("actors") as any)
+    const { data: actor } = await supabase
+      .from("actors")
       .select("type")
       .eq("user_id", user.id)
       .single();
@@ -27,11 +32,12 @@ export async function POST() {
 
     // Only update the relevant table based on actor type
     if (actor.type === "model") {
-      await (supabase.from("models") as any)
+      await supabase.from("models")
         .update({ last_active_at: now })
         .eq("user_id", user.id);
     } else if (actor.type === "fan") {
-      await (supabase.from("fans") as any)
+      const fansTable = supabase.from("fans") as any;
+      await fansTable
         .update({ last_active_at: now })
         .eq("user_id", user.id);
     }

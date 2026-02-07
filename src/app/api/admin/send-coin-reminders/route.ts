@@ -50,8 +50,8 @@ export async function POST() {
 
     // Get model coin balances from actors table
     const userIds = models.map(m => m.user_id).filter(Boolean);
-    const { data: actors } = await (adminClient
-      .from("actors") as any)
+    const { data: actors } = await adminClient
+      .from("actors")
       .select("user_id, coin_balance")
       .in("user_id", userIds);
 
@@ -158,8 +158,8 @@ export async function GET() {
 
     // Get actor coin balances (the authoritative source)
     const userIds = models.map(m => m.user_id).filter(Boolean);
-    const { data: actors } = await (adminClient
-      .from("actors") as any)
+    const { data: actors } = await adminClient
+      .from("actors")
       .select("user_id, coin_balance")
       .in("user_id", userIds);
 

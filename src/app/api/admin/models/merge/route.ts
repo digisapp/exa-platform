@@ -42,14 +42,14 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch both models
-    const { data: keepModel } = await (adminClient
-      .from("models") as any)
+    const { data: keepModel } = await adminClient
+      .from("models")
       .select("*, actors:user_id(id, type)")
       .eq("username", keepUsername)
       .single();
 
-    const { data: deleteModel } = await (adminClient
-      .from("models") as any)
+    const { data: deleteModel } = await adminClient
+      .from("models")
       .select("*, actors:user_id(id, type)")
       .eq("username", deleteUsername)
       .single();

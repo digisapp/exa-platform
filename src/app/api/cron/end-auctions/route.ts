@@ -2,7 +2,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendAuctionSoldEmail, sendAuctionWonEmail } from "@/lib/email";
 
-const supabase: any = createServiceRoleClient();
+const supabase = createServiceRoleClient();
 
 // GET /api/cron/end-auctions - End expired auctions
 // Runs every 5 minutes via Vercel cron

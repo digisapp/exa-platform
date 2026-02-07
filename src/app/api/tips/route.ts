@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Transfer coins using the database function
-    const { data: result, error: transferError } = await (supabase.rpc as any)(
+    const { data: result, error: transferError } = await supabase.rpc(
       "transfer_coins",
       {
         p_sender_id: sender.id,
@@ -114,22 +114,22 @@ export async function POST(request: NextRequest) {
     // Get sender name for the tip message
     let senderName = "Someone";
     if (sender.type === "fan") {
-      const { data: fan } = await (supabase
-        .from("fans") as any)
+      const { data: fan } = await supabase
+        .from("fans")
         .select("display_name")
         .eq("id", sender.id)
         .single();
       senderName = fan?.display_name || "A fan";
     } else if (sender.type === "model") {
-      const { data: senderModel } = await (supabase
-        .from("models") as any)
+      const { data: senderModel } = await supabase
+        .from("models")
         .select("first_name, username")
         .eq("user_id", user.id)
         .single();
       senderName = senderModel?.first_name || senderModel?.username || "A model";
     } else if (sender.type === "brand") {
-      const { data: brand } = await (supabase
-        .from("brands") as any)
+      const { data: brand } = await supabase
+        .from("brands")
         .select("company_name")
         .eq("id", sender.id)
         .single();

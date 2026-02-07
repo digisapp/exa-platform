@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
 
     // Get or create session
-    const { data: sessionData, error: sessionError } = await (supabase as any).rpc(
+    const { data: sessionData, error: sessionError } = await supabase.rpc(
       "get_or_create_top_model_session",
       {
         p_user_id: user?.id || null,
@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
     // Get swiped model IDs from session
     let swipedIds: string[] = [];
     if (session.session_id) {
-      const { data: sessionRow } = await (supabase as any)
+      const { data: sessionRow } = await supabase
         .from("top_model_sessions")
         .select("models_swiped")
         .eq("id", session.session_id)
@@ -123,7 +123,7 @@ export async function GET(request: NextRequest) {
       .order("created_at", { ascending: false });
 
     // Get today's leaderboard rankings
-    const { data: leaderboardData } = await (supabase as any)
+    const { data: leaderboardData } = await supabase
       .from("top_model_leaderboard")
       .select("model_id, today_points")
       .gt("today_points", 0)

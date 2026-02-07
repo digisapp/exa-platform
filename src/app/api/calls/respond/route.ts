@@ -33,8 +33,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Get call session
-    const { data: session } = await (supabase
-      .from("video_call_sessions") as any)
+    const { data: session } = await supabase
+      .from("video_call_sessions")
       .select("*")
       .eq("id", sessionId)
       .eq("recipient_id", actor.id)
@@ -47,8 +47,8 @@ export async function POST(request: NextRequest) {
 
     if (accept) {
       // Accept the call
-      const { error: updateError } = await (supabase
-        .from("video_call_sessions") as any)
+      const { error: updateError } = await supabase
+        .from("video_call_sessions")
         .update({
           status: "active",
           started_at: new Date().toISOString(),
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Get recipient's name for token
-      const { data: model } = await (supabase.from("models") as any)
+      const { data: model } = await supabase.from("models")
         .select("first_name, username")
         .eq("user_id", user.id)
         .single();
@@ -77,8 +77,8 @@ export async function POST(request: NextRequest) {
       });
     } else {
       // Decline the call
-      await (supabase
-        .from("video_call_sessions") as any)
+      await supabase
+        .from("video_call_sessions")
         .update({
           status: "declined",
           ended_at: new Date().toISOString(),

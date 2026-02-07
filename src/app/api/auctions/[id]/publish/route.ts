@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 // POST - Publish/activate an auction
 export async function POST(
@@ -15,8 +16,12 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
+
     // Get model
-    const { data: model } = await (supabase as any)
+    const { data: model } = await supabase
       .from("models")
       .select("id")
       .eq("user_id", user.id)
@@ -27,7 +32,7 @@ export async function POST(
     }
 
     // Get auction
-    const { data: auction } = await (supabase as any)
+    const { data: auction } = await supabase
       .from("auctions")
       .select("id, model_id, status, ends_at, starting_price, buy_now_price, reserve_price")
       .eq("id", auctionId)
@@ -73,7 +78,7 @@ export async function POST(
     }
 
     // Activate the auction
-    const { data: updated, error } = await (supabase as any)
+    const { data: updated, error } = await supabase
       .from("auctions")
       .update({
         status: "active",

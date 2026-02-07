@@ -6,7 +6,7 @@ import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 
 // Service role client for atomic stock operations
-const supabaseAdmin: any = createServiceRoleClient();
+const supabaseAdmin = createServiceRoleClient();
 
 const shippingAddressSchema = z.object({
   line1: z.string().min(1).max(500),
@@ -73,7 +73,7 @@ export async function POST(request: Request) {
     } = parsed.data;
 
     // Find cart
-    let cartQuery = (supabase as any)
+    let cartQuery = supabase
       .from("shop_carts")
       .select(`
         id,
@@ -216,7 +216,7 @@ export async function POST(request: Request) {
     }
 
     // Create order in database
-    const { data: order, error: orderError } = await (supabase as any)
+    const { data: order, error: orderError } = await supabase
       .from("shop_orders")
       .insert({
         user_id: user?.id || null,
@@ -279,14 +279,14 @@ export async function POST(request: Request) {
       line_total: item.lineTotal,
     }));
 
-    const { error: itemsError } = await (supabase as any)
+    const { error: itemsError } = await supabase
       .from("shop_order_items")
       .insert(orderItems);
 
     if (itemsError) {
       console.error("Order items error:", itemsError);
       // Rollback order and reserved stock
-      await (supabase as any)
+      await supabase
         .from("shop_orders")
         .delete()
         .eq("id", order.id);
@@ -361,7 +361,7 @@ export async function POST(request: Request) {
     });
 
     // Update order with Stripe payment intent
-    await (supabase as any)
+    await supabase
       .from("shop_orders")
       .update({
         stripe_payment_intent_id: session.payment_intent,

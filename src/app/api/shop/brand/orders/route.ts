@@ -12,7 +12,7 @@ export async function GET(request: Request) {
     }
 
     // Get shop_brand for this user
-    const { data: shopBrand } = await (supabase as any)
+    const { data: shopBrand } = await supabase
       .from("shop_brands")
       .select("id, name")
       .eq("contact_email", user.email)
@@ -31,7 +31,7 @@ export async function GET(request: Request) {
     const limit = Math.min(parseInt(searchParams.get("limit") || "50"), 100);
 
     // Get order items for this brand
-    let query = (supabase as any)
+    let query = supabase
       .from("shop_order_items")
       .select(`
         id,
@@ -180,7 +180,7 @@ export async function PATCH(request: Request) {
     }
 
     // Get shop_brand for this user
-    const { data: shopBrand } = await (supabase as any)
+    const { data: shopBrand } = await supabase
       .from("shop_brands")
       .select("id")
       .eq("contact_email", user.email)
@@ -203,7 +203,7 @@ export async function PATCH(request: Request) {
     }
 
     // Verify item belongs to this brand
-    const { data: item } = await (supabase as any)
+    const { data: item } = await supabase
       .from("shop_order_items")
       .select("id, brand_id")
       .eq("id", itemId)
@@ -244,7 +244,7 @@ export async function PATCH(request: Request) {
       }
     }
 
-    const { error } = await (supabase as any)
+    const { error } = await supabase
       .from("shop_order_items")
       .update(updateData)
       .eq("id", itemId);

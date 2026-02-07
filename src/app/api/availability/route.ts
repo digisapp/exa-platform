@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 async function isAdmin(supabase: any, userId: string) {
   const { data: actor } = await supabase
@@ -13,6 +14,10 @@ async function isAdmin(supabase: any, userId: string) {
 // GET - Fetch available slots (public)
 export async function GET(request: NextRequest) {
   try {
+    // Rate limit (public endpoint, IP-based)
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general");
+    if (rateLimitResponse) return rateLimitResponse;
+
     const supabase = await createClient();
     const { searchParams } = new URL(request.url);
 
@@ -20,7 +25,7 @@ export async function GET(request: NextRequest) {
     const endDate = searchParams.get("end_date");
     const onlyAvailable = searchParams.get("only_available") !== "false";
 
-    let query = (supabase as any)
+    let query = supabase
       .from("availability_slots")
       .select("id, date, start_time, end_time, is_available, notes")
       .order("date", { ascending: true })
@@ -72,6 +77,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Rate limit
+    const rateLimitResponse2 = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse2) return rateLimitResponse2;
+
     const body = await request.json();
     const { slots } = body;
 
@@ -101,7 +110,7 @@ export async function POST(request: NextRequest) {
       notes: slot.notes || null,
     }));
 
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from("availability_slots")
       .upsert(slotsToInsert, { onConflict: "date,start_time" })
       .select();
@@ -142,6 +151,10 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Rate limit
+    const rateLimitResponse3 = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse3) return rateLimitResponse3;
+
     const { searchParams } = new URL(request.url);
     const slotId = searchParams.get("id");
     const date = searchParams.get("date");
@@ -153,7 +166,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    let query = (supabase as any).from("availability_slots").delete();
+    let query = supabase.from("availability_slots").delete();
 
     if (slotId) {
       query = query.eq("id", slotId);

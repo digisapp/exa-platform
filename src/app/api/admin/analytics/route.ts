@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,15 +22,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
+
     // Get date range from query params
     const searchParams = request.nextUrl.searchParams;
     const days = parseInt(searchParams.get("days") || "7");
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
     const startDateStr = startDate.toISOString();
-
-    // Cast supabase to any to use custom RPC functions
-    const db = supabase as any;
 
     // Fetch all analytics data in parallel
     const [
@@ -49,25 +51,25 @@ export async function GET(request: NextRequest) {
         .gte("created_at", startDateStr),
 
       // Unique visitors
-      db.rpc("count_unique_visitors", { start_date: startDateStr }),
+      supabase.rpc("count_unique_visitors", { start_date: startDateStr }),
 
       // Device breakdown
-      db.rpc("get_device_breakdown", { start_date: startDateStr }),
+      supabase.rpc("get_device_breakdown", { start_date: startDateStr }),
 
       // Top pages
-      db.rpc("get_top_pages", { start_date: startDateStr, limit_count: 10 }),
+      supabase.rpc("get_top_pages", { start_date: startDateStr, limit_count: 10 }),
 
       // Top model profiles
-      db.rpc("get_top_model_profiles", { start_date: startDateStr, limit_count: 10 }),
+      supabase.rpc("get_top_model_profiles", { start_date: startDateStr, limit_count: 10 }),
 
       // Daily views
-      db.rpc("get_daily_views", { start_date: startDateStr }),
+      supabase.rpc("get_daily_views", { start_date: startDateStr }),
 
       // Browser breakdown
-      db.rpc("get_browser_breakdown", { start_date: startDateStr }),
+      supabase.rpc("get_browser_breakdown", { start_date: startDateStr }),
 
       // Country breakdown
-      db.rpc("get_country_breakdown", { start_date: startDateStr, limit_count: 10 }),
+      supabase.rpc("get_country_breakdown", { start_date: startDateStr, limit_count: 10 }),
     ]);
 
     const totalViews = totalViewsResult.count || 0;

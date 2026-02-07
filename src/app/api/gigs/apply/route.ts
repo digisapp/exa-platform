@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 
 const gigApplySchema = z.object({
@@ -18,6 +19,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
+
     const body = await request.json();
     const parsed = gigApplySchema.safeParse(body);
     if (!parsed.success) {
@@ -29,8 +34,8 @@ export async function POST(request: NextRequest) {
     const { gigId } = parsed.data;
 
     // Get the model's ID (models are linked by user_id, not actor)
-    const { data: model } = await (supabase
-      .from("models") as any)
+    const { data: model } = await supabase
+      .from("models")
       .select("id, is_approved")
       .eq("user_id", user.id)
       .single();
@@ -44,8 +49,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if already applied
-    const { data: existingApp } = await (supabase
-      .from("gig_applications") as any)
+    const { data: existingApp } = await supabase
+      .from("gig_applications")
       .select("id, status")
       .eq("gig_id", gigId)
       .eq("model_id", model.id)
@@ -59,8 +64,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if gig is still open
-    const { data: gig } = await (supabase
-      .from("gigs") as any)
+    const { data: gig } = await supabase
+      .from("gigs")
       .select("id, status, spots, spots_filled")
       .eq("id", gigId)
       .single();
@@ -78,8 +83,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Create application
-    const { data: application, error } = await (supabase
-      .from("gig_applications") as any)
+    const { data: application, error } = await supabase
+      .from("gig_applications")
       .insert({
         gig_id: gigId,
         model_id: model.id,
@@ -126,8 +131,8 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Get the model's ID
-    const { data: model } = await (supabase
-      .from("models") as any)
+    const { data: model } = await supabase
+      .from("models")
       .select("id")
       .eq("user_id", user.id)
       .single();
@@ -137,8 +142,8 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Get the application and verify ownership
-    const { data: application } = await (supabase
-      .from("gig_applications") as any)
+    const { data: application } = await supabase
+      .from("gig_applications")
       .select("id, status, model_id")
       .eq("id", applicationId)
       .single();

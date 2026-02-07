@@ -46,8 +46,8 @@ export async function PATCH(
     }
     const { is_suspended } = parsed.data;
 
-    const { error } = await (supabase
-      .from("fans") as any)
+    const { error } = await supabase
+      .from("fans")
       .update({ is_suspended, updated_at: new Date().toISOString() })
       .eq("id", fanId);
 
@@ -96,8 +96,8 @@ export async function DELETE(
     }
 
     // Get the fan's user_id first
-    const { data: fan, error: fanError } = await (supabase
-      .from("fans") as any)
+    const { data: fan, error: fanError } = await supabase
+      .from("fans")
       .select("id, user_id")
       .eq("id", fanId)
       .single();
@@ -107,8 +107,8 @@ export async function DELETE(
     }
 
     // Delete the fan record
-    const { error: deleteError } = await (supabase
-      .from("fans") as any)
+    const { error: deleteError } = await supabase
+      .from("fans")
       .delete()
       .eq("id", fanId);
 
@@ -119,8 +119,8 @@ export async function DELETE(
 
     // Also delete the actor if it exists
     if (fan.user_id) {
-      await (supabase
-        .from("actors") as any)
+      await supabase
+        .from("actors")
         .delete()
         .eq("user_id", fan.user_id)
         .eq("type", "fan");

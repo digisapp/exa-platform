@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ orderNumber: string }> }
 ) {
   try {
@@ -18,8 +19,12 @@ export async function GET(
       );
     }
 
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
+
     // Get order - verify ownership
-    const orderQuery = (supabase as any)
+    const orderQuery = supabase
       .from("shop_orders")
       .select(`
         id,

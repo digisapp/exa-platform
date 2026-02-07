@@ -1,12 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 const adminClient = createServiceRoleClient();
 
 // GET /api/brands/model-notes/[modelId] - Get notes for a model
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ modelId: string }> }
 ) {
   const { modelId } = await params;
@@ -16,6 +17,10 @@ export async function GET(
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  // Rate limit
+  const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+  if (rateLimitResponse) return rateLimitResponse;
 
   // Get actor and verify it's a brand
   const { data: actor } = await supabase
@@ -29,8 +34,8 @@ export async function GET(
   }
 
   // Get notes for this model
-  const { data: notes, error } = await (supabase
-    .from("brand_model_notes") as any)
+  const { data: notes, error } = await supabase
+    .from("brand_model_notes")
     .select("*")
     .eq("brand_id", actor.id)
     .eq("model_id", modelId)
@@ -48,7 +53,7 @@ export async function GET(
 
 // POST /api/brands/model-notes/[modelId] - Create or update notes for a model
 export async function POST(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ modelId: string }> }
 ) {
   const { modelId } = await params;
@@ -58,6 +63,10 @@ export async function POST(
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  // Rate limit
+  const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+  if (rateLimitResponse) return rateLimitResponse;
 
   // Get actor and verify it's a brand
   const { data: actor } = await supabase
@@ -87,8 +96,8 @@ export async function POST(
     : [];
 
   // Upsert notes
-  const { data, error } = await (adminClient
-    .from("brand_model_notes") as any)
+  const { data, error } = await adminClient
+    .from("brand_model_notes")
     .upsert({
       brand_id: actor.id,
       model_id: modelId,
@@ -111,7 +120,7 @@ export async function POST(
 
 // DELETE /api/brands/model-notes/[modelId] - Delete notes for a model
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ modelId: string }> }
 ) {
   const { modelId } = await params;
@@ -121,6 +130,10 @@ export async function DELETE(
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  // Rate limit
+  const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+  if (rateLimitResponse) return rateLimitResponse;
 
   // Get actor and verify it's a brand
   const { data: actor } = await supabase
@@ -133,8 +146,8 @@ export async function DELETE(
     return NextResponse.json({ error: "Only brands can manage model notes" }, { status: 403 });
   }
 
-  const { error } = await (adminClient
-    .from("brand_model_notes") as any)
+  const { error } = await adminClient
+    .from("brand_model_notes")
     .delete()
     .eq("brand_id", actor.id)
     .eq("model_id", modelId);

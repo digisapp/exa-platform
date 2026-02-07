@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     const pageSize = Math.min(parseInt(searchParams.get("pageSize") || "20"), 100);
     const hasBuyNow = searchParams.get("has_buy_now") === "true";
 
-    let query = (supabase as any)
+    let query = supabase
       .from("auctions")
       .select(`
         *,
@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get model profile
-    const { data: model } = await (supabase as any)
+    const { data: model } = await supabase
       .from("models")
       .select("id, is_approved")
       .eq("user_id", user.id)
@@ -190,7 +190,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create auction as draft
-    const { data: auction, error } = await (supabase as any)
+    const { data: auction, error } = await supabase
       .from("auctions")
       .insert({
         model_id: model.id,

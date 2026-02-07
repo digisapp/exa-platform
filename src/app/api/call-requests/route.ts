@@ -48,7 +48,7 @@ export async function POST(request: Request) {
     let scheduledAt = null;
     if (slot_id) {
       // Check slot availability
-      const { data: slot, error: slotError } = await (supabase as any)
+      const { data: slot, error: slotError } = await supabase
         .from("availability_slots")
         .select("id, date, start_time, is_available")
         .eq("id", slot_id)
@@ -73,7 +73,7 @@ export async function POST(request: Request) {
     }
 
     // Create the call request
-    const { data: callRequest, error } = await (supabase as any)
+    const { data: callRequest, error } = await supabase
       .from("call_requests")
       .insert({
         name,
@@ -101,7 +101,7 @@ export async function POST(request: Request) {
 
     // If slot was booked, mark it as unavailable
     if (slot_id) {
-      const { error: updateError } = await (supabase as any)
+      const { error: updateError } = await supabase
         .from("availability_slots")
         .update({
           is_available: false,
@@ -117,7 +117,7 @@ export async function POST(request: Request) {
     }
 
     // Log activity
-    await (supabase as any)
+    await supabase
       .from("crm_activities")
       .insert({
         call_request_id: callRequest.id,
@@ -176,7 +176,7 @@ export async function GET() {
     }
 
     // Get model's call requests
-    const { data: callRequests, error } = await (supabase as any)
+    const { data: callRequests, error } = await supabase
       .from("call_requests")
       .select(`
         id,

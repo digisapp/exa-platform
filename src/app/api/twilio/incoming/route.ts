@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 
 // Use service role for webhook (no user auth)
-const supabase: any = createServiceRoleClient();
+const supabase = createServiceRoleClient();
 
 export async function POST(request: NextRequest) {
   try {

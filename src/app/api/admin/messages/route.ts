@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { escapeIlike } from "@/lib/utils";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 // Admin client for bypassing RLS
 const adminClient = createServiceRoleClient();
@@ -29,6 +30,10 @@ export async function GET(request: NextRequest) {
     if (actor?.type !== "admin") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
+
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
 
     const { searchParams } = new URL(request.url);
     const action = searchParams.get("action");

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
-const supabase: any = createServiceRoleClient();
+const supabase = createServiceRoleClient();
 
 interface CheckoutItem {
   variant_id: string;
@@ -34,6 +35,10 @@ function generateOrderNumber(): string {
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "financial");
+    if (rateLimitResponse) return rateLimitResponse;
+
     const body: CheckoutBody = await request.json();
 
     // Validate input
@@ -125,10 +130,10 @@ export async function POST(request: NextRequest) {
         .from("shop_order_items")
         .insert({
           order_id: order.id,
-          product_id: (variant as any).shop_products.id,
+          product_id: variant.shop_products.id,
           variant_id: variant.id,
-          brand_id: (variant as any).shop_products.brand_id,
-          product_name: (variant as any).shop_products.name,
+          brand_id: variant.shop_products.brand_id,
+          product_name: variant.shop_products.name,
           variant_sku: variant.sku,
           variant_size: variant.size,
           variant_color: variant.color,

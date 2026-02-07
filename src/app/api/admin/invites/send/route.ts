@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { sendModelInviteEmail } from "@/lib/email";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 
 const sendInvitesSchema = z.object({
@@ -63,11 +64,15 @@ export async function POST(request: NextRequest) {
       .from("actors")
       .select("id, type")
       .eq("user_id", user.id)
-      .single() as { data: { id: string; type: string } | null };
+      .single();
 
     if (!actor || actor.type !== "admin") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
+
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
 
     // Check warmup status
     const warmupStart = getWarmupStartDate();
@@ -86,8 +91,8 @@ export async function POST(request: NextRequest) {
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
-    const { count: sentTodayCount } = await (supabase
-      .from("models") as any)
+    const { count: sentTodayCount } = await supabase
+      .from("models")
       .select("id", { count: "exact", head: true })
       .not("invite_sent_at", "is", null)
       .gte("invite_sent_at", todayStart.toISOString());
@@ -117,15 +122,15 @@ export async function POST(request: NextRequest) {
     }
     const { modelIds, sendAll } = parsed.data;
 
-    let modelsToInvite: { id: string; email: string; first_name: string; invite_token: string }[] = [];
+    let modelsToInvite: { id: string; email: string; first_name: string | null; invite_token: string | null }[] = [];
 
     // Limit query to remaining daily quota
     const batchLimit = Math.min(50, remainingToday); // Max 50 per request for safety
 
     if (sendAll) {
       // Get models with invite tokens who haven't been invited yet and haven't claimed
-      const { data: models, error } = await (supabase
-        .from("models") as any)
+      const { data: models, error } = await supabase
+        .from("models")
         .select("id, email, first_name, invite_token")
         .not("invite_token", "is", null)
         .is("user_id", null)
@@ -138,8 +143,8 @@ export async function POST(request: NextRequest) {
     } else if (modelIds && Array.isArray(modelIds)) {
       // Get specific models (still respect daily limit)
       const limitedIds = modelIds.slice(0, batchLimit);
-      const { data: models, error } = await (supabase
-        .from("models") as any)
+      const { data: models, error } = await supabase
+        .from("models")
         .select("id, email, first_name, invite_token")
         .in("id", limitedIds)
         .not("invite_token", "is", null)
@@ -195,7 +200,7 @@ export async function POST(request: NextRequest) {
 
       if (result.success) {
         // Update invite_sent_at
-        await (supabase.from("models") as any)
+        await supabase.from("models")
           .update({ invite_sent_at: new Date().toISOString() })
           .eq("id", model.id);
         sent++;
@@ -209,8 +214,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if there are more models to send
-    const { count: remainingPending } = await (supabase
-      .from("models") as any)
+    const { count: remainingPending } = await supabase
+      .from("models")
       .select("id", { count: "exact", head: true })
       .not("invite_token", "is", null)
       .is("user_id", null)
@@ -255,15 +260,15 @@ export async function GET() {
       .from("actors")
       .select("id, type")
       .eq("user_id", user.id)
-      .single() as { data: { id: string; type: string } | null };
+      .single();
 
     if (!actor || actor.type !== "admin") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     // Count models that can be invited (excluding placeholder emails)
-    const { count: pendingCount } = await (supabase
-      .from("models") as any)
+    const { count: pendingCount } = await supabase
+      .from("models")
       .select("id", { count: "exact", head: true })
       .not("invite_token", "is", null)
       .is("user_id", null)
@@ -272,16 +277,16 @@ export async function GET() {
       .not("email", "ilike", "%roster-import.examodels.com%");
 
     // Count models that have been invited but not claimed
-    const { count: invitedCount } = await (supabase
-      .from("models") as any)
+    const { count: invitedCount } = await supabase
+      .from("models")
       .select("id", { count: "exact", head: true })
       .not("invite_token", "is", null)
       .is("user_id", null)
       .not("invite_sent_at", "is", null);
 
     // Count models that have claimed
-    const { count: claimedCount } = await (supabase
-      .from("models") as any)
+    const { count: claimedCount } = await supabase
+      .from("models")
       .select("id", { count: "exact", head: true })
       .not("user_id", "is", null);
 
@@ -300,8 +305,8 @@ export async function GET() {
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
 
-      const { count: sentTodayCount } = await (supabase
-        .from("models") as any)
+      const { count: sentTodayCount } = await supabase
+        .from("models")
         .select("id", { count: "exact", head: true })
         .not("invite_sent_at", "is", null)
         .gte("invite_sent_at", todayStart.toISOString());

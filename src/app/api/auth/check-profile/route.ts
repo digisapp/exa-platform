@@ -20,8 +20,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Check for actor record
-    const { data: actor } = await (supabase
-      .from("actors") as any)
+    const { data: actor } = await supabase
+      .from("actors")
       .select("id, type")
       .eq("user_id", user.id)
       .single();
@@ -35,8 +35,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Legacy check for model record without actor
-    const { data: model } = await (supabase
-      .from("models") as any)
+    const { data: model } = await supabase
+      .from("models")
       .select("id")
       .eq("user_id", user.id)
       .single();

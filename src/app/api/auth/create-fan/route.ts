@@ -37,8 +37,8 @@ export async function POST(request: NextRequest) {
     // FIRST: Check if there's an existing model record with this email (from imports)
     // This handles models who were imported before they had an auth account
     if (user.email) {
-      const { data: existingModel } = await (supabase
-        .from("models") as any)
+      const { data: existingModel } = await supabase
+        .from("models")
         .select("id, user_id, is_approved")
         .eq("email", user.email.toLowerCase())
         .is("user_id", null)
@@ -46,27 +46,27 @@ export async function POST(request: NextRequest) {
 
       if (existingModel) {
         // Link the existing model to this user
-        await (supabase.from("models") as any)
+        await supabase.from("models")
           .update({ user_id: user.id })
           .eq("id", existingModel.id);
 
         // Check if actor already exists
-        const { data: existingActor } = await (supabase
-          .from("actors") as any)
+        const { data: existingActor } = await supabase
+          .from("actors")
           .select("id")
           .eq("user_id", user.id)
           .single();
 
         if (!existingActor) {
           // Create actor record for this model
-          await (supabase.from("actors") as any)
+          await supabase.from("actors")
             .insert({
               user_id: user.id,
               type: "model",
             });
         } else {
           // Update existing actor to type model if it was fan
-          await (supabase.from("actors") as any)
+          await supabase.from("actors")
             .update({ type: "model" })
             .eq("user_id", user.id);
         }
@@ -80,16 +80,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user already has an actor record
-    const { data: existingActor } = await (supabase
-      .from("actors") as any)
+    const { data: existingActor } = await supabase
+      .from("actors")
       .select("id, type")
       .eq("user_id", user.id)
       .single();
 
     if (existingActor) {
       // Already exists - check if fan profile exists too
-      const { data: existingFan } = await (supabase
-        .from("fans") as any)
+      const { data: existingFan } = await supabase
+        .from("fans")
         .select("id")
         .eq("user_id", user.id)
         .single();
@@ -107,8 +107,8 @@ export async function POST(request: NextRequest) {
       // Validate referrer model exists if provided
       let validReferrerId = null;
       if (referrerModelId) {
-        const { data: referrerModel } = await (supabase
-          .from("models") as any)
+        const { data: referrerModel } = await supabase
+          .from("models")
           .select("id")
           .eq("id", referrerModelId)
           .single();
@@ -117,8 +117,8 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      const { error: fanError } = await (supabase
-        .from("fans") as any)
+      const { error: fanError } = await supabase
+        .from("fans")
         .upsert({
           id: existingActor.id,
           user_id: user.id,
@@ -144,8 +144,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Create actor record with type "fan"
-    const { data: actor, error: actorError } = await (supabase
-      .from("actors") as any)
+    const { data: actor, error: actorError } = await supabase
+      .from("actors")
       .upsert({
         user_id: user.id,
         type: "fan",
@@ -161,13 +161,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const actorId = (actor as { id: string }).id;
+    const actorId = actor?.id;
 
     // Validate referrer model exists if provided
     let validReferrerId = null;
     if (referrerModelId) {
-      const { data: referrerModel } = await (supabase
-        .from("models") as any)
+      const { data: referrerModel } = await supabase
+        .from("models")
         .select("id")
         .eq("id", referrerModelId)
         .single();
@@ -177,8 +177,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Create fan profile with upsert
-    const { error: fanError } = await (supabase
-      .from("fans") as any)
+    const { error: fanError } = await supabase
+      .from("fans")
       .upsert({
         id: actorId,
         user_id: user.id,
@@ -197,7 +197,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Record the welcome bonus transaction (only if new)
-    await (supabase.from("coin_transactions") as any).insert({
+    await supabase.from("coin_transactions").insert({
       actor_id: actorId,
       amount: 10,
       action: "signup_bonus",

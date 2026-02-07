@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       .from("actors")
       .select("id")
       .eq("user_id", user.id)
-      .single() as { data: { id: string } | null };
+      .single();
 
     if (!actor) {
       return NextResponse.json(
@@ -54,8 +54,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify the message exists and user is a participant
-    const { data: message } = await (supabase
-      .from("messages") as any)
+    const { data: message } = await supabase
+      .from("messages")
       .select("id, conversation_id")
       .eq("id", messageId)
       .single();
@@ -83,8 +83,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if reaction already exists
-    const { data: existingReaction } = await (supabase
-      .from("message_reactions") as any)
+    const { data: existingReaction } = await supabase
+      .from("message_reactions")
       .select("id")
       .eq("message_id", messageId)
       .eq("actor_id", actor.id)
@@ -93,8 +93,8 @@ export async function POST(request: NextRequest) {
 
     if (existingReaction) {
       // Remove reaction (toggle off)
-      await (supabase
-        .from("message_reactions") as any)
+      await supabase
+        .from("message_reactions")
         .delete()
         .eq("id", existingReaction.id);
 
@@ -105,8 +105,8 @@ export async function POST(request: NextRequest) {
       });
     } else {
       // Add reaction
-      const { error: insertError } = await (supabase
-        .from("message_reactions") as any)
+      const { error: insertError } = await supabase
+        .from("message_reactions")
         .insert({
           message_id: messageId,
           actor_id: actor.id,
@@ -172,7 +172,7 @@ export async function GET(request: NextRequest) {
       .from("actors")
       .select("id")
       .eq("user_id", user.id)
-      .single() as { data: { id: string } | null };
+      .single();
 
     if (!actor) {
       return NextResponse.json(
@@ -182,8 +182,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Verify user is a participant in the message's conversation
-    const { data: message } = await (supabase
-      .from("messages") as any)
+    const { data: message } = await supabase
+      .from("messages")
       .select("conversation_id")
       .eq("id", messageId)
       .single();
@@ -210,8 +210,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Get reactions grouped by emoji
-    const { data: reactions, error } = await (supabase
-      .from("message_reactions") as any)
+    const { data: reactions, error } = await supabase
+      .from("message_reactions")
       .select("emoji, actor_id")
       .eq("message_id", messageId);
 

@@ -1,14 +1,19 @@
 import { createClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 // GET /api/brands/tags - Get all unique tags used by this brand
-export async function GET() {
+export async function GET(request: NextRequest) {
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  // Rate limit
+  const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+  if (rateLimitResponse) return rateLimitResponse;
 
   // Get actor and verify it's a brand
   const { data: actor } = await supabase
@@ -22,8 +27,8 @@ export async function GET() {
   }
 
   // Get all notes with tags for this brand
-  const { data: notes, error } = await (supabase
-    .from("brand_model_notes") as any)
+  const { data: notes, error } = await supabase
+    .from("brand_model_notes")
     .select("tags")
     .eq("brand_id", actor.id);
 

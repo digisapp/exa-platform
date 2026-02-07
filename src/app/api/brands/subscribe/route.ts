@@ -33,8 +33,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Get brand data
-    const { data: brand } = await (supabase
-      .from("brands") as any)
+    const { data: brand } = await supabase
+      .from("brands")
       .select("id, email, company_name, stripe_customer_id")
       .eq("id", actor.id)
       .single();
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
       stripeCustomerId = customer.id;
 
       // Save customer ID to brand
-      await (supabase.from("brands") as any)
+      await supabase.from("brands")
         .update({ stripe_customer_id: stripeCustomerId })
         .eq("id", brand.id);
     }

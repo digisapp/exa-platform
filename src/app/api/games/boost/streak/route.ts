@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 // POST - Update streak when session completes
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit (no auth, use IP-based)
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general");
+    if (rateLimitResponse) return rateLimitResponse;
+
     const supabase = await createClient();
     const { sessionId } = await request.json();
 
@@ -15,7 +20,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Update streak using database function
-    const { data, error } = await (supabase as any).rpc(
+    const { data, error } = await supabase.rpc(
       "update_session_streak",
       { p_session_id: sessionId }
     );

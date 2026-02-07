@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 // GET - Get user's orders
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -11,11 +12,15 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
+
     const { searchParams } = new URL(request.url);
     const limit = Math.min(parseInt(searchParams.get("limit") || "20"), 50);
     const offset = parseInt(searchParams.get("offset") || "0");
 
-    const { data: orders, error } = await (supabase as any)
+    const { data: orders, error } = await supabase
       .from("shop_orders")
       .select(`
         id,

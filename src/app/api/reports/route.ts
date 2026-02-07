@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 
 const REPORT_REASONS = [
@@ -20,6 +21,10 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
 
     // Get reporter's actor ID
     const { data: reporterActor } = await supabase
@@ -70,8 +75,8 @@ export async function POST(request: NextRequest) {
 
     // Check for duplicate recent report (within 24 hours)
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    const { data: existingReport } = await (supabase
-      .from("reports") as any)
+    const { data: existingReport } = await supabase
+      .from("reports")
       .select("id")
       .eq("reporter_id", reporterActor.id)
       .eq("reported_user_id", reportedActorId)
@@ -83,8 +88,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the report
-    const { error: insertError } = await (supabase
-      .from("reports") as any)
+    const { error: insertError } = await supabase
+      .from("reports")
       .insert({
         reporter_id: reporterActor.id,
         reported_user_id: reportedActorId,
@@ -132,7 +137,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status");
     const reportedUserId = searchParams.get("reportedUserId");
 
-    let query = (supabase.from("reports") as any)
+    let query = supabase.from("reports")
       .select("*")
       .order("created_at", { ascending: false });
 

@@ -55,8 +55,8 @@ export async function PUT(request: NextRequest) {
   if (username) {
 
     // Check if username is taken (by another brand)
-    const { data: existingBrand } = await (adminClient
-      .from("brands") as any)
+    const { data: existingBrand } = await adminClient
+      .from("brands")
       .select("id")
       .eq("username", username)
       .neq("id", actor.id)
@@ -79,8 +79,8 @@ export async function PUT(request: NextRequest) {
   }
 
   // Update brand profile
-  const { data: brand, error } = await (adminClient
-    .from("brands") as any)
+  const { data: brand, error } = await adminClient
+    .from("brands")
     .update({
       company_name: company_name.trim(),
       contact_name: contact_name?.trim() || null,

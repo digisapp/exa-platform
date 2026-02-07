@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 export async function GET(request: NextRequest) {
   try {
+    // Rate limit (public endpoint, IP-based)
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general");
+    if (rateLimitResponse) return rateLimitResponse;
+
     const { searchParams } = new URL(request.url);
     const eventId = searchParams.get("eventId");
 
@@ -30,7 +35,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get active tiers for the event
-    const { data: tiers, error } = await (supabase as any)
+    const { data: tiers, error } = await supabase
       .from("ticket_tiers")
       .select(`
         id,

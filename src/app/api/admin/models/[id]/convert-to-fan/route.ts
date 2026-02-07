@@ -29,8 +29,8 @@ export async function POST(
     }
 
     // Get the model's user_id
-    const { data: model, error: modelError } = await (supabase
-      .from("models") as any)
+    const { data: model, error: modelError } = await supabase
+      .from("models")
       .select("id, user_id, first_name, last_name, email")
       .eq("id", modelId)
       .single();
@@ -40,16 +40,16 @@ export async function POST(
     }
 
     // Check if fan already exists for this user
-    const { data: existingFan } = await (supabase
-      .from("fans") as any)
+    const { data: existingFan } = await supabase
+      .from("fans")
       .select("id")
       .eq("user_id", model.user_id)
       .single();
 
     if (!existingFan) {
       // Create fan record
-      const { error: fanError } = await (supabase
-        .from("fans") as any)
+      const { error: fanError } = await supabase
+        .from("fans")
         .insert({
           user_id: model.user_id,
           display_name: model.first_name
@@ -66,8 +66,8 @@ export async function POST(
     }
 
     // Update actor type from model to fan
-    const { error: actorError } = await (supabase
-      .from("actors") as any)
+    const { error: actorError } = await supabase
+      .from("actors")
       .update({ type: "fan" })
       .eq("user_id", model.user_id)
       .eq("type", "model");
@@ -78,8 +78,8 @@ export async function POST(
     }
 
     // Delete the model record
-    const { error: deleteError } = await (supabase
-      .from("models") as any)
+    const { error: deleteError } = await supabase
+      .from("models")
       .delete()
       .eq("id", modelId);
 

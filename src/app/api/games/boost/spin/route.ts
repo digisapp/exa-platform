@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import crypto from "crypto";
 
 // Server-side spin result based on weighted probability
@@ -17,7 +18,7 @@ function determineSpinReward(): number {
 }
 
 // POST - Claim daily spin reward
-export async function POST(_request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -29,11 +30,15 @@ export async function POST(_request: NextRequest) {
       );
     }
 
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
+
     // Determine reward server-side (ignore any client-provided amount)
     const coins = determineSpinReward();
 
     // Call the claim_daily_spin function
-    const { data, error } = await (supabase as any).rpc(
+    const { data, error } = await supabase.rpc(
       "claim_daily_spin",
       {
         p_user_id: user.id,

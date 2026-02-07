@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -10,8 +11,12 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
+
     // Get shop_brand for this user
-    const { data: shopBrand } = await (supabase as any)
+    const { data: shopBrand } = await supabase
       .from("shop_brands")
       .select(`
         id,
@@ -34,7 +39,7 @@ export async function GET() {
     }
 
     // Get product stats
-    const { data: products } = await (supabase as any)
+    const { data: products } = await supabase
       .from("shop_products")
       .select("id, is_active, total_sold, view_count")
       .eq("brand_id", shopBrand.id);
@@ -45,7 +50,7 @@ export async function GET() {
     const totalViews = products?.reduce((sum: number, p: any) => sum + (p.view_count || 0), 0) || 0;
 
     // Get variant stock
-    const { data: variants } = await (supabase as any)
+    const { data: variants } = await supabase
       .from("shop_product_variants")
       .select("stock_quantity, low_stock_threshold, product:shop_products!inner(brand_id)")
       .eq("product.brand_id", shopBrand.id);
@@ -59,7 +64,7 @@ export async function GET() {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const { data: recentItems } = await (supabase as any)
+    const { data: recentItems } = await supabase
       .from("shop_order_items")
       .select(`
         line_total,
@@ -82,7 +87,7 @@ export async function GET() {
     };
 
     // Get pending payouts
-    const { data: pendingPayouts } = await (supabase as any)
+    const { data: pendingPayouts } = await supabase
       .from("shop_brand_payouts")
       .select("net_payout")
       .eq("brand_id", shopBrand.id)

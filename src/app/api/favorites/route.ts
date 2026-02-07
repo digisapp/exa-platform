@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 // GET - Get user's favorites
 export async function GET() {
@@ -16,13 +17,14 @@ export async function GET() {
       .from("actors")
       .select("id")
       .eq("user_id", user.id)
-      .single() as { data: { id: string } | null };
+      .single();
 
     if (!actor) {
       return NextResponse.json({ error: "Actor not found" }, { status: 404 });
     }
 
     // Get favorites with model details
+    // Note: as any needed because follows FK points to actors, not models directly
     const { data: favorites, error } = await (supabase
       .from("follows") as any)
       .select(`
@@ -76,6 +78,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
+
     const body = await request.json();
     const { modelId } = body;
 
@@ -91,7 +97,7 @@ export async function POST(request: NextRequest) {
       .from("actors")
       .select("id")
       .eq("user_id", user.id)
-      .single() as { data: { id: string } | null };
+      .single();
 
     if (!actor) {
       return NextResponse.json({ error: "Actor not found" }, { status: 404 });
@@ -102,9 +108,9 @@ export async function POST(request: NextRequest) {
       .from("models")
       .select("user_id")
       .eq("id", modelId)
-      .single() as { data: { user_id: string } | null };
+      .single();
 
-    if (!model) {
+    if (!model || !model.user_id) {
       return NextResponse.json({ error: "Model not found" }, { status: 404 });
     }
 
@@ -112,7 +118,7 @@ export async function POST(request: NextRequest) {
       .from("actors")
       .select("id")
       .eq("user_id", model.user_id)
-      .single() as { data: { id: string } | null };
+      .single();
 
     if (!modelActor) {
       return NextResponse.json({ error: "Model actor not found" }, { status: 404 });
@@ -126,7 +132,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if already favorited
+    // Check if already favorited (as any needed: follows has no "id" column in types)
     const { data: existingFavorite } = await (supabase
       .from("follows") as any)
       .select("id")
@@ -137,8 +143,8 @@ export async function POST(request: NextRequest) {
     const isNewFavorite = !existingFavorite;
 
     // Insert favorite (using follows table)
-    const { error: insertError } = await (supabase
-      .from("follows") as any)
+    const { error: insertError } = await supabase
+      .from("follows")
       .upsert(
         { follower_id: actor.id, following_id: modelActor.id },
         { onConflict: "follower_id,following_id", ignoreDuplicates: true }
@@ -156,7 +162,7 @@ export async function POST(request: NextRequest) {
         .from("actors")
         .select("type")
         .eq("id", actor.id)
-        .single() as { data: { type: string } | null };
+        .single();
 
       let followerName = "Someone";
       if (followerActor?.type === "fan") {
@@ -164,19 +170,19 @@ export async function POST(request: NextRequest) {
           .from("fans")
           .select("display_name, username")
           .eq("id", actor.id)
-          .single() as { data: { display_name: string | null; username: string | null } | null };
+          .single();
         followerName = fan?.display_name || fan?.username || "A fan";
       } else if (followerActor?.type === "brand") {
         const { data: brand } = await supabase
           .from("brands")
           .select("company_name")
           .eq("id", actor.id)
-          .single() as { data: { company_name: string | null } | null };
+          .single();
         followerName = brand?.company_name || "A brand";
       }
 
       // Create notification for the model
-      await (supabase.from("notifications") as any).insert({
+      await supabase.from("notifications").insert({
         user_id: model.user_id,
         type: "new_follower",
         title: "New Favorite",
@@ -187,8 +193,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Get updated favorite count for this model
-    const { count: favoriteCount } = await (supabase
-      .from("follows") as any)
+    const { count: favoriteCount } = await supabase
+      .from("follows")
       .select("*", { count: "exact", head: true })
       .eq("following_id", modelActor.id);
 
@@ -230,7 +236,7 @@ export async function DELETE(request: NextRequest) {
       .from("actors")
       .select("id")
       .eq("user_id", user.id)
-      .single() as { data: { id: string } | null };
+      .single();
 
     if (!actor) {
       return NextResponse.json({ error: "Actor not found" }, { status: 404 });
@@ -241,9 +247,9 @@ export async function DELETE(request: NextRequest) {
       .from("models")
       .select("user_id")
       .eq("id", modelId)
-      .single() as { data: { user_id: string } | null };
+      .single();
 
-    if (!model) {
+    if (!model || !model.user_id) {
       return NextResponse.json({ error: "Model not found" }, { status: 404 });
     }
 
@@ -251,15 +257,15 @@ export async function DELETE(request: NextRequest) {
       .from("actors")
       .select("id")
       .eq("user_id", model.user_id)
-      .single() as { data: { id: string } | null };
+      .single();
 
     if (!modelActor) {
       return NextResponse.json({ error: "Model actor not found" }, { status: 404 });
     }
 
     // Delete favorite
-    const { error: deleteError } = await (supabase
-      .from("follows") as any)
+    const { error: deleteError } = await supabase
+      .from("follows")
       .delete()
       .eq("follower_id", actor.id)
       .eq("following_id", modelActor.id);
@@ -270,8 +276,8 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Get updated favorite count
-    const { count: favoriteCount } = await (supabase
-      .from("follows") as any)
+    const { count: favoriteCount } = await supabase
+      .from("follows")
       .select("*", { count: "exact", head: true })
       .eq("following_id", modelActor.id);
 

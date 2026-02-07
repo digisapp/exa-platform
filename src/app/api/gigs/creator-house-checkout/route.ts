@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { stripe } from "@/lib/stripe";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 const CREATOR_HOUSE_PRICE_CENTS = 140000; // $1,400
 
@@ -13,6 +14,10 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "financial", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
 
     const { applicationId, gigId, modelId } = await request.json();
 
@@ -48,8 +53,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify application exists and is accepted
-    const { data: application } = await (supabase
-      .from("gig_applications") as any)
+    const { data: application } = await supabase
+      .from("gig_applications")
       .select("id, status, payment_status")
       .eq("id", applicationId)
       .eq("gig_id", gigId)
@@ -122,8 +127,8 @@ export async function POST(request: NextRequest) {
     });
 
     // Update application with pending payment status
-    await (supabase
-      .from("gig_applications") as any)
+    await supabase
+      .from("gig_applications")
       .update({
         payment_status: "pending",
         stripe_checkout_session_id: session.id,

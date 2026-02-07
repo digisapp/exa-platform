@@ -45,16 +45,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user already has an actor record
-    const { data: existingActor } = await (supabase
-      .from("actors") as any)
+    const { data: existingActor } = await supabase
+      .from("actors")
       .select("id, type")
       .eq("user_id", user.id)
       .single();
 
     if (existingActor) {
       // Check if brand profile exists
-      const { data: existingBrand } = await (supabase
-        .from("brands") as any)
+      const { data: existingBrand } = await supabase
+        .from("brands")
         .select("id")
         .eq("id", existingActor.id)
         .single();
@@ -79,8 +79,8 @@ export async function POST(request: NextRequest) {
 
       // Check for username conflicts
       while (suffix < 100) {
-        const { data: conflict } = await (supabase
-          .from("brands") as any)
+        const { data: conflict } = await supabase
+          .from("brands")
           .select("id")
           .eq("username", finalUsername)
           .maybeSingle();
@@ -90,8 +90,8 @@ export async function POST(request: NextRequest) {
         suffix++;
       }
 
-      const { error: brandError } = await (supabase
-        .from("brands") as any)
+      const { error: brandError } = await supabase
+        .from("brands")
         .upsert({
           id: existingActor.id,
           username: finalUsername,
@@ -119,8 +119,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Create actor record with type "brand"
-    const { data: actor, error: actorError } = await (supabase
-      .from("actors") as any)
+    const { data: actor, error: actorError } = await supabase
+      .from("actors")
       .upsert({
         user_id: user.id,
         type: "brand",
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const actorId = (actor as { id: string }).id;
+    const actorId = actor.id;
 
     // Generate username from company name
     let baseUsername = companyName.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 20);
@@ -149,8 +149,8 @@ export async function POST(request: NextRequest) {
 
     // Check for username conflicts
     while (suffix < 100) {
-      const { data: conflict } = await (supabase
-        .from("brands") as any)
+      const { data: conflict } = await supabase
+        .from("brands")
         .select("id")
         .eq("username", finalUsername)
         .maybeSingle();
@@ -161,8 +161,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Create brand profile
-    const { error: brandError } = await (supabase
-      .from("brands") as any)
+    const { error: brandError } = await supabase
+      .from("brands")
       .upsert({
         id: actorId,
         username: finalUsername,

@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     // Filter to events in 24-48 hour window
     // Note: Supabase returns offer as single object (not array) for FK relationships
     const upcomingResponses = (responses || []).filter((r: any) => {
-      const offer = r.offer as any;
+      const offer = r.offer as Record<string, any>;
       if (!offer?.event_date) return false;
       const eventDate = new Date(offer.event_date);
       return eventDate >= in24Hours && eventDate <= in48Hours;
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get unique brand IDs for company names
-    const brandIds = [...new Set(upcomingResponses.map((r: any) => (r.offer as any).brand_id))];
+    const brandIds = [...new Set(upcomingResponses.map((r: any) => (r.offer as Record<string, any>).brand_id))];
     const { data: brands } = await adminClient
       .from("brands")
       .select("id, company_name, contact_email, contact_phone")
@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
 
     // Send reminders
     for (const response of upcomingResponses) {
-      const offer = response.offer as any;
+      const offer = response.offer as Record<string, any>;
       const model = modelMap.get(response.model_id);
       const brand = brandMap.get(offer.brand_id);
       const email = model ? userEmails.get(model.user_id) : null;

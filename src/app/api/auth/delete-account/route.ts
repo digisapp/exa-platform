@@ -37,8 +37,8 @@ export async function DELETE(request: Request) {
     }
 
     // Get actor to check type
-    const { data: actor } = await (supabase
-      .from("actors") as any)
+    const { data: actor } = await supabase
+      .from("actors")
       .select("id, type")
       .eq("user_id", user.id)
       .single() as { data: { id: string; type: string } | null };

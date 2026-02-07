@@ -1,10 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 // GET /api/campaigns/model/[modelId] - Get all campaigns and whether this model is in each
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ modelId: string }> }
 ) {
   const { modelId } = await params;
@@ -14,6 +15,10 @@ export async function GET(
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  // Rate limit
+  const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+  if (rateLimitResponse) return rateLimitResponse;
 
   // Get actor and verify it's a brand
   const { data: actor } = await supabase
@@ -27,8 +32,8 @@ export async function GET(
   }
 
   // Get all campaigns for this brand
-  const { data: campaigns, error } = await (supabase
-    .from("campaigns") as any)
+  const { data: campaigns, error } = await supabase
+    .from("campaigns")
     .select(`
       id,
       name,
@@ -58,7 +63,7 @@ export async function GET(
 
 // POST /api/campaigns/model/[modelId] - Toggle model in campaign
 export async function POST(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ modelId: string }> }
 ) {
   const { modelId } = await params;
@@ -68,6 +73,10 @@ export async function POST(
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  // Rate limit
+  const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+  if (rateLimitResponse) return rateLimitResponse;
 
   // Get actor and verify it's a brand
   const { data: actor } = await supabase
@@ -88,8 +97,8 @@ export async function POST(
   }
 
   // Verify the campaign belongs to this brand
-  const { data: campaign } = await (supabase
-    .from("campaigns") as any)
+  const { data: campaign } = await supabase
+    .from("campaigns")
     .select("id")
     .eq("id", campaignId)
     .eq("brand_id", actor.id)
@@ -104,8 +113,8 @@ export async function POST(
 
   if (add) {
     // Add model to campaign
-    const { error } = await (adminClient
-      .from("campaign_models") as any)
+    const { error } = await adminClient
+      .from("campaign_models")
       .upsert({
         campaign_id: campaignId,
         model_id: modelId,
@@ -116,8 +125,8 @@ export async function POST(
     }
   } else {
     // Remove model from campaign
-    const { error } = await (adminClient
-      .from("campaign_models") as any)
+    const { error } = await adminClient
+      .from("campaign_models")
       .delete()
       .eq("campaign_id", campaignId)
       .eq("model_id", modelId);

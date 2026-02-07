@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { escapeIlike } from "@/lib/utils";
 
-const supabase: any = createServiceRoleClient();
+const supabase = createServiceRoleClient();
 
 export async function GET(request: NextRequest) {
   try {
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "search");
+    if (rateLimitResponse) return rateLimitResponse;
+
     const searchParams = request.nextUrl.searchParams;
     const query = searchParams.get("q")?.trim();
 

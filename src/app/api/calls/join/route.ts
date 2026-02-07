@@ -34,11 +34,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Get the call session
-    const { data: callSession } = await (supabase
-      .from('video_call_sessions') as any)
+    const { data: callSession } = await supabase
+      .from('video_call_sessions')
       .select('*')
       .eq('id', sessionId)
-      .single() as { data: any };
+      .single() ;
 
     if (!callSession) {
       return NextResponse.json({ error: 'Call session not found' }, { status: 404 });
@@ -75,8 +75,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Update call session to active
-    const { error: updateError } = await (supabase
-      .from('video_call_sessions') as any)
+    const { error: updateError } = await supabase
+      .from('video_call_sessions')
       .update({
         status: 'active',
         started_at: new Date().toISOString(),
@@ -139,11 +139,11 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Get the call session
-    const { data: callSession } = await (supabase
-      .from('video_call_sessions') as any)
+    const { data: callSession } = await supabase
+      .from('video_call_sessions')
       .select('*')
       .eq('id', sessionId)
-      .single() as { data: any };
+      .single() ;
 
     if (!callSession) {
       return NextResponse.json({ error: 'Call session not found' }, { status: 404 });
@@ -158,8 +158,8 @@ export async function DELETE(request: NextRequest) {
     const status = reason === 'missed' ? 'missed' : 'declined';
 
     // Update call session
-    const { error: updateError } = await (supabase
-      .from('video_call_sessions') as any)
+    const { error: updateError } = await supabase
+      .from('video_call_sessions')
       .update({
         status,
         ended_at: new Date().toISOString(),
@@ -174,7 +174,7 @@ export async function DELETE(request: NextRequest) {
     // Add system message for missed calls
     if (status === 'missed') {
       const callTypeLabel = callSession.call_type === "voice" ? "voice" : "video";
-      await (supabase.from('messages') as any).insert({
+      await supabase.from('messages').insert({
         conversation_id: callSession.conversation_id,
         sender_id: callSession.initiated_by,
         content: `Missed ${callTypeLabel} call`,

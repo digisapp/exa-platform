@@ -42,8 +42,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Get call session
-    const { data: session } = await (supabase
-      .from("video_call_sessions") as any)
+    const { data: session } = await supabase
+      .from("video_call_sessions")
       .select("*")
       .eq("id", sessionId)
       .or(`initiated_by.eq.${actor.id},recipient_id.eq.${actor.id}`)
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
       .single() as { data: { user_id: string } | null };
 
     // Get call rates from recipient model
-    const { data: recipientModel } = await (supabase.from("models") as any)
+    const { data: recipientModel } = await supabase.from("models")
       .select("video_call_rate, voice_call_rate, user_id")
       .eq("user_id", recipientActorData?.user_id)
       .single();
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
         .single() as { data: { type: string } | null };
 
       if (callerActor?.type === "fan" && recipientModel?.user_id) {
-        const { data: transferResult, error: transferError } = await (supabase.rpc as any)(
+        const { data: transferResult, error: transferError } = await supabase.rpc(
           "end_call_transfer",
           {
             p_session_id: sessionId,
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Update session
-    const { error: sessionUpdateError } = await (supabase.from("video_call_sessions") as any)
+    const { error: sessionUpdateError } = await supabase.from("video_call_sessions")
       .update({
         status: "ended",
         ended_at: now.toISOString(),
@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
     const coinsStr = coinsToCharge > 0 ? " (" + coinsToCharge + " coins)" : "";
     const callTypeLabel = callType === "voice" ? "Voice" : "Video";
 
-    await (supabase.from("messages") as any).insert({
+    await supabase.from("messages").insert({
       conversation_id: session.conversation_id,
       sender_id: actor.id,
       content: `${callTypeLabel} call ended - ${durationStr}${coinsStr}`,

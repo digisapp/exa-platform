@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
     const pageType = getPageType(path);
 
     // Insert page view
-    const { error } = await (supabase.from("page_views") as any).insert({
+    const { error } = await supabase.from("page_views").insert({
       page_path: path,
       page_type: pageType,
       model_id: modelId || null,

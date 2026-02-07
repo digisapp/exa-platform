@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { sendBrandOutreachEmail } from "@/lib/email";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 interface ContactToEmail {
   id: string;
@@ -28,6 +29,10 @@ export async function POST(request: NextRequest) {
     if (!actor || actor.type !== "admin") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
+
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
 
     const body = await request.json();
     const { contacts, subject, body: emailBody } = body as {
@@ -63,7 +68,7 @@ export async function POST(request: NextRequest) {
           sent++;
 
           // Log the email in the database
-          await (supabase as any).from("brand_outreach_emails").insert({
+          await supabase.from("brand_outreach_emails").insert({
             contact_id: contact.id,
             subject,
             body_html: emailBody,
@@ -74,7 +79,7 @@ export async function POST(request: NextRequest) {
           });
 
           // Update the contact status and last_contacted_at
-          await (supabase as any)
+          await supabase
             .from("brand_outreach_contacts")
             .update({
               status: "contacted",

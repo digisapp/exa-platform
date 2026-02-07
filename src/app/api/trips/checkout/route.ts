@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { stripe } from "@/lib/stripe";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 
 const tripCheckoutSchema = z.object({
@@ -20,6 +21,10 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "financial", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
 
     const body = await request.json();
     const parsed = tripCheckoutSchema.safeParse(body);
@@ -121,8 +126,8 @@ export async function POST(request: NextRequest) {
 
     // Create or update the application with pending payment status
     if (existingApp) {
-      await (supabase
-        .from("gig_applications") as any)
+      await supabase
+        .from("gig_applications")
         .update({
           trip_number: tripNumber,
           spot_type: "paid",
@@ -132,8 +137,8 @@ export async function POST(request: NextRequest) {
         })
         .eq("id", existingApp.id);
     } else {
-      await (supabase
-        .from("gig_applications") as any)
+      await supabase
+        .from("gig_applications")
         .insert({
           gig_id: gigId,
           model_id: modelId,

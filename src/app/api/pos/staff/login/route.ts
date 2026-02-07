@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
-const supabase: any = createServiceRoleClient();
+const supabase = createServiceRoleClient();
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit (unauthenticated - IP-based, auth tier for login)
+    const rateLimitResponse = await checkEndpointRateLimit(request, "auth");
+    if (rateLimitResponse) return rateLimitResponse;
+
     const { pin } = await request.json();
 
     if (!pin || pin.length !== 4) {

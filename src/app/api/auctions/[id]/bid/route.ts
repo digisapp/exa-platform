@@ -59,7 +59,8 @@ export async function POST(
     }
 
     // Call the RPC function to place the bid
-    const { data: result, error } = await (supabase as any).rpc("place_auction_bid", {
+    const rpcClient = supabase as any;
+    const { data: result, error } = await rpcClient.rpc("place_auction_bid", {
       p_auction_id: auctionId,
       p_bidder_id: actor.id,
       p_amount: amount,
@@ -96,7 +97,7 @@ export async function POST(
     }
 
     // Get updated balance
-    const { data: balanceResult } = await (supabase as any).rpc("get_actor_coin_balance", {
+    const { data: balanceResult } = await supabase.rpc("get_actor_coin_balance", {
       p_actor_id: actor.id,
     });
 
@@ -131,7 +132,7 @@ export async function GET(
     const { id: auctionId } = await params;
     const supabase = await createClient();
 
-    const { data: bids, error } = await (supabase as any)
+    const { data: bids, error } = await supabase
       .from("auction_bids")
       .select(`
         id,

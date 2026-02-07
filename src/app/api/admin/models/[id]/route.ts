@@ -49,8 +49,8 @@ export async function PATCH(
     const { is_approved } = parsed.data;
 
     // Get current model data before update
-    const { data: model } = await (supabase
-      .from("models") as any)
+    const { data: model } = await supabase
+      .from("models")
       .select("email, first_name, last_name, username, is_approved, user_id")
       .eq("id", id)
       .single();
@@ -63,8 +63,8 @@ export async function PATCH(
     const statusChanged = model.is_approved !== is_approved;
 
     // Update the model
-    const { error } = await (supabase
-      .from("models") as any)
+    const { error } = await supabase
+      .from("models")
       .update({ is_approved, updated_at: new Date().toISOString() })
       .eq("id", id);
 
@@ -73,8 +73,8 @@ export async function PATCH(
     // Update actor type based on approval status
     if (model.user_id) {
       const newActorType = is_approved ? "model" : "fan";
-      const { error: actorError } = await (supabase
-        .from("actors") as any)
+      const { error: actorError } = await supabase
+        .from("actors")
         .update({ type: newActorType })
         .eq("user_id", model.user_id);
 

@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
 
     // Deduct coins if needed
     if (coinsToSpend > 0 && actorId) {
-      const { data: deductResult, error: deductError } = await (supabase as any).rpc(
+      const { data: deductResult, error: deductError } = await supabase.rpc(
         "deduct_coins",
         {
           p_actor_id: actorId,
@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Record the vote
-    const { data: voteResult, error: voteError } = await (supabase as any).rpc(
+    const { data: voteResult, error: voteError } = await supabase.rpc(
       "record_top_model_vote",
       {
         p_voter_id: actorId,
@@ -198,7 +198,7 @@ export async function POST(request: NextRequest) {
         .eq("is_approved", true)
         .not("profile_photo_url", "is", null);
 
-      await (supabase as any).rpc("mark_model_swiped", {
+      await supabase.rpc("mark_model_swiped", {
         p_session_id: session_id,
         p_model_id: model_id,
         p_total_models: count || 0,
@@ -216,14 +216,14 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (actor?.type === "fan") {
-        const { data: fan } = await (supabase as any)
+        const { data: fan } = await supabase
           .from("fans")
           .select("name, username")
           .eq("user_id", user.id)
           .single();
         voterName = fan?.name || fan?.username || "A fan";
       } else if (actor?.type === "brand") {
-        const { data: brand } = await (supabase as any)
+        const { data: brand } = await supabase
           .from("brands")
           .select("company_name")
           .eq("user_id", user.id)
@@ -251,7 +251,7 @@ export async function POST(request: NextRequest) {
             ? `${voterName} gave you a SUPER BOOST in EXA Boost! You gained ${points} points!`
             : `${voterName} boosted you in EXA Boost! You gained ${points} points.`;
 
-          await (supabase as any).from("notifications").insert({
+          await supabase.from("notifications").insert({
             actor_id: modelActor.id,
             type: isSuperBoosted ? "exa_boost_super" : "exa_boost",
             title: notificationTitle,

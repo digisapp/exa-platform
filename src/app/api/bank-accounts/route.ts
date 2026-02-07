@@ -65,16 +65,16 @@ export async function POST(request: Request) {
     const encryptedRoutingNumber = encryptBankAccount(routingNumber);
 
     // Check if model already has a bank account
-    const { data: existingAccounts } = await (supabase
-      .from("bank_accounts") as any)
+    const { data: existingAccounts } = await supabase
+      .from("bank_accounts")
       .select("id")
       .eq("model_id", model.id);
 
     const isPrimary = !existingAccounts || existingAccounts.length === 0;
 
     // Insert bank account
-    const { data: bankAccount, error } = await (supabase
-      .from("bank_accounts") as any)
+    const { data: bankAccount, error } = await supabase
+      .from("bank_accounts")
       .insert({
         model_id: model.id,
         account_holder_name: accountHolderName,
@@ -145,8 +145,8 @@ export async function DELETE(request: Request) {
     }
 
     // Delete bank account (only if it belongs to this model)
-    const { error } = await (supabase
-      .from("bank_accounts") as any)
+    const { error } = await supabase
+      .from("bank_accounts")
       .delete()
       .eq("id", bankAccountId)
       .eq("model_id", model.id);

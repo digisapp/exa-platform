@@ -42,8 +42,8 @@ export async function GET(request: NextRequest) {
         .single() as { data: { coin_balance: number } | null };
       balance = data?.coin_balance ?? 0;
     } else if (actor.type === "brand") {
-      const { data } = await (supabase
-        .from("brands") as any)
+      const { data } = await supabase
+        .from("brands")
         .select("coin_balance")
         .eq("id", actor.id)
         .single() as { data: { coin_balance: number } | null };

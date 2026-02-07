@@ -50,8 +50,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Get the message to verify ownership
-    const { data: message } = await (supabase
-      .from("messages") as any)
+    const { data: message } = await supabase
+      .from("messages")
       .select("id, sender_id, conversation_id, deleted_at")
       .eq("id", messageId)
       .single();
@@ -80,8 +80,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Soft delete the message
-    const { error: deleteError } = await (supabase
-      .from("messages") as any)
+    const { error: deleteError } = await supabase
+      .from("messages")
       .update({
         deleted_at: new Date().toISOString(),
         content: null, // Clear content

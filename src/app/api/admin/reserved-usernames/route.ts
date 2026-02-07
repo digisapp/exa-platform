@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
 
@@ -22,9 +23,13 @@ export async function GET() {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
+
     // Fetch all reserved usernames
-    const { data: usernames, error } = await (supabase
-      .from("reserved_usernames") as any)
+    const { data: usernames, error } = await supabase
+      .from("reserved_usernames")
       .select("*")
       .order("username", { ascending: true });
 

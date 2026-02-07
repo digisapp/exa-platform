@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Call the unlock function
-    const { data: result, error: unlockError } = await (supabase.rpc as any)(
+    const { data: result, error: unlockError } = await supabase.rpc(
       "unlock_content",
       {
         p_buyer_id: actor.id,
@@ -75,8 +75,8 @@ export async function POST(request: NextRequest) {
 
     // Award points to content creator for sale (+5) - only if not already unlocked
     if (!result.already_unlocked) {
-      const { data: content } = await (supabase
-        .from("premium_content") as any)
+      const { data: content } = await supabase
+        .from("premium_content")
         .select("id, model_id, title")
         .eq("id", contentId)
         .single();
@@ -85,8 +85,8 @@ export async function POST(request: NextRequest) {
         // Send email notification to model (non-blocking)
         try {
           // Get model info
-          const { data: model } = await (supabase
-            .from("models") as any)
+          const { data: model } = await supabase
+            .from("models")
             .select("email, first_name, username")
             .eq("id", content.model_id)
             .single();
@@ -94,15 +94,15 @@ export async function POST(request: NextRequest) {
           // Get buyer name
           let buyerName = "Someone";
           if (actor.type === "fan") {
-            const { data: fan } = await (supabase
-              .from("fans") as any)
+            const { data: fan } = await supabase
+              .from("fans")
               .select("display_name")
               .eq("id", actor.id)
               .single();
             buyerName = fan?.display_name || "A fan";
           } else if (actor.type === "model") {
-            const { data: buyerModel } = await (supabase
-              .from("models") as any)
+            const { data: buyerModel } = await supabase
+              .from("models")
               .select("first_name, username")
               .eq("user_id", user.id)
               .single();

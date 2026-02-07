@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 const getAdminClient = () => createServiceRoleClient();
 
@@ -25,6 +26,10 @@ export async function GET(request: NextRequest) {
     if (!(await isAdmin(supabase, user.id))) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
+
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
 
     const { searchParams } = new URL(request.url);
     const chartPeriod = searchParams.get("chartPeriod") || "7d";

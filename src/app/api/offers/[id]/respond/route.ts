@@ -27,7 +27,7 @@ export async function POST(
       .from("actors")
       .select("id, type")
       .eq("user_id", user.id)
-      .single() as { data: { id: string; type: string } | null };
+      .single();
 
     if (!actor || actor.type !== "model") {
       return NextResponse.json({ error: "Only models can respond to offers" }, { status: 403 });
@@ -38,15 +38,15 @@ export async function POST(
       .from("models")
       .select("id, username, first_name")
       .eq("user_id", user.id)
-      .single() as { data: { id: string; username: string; first_name: string | null } | null };
+      .single();
 
     if (!model) {
       return NextResponse.json({ error: "Model not found" }, { status: 404 });
     }
 
     // Get offer
-    const { data: offer } = await (supabase
-      .from("offers") as any)
+    const { data: offer } = await supabase
+      .from("offers")
       .select("id, title, brand_id, status, spots, spots_filled")
       .eq("id", offerId)
       .single();
@@ -60,8 +60,8 @@ export async function POST(
     }
 
     // Get existing response
-    const { data: existingResponse } = await (supabase
-      .from("offer_responses") as any)
+    const { data: existingResponse } = await supabase
+      .from("offer_responses")
       .select("id, status")
       .eq("offer_id", offerId)
       .eq("model_id", model.id)
@@ -86,8 +86,8 @@ export async function POST(
     const previousStatus = existingResponse.status;
 
     // Update response
-    const { error: updateError } = await (adminClient
-      .from("offer_responses") as any)
+    const { error: updateError } = await adminClient
+      .from("offer_responses")
       .update({
         status,
         notes,
@@ -110,7 +110,7 @@ export async function POST(
       const { data: existingConvs } = await supabase
         .from("conversation_participants")
         .select("conversation_id")
-        .eq("actor_id", actor.id) as { data: { conversation_id: string }[] | null };
+        .eq("actor_id", actor.id);
 
       let conversationId: string | null = null;
 
@@ -130,14 +130,14 @@ export async function POST(
       }
 
       if (!conversationId) {
-        const { data: newConv } = await (adminClient
-          .from("conversations") as any)
+        const { data: newConv } = await adminClient
+          .from("conversations")
           .insert({ type: "direct" })
           .select()
           .single();
         if (newConv) {
           conversationId = newConv.id;
-          await (adminClient.from("conversation_participants") as any).insert([
+          await adminClient.from("conversation_participants").insert([
             { conversation_id: conversationId, actor_id: actor.id },
             { conversation_id: conversationId, actor_id: offer.brand_id },
           ]);
@@ -150,7 +150,7 @@ export async function POST(
           ? `${modelName} has accepted your offer "${offer.title}"!`
           : `${modelName} has declined your offer "${offer.title}".`;
 
-        await (adminClient.from("messages") as any).insert({
+        await adminClient.from("messages").insert({
           conversation_id: conversationId,
           sender_id: actor.id,
           content: message,

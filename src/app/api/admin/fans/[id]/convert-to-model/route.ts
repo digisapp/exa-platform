@@ -30,21 +30,23 @@ export async function POST(
     }
 
     // Get the fan record
-    const { data: fan, error: fanError } = await (supabase
-      .from("fans") as any)
+    const { data: fan, error: fanError } = await supabase
+      .from("fans")
       .select("id, user_id, email, display_name, coin_balance")
       .eq("id", fanId)
       .single();
 
-    if (fanError || !fan) {
+    if (fanError || !fan || !fan.user_id) {
       return NextResponse.json({ error: "Fan not found" }, { status: 404 });
     }
 
+    const fanUserId = fan.user_id;
+
     // Update the actor type from 'fan' to 'model'
-    const { error: actorError } = await (supabase
-      .from("actors") as any)
+    const { error: actorError } = await supabase
+      .from("actors")
       .update({ type: "model" })
-      .eq("user_id", fan.user_id)
+      .eq("user_id", fanUserId)
       .eq("type", "fan");
 
     if (actorError) {
@@ -58,10 +60,10 @@ export async function POST(
       .replace(/[^a-z0-9]/g, "")
       .slice(0, 20) + Math.random().toString(36).slice(2, 6);
 
-    const { error: modelError } = await (supabase
-      .from("models") as any)
+    const { error: modelError } = await supabase
+      .from("models")
       .insert({
-        user_id: fan.user_id,
+        user_id: fanUserId,
         email: fan.email,
         username: username,
         first_name: fan.display_name || "New",
@@ -73,16 +75,16 @@ export async function POST(
     if (modelError) {
       console.error("Error creating model:", modelError);
       // Try to rollback actor change
-      await (supabase
-        .from("actors") as any)
+      await supabase
+        .from("actors")
         .update({ type: "fan" })
-        .eq("user_id", fan.user_id);
+        .eq("user_id", fanUserId);
       throw modelError;
     }
 
     // Delete the fan record
-    await (supabase
-      .from("fans") as any)
+    await supabase
+      .from("fans")
       .delete()
       .eq("id", fanId);
 
@@ -93,7 +95,7 @@ export async function POST(
       action: AdminActions.FAN_CONVERTED_TO_MODEL,
       targetType: "fan",
       targetId: fanId,
-      oldValues: { type: "fan", user_id: fan.user_id, email: fan.email },
+      oldValues: { type: "fan", user_id: fanUserId, email: fan.email },
       newValues: { type: "model", username },
     });
 

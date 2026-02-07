@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { getModelId } from "@/lib/ids";
 import { NextRequest, NextResponse } from "next/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 
 const uploadCompleteSchema = z.object({
@@ -31,6 +32,10 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "uploads", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
 
     // Get model and actor IDs server-side - NEVER trust client-submitted IDs
     const modelId = await getModelId(supabase, user.id);

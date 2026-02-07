@@ -10,7 +10,7 @@ export async function GET(
     const { id } = await params;
 
     // Fetch product with all related data
-    const { data: product, error } = await (supabase as any)
+    const { data: product, error } = await supabase
       .from("shop_products")
       .select(`
         id,
@@ -66,14 +66,14 @@ export async function GET(
     }
 
     // Fire-and-forget view count increment (minor race condition acceptable for analytics)
-    (supabase as any)
+    supabase
       .from("shop_products")
       .update({ view_count: (product.view_count || 0) + 1 })
       .eq("id", id)
       .then(() => {});
 
     // Get models who have worn this product
-    const { data: modelProducts } = await (supabase as any)
+    const { data: modelProducts } = await supabase
       .from("shop_model_products")
       .select(`
         is_favorite,

@@ -1,9 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { decryptBankAccount } from "@/lib/encryption";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -26,6 +27,10 @@ export async function GET(
     if (!actor || actor.type !== "admin") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
+
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
 
     // Get bank account
     interface BankAccountRow {

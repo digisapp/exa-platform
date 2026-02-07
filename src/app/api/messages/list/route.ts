@@ -84,8 +84,8 @@ export async function GET(request: NextRequest) {
 
     // If "before" is provided, get messages created before that message
     if (before) {
-      const { data: beforeMessage } = await (supabase
-        .from("messages") as any)
+      const { data: beforeMessage } = await supabase
+        .from("messages")
         .select("created_at")
         .eq("id", before)
         .single();
@@ -127,8 +127,8 @@ export async function GET(request: NextRequest) {
     const reactionsMap: Record<string, any[]> = {};
 
     if (messageIds.length > 0) {
-      const { data: allReactions } = await (supabase
-        .from("message_reactions") as any)
+      const { data: allReactions } = await supabase
+        .from("message_reactions")
         .select("message_id, emoji, actor_id")
         .in("message_id", messageIds);
 

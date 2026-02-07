@@ -1,8 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { stripe } from "@/lib/stripe";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
 
@@ -13,6 +14,10 @@ export async function POST() {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "financial", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
 
     // Get actor and verify it's a brand
     const { data: actor } = await supabase
@@ -26,8 +31,8 @@ export async function POST() {
     }
 
     // Get brand data
-    const { data: brand } = await (supabase
-      .from("brands") as any)
+    const { data: brand } = await supabase
+      .from("brands")
       .select("stripe_customer_id")
       .eq("id", actor.id)
       .single();

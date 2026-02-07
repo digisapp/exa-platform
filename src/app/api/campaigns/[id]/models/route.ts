@@ -1,11 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { BRAND_SUBSCRIPTION_TIERS, BrandTier } from "@/lib/stripe-config";
 
 // POST /api/campaigns/[id]/models - Add model to campaign
 export async function POST(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id: campaignId } = await params;
@@ -15,6 +16,10 @@ export async function POST(
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  // Rate limit
+  const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+  if (rateLimitResponse) return rateLimitResponse;
 
   // Get actor and verify it's a brand
   const { data: actor } = await supabase
@@ -31,8 +36,8 @@ export async function POST(
   const adminClient = createServiceRoleClient();
 
   // Verify the campaign belongs to this brand
-  const { data: campaign } = await (supabase
-    .from("campaigns") as any)
+  const { data: campaign } = await supabase
+    .from("campaigns")
     .select("id")
     .eq("id", campaignId)
     .eq("brand_id", actor.id)
@@ -43,8 +48,8 @@ export async function POST(
   }
 
   // Get brand's subscription tier
-  const { data: brand } = await (adminClient
-    .from("brands") as any)
+  const { data: brand } = await adminClient
+    .from("brands")
     .select("subscription_tier, subscription_status")
     .eq("id", actor.id)
     .single();
@@ -54,8 +59,8 @@ export async function POST(
 
   // Check models per campaign limit (skip if unlimited: -1)
   if (tierConfig.maxModelsPerList !== -1) {
-    const { count } = await (adminClient
-      .from("campaign_models") as any)
+    const { count } = await adminClient
+      .from("campaign_models")
       .select("id", { count: "exact", head: true })
       .eq("campaign_id", campaignId);
 
@@ -75,8 +80,8 @@ export async function POST(
   }
 
   // Add model to campaign
-  const { data: item, error } = await (adminClient
-    .from("campaign_models") as any)
+  const { data: item, error } = await adminClient
+    .from("campaign_models")
     .insert({
       campaign_id: campaignId,
       model_id: modelId,
@@ -97,7 +102,7 @@ export async function POST(
 
 // DELETE /api/campaigns/[id]/models - Remove model from campaign
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id: campaignId } = await params;
@@ -107,6 +112,10 @@ export async function DELETE(
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  // Rate limit
+  const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+  if (rateLimitResponse) return rateLimitResponse;
 
   // Get actor and verify it's a brand
   const { data: actor } = await supabase
@@ -128,8 +137,8 @@ export async function DELETE(
   }
 
   // Verify the campaign belongs to this brand
-  const { data: campaign } = await (supabase
-    .from("campaigns") as any)
+  const { data: campaign } = await supabase
+    .from("campaigns")
     .select("id")
     .eq("id", campaignId)
     .eq("brand_id", actor.id)
@@ -143,8 +152,8 @@ export async function DELETE(
   const adminClient = createServiceRoleClient();
 
   // Remove model from campaign
-  const { error } = await (adminClient
-    .from("campaign_models") as any)
+  const { error } = await adminClient
+    .from("campaign_models")
     .delete()
     .eq("campaign_id", campaignId)
     .eq("model_id", modelId);

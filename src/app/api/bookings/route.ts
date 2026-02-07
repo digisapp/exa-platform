@@ -85,8 +85,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Get actor
-    const { data: actor, error: actorError } = await (supabase
-      .from("actors") as any)
+    const { data: actor, error: actorError } = await supabase
+      .from("actors")
       .select("id, type")
       .eq("user_id", user.id)
       .maybeSingle();
@@ -103,7 +103,7 @@ export async function GET(request: NextRequest) {
     // For models, get their model ID
     let modelId: string | null = null;
     if (role === "model" || actor.type === "model") {
-      const { data: model } = await (supabase.from("models") as any)
+      const { data: model } = await supabase.from("models")
         .select("id")
         .eq("user_id", user.id)
         .maybeSingle();
@@ -118,7 +118,7 @@ export async function GET(request: NextRequest) {
     let bookings: any[] = [];
 
     if (modelId) {
-      const { data, error } = await (adminClient.from("bookings") as any)
+      const { data, error } = await adminClient.from("bookings")
         .select("*")
         .eq("model_id", modelId)
         .order("created_at", { ascending: false });
@@ -129,7 +129,7 @@ export async function GET(request: NextRequest) {
       }
       bookings = data || [];
     } else {
-      const { data, error } = await (adminClient.from("bookings") as any)
+      const { data, error } = await adminClient.from("bookings")
         .select("*")
         .eq("client_id", actor.id)
         .order("created_at", { ascending: false });
@@ -162,7 +162,7 @@ export async function GET(request: NextRequest) {
       // Batch fetch all models
       const modelsMap = new Map<string, any>();
       if (modelIds.length > 0) {
-        const { data: models } = await (adminClient.from("models") as any)
+        const { data: models } = await adminClient.from("models")
           .select("id, username, first_name, last_name, profile_photo_url, city, state")
           .in("id", modelIds);
         (models || []).forEach((m: any) => modelsMap.set(m.id, m));
@@ -171,7 +171,7 @@ export async function GET(request: NextRequest) {
       // Batch fetch all client actors
       const actorsMap = new Map<string, any>();
       if (clientIds.length > 0) {
-        const { data: actors } = await (adminClient.from("actors") as any)
+        const { data: actors } = await adminClient.from("actors")
           .select("id, type")
           .in("id", clientIds);
         (actors || []).forEach((a: any) => actorsMap.set(a.id, a));
@@ -186,14 +186,14 @@ export async function GET(request: NextRequest) {
       const brandsMap = new Map<string, any>();
 
       if (fanIds.length > 0) {
-        const { data: fans } = await (adminClient.from("fans") as any)
+        const { data: fans } = await adminClient.from("fans")
           .select("id, display_name, email, avatar_url")
           .in("id", fanIds);
         (fans || []).forEach((f: any) => fansMap.set(f.id, f));
       }
 
       if (brandIds.length > 0) {
-        const { data: brands } = await (adminClient.from("brands") as any)
+        const { data: brands } = await adminClient.from("brands")
           .select("id, company_name, contact_name, email, logo_url")
           .in("id", brandIds);
         (brands || []).forEach((b: any) => brandsMap.set(b.id, b));
@@ -242,16 +242,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Get actor
-    let { data: actor } = await (supabase
-      .from("actors") as any)
+    let { data: actor } = await supabase
+      .from("actors")
       .select("id, type")
       .eq("user_id", user.id)
       .maybeSingle();
 
     // If no actor exists, create one as a fan (so they can book)
     if (!actor) {
-      const { data: newActor, error: actorError } = await (supabase
-        .from("actors") as any)
+      const { data: newActor, error: actorError } = await supabase
+        .from("actors")
         .insert({ user_id: user.id, type: "fan" })
         .select("id, type")
         .single();
@@ -265,8 +265,8 @@ export async function POST(request: NextRequest) {
 
     // Check if brand has active subscription
     if (actor.type === "brand") {
-      const { data: brand } = await (supabase
-        .from("brands") as any)
+      const { data: brand } = await supabase
+        .from("brands")
         .select("subscription_tier, subscription_status")
         .eq("id", actor.id)
         .maybeSingle();
@@ -311,7 +311,7 @@ export async function POST(request: NextRequest) {
     } = validationResult.data;
 
     // Get model to verify and get rate
-    const { data: model } = await (supabase.from("models") as any)
+    const { data: model } = await supabase.from("models")
       .select("*")
       .eq("id", modelId)
       .eq("is_approved", true)
@@ -352,13 +352,13 @@ export async function POST(request: NextRequest) {
     // Check client's coin balance
     let clientBalance = 0;
     if (actor.type === "fan") {
-      const { data: fan } = await (supabase.from("fans") as any)
+      const { data: fan } = await supabase.from("fans")
         .select("coin_balance")
         .eq("id", actor.id)
         .single();
       clientBalance = fan?.coin_balance || 0;
     } else if (actor.type === "brand") {
-      const { data: brand } = await (supabase.from("brands") as any)
+      const { data: brand } = await supabase.from("brands")
         .select("coin_balance")
         .eq("id", actor.id)
         .single();
@@ -366,7 +366,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get sum of pending booking amounts for this client (soft reservation)
-    const { data: pendingBookings } = await (supabase.from("bookings") as any)
+    const { data: pendingBookings } = await supabase.from("bookings")
       .select("total_amount")
       .eq("client_id", actor.id)
       .in("status", ["pending", "counter", "accepted"]);
@@ -392,7 +392,7 @@ export async function POST(request: NextRequest) {
     // NOTE: Coins are NOT deducted here - they will be escrowed when model accepts
 
     // Create booking
-    const { data: booking, error } = await (supabase.from("bookings") as any)
+    const { data: booking, error } = await supabase.from("bookings")
       .insert({
         model_id: modelId,
         client_id: actor.id,
@@ -426,10 +426,10 @@ export async function POST(request: NextRequest) {
           .from("actors")
           .select("id")
           .eq("user_id", model.user_id)
-          .single() as { data: { id: string } | null };
+          .single();
 
         if (modelActor) {
-          await (supabase.from("notifications") as any).insert({
+          await supabase.from("notifications").insert({
             actor_id: modelActor.id,
             type: "booking_request",
             title: "New Booking Request",
@@ -456,14 +456,14 @@ export async function POST(request: NextRequest) {
         let clientType: "fan" | "brand" = "fan";
 
         if (actor.type === "fan") {
-          const { data: fan } = await (supabase.from("fans") as any)
+          const { data: fan } = await supabase.from("fans")
             .select("display_name")
             .eq("id", actor.id)
             .single();
           clientName = fan?.display_name || "A fan";
           clientType = "fan";
         } else if (actor.type === "brand") {
-          const { data: brand } = await (supabase.from("brands") as any)
+          const { data: brand } = await supabase.from("brands")
             .select("company_name, contact_name")
             .eq("id", actor.id)
             .single();

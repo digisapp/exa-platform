@@ -153,8 +153,8 @@ export async function POST(request: NextRequest) {
 
     // Check for Instagram duplicate in existing models (claimed accounts only)
     if (normalizedInstagram) {
-      const { data: existingModelByInsta } = await (adminClient
-        .from("models") as any)
+      const { data: existingModelByInsta } = await adminClient
+        .from("models")
         .select("id, email, user_id")
         .ilike("instagram_name", escapeIlike(normalizedInstagram))
         .not("user_id", "is", null)  // Only check claimed models
@@ -168,8 +168,8 @@ export async function POST(request: NextRequest) {
       }
 
       // Check for Instagram duplicate in pending applications
-      const { data: existingAppByInsta } = await (adminClient
-        .from("model_applications") as any)
+      const { data: existingAppByInsta } = await adminClient
+        .from("model_applications")
         .select("id, email")
         .ilike("instagram_username", escapeIlike(normalizedInstagram))
         .eq("status", "pending")
@@ -191,8 +191,8 @@ export async function POST(request: NextRequest) {
 
     if (existingUser) {
       // User already exists - check if they have a pending application
-      const { data: existingApp } = await (adminClient
-        .from("model_applications") as any)
+      const { data: existingApp } = await adminClient
+        .from("model_applications")
         .select("id, status")
         .eq("user_id", existingUser.id)
         .neq("status", "rejected")
@@ -207,8 +207,8 @@ export async function POST(request: NextRequest) {
       }
 
       // Check if they're already an approved model
-      const { data: existingModel } = await (adminClient
-        .from("models") as any)
+      const { data: existingModel } = await adminClient
+        .from("models")
         .select("id, is_approved")
         .eq("user_id", existingUser.id)
         .single();
@@ -354,8 +354,8 @@ async function createFanAndApplication(
   height: string | null | undefined
 ): Promise<boolean> {
   // Check for existing model record with this email (from imports)
-  const { data: existingModel } = await (adminClient
-    .from("models") as any)
+  const { data: existingModel } = await adminClient
+    .from("models")
     .select("id, user_id, is_approved")
     .eq("email", email)
     .is("user_id", null)
@@ -363,7 +363,7 @@ async function createFanAndApplication(
 
   if (existingModel) {
     // Link the existing model to this user and approve them
-    await (adminClient.from("models") as any)
+    await adminClient.from("models")
       .update({
         user_id: userId,
         claimed_at: new Date().toISOString(),
@@ -372,17 +372,17 @@ async function createFanAndApplication(
       .eq("id", existingModel.id);
 
     // Check/create actor record
-    const { data: existingActor } = await (adminClient
-      .from("actors") as any)
+    const { data: existingActor } = await adminClient
+      .from("actors")
       .select("id")
       .eq("user_id", userId)
       .single();
 
     if (!existingActor) {
-      await (adminClient.from("actors") as any)
+      await adminClient.from("actors")
         .insert({ user_id: userId, type: "model" });
     } else {
-      await (adminClient.from("actors") as any)
+      await adminClient.from("actors")
         .update({ type: "model" })
         .eq("user_id", userId);
     }
@@ -394,8 +394,8 @@ async function createFanAndApplication(
   }
 
   // Create actor record
-  const { data: actor } = await (adminClient
-    .from("actors") as any)
+  const { data: actor } = await adminClient
+    .from("actors")
     .upsert({ user_id: userId, type: "fan" }, { onConflict: "user_id" })
     .select()
     .single();
@@ -407,7 +407,7 @@ async function createFanAndApplication(
   }
 
   // Create fan profile
-  await (adminClient.from("fans") as any)
+  await adminClient.from("fans")
     .upsert({
       id: actorId,
       user_id: userId,
@@ -417,7 +417,7 @@ async function createFanAndApplication(
     }, { onConflict: "user_id" });
 
   // Record welcome bonus
-  await (adminClient.from("coin_transactions") as any)
+  await adminClient.from("coin_transactions")
     .insert({
       actor_id: actorId,
       amount: 10,
@@ -426,8 +426,8 @@ async function createFanAndApplication(
     });
 
   // Check for existing application
-  const { data: existingApp } = await (adminClient
-    .from("model_applications") as any)
+  const { data: existingApp } = await adminClient
+    .from("model_applications")
     .select("id")
     .eq("user_id", userId)
     .neq("status", "rejected")
@@ -438,7 +438,7 @@ async function createFanAndApplication(
   }
 
   // Create model application
-  await (adminClient.from("model_applications") as any)
+  await adminClient.from("model_applications")
     .insert({
       user_id: userId,
       fan_id: actorId,

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 const MIN_FOLLOWERS = 20000;
 
@@ -12,6 +13,10 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
 
     const {
       gigId,
@@ -105,8 +110,8 @@ export async function POST(request: NextRequest) {
       }
 
       // Update existing application to sponsored
-      const { error: updateError } = await (supabase
-        .from("gig_applications") as any)
+      const { error: updateError } = await supabase
+        .from("gig_applications")
         .update({
           trip_number: tripNumber,
           spot_type: "sponsored",
@@ -128,8 +133,8 @@ export async function POST(request: NextRequest) {
       }
     } else {
       // Create new application
-      const { error: insertError } = await (supabase
-        .from("gig_applications") as any)
+      const { error: insertError } = await supabase
+        .from("gig_applications")
         .insert({
           gig_id: gigId,
           model_id: modelId,

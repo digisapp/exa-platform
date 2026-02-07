@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check for existing pending application by email
-    const { data: existing } = await (supabase as any)
+    const { data: existing } = await supabase
       .from("content_program_applications")
       .select("id, status")
       .eq("email", email.toLowerCase())
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
 
     // Insert application
-    const { data: application, error } = await (supabase as any)
+    const { data: application, error } = await supabase
       .from("content_program_applications")
       .insert({
         brand_name: brand_name.trim(),

@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 // GET - Get model's affiliate dashboard data
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -10,6 +11,10 @@ export async function GET() {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
 
     // Get model
     const { data: model } = await supabase
@@ -26,7 +31,7 @@ export async function GET() {
     }
 
     // Get affiliate codes
-    const { data: codes } = await (supabase as any)
+    const { data: codes } = await supabase
       .from("shop_affiliate_codes")
       .select(`
         id,
@@ -43,7 +48,7 @@ export async function GET() {
       .order("created_at", { ascending: false });
 
     // Get earnings summary
-    const { data: earnings } = await (supabase as any)
+    const { data: earnings } = await supabase
       .from("shop_affiliate_earnings")
       .select(`
         id,
@@ -83,7 +88,7 @@ export async function GET() {
     ) || 0;
 
     // Get products model has worn/promoted
-    const { data: modelProducts } = await (supabase as any)
+    const { data: modelProducts } = await supabase
       .from("shop_model_products")
       .select(`
         id,
@@ -149,7 +154,7 @@ export async function GET() {
 }
 
 // POST - Create or update affiliate code
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -157,6 +162,10 @@ export async function POST(request: Request) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
 
     // Get model
     const { data: model } = await supabase
@@ -185,7 +194,7 @@ export async function POST(request: Request) {
     }
 
     // Check if code already exists (not owned by this model)
-    const { data: existingCode } = await (supabase as any)
+    const { data: existingCode } = await supabase
       .from("shop_affiliate_codes")
       .select("id, model_id")
       .eq("code", cleanCode)
@@ -214,7 +223,7 @@ export async function POST(request: Request) {
 
     if (existingCode) {
       // Update existing code
-      const { data: updated, error } = await (supabase as any)
+      const { data: updated, error } = await supabase
         .from("shop_affiliate_codes")
         .update({
           code: cleanCode,
@@ -236,7 +245,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ code: updated });
     } else {
       // Create new code
-      const { data: created, error } = await (supabase as any)
+      const { data: created, error } = await supabase
         .from("shop_affiliate_codes")
         .insert({
           model_id: model.id,

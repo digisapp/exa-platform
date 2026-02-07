@@ -39,8 +39,8 @@ export async function GET(request: NextRequest) {
   }
 
   // Get all campaigns for this brand with model counts
-  const { data: campaigns, error } = await (supabase
-    .from("campaigns") as any)
+  const { data: campaigns, error } = await supabase
+    .from("campaigns")
     .select(`
       *,
       campaign_models (
@@ -96,8 +96,8 @@ export async function POST(request: NextRequest) {
   const adminClient = createServiceRoleClient();
 
   // Get brand's subscription tier
-  const { data: brand } = await (adminClient
-    .from("brands") as any)
+  const { data: brand } = await adminClient
+    .from("brands")
     .select("subscription_tier, subscription_status")
     .eq("id", actor.id)
     .single();
@@ -107,8 +107,8 @@ export async function POST(request: NextRequest) {
 
   // Check campaign limit (skip if unlimited: -1)
   if (tierConfig.maxLists !== -1) {
-    const { count } = await (adminClient
-      .from("campaigns") as any)
+    const { count } = await adminClient
+      .from("campaigns")
       .select("id", { count: "exact", head: true })
       .eq("brand_id", actor.id);
 
@@ -135,8 +135,8 @@ export async function POST(request: NextRequest) {
   const { name, description, color } = validationResult.data;
 
   // Create the campaign
-  const { data: campaign, error } = await (adminClient
-    .from("campaigns") as any)
+  const { data: campaign, error } = await adminClient
+    .from("campaigns")
     .insert({
       brand_id: actor.id,
       name,

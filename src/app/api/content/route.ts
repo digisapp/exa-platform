@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
     // Batch fetch media_urls via secure RPC (only returns URLs for unlocked/owned content)
     const mediaUrlMap = new Map<string, string>();
     if (unlockedContentIds.length > 0) {
-      const { data: mediaUrls } = await (supabase.rpc as any)(
+      const { data: mediaUrls } = await supabase.rpc(
         "get_unlocked_media_urls",
         {
           p_content_ids: unlockedContentIds,
@@ -183,8 +183,8 @@ export async function POST(request: NextRequest) {
     // Use media URL as preview if no preview provided (will be blurred by frontend)
     const finalPreviewUrl = previewUrl || mediaUrl;
 
-    const { data: content, error } = await (supabase
-      .from("premium_content") as any)
+    const { data: content, error } = await supabase
+      .from("premium_content")
       .insert({
         model_id: modelId,
         title: title || null,

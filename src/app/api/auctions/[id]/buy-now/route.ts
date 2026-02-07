@@ -32,7 +32,7 @@ export async function POST(
     }
 
     // Call the RPC function to buy now
-    const { data: result, error } = await (supabase as any).rpc("buy_now_auction", {
+    const { data: result, error } = await supabase.rpc("buy_now_auction", {
       p_auction_id: auctionId,
       p_buyer_id: actor.id,
     });
@@ -64,7 +64,7 @@ export async function POST(
     }
 
     // Get updated balance
-    const { data: balanceResult } = await (supabase as any).rpc("get_actor_coin_balance", {
+    const { data: balanceResult } = await supabase.rpc("get_actor_coin_balance", {
       p_actor_id: actor.id,
     });
 

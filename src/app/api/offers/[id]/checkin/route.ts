@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 const adminClient = createServiceRoleClient();
 
@@ -23,15 +24,19 @@ export async function POST(
       .from("actors")
       .select("id, type")
       .eq("user_id", user.id)
-      .single() as { data: { id: string; type: string } | null };
+      .single();
 
     if (!actor || (actor.type !== "brand" && actor.type !== "admin")) {
       return NextResponse.json({ error: "Only brands can check in models" }, { status: 403 });
     }
 
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
+
     // Verify offer belongs to brand
-    const { data: offer } = await (supabase
-      .from("offers") as any)
+    const { data: offer } = await supabase
+      .from("offers")
       .select("id, brand_id, event_date")
       .eq("id", offerId)
       .single();
@@ -54,8 +59,8 @@ export async function POST(
     }
 
     // Verify response exists and belongs to this offer
-    const { data: response } = await (supabase
-      .from("offer_responses") as any)
+    const { data: response } = await supabase
+      .from("offer_responses")
       .select("id, model_id, status")
       .eq("id", response_id)
       .eq("offer_id", offerId)
@@ -74,8 +79,8 @@ export async function POST(
 
     // Update based on action
     if (action === "checkin") {
-      const { error: updateError } = await (adminClient
-        .from("offer_responses") as any)
+      const { error: updateError } = await adminClient
+        .from("offer_responses")
         .update({
           checked_in_at: new Date().toISOString(),
           no_show: false,
@@ -84,8 +89,8 @@ export async function POST(
 
       if (updateError) throw updateError;
     } else if (action === "noshow") {
-      const { error: updateError } = await (adminClient
-        .from("offer_responses") as any)
+      const { error: updateError } = await adminClient
+        .from("offer_responses")
         .update({
           no_show: true,
           checked_in_at: null,
@@ -122,14 +127,14 @@ export async function DELETE(
       .from("actors")
       .select("id, type")
       .eq("user_id", user.id)
-      .single() as { data: { id: string; type: string } | null };
+      .single();
 
     if (!actor || (actor.type !== "brand" && actor.type !== "admin")) {
       return NextResponse.json({ error: "Only brands can modify check-in status" }, { status: 403 });
     }
 
-    const { data: offer } = await (supabase
-      .from("offers") as any)
+    const { data: offer } = await supabase
+      .from("offers")
       .select("id, brand_id")
       .eq("id", offerId)
       .single();
@@ -150,8 +155,8 @@ export async function DELETE(
     }
 
     // Reset check-in status
-    const { error: updateError } = await (adminClient
-      .from("offer_responses") as any)
+    const { error: updateError } = await adminClient
+      .from("offer_responses")
       .update({
         checked_in_at: null,
         no_show: false,

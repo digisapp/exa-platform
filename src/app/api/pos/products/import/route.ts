@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { escapeIlike } from "@/lib/utils";
 
-const supabase: any = createServiceRoleClient();
+const supabase = createServiceRoleClient();
 
 interface CSVRow {
   sku: string;
@@ -40,6 +41,10 @@ function parseCSV(text: string): CSVRow[] {
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general");
+    if (rateLimitResponse) return rateLimitResponse;
+
     const formData = await request.formData();
     const file = formData.get("file") as File;
 

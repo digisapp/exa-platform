@@ -1,14 +1,19 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
+    // Rate limit (public endpoint, IP-based)
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general");
+    if (rateLimitResponse) return rateLimitResponse;
+
     const supabase = await createClient();
     const { searchParams } = new URL(request.url);
 
     const limit = Math.min(parseInt(searchParams.get("limit") || "50"), 100);
 
-    const query = (supabase as any)
+    const query = supabase
       .from("shop_brands")
       .select(`
         id,
@@ -36,7 +41,7 @@ export async function GET(request: Request) {
     // Get product counts for each brand
     const brandIds = brands?.map((b: any) => b.id) || [];
 
-    const { data: productCounts } = await (supabase as any)
+    const { data: productCounts } = await supabase
       .from("shop_products")
       .select("brand_id")
       .eq("is_active", true)

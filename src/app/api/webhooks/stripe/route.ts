@@ -6,7 +6,7 @@ import { BRAND_SUBSCRIPTION_TIERS, BrandTier } from "@/lib/stripe-config";
 import { TICKET_CONFIG } from "@/lib/ticket-config";
 
 // Create admin client for webhook (no auth context)
-const supabaseAdmin: any = createServiceRoleClient();
+const supabaseAdmin = createServiceRoleClient();
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
@@ -172,7 +172,7 @@ export async function POST(request: NextRequest) {
       case "invoice.paid": {
         const invoice = event.data.object as Stripe.Invoice;
         // Grant monthly coins on successful invoice payment (renewal)
-        const subscriptionId = (invoice as any).subscription;
+        const subscriptionId = invoice.subscription;
         if (subscriptionId && invoice.billing_reason === "subscription_cycle") {
           await grantMonthlyCoins(invoice);
         }
@@ -183,7 +183,7 @@ export async function POST(request: NextRequest) {
         const invoice = event.data.object as Stripe.Invoice;
         console.error("Invoice payment failed:", invoice.id);
         // Update subscription status to past_due
-        const failedSubId = (invoice as any).subscription;
+        const failedSubId = invoice.subscription;
         if (failedSubId) {
           const subscriptionId = typeof failedSubId === "string"
             ? failedSubId
@@ -297,7 +297,7 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
 
   const status = subscription.status;
   const tier = subscription.metadata?.tier as BrandTier;
-  const periodEnd = (subscription as any).current_period_end;
+  const periodEnd = subscription.current_period_end;
 
   await supabaseAdmin
     .from("brands")
@@ -330,7 +330,7 @@ async function handleSubscriptionCanceled(subscription: Stripe.Subscription) {
 }
 
 async function grantMonthlyCoins(invoice: Stripe.Invoice) {
-  const invoiceSubscription = (invoice as any).subscription;
+  const invoiceSubscription = invoice.subscription;
   const subscriptionId = typeof invoiceSubscription === "string"
     ? invoiceSubscription
     : invoiceSubscription?.id;
@@ -831,7 +831,7 @@ async function handleContentProgramPayment(session: Stripe.Checkout.Session) {
     : session.payment_intent?.id;
 
   // Update enrollment to active
-  const { error: updateError } = await (supabaseAdmin as any)
+  const { error: updateError } = await supabaseAdmin
     .from("content_program_enrollments")
     .update({
       status: "active",
@@ -844,7 +844,7 @@ async function handleContentProgramPayment(session: Stripe.Checkout.Session) {
   if (updateError) {
     console.error("Error updating content program enrollment:", updateError);
     // Try to create the enrollment if it doesn't exist
-    const { error: insertError } = await (supabaseAdmin as any)
+    const { error: insertError } = await supabaseAdmin
       .from("content_program_enrollments")
       .insert({
         brand_name: brandName,
@@ -891,7 +891,7 @@ async function handleContentProgramSubscription(session: Stripe.Checkout.Session
     : session.customer?.id;
 
   // Update enrollment to active with subscription info
-  const { error: updateError } = await (supabaseAdmin as any)
+  const { error: updateError } = await supabaseAdmin
     .from("content_program_enrollments")
     .update({
       status: "active",
@@ -905,7 +905,7 @@ async function handleContentProgramSubscription(session: Stripe.Checkout.Session
   if (updateError) {
     console.error("Error updating content program enrollment:", updateError);
     // Try to create the enrollment if it doesn't exist
-    const { error: insertError } = await (supabaseAdmin as any)
+    const { error: insertError } = await supabaseAdmin
       .from("content_program_enrollments")
       .insert({
         brand_name: brandName,

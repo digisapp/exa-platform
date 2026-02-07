@@ -24,7 +24,7 @@ export async function PATCH(
       .from("actors")
       .select("id, type")
       .eq("user_id", user.id)
-      .single() as { data: { id: string; type: string } | null };
+      .single();
 
     if (!actor || actor.type !== "admin") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -41,8 +41,8 @@ export async function PATCH(
     }
 
     // Get the application
-    const { data: application, error: fetchError } = await (supabase
-      .from("model_applications") as any)
+    const { data: application, error: fetchError } = await supabase
+      .from("model_applications")
       .select("*")
       .eq("id", id)
       .single();
@@ -55,8 +55,8 @@ export async function PATCH(
     }
 
     // Update application status
-    const { error: updateError } = await (supabase
-      .from("model_applications") as any)
+    const { error: updateError } = await supabase
+      .from("model_applications")
       .update({
         status,
         reviewed_at: new Date().toISOString(),
@@ -74,7 +74,7 @@ export async function PATCH(
       const adminClient = createServiceRoleClient();
 
       // Check if model already exists by user_id
-      const { data: existingModelByUser } = await (adminClient.from("models") as any)
+      const { data: existingModelByUser } = await adminClient.from("models")
         .select("id")
         .eq("user_id", application.user_id)
         .single();
@@ -83,7 +83,7 @@ export async function PATCH(
       // Use case-insensitive matching since Instagram usernames can vary in casing
       let existingModelByInstagram = null;
       if (application.instagram_username && !existingModelByUser) {
-        const { data: igModel } = await (adminClient.from("models") as any)
+        const { data: igModel } = await adminClient.from("models")
           .select("id, username, user_id")
           .ilike("instagram_name", escapeIlike(application.instagram_username))
           .single();
@@ -96,7 +96,7 @@ export async function PATCH(
       // Also check by email if no match yet (case-insensitive)
       let existingModelByEmail = null;
       if (!existingModelByUser && !existingModelByInstagram && application.email) {
-        const { data: emailModel } = await (adminClient.from("models") as any)
+        const { data: emailModel } = await adminClient.from("models")
           .select("id, username, user_id")
           .ilike("email", escapeIlike(application.email))
           .single();
@@ -111,7 +111,7 @@ export async function PATCH(
 
       if (existingModel && !existingModelByUser) {
         // Found existing model by Instagram/email - link user_id to it
-        const { error: linkError } = await (adminClient.from("models") as any)
+        const { error: linkError } = await adminClient.from("models")
           .update({
             user_id: application.user_id,
             is_approved: true,
@@ -150,7 +150,7 @@ export async function PATCH(
 
         while (true) {
           const checkUsername = attempt === 0 ? finalUsername : `${finalUsername}${attempt}`;
-          const { data: usernameCheck } = await (adminClient.from("models") as any)
+          const { data: usernameCheck } = await adminClient.from("models")
             .select("id")
             .eq("username", checkUsername)
             .single();
@@ -167,7 +167,7 @@ export async function PATCH(
         }
 
         // Create the model record
-        const { error: modelError } = await (adminClient.from("models") as any)
+        const { error: modelError } = await adminClient.from("models")
           .insert({
             user_id: application.user_id,
             email: application.email,
@@ -203,7 +203,7 @@ export async function PATCH(
         }
       } else {
         // Model already exists by user_id, just approve it
-        await (adminClient.from("models") as any)
+        await adminClient.from("models")
           .update({ is_approved: true, status: "approved" })
           .eq("user_id", application.user_id);
 
@@ -245,7 +245,7 @@ export async function PATCH(
           .from("actors")
           .select("id")
           .eq("user_id", application.user_id)
-          .single() as { data: { id: string } | null };
+          .single();
 
         if (modelActor) {
           // Find existing conversation or create new one
@@ -255,7 +255,7 @@ export async function PATCH(
           const { data: existingConv } = await adminClient
             .from("conversation_participants")
             .select("conversation_id")
-            .eq("actor_id", actor.id) as { data: { conversation_id: string }[] | null };
+            .eq("actor_id", actor.id);
 
           if (existingConv) {
             for (const cp of existingConv) {
@@ -274,15 +274,15 @@ export async function PATCH(
 
           // Create new conversation if none exists
           if (!conversationId) {
-            const { data: newConv } = await (adminClient
-              .from("conversations") as any)
+            const { data: newConv } = await adminClient
+              .from("conversations")
               .insert({ type: "direct" })
               .select()
               .single();
 
             if (newConv) {
               conversationId = newConv.id;
-              await (adminClient.from("conversation_participants") as any).insert([
+              await adminClient.from("conversation_participants").insert([
                 { conversation_id: conversationId, actor_id: actor.id },
                 { conversation_id: conversationId, actor_id: modelActor.id },
               ]);
@@ -300,7 +300,7 @@ Here's how to get started:
 • Share your examodels.com/${application.instagram_username || application.tiktok_username || application.email.split("@")[0]} on Instagram Bio + Story
 • Engage with the community 😊`;
 
-            await (adminClient.from("messages") as any).insert({
+            await adminClient.from("messages").insert({
               conversation_id: conversationId,
               sender_id: actor.id,
               content: welcomeMessage,
@@ -348,7 +348,7 @@ export async function DELETE(
       .from("actors")
       .select("id, type")
       .eq("user_id", user.id)
-      .single() as { data: { id: string; type: string } | null };
+      .single();
 
     if (!actor || actor.type !== "admin") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });

@@ -1,9 +1,14 @@
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 // POST - Record a commission (called by ticket system webhook)
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit (webhook-like, IP-based)
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general");
+    if (rateLimitResponse) return rateLimitResponse;
+
     // Verify webhook secret (simple auth for now)
     const authHeader = request.headers.get("authorization");
     const webhookSecret = process.env.AFFILIATE_WEBHOOK_SECRET;
@@ -121,6 +126,10 @@ export async function POST(request: NextRequest) {
 // PATCH - Update commission status (confirm or mark as paid)
 export async function PATCH(request: NextRequest) {
   try {
+    // Rate limit (webhook-like, IP-based)
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general");
+    if (rateLimitResponse) return rateLimitResponse;
+
     // Verify webhook secret
     const authHeader = request.headers.get("authorization");
     const webhookSecret = process.env.AFFILIATE_WEBHOOK_SECRET;

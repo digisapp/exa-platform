@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     }
 
     // Find cart
-    let cartQuery = (supabase as any)
+    let cartQuery = supabase
       .from("shop_carts")
       .select(`
         id,
@@ -135,7 +135,7 @@ export async function POST(request: Request) {
     }
 
     // Verify variant exists and has stock
-    const { data: variant, error: variantError } = await (supabase as any)
+    const { data: variant, error: variantError } = await supabase
       .from("shop_product_variants")
       .select(`
         id,
@@ -171,7 +171,7 @@ export async function POST(request: Request) {
     }
 
     // Find or create cart
-    let cartQuery = (supabase as any)
+    let cartQuery = supabase
       .from("shop_carts")
       .select("id, affiliate_code")
       .gt("expires_at", new Date().toISOString());
@@ -194,7 +194,7 @@ export async function POST(request: Request) {
       // If affiliate code provided, look up model
       let affiliateModelId = null;
       if (affiliateCode) {
-        const { data: affiliateData } = await (supabase as any)
+        const { data: affiliateData } = await supabase
           .from("shop_affiliate_codes")
           .select("model_id")
           .eq("code", affiliateCode.toUpperCase())
@@ -205,14 +205,14 @@ export async function POST(request: Request) {
           affiliateModelId = affiliateData.model_id;
 
           // Increment click count
-          await (supabase as any)
+          await supabase
             .from("shop_affiliate_codes")
             .update({ click_count: (supabase as any).sql`click_count + 1` })
             .eq("code", affiliateCode.toUpperCase());
         }
       }
 
-      const { data: newCart, error: createError } = await (supabase as any)
+      const { data: newCart, error: createError } = await supabase
         .from("shop_carts")
         .insert({
           user_id: user?.id || null,
@@ -235,7 +235,7 @@ export async function POST(request: Request) {
     }
 
     // Check if item already in cart
-    const { data: existingItem } = await (supabase as any)
+    const { data: existingItem } = await supabase
       .from("shop_cart_items")
       .select("id, quantity")
       .eq("cart_id", cart.id)
@@ -253,13 +253,13 @@ export async function POST(request: Request) {
         );
       }
 
-      await (supabase as any)
+      await supabase
         .from("shop_cart_items")
         .update({ quantity: newQuantity })
         .eq("id", existingItem.id);
     } else {
       // Add new item
-      await (supabase as any)
+      await supabase
         .from("shop_cart_items")
         .insert({
           cart_id: cart.id,
@@ -295,7 +295,7 @@ export async function PATCH(request: Request) {
     }
 
     // Verify cart ownership
-    const { data: item } = await (supabase as any)
+    const { data: item } = await supabase
       .from("shop_cart_items")
       .select(`
         id,
@@ -322,7 +322,7 @@ export async function PATCH(request: Request) {
 
     if (quantity <= 0) {
       // Remove item
-      await (supabase as any)
+      await supabase
         .from("shop_cart_items")
         .delete()
         .eq("id", itemId);
@@ -336,7 +336,7 @@ export async function PATCH(request: Request) {
       }
 
       // Update quantity
-      await (supabase as any)
+      await supabase
         .from("shop_cart_items")
         .update({ quantity })
         .eq("id", itemId);
@@ -370,7 +370,7 @@ export async function DELETE(request: Request) {
     }
 
     // Verify cart ownership
-    const { data: item } = await (supabase as any)
+    const { data: item } = await supabase
       .from("shop_cart_items")
       .select(`
         id,
@@ -395,7 +395,7 @@ export async function DELETE(request: Request) {
     }
 
     // Remove item
-    await (supabase as any)
+    await supabase
       .from("shop_cart_items")
       .delete()
       .eq("id", itemId);

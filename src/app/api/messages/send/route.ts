@@ -73,8 +73,8 @@ export async function POST(request: NextRequest) {
 
     // Check if brand has active subscription
     if (sender.type === "brand") {
-      const { data: brand } = await (supabase
-        .from("brands") as any)
+      const { data: brand } = await supabase
+        .from("brands")
         .select("subscription_tier, subscription_status")
         .eq("id", sender.id)
         .maybeSingle();
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
 
     // Check if either user has blocked the other
     if (recipient?.actors?.id) {
-      const { data: isBlocked } = await (supabase.rpc as any)("is_blocked", {
+      const { data: isBlocked } = await supabase.rpc("is_blocked", {
         p_actor_id_1: sender.id,
         p_actor_id_2: recipient.actors.id,
       });
@@ -169,7 +169,7 @@ export async function POST(request: NextRequest) {
 
     // Use atomic function for message sending with coin transfer
     // Pass the actual model ID (not actor ID) for coin crediting
-    const { data: result, error: rpcError } = await (supabase.rpc as any)(
+    const { data: result, error: rpcError } = await supabase.rpc(
       "send_message_with_coins",
       {
         p_conversation_id: conversationId,
@@ -210,8 +210,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch the created message for response
-    const { data: message } = await (supabase
-      .from("messages") as any)
+    const { data: message } = await supabase
+      .from("messages")
       .select("*")
       .eq("id", result.message_id)
       .single();

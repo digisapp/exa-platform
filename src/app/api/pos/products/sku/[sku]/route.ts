@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { escapeIlike } from "@/lib/utils";
 
-const supabase: any = createServiceRoleClient();
+const supabase = createServiceRoleClient();
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ sku: string }> }
 ) {
   try {
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general");
+    if (rateLimitResponse) return rateLimitResponse;
+
     const { sku } = await params;
 
     if (!sku) {
@@ -79,7 +84,7 @@ export async function GET(
           retail_price: product.retail_price,
           images: product.images || [],
           brand_id: product.brand_id,
-          brand_name: (product as any).shop_brands?.name,
+          brand_name: product.shop_brands?.name,
         },
         variant: {
           id: variantCaseInsensitive.id,
@@ -120,7 +125,7 @@ export async function GET(
         retail_price: product.retail_price,
         images: product.images || [],
         brand_id: product.brand_id,
-        brand_name: (product as any).shop_brands?.name,
+        brand_name: product.shop_brands?.name,
       },
       variant: {
         id: variant.id,

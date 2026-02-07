@@ -30,7 +30,7 @@ export async function GET() {
     }
 
     // Get watchlist with auction details
-    const { data: watchlist, error } = await (supabase as any)
+    const { data: watchlist, error } = await supabase
       .from("auction_watchlist")
       .select(`
         id,
@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
     const { auction_id, notify_outbid, notify_ending } = parsed.data;
 
     // Verify auction exists and is active
-    const { data: auction } = await (supabase as any)
+    const { data: auction } = await supabase
       .from("auctions")
       .select("id, status, model_id")
       .eq("id", auction_id)
@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if already watching
-    const { data: existing } = await (supabase as any)
+    const { data: existing } = await supabase
       .from("auction_watchlist")
       .select("id")
       .eq("auction_id", auction_id)
@@ -149,7 +149,7 @@ export async function POST(request: NextRequest) {
 
     if (existing) {
       // Update notification preferences
-      const { error: updateError } = await (supabase as any)
+      const { error: updateError } = await supabase
         .from("auction_watchlist")
         .update({ notify_outbid, notify_ending })
         .eq("id", existing.id);
@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Add to watchlist
-    const { data: entry, error } = await (supabase as any)
+    const { data: entry, error } = await supabase
       .from("auction_watchlist")
       .insert({
         auction_id,
@@ -220,7 +220,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const { error } = await (supabase as any)
+    const { error } = await supabase
       .from("auction_watchlist")
       .delete()
       .eq("auction_id", auctionId)

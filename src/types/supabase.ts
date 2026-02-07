@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       actors: {
@@ -743,6 +768,116 @@ export type Database = {
           },
         ]
       }
+      brand_outreach_contacts: {
+        Row: {
+          brand_name: string
+          category: string | null
+          contact_name: string | null
+          created_at: string | null
+          email: string
+          email_type: string | null
+          id: string
+          instagram_handle: string | null
+          last_contacted_at: string | null
+          location_city: string | null
+          location_country: string | null
+          notes: string | null
+          phone: string | null
+          status: string | null
+          updated_at: string | null
+          website_url: string | null
+        }
+        Insert: {
+          brand_name: string
+          category?: string | null
+          contact_name?: string | null
+          created_at?: string | null
+          email: string
+          email_type?: string | null
+          id?: string
+          instagram_handle?: string | null
+          last_contacted_at?: string | null
+          location_city?: string | null
+          location_country?: string | null
+          notes?: string | null
+          phone?: string | null
+          status?: string | null
+          updated_at?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          brand_name?: string
+          category?: string | null
+          contact_name?: string | null
+          created_at?: string | null
+          email?: string
+          email_type?: string | null
+          id?: string
+          instagram_handle?: string | null
+          last_contacted_at?: string | null
+          location_city?: string | null
+          location_country?: string | null
+          notes?: string | null
+          phone?: string | null
+          status?: string | null
+          updated_at?: string | null
+          website_url?: string | null
+        }
+        Relationships: []
+      }
+      brand_outreach_emails: {
+        Row: {
+          body_html: string
+          clicked_at: string | null
+          contact_id: string | null
+          created_at: string | null
+          email_type: string | null
+          id: string
+          opened_at: string | null
+          resend_message_id: string | null
+          sent_at: string | null
+          sent_by: string | null
+          status: string | null
+          subject: string
+        }
+        Insert: {
+          body_html: string
+          clicked_at?: string | null
+          contact_id?: string | null
+          created_at?: string | null
+          email_type?: string | null
+          id?: string
+          opened_at?: string | null
+          resend_message_id?: string | null
+          sent_at?: string | null
+          sent_by?: string | null
+          status?: string | null
+          subject: string
+        }
+        Update: {
+          body_html?: string
+          clicked_at?: string | null
+          contact_id?: string | null
+          created_at?: string | null
+          email_type?: string | null
+          id?: string
+          opened_at?: string | null
+          resend_message_id?: string | null
+          sent_at?: string | null
+          sent_by?: string | null
+          status?: string | null
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brand_outreach_emails_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "brand_outreach_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       brands: {
         Row: {
           billing_cycle: string | null
@@ -1354,6 +1489,343 @@ export type Database = {
             columns: ["message_id"]
             isOneToOne: false
             referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_program_applications: {
+        Row: {
+          admin_notes: string | null
+          brand_name: string
+          collection_description: string | null
+          collection_name: string | null
+          collection_pieces_count: number | null
+          contact_name: string
+          created_at: string | null
+          email: string
+          id: string
+          instagram_handle: string | null
+          phone: string | null
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          source: string | null
+          source_detail: string | null
+          status: string | null
+          target_audience: string | null
+          tiktok_handle: string | null
+          updated_at: string | null
+          user_id: string | null
+          website_url: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          brand_name: string
+          collection_description?: string | null
+          collection_name?: string | null
+          collection_pieces_count?: number | null
+          contact_name: string
+          created_at?: string | null
+          email: string
+          id?: string
+          instagram_handle?: string | null
+          phone?: string | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source?: string | null
+          source_detail?: string | null
+          status?: string | null
+          target_audience?: string | null
+          tiktok_handle?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          brand_name?: string
+          collection_description?: string | null
+          collection_name?: string | null
+          collection_pieces_count?: number | null
+          contact_name?: string
+          created_at?: string | null
+          email?: string
+          id?: string
+          instagram_handle?: string | null
+          phone?: string | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source?: string | null
+          source_detail?: string | null
+          status?: string | null
+          target_audience?: string | null
+          tiktok_handle?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_program_applications_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "actors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_program_applications_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "public_model_actors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_program_deliverables: {
+        Row: {
+          created_at: string | null
+          delivery_date: string | null
+          delivery_month: number
+          delivery_notes: string | null
+          enrollment_id: string
+          id: string
+          payment_id: string | null
+          photos_count: number | null
+          photos_required: number | null
+          status: string | null
+          updated_at: string | null
+          video_clips_count: number | null
+          video_clips_required: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          delivery_date?: string | null
+          delivery_month: number
+          delivery_notes?: string | null
+          enrollment_id: string
+          id?: string
+          payment_id?: string | null
+          photos_count?: number | null
+          photos_required?: number | null
+          status?: string | null
+          updated_at?: string | null
+          video_clips_count?: number | null
+          video_clips_required?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          delivery_date?: string | null
+          delivery_month?: number
+          delivery_notes?: string | null
+          enrollment_id?: string
+          id?: string
+          payment_id?: string | null
+          photos_count?: number | null
+          photos_required?: number | null
+          status?: string | null
+          updated_at?: string | null
+          video_clips_count?: number | null
+          video_clips_required?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_program_deliverables_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "content_program_enrollments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_program_deliverables_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "content_program_payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_program_enrollments: {
+        Row: {
+          application_id: string | null
+          brand_name: string
+          commitment_months: number | null
+          contact_email: string
+          contact_name: string | null
+          created_at: string | null
+          id: string
+          instagram_handle: string | null
+          monthly_rate: number | null
+          paid_at: string | null
+          phone: string | null
+          start_date: string
+          status: string | null
+          stripe_checkout_session_id: string | null
+          stripe_customer_id: string | null
+          stripe_payment_intent_id: string | null
+          stripe_subscription_id: string | null
+          swim_week_package_cost: number | null
+          swim_week_target_date: string | null
+          updated_at: string | null
+          website_url: string | null
+        }
+        Insert: {
+          application_id?: string | null
+          brand_name: string
+          commitment_months?: number | null
+          contact_email: string
+          contact_name?: string | null
+          created_at?: string | null
+          id?: string
+          instagram_handle?: string | null
+          monthly_rate?: number | null
+          paid_at?: string | null
+          phone?: string | null
+          start_date: string
+          status?: string | null
+          stripe_checkout_session_id?: string | null
+          stripe_customer_id?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_subscription_id?: string | null
+          swim_week_package_cost?: number | null
+          swim_week_target_date?: string | null
+          updated_at?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          application_id?: string | null
+          brand_name?: string
+          commitment_months?: number | null
+          contact_email?: string
+          contact_name?: string | null
+          created_at?: string | null
+          id?: string
+          instagram_handle?: string | null
+          monthly_rate?: number | null
+          paid_at?: string | null
+          phone?: string | null
+          start_date?: string
+          status?: string | null
+          stripe_checkout_session_id?: string | null
+          stripe_customer_id?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_subscription_id?: string | null
+          swim_week_package_cost?: number | null
+          swim_week_target_date?: string | null
+          updated_at?: string | null
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_program_enrollments_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "content_program_applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_program_notes: {
+        Row: {
+          application_id: string | null
+          content: string
+          created_at: string | null
+          created_by: string | null
+          enrollment_id: string | null
+          id: string
+          note_type: string | null
+        }
+        Insert: {
+          application_id?: string | null
+          content: string
+          created_at?: string | null
+          created_by?: string | null
+          enrollment_id?: string | null
+          id?: string
+          note_type?: string | null
+        }
+        Update: {
+          application_id?: string | null
+          content?: string
+          created_at?: string | null
+          created_by?: string | null
+          enrollment_id?: string | null
+          id?: string
+          note_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_program_notes_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "content_program_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_program_notes_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "content_program_enrollments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_program_payments: {
+        Row: {
+          admin_notes: string | null
+          amount: number
+          created_at: string | null
+          credits_toward_swim_week: number | null
+          due_date: string
+          enrollment_id: string
+          id: string
+          paid_at: string | null
+          payment_method: string | null
+          payment_month: number
+          status: string | null
+          stripe_invoice_id: string | null
+          stripe_payment_intent_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          amount: number
+          created_at?: string | null
+          credits_toward_swim_week?: number | null
+          due_date: string
+          enrollment_id: string
+          id?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          payment_month: number
+          status?: string | null
+          stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          amount?: number
+          created_at?: string | null
+          credits_toward_swim_week?: number | null
+          due_date?: string
+          enrollment_id?: string
+          id?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          payment_month?: number
+          status?: string | null
+          stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_program_payments_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "content_program_enrollments"
             referencedColumns: ["id"]
           },
         ]
@@ -3553,6 +4025,7 @@ export type Database = {
           show_measurements: boolean | null
           show_on_rates_page: boolean | null
           show_social_media: boolean | null
+          sms_opt_out: boolean | null
           snapchat_followers: number | null
           snapchat_username: string | null
           social_companion_hourly_rate: number | null
@@ -3650,6 +4123,7 @@ export type Database = {
           show_measurements?: boolean | null
           show_on_rates_page?: boolean | null
           show_social_media?: boolean | null
+          sms_opt_out?: boolean | null
           snapchat_followers?: number | null
           snapchat_username?: string | null
           social_companion_hourly_rate?: number | null
@@ -3747,6 +4221,7 @@ export type Database = {
           show_measurements?: boolean | null
           show_on_rates_page?: boolean | null
           show_social_media?: boolean | null
+          sms_opt_out?: boolean | null
           snapchat_followers?: number | null
           snapchat_username?: string | null
           social_companion_hourly_rate?: number | null
@@ -4506,6 +4981,205 @@ export type Database = {
             columns: ["model_id"]
             isOneToOne: false
             referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pos_drawer_sessions: {
+        Row: {
+          cash_difference: number | null
+          closed_at: string | null
+          closing_cash: number | null
+          expected_cash: number | null
+          id: string
+          notes: string | null
+          opened_at: string | null
+          opening_cash: number
+          staff_id: string | null
+          staff_name: string | null
+          status: string | null
+          terminal_id: string
+          total_card_sales: number | null
+          total_cash_sales: number | null
+          total_sales: number | null
+          total_transactions: number | null
+        }
+        Insert: {
+          cash_difference?: number | null
+          closed_at?: string | null
+          closing_cash?: number | null
+          expected_cash?: number | null
+          id?: string
+          notes?: string | null
+          opened_at?: string | null
+          opening_cash?: number
+          staff_id?: string | null
+          staff_name?: string | null
+          status?: string | null
+          terminal_id: string
+          total_card_sales?: number | null
+          total_cash_sales?: number | null
+          total_sales?: number | null
+          total_transactions?: number | null
+        }
+        Update: {
+          cash_difference?: number | null
+          closed_at?: string | null
+          closing_cash?: number | null
+          expected_cash?: number | null
+          id?: string
+          notes?: string | null
+          opened_at?: string | null
+          opening_cash?: number
+          staff_id?: string | null
+          staff_name?: string | null
+          status?: string | null
+          terminal_id?: string
+          total_card_sales?: number | null
+          total_cash_sales?: number | null
+          total_sales?: number | null
+          total_transactions?: number | null
+        }
+        Relationships: []
+      }
+      pos_staff: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string
+          is_active: boolean | null
+          last_login_at: string | null
+          name: string
+          phone: string | null
+          pin: string
+          role: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_login_at?: string | null
+          name: string
+          phone?: string | null
+          pin: string
+          role?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_login_at?: string | null
+          name?: string
+          phone?: string | null
+          pin?: string
+          role?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      pos_staff_logs: {
+        Row: {
+          action: string
+          details: Json | null
+          id: string
+          staff_id: string | null
+          timestamp: string | null
+        }
+        Insert: {
+          action: string
+          details?: Json | null
+          id?: string
+          staff_id?: string | null
+          timestamp?: string | null
+        }
+        Update: {
+          action?: string
+          details?: Json | null
+          id?: string
+          staff_id?: string | null
+          timestamp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_staff_logs_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "pos_staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pos_transactions: {
+        Row: {
+          amount: number
+          amount_paid: number
+          card_brand: string | null
+          card_last_four: string | null
+          change_given: number | null
+          created_at: string | null
+          id: string
+          order_id: string | null
+          order_number: string
+          payment_method: string
+          staff_id: string | null
+          staff_name: string | null
+          status: string | null
+          stripe_payment_intent_id: string | null
+          terminal_id: string | null
+          void_reason: string | null
+          voided_at: string | null
+          voided_by: string | null
+        }
+        Insert: {
+          amount: number
+          amount_paid: number
+          card_brand?: string | null
+          card_last_four?: string | null
+          change_given?: number | null
+          created_at?: string | null
+          id?: string
+          order_id?: string | null
+          order_number: string
+          payment_method: string
+          staff_id?: string | null
+          staff_name?: string | null
+          status?: string | null
+          stripe_payment_intent_id?: string | null
+          terminal_id?: string | null
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
+        }
+        Update: {
+          amount?: number
+          amount_paid?: number
+          card_brand?: string | null
+          card_last_four?: string | null
+          change_given?: number | null
+          created_at?: string | null
+          id?: string
+          order_id?: string | null
+          order_number?: string
+          payment_method?: string
+          staff_id?: string | null
+          staff_name?: string | null
+          status?: string | null
+          stripe_payment_intent_id?: string | null
+          terminal_id?: string | null
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "shop_orders"
             referencedColumns: ["id"]
           },
         ]
@@ -5524,6 +6198,7 @@ export type Database = {
           discount_amount: number | null
           id: string
           internal_notes: string | null
+          is_pos_sale: boolean | null
           order_number: string
           paid_at: string | null
           payment_status: string | null
@@ -5562,6 +6237,7 @@ export type Database = {
           discount_amount?: number | null
           id?: string
           internal_notes?: string | null
+          is_pos_sale?: boolean | null
           order_number: string
           paid_at?: string | null
           payment_status?: string | null
@@ -5600,6 +6276,7 @@ export type Database = {
           discount_amount?: number | null
           id?: string
           internal_notes?: string | null
+          is_pos_sale?: boolean | null
           order_number?: string
           paid_at?: string | null
           payment_status?: string | null
@@ -5812,6 +6489,92 @@ export type Database = {
             columns: ["source_order_id"]
             isOneToOne: false
             referencedRelation: "shop_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sms_broadcasts: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          failed_count: number | null
+          id: string
+          message: string
+          recipient_count: number
+          sent_by: string | null
+          sent_count: number | null
+          status: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          failed_count?: number | null
+          id?: string
+          message: string
+          recipient_count?: number
+          sent_by?: string | null
+          sent_count?: number | null
+          status?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          failed_count?: number | null
+          id?: string
+          message?: string
+          recipient_count?: number
+          sent_by?: string | null
+          sent_count?: number | null
+          status?: string | null
+        }
+        Relationships: []
+      }
+      sms_logs: {
+        Row: {
+          broadcast_id: string | null
+          created_at: string | null
+          direction: string
+          error_message: string | null
+          id: string
+          message: string
+          model_id: string | null
+          phone_number: string
+          response_type: string | null
+          status: string | null
+          twilio_sid: string | null
+        }
+        Insert: {
+          broadcast_id?: string | null
+          created_at?: string | null
+          direction: string
+          error_message?: string | null
+          id?: string
+          message: string
+          model_id?: string | null
+          phone_number: string
+          response_type?: string | null
+          status?: string | null
+          twilio_sid?: string | null
+        }
+        Update: {
+          broadcast_id?: string | null
+          created_at?: string | null
+          direction?: string
+          error_message?: string | null
+          id?: string
+          message?: string
+          model_id?: string | null
+          phone_number?: string
+          response_type?: string | null
+          status?: string | null
+          twilio_sid?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_logs_broadcast_id_fkey"
+            columns: ["broadcast_id"]
+            isOneToOne: false
+            referencedRelation: "sms_broadcasts"
             referencedColumns: ["id"]
           },
         ]
@@ -6067,25 +6830,40 @@ export type Database = {
         Row: {
           completed_at: string | null
           created_at: string | null
+          current_streak: number | null
           fingerprint: string | null
           id: string
+          last_play_date: string | null
+          last_spin_date: string | null
+          longest_streak: number | null
           models_swiped: string[] | null
+          total_spin_coins: number | null
           user_id: string | null
         }
         Insert: {
           completed_at?: string | null
           created_at?: string | null
+          current_streak?: number | null
           fingerprint?: string | null
           id?: string
+          last_play_date?: string | null
+          last_spin_date?: string | null
+          longest_streak?: number | null
           models_swiped?: string[] | null
+          total_spin_coins?: number | null
           user_id?: string | null
         }
         Update: {
           completed_at?: string | null
           created_at?: string | null
+          current_streak?: number | null
           fingerprint?: string | null
           id?: string
+          last_play_date?: string | null
+          last_spin_date?: string | null
+          longest_streak?: number | null
           models_swiped?: string[] | null
+          total_spin_coins?: number | null
           user_id?: string | null
         }
         Relationships: []
@@ -6894,6 +7672,10 @@ export type Database = {
         }
         Returns: Json
       }
+      claim_daily_spin: {
+        Args: { p_coins: number; p_user_id: string }
+        Returns: Json
+      }
       claim_instagram_profile: {
         Args: { p_email: string; p_instagram_name: string; p_user_id: string }
         Returns: Json
@@ -6966,6 +7748,10 @@ export type Database = {
       }
       decrement_offer_spots_filled: {
         Args: { p_offer_id: string }
+        Returns: undefined
+      }
+      decrement_stock: {
+        Args: { quantity: number; variant_id: string }
         Returns: undefined
       }
       deduct_coins: {
@@ -7280,8 +8066,16 @@ export type Database = {
         Args: { p_escrow_id: string; p_model_id: string }
         Returns: Json
       }
+      release_stock: {
+        Args: { p_quantity: number; p_variant_id: string }
+        Returns: undefined
+      }
       remove_tag_from_model: {
         Args: { p_model_id: string; p_tag_id: string }
+        Returns: boolean
+      }
+      reserve_stock: {
+        Args: { p_quantity: number; p_variant_id: string }
         Returns: boolean
       }
       reset_daily_top_model_leaderboard: { Args: never; Returns: undefined }
@@ -7418,6 +8212,7 @@ export type Database = {
         Args: { p_model_id: string }
         Returns: undefined
       }
+      update_session_streak: { Args: { p_session_id: string }; Returns: Json }
     }
     Enums: {
       booking_status:
@@ -7620,6 +8415,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       booking_status: [

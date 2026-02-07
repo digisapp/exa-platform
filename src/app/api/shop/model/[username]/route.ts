@@ -1,16 +1,21 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ username: string }> }
 ) {
   try {
+    // Rate limit (public endpoint, IP-based)
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general");
+    if (rateLimitResponse) return rateLimitResponse;
+
     const supabase = await createClient();
     const { username } = await params;
 
     // Get model by username
-    const { data: model, error: modelError } = await (supabase as any)
+    const { data: model, error: modelError } = await supabase
       .from("models")
       .select(`
         id,
@@ -32,7 +37,7 @@ export async function GET(
     }
 
     // Get model's affiliate code
-    const { data: affiliateCode } = await (supabase as any)
+    const { data: affiliateCode } = await supabase
       .from("shop_affiliate_codes")
       .select("code, discount_type, discount_value")
       .eq("model_id", model.id)
@@ -40,7 +45,7 @@ export async function GET(
       .single();
 
     // Get products the model has worn/promoted
-    const { data: modelProducts } = await (supabase as any)
+    const { data: modelProducts } = await supabase
       .from("shop_model_products")
       .select(`
         id,
@@ -126,7 +131,7 @@ export async function GET(
     const favorites = products.filter((p: any) => p.isFavorite);
 
     // Get featured products from the shop for "You might also like"
-    const { data: featuredProducts } = await (supabase as any)
+    const { data: featuredProducts } = await supabase
       .from("shop_products")
       .select(`
         id,

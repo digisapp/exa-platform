@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { logAdminAction, AdminActions } from "@/lib/admin-audit";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 async function isAdmin(supabase: any, userId: string) {
   const { data: actor } = await supabase
@@ -28,9 +29,13 @@ export async function DELETE(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
+
     // Get the model's data first (for audit logging)
-    const { data: model, error: modelError } = await (supabase
-      .from("models") as any)
+    const { data: model, error: modelError } = await supabase
+      .from("models")
       .select("id, user_id, email, username, first_name, last_name")
       .eq("id", modelId)
       .single();
@@ -40,8 +45,8 @@ export async function DELETE(
     }
 
     // Delete the model record
-    const { error: deleteError } = await (supabase
-      .from("models") as any)
+    const { error: deleteError } = await supabase
+      .from("models")
       .delete()
       .eq("id", modelId);
 
@@ -52,8 +57,8 @@ export async function DELETE(
 
     // Also delete the actor if it exists
     if (model.user_id) {
-      await (supabase
-        .from("actors") as any)
+      await supabase
+        .from("actors")
         .delete()
         .eq("user_id", model.user_id)
         .eq("type", "model");

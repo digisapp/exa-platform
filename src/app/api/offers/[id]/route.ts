@@ -42,22 +42,21 @@ export async function GET(
       .from("actors")
       .select("id, type")
       .eq("user_id", user.id)
-      .single() as { data: { id: string; type: string } | null };
+      .single();
 
     if (!actor) {
       return NextResponse.json({ error: "Actor not found" }, { status: 404 });
     }
 
     // Get offer
-    const { data: offer } = await (supabase
-      .from("offers") as any)
+    const { data: offer } = await supabase
+      .from("offers")
       .select(`
         *,
         brand:actors!brand_id(
           id,
           brands:brands(id, company_name, logo_url)
-        ),
-        list:brand_lists(id, name)
+        )
       `)
       .eq("id", id)
       .single();
@@ -73,8 +72,8 @@ export async function GET(
 
     // For brands, include full response details with model info
     if (actor.type === "brand" || actor.type === "admin") {
-      const { data: responses } = await (supabase
-        .from("offer_responses") as any)
+      const { data: responses } = await supabase
+        .from("offer_responses")
         .select(`
           *,
           model:models(id, username, first_name, last_name, profile_photo_url, city, state, reliability_score)
@@ -90,11 +89,11 @@ export async function GET(
       .from("models")
       .select("id")
       .eq("user_id", user.id)
-      .single() as { data: { id: string } | null };
+      .single();
 
     if (model) {
-      const { data: myResponse } = await (supabase
-        .from("offer_responses") as any)
+      const { data: myResponse } = await supabase
+        .from("offer_responses")
         .select("*")
         .eq("offer_id", id)
         .eq("model_id", model.id)
@@ -128,15 +127,15 @@ export async function PATCH(
       .from("actors")
       .select("id, type")
       .eq("user_id", user.id)
-      .single() as { data: { id: string; type: string } | null };
+      .single();
 
     if (!actor || (actor.type !== "brand" && actor.type !== "admin")) {
       return NextResponse.json({ error: "Only brands can update offers" }, { status: 403 });
     }
 
     // Verify offer belongs to brand
-    const { data: offer } = await (supabase
-      .from("offers") as any)
+    const { data: offer } = await supabase
+      .from("offers")
       .select("id, brand_id")
       .eq("id", id)
       .single();
@@ -164,8 +163,8 @@ export async function PATCH(
       }
 
       // Get current response to check previous status
-      const { data: currentResponse } = await (supabase
-        .from("offer_responses") as any)
+      const { data: currentResponse } = await supabase
+        .from("offer_responses")
         .select("status")
         .eq("id", responseId)
         .eq("offer_id", id)
@@ -178,8 +177,8 @@ export async function PATCH(
       const previousStatus = currentResponse.status;
 
       // Update response
-      const { error: updateError } = await (adminClient
-        .from("offer_responses") as any)
+      const { error: updateError } = await adminClient
+        .from("offer_responses")
         .update({
           status: responseStatus,
           responded_at: new Date().toISOString(),
@@ -222,8 +221,8 @@ export async function PATCH(
 
     updates.updated_at = new Date().toISOString();
 
-    const { data: updatedOffer, error } = await (adminClient
-      .from("offers") as any)
+    const { data: updatedOffer, error } = await adminClient
+      .from("offers")
       .update(updates)
       .eq("id", id)
       .select()
@@ -256,15 +255,15 @@ export async function DELETE(
       .from("actors")
       .select("id, type")
       .eq("user_id", user.id)
-      .single() as { data: { id: string; type: string } | null };
+      .single();
 
     if (!actor || (actor.type !== "brand" && actor.type !== "admin")) {
       return NextResponse.json({ error: "Only brands can delete offers" }, { status: 403 });
     }
 
     // Verify offer belongs to brand
-    const { data: offer } = await (supabase
-      .from("offers") as any)
+    const { data: offer } = await supabase
+      .from("offers")
       .select("id, brand_id")
       .eq("id", id)
       .single();
@@ -274,13 +273,13 @@ export async function DELETE(
     }
 
     // Delete responses first
-    await (adminClient.from("offer_responses") as any)
+    await adminClient.from("offer_responses")
       .delete()
       .eq("offer_id", id);
 
     // Delete offer
-    const { error } = await (adminClient
-      .from("offers") as any)
+    const { error } = await adminClient
+      .from("offers")
       .delete()
       .eq("id", id);
 

@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendGigApplicationAcceptedEmail, sendGigApplicationRejectedEmail, sendCreatorHouseAcceptedEmail } from "@/lib/email";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 // Send gig application notification (chat message + email) - server-side only
 export async function POST(request: NextRequest) {
@@ -24,6 +25,10 @@ export async function POST(request: NextRequest) {
     if (!actor || actor.type !== "admin") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
+
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
 
     const body = await request.json();
     const {
@@ -57,13 +62,13 @@ export async function POST(request: NextRequest) {
     const adminClient = createServiceRoleClient();
 
     // Get model's actor id and email
-    const { data: modelRecord } = await (adminClient
-      .from("models") as any)
+    const { data: modelRecord } = await adminClient
+      .from("models")
       .select("user_id, email, first_name, username")
       .eq("id", modelId)
       .single();
 
-    if (!modelRecord) {
+    if (!modelRecord || !modelRecord.user_id) {
       return NextResponse.json(
         { error: "Model not found" },
         { status: 404 }
@@ -105,15 +110,15 @@ export async function POST(request: NextRequest) {
 
       // Create new conversation if none exists
       if (!conversationId) {
-        const { data: newConv } = await (adminClient
-          .from("conversations") as any)
+        const { data: newConv } = await adminClient
+          .from("conversations")
           .insert({ type: "direct" })
           .select()
           .single();
 
         if (newConv) {
           conversationId = newConv.id;
-          await (adminClient.from("conversation_participants") as any).insert([
+          await adminClient.from("conversation_participants").insert([
             { conversation_id: conversationId, actor_id: actor.id },
             { conversation_id: conversationId, actor_id: modelActor.id },
           ]);
@@ -128,7 +133,7 @@ export async function POST(request: NextRequest) {
           ? `Your spot for "${gigTitle || "a gig"}" has been cancelled. If you have questions, please reach out to us.`
           : `Thank you for your interest in "${gigTitle || "a gig"}". Unfortunately, we weren't able to accept your application at this time. We encourage you to apply for future opportunities!`;
 
-        await (adminClient.from("messages") as any).insert({
+        await adminClient.from("messages").insert({
           conversation_id: conversationId,
           sender_id: actor.id,
           content: message,

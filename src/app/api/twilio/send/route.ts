@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import twilio from "twilio";
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -31,6 +32,10 @@ export async function POST(request: NextRequest) {
     if (actor?.type !== "admin") {
       return NextResponse.json({ error: "Admin access required" }, { status: 403 });
     }
+
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
 
     // Check Twilio config
     if (!accountSid || !authToken || !fromNumber) {
@@ -66,7 +71,7 @@ export async function POST(request: NextRequest) {
     };
 
     // Create a batch record for this broadcast
-    const { data: broadcast } = await (supabase as any)
+    const { data: broadcast } = await supabase
       .from("sms_broadcasts")
       .insert({
         sent_by: user.id,
@@ -102,7 +107,7 @@ export async function POST(request: NextRequest) {
         });
 
         // Log the message
-        await (supabase as any).from("sms_logs").insert({
+        await supabase.from("sms_logs").insert({
           broadcast_id: broadcastId,
           model_id: modelId || null,
           phone_number: normalizedPhone,
@@ -119,7 +124,7 @@ export async function POST(request: NextRequest) {
         results.errors.push(`${phone}: ${errorMsg}`);
 
         // Log failed attempt
-        await (supabase as any).from("sms_logs").insert({
+        await supabase.from("sms_logs").insert({
           broadcast_id: broadcastId,
           model_id: modelId || null,
           phone_number: phone,
@@ -133,7 +138,7 @@ export async function POST(request: NextRequest) {
 
     // Update broadcast status
     if (broadcastId) {
-      await (supabase as any)
+      await supabase
         .from("sms_broadcasts")
         .update({
           status: results.failed === phoneNumbers.length ? "failed" : "completed",

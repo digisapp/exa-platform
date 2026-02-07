@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
-const supabase: any = createServiceRoleClient();
+const supabase = createServiceRoleClient();
 
 const LOW_STOCK_THRESHOLD = 5;
 
 export async function GET(request: NextRequest) {
   try {
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general");
+    if (rateLimitResponse) return rateLimitResponse;
+
     const countOnly = request.nextUrl.searchParams.get("count_only") === "true";
 
     // Get variants with low stock

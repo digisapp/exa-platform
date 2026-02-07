@@ -152,8 +152,8 @@ export async function POST(request: NextRequest) {
     } = supabase.storage.from(bucket).getPublicUrl(filename);
 
     // Create media_asset record
-    const { data: mediaAsset, error: mediaError } = await (supabase
-      .from("media_assets") as any)
+    const { data: mediaAsset, error: mediaError } = await supabase
+      .from("media_assets")
       .insert({
         owner_id: actor.id,
         type: "photo",
@@ -181,8 +181,8 @@ export async function POST(request: NextRequest) {
       // Get model ID (models.id != actors.id)
       const modelId = await getModelId(supabase, user.id);
       if (modelId) {
-        await (supabase
-          .from("models") as any)
+        await supabase
+          .from("models")
           .update({ profile_photo_url: publicUrl })
           .eq("id", modelId);
       }
@@ -255,7 +255,7 @@ export async function DELETE(request: NextRequest) {
     await supabase.storage.from(bucket).remove([mediaAsset.storage_path]);
 
     // Delete record
-    await (supabase.from("media_assets") as any).delete().eq("id", mediaId);
+    await supabase.from("media_assets").delete().eq("id", mediaId);
 
     return NextResponse.json({ success: true });
   } catch (error) {

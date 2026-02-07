@@ -29,7 +29,7 @@ export async function PATCH(
       .from("actors")
       .select("id, type")
       .eq("user_id", user.id)
-      .single() as { data: { id: string; type: string } | null };
+      .single();
 
     if (!actor || actor.type !== "admin") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -64,7 +64,7 @@ export async function PATCH(
       updateData.rejection_reason = rejection_reason;
     }
 
-    const { data: application, error } = await (adminClient as any)
+    const { data: application, error } = await adminClient
       .from("content_program_applications")
       .update(updateData)
       .eq("id", id)
@@ -79,7 +79,7 @@ export async function PATCH(
     // If approved, create enrollment
     if (status === "approved" && application) {
       // Check if enrollment already exists
-      const { data: existingEnrollment } = await (adminClient as any)
+      const { data: existingEnrollment } = await adminClient
         .from("content_program_enrollments")
         .select("id")
         .eq("application_id", id)
@@ -88,7 +88,7 @@ export async function PATCH(
       if (!existingEnrollment) {
         // Create enrollment with 3 payments
         const startDate = new Date();
-        const { data: enrollment, error: enrollError } = await (adminClient as any)
+        const { data: enrollment, error: enrollError } = await adminClient
           .from("content_program_enrollments")
           .insert({
             application_id: id,
@@ -122,7 +122,7 @@ export async function PATCH(
             });
           }
 
-          const { error: paymentsError } = await (adminClient as any)
+          const { error: paymentsError } = await adminClient
             .from("content_program_payments")
             .insert(payments);
 
@@ -131,7 +131,7 @@ export async function PATCH(
           }
 
           // Update application status to enrolled
-          await (adminClient as any)
+          await adminClient
             .from("content_program_applications")
             .update({ status: "enrolled" })
             .eq("id", id);
@@ -185,7 +185,7 @@ export async function DELETE(
       .from("actors")
       .select("id, type")
       .eq("user_id", user.id)
-      .single() as { data: { id: string; type: string } | null };
+      .single();
 
     if (!actor || actor.type !== "admin") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -194,7 +194,7 @@ export async function DELETE(
     // Use admin client for the delete
     const adminClient = createServiceRoleClient();
 
-    const { error } = await (adminClient as any)
+    const { error } = await adminClient
       .from("content_program_applications")
       .delete()
       .eq("id", id);

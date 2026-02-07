@@ -29,7 +29,7 @@ export async function GET(
     const { data: { user } } = await supabase.auth.getUser();
 
     // Get auction with model info
-    const { data: auction, error } = await (supabase as any)
+    const { data: auction, error } = await supabase
       .from("auctions")
       .select(`
         *,
@@ -50,7 +50,7 @@ export async function GET(
     }
 
     // Get watchlist count
-    const { count: watchlistCount } = await (supabase as any)
+    const { count: watchlistCount } = await supabase
       .from("auction_watchlist")
       .select("*", { count: "exact", head: true })
       .eq("auction_id", id);
@@ -62,10 +62,10 @@ export async function GET(
         .from("actors")
         .select("id")
         .eq("user_id", user.id)
-        .single() as { data: { id: string } | null };
+        .single();
 
       if (actor) {
-        const { data: watchEntry } = await (supabase as any)
+        const { data: watchEntry } = await supabase
           .from("auction_watchlist")
           .select("id")
           .eq("auction_id", id)
@@ -77,7 +77,7 @@ export async function GET(
     }
 
     // Get bid history
-    const { data: bids } = await (supabase as any)
+    const { data: bids } = await supabase
       .from("auction_bids")
       .select(`
         *,
@@ -137,7 +137,7 @@ export async function PATCH(
     }
 
     // Get model
-    const { data: model } = await (supabase as any)
+    const { data: model } = await supabase
       .from("models")
       .select("id")
       .eq("user_id", user.id)
@@ -148,7 +148,7 @@ export async function PATCH(
     }
 
     // Get auction
-    const { data: auction } = await (supabase as any)
+    const { data: auction } = await supabase
       .from("auctions")
       .select("id, model_id, status")
       .eq("id", id)
@@ -208,7 +208,7 @@ export async function PATCH(
 
     updateData.updated_at = new Date().toISOString();
 
-    const { data: updated, error } = await (supabase as any)
+    const { data: updated, error } = await supabase
       .from("auctions")
       .update(updateData)
       .eq("id", id)
@@ -245,7 +245,7 @@ export async function DELETE(
     }
 
     // Get model
-    const { data: model } = await (supabase as any)
+    const { data: model } = await supabase
       .from("models")
       .select("id")
       .eq("user_id", user.id)
@@ -256,7 +256,7 @@ export async function DELETE(
     }
 
     // Get auction
-    const { data: auction } = await (supabase as any)
+    const { data: auction } = await supabase
       .from("auctions")
       .select("id, model_id, status")
       .eq("id", id)
@@ -277,7 +277,7 @@ export async function DELETE(
       );
     }
 
-    const { error } = await (supabase as any)
+    const { error } = await supabase
       .from("auctions")
       .delete()
       .eq("id", id);

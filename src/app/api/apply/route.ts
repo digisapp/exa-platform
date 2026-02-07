@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 
 const applySchema = z.object({
@@ -20,6 +21,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Rate limit
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
+
     const body = await request.json();
     const parsed = applySchema.safeParse(body);
     if (!parsed.success) {
@@ -39,7 +44,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user is already a model
-    const { data: existingModel } = await (supabase.from("models") as any)
+    const { data: existingModel } = await supabase.from("models")
       .select("id, is_approved")
       .eq("user_id", user.id)
       .single();
@@ -52,7 +57,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check for existing application (any status except rejected)
-    const { data: existingApp } = await (supabase.from("model_applications") as any)
+    const { data: existingApp } = await supabase.from("model_applications")
       .select("id, status, created_at")
       .eq("user_id", user.id)
       .neq("status", "rejected")
@@ -74,7 +79,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user's fan info for display name
-    const { data: fan } = await (supabase.from("fans") as any)
+    const { data: fan } = await supabase.from("fans")
       .select("id, display_name")
       .eq("user_id", user.id)
       .single();
@@ -87,7 +92,8 @@ export async function POST(request: NextRequest) {
                         "Unknown";
 
     // Create application
-    const { error: insertError } = await (supabase.from("model_applications") as any)
+    const applicationsTable = supabase.from("model_applications") as any;
+    const { error: insertError } = await applicationsTable
       .insert({
         user_id: user.id,
         fan_id: fan?.id || null,
@@ -129,7 +135,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data: application } = await (supabase.from("model_applications") as any)
+    const { data: application } = await supabase.from("model_applications")
       .select("*")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })

@@ -1,9 +1,14 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { escapeIlike } from "@/lib/utils";
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
+    // Rate limit (public endpoint, IP-based)
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general");
+    if (rateLimitResponse) return rateLimitResponse;
+
     const supabase = await createClient();
     const { searchParams } = new URL(request.url);
 
@@ -17,7 +22,7 @@ export async function GET(request: Request) {
     const sortBy = searchParams.get("sort") || "newest";
 
     // Build query
-    let query = (supabase as any)
+    let query = supabase
       .from("shop_products")
       .select(`
         id,

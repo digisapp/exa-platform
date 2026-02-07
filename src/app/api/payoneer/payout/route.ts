@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get Payoneer account
-    const payoneerAccount = (withdrawal as any).payoneer_accounts;
+    const payoneerAccount = withdrawal.payoneer_accounts;
     if (!payoneerAccount) {
       // Revert status since we can't process without a Payoneer account
       await adminClient
