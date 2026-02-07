@@ -27,6 +27,8 @@ import {
   UserPlus,
   Activity,
   MessageCircle,
+  Gavel,
+  Plus,
 } from "lucide-react";
 import { FanDashboard } from "./FanDashboard";
 import { BrandDashboard } from "./BrandDashboard";
@@ -201,6 +203,15 @@ export default async function DashboardPage() {
     .from("gig_applications") as any)
     .select("gig_id, status")
     .eq("model_id", model.id);
+
+  // Get model's auctions for EXA Bids section
+  const { data: modelAuctions } = await (supabase as any)
+    .from("auctions")
+    .select("id, title, status, current_bid, starting_price, bid_count, ends_at, category")
+    .eq("model_id", model.id)
+    .in("status", ["draft", "active"])
+    .order("created_at", { ascending: false })
+    .limit(5);
 
   // ============================================
   // RECENT ACTIVITY FEED
@@ -520,6 +531,86 @@ export default async function DashboardPage() {
           />
         </div>
       </div>
+
+      {/* EXA Bids */}
+      <Card className="border-violet-500/30 bg-gradient-to-br from-pink-500/5 to-violet-500/5">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Gavel className="h-5 w-5 text-violet-500" />
+            EXA Bids
+            {(modelAuctions?.length || 0) > 0 && (
+              <Badge className="bg-violet-500 text-white ml-2">{modelAuctions?.length}</Badge>
+            )}
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/bids/manage" className="text-violet-500">
+                Manage
+                <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </Button>
+            <Button size="sm" asChild className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white">
+              <Link href="/bids/new">
+                <Plus className="h-4 w-4 mr-1" />
+                Create Auction
+              </Link>
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {(modelAuctions?.length || 0) > 0 ? (
+            <div className="space-y-3">
+              {modelAuctions?.map((auction: any) => (
+                <Link
+                  key={auction.id}
+                  href={auction.status === "draft" ? `/bids/${auction.id}/edit` : `/bids/${auction.id}`}
+                  className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors border border-transparent hover:border-violet-500/30"
+                >
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500/20 to-violet-500/20 flex items-center justify-center">
+                    <Gavel className="h-5 w-5 text-violet-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate">{auction.title}</p>
+                    <div className="flex items-center gap-3 mt-0.5 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Coins className="h-3 w-3 text-amber-500" />
+                        {auction.current_bid || auction.starting_price} coins
+                      </span>
+                      <span>{auction.bid_count || 0} bids</span>
+                      {auction.status === "active" && (
+                        <span>Ends {new Date(auction.ends_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                      )}
+                    </div>
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className={auction.status === "active"
+                      ? "bg-green-500/10 text-green-600 border-green-500/30 text-xs"
+                      : "bg-yellow-500/10 text-yellow-600 border-yellow-500/30 text-xs"
+                    }
+                  >
+                    {auction.status === "active" ? "Live" : "Draft"}
+                  </Badge>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <div className="p-4 rounded-full bg-violet-500/10 inline-block mb-4">
+                <Gavel className="h-8 w-8 text-violet-500" />
+              </div>
+              <p className="text-muted-foreground">No auctions yet</p>
+              <p className="text-sm text-muted-foreground mt-1">Create your first auction and let fans bid on experiences</p>
+              <Button size="sm" asChild className="mt-4 bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white">
+                <Link href="/bids/new">
+                  <Plus className="h-4 w-4 mr-1" />
+                  Create Auction
+                </Link>
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Recent Activity Feed */}
       {activityFeed.length > 0 && (

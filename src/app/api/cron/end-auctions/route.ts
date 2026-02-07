@@ -1,5 +1,6 @@
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
+import { sendAuctionSoldEmail, sendAuctionWonEmail } from "@/lib/email";
 
 const supabase: any = createServiceRoleClient();
 
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
     // Find active auctions that have expired
     const { data: expiredAuctions, error: fetchError } = await supabase
       .from("auctions")
-      .select("id, title")
+      .select("id, title, model_id")
       .eq("status", "active")
       .lt("ends_at", new Date().toISOString());
 
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
 
     // End each auction using the RPC function
     const results = await Promise.all(
-      expiredAuctions.map(async (auction: { id: string; title: string }) => {
+      expiredAuctions.map(async (auction: { id: string; title: string; model_id: string }) => {
         try {
           const { data, error } = await supabase.rpc("end_auction", {
             p_auction_id: auction.id,
@@ -43,6 +44,79 @@ export async function GET(request: NextRequest) {
           if (error) {
             console.error(`Failed to end auction ${auction.id} (${auction.title}):`, error);
             return { id: auction.id, title: auction.title, success: false, error: error.message };
+          }
+
+          // Send email notifications if auction was sold
+          if (data?.status === "sold" && data?.winner_id && data?.amount) {
+            try {
+              // Get model's email and name
+              const { data: model } = await supabase
+                .from("models")
+                .select("first_name, last_name, user_id")
+                .eq("id", auction.model_id)
+                .single();
+
+              if (model) {
+                const { data: modelUser } = await supabase.auth.admin.getUserById(model.user_id);
+                const modelName = model.first_name
+                  ? `${model.first_name} ${model.last_name || ""}`.trim()
+                  : "there";
+
+                if (modelUser?.user?.email) {
+                  await sendAuctionSoldEmail({
+                    to: modelUser.user.email,
+                    modelName,
+                    auctionTitle: auction.title,
+                    amount: data.amount,
+                    auctionId: auction.id,
+                  });
+                }
+
+                // Get winner's email and name
+                const { data: winnerActor } = await supabase
+                  .from("actors")
+                  .select("id, type, user_id")
+                  .eq("id", data.winner_id)
+                  .single();
+
+                if (winnerActor?.user_id) {
+                  const { data: winnerUser } = await supabase.auth.admin.getUserById(winnerActor.user_id);
+                  let winnerName = "there";
+
+                  if (winnerActor.type === "fan") {
+                    const { data: fan } = await supabase
+                      .from("fans")
+                      .select("display_name, username")
+                      .eq("id", winnerActor.id)
+                      .single();
+                    winnerName = fan?.display_name || fan?.username || "there";
+                  } else if (winnerActor.type === "model") {
+                    const { data: winnerModel } = await supabase
+                      .from("models")
+                      .select("first_name, last_name, username")
+                      .eq("user_id", winnerActor.user_id)
+                      .single();
+                    winnerName = winnerModel?.first_name
+                      ? `${winnerModel.first_name} ${winnerModel.last_name || ""}`.trim()
+                      : winnerModel?.username || "there";
+                  }
+
+                  if (winnerUser?.user?.email) {
+                    await sendAuctionWonEmail({
+                      to: winnerUser.user.email,
+                      winnerName,
+                      modelName,
+                      auctionTitle: auction.title,
+                      amount: data.amount,
+                      auctionId: auction.id,
+                    });
+                  }
+                }
+              }
+            } catch (emailError) {
+              // Don't fail the cron job if email sending fails
+              console.error(`Failed to send auction emails for ${auction.id}:`, emailError);
+            }
           }
 
           return { id: auction.id, title: auction.title, success: true, result: data };
