@@ -301,7 +301,7 @@ export default function EditBidPage({ params }: { params: Promise<{ id: string }
           <CardContent>
             <div className="space-y-4">
               {coverImageUrl ? (
-                <div className="relative aspect-video rounded-lg overflow-hidden bg-zinc-800">
+                <div className="relative aspect-[3/4] max-w-xs mx-auto rounded-lg overflow-hidden bg-zinc-800">
                   <Image
                     src={coverImageUrl}
                     alt="Cover"
@@ -318,7 +318,7 @@ export default function EditBidPage({ params }: { params: Promise<{ id: string }
                   </Button>
                 </div>
               ) : (
-                <label className="flex flex-col items-center justify-center aspect-video rounded-lg border-2 border-dashed border-zinc-700 hover:border-zinc-600 cursor-pointer transition-colors">
+                <label className="flex flex-col items-center justify-center aspect-[3/4] max-w-xs mx-auto rounded-lg border-2 border-dashed border-zinc-700 hover:border-zinc-600 cursor-pointer transition-colors">
                   <input
                     type="file"
                     accept="image/*"
