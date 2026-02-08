@@ -2,6 +2,7 @@
 
 import { CallListener } from "@/components/video";
 import { TipNotificationListener } from "@/components/TipNotificationListener";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 
 interface DashboardClientWrapperProps {
   actorId: string | null;
@@ -16,7 +17,9 @@ export function DashboardClientWrapper({
     <>
       {actorId && <CallListener actorId={actorId} />}
       {actorId && <TipNotificationListener actorId={actorId} />}
-      {children}
+      <ErrorBoundary>
+        {children}
+      </ErrorBoundary>
     </>
   );
 }

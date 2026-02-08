@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { useGameSounds } from "@/hooks/useGameSounds";
 import { useCoinBalanceOptional } from "@/contexts/CoinBalanceContext";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 
 interface Model {
   id: string;
@@ -379,11 +380,12 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
   }
 
   return (
+    <ErrorBoundary>
     <div className="w-full">
       {/* Desktop: Two columns - Game + Leaderboard */}
       <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
         {/* Game Area */}
-        <div className="flex-1 flex flex-col items-center pb-8 md:pb-0">
+        <div className="flex-1 flex flex-col items-center pb-8 md:pb-0" aria-live="polite">
           {gameComplete ? (
             <GameComplete
               nextResetAt={session?.nextResetAt || null}
@@ -577,5 +579,6 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
       </Dialog>
 
     </div>
+    </ErrorBoundary>
   );
 }

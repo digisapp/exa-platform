@@ -5,6 +5,7 @@ import { BottomNav } from "@/components/layout/BottomNav";
 import { DashboardClientWrapper } from "@/components/layout/DashboardClientWrapper";
 import { ActivityTracker } from "@/components/ActivityTracker";
 import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
+import { RouteFocusManager } from "@/components/layout/RouteFocusManager";
 
 // Prevent caching to ensure fresh auth state on every request
 export const dynamic = 'force-dynamic';
@@ -105,6 +106,7 @@ export default async function DashboardLayout({
   return (
     <CoinBalanceProvider initialBalance={coinBalance}>
       <div className="min-h-screen bg-background">
+        <RouteFocusManager />
         <ActivityTracker />
         <Navbar
           user={{

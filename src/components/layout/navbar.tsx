@@ -200,7 +200,7 @@ export function Navbar({ user, actorType, unreadCount = 0 }: NavbarProps) {
               {/* User Menu Dropdown - Both mobile and desktop */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0 ring-2 ring-pink-500/50 hover:ring-pink-500 transition-all">
+                  <Button variant="ghost" aria-label="User menu" className="relative h-10 w-10 rounded-full p-0 ring-2 ring-pink-500/50 hover:ring-pink-500 transition-all">
                     <Avatar className="h-10 w-10">
                       <AvatarImage src={user.avatar_url} alt={user.name || ""} />
                       <AvatarFallback className="bg-gradient-to-br from-pink-500 to-violet-500 text-white">

@@ -34,6 +34,7 @@ import Link from "next/link";
 import type { Message, Actor, Model, Conversation, Fan, Brand } from "@/types/database";
 import { useCoinBalanceOptional } from "@/contexts/CoinBalanceContext";
 import { formatDistanceToNow } from "date-fns";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 
 interface Participant {
   actor_id: string;
@@ -489,8 +490,8 @@ export function ChatView({
     <div className="flex flex-col h-[calc(100vh-120px)] lg:h-full max-md:h-[calc(100vh-180px)] relative">
       {/* Header */}
       <div className="flex items-center gap-4 p-4 border-b">
-        <Link href="/chats" className="lg:hidden">
-          <Button variant="ghost" size="icon">
+        <Link href="/chats" className="lg:hidden" aria-label="Back to chats">
+          <Button variant="ghost" size="icon" aria-label="Back to chats">
             <ArrowLeft className="h-5 w-5" />
           </Button>
         </Link>
@@ -590,7 +591,7 @@ export function ChatView({
         {/* More options menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" aria-label="More options">
               <MoreVertical className="h-5 w-5" />
             </Button>
           </DropdownMenuTrigger>
@@ -641,6 +642,7 @@ export function ChatView({
       )}
 
       {/* Messages */}
+      <ErrorBoundary>
       <div
         ref={messagesContainerRef}
         onScroll={handleScroll}
@@ -770,12 +772,15 @@ export function ChatView({
         )}
 
         {/* Typing indicator */}
-        {typingUsers.length > 0 && (
-          <TypingIndicator name={typingUsers[0].name} />
-        )}
+        <div aria-live="polite" aria-atomic="true">
+          {typingUsers.length > 0 && (
+            <TypingIndicator name={typingUsers[0].name} />
+          )}
+        </div>
 
         <div ref={messagesEndRef} />
       </div>
+      </ErrorBoundary>
 
       {/* Scroll to bottom button */}
       {showScrollButton && (
@@ -783,6 +788,7 @@ export function ChatView({
           <Button
             onClick={() => scrollToBottom()}
             size="icon"
+            aria-label="Scroll to latest messages"
             className="h-10 w-10 rounded-full shadow-lg bg-background border hover:bg-muted"
           >
             <ChevronDown className="h-5 w-5" />

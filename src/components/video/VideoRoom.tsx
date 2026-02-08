@@ -17,6 +17,7 @@ import { CALL_COST_PER_MINUTE } from "@/lib/livekit-constants";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { showTipSuccessToast } from "@/lib/tip-toast";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 
 const TIP_AMOUNTS = [5, 10, 25, 50];
 
@@ -85,6 +86,7 @@ export function VideoRoom({
   }
 
   return (
+    <ErrorBoundary>
     <div className="fixed inset-0 z-50 bg-black">
       <LiveKitRoom
         token={token}
@@ -109,6 +111,7 @@ export function VideoRoom({
         <RoomAudioRenderer />
       </LiveKitRoom>
     </div>
+    </ErrorBoundary>
   );
 }
 
@@ -332,6 +335,7 @@ function VideoCallContent({
           <Button
             variant="ghost"
             size="icon"
+            aria-label={isMuted ? "Unmute microphone" : "Mute microphone"}
             className={`rounded-full w-12 h-12 ${
               isMuted ? "bg-red-500/20 text-red-400" : "bg-white/10 text-white"
             }`}
@@ -343,6 +347,7 @@ function VideoCallContent({
           <Button
             variant="ghost"
             size="icon"
+            aria-label={isVideoOff ? "Turn on camera" : "Turn off camera"}
             className={`rounded-full w-12 h-12 ${
               isVideoOff ? "bg-red-500/20 text-red-400" : "bg-white/10 text-white"
             }`}
@@ -356,6 +361,7 @@ function VideoCallContent({
             <Button
               variant="ghost"
               size="icon"
+              aria-label={showTipMenu ? "Close tip menu" : "Send a tip"}
               className={cn(
                 "rounded-full w-12 h-12",
                 showTipMenu
@@ -371,6 +377,7 @@ function VideoCallContent({
           <Button
             variant="destructive"
             size="icon"
+            aria-label="End call"
             className="rounded-full w-14 h-14 bg-red-500 hover:bg-red-600"
             onClick={onHangUp}
           >

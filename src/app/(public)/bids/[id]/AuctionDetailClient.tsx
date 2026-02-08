@@ -22,6 +22,7 @@ import {
   Package,
 } from "lucide-react";
 import type { AuctionWithDetails, BidWithBidder } from "@/types/auctions";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 
 interface AuctionDetailClientProps {
   auction: AuctionWithDetails;
@@ -152,6 +153,7 @@ export function AuctionDetailClient({
 
         {/* Right Column - Bidding */}
         <div className="space-y-6">
+          <ErrorBoundary>
           {/* Sticky Bid Section */}
           <div className="lg:sticky lg:top-24 space-y-6">
             {/* Connection Status */}
@@ -177,7 +179,7 @@ export function AuctionDetailClient({
             )}
 
             {/* Price Display */}
-            <div className="glass-card p-6 rounded-xl">
+            <div className="glass-card p-6 rounded-xl" aria-live="polite" aria-atomic="true">
               <div className="flex items-center justify-between mb-4">
                 <span className="text-sm text-zinc-400">
                   {auction.current_bid ? "Current Bid" : "Starting Price"}
@@ -255,6 +257,7 @@ export function AuctionDetailClient({
               </p>
             )}
           </div>
+          </ErrorBoundary>
         </div>
       </div>
     </main>

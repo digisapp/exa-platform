@@ -93,8 +93,14 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.className} bg-background text-foreground antialiased min-h-screen`}>
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none"
+        >
+          Skip to content
+        </a>
         <AuthProvider>
-          {children}
+          <div id="main-content" tabIndex={-1} className="outline-none">{children}</div>
         </AuthProvider>
         <Suspense fallback={null}>
           <PageViewTracker />

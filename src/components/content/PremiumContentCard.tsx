@@ -102,7 +102,11 @@ export function PremiumContentCard({
           "bg-gradient-to-br from-gray-900 to-gray-800",
           isVideo ? "aspect-video" : "aspect-[3/4]"
         )}
+        role="button"
+        tabIndex={0}
+        aria-label={isUnlocked ? (content.title || "View content") : `Unlock content for ${content.coin_price} coins`}
         onClick={() => isUnlocked ? setShowFull(true) : setShowPreview(true)}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); isUnlocked ? setShowFull(true) : setShowPreview(true); } }}
       >
         {/* Preview or Full Image/Video */}
         {((isUnlocked && mediaUrl) || content.preview_url) && !imageError ? (
