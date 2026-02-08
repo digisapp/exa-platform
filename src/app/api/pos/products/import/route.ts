@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { escapeIlike } from "@/lib/utils";
+import { requirePosAuth, isPosAuthError } from "@/lib/pos-auth";
 
 // as any needed: import uses field names and values not matching typed shop_brands/shop_products schema
 const supabase: any = createServiceRoleClient();
@@ -42,9 +43,16 @@ function parseCSV(text: string): CSVRow[] {
 
 export async function POST(request: NextRequest) {
   try {
+    // POS staff authentication
+    const authResult = await requirePosAuth(request);
+    if (isPosAuthError(authResult)) return authResult;
+
     // Rate limit
     const rateLimitResponse = await checkEndpointRateLimit(request, "general");
     if (rateLimitResponse) return rateLimitResponse;
+
+    const MAX_FILE_SIZE = 1024 * 1024; // 1MB
+    const MAX_ROWS = 1000;
 
     const formData = await request.formData();
     const file = formData.get("file") as File;
@@ -53,11 +61,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { error: "File too large. Maximum size is 1MB." },
+        { status: 400 }
+      );
+    }
+
     const text = await file.text();
     const rows = parseCSV(text);
 
     if (rows.length === 0) {
       return NextResponse.json({ error: "No data in CSV" }, { status: 400 });
+    }
+
+    if (rows.length > MAX_ROWS) {
+      return NextResponse.json(
+        { error: `Too many rows. Maximum is ${MAX_ROWS} rows per import.` },
+        { status: 400 }
+      );
     }
 
     let success = 0;

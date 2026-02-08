@@ -3,6 +3,14 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendTipReceivedEmail } from "@/lib/email";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { z } from "zod";
+
+const MAX_TIP_AMOUNT = 10000; // 10,000 coins = $1,000 USD
+
+const tipSchema = z.object({
+  recipientUsername: z.string().min(1, "Recipient username required"),
+  amount: z.number().int("Amount must be a whole number").min(1, "Minimum tip is 1 coin").max(MAX_TIP_AMOUNT, `Maximum tip is ${MAX_TIP_AMOUNT} coins`),
+});
 
 // Service role client for privileged operations (server-side only)
 const adminClient = createServiceRoleClient();
@@ -26,23 +34,15 @@ export async function POST(request: NextRequest) {
       return rateLimitResponse;
     }
 
-    const body = await request.json();
-    const { recipientUsername, amount } = body;
-
-    // Validate inputs
-    if (!recipientUsername) {
+    const rawBody = await request.json();
+    const parsed = tipSchema.safeParse(rawBody);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Recipient username required" },
+        { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
-
-    if (!amount || amount < 1) {
-      return NextResponse.json(
-        { error: "Invalid tip amount" },
-        { status: 400 }
-      );
-    }
+    const { recipientUsername, amount } = parsed.data;
 
     // Get sender's actor info
     const { data: sender } = await supabase

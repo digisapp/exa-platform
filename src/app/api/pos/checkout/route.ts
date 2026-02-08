@@ -1,26 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { requirePosAuth, isPosAuthError } from "@/lib/pos-auth";
+import { z } from "zod";
 
 // as any needed: POS orders use different field names than typed shop_orders schema
 const supabase: any = createServiceRoleClient();
 
-interface CheckoutItem {
-  variant_id: string;
-  quantity: number;
-  price: number;
-}
+const TAX_RATE = 0.08; // 8% sales tax
 
-interface CheckoutBody {
-  items: CheckoutItem[];
-  subtotal: number;
-  tax: number;
-  total: number;
-  payment_method: "cash" | "card";
-  amount_paid: number;
-  customer_email?: string;
-  customer_phone?: string;
-}
+const checkoutSchema = z.object({
+  items: z
+    .array(
+      z.object({
+        variant_id: z.string().uuid(),
+        quantity: z.number().int().min(1),
+      })
+    )
+    .min(1, "At least one item is required"),
+  payment_method: z.enum(["cash", "card"]),
+  amount_paid: z.number().min(0),
+  customer_email: z.string().email().optional(),
+  customer_phone: z.string().optional(),
+});
 
 // Generate order number: POS-YYMMDD-XXXX
 function generateOrderNumber(): string {
@@ -36,26 +38,55 @@ function generateOrderNumber(): string {
 
 export async function POST(request: NextRequest) {
   try {
+    // POS staff authentication
+    const authResult = await requirePosAuth(request);
+    if (isPosAuthError(authResult)) return authResult;
+
     // Rate limit
     const rateLimitResponse = await checkEndpointRateLimit(request, "financial");
     if (rateLimitResponse) return rateLimitResponse;
 
-    const body: CheckoutBody = await request.json();
-
-    // Validate input
-    if (!body.items || body.items.length === 0) {
-      return NextResponse.json({ error: "No items in cart" }, { status: 400 });
+    const rawBody = await request.json();
+    const parsed = checkoutSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
     }
+    const body = parsed.data;
 
-    if (body.amount_paid < body.total) {
-      return NextResponse.json({ error: "Insufficient payment" }, { status: 400 });
-    }
+    // Look up actual prices from DB and verify stock for all items
+    const itemsWithPrices: {
+      variant_id: string;
+      quantity: number;
+      unit_price: number;
+      sku: string;
+      size: string | null;
+      color: string | null;
+      product_id: string;
+      product_name: string;
+      brand_id: string;
+    }[] = [];
 
-    // Verify stock for all items
     for (const item of body.items) {
       const { data: variant, error } = await supabase
         .from("shop_product_variants")
-        .select("stock_quantity, sku")
+        .select(`
+          id,
+          stock_quantity,
+          sku,
+          size,
+          color,
+          price_override,
+          product_id,
+          shop_products (
+            id,
+            name,
+            retail_price,
+            brand_id
+          )
+        `)
         .eq("id", item.variant_id)
         .single();
 
@@ -72,6 +103,36 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
+
+      // Use price_override if set, otherwise fall back to product retail_price
+      const unitPrice: number =
+        variant.price_override != null
+          ? variant.price_override
+          : variant.shop_products.retail_price;
+
+      itemsWithPrices.push({
+        variant_id: item.variant_id,
+        quantity: item.quantity,
+        unit_price: unitPrice,
+        sku: variant.sku,
+        size: variant.size,
+        color: variant.color,
+        product_id: variant.shop_products.id,
+        product_name: variant.shop_products.name,
+        brand_id: variant.shop_products.brand_id,
+      });
+    }
+
+    // Calculate totals server-side (ignore any client-provided totals)
+    const subtotal = itemsWithPrices.reduce(
+      (sum, item) => sum + item.unit_price * item.quantity,
+      0
+    );
+    const tax = Math.round(subtotal * TAX_RATE * 100) / 100;
+    const total = Math.round((subtotal + tax) * 100) / 100;
+
+    if (body.amount_paid < total) {
+      return NextResponse.json({ error: "Insufficient payment" }, { status: 400 });
     }
 
     // Generate order number
@@ -83,10 +144,10 @@ export async function POST(request: NextRequest) {
       .insert({
         order_number: orderNumber,
         status: "completed", // POS orders are completed immediately
-        subtotal: body.subtotal,
-        tax: body.tax,
+        subtotal,
+        tax,
         shipping_cost: 0,
-        total: body.total,
+        total,
         payment_method: body.payment_method,
         payment_status: "paid",
         customer_email: body.customer_email || null,
@@ -105,42 +166,22 @@ export async function POST(request: NextRequest) {
     }
 
     // Create order items and update inventory
-    for (const item of body.items) {
-      // Get variant details
-      const { data: variant } = await supabase
-        .from("shop_product_variants")
-        .select(`
-          id,
-          sku,
-          size,
-          color,
-          product_id,
-          shop_products (
-            id,
-            name,
-            brand_id
-          )
-        `)
-        .eq("id", item.variant_id)
-        .single();
-
-      if (!variant) continue;
-
-      // Create order item
+    for (const item of itemsWithPrices) {
+      // Create order item using server-verified prices
       const { error: itemError } = await supabase
         .from("shop_order_items")
         .insert({
           order_id: order.id,
-          product_id: variant.shop_products.id,
-          variant_id: variant.id,
-          brand_id: variant.shop_products.brand_id,
-          product_name: variant.shop_products.name,
-          variant_sku: variant.sku,
-          variant_size: variant.size,
-          variant_color: variant.color,
+          product_id: item.product_id,
+          variant_id: item.variant_id,
+          brand_id: item.brand_id,
+          product_name: item.product_name,
+          variant_sku: item.sku,
+          variant_size: item.size,
+          variant_color: item.color,
           quantity: item.quantity,
-          unit_price: item.price,
-          total_price: item.price * item.quantity,
+          unit_price: item.unit_price,
+          total_price: item.unit_price * item.quantity,
           fulfillment_status: "delivered", // POS items are delivered immediately
         });
 
@@ -174,14 +215,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Record payment
+    // Record payment with server-calculated total
     await supabase.from("pos_transactions").insert({
       order_id: order.id,
       order_number: orderNumber,
       payment_method: body.payment_method,
-      amount: body.total,
+      amount: total,
       amount_paid: body.amount_paid,
-      change_given: body.amount_paid - body.total,
+      change_given: body.amount_paid - total,
       status: "completed",
     });
 

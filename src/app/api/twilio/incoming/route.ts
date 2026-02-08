@@ -1,17 +1,50 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import twilio from "twilio";
 
 // Use service role for webhook (no user auth)
 const supabase = createServiceRoleClient();
 
 export async function POST(request: NextRequest) {
   try {
-    // Parse form data from Twilio webhook
-    const formData = await request.formData();
+    // Verify Twilio signature
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    if (!authToken) {
+      console.error("TWILIO_AUTH_TOKEN not configured");
+      return new NextResponse("Webhook not configured", { status: 500 });
+    }
 
-    const from = formData.get("From") as string;
-    const body = formData.get("Body") as string;
-    const messageSid = formData.get("MessageSid") as string;
+    const twilioSignature = request.headers.get("x-twilio-signature");
+    if (!twilioSignature) {
+      return new NextResponse("Missing signature", { status: 403 });
+    }
+
+    // Read form body as URLSearchParams for validation
+    const bodyText = await request.text();
+    const params: Record<string, string> = {};
+    const searchParams = new URLSearchParams(bodyText);
+    searchParams.forEach((value, key) => {
+      params[key] = value;
+    });
+
+    // Build the full URL Twilio used to sign the request
+    const url = request.url;
+
+    const isValid = twilio.validateRequest(
+      authToken,
+      twilioSignature,
+      url,
+      params
+    );
+
+    if (!isValid) {
+      console.error("Invalid Twilio signature");
+      return new NextResponse("Invalid signature", { status: 403 });
+    }
+
+    const from = params.From;
+    const body = params.Body;
+    const messageSid = params.MessageSid;
 
     if (!from || !body) {
       return new NextResponse("Missing required fields", { status: 400 });
@@ -69,7 +102,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Return TwiML response (empty = no auto-reply)
-    // You can customize this to send an auto-reply if needed
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
 </Response>`;

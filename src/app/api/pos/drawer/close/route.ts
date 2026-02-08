@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { requirePosAuth, isPosAuthError } from "@/lib/pos-auth";
 
 const supabase = createServiceRoleClient();
 
 export async function POST(request: NextRequest) {
   try {
+    // POS staff authentication
+    const authResult = await requirePosAuth(request);
+    if (isPosAuthError(authResult)) return authResult;
+
     // Rate limit
     const rateLimitResponse = await checkEndpointRateLimit(request, "financial");
     if (rateLimitResponse) return rateLimitResponse;

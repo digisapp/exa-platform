@@ -1,6 +1,38 @@
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { z } from "zod";
+
+const postSchema = z.object({
+  orderId: z.string().min(1),
+  eventId: z.string().min(1),
+  affiliateCode: z.string().min(1),
+  saleAmountCents: z.number().int().min(1),
+  commissionRate: z.number().min(0).max(1).default(0.20),
+});
+
+const patchSchema = z.object({
+  commissionId: z.string().min(1),
+  status: z.enum(["pending", "confirmed", "paid", "cancelled"]),
+  paymentReference: z.string().optional(),
+});
+
+function verifyWebhookSecret(request: NextRequest): NextResponse | null {
+  const webhookSecret = process.env.AFFILIATE_WEBHOOK_SECRET;
+  if (!webhookSecret) {
+    return NextResponse.json(
+      { error: "Webhook not configured" },
+      { status: 500 }
+    );
+  }
+
+  const authHeader = request.headers.get("authorization");
+  if (authHeader !== `Bearer ${webhookSecret}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  return null;
+}
 
 // POST - Record a commission (called by ticket system webhook)
 export async function POST(request: NextRequest) {
@@ -9,27 +41,20 @@ export async function POST(request: NextRequest) {
     const rateLimitResponse = await checkEndpointRateLimit(request, "general");
     if (rateLimitResponse) return rateLimitResponse;
 
-    // Verify webhook secret (simple auth for now)
-    const authHeader = request.headers.get("authorization");
-    const webhookSecret = process.env.AFFILIATE_WEBHOOK_SECRET;
+    // Verify webhook secret (mandatory)
+    const authError = verifyWebhookSecret(request);
+    if (authError) return authError;
 
-    if (webhookSecret && authHeader !== `Bearer ${webhookSecret}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const rawBody = await request.json();
+    const parsed = postSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
     }
 
-    const {
-      orderId,
-      eventId,
-      affiliateCode,
-      saleAmountCents,
-      commissionRate = 0.20, // 20% default
-    } = await request.json();
-
-    if (!orderId || !eventId || !affiliateCode || !saleAmountCents) {
-      return NextResponse.json({
-        error: "Missing required fields: orderId, eventId, affiliateCode, saleAmountCents"
-      }, { status: 400 });
-    }
+    const { orderId, eventId, affiliateCode, saleAmountCents, commissionRate } = parsed.data;
 
     // Use admin client
     const adminClient = createServiceRoleClient();
@@ -130,31 +155,20 @@ export async function PATCH(request: NextRequest) {
     const rateLimitResponse = await checkEndpointRateLimit(request, "general");
     if (rateLimitResponse) return rateLimitResponse;
 
-    // Verify webhook secret
-    const authHeader = request.headers.get("authorization");
-    const webhookSecret = process.env.AFFILIATE_WEBHOOK_SECRET;
+    // Verify webhook secret (mandatory)
+    const authError = verifyWebhookSecret(request);
+    if (authError) return authError;
 
-    if (webhookSecret && authHeader !== `Bearer ${webhookSecret}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const rawBody = await request.json();
+    const parsed = patchSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
     }
 
-    const {
-      commissionId,
-      status,
-      paymentReference,
-    } = await request.json();
-
-    if (!commissionId || !status) {
-      return NextResponse.json({
-        error: "Missing required fields: commissionId, status"
-      }, { status: 400 });
-    }
-
-    if (!["pending", "confirmed", "paid", "cancelled"].includes(status)) {
-      return NextResponse.json({
-        error: "Invalid status. Must be one of: pending, confirmed, paid, cancelled"
-      }, { status: 400 });
-    }
+    const { commissionId, status, paymentReference } = parsed.data;
 
     // Use admin client
     const adminClient = createServiceRoleClient();

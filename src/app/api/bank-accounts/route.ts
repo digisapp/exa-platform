@@ -2,6 +2,15 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { encryptBankAccount } from "@/lib/encryption";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { z } from "zod";
+
+const bankAccountSchema = z.object({
+  accountHolderName: z.string().trim().min(1, "Account holder name is required"),
+  bankName: z.string().trim().min(1, "Bank name is required"),
+  routingNumber: z.string().regex(/^\d{9}$/, "Routing number must be exactly 9 digits"),
+  accountNumber: z.string().regex(/^\d{4,17}$/, "Account number must be 4-17 digits"),
+  accountType: z.enum(["checking", "savings"], { message: "Account type must be checking or savings" }),
+});
 
 interface BankAccountRow {
   id: string;
@@ -38,27 +47,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Model not found" }, { status: 404 });
     }
 
-    const body = await request.json();
-    const {
-      accountHolderName,
-      bankName,
-      routingNumber,
-      accountNumber,
-      accountType,
-    } = body;
-
-    // Validate
-    if (!accountHolderName || !bankName || !routingNumber || !accountNumber || !accountType) {
-      return NextResponse.json({ error: "All fields are required" }, { status: 400 });
+    const rawBody = await request.json();
+    const parsed = bankAccountSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
     }
-
-    if (routingNumber.length !== 9) {
-      return NextResponse.json({ error: "Routing number must be 9 digits" }, { status: 400 });
-    }
-
-    if (accountNumber.length < 4) {
-      return NextResponse.json({ error: "Invalid account number" }, { status: 400 });
-    }
+    const { accountHolderName, bankName, routingNumber, accountNumber, accountType } = parsed.data;
 
     // Encrypt the account number and routing number
     const encryptedAccountNumber = encryptBankAccount(accountNumber);
