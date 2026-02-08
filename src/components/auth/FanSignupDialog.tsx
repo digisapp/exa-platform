@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ export function FanSignupDialog({ children }: FanSignupDialogProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const router = useRouter();
   const supabase = createClient();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -134,7 +136,7 @@ export function FanSignupDialog({ children }: FanSignupDialogProps) {
   };
 
   const handleGoToDashboard = () => {
-    window.location.href = "/dashboard";
+    router.push("/dashboard");
   };
 
   return (

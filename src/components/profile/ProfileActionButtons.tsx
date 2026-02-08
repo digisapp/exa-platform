@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -70,6 +71,7 @@ export function ProfileActionButtons({
   const [sending, setSending] = useState(false);
   const [startingCall, setStartingCall] = useState(false);
   const [startingVoiceCall, setStartingVoiceCall] = useState(false);
+  const router = useRouter();
   const [callSession, setCallSession] = useState<{
     sessionId: string;
     token: string;
@@ -87,7 +89,7 @@ export function ProfileActionButtons({
     if (messageRate > 0) {
       setShowChatConfirm(true);
     } else {
-      window.location.href = `/chats?new=${modelUsername}`;
+      router.push(`/chats?new=${modelUsername}`);
     }
   };
 

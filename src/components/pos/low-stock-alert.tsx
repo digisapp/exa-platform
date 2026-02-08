@@ -180,8 +180,23 @@ export function LowStockBadge({ onClick }: { onClick: () => void }) {
     };
 
     fetchCount();
-    const interval = setInterval(fetchCount, 60000); // Check every minute
-    return () => clearInterval(interval);
+    let interval = setInterval(fetchCount, 60000); // Check every minute
+
+    // Pause polling when tab is hidden
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchCount();
+        interval = setInterval(fetchCount, 60000);
+      } else {
+        clearInterval(interval);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, []);
 
   if (count === 0) return null;

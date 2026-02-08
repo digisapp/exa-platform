@@ -66,6 +66,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       brands: transformedBrands || [],
+    }, {
+      headers: { "Cache-Control": "public, s-maxage=1800, stale-while-revalidate=3600" },
     });
   } catch (error) {
     console.error("Shop brands error:", error);

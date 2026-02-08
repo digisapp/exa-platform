@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     // Get the call session
     const { data: callSession } = await supabase
       .from('video_call_sessions')
-      .select('*')
+      .select('id, recipient_id, status, room_name, call_type, conversation_id, initiated_by')
       .eq('id', sessionId)
       .single() ;
 
@@ -141,7 +141,7 @@ export async function DELETE(request: NextRequest) {
     // Get the call session
     const { data: callSession } = await supabase
       .from('video_call_sessions')
-      .select('*')
+      .select('id, recipient_id, status, call_type, conversation_id, initiated_by')
       .eq('id', sessionId)
       .single() ;
 

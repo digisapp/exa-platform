@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,7 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
   const [, setPhone] = useState("");
   const [message, setMessage] = useState("");
 
+  const router = useRouter();
   const supabase = createClient();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -175,7 +177,7 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
   };
 
   const handleGoToDashboard = () => {
-    window.location.href = "/dashboard";
+    router.push("/dashboard");
   };
 
   return (

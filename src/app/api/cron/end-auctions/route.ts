@@ -50,18 +50,30 @@ export async function GET(request: NextRequest) {
           // Send email notifications if auction was sold
           if (data?.status === "sold" && data?.winner_id && data?.amount) {
             try {
-              // Get model's email and name
-              const { data: model } = await supabase
-                .from("models")
-                .select("first_name, last_name, user_id")
-                .eq("id", auction.model_id)
-                .single();
+              // Get model info and winner actor info in parallel
+              const [modelResult, winnerActorResult] = await Promise.all([
+                supabase.from("models").select("first_name, last_name, user_id").eq("id", auction.model_id).single(),
+                supabase.from("actors").select("id, type, user_id").eq("id", data.winner_id).single(),
+              ]);
+
+              const model = modelResult.data;
 
               if (model) {
-                const { data: modelUser } = await supabase.auth.admin.getUserById(model.user_id);
                 const modelName = model.first_name
                   ? `${model.first_name} ${model.last_name || ""}`.trim()
                   : "there";
+
+                // Get model user and winner user emails in parallel
+                const winnerActor = winnerActorResult.data;
+                const emailPromises: Promise<any>[] = [
+                  supabase.auth.admin.getUserById(model.user_id),
+                ];
+                if (winnerActor?.user_id) {
+                  emailPromises.push(supabase.auth.admin.getUserById(winnerActor.user_id));
+                }
+                const emailResults = await Promise.all(emailPromises);
+                const modelUser = emailResults[0]?.data;
+                const winnerUser = emailResults[1]?.data;
 
                 if (modelUser?.user?.email) {
                   await sendAuctionSoldEmail({
@@ -73,15 +85,7 @@ export async function GET(request: NextRequest) {
                   });
                 }
 
-                // Get winner's email and name
-                const { data: winnerActor } = await supabase
-                  .from("actors")
-                  .select("id, type, user_id")
-                  .eq("id", data.winner_id)
-                  .single();
-
-                if (winnerActor?.user_id) {
-                  const { data: winnerUser } = await supabase.auth.admin.getUserById(winnerActor.user_id);
+                if (winnerActor?.user_id && winnerUser?.user?.email) {
                   let winnerName = "there";
 
                   if (winnerActor.type === "fan") {
@@ -102,16 +106,14 @@ export async function GET(request: NextRequest) {
                       : winnerModel?.username || "there";
                   }
 
-                  if (winnerUser?.user?.email) {
-                    await sendAuctionWonEmail({
-                      to: winnerUser.user.email,
-                      winnerName,
-                      modelName,
-                      auctionTitle: auction.title,
-                      amount: data.amount,
-                      auctionId: auction.id,
-                    });
-                  }
+                  await sendAuctionWonEmail({
+                    to: winnerUser.user.email,
+                    winnerName,
+                    modelName,
+                    auctionTitle: auction.title,
+                    amount: data.amount,
+                    auctionId: auction.id,
+                  });
                 }
               }
             } catch (emailError) {

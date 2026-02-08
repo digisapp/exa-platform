@@ -300,25 +300,19 @@ export async function POST(request: NextRequest) {
 
       await adminClient.from("offer_responses").insert(responses);
 
-      // Get brand name for email
-      const { data: brandData } = await adminClient
-        .from("brands")
-        .select("company_name")
-        .eq("id", offerBrandId)
-        .single();
-      const brandName = brandData?.company_name || "A brand";
-
-      // Get model details for sending emails
+      // Get brand name, model details, and user emails in parallel
       const modelIds = campaignModels.map((item: any) => item.model_id);
-      const { data: models } = await adminClient
-        .from("models")
-        .select("id, first_name, username, user_id")
-        .in("id", modelIds);
+      const [brandResult, modelsResult, usersResult] = await Promise.all([
+        adminClient.from("brands").select("company_name").eq("id", offerBrandId).single(),
+        adminClient.from("models").select("id, first_name, username, user_id").in("id", modelIds),
+        adminClient.auth.admin.listUsers(),
+      ]);
+      const brandName = brandResult.data?.company_name || "A brand";
+      const models = modelsResult.data;
 
       if (models && models.length > 0) {
-        // Get user emails
         const userIds = models.map((m: any) => m.user_id);
-        const { data: users } = await adminClient.auth.admin.listUsers();
+        const users = usersResult.data;
         const userEmails = new Map(
           users?.users?.filter((u: any) => userIds.includes(u.id)).map((u: any) => [u.id, u.email]) || []
         );

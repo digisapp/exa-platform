@@ -119,7 +119,7 @@ export async function GET(request: NextRequest) {
 
     if (modelId) {
       const { data, error } = await adminClient.from("bookings")
-        .select("*")
+        .select("id, booking_number, model_id, client_id, service_type, service_description, event_date, start_time, duration_hours, location_name, location_address, location_city, location_state, is_remote, quoted_rate, total_amount, counter_amount, counter_notes, client_notes, status, model_response_notes, responded_at, confirmed_at, completed_at, cancelled_at, cancelled_by, cancellation_reason, created_at")
         .eq("model_id", modelId)
         .order("created_at", { ascending: false });
 
@@ -130,7 +130,7 @@ export async function GET(request: NextRequest) {
       bookings = data || [];
     } else {
       const { data, error } = await adminClient.from("bookings")
-        .select("*")
+        .select("id, booking_number, model_id, client_id, service_type, service_description, event_date, start_time, duration_hours, location_name, location_address, location_city, location_state, is_remote, quoted_rate, total_amount, counter_amount, counter_notes, client_notes, status, model_response_notes, responded_at, confirmed_at, completed_at, cancelled_at, cancelled_by, cancellation_reason, created_at")
         .eq("client_id", actor.id)
         .order("created_at", { ascending: false });
 
@@ -313,7 +313,7 @@ export async function POST(request: NextRequest) {
 
     // Get model to verify and get rate
     const { data: model } = await supabase.from("models")
-      .select("*")
+      .select("id, user_id, username, first_name, email, photoshoot_hourly_rate, photoshoot_half_day_rate, photoshoot_full_day_rate, promo_hourly_rate, brand_ambassador_daily_rate, private_event_hourly_rate, social_companion_hourly_rate, meet_greet_rate, is_approved")
       .eq("id", modelId)
       .eq("is_approved", true)
       .single();
@@ -350,27 +350,15 @@ export async function POST(request: NextRequest) {
       totalAmount = quotedRate * durationHours;
     }
 
-    // Check client's coin balance
-    let clientBalance = 0;
-    if (actor.type === "fan") {
-      const { data: fan } = await supabase.from("fans")
-        .select("coin_balance")
-        .eq("id", actor.id)
-        .single();
-      clientBalance = fan?.coin_balance || 0;
-    } else if (actor.type === "brand") {
-      const { data: brand } = await supabase.from("brands")
-        .select("coin_balance")
-        .eq("id", actor.id)
-        .single();
-      clientBalance = brand?.coin_balance || 0;
-    }
+    // Check client's coin balance and pending bookings in parallel
+    const balanceTable = actor.type === "fan" ? "fans" : "brands";
+    const [balanceResult, pendingResult] = await Promise.all([
+      supabase.from(balanceTable).select("coin_balance").eq("id", actor.id).single(),
+      supabase.from("bookings").select("total_amount").eq("client_id", actor.id).in("status", ["pending", "counter", "accepted"]),
+    ]);
 
-    // Get sum of pending booking amounts for this client (soft reservation)
-    const { data: pendingBookings } = await supabase.from("bookings")
-      .select("total_amount")
-      .eq("client_id", actor.id)
-      .in("status", ["pending", "counter", "accepted"]);
+    const clientBalance = balanceResult.data?.coin_balance || 0;
+    const pendingBookings = pendingResult.data;
 
     const pendingTotal = (pendingBookings || []).reduce(
       (sum: number, b: any) => sum + (b.total_amount || 0),

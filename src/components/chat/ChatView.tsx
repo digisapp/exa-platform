@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { MessageBubble } from "./MessageBubble";
 import { MessageInput } from "./MessageInput";
@@ -84,6 +85,7 @@ export function ChatView({
   const [isNearBottom, setIsNearBottom] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
   const supabase = createClient();
 
   // Get current user's display name for typing indicator
@@ -116,7 +118,7 @@ export function ChatView({
         toast.success(`${otherName} has been blocked`);
         setShowBlockDialog(false);
         // Redirect to chats list
-        window.location.href = "/chats";
+        router.push("/chats");
       } else {
         const data = await response.json();
         toast.error(data.error || "Failed to block user");

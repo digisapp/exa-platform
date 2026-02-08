@@ -69,7 +69,7 @@ export function CountdownTimer({
       return;
     }
 
-    const timer = setInterval(() => {
+    let timer = setInterval(() => {
       const newTimeLeft = calculateTimeLeft(endsAt);
       setTimeLeft(newTimeLeft);
 
@@ -82,7 +82,34 @@ export function CountdownTimer({
       }
     }, 1000);
 
-    return () => clearInterval(timer);
+    // Pause timer when tab is hidden, resume and recalculate when visible
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        const updated = calculateTimeLeft(endsAt);
+        setTimeLeft(updated);
+        if (updated.total > 0) {
+          timer = setInterval(() => {
+            const newTimeLeft = calculateTimeLeft(endsAt);
+            setTimeLeft(newTimeLeft);
+            if (newTimeLeft.total <= 0) {
+              clearInterval(timer);
+              if (!hasEndedRef.current) {
+                hasEndedRef.current = true;
+                onEndRef.current?.();
+              }
+            }
+          }, 1000);
+        }
+      } else {
+        clearInterval(timer);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, [endsAt]);
 
   if (timeLeft.total <= 0) {

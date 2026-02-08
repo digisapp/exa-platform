@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
     // Verify user is a participant
     const { data: participation } = await supabase
       .from("conversation_participants")
-      .select("*")
+      .select("conversation_id")
       .eq("conversation_id", conversationId)
       .eq("actor_id", sender.id)
       .single();
@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
     // Build query - filter out soft-deleted messages
     let query = supabase
       .from("messages")
-      .select("*")
+      .select("id, conversation_id, sender_id, content, media_url, media_type, media_price, media_viewed_by, is_system, deleted_at, created_at")
       .eq("conversation_id", conversationId)
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
@@ -146,6 +146,8 @@ export async function GET(request: NextRequest) {
       messages: sanitizedMessages,
       reactions: reactionsMap,
       hasMore,
+    }, {
+      headers: { "Cache-Control": "private, no-cache" },
     });
   } catch (error) {
     console.error("List messages error:", error);

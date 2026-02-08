@@ -50,7 +50,7 @@ export async function GET(
 
     // Get booking
     const { data: booking, error } = await supabase.from("bookings")
-      .select("*")
+      .select("id, booking_number, model_id, client_id, service_type, service_description, event_date, start_time, duration_hours, location_name, location_address, location_city, location_state, is_remote, quoted_rate, total_amount, counter_amount, counter_notes, client_notes, status, model_response_notes, responded_at, confirmed_at, completed_at, cancelled_at, cancelled_by, cancellation_reason, created_at")
       .eq("id", id)
       .maybeSingle();
 
@@ -182,7 +182,7 @@ export async function PATCH(
     // Get existing booking
     const { data: booking, error: bookingError } = await adminClient
       .from("bookings")
-      .select("*")
+      .select("id, booking_number, model_id, client_id, service_type, service_description, event_date, start_time, duration_hours, location_name, location_address, location_city, location_state, is_remote, quoted_rate, total_amount, counter_amount, counter_notes, client_notes, status, model_response_notes, responded_at, confirmed_at, completed_at, cancelled_at, cancelled_by, cancellation_reason, created_at")
       .eq("id", id)
       .maybeSingle();
 

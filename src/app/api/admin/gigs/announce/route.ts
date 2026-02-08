@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     // Get gig details
     const { data: gig } = await adminClient
       .from("gigs")
-      .select("*")
+      .select("id, title, type, slug, start_at, location_city, location_state, cover_image_url")
       .eq("id", gigId)
       .single();
 
@@ -53,12 +53,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get all models with profile pictures (approved models only)
+    // Get all models with profile pictures (approved models only, capped for safety)
     const { data: models, error: modelsError } = await adminClient
       .from("models")
       .select("id, email, first_name, username, profile_photo_url")
       .eq("is_approved", true)
-      .not("profile_photo_url", "is", null);
+      .not("profile_photo_url", "is", null)
+      .limit(5000);
 
     if (modelsError) {
       console.error("Error fetching models:", modelsError);

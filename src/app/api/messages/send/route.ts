@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
     // Verify sender is part of conversation
     const { data: participation, error: partError } = await supabase
       .from("conversation_participants")
-      .select("*")
+      .select("conversation_id")
       .eq("conversation_id", conversationId)
       .eq("actor_id", sender.id)
       .maybeSingle();
@@ -213,7 +213,7 @@ export async function POST(request: NextRequest) {
     // Fetch the created message for response
     const { data: message } = await supabase
       .from("messages")
-      .select("*")
+      .select("id, conversation_id, sender_id, content, media_url, media_type, media_price, media_viewed_by, is_system, created_at")
       .eq("id", result.message_id)
       .single();
 

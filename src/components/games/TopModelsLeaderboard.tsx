@@ -57,9 +57,23 @@ export function TopModelsLeaderboard({
 
     fetchLeaderboard();
 
-    // Refresh every 30 seconds
-    const interval = setInterval(fetchLeaderboard, 30000);
-    return () => clearInterval(interval);
+    // Refresh every 30 seconds, but pause when tab is hidden
+    let interval = setInterval(fetchLeaderboard, 30000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchLeaderboard();
+        interval = setInterval(fetchLeaderboard, 30000);
+      } else {
+        clearInterval(interval);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, [period]);
 
   const getRankIcon = (rank: number) => {

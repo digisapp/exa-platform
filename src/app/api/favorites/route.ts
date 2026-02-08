@@ -58,7 +58,9 @@ export async function GET() {
         favorited_at: f.created_at,
       }));
 
-    return NextResponse.json({ favorites: favoriteModels });
+    return NextResponse.json({ favorites: favoriteModels }, {
+      headers: { "Cache-Control": "private, s-maxage=60, stale-while-revalidate=120" },
+    });
   } catch (error) {
     console.error("Get favorites error:", error);
     return NextResponse.json(
@@ -103,13 +105,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Actor not found" }, { status: 404 });
     }
 
-    // Get the model's actor ID
-    const { data: model } = await supabase
-      .from("models")
-      .select("user_id")
-      .eq("id", modelId)
-      .single();
+    // Get the model's actor ID and actor type in parallel
+    const [modelResult, actorTypeResult] = await Promise.all([
+      supabase.from("models").select("user_id").eq("id", modelId).single(),
+      supabase.from("actors").select("type").eq("id", actor.id).single(),
+    ]);
 
+    const model = modelResult.data;
     if (!model || !model.user_id) {
       return NextResponse.json({ error: "Model not found" }, { status: 404 });
     }
@@ -157,12 +159,8 @@ export async function POST(request: NextRequest) {
 
     // Send notification to model if this is a new favorite
     if (isNewFavorite) {
-      // Get follower info for notification
-      const { data: followerActor } = await supabase
-        .from("actors")
-        .select("type")
-        .eq("id", actor.id)
-        .single();
+      // Get follower info for notification (already fetched above)
+      const followerActor = actorTypeResult.data;
 
       let followerName = "Someone";
       if (followerActor?.type === "fan") {

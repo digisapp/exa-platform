@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     // Get call session
     const { data: session } = await supabase
       .from("video_call_sessions")
-      .select("*")
+      .select("id, room_name, status, recipient_id, conversation_id")
       .eq("id", sessionId)
       .eq("recipient_id", actor.id)
       .eq("status", "pending")

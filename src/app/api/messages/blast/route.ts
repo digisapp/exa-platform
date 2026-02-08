@@ -67,11 +67,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get all conversations where this model is a participant
+    // Get all conversations where this model is a participant (capped for safety)
     const { data: participations } = await supabase
       .from("conversation_participants")
       .select("conversation_id")
-      .eq("actor_id", actor.id) as { data: { conversation_id: string }[] | null };
+      .eq("actor_id", actor.id)
+      .limit(5000) as { data: { conversation_id: string }[] | null };
 
     if (!participations || participations.length === 0) {
       return NextResponse.json({
