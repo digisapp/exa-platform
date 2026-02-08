@@ -27,6 +27,7 @@ import {
   Package,
 } from "lucide-react";
 import { toast } from "sonner";
+import { FormFieldError } from "@/components/ui/form-field-error";
 
 interface CartItem {
   id: string;
@@ -65,6 +66,7 @@ export default function CheckoutPage() {
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
   const [postalCode, setPostalCode] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const fetchCart = useCallback(async () => {
     try {
@@ -96,15 +98,28 @@ export default function CheckoutPage() {
     fetchCart();
   }, [fetchCart]);
 
+  const clearFieldError = (field: string) => {
+    setFieldErrors((prev) => { const { [field]: _, ...rest } = prev; return rest; });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation
-    if (!email || !name || !address1 || !city || !state || !postalCode) {
-      toast.error("Please fill in all required fields");
+    // Inline validation
+    const errors: Record<string, string> = {};
+    if (!email) errors.email = "Email is required";
+    if (!name) errors.name = "Full name is required";
+    if (!address1) errors.address1 = "Address is required";
+    if (!city) errors.city = "City is required";
+    if (!state) errors.state = "State is required";
+    if (!postalCode) errors.postalCode = "ZIP code is required";
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
       return;
     }
 
+    setFieldErrors({});
     setSubmitting(true);
     try {
       const sessionId = localStorage.getItem("shop_session_id");
@@ -219,10 +234,13 @@ export default function CheckoutPage() {
                     type="email"
                     placeholder="you@example.com"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => { setEmail(e.target.value); clearFieldError("email"); }}
                     required
                     className={inputClasses}
+                    aria-describedby={fieldErrors.email ? "email-error" : undefined}
+                    aria-invalid={!!fieldErrors.email}
                   />
+                  <FormFieldError id="email-error" message={fieldErrors.email} />
                 </div>
                 <div>
                   <Label htmlFor="phone">Phone (optional)</Label>
@@ -256,10 +274,13 @@ export default function CheckoutPage() {
                     id="name"
                     placeholder="Jane Smith"
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    onChange={(e) => { setName(e.target.value); clearFieldError("name"); }}
                     required
                     className={inputClasses}
+                    aria-describedby={fieldErrors.name ? "name-error" : undefined}
+                    aria-invalid={!!fieldErrors.name}
                   />
+                  <FormFieldError id="name-error" message={fieldErrors.name} />
                 </div>
                 <div>
                   <Label htmlFor="address1">Address *</Label>
@@ -267,10 +288,13 @@ export default function CheckoutPage() {
                     id="address1"
                     placeholder="123 Main St"
                     value={address1}
-                    onChange={(e) => setAddress1(e.target.value)}
+                    onChange={(e) => { setAddress1(e.target.value); clearFieldError("address1"); }}
                     required
                     className={inputClasses}
+                    aria-describedby={fieldErrors.address1 ? "address1-error" : undefined}
+                    aria-invalid={!!fieldErrors.address1}
                   />
+                  <FormFieldError id="address1-error" message={fieldErrors.address1} />
                 </div>
                 <div>
                   <Label htmlFor="address2">Apartment, suite, etc.</Label>
@@ -289,15 +313,22 @@ export default function CheckoutPage() {
                       id="city"
                       placeholder="Miami"
                       value={city}
-                      onChange={(e) => setCity(e.target.value)}
+                      onChange={(e) => { setCity(e.target.value); clearFieldError("city"); }}
                       required
                       className={inputClasses}
+                      aria-describedby={fieldErrors.city ? "city-error" : undefined}
+                      aria-invalid={!!fieldErrors.city}
                     />
+                    <FormFieldError id="city-error" message={fieldErrors.city} />
                   </div>
                   <div>
                     <Label htmlFor="state">State *</Label>
-                    <Select value={state} onValueChange={setState}>
-                      <SelectTrigger className="bg-background/50 border-pink-500/20">
+                    <Select value={state} onValueChange={(v) => { setState(v); clearFieldError("state"); }}>
+                      <SelectTrigger
+                        className="bg-background/50 border-pink-500/20"
+                        aria-describedby={fieldErrors.state ? "state-error" : undefined}
+                        aria-invalid={!!fieldErrors.state}
+                      >
                         <SelectValue placeholder="Select state" />
                       </SelectTrigger>
                       <SelectContent>
@@ -308,6 +339,7 @@ export default function CheckoutPage() {
                         ))}
                       </SelectContent>
                     </Select>
+                    <FormFieldError id="state-error" message={fieldErrors.state} />
                   </div>
                 </div>
                 <div className="w-1/2">
@@ -316,10 +348,13 @@ export default function CheckoutPage() {
                     id="postalCode"
                     placeholder="33139"
                     value={postalCode}
-                    onChange={(e) => setPostalCode(e.target.value)}
+                    onChange={(e) => { setPostalCode(e.target.value); clearFieldError("postalCode"); }}
                     required
                     className={inputClasses}
+                    aria-describedby={fieldErrors.postalCode ? "postalcode-error" : undefined}
+                    aria-invalid={!!fieldErrors.postalCode}
                   />
+                  <FormFieldError id="postalcode-error" message={fieldErrors.postalCode} />
                 </div>
               </div>
             </div>

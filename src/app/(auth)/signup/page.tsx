@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { toast } from "sonner";
 import { Loader2, ArrowLeft, Eye, EyeOff, Instagram, DollarSign, Users, Sparkles } from "lucide-react";
 import { TikTokIcon } from "@/components/ui/tiktok-icon";
+import { FormFieldError } from "@/components/ui/form-field-error";
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
@@ -22,25 +23,31 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const supabase = createClient();
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (password !== confirmPassword) {
-      toast.error("Passwords do not match");
-      return;
-    }
+    const errors: Record<string, string> = {};
 
     if (password.length < 8) {
-      toast.error("Password must be at least 8 characters");
-      return;
+      errors.password = "Password must be at least 8 characters";
+    }
+
+    if (password !== confirmPassword) {
+      errors.confirmPassword = "Passwords do not match";
     }
 
     if (!instagram && !tiktok) {
-      toast.error("Please provide at least one social media handle");
+      errors.social = "Please provide at least one social media handle";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
       return;
     }
+
+    setFieldErrors({});
 
     const name = displayName.trim() || instagram.replace("@", "").trim() || tiktok.replace("@", "").trim() || email.split("@")[0];
 
@@ -178,10 +185,12 @@ export default function SignupPage() {
                   type={showPassword ? "text" : "password"}
                   placeholder="Create a password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => { setPassword(e.target.value); setFieldErrors((prev) => { const { password: _, ...rest } = prev; return rest; }); }}
                   required
                   disabled={loading}
                   className="pr-10"
+                  aria-describedby={fieldErrors.password ? "password-error" : undefined}
+                  aria-invalid={!!fieldErrors.password}
                 />
                 <button
                   type="button"
@@ -192,6 +201,7 @@ export default function SignupPage() {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              <FormFieldError id="password-error" message={fieldErrors.password} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
@@ -201,10 +211,12 @@ export default function SignupPage() {
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="Confirm your password"
                   value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onChange={(e) => { setConfirmPassword(e.target.value); setFieldErrors((prev) => { const { confirmPassword: _, ...rest } = prev; return rest; }); }}
                   required
                   disabled={loading}
                   className="pr-10"
+                  aria-describedby={fieldErrors.confirmPassword ? "confirm-password-error" : undefined}
+                  aria-invalid={!!fieldErrors.confirmPassword}
                 />
                 <button
                   type="button"
@@ -215,6 +227,7 @@ export default function SignupPage() {
                   {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              <FormFieldError id="confirm-password-error" message={fieldErrors.confirmPassword} />
             </div>
 
             <div className="border-t pt-4 mt-4">
@@ -247,9 +260,12 @@ export default function SignupPage() {
                   />
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                Provide at least one for verification
-              </p>
+              <FormFieldError id="social-error" message={fieldErrors.social} />
+              {!fieldErrors.social && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  Provide at least one for verification
+                </p>
+              )}
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4 pt-4">
