@@ -190,8 +190,8 @@ export default async function RatesPage({ searchParams }: Props) {
                             <span className="text-6xl">👤</span>
                           </div>
                         )}
-                        {/* Availability Badge */}
-                        {model.availability_status === "available" && (
+                        {/* Availability Badge - online if active within last 5 minutes */}
+                        {model.last_active_at && (Date.now() - new Date(model.last_active_at).getTime()) < 5 * 60 * 1000 && (
                           <div className="absolute top-3 left-3 px-2 py-1 rounded-full bg-green-500/90 text-white text-xs font-medium">
                             Available
                           </div>

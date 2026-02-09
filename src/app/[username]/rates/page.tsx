@@ -158,7 +158,7 @@ export default async function ModelRatesPage({ params }: Props) {
                   <span className="text-3xl">👤</span>
                 </div>
               )}
-              {model.availability_status === "available" && (
+              {model.last_active_at && (Date.now() - new Date(model.last_active_at).getTime()) < 5 * 60 * 1000 && (
                 <div className="absolute bottom-0 right-0 w-5 h-5 bg-green-500 rounded-full border-2 border-[#1a0033]" />
               )}
             </div>
@@ -196,22 +196,17 @@ export default async function ModelRatesPage({ params }: Props) {
             </div>
           </div>
 
-          {/* Availability Status */}
+          {/* Availability Status - based on real activity */}
           <div className="flex items-center gap-2 p-3 rounded-xl bg-white/5 border border-white/10 mb-6">
-            {model.availability_status === "available" ? (
+            {model.last_active_at && (Date.now() - new Date(model.last_active_at).getTime()) < 5 * 60 * 1000 ? (
               <>
                 <CheckCircle2 className="h-5 w-5 text-green-500" />
                 <span className="text-white font-medium">Available for Booking</span>
               </>
-            ) : model.availability_status === "busy" ? (
-              <>
-                <Clock className="h-5 w-5 text-yellow-500" />
-                <span className="text-white font-medium">Limited Availability</span>
-              </>
             ) : (
               <>
-                <Clock className="h-5 w-5 text-red-500" />
-                <span className="text-white font-medium">Currently Unavailable</span>
+                <Clock className="h-5 w-5 text-muted-foreground" />
+                <span className="text-white/60 font-medium">Offline</span>
               </>
             )}
           </div>
