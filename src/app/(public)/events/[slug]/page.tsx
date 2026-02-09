@@ -309,9 +309,8 @@ export default async function EventPage({ params, searchParams }: Props) {
         )}
 
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-10">
-            {/* Description */}
+          {/* Description - always first */}
+          <div className="lg:col-span-2 order-1">
             {event.description && (
               <div className="glass-card rounded-2xl p-6 md:p-8">
                 <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
@@ -322,87 +321,10 @@ export default async function EventPage({ params, searchParams }: Props) {
                 </p>
               </div>
             )}
-
-            {/* Confirmed Models */}
-            {eventModels.length > 0 && (
-              <div>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-2 rounded-xl bg-gradient-to-br from-pink-500/20 to-violet-500/20">
-                    <Sparkles className="h-6 w-6 text-pink-500" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold">Confirmed Models</h2>
-                    <p className="text-sm text-muted-foreground">{eventModels.length} models walking the runway</p>
-                  </div>
-                </div>
-                {user ? (
-                  <ModelsGrid
-                    models={eventModels}
-                    isLoggedIn={!!user}
-                    favoriteModelIds={favoriteModelIds}
-                    actorType={actorType}
-                  />
-                ) : (
-                  <div className="relative">
-                    {/* Show first row of models unblurred as a teaser */}
-                    <ModelsGrid
-                      models={eventModels.slice(0, 4)}
-                      isLoggedIn={false}
-                      favoriteModelIds={[]}
-                      actorType={null}
-                    />
-                    {/* Blurred remaining models + overlay */}
-                    {eventModels.length > 4 && (
-                      <div className="relative mt-4 overflow-hidden rounded-2xl">
-                        <div className="blur-lg pointer-events-none select-none" aria-hidden="true">
-                          <ModelsGrid
-                            models={eventModels.slice(4, 12)}
-                            isLoggedIn={false}
-                            favoriteModelIds={[]}
-                            actorType={null}
-                          />
-                        </div>
-                        <div className="absolute inset-0 bg-background/60 backdrop-blur-sm flex flex-col items-center justify-center text-center p-8">
-                          <Users className="h-10 w-10 text-pink-500 mb-3" />
-                          <h3 className="text-xl font-bold mb-2">
-                            +{eventModels.length - 4} More Confirmed Models
-                          </h3>
-                          <p className="text-muted-foreground mb-5 max-w-md">
-                            Sign in to view all confirmed models for this event
-                          </p>
-                          <div className="flex gap-3">
-                            <Button asChild variant="outline" className="rounded-xl">
-                              <Link href="/signin">Sign In</Link>
-                            </Button>
-                            <Button asChild className="rounded-xl bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600">
-                              <Link href="/signup">Sign Up Free</Link>
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    {/* Overlay for when there are 4 or fewer models */}
-                    {eventModels.length <= 4 && (
-                      <div className="mt-6 text-center p-6 rounded-2xl bg-gradient-to-r from-pink-500/10 to-violet-500/10 border border-pink-500/20">
-                        <p className="text-muted-foreground mb-4">Sign in to follow models and get updates</p>
-                        <div className="flex gap-3 justify-center">
-                          <Button asChild variant="outline" className="rounded-xl">
-                            <Link href="/signin">Sign In</Link>
-                          </Button>
-                          <Button asChild className="rounded-xl bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600">
-                            <Link href="/signup">Sign Up Free</Link>
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
           </div>
 
-          {/* Sidebar */}
-          <div className="lg:col-span-1">
+          {/* Sidebar - second on mobile, right column on desktop spanning both rows */}
+          <div className="lg:col-span-1 order-2 lg:row-span-2">
             <div className="sticky top-24 space-y-4">
               {/* Ticket Button with Popup */}
               {hasInternalTickets ? (
@@ -490,8 +412,94 @@ export default async function EventPage({ params, searchParams }: Props) {
                   </a>
                 </CardContent>
               </Card>
+              {/* Designers Card */}
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="font-semibold mb-3 text-xs uppercase tracking-wider text-muted-foreground">Designers</h3>
+                  <div className="flex items-center justify-center p-4 rounded-xl bg-muted/50 border border-dashed border-white/10">
+                    <p className="text-sm text-muted-foreground">TBA</p>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
+
+          {/* Confirmed Models - third on mobile (after sidebar), left column on desktop */}
+          {eventModels.length > 0 && (
+            <div className="lg:col-span-2 order-3">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-pink-500/20 to-violet-500/20">
+                  <Sparkles className="h-6 w-6 text-pink-500" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold">Confirmed Models</h2>
+                  <p className="text-sm text-muted-foreground">{eventModels.length} models walking the runway</p>
+                </div>
+              </div>
+              {user ? (
+                <ModelsGrid
+                  models={eventModels}
+                  isLoggedIn={!!user}
+                  favoriteModelIds={favoriteModelIds}
+                  actorType={actorType}
+                />
+              ) : (
+                <div className="relative">
+                  {/* Show first row of models unblurred as a teaser */}
+                  <ModelsGrid
+                    models={eventModels.slice(0, 4)}
+                    isLoggedIn={false}
+                    favoriteModelIds={[]}
+                    actorType={null}
+                  />
+                  {/* Blurred remaining models + overlay */}
+                  {eventModels.length > 4 && (
+                    <div className="relative mt-4 overflow-hidden rounded-2xl">
+                      <div className="blur-lg pointer-events-none select-none" aria-hidden="true">
+                        <ModelsGrid
+                          models={eventModels.slice(4, 12)}
+                          isLoggedIn={false}
+                          favoriteModelIds={[]}
+                          actorType={null}
+                        />
+                      </div>
+                      <div className="absolute inset-0 bg-background/60 backdrop-blur-sm flex flex-col items-center justify-center text-center p-8">
+                        <Users className="h-10 w-10 text-pink-500 mb-3" />
+                        <h3 className="text-xl font-bold mb-2">
+                          +{eventModels.length - 4} More Confirmed Models
+                        </h3>
+                        <p className="text-muted-foreground mb-5 max-w-md">
+                          Sign in to view all confirmed models for this event
+                        </p>
+                        <div className="flex gap-3">
+                          <Button asChild variant="outline" className="rounded-xl">
+                            <Link href="/signin">Sign In</Link>
+                          </Button>
+                          <Button asChild className="rounded-xl bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600">
+                            <Link href="/signup">Sign Up Free</Link>
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {/* Overlay for when there are 4 or fewer models */}
+                  {eventModels.length <= 4 && (
+                    <div className="mt-6 text-center p-6 rounded-2xl bg-gradient-to-r from-pink-500/10 to-violet-500/10 border border-pink-500/20">
+                      <p className="text-muted-foreground mb-4">Sign in to follow models and get updates</p>
+                      <div className="flex gap-3 justify-center">
+                        <Button asChild variant="outline" className="rounded-xl">
+                          <Link href="/signin">Sign In</Link>
+                        </Button>
+                        <Button asChild className="rounded-xl bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600">
+                          <Link href="/signup">Sign Up Free</Link>
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </main>
 
