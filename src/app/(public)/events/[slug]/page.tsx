@@ -468,6 +468,28 @@ export default async function EventPage({ params, searchParams }: Props) {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Sponsor Card */}
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="font-semibold mb-3 text-xs uppercase tracking-wider text-muted-foreground">Sponsored By</h3>
+                  <a
+                    href="https://digis.cc"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-pink-500/10 to-violet-500/10 border border-white/10 hover:border-pink-500/30 transition-all hover:scale-[1.02]"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center flex-shrink-0">
+                      <span className="text-white font-bold text-sm">D</span>
+                    </div>
+                    <div>
+                      <p className="font-semibold">Digis</p>
+                      <p className="text-xs text-muted-foreground">digis.cc</p>
+                    </div>
+                    <ExternalLink className="h-3.5 w-3.5 text-muted-foreground ml-auto" />
+                  </a>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>
