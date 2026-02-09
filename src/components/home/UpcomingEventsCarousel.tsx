@@ -3,16 +3,7 @@
 import { useState, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { ChevronLeft, ChevronRight, Calendar, Users, Star, Plane, Camera, PartyPopper, Sparkles } from "lucide-react";
-import { ModelSignupDialog } from "@/components/auth/ModelSignupDialog";
 import { format } from "date-fns";
 
 interface Event {
@@ -59,7 +50,6 @@ export function UpcomingEventsCarousel({ events }: UpcomingEventsCarouselProps) 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
   const handleScroll = () => {
     if (!scrollContainerRef.current) return;
@@ -123,10 +113,10 @@ export function UpcomingEventsCarousel({ events }: UpcomingEventsCarouselProps) 
               : null;
 
             return (
-              <div
+              <Link
                 key={event.id}
-                onClick={() => setSelectedEvent(event)}
-                className="flex-shrink-0 w-[280px] cursor-pointer group/card"
+                href={`/events/${event.slug}`}
+                className="flex-shrink-0 w-[280px] group/card"
               >
                 <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-pink-500/10 to-violet-500/10 border border-white/10 hover:border-pink-500/50 transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-pink-500/20">
                   {/* Type Badge */}
@@ -175,71 +165,11 @@ export function UpcomingEventsCarousel({ events }: UpcomingEventsCarouselProps) 
                     </div>
                   </div>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>
       </div>
-
-      {/* Signup Modal */}
-      <Dialog open={!!selectedEvent} onOpenChange={() => setSelectedEvent(null)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-center">
-              Join {selectedEvent?.title}
-            </DialogTitle>
-            <DialogDescription className="text-center">
-              Sign up as a model to apply for this gig and more exclusive experiences.
-            </DialogDescription>
-          </DialogHeader>
-
-          {selectedEvent && (
-            <div className="flex flex-col items-center py-4">
-              <div className="w-full aspect-video rounded-xl overflow-hidden mb-4 relative">
-                {selectedEvent.cover_image_url ? (
-                  <Image
-                    src={selectedEvent.cover_image_url}
-                    alt={selectedEvent.title}
-                    fill
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className={`w-full h-full bg-gradient-to-br ${typeGradients[selectedEvent.type] || "from-pink-500 to-violet-500"} opacity-50 flex items-center justify-center`}>
-                    {(() => {
-                      const Icon = typeIcons[selectedEvent.type] || Sparkles;
-                      return <Icon className="h-12 w-12 text-white/70" />;
-                    })()}
-                  </div>
-                )}
-              </div>
-
-              <h3 className="text-lg font-semibold mb-2 text-center">{selectedEvent.title}</h3>
-
-              <div className="flex flex-wrap justify-center gap-4 text-sm text-muted-foreground mb-4">
-                {selectedEvent.start_at && (
-                  <span className="flex items-center gap-1">
-                    <Calendar className="h-4 w-4" />
-                    {format(new Date(selectedEvent.start_at), "MMM d, yyyy")}
-                  </span>
-                )}
-              </div>
-
-              <ModelSignupDialog>
-                <Button className="exa-gradient-button w-full">
-                  Sign Up to Apply
-                </Button>
-              </ModelSignupDialog>
-
-              <p className="text-xs text-muted-foreground mt-4 text-center">
-                Already have an account?{" "}
-                <Link href="/signin" className="text-pink-500 hover:underline">
-                  Sign in
-                </Link>
-              </p>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </>
   );
 }

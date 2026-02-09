@@ -335,12 +335,68 @@ export default async function EventPage({ params, searchParams }: Props) {
                     <p className="text-sm text-muted-foreground">{eventModels.length} models walking the runway</p>
                   </div>
                 </div>
-                <ModelsGrid
-                  models={eventModels}
-                  isLoggedIn={!!user}
-                  favoriteModelIds={favoriteModelIds}
-                  actorType={actorType}
-                />
+                {user ? (
+                  <ModelsGrid
+                    models={eventModels}
+                    isLoggedIn={!!user}
+                    favoriteModelIds={favoriteModelIds}
+                    actorType={actorType}
+                  />
+                ) : (
+                  <div className="relative">
+                    {/* Show first row of models unblurred as a teaser */}
+                    <ModelsGrid
+                      models={eventModels.slice(0, 4)}
+                      isLoggedIn={false}
+                      favoriteModelIds={[]}
+                      actorType={null}
+                    />
+                    {/* Blurred remaining models + overlay */}
+                    {eventModels.length > 4 && (
+                      <div className="relative mt-4 overflow-hidden rounded-2xl">
+                        <div className="blur-lg pointer-events-none select-none" aria-hidden="true">
+                          <ModelsGrid
+                            models={eventModels.slice(4, 12)}
+                            isLoggedIn={false}
+                            favoriteModelIds={[]}
+                            actorType={null}
+                          />
+                        </div>
+                        <div className="absolute inset-0 bg-background/60 backdrop-blur-sm flex flex-col items-center justify-center text-center p-8">
+                          <Users className="h-10 w-10 text-pink-500 mb-3" />
+                          <h3 className="text-xl font-bold mb-2">
+                            +{eventModels.length - 4} More Confirmed Models
+                          </h3>
+                          <p className="text-muted-foreground mb-5 max-w-md">
+                            Sign in to view all confirmed models for this event
+                          </p>
+                          <div className="flex gap-3">
+                            <Button asChild variant="outline" className="rounded-xl">
+                              <Link href="/signin">Sign In</Link>
+                            </Button>
+                            <Button asChild className="rounded-xl bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600">
+                              <Link href="/signup">Sign Up Free</Link>
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {/* Overlay for when there are 4 or fewer models */}
+                    {eventModels.length <= 4 && (
+                      <div className="mt-6 text-center p-6 rounded-2xl bg-gradient-to-r from-pink-500/10 to-violet-500/10 border border-pink-500/20">
+                        <p className="text-muted-foreground mb-4">Sign in to follow models and get updates</p>
+                        <div className="flex gap-3 justify-center">
+                          <Button asChild variant="outline" className="rounded-xl">
+                            <Link href="/signin">Sign In</Link>
+                          </Button>
+                          <Button asChild className="rounded-xl bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600">
+                            <Link href="/signup">Sign Up Free</Link>
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
