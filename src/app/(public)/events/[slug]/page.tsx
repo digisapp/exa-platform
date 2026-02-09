@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import { escapeIlike } from "@/lib/utils";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Navbar } from "@/components/layout/navbar";
@@ -100,37 +99,33 @@ export default async function EventPage({ params, searchParams }: Props) {
 
   const hasInternalTickets = event.tickets_enabled && ticketTiers.length > 0;
 
-  // Get confirmed models for this event
-  // First, get gigs linked to this event (by event_id or by title match)
-  const { data: eventGigs } = await supabase
-    .from("gigs")
+  // Get confirmed models via event badge
+  // Each event has a linked badge - models with that badge are confirmed
+  const { data: eventBadge } = await supabase
+    .from("badges")
     .select("id")
-    .or(`event_id.eq.${event.id},title.ilike.%${escapeIlike(event.short_name || event.name)}%`) as { data: { id: string }[] | null };
+    .eq("event_id", event.id)
+    .eq("badge_type", "event")
+    .eq("is_active", true)
+    .single() as { data: { id: string } | null };
 
-  const gigIds = eventGigs?.map(g => g.id) || [];
-
-  // Get accepted applications to find confirmed model IDs
-  const { data: confirmedApps } = gigIds.length > 0
-    ? await supabase
-        .from("gig_applications")
-        .select("model_id")
-        .eq("status", "accepted")
-        .in("gig_id", gigIds) as { data: { model_id: string }[] | null }
-    : { data: null };
-
-  const confirmedModelIds = confirmedApps
-    ? [...new Set(confirmedApps.map((a) => a.model_id))]
-    : [];
-
-  // Fetch full model data for the ModelCard component
   let eventModels: any[] = [];
-  if (confirmedModelIds.length > 0) {
-    const { data: fullModels } = await supabase
-      .from("models")
-      .select("*")
-      .in("id", confirmedModelIds)
-      .not("profile_photo_url", "is", null);
-    eventModels = fullModels || [];
+  if (eventBadge) {
+    const { data: badgeHolders } = await supabase
+      .from("model_badges")
+      .select("model_id")
+      .eq("badge_id", eventBadge.id) as { data: { model_id: string }[] | null };
+
+    const modelIds = badgeHolders?.map((b) => b.model_id) || [];
+
+    if (modelIds.length > 0) {
+      const { data: fullModels } = await supabase
+        .from("models")
+        .select("*")
+        .in("id", modelIds)
+        .not("profile_photo_url", "is", null);
+      eventModels = fullModels || [];
+    }
   }
 
   // If there's a referral code (ref), track the affiliate click
