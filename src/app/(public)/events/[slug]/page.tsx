@@ -2,9 +2,9 @@ import { createClient } from "@/lib/supabase/server";
 import { escapeIlike } from "@/lib/utils";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { Navbar } from "@/components/layout/navbar";
 import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
+import { ModelsGrid } from "@/components/models/models-grid";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,7 +15,6 @@ import {
   Ticket,
   ArrowLeft,
   ExternalLink,
-  Instagram,
   Sparkles,
 } from "lucide-react";
 import { format } from "date-fns";
@@ -110,33 +109,29 @@ export default async function EventPage({ params, searchParams }: Props) {
 
   const gigIds = eventGigs?.map(g => g.id) || [];
 
-  // Then get accepted applications for those gigs
-  const { data: confirmedModels } = gigIds.length > 0
+  // Get accepted applications to find confirmed model IDs
+  const { data: confirmedApps } = gigIds.length > 0
     ? await supabase
         .from("gig_applications")
-        .select(`
-          model_id,
-          reviewed_at,
-          models!inner (
-            id,
-            username,
-            first_name,
-            last_name,
-            profile_photo_url,
-            city,
-            state,
-            affiliate_code,
-            instagram_name,
-            instagram_followers,
-            height,
-            focus_tags,
-            is_verified,
-            is_featured
-          )
-        `)
+        .select("model_id")
         .eq("status", "accepted")
-        .in("gig_id", gigIds) as { data: any[] | null }
+        .in("gig_id", gigIds) as { data: { model_id: string }[] | null }
     : { data: null };
+
+  const confirmedModelIds = confirmedApps
+    ? [...new Set(confirmedApps.map((a) => a.model_id))]
+    : [];
+
+  // Fetch full model data for the ModelCard component
+  let eventModels: any[] = [];
+  if (confirmedModelIds.length > 0) {
+    const { data: fullModels } = await supabase
+      .from("models")
+      .select("*")
+      .in("id", confirmedModelIds)
+      .not("profile_photo_url", "is", null);
+    eventModels = fullModels || [];
+  }
 
   // If there's a referral code (ref), track the affiliate click
   let referringModel = null;
@@ -157,6 +152,7 @@ export default async function EventPage({ params, searchParams }: Props) {
   let actorType: "model" | "fan" | "brand" | "admin" | null = null;
   let profileData: any = null;
   let coinBalance = 0;
+  let favoriteModelIds: string[] = [];
 
   if (user) {
     const { data: actor } = await supabase
@@ -184,6 +180,29 @@ export default async function EventPage({ params, searchParams }: Props) {
       profileData = data;
       coinBalance = data?.coin_balance ?? 0;
     }
+
+    // Get favorites for logged-in user
+    if (actor) {
+      const { data: favorites } = await (supabase
+        .from("follows") as any)
+        .select("following_id, actor:actors!follows_following_id_fkey(user_id)")
+        .eq("follower_id", actor.id) as { data: { following_id: string; actor: { user_id: string } | null }[] | null };
+
+      if (favorites && favorites.length > 0) {
+        const userIds = favorites
+          .map((f) => f.actor?.user_id)
+          .filter(Boolean) as string[];
+
+        if (userIds.length > 0) {
+          const { data: favModels } = await supabase
+            .from("models")
+            .select("id")
+            .in("user_id", userIds);
+
+          favoriteModelIds = favModels?.map((m: any) => m.id) || [];
+        }
+      }
+    }
   }
 
   const displayName = actorType === "fan"
@@ -207,11 +226,6 @@ export default async function EventPage({ params, searchParams }: Props) {
       ? `${event.ticket_url}${event.ticket_url.includes("?") ? "&" : "?"}ref=${ref}`
       : event.ticket_url
     : null;
-
-  // Unique models (dedupe by id)
-  const uniqueModels = confirmedModels
-    ? Array.from(new Map(confirmedModels.map((m: any) => [m.models.id, m.models])).values())
-    : [];
 
   return (
     <CoinBalanceProvider initialBalance={coinBalance}>
@@ -273,10 +287,10 @@ export default async function EventPage({ params, searchParams }: Props) {
                 <Calendar className="h-5 w-5 text-cyan-400" />
                 <span className="font-medium">{dateDisplay}</span>
               </div>
-              {uniqueModels.length > 0 && (
+              {eventModels.length > 0 && (
                 <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
                   <Users className="h-5 w-5 text-violet-400" />
-                  <span className="font-medium">{uniqueModels.length} Confirmed Models</span>
+                  <span className="font-medium">{eventModels.length} Confirmed Models</span>
                 </div>
               )}
             </div>
@@ -315,7 +329,7 @@ export default async function EventPage({ params, searchParams }: Props) {
             )}
 
             {/* Confirmed Models */}
-            {uniqueModels.length > 0 && (
+            {eventModels.length > 0 && (
               <div>
                 <div className="flex items-center gap-3 mb-6">
                   <div className="p-2 rounded-xl bg-gradient-to-br from-pink-500/20 to-violet-500/20">
@@ -323,108 +337,15 @@ export default async function EventPage({ params, searchParams }: Props) {
                   </div>
                   <div>
                     <h2 className="text-2xl font-bold">Confirmed Models</h2>
-                    <p className="text-sm text-muted-foreground">{uniqueModels.length} models walking the runway</p>
+                    <p className="text-sm text-muted-foreground">{eventModels.length} models walking the runway</p>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                  {uniqueModels.map((model: any) => {
-                    const displayName = model.first_name || model.username;
-                    const focusLabels: Record<string, string> = {
-                      fashion: "Fashion", commercial: "Commercial", fitness: "Fitness", athlete: "Athlete",
-                      swimwear: "Swimwear", beauty: "Beauty", editorial: "Editorial",
-                      ecommerce: "E-Comm", promo: "Promo", luxury: "Luxury", lifestyle: "Lifestyle"
-                    };
-
-                    return (
-                      <Link
-                        key={model.id}
-                        href={`/${model.username}`}
-                        className="group"
-                      >
-                        <div className="glass-card rounded-2xl overflow-hidden hover:scale-[1.02] transition-all h-full">
-                          {/* Image with Hover Overlay */}
-                          <div className="aspect-[3/4] relative bg-gradient-to-br from-[#FF69B4]/20 to-[#9400D3]/20 overflow-hidden">
-                            {model.profile_photo_url ? (
-                              <Image
-                                src={model.profile_photo_url}
-                                alt={displayName}
-                                fill
-                                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                                className="object-cover group-hover:scale-110 transition-transform duration-300"
-                              />
-                            ) : (
-                              <div className="absolute inset-0 flex items-center justify-center">
-                                <span className="text-6xl">👤</span>
-                              </div>
-                            )}
-
-                            {/* Level Badge */}
-                            {(model.is_verified || model.is_featured) && (
-                              <div className="absolute top-3 right-3">
-                                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                                  model.is_verified ? "level-verified" : "level-pro"
-                                }`}>
-                                  {model.is_verified ? "✓ Verified" : "⭐ Featured"}
-                                </span>
-                              </div>
-                            )}
-
-                            {/* Bottom Name Bar - Always Visible */}
-                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-3 pt-8">
-                              <h3 className="font-semibold text-white truncate">{displayName}</h3>
-                              <p className="text-sm text-[#00BFFF]">@{model.username}</p>
-                            </div>
-
-                            {/* Hover Overlay with Details */}
-                            <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-4">
-                              <div className="space-y-2">
-                                <h3 className="font-semibold text-white text-lg">{displayName}</h3>
-                                <p className="text-sm text-[#00BFFF]">@{model.username}</p>
-
-                                {(model.city || model.state) && (
-                                  <div className="flex items-center gap-1 text-sm text-white/80">
-                                    <MapPin className="h-3.5 w-3.5 text-[#FF69B4]" />
-                                    {model.city && model.state ? `${model.city}, ${model.state}` : model.city || model.state}
-                                  </div>
-                                )}
-
-                                {model.instagram_name && (
-                                  <div className="flex items-center gap-1 text-sm text-white/80">
-                                    <Instagram className="h-3.5 w-3.5" />
-                                    @{model.instagram_name}
-                                    {model.instagram_followers && (
-                                      <span className="text-white/60 ml-1">
-                                        ({(model.instagram_followers / 1000).toFixed(1)}K)
-                                      </span>
-                                    )}
-                                  </div>
-                                )}
-
-                                {model.height && (
-                                  <p className="text-sm text-white/80">{model.height}</p>
-                                )}
-
-                                {/* Focus Tags */}
-                                {model.focus_tags && model.focus_tags.length > 0 && (
-                                  <div className="flex flex-wrap gap-1.5 pt-1">
-                                    {model.focus_tags.slice(0, 3).map((tag: string) => (
-                                      <span
-                                        key={tag}
-                                        className="px-2 py-0.5 text-xs font-medium rounded-full bg-gradient-to-r from-pink-500/30 to-violet-500/30 text-white border border-white/20"
-                                      >
-                                        {focusLabels[tag] || tag}
-                                      </span>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
+                <ModelsGrid
+                  models={eventModels}
+                  isLoggedIn={!!user}
+                  favoriteModelIds={favoriteModelIds}
+                  actorType={actorType}
+                />
               </div>
             )}
           </div>
