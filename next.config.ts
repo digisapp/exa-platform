@@ -74,7 +74,7 @@ const nextConfig: NextConfig = {
               "img-src 'self' data: blob: *.supabase.co *.cdninstagram.com www.google.com",
               "font-src 'self' fonts.gstatic.com data:",
               "connect-src 'self' *.supabase.co wss://*.supabase.co *.livekit.cloud wss://*.livekit.cloud api.stripe.com *.upstash.io",
-              "frame-src 'self' js.stripe.com",
+              "frame-src 'self' js.stripe.com www.youtube.com",
               "media-src 'self' blob: *.supabase.co",
               "object-src 'none'",
               "base-uri 'self'",
