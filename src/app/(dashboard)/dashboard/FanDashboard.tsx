@@ -48,7 +48,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
         instagram_name, show_social_media,
         height, show_measurements,
         focus_tags, reliability_score,
-        is_verified, is_featured, availability_status
+        is_verified, is_featured, last_active_at
       `)
       .eq("is_approved", true)
       .not("profile_photo_url", "is", null)
@@ -74,7 +74,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
         instagram_name, show_social_media,
         height, show_measurements,
         focus_tags, reliability_score,
-        is_verified, is_featured, availability_status
+        is_verified, is_featured, last_active_at
       `)
       .in("user_id", followedUserIds)
       .eq("is_approved", true);

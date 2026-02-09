@@ -577,7 +577,7 @@ export default function ProfilePage() {
         show_measurements: model.show_measurements,
         show_location: model.show_location,
         show_social_media: model.show_social_media,
-        availability_status: model.availability_status,
+
         video_call_rate: model.video_call_rate || 5,
         voice_call_rate: model.voice_call_rate || 5,
         message_rate: Math.max(10, model.message_rate || 10),
@@ -2134,28 +2134,6 @@ export default function ProfilePage() {
                   onCheckedChange={(v) => setModel({ ...model, allow_tips: v } as any)}
                 />
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Availability</CardTitle>
-              <CardDescription>Let brands know if you&apos;re available for bookings</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Select
-                value={model.availability_status || "available"}
-                onValueChange={(v: string) => setModel({ ...model, availability_status: v })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="available">Available</SelectItem>
-                  <SelectItem value="busy">Busy</SelectItem>
-                  <SelectItem value="not_available">Not Available</SelectItem>
-                </SelectContent>
-              </Select>
             </CardContent>
           </Card>
 
