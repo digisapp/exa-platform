@@ -190,7 +190,7 @@ export default function ManageBidsPage() {
                 <Gavel className="h-6 w-6 text-green-500" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Active Auctions</p>
+                <p className="text-sm text-muted-foreground">Active Bids</p>
                 <p className="text-2xl font-bold">{stats.activeCount}</p>
               </div>
             </div>
@@ -247,7 +247,7 @@ export default function ManageBidsPage() {
         <TabsContent value="active">
           <AuctionList
             auctions={activeAuctions}
-            emptyMessage="No active auctions. Create one to get started!"
+            emptyMessage="No active bids. Create one to get started!"
             onPublish={handlePublish}
             onDelete={handleDelete}
           />
@@ -256,7 +256,7 @@ export default function ManageBidsPage() {
         <TabsContent value="drafts">
           <AuctionList
             auctions={draftAuctions}
-            emptyMessage="No draft auctions."
+            emptyMessage="No draft listings."
             onPublish={handlePublish}
             onDelete={handleDelete}
             showPublish
@@ -266,7 +266,7 @@ export default function ManageBidsPage() {
         <TabsContent value="ended">
           <AuctionList
             auctions={endedAuctions}
-            emptyMessage="No ended auctions yet."
+            emptyMessage="No ended bids yet."
             onPublish={handlePublish}
             onDelete={handleDelete}
           />

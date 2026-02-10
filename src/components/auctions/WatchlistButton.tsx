@@ -56,7 +56,7 @@ export function WatchlistButton({
         setIsWatching(true);
         onWatchChange?.(true);
         toast.success("Added to watchlist", {
-          description: "You'll be notified about this auction",
+          description: "You'll be notified about this bid",
         });
       }
     } catch (error: any) {

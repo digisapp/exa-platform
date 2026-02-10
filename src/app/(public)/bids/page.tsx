@@ -10,7 +10,7 @@ import { Gavel, Clock, Sparkles, Zap, Eye } from "lucide-react";
 import type { AuctionWithModel } from "@/types/auctions";
 
 export const metadata: Metadata = {
-  title: "Bids - Live Auctions",
+  title: "EXA Bids - Live Listings",
   description: "Bid on exclusive experiences and content from your favorite models",
   robots: { index: true, follow: true },
 };
@@ -183,7 +183,7 @@ export default async function BidsPage() {
               <AuctionGrid
                 auctions={formattedAuctions}
                 watchedIds={watchedAuctionIds}
-                emptyMessage="No active auctions right now. Check back soon!"
+                emptyMessage="No active bids right now. Check back soon!"
               />
             </TabsContent>
 
@@ -191,7 +191,7 @@ export default async function BidsPage() {
               <AuctionGrid
                 auctions={endingSoon}
                 watchedIds={watchedAuctionIds}
-                emptyMessage="No auctions ending soon."
+                emptyMessage="No bids ending soon."
               />
             </TabsContent>
 
@@ -199,7 +199,7 @@ export default async function BidsPage() {
               <AuctionGrid
                 auctions={newAuctions}
                 watchedIds={watchedAuctionIds}
-                emptyMessage="No new auctions in the last 24 hours."
+                emptyMessage="No new bids in the last 24 hours."
               />
             </TabsContent>
 
@@ -207,7 +207,7 @@ export default async function BidsPage() {
               <AuctionGrid
                 auctions={withBuyNow}
                 watchedIds={watchedAuctionIds}
-                emptyMessage="No auctions with Buy Now option available."
+                emptyMessage="No listings with Buy Now option available."
               />
             </TabsContent>
 
@@ -216,7 +216,7 @@ export default async function BidsPage() {
                 <AuctionGrid
                   auctions={watchedAuctions}
                   watchedIds={watchedAuctionIds}
-                  emptyMessage="You're not watching any auctions yet."
+                  emptyMessage="You're not watching any bids yet."
                 />
               </TabsContent>
             )}

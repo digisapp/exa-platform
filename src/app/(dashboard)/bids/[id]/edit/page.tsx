@@ -397,7 +397,7 @@ export default function EditBidPage({ params }: { params: Promise<{ id: string }
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Describe what makes this auction special..."
+                placeholder="Describe what makes this listing special..."
                 className="mt-1.5 min-h-[100px] bg-background/50 border-violet-500/20 focus:border-violet-500/50"
               />
             </div>

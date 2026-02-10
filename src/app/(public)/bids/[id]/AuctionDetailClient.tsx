@@ -66,7 +66,7 @@ export function AuctionDetailClient({
         className="mb-6 -ml-2"
       >
         <ArrowLeft className="h-4 w-4 mr-2" />
-        Back to Auctions
+        Back to Bids
       </Button>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -124,7 +124,7 @@ export function AuctionDetailClient({
             <div className="glass-card p-6 rounded-xl">
               <h2 className="font-semibold mb-3 flex items-center gap-2">
                 <Package className="h-5 w-5 text-pink-400" />
-                About This Auction
+                About This Listing
               </h2>
               <p className="text-zinc-300 whitespace-pre-wrap">{auction.description}</p>
             </div>
@@ -253,7 +253,7 @@ export function AuctionDetailClient({
             {/* Anti-sniping Notice */}
             {!hasEnded && auction.anti_snipe_minutes > 0 && (
               <p className="text-xs text-zinc-500 text-center">
-                Bids in the final {auction.anti_snipe_minutes} minutes will extend the auction
+                Bids in the final {auction.anti_snipe_minutes} minutes will extend the timer
               </p>
             )}
           </div>

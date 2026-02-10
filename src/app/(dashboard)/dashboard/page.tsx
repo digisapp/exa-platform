@@ -552,7 +552,7 @@ export default async function DashboardPage() {
             <Button size="sm" asChild className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white">
               <Link href="/bids/new">
                 <Plus className="h-4 w-4 mr-1" />
-                Create Auction
+                Create Listing
               </Link>
             </Button>
           </div>
@@ -600,7 +600,7 @@ export default async function DashboardPage() {
                 <Gavel className="h-8 w-8 text-violet-500" />
               </div>
               <p className="text-muted-foreground">You have no EXA Bids yet</p>
-              <p className="text-sm text-muted-foreground mt-1">Let fans and brands compete in real-time auctions for your exclusive content, experiences, and services</p>
+              <p className="text-sm text-muted-foreground mt-1">Let fans and brands compete in real-time bids for your exclusive content, experiences, and services</p>
               <Button size="sm" asChild className="mt-4 bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white">
                 <Link href="/bids/new">
                   <Plus className="h-4 w-4 mr-1" />

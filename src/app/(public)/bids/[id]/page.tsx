@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     .single();
 
   if (!auction) {
-    return { title: "Auction Not Found" };
+    return { title: "Bid Not Found" };
   }
 
   return {

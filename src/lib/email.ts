@@ -3940,7 +3940,7 @@ export async function sendAuctionSoldEmail({
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
       to: [to],
-      subject: `Your auction sold for ${amount} coins!`,
+      subject: `Your listing sold for ${amount} coins!`,
       html: `
 <!DOCTYPE html>
 <html>
@@ -3959,7 +3959,7 @@ export async function sendAuctionSoldEmail({
             <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 30px; text-align: center;">
               <p style="margin: 0; font-size: 48px;">&#127881;</p>
               <h1 style="margin: 10px 0 0; color: white; font-size: 24px; font-weight: bold;">
-                Your Auction Sold!
+                Your Listing Sold!
               </h1>
             </td>
           </tr>
@@ -3971,7 +3971,7 @@ export async function sendAuctionSoldEmail({
                 Hey ${escapeHtml(modelName)}!
               </p>
               <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
-                Great news! Your auction <strong style="color: #ffffff;">"${escapeHtml(auctionTitle)}"</strong> has been sold.
+                Great news! Your listing <strong style="color: #ffffff;">"${escapeHtml(auctionTitle)}"</strong> has been sold.
               </p>
 
               <!-- Amount -->
@@ -3994,7 +3994,7 @@ export async function sendAuctionSoldEmail({
                 <tr>
                   <td align="center" style="padding-bottom: 12px;">
                     <a href="${auctionUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
-                      View Auction
+                      View Listing
                     </a>
                   </td>
                 </tr>
@@ -4095,7 +4095,7 @@ export async function sendAuctionWonEmail({
               </p>
 
               <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 14px; line-height: 1.6;">
-                The model will be in touch to deliver your experience. You can also message them directly from the auction page.
+                The model will be in touch to deliver your experience. You can also message them directly from the listing page.
               </p>
 
               <!-- CTA -->
@@ -4103,7 +4103,7 @@ export async function sendAuctionWonEmail({
                 <tr>
                   <td align="center">
                     <a href="${auctionUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
-                      View Auction
+                      View Listing
                     </a>
                   </td>
                 </tr>

@@ -113,7 +113,7 @@ export function BidForm({
         coinBalance.setBalance(data.new_balance);
       }
 
-      toast.success("Congratulations! You won the auction!");
+      toast.success("Congratulations! You won!");
 
       onBuyNow?.(data);
     } catch (error: any) {
@@ -126,7 +126,7 @@ export function BidForm({
   if (hasEnded) {
     return (
       <div className="glass-card p-6 rounded-xl text-center">
-        <p className="text-zinc-400">This auction has ended</p>
+        <p className="text-zinc-400">This bid has ended</p>
         {auction.winner_id && (
           <p className="text-sm text-zinc-500 mt-2">
             Final price: {formatCoins(auction.current_bid || 0)} coins
@@ -139,7 +139,7 @@ export function BidForm({
   if (isOwner) {
     return (
       <div className="glass-card p-6 rounded-xl text-center">
-        <p className="text-zinc-400">This is your auction</p>
+        <p className="text-zinc-400">This is your listing</p>
       </div>
     );
   }

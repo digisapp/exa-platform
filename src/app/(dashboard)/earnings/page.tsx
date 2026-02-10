@@ -167,7 +167,7 @@ export default async function EarningsPage() {
             </div>
             <div>
               <h1 className="text-2xl md:text-3xl font-bold">Earnings</h1>
-              <p className="text-sm text-muted-foreground mt-0.5">Track your coin earnings from tips, messages, content, calls, and auctions</p>
+              <p className="text-sm text-muted-foreground mt-0.5">Track your coin earnings from tips, messages, content, calls, and bids</p>
             </div>
           </div>
         </div>

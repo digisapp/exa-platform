@@ -306,7 +306,7 @@ export default async function HomePage() {
                     </div>
                   ) : (
                     <div className="flex items-center justify-center py-8 mb-5 rounded-xl bg-white/5">
-                      <p className="text-sm text-white/40">No active auctions right now</p>
+                      <p className="text-sm text-white/40">No active bids right now</p>
                     </div>
                   )}
 
@@ -314,7 +314,7 @@ export default async function HomePage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 text-white/50">
                       <Clock className="h-4 w-4 text-violet-400" />
-                      <span className="text-xs">Live Auctions</span>
+                      <span className="text-xs">Live Bids</span>
                     </div>
                     <div className="px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 text-white text-sm font-semibold group-hover:scale-105 transition-transform flex items-center gap-2">
                       Place Bids
