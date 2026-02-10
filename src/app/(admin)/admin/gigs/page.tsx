@@ -45,6 +45,7 @@ import {
   DollarSign,
   Search,
   Clock,
+  Mail,
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -163,6 +164,11 @@ export default function AdminGigsPage() {
   const [syncingBadges, setSyncingBadges] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [previewExpandedImage, setPreviewExpandedImage] = useState<string | null>(null);
+
+  // Mass email state
+  const [showMassEmailDialog, setShowMassEmailDialog] = useState(false);
+  const [massEmailFilter, setMassEmailFilter] = useState<"all" | "pending" | "approved">("pending");
+  const [massEmailSending, setMassEmailSending] = useState(false);
 
   // Workshop state
   const [workshops, setWorkshops] = useState<Workshop[]>([]);
@@ -343,6 +349,42 @@ export default function AdminGigsPage() {
       toast.error("Failed to sync badges");
     } finally {
       setSyncingBadges(false);
+    }
+  }
+
+  async function handleSendMassEmail() {
+    if (!selectedGig) return;
+    setMassEmailSending(true);
+    try {
+      const response = await fetch("/api/admin/gigs/mass-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          gigId: selectedGig,
+          recipientFilter: massEmailFilter,
+          template: "schedule-call",
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data.error || "Failed to send emails");
+        return;
+      }
+
+      const parts = [];
+      if (data.emailsSent > 0) parts.push(`${data.emailsSent} sent`);
+      if (data.emailsSkipped > 0) parts.push(`${data.emailsSkipped} skipped`);
+      if (data.emailsFailed > 0) parts.push(`${data.emailsFailed} failed`);
+
+      toast.success(`Mass email complete: ${parts.join(", ")}`);
+      setShowMassEmailDialog(false);
+    } catch (error) {
+      console.error("Mass email error:", error);
+      toast.error("Failed to send mass email");
+    } finally {
+      setMassEmailSending(false);
     }
   }
 
@@ -1622,23 +1664,38 @@ export default function AdminGigsPage() {
                 <Users className="h-5 w-5 text-blue-500" />
                 Applications {selectedGig && `(${applications.length})`}
               </span>
-              {/* Badge Sync Button - only show for event-linked gigs */}
-              {selectedGig && gigs.find(g => g.id === selectedGig)?.event_id && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={syncBadges}
-                  disabled={syncingBadges}
-                  className="text-xs"
-                >
-                  {syncingBadges ? (
-                    <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                  ) : (
-                    <RefreshCw className="h-3 w-3 mr-1" />
-                  )}
-                  Sync Badges
-                </Button>
-              )}
+              <div className="flex items-center gap-1">
+                {/* Mass Email Button */}
+                {selectedGig && applications.length > 0 && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowMassEmailDialog(true)}
+                    className="text-xs"
+                    title="Send mass email to applicants"
+                  >
+                    <Mail className="h-3 w-3 mr-1" />
+                    Email
+                  </Button>
+                )}
+                {/* Badge Sync Button - only show for event-linked gigs */}
+                {selectedGig && gigs.find(g => g.id === selectedGig)?.event_id && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={syncBadges}
+                    disabled={syncingBadges}
+                    className="text-xs"
+                  >
+                    {syncingBadges ? (
+                      <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                    ) : (
+                      <RefreshCw className="h-3 w-3 mr-1" />
+                    )}
+                    Sync Badges
+                  </Button>
+                )}
+              </div>
             </CardTitle>
             <CardDescription>
               {selectedGig
@@ -2646,6 +2703,105 @@ export default function AdminGigsPage() {
                 className="w-full h-auto max-h-[85vh] object-contain rounded-lg"
               />
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Mass Email Dialog */}
+      <Dialog open={showMassEmailDialog} onOpenChange={setShowMassEmailDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5" />
+              Send Mass Email
+            </DialogTitle>
+            <DialogDescription>
+              Email applicants for: {gigs.find(g => g.id === selectedGig)?.title}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Recipient Filter */}
+            <div className="space-y-2">
+              <Label>Recipients</Label>
+              <Select
+                value={massEmailFilter}
+                onValueChange={(v) => setMassEmailFilter(v as "all" | "pending" | "approved")}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">
+                    All Applicants ({applications.length})
+                  </SelectItem>
+                  <SelectItem value="pending">
+                    Pending ({applications.filter(a => a.status === "pending").length})
+                  </SelectItem>
+                  <SelectItem value="approved">
+                    Approved ({applications.filter(a => a.status === "accepted" || a.status === "approved").length})
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Template */}
+            <div className="space-y-2">
+              <Label>Template</Label>
+              <div className="p-3 rounded-lg border bg-muted/50">
+                <p className="font-medium text-sm">Schedule a Call</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Invites models to schedule a call to discuss the gig
+                </p>
+              </div>
+            </div>
+
+            {/* Preview */}
+            <div className="space-y-2">
+              <Label>Preview</Label>
+              <div className="p-3 rounded-lg border text-sm space-y-1">
+                <p className="text-muted-foreground">
+                  <span className="font-medium text-foreground">Subject:</span>{" "}
+                  Let&apos;s Chat &mdash; Schedule a Call with EXA Models
+                </p>
+                <p className="text-muted-foreground">
+                  <span className="font-medium text-foreground">Body:</span>{" "}
+                  Personalized email with gig details and a &quot;Schedule My Call&quot; button linking to a scheduling page.
+                </p>
+              </div>
+            </div>
+
+            {/* Send Button */}
+            <Button
+              className="w-full"
+              onClick={handleSendMassEmail}
+              disabled={massEmailSending || (() => {
+                const count = massEmailFilter === "all"
+                  ? applications.length
+                  : massEmailFilter === "pending"
+                    ? applications.filter(a => a.status === "pending").length
+                    : applications.filter(a => a.status === "accepted" || a.status === "approved").length;
+                return count === 0;
+              })()}
+            >
+              {massEmailSending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-2" />
+                  Send to{" "}
+                  {massEmailFilter === "all"
+                    ? applications.length
+                    : massEmailFilter === "pending"
+                      ? applications.filter(a => a.status === "pending").length
+                      : applications.filter(a => a.status === "accepted" || a.status === "approved").length}{" "}
+                  model(s)
+                </>
+              )}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

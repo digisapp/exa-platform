@@ -4132,3 +4132,125 @@ export async function sendAuctionWonEmail({
     return { success: false, error };
   }
 }
+
+export async function sendScheduleCallEmail({
+  to,
+  modelName,
+  gigTitle,
+  gigDate,
+  gigLocation,
+  scheduleUrl,
+}: {
+  to: string;
+  modelName: string;
+  gigTitle: string;
+  gigDate?: string;
+  gigLocation?: string;
+  scheduleUrl: string;
+}) {
+  try {
+    if (await isEmailUnsubscribed(to, "marketing")) {
+      return { success: true, skipped: true };
+    }
+
+    const resend = getResendClient();
+    const unsubscribeToken = await getUnsubscribeToken(to);
+    const safeName = escapeHtml(modelName);
+    const safeTitle = escapeHtml(gigTitle);
+
+    const gigDetailsHtml =
+      gigDate || gigLocation
+        ? `
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+                <tr>
+                  <td style="padding: 15px; background-color: #262626; border-radius: 8px;">
+                    ${gigDate ? `<p style="margin: 0 0 ${gigLocation ? "8px" : "0"}; color: #a1a1aa; font-size: 14px;">&#128197; ${escapeHtml(gigDate)}</p>` : ""}
+                    ${gigLocation ? `<p style="margin: 0; color: #a1a1aa; font-size: 14px;">&#128205; ${escapeHtml(gigLocation)}</p>` : ""}
+                  </td>
+                </tr>
+              </table>`
+        : "";
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      subject: "Let's Chat \u2014 Schedule a Call with EXA Models",
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 40px 30px; text-align: center;">
+              <h1 style="margin: 0; color: white; font-size: 28px; font-weight: bold;">
+                Let's Chat!
+              </h1>
+              <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
+                Schedule a call with EXA Models
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
+                Hey ${safeName},
+              </p>
+              <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                We'd love to discuss <strong style="color: #ffffff;">${safeTitle}</strong> with you! Let's hop on a quick call to go over the details and answer any questions you might have.
+              </p>
+
+              ${gigDetailsHtml}
+
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                Pick a time that works best for you and we'll give you a call:
+              </p>
+
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+                <tr>
+                  <td align="center">
+                    <a href="${scheduleUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: 600; font-size: 18px;">
+                      Schedule My Call
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0; color: #71717a; font-size: 13px; text-align: center;">
+                This link expires in 30 days
+              </p>
+            </td>
+          </tr>
+
+          ${generateEmailFooter(unsubscribeToken)}
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      console.error("Resend error:", error);
+      return { success: false, error };
+    }
+    return { success: true, data };
+  } catch (error) {
+    console.error("Email send error:", error);
+    return { success: false, error };
+  }
+}
