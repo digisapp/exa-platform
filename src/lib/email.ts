@@ -4174,7 +4174,7 @@ export async function sendScheduleCallEmail({
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
       to: [to],
-      subject: "Let's Chat \u2014 Schedule a Call with EXA Models",
+      subject: "Schedule a Call \u2014 Updated Link | EXA Models",
       html: `
 <!DOCTYPE html>
 <html>
