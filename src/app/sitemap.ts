@@ -79,7 +79,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .not("slug", "is", null);
 
   const eventPages: MetadataRoute.Sitemap = (events || []).map((event) => ({
-    url: `${baseUrl}/events/${event.slug}`,
+    url: `${baseUrl}/shows/${event.slug}`,
     lastModified: event.updated_at ? new Date(event.updated_at) : new Date(),
     changeFrequency: "weekly" as const,
     priority: 0.7,
@@ -88,7 +88,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Add events listing page
   const eventsListingPage: MetadataRoute.Sitemap = events && events.length > 0 ? [
     {
-      url: `${baseUrl}/events`,
+      url: `${baseUrl}/shows`,
       lastModified: new Date(),
       changeFrequency: "weekly" as const,
       priority: 0.8,

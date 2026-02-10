@@ -389,15 +389,12 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* Upcoming Experiences Section */}
+        {/* Upcoming Shows Section */}
         <section className="py-6">
           <div className="container px-8 md:px-16 mb-8">
             <h2 className="text-3xl md:text-4xl font-bold mb-2 exa-gradient-text">
-              Upcoming Experiences
+              Upcoming Shows
             </h2>
-            <p className="text-muted-foreground">
-              Fashion shows, travel experiences, and brand campaigns
-            </p>
           </div>
           <UpcomingEventsCarousel events={upcomingEvents || []} />
         </section>

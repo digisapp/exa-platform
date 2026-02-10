@@ -31,6 +31,21 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '50mb',
     },
   },
+  // Redirect old /events URLs to /shows
+  async redirects() {
+    return [
+      {
+        source: '/events',
+        destination: '/shows',
+        permanent: true,
+      },
+      {
+        source: '/events/:slug*',
+        destination: '/shows/:slug*',
+        permanent: true,
+      },
+    ];
+  },
   // Security headers
   async headers() {
     return [

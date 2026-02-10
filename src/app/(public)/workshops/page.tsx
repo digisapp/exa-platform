@@ -247,7 +247,7 @@ export default async function WorkshopsPage() {
                 Check back soon for new workshop announcements!
               </p>
               <Button asChild variant="outline">
-                <Link href="/events">View Upcoming Shows</Link>
+                <Link href="/shows">View Upcoming Shows</Link>
               </Button>
             </Card>
           )}

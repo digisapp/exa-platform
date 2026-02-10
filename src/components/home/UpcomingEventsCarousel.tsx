@@ -115,7 +115,7 @@ export function UpcomingEventsCarousel({ events }: UpcomingEventsCarouselProps) 
             return (
               <Link
                 key={event.id}
-                href={`/events/${event.slug}`}
+                href={`/shows/${event.slug}`}
                 className="flex-shrink-0 w-[280px] group/card"
               >
                 <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-pink-500/10 to-violet-500/10 border border-white/10 hover:border-pink-500/50 transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-pink-500/20">

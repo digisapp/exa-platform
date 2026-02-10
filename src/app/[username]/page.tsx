@@ -35,7 +35,7 @@ const RESERVED_PATHS = [
   'earnings', 'fan', 'opportunities', 'settings', 'notifications', 'search',
   'explore', 'trending', 'popular', 'new', 'hot', 'top', 'best', 'featured',
   'favorites', 'chats', 'claim', 'forgot-password', 'rates', 'book', 'booking',
-  'events',
+  'events', 'shows',
 ];
 
 interface Props {
@@ -350,7 +350,7 @@ export default async function ModelProfilePage({ params }: Props) {
               {/* Event badge wrapper - makes profile pic clickable if has event badge */}
               {eventBadges && eventBadges.length > 0 ? (
                 <Link
-                  href={`/events/${eventBadges[0].badges.events.slug}?ref=${model.affiliate_code}`}
+                  href={`/shows/${eventBadges[0].badges.events.slug}?ref=${model.affiliate_code}`}
                   className="block relative"
                   title={`Confirmed ${eventBadges[0].badges.events.name} Model`}
                 >

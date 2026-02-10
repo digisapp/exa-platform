@@ -160,7 +160,7 @@ export default async function EventsPage() {
               const gradient = gradients[event.short_name] || "from-pink-500/15 via-violet-500/10 to-cyan-500/15";
 
               return (
-                <Link key={event.id} href={`/events/${event.slug}`} className="group block">
+                <Link key={event.id} href={`/shows/${event.slug}`} className="group block">
                   <div className={`relative rounded-2xl bg-gradient-to-r ${gradient} border border-white/10 overflow-hidden transition-all group-hover:border-pink-500/40 group-hover:shadow-xl group-hover:shadow-pink-500/10 group-hover:scale-[1.01]`}>
                     <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8 p-6 md:p-8">
                       {/* Date Block */}
