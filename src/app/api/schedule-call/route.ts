@@ -8,14 +8,17 @@ import { checkEndpointRateLimit } from "@/lib/rate-limit";
 export async function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get("token");
   if (!token) {
+    console.error("Schedule-call: no token in URL. Full URL:", request.url);
     return NextResponse.json(
       { error: "Missing token" },
       { status: 400 }
     );
   }
 
+  console.log("Schedule-call: token length:", token.length, "token preview:", token.substring(0, 20) + "...");
   const payload = verifyEmailToken(token);
   if (!payload) {
+    console.error("Schedule-call: token verification failed. Token:", token.substring(0, 30), "... length:", token.length, "has dot:", token.includes("."));
     return NextResponse.json(
       { error: "Invalid or expired token" },
       { status: 401 }

@@ -47,7 +47,10 @@ export function verifyEmailToken(
 ): { modelId: string; gigId: string } | null {
   try {
     const parts = token.split(".");
-    if (parts.length !== 2) return null;
+    if (parts.length !== 2) {
+      console.error("Token verify: wrong number of parts:", parts.length);
+      return null;
+    }
 
     const [payloadEncoded, signatureEncoded] = parts;
 
@@ -59,27 +62,41 @@ export function verifyEmailToken(
 
     const providedSignature = base64urlDecode(signatureEncoded);
 
+    if (expectedSignature.length !== providedSignature.length) {
+      console.error("Token verify: signature length mismatch. Expected:", expectedSignature.length, "Got:", providedSignature.length);
+      return null;
+    }
+
     if (!crypto.timingSafeEqual(expectedSignature, providedSignature)) {
+      console.error("Token verify: signature mismatch (HMAC doesn't match)");
       return null;
     }
 
     const payload = base64urlDecode(payloadEncoded).toString("utf-8");
     const segments = payload.split(":");
-    if (segments.length !== 3) return null;
+    if (segments.length !== 3) {
+      console.error("Token verify: payload has wrong segments:", segments.length);
+      return null;
+    }
 
     const [modelId, gigId, timestampStr] = segments;
     const timestamp = parseInt(timestampStr, 10);
-    if (isNaN(timestamp)) return null;
+    if (isNaN(timestamp)) {
+      console.error("Token verify: invalid timestamp");
+      return null;
+    }
 
     // Check expiry
     const now = Math.floor(Date.now() / 1000);
     const expirySeconds = TOKEN_EXPIRY_DAYS * 24 * 60 * 60;
     if (now - timestamp > expirySeconds) {
+      console.error("Token verify: expired. Age:", now - timestamp, "seconds. Max:", expirySeconds);
       return null;
     }
 
     return { modelId, gigId };
-  } catch {
+  } catch (err) {
+    console.error("Token verify: exception:", err);
     return null;
   }
 }
