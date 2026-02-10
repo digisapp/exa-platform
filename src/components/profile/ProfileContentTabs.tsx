@@ -14,20 +14,23 @@ interface MediaAsset {
   title?: string | null;
 }
 
-// Component for handling broken images
+// Component for handling broken images with Next.js Image optimization
 function ImageWithFallback({
   src,
   alt,
   className,
-  onClick
+  onClick,
+  sizes,
+  priority,
 }: {
   src?: string;
   alt: string;
   className?: string;
   onClick?: () => void;
+  sizes?: string;
+  priority?: boolean;
 }) {
   const [error, setError] = useState(false);
-  const [loaded, setLoaded] = useState(false);
 
   if (!src || error) {
     return (
@@ -38,21 +41,17 @@ function ImageWithFallback({
   }
 
   return (
-    <>
-      {!loaded && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white/5 animate-pulse">
-          <Camera className="h-8 w-8 text-white/20" />
-        </div>
-      )}
-      <img
-        src={src}
-        alt={alt}
-        className={cn(className, !loaded && "opacity-0")}
-        onError={() => setError(true)}
-        onLoad={() => setLoaded(true)}
-        onClick={onClick}
-      />
-    </>
+    <Image
+      src={src}
+      alt={alt}
+      fill
+      sizes={sizes || "(max-width: 640px) 33vw, (max-width: 1024px) 25vw, 20vw"}
+      className={cn("object-cover", className)}
+      onError={() => setError(true)}
+      onClick={onClick}
+      loading={priority ? "eager" : "lazy"}
+      priority={priority}
+    />
   );
 }
 
@@ -372,7 +371,9 @@ export function ProfileContentTabs({
                       <ImageWithFallback
                         src={photo.photo_url || photo.url}
                         alt={photo.title || "Portfolio photo"}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        className="transition-transform duration-500 group-hover:scale-110"
+                        sizes={isFeatured ? "(max-width: 640px) 66vw, 40vw" : "(max-width: 640px) 33vw, 20vw"}
+                        priority={index < 3}
                       />
                       {/* Gradient overlay on hover */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
