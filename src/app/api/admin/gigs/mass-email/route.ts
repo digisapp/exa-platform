@@ -145,18 +145,34 @@ export async function POST(request: NextRequest) {
     let emailsSent = 0;
     let emailsSkipped = 0;
     let emailsFailed = 0;
+    const failedDetails: { email: string; reason: string }[] = [];
 
-    // Process 2 at a time with 1.1s delay (Resend rate limit)
-    for (let i = 0; i < batch.length; i += 2) {
-      const pair = batch.slice(i, i + 2);
+    async function sendOne(r: any): Promise<void> {
+      try {
+        const token = createEmailToken(r.modelId, gig.id);
+        const scheduleUrl = `${BASE_URL}/schedule-call?token=${token}`;
 
-      await Promise.all(
-        pair.map(async (r: any) => {
-          try {
-            const token = createEmailToken(r.modelId, gig.id);
-            const scheduleUrl = `${BASE_URL}/schedule-call?token=${token}`;
+        const result = await sendScheduleCallEmail({
+          to: r.email,
+          modelName: r.modelName,
+          gigTitle: gig.title,
+          gigDate: gig.date,
+          gigLocation: gig.location,
+          scheduleUrl,
+        });
 
-            const result = await sendScheduleCallEmail({
+        if (result.success) {
+          if ((result as any).skipped) {
+            emailsSkipped++;
+          } else {
+            emailsSent++;
+          }
+        } else {
+          const errMsg = (result as any).error?.message || JSON.stringify((result as any).error) || "Unknown error";
+          // Retry once after 2s if rate limited
+          if (errMsg.toLowerCase().includes("rate") || errMsg.toLowerCase().includes("too many")) {
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+            const retry = await sendScheduleCallEmail({
               to: r.email,
               modelName: r.modelName,
               gigTitle: gig.title,
@@ -164,23 +180,27 @@ export async function POST(request: NextRequest) {
               gigLocation: gig.location,
               scheduleUrl,
             });
-
-            if (result.success) {
-              if ((result as any).skipped) {
-                emailsSkipped++;
-              } else {
-                emailsSent++;
-              }
-            } else {
-              emailsFailed++;
-              console.error(`Email failed for ${r.email}:`, (result as any).error);
+            if (retry.success && !(retry as any).skipped) {
+              emailsSent++;
+              return;
             }
-          } catch (err) {
-            emailsFailed++;
-            console.error(`Email exception for ${r.email}:`, err);
           }
-        })
-      );
+          emailsFailed++;
+          failedDetails.push({ email: r.email, reason: errMsg });
+          console.error(`Email failed for ${r.email}:`, errMsg);
+        }
+      } catch (err: any) {
+        emailsFailed++;
+        const reason = err?.message || String(err);
+        failedDetails.push({ email: r.email, reason });
+        console.error(`Email exception for ${r.email}:`, reason);
+      }
+    }
+
+    // Process 2 at a time with 1.1s delay (Resend rate limit)
+    for (let i = 0; i < batch.length; i += 2) {
+      const pair = batch.slice(i, i + 2);
+      await Promise.all(pair.map(sendOne));
 
       // Delay between pairs
       if (i + 2 < batch.length) {
@@ -194,6 +214,7 @@ export async function POST(request: NextRequest) {
       emailsSkipped,
       emailsFailed,
       batchSize: batch.length,
+      failedDetails: failedDetails.length > 0 ? failedDetails : undefined,
     });
   } catch (error) {
     console.error("Mass email POST error:", error);

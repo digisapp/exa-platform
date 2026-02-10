@@ -385,6 +385,7 @@ export default function AdminGigsPage() {
       let totalSent = 0;
       let totalSkipped = 0;
       let totalFailed = 0;
+      const allFailedDetails: { email: string; reason: string }[] = [];
 
       for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
         const batch = recipients.slice(i, i + BATCH_SIZE);
@@ -405,6 +406,9 @@ export default function AdminGigsPage() {
           totalSent += batchData.emailsSent || 0;
           totalSkipped += batchData.emailsSkipped || 0;
           totalFailed += batchData.emailsFailed || 0;
+          if (batchData.failedDetails) {
+            allFailedDetails.push(...batchData.failedDetails);
+          }
         } else {
           totalFailed += batch.length;
         }
@@ -423,6 +427,12 @@ export default function AdminGigsPage() {
       if (totalFailed > 0) parts.push(`${totalFailed} failed`);
 
       toast.success(`Mass email complete: ${parts.join(", ")}`);
+
+      if (allFailedDetails.length > 0) {
+        const reasons = [...new Set(allFailedDetails.map((d: any) => d.reason))];
+        console.log("Failed emails:", allFailedDetails);
+        toast.error(`Failed reasons: ${reasons.slice(0, 3).join("; ")}`, { duration: 10000 });
+      }
       setShowMassEmailDialog(false);
     } catch (error) {
       console.error("Mass email error:", error);
