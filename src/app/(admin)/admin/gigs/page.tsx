@@ -169,6 +169,7 @@ export default function AdminGigsPage() {
   const [showMassEmailDialog, setShowMassEmailDialog] = useState(false);
   const [massEmailFilter, setMassEmailFilter] = useState<"all" | "pending" | "approved">("pending");
   const [massEmailSending, setMassEmailSending] = useState(false);
+  const [massEmailProgress, setMassEmailProgress] = useState({ sent: 0, skipped: 0, failed: 0, total: 0 });
 
   // Workshop state
   const [workshops, setWorkshops] = useState<Workshop[]>([]);
@@ -355,28 +356,71 @@ export default function AdminGigsPage() {
   async function handleSendMassEmail() {
     if (!selectedGig) return;
     setMassEmailSending(true);
+    setMassEmailProgress({ sent: 0, skipped: 0, failed: 0, total: 0 });
+
     try {
-      const response = await fetch("/api/admin/gigs/mass-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          gigId: selectedGig,
-          recipientFilter: massEmailFilter,
-          template: "schedule-call",
-        }),
-      });
+      // Step 1: Fetch all recipients
+      const listRes = await fetch(
+        `/api/admin/gigs/mass-email?gigId=${selectedGig}&recipientFilter=${massEmailFilter}`
+      );
+      const listData = await listRes.json();
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        toast.error(data.error || "Failed to send emails");
+      if (!listRes.ok) {
+        toast.error(listData.error || "Failed to fetch recipients");
+        setMassEmailSending(false);
         return;
       }
 
+      const { recipients, gig } = listData;
+      if (!recipients || recipients.length === 0) {
+        toast.info("No recipients with email addresses found");
+        setMassEmailSending(false);
+        return;
+      }
+
+      setMassEmailProgress({ sent: 0, skipped: 0, failed: 0, total: recipients.length });
+
+      // Step 2: Send in batches of 10
+      const BATCH_SIZE = 10;
+      let totalSent = 0;
+      let totalSkipped = 0;
+      let totalFailed = 0;
+
+      for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
+        const batch = recipients.slice(i, i + BATCH_SIZE);
+
+        const batchRes = await fetch("/api/admin/gigs/mass-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            recipients: batch,
+            gig,
+            template: "schedule-call",
+          }),
+        });
+
+        const batchData = await batchRes.json();
+
+        if (batchRes.ok) {
+          totalSent += batchData.emailsSent || 0;
+          totalSkipped += batchData.emailsSkipped || 0;
+          totalFailed += batchData.emailsFailed || 0;
+        } else {
+          totalFailed += batch.length;
+        }
+
+        setMassEmailProgress({
+          sent: totalSent,
+          skipped: totalSkipped,
+          failed: totalFailed,
+          total: recipients.length,
+        });
+      }
+
       const parts = [];
-      if (data.emailsSent > 0) parts.push(`${data.emailsSent} sent`);
-      if (data.emailsSkipped > 0) parts.push(`${data.emailsSkipped} skipped`);
-      if (data.emailsFailed > 0) parts.push(`${data.emailsFailed} failed`);
+      if (totalSent > 0) parts.push(`${totalSent} sent`);
+      if (totalSkipped > 0) parts.push(`${totalSkipped} skipped`);
+      if (totalFailed > 0) parts.push(`${totalFailed} failed`);
 
       toast.success(`Mass email complete: ${parts.join(", ")}`);
       setShowMassEmailDialog(false);
@@ -2771,6 +2815,31 @@ export default function AdminGigsPage() {
               </div>
             </div>
 
+            {/* Progress */}
+            {massEmailSending && massEmailProgress.total > 0 && (
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Progress</span>
+                  <span className="font-medium">
+                    {massEmailProgress.sent + massEmailProgress.skipped + massEmailProgress.failed} / {massEmailProgress.total}
+                  </span>
+                </div>
+                <div className="h-2 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-pink-500 to-purple-500 transition-all duration-300"
+                    style={{
+                      width: `${((massEmailProgress.sent + massEmailProgress.skipped + massEmailProgress.failed) / massEmailProgress.total) * 100}%`,
+                    }}
+                  />
+                </div>
+                <div className="flex gap-3 text-xs text-muted-foreground">
+                  {massEmailProgress.sent > 0 && <span className="text-green-500">{massEmailProgress.sent} sent</span>}
+                  {massEmailProgress.skipped > 0 && <span className="text-amber-500">{massEmailProgress.skipped} skipped</span>}
+                  {massEmailProgress.failed > 0 && <span className="text-red-500">{massEmailProgress.failed} failed</span>}
+                </div>
+              </div>
+            )}
+
             {/* Send Button */}
             <Button
               className="w-full"
@@ -2787,7 +2856,7 @@ export default function AdminGigsPage() {
               {massEmailSending ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Sending...
+                  Sending... {massEmailProgress.total > 0 && `(${massEmailProgress.sent + massEmailProgress.skipped + massEmailProgress.failed}/${massEmailProgress.total})`}
                 </>
               ) : (
                 <>

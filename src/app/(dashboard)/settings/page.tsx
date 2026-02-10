@@ -567,6 +567,9 @@ export default function ProfilePage() {
         hair_color: model.hair_color,
         eye_color: model.eye_color,
         instagram_name: model.instagram_name,
+        instagram_url: model.instagram_name
+          ? `https://www.instagram.com/${model.instagram_name.replace(/^@/, "").trim()}`
+          : null,
         tiktok_username: model.tiktok_username,
         snapchat_username: model.snapchat_username,
         x_username: model.x_username,

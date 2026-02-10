@@ -8,49 +8,38 @@ import { format } from "date-fns";
 const BASE_URL =
   process.env.NEXT_PUBLIC_APP_URL || "https://www.examodels.com";
 
-export async function POST(request: NextRequest) {
+async function checkAdmin(supabase: any) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data: actor } = await supabase
+    .from("actors")
+    .select("id, type")
+    .eq("user_id", user.id)
+    .single();
+
+  if (!actor || actor.type !== "admin") return null;
+  return user;
+}
+
+// GET - Fetch recipients list (for client-side batching)
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
-
-    // Auth check
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await checkAdmin(supabase);
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Admin check
-    const { data: actor } = (await supabase
-      .from("actors")
-      .select("id, type")
-      .eq("user_id", user.id)
-      .single()) as { data: { id: string; type: string } | null };
+    const { searchParams } = new URL(request.url);
+    const gigId = searchParams.get("gigId");
+    const recipientFilter = searchParams.get("recipientFilter");
 
-    if (!actor || actor.type !== "admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    const body = await request.json();
-    const { gigId, recipientFilter, template } = body;
-
-    if (!gigId || !recipientFilter || !template) {
+    if (!gigId || !recipientFilter) {
       return NextResponse.json(
-        { error: "Missing required fields: gigId, recipientFilter, template" },
-        { status: 400 }
-      );
-    }
-
-    if (!["all", "pending", "approved"].includes(recipientFilter)) {
-      return NextResponse.json(
-        { error: "recipientFilter must be all, pending, or approved" },
-        { status: 400 }
-      );
-    }
-
-    if (template !== "schedule-call") {
-      return NextResponse.json(
-        { error: "Unsupported template" },
+        { error: "Missing gigId or recipientFilter" },
         { status: 400 }
       );
     }
@@ -60,9 +49,7 @@ export async function POST(request: NextRequest) {
     // Get gig details
     const { data: gig } = await adminClient
       .from("gigs")
-      .select(
-        "id, title, start_at, location_city, location_state"
-      )
+      .select("id, title, start_at, location_city, location_state")
       .eq("id", gigId)
       .single();
 
@@ -73,7 +60,7 @@ export async function POST(request: NextRequest) {
     // Get applications with model data
     let query = (adminClient.from("gig_applications") as any)
       .select(
-        "id, status, model_id, model:models(id, email, first_name, last_name, username, phone)"
+        "id, status, model_id, model:models(id, email, first_name, last_name, username)"
       )
       .eq("gig_id", gigId);
 
@@ -86,24 +73,13 @@ export async function POST(request: NextRequest) {
     const { data: applications, error: appsError } = await query;
 
     if (appsError) {
-      console.error("Error fetching applications:", appsError);
       return NextResponse.json(
         { error: "Failed to fetch applications" },
         { status: 500 }
       );
     }
 
-    if (!applications || applications.length === 0) {
-      return NextResponse.json({
-        success: true,
-        message: "No matching applications found",
-        emailsSent: 0,
-        emailsSkipped: 0,
-        emailsFailed: 0,
-      });
-    }
-
-    // Format gig details
+    // Build recipient list with tokens
     const gigDate = gig.start_at
       ? format(new Date(gig.start_at), "MMMM d, yyyy")
       : undefined;
@@ -112,39 +88,80 @@ export async function POST(request: NextRequest) {
         ? `${gig.location_city}, ${gig.location_state}`
         : gig.location_city || gig.location_state || undefined;
 
+    const recipients = (applications || [])
+      .filter((app: any) => app.model?.email)
+      .map((app: any) => ({
+        modelId: app.model.id,
+        email: app.model.email,
+        modelName: app.model.first_name || app.model.username || "",
+      }));
+
+    return NextResponse.json({
+      recipients,
+      gig: {
+        id: gig.id,
+        title: gig.title,
+        date: gigDate,
+        location: gigLocation,
+      },
+    });
+  } catch (error) {
+    console.error("Mass email GET error:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch recipients" },
+      { status: 500 }
+    );
+  }
+}
+
+// POST - Send a batch of emails (called repeatedly by client)
+export async function POST(request: NextRequest) {
+  try {
+    const supabase = await createClient();
+    const user = await checkAdmin(supabase);
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { recipients, gig, template } = body;
+
+    if (!recipients || !Array.isArray(recipients) || !gig || !template) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
+    if (template !== "schedule-call") {
+      return NextResponse.json(
+        { error: "Unsupported template" },
+        { status: 400 }
+      );
+    }
+
+    // Send up to 10 emails per batch (fits within ~6s with rate limiting)
+    const batch = recipients.slice(0, 10);
     let emailsSent = 0;
     let emailsSkipped = 0;
     let emailsFailed = 0;
 
-    // Process in batches (Resend rate limit: 2/sec)
-    const batchSize = 2;
-    const batchDelayMs = 1100;
-
-    console.log(
-      `Starting mass email (${template}) to ${applications.length} applicants in batches of ${batchSize}`
-    );
-
-    for (let i = 0; i < applications.length; i += batchSize) {
-      const batch = applications.slice(i, i + batchSize);
+    // Process 2 at a time with 1.1s delay (Resend rate limit)
+    for (let i = 0; i < batch.length; i += 2) {
+      const pair = batch.slice(i, i + 2);
 
       await Promise.all(
-        batch.map(async (app: any) => {
-          const model = app.model;
-          if (!model?.email) {
-            emailsSkipped++;
-            return;
-          }
-
+        pair.map(async (r: any) => {
           try {
-            const token = createEmailToken(model.id, gigId);
+            const token = createEmailToken(r.modelId, gig.id);
             const scheduleUrl = `${BASE_URL}/schedule-call?token=${token}`;
 
             const result = await sendScheduleCallEmail({
-              to: model.email,
-              modelName: model.first_name || model.username || "",
+              to: r.email,
+              modelName: r.modelName,
               gigTitle: gig.title,
-              gigDate,
-              gigLocation,
+              gigDate: gig.date,
+              gigLocation: gig.location,
               scheduleUrl,
             });
 
@@ -156,38 +173,30 @@ export async function POST(request: NextRequest) {
               }
             } else {
               emailsFailed++;
-              console.error(
-                `Failed to send to ${model.email}: ${(result as any).error || "Unknown error"}`
-              );
             }
-          } catch (error) {
-            console.error(`Exception sending to ${model.email}:`, error);
+          } catch {
             emailsFailed++;
           }
         })
       );
 
-      // Delay between batches
-      if (i + batchSize < applications.length) {
-        await new Promise((resolve) => setTimeout(resolve, batchDelayMs));
+      // Delay between pairs
+      if (i + 2 < batch.length) {
+        await new Promise((resolve) => setTimeout(resolve, 1100));
       }
     }
-
-    console.log(
-      `Mass email complete: ${emailsSent} sent, ${emailsSkipped} skipped, ${emailsFailed} failed`
-    );
 
     return NextResponse.json({
       success: true,
       emailsSent,
       emailsSkipped,
       emailsFailed,
-      totalApplications: applications.length,
+      batchSize: batch.length,
     });
   } catch (error) {
-    console.error("Mass email error:", error);
+    console.error("Mass email POST error:", error);
     return NextResponse.json(
-      { error: "Failed to send mass email" },
+      { error: "Failed to send batch" },
       { status: 500 }
     );
   }
