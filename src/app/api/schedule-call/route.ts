@@ -126,21 +126,28 @@ export async function POST(request: NextRequest) {
       .filter(Boolean)
       .join(" ") || model.username || "Unknown";
 
-    // Format preferences into message
-    const timeRangeLabels: Record<string, string> = {
-      morning: "Morning (9am-12pm)",
-      afternoon: "Afternoon (12pm-5pm)",
-      evening: "Evening (5pm-9pm)",
-    };
+    // Parse the selected day + time into a scheduled_at date
+    const selectedDay = preferred_days[0]; // e.g. "Wed, Feb 11"
+    const selectedTime = preferred_time_range; // e.g. "2:00 PM"
+    let scheduledAt: string | null = null;
 
-    const message = [
-      `Preferred days: ${preferred_days.join(", ")}`,
-      `Time range: ${timeRangeLabels[preferred_time_range] || preferred_time_range}`,
-      `Timezone: ${timezone || "Not specified"}`,
-      notes ? `Notes: ${notes}` : null,
-    ]
-      .filter(Boolean)
-      .join("\n");
+    try {
+      // Parse "Wed, Feb 11" — append current year
+      const year = new Date().getFullYear();
+      const dateStr = `${selectedDay}, ${year} ${selectedTime}`;
+      const parsed = new Date(dateStr);
+      if (!isNaN(parsed.getTime())) {
+        // If the parsed date is in the past, it might be next year
+        if (parsed < new Date()) {
+          parsed.setFullYear(year + 1);
+        }
+        scheduledAt = parsed.toISOString();
+      }
+    } catch {
+      // If parsing fails, store as message instead
+    }
+
+    const message = `${selectedDay} at ${selectedTime}${timezone ? ` (${timezone})` : ""}`;
 
     // Create call request
     const { data: callRequest, error: insertError } = await supabase
@@ -152,7 +159,8 @@ export async function POST(request: NextRequest) {
         model_id: payload.modelId,
         source: "gig-email",
         source_detail: payload.gigId,
-        status: "pending",
+        status: scheduledAt ? "scheduled" : "pending",
+        scheduled_at: scheduledAt,
         message,
       })
       .select("id, created_at")

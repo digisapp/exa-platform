@@ -223,7 +223,7 @@ function ScheduleCallContent() {
 
             {/* Day Selection */}
             <div className="space-y-2">
-              <Label>Preferred Day</Label>
+              <Label>Day</Label>
               <div className="grid grid-cols-2 gap-2">
                 {weekdays.map((day) => (
                   <button
@@ -249,7 +249,7 @@ function ScheduleCallContent() {
 
             {/* Time Selection */}
             <div className="space-y-2">
-              <Label htmlFor="time">Preferred Time (ET)</Label>
+              <Label htmlFor="time">Time (ET)</Label>
               <select
                 id="time"
                 value={selectedTime}
