@@ -14,6 +14,7 @@ import {
   ArrowRight,
   Sparkles,
   Ticket,
+  Tv,
 } from "lucide-react";
 import { format } from "date-fns";
 import type { Metadata } from "next";
@@ -132,14 +133,21 @@ export default async function EventsPage() {
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-3 drop-shadow-lg">
               EXA Shows
             </h1>
-            <p className="text-lg md:text-xl text-white/80 max-w-2xl drop-shadow">
-              Runway shows, fashion experiences, and brand campaigns featuring the hottest EXA models
-            </p>
           </div>
         </div>
       </div>
 
       <main className="container px-4 md:px-8 py-10">
+        {/* EXA TV Link */}
+        <Link
+          href="/tv"
+          className="group mb-8 flex items-center gap-3 rounded-xl bg-gradient-to-r from-pink-500/10 via-violet-500/10 to-cyan-500/10 border border-white/10 hover:border-pink-500/40 p-4 transition-all hover:shadow-lg hover:shadow-pink-500/10"
+        >
+          <Tv className="h-5 w-5 text-pink-500" />
+          <span className="text-sm font-semibold text-white">Watch Past Shows on EXA TV</span>
+          <ArrowRight className="h-4 w-4 text-muted-foreground ml-auto transition-transform group-hover:translate-x-1" />
+        </Link>
+
         {/* Events List */}
         {events && events.length > 0 ? (
           <div className="space-y-4">

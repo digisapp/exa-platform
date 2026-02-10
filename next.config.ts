@@ -23,6 +23,10 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'scontent*.cdninstagram.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'img.youtube.com',
+      },
     ],
   },
   // Increase body size limit for file uploads (default is 1MB)
@@ -86,7 +90,7 @@ const nextConfig: NextConfig = {
               "default-src 'self'",
               `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} js.stripe.com`,
               "style-src 'self' 'unsafe-inline' fonts.googleapis.com",
-              "img-src 'self' data: blob: *.supabase.co *.cdninstagram.com www.google.com",
+              "img-src 'self' data: blob: *.supabase.co *.cdninstagram.com www.google.com img.youtube.com",
               "font-src 'self' fonts.gstatic.com data:",
               "connect-src 'self' *.supabase.co wss://*.supabase.co *.livekit.cloud wss://*.livekit.cloud api.stripe.com *.upstash.io",
               "frame-src 'self' js.stripe.com www.youtube.com",
