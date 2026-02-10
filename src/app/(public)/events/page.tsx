@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import Image from "next/image";
 import { Navbar } from "@/components/layout/navbar";
 import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 
@@ -141,10 +140,10 @@ export default async function EventsPage() {
       </div>
 
       <main className="container px-4 md:px-8 py-10">
-        {/* Events Grid */}
+        {/* Events List */}
         {events && events.length > 0 ? (
-          <div className="space-y-6">
-            {events.map((event, index) => {
+          <div className="space-y-4">
+            {events.map((event) => {
               const startDate = event.start_date ? new Date(event.start_date) : null;
               const endDate = event.end_date ? new Date(event.end_date) : null;
               const dateDisplay = startDate && endDate
@@ -152,86 +151,77 @@ export default async function EventsPage() {
                 : startDate
                   ? format(startDate, "MMMM d, yyyy")
                   : "TBA";
-              const isFirst = index === 0;
+
+              const gradients: Record<string, string> = {
+                MSW: "from-cyan-500/15 via-blue-500/10 to-violet-500/15",
+                NYFW: "from-pink-500/15 via-rose-500/10 to-orange-500/15",
+                MAW: "from-violet-500/15 via-purple-500/10 to-pink-500/15",
+              };
+              const gradient = gradients[event.short_name] || "from-pink-500/15 via-violet-500/10 to-cyan-500/15";
 
               return (
                 <Link key={event.id} href={`/events/${event.slug}`} className="group block">
-                  <div className={`relative rounded-2xl overflow-hidden transition-all group-hover:ring-2 group-hover:ring-pink-500/50 group-hover:shadow-xl group-hover:shadow-pink-500/10 ${isFirst ? '' : ''}`}>
-                    <div className={`flex flex-col ${isFirst ? 'md:flex-row' : 'md:flex-row'}`}>
-                      {/* Image */}
-                      <div className={`relative bg-gradient-to-br from-pink-500/30 via-violet-500/30 to-cyan-500/30 overflow-hidden ${isFirst ? 'aspect-video md:aspect-auto md:w-2/3' : 'aspect-video md:aspect-auto md:w-1/3'}`}>
-                        {event.cover_image_url ? (
-                          <Image
-                            src={event.cover_image_url}
-                            alt={event.name}
-                            fill
-                            sizes={isFirst ? "(max-width: 768px) 100vw, 66vw" : "(max-width: 768px) 100vw, 33vw"}
-                            className="object-cover transition-transform duration-500 group-hover:scale-105"
-                          />
+                  <div className={`relative rounded-2xl bg-gradient-to-r ${gradient} border border-white/10 overflow-hidden transition-all group-hover:border-pink-500/40 group-hover:shadow-xl group-hover:shadow-pink-500/10 group-hover:scale-[1.01]`}>
+                    <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8 p-6 md:p-8">
+                      {/* Date Block */}
+                      <div className="flex-shrink-0 text-center md:w-24">
+                        {startDate ? (
+                          <>
+                            <p className="text-3xl md:text-4xl font-bold text-white">{format(startDate, "d")}</p>
+                            <p className="text-sm font-semibold text-pink-500 uppercase tracking-wider">{format(startDate, "MMM yyyy")}</p>
+                          </>
                         ) : (
-                          <div className="w-full h-full min-h-[200px] flex items-center justify-center">
-                            <span className="text-6xl">
-                              {event.short_name === "MSW" ? "🏖️" :
-                               event.short_name === "NYFW" ? "🗽" :
-                               event.short_name === "MAW" ? "🎨" : "✨"}
-                            </span>
-                          </div>
+                          <p className="text-lg font-bold text-muted-foreground">TBA</p>
                         )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:to-black/30" />
-                        <div className="absolute top-4 left-4 flex items-center gap-2">
-                          <Badge className="bg-gradient-to-r from-pink-500 to-violet-500 text-white border-0 px-3 py-1 text-sm font-semibold shadow-lg">
+                      </div>
+
+                      {/* Divider */}
+                      <div className="hidden md:block w-px h-16 bg-white/10" />
+
+                      {/* Event Details */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <Badge className="bg-white/10 text-white border-0 text-xs font-semibold px-2 py-0.5">
                             {event.short_name} {event.year}
                           </Badge>
                           {event.status === "active" && (
-                            <Badge className="bg-green-500 text-white border-0 animate-pulse shadow-lg">
+                            <Badge className="bg-green-500 text-white border-0 text-xs animate-pulse">
                               Live Now
                             </Badge>
                           )}
                         </div>
-                      </div>
-
-                      {/* Content */}
-                      <div className={`bg-card border border-white/10 ${isFirst ? 'md:w-1/3' : 'md:w-2/3'} p-6 md:p-8 flex flex-col justify-center`}>
-                        <h2 className={`font-bold mb-3 group-hover:text-pink-500 transition-colors ${isFirst ? 'text-2xl md:text-3xl' : 'text-xl md:text-2xl'}`}>
+                        <h2 className="text-xl md:text-2xl font-bold text-white group-hover:text-pink-400 transition-colors mb-1.5">
                           {event.name}
                         </h2>
-
-                        {event.description && (
-                          <p className="text-muted-foreground text-sm line-clamp-2 mb-4">
-                            {event.description}
-                          </p>
-                        )}
-
-                        <div className="space-y-2.5 text-sm text-muted-foreground mb-5">
+                        <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm text-muted-foreground">
                           {(event.location_city || event.location_state) && (
-                            <div className="flex items-center gap-2.5">
-                              <MapPin className="h-4 w-4 text-pink-500" />
-                              <span>
-                                {event.location_city && event.location_state
-                                  ? `${event.location_city}, ${event.location_state}`
-                                  : event.location_city || event.location_state}
-                              </span>
-                            </div>
+                            <span className="flex items-center gap-1.5">
+                              <MapPin className="h-3.5 w-3.5 text-pink-500" />
+                              {event.location_city && event.location_state
+                                ? `${event.location_city}, ${event.location_state}`
+                                : event.location_city || event.location_state}
+                            </span>
                           )}
-                          <div className="flex items-center gap-2.5">
-                            <Calendar className="h-4 w-4 text-cyan-500" />
-                            <span>{dateDisplay}</span>
-                          </div>
-                          {eventCounts[event.id] > 0 && (
-                            <div className="flex items-center gap-2.5">
-                              <Users className="h-4 w-4 text-violet-500" />
-                              <span className="font-medium">{eventCounts[event.id]} models confirmed</span>
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                          <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-pink-500 to-violet-500 text-white text-sm font-semibold group-hover:from-pink-600 group-hover:to-violet-600 transition-colors shadow-lg shadow-pink-500/20">
-                            <Ticket className="h-4 w-4" />
-                            View Event
-                            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                          <span className="flex items-center gap-1.5">
+                            <Calendar className="h-3.5 w-3.5 text-cyan-500" />
+                            {dateDisplay}
                           </span>
+                          {eventCounts[event.id] > 0 && (
+                            <span className="flex items-center gap-1.5">
+                              <Users className="h-3.5 w-3.5 text-violet-500" />
+                              <span className="font-medium">{eventCounts[event.id]} models confirmed</span>
+                            </span>
+                          )}
                         </div>
+                      </div>
+
+                      {/* CTA */}
+                      <div className="flex-shrink-0">
+                        <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 text-white text-sm font-semibold group-hover:bg-gradient-to-r group-hover:from-pink-500 group-hover:to-violet-500 transition-all">
+                          <Ticket className="h-4 w-4" />
+                          View Event
+                          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                        </span>
                       </div>
                     </div>
                   </div>
