@@ -5,7 +5,6 @@ import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, CheckCircle, AlertTriangle, Phone } from "lucide-react";
 
@@ -43,27 +42,13 @@ function getNext14Weekdays(): string[] {
   return days;
 }
 
-function detectTimezone(): string {
-  try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone;
-  } catch {
-    return "America/New_York";
-  }
-}
-
-const TIME_RANGES = [
-  { value: "morning", label: "Morning", desc: "9am - 12pm" },
-  { value: "afternoon", label: "Afternoon", desc: "12pm - 5pm" },
-  { value: "evening", label: "Evening", desc: "5pm - 9pm" },
-] as const;
-
-const COMMON_TIMEZONES = [
-  "America/New_York",
-  "America/Chicago",
-  "America/Denver",
-  "America/Los_Angeles",
-  "America/Phoenix",
-  "Pacific/Honolulu",
+const TIME_SLOTS = [
+  "9:00 AM", "9:30 AM", "10:00 AM", "10:30 AM",
+  "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM",
+  "1:00 PM", "1:30 PM", "2:00 PM", "2:30 PM",
+  "3:00 PM", "3:30 PM", "4:00 PM", "4:30 PM",
+  "5:00 PM", "5:30 PM", "6:00 PM", "6:30 PM",
+  "7:00 PM",
 ];
 
 function ScheduleCallContent() {
@@ -76,10 +61,8 @@ function ScheduleCallContent() {
   const [gig, setGig] = useState<GigInfo | null>(null);
 
   const [phone, setPhone] = useState("");
-  const [selectedDays, setSelectedDays] = useState<string[]>([]);
-  const [timeRange, setTimeRange] = useState<string>("afternoon");
-  const [timezone, setTimezone] = useState(detectTimezone());
-  const [notes, setNotes] = useState("");
+  const [selectedDay, setSelectedDay] = useState<string>("");
+  const [selectedTime, setSelectedTime] = useState<string>("");
 
   const weekdays = getNext14Weekdays();
 
@@ -108,7 +91,7 @@ function ScheduleCallContent() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!token || selectedDays.length === 0) return;
+    if (!token || !selectedDay || !selectedTime) return;
 
     setState("submitting");
     try {
@@ -117,11 +100,10 @@ function ScheduleCallContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           token,
-          preferred_days: selectedDays,
-          preferred_time_range: timeRange,
-          timezone,
+          preferred_days: [selectedDay],
+          preferred_time_range: selectedTime,
+          timezone: "America/New_York",
           phone,
-          notes: notes || undefined,
         }),
       });
 
@@ -141,12 +123,6 @@ function ScheduleCallContent() {
     } catch {
       setState("error");
     }
-  }
-
-  function toggleDay(day: string) {
-    setSelectedDays((prev) =>
-      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
-    );
   }
 
   if (state === "loading") {
@@ -247,20 +223,15 @@ function ScheduleCallContent() {
 
             {/* Day Selection */}
             <div className="space-y-2">
-              <Label>
-                Preferred Days{" "}
-                <span className="text-muted-foreground font-normal">
-                  (select all that work)
-                </span>
-              </Label>
+              <Label>Preferred Day</Label>
               <div className="grid grid-cols-2 gap-2">
                 {weekdays.map((day) => (
                   <button
                     key={day}
                     type="button"
-                    onClick={() => toggleDay(day)}
+                    onClick={() => setSelectedDay(day)}
                     className={`px-3 py-2 text-sm rounded-lg border transition-colors ${
-                      selectedDays.includes(day)
+                      selectedDay === day
                         ? "bg-pink-500/10 border-pink-500 text-pink-500 font-medium"
                         : "border-border hover:bg-muted text-muted-foreground"
                     }`}
@@ -269,79 +240,35 @@ function ScheduleCallContent() {
                   </button>
                 ))}
               </div>
-              {selectedDays.length === 0 && (
+              {!selectedDay && (
                 <p className="text-xs text-amber-500">
-                  Please select at least one day
+                  Please select a day
                 </p>
               )}
             </div>
 
-            {/* Time Range */}
+            {/* Time Selection */}
             <div className="space-y-2">
-              <Label>Preferred Time</Label>
-              <div className="grid grid-cols-3 gap-2">
-                {TIME_RANGES.map((tr) => (
-                  <button
-                    key={tr.value}
-                    type="button"
-                    onClick={() => setTimeRange(tr.value)}
-                    className={`px-3 py-3 text-sm rounded-lg border transition-colors text-center ${
-                      timeRange === tr.value
-                        ? "bg-pink-500/10 border-pink-500 text-pink-500 font-medium"
-                        : "border-border hover:bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    <div className="font-medium">{tr.label}</div>
-                    <div className="text-xs opacity-70">{tr.desc}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Timezone */}
-            <div className="space-y-2">
-              <Label htmlFor="timezone">Your Timezone</Label>
+              <Label htmlFor="time">Preferred Time (ET)</Label>
               <select
-                id="timezone"
-                value={timezone}
-                onChange={(e) => setTimezone(e.target.value)}
+                id="time"
+                value={selectedTime}
+                onChange={(e) => setSelectedTime(e.target.value)}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                required
               >
-                {COMMON_TIMEZONES.map((tz) => (
-                  <option key={tz} value={tz}>
-                    {tz.replace(/_/g, " ").replace("America/", "")}
-                  </option>
+                <option value="">Select a time</option>
+                {TIME_SLOTS.map((t) => (
+                  <option key={t} value={t}>{t}</option>
                 ))}
-                {!COMMON_TIMEZONES.includes(timezone) && (
-                  <option value={timezone}>
-                    {timezone.replace(/_/g, " ")}
-                  </option>
-                )}
               </select>
-            </div>
-
-            {/* Notes */}
-            <div className="space-y-2">
-              <Label htmlFor="notes">
-                Notes{" "}
-                <span className="text-muted-foreground font-normal">
-                  (optional)
-                </span>
-              </Label>
-              <Textarea
-                id="notes"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Anything you'd like us to know..."
-                rows={3}
-              />
             </div>
 
             {/* Submit */}
             <Button
               type="submit"
               className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700"
-              disabled={state === "submitting" || selectedDays.length === 0 || !phone}
+              disabled={state === "submitting" || !selectedDay || !selectedTime || !phone}
             >
               {state === "submitting" ? (
                 <>
