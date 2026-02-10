@@ -173,9 +173,11 @@ export async function POST(request: NextRequest) {
               }
             } else {
               emailsFailed++;
+              console.error(`Email failed for ${r.email}:`, (result as any).error);
             }
-          } catch {
+          } catch (err) {
             emailsFailed++;
+            console.error(`Email exception for ${r.email}:`, err);
           }
         })
       );
