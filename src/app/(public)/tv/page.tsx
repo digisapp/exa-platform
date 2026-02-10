@@ -87,34 +87,26 @@ export default async function TVPage() {
         />
 
         {/* Hero Section */}
-        <div className="relative overflow-hidden">
-          <div className="aspect-[21/9] md:aspect-[3/1] relative bg-gradient-to-br from-violet-950 via-black to-pink-950">
-            {/* Background pattern */}
-            <div className="absolute inset-0 opacity-20">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(168,85,247,0.4),transparent_50%)]" />
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_50%,rgba(236,72,153,0.4),transparent_50%)]" />
-            </div>
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+        <div className="relative bg-gradient-to-br from-violet-950 via-black to-pink-950 pt-16 pb-10 md:pt-20 md:pb-14">
+          <div className="absolute inset-0 opacity-20">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(168,85,247,0.4),transparent_50%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_50%,rgba(236,72,153,0.4),transparent_50%)]" />
           </div>
-
-          {/* Hero Text Overlay */}
-          <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 pointer-events-none">
-            <div className="container px-4 md:px-8">
-              <div className="flex items-center gap-2 mb-3">
-                <Sparkles className="h-5 w-5 text-pink-500" />
-                <Badge className="bg-gradient-to-r from-pink-500 to-violet-500 text-white border-0 px-3 py-1">
-                  {TV_VIDEOS.length} Videos
-                </Badge>
-              </div>
-              <h1 className="text-4xl md:text-6xl font-bold text-white mb-3 drop-shadow-lg flex items-center gap-4">
-                <Tv className="h-10 w-10 md:h-14 md:w-14 text-pink-500" />
-                EXA TV
-              </h1>
-              <p className="text-lg text-white/60 max-w-2xl">
-                Watch runway shows, backstage footage, and highlights from our
-                fashion events.
-              </p>
+          <div className="relative container px-4 md:px-8">
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles className="h-5 w-5 text-pink-500" />
+              <Badge className="bg-gradient-to-r from-pink-500 to-violet-500 text-white border-0 px-3 py-1">
+                {TV_VIDEOS.length} Videos
+              </Badge>
             </div>
+            <h1 className="text-4xl md:text-6xl font-bold text-white mb-3 drop-shadow-lg flex items-center gap-4">
+              <Tv className="h-10 w-10 md:h-14 md:w-14 text-pink-500" />
+              EXA TV
+            </h1>
+            <p className="text-lg text-white/60 max-w-2xl">
+              Watch runway shows, backstage footage, and highlights from our
+              fashion events.
+            </p>
           </div>
         </div>
 
