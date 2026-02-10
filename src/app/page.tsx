@@ -81,6 +81,7 @@ export default async function HomePage() {
     .select("id, slug, title, type, location_city, location_state, start_at, end_at, cover_image_url, spots, spots_filled")
     .eq("status", "open")
     .gte("start_at", new Date().toISOString())
+    .neq("title", "EXA Models Creator House - Trip 3")
     .order("start_at", { ascending: true })
     .limit(20);
 
