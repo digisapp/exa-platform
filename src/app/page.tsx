@@ -15,6 +15,8 @@ import {
   Gavel,
   Coins,
   Clock,
+  Tv,
+  Play,
 } from "lucide-react";
 import { TopModelsCarousel } from "@/components/home/TopModelsCarousel";
 import { UpcomingEventsCarousel } from "@/components/home/UpcomingEventsCarousel";
@@ -398,6 +400,34 @@ export default async function HomePage() {
             </h2>
           </div>
           <UpcomingEventsCarousel events={upcomingEvents || []} />
+        </section>
+
+        {/* EXA TV Banner */}
+        <section className="container px-8 md:px-16 py-4">
+          <Link href="/tv" className="block group">
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-violet-600 via-pink-600 to-cyan-600 p-[2px]">
+              <div className="relative rounded-3xl bg-black/90 backdrop-blur-xl px-6 py-5 md:px-8 md:py-6 flex items-center gap-4 md:gap-6">
+                <div className="relative flex-shrink-0">
+                  <div className="absolute inset-0 bg-gradient-to-r from-violet-500 to-pink-500 rounded-2xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity" />
+                  <div className="relative w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center">
+                    <Tv className="h-6 w-6 md:h-7 md:w-7 text-white" />
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg md:text-xl font-bold text-white">
+                    EXA TV
+                  </h3>
+                  <p className="text-white/50 text-xs md:text-sm">
+                    Watch 59 runway shows, backstage footage & highlights
+                  </p>
+                </div>
+                <div className="flex-shrink-0 px-5 py-2.5 rounded-full bg-gradient-to-r from-violet-500 to-pink-500 text-white text-sm font-semibold group-hover:scale-105 transition-transform flex items-center gap-2">
+                  <Play className="h-4 w-4" fill="white" />
+                  Watch Now
+                </div>
+              </div>
+            </div>
+          </Link>
         </section>
 
         {/* Book Top Models Section */}
