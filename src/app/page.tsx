@@ -272,7 +272,7 @@ export default async function HomePage() {
                         EXA Bids
                       </h3>
                       <p className="text-white/60 text-xs md:text-sm">
-                        Live auctions from top models
+                        Bid on services & content from top models
                       </p>
                     </div>
                   </div>
