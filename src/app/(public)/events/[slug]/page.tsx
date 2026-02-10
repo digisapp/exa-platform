@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .single() as { data: any };
 
   if (!data) {
-    return { title: "Event Not Found | EXA" };
+    return { title: "Show Not Found | EXA" };
   }
 
   return {
@@ -314,7 +314,7 @@ export default async function EventPage({ params, searchParams }: Props) {
             {event.description && (
               <div className="glass-card rounded-2xl p-6 md:p-8">
                 <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-                  <span className="text-3xl">🌴</span> About This Event
+                  <span className="text-3xl">🌴</span> About This Show
                 </h2>
                 <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed text-lg">
                   {event.description}
@@ -360,10 +360,10 @@ export default async function EventPage({ params, searchParams }: Props) {
                 </Button>
               )}
 
-              {/* Event Details Card */}
+              {/* Show Details Card */}
               <Card>
                 <CardContent className="p-6 space-y-4">
-                  <h3 className="font-semibold">Event Details</h3>
+                  <h3 className="font-semibold">Show Details</h3>
 
                   <div className="space-y-3 text-sm">
                     <div className="flex items-center justify-between">
@@ -469,7 +469,7 @@ export default async function EventPage({ params, searchParams }: Props) {
                           +{eventModels.length - 4} More Confirmed Models
                         </h3>
                         <p className="text-muted-foreground mb-5 max-w-md">
-                          Sign in to view all confirmed models for this event
+                          Sign in to view all confirmed models for this show
                         </p>
                         <div className="flex gap-3">
                           <Button asChild variant="outline" className="rounded-xl">

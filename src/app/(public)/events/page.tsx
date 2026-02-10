@@ -19,8 +19,8 @@ import { format } from "date-fns";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Upcoming Events | EXA Models",
-  description: "Discover fashion events featuring EXA models - Miami Swim Week, New York Fashion Week, Miami Art Week and more.",
+  title: "Upcoming Shows | EXA Models",
+  description: "Discover fashion shows featuring EXA models - Miami Swim Week, New York Fashion Week, Miami Art Week and more.",
 };
 
 export default async function EventsPage() {
@@ -111,7 +111,7 @@ export default async function EventsPage() {
         <div className="aspect-[21/9] md:aspect-[3/1] relative">
           <iframe
             src="https://www.youtube.com/embed/Iu68o0MCuvw?autoplay=1&mute=1&loop=1&playlist=Iu68o0MCuvw&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1"
-            title="EXA Events"
+            title="EXA Shows"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
             className="absolute inset-0 w-full h-full"
@@ -130,10 +130,10 @@ export default async function EventsPage() {
               </Badge>
             </div>
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-3 drop-shadow-lg">
-              EXA Events
+              EXA Shows
             </h1>
             <p className="text-lg md:text-xl text-white/80 max-w-2xl drop-shadow">
-              Fashion shows, runway experiences, and brand campaigns featuring the hottest EXA models
+              Runway shows, fashion experiences, and brand campaigns featuring the hottest EXA models
             </p>
           </div>
         </div>
@@ -219,7 +219,7 @@ export default async function EventsPage() {
                       <div className="flex-shrink-0">
                         <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 text-white text-sm font-semibold group-hover:bg-gradient-to-r group-hover:from-pink-500 group-hover:to-violet-500 transition-all">
                           <Ticket className="h-4 w-4" />
-                          View Event
+                          View Show
                           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                         </span>
                       </div>
@@ -232,7 +232,7 @@ export default async function EventsPage() {
         ) : (
           <Card className="p-12 text-center">
             <p className="text-muted-foreground text-lg">
-              No upcoming events at the moment. Check back soon!
+              No upcoming shows at the moment. Check back soon!
             </p>
           </Card>
         )}

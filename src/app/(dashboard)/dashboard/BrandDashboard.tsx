@@ -235,7 +235,7 @@ export async function BrandDashboard({ actorId }: { actorId: string }) {
                 <Calendar className="h-5 w-5 text-green-500" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Upcoming Events</p>
+                <p className="text-sm text-muted-foreground">Upcoming Shows</p>
                 <p className="text-2xl font-bold">{upcomingEventCount}</p>
               </div>
             </div>
@@ -552,7 +552,7 @@ export async function BrandDashboard({ actorId }: { actorId: string }) {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5 text-green-500" />
-            Upcoming Events
+            Upcoming Shows
           </CardTitle>
           {upcomingEventCount > 0 && (
             <Button variant="ghost" size="sm" asChild>

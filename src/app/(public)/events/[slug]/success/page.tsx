@@ -110,7 +110,7 @@ export default function TicketSuccessPage() {
                     </div>
                     <div className="flex items-center gap-3 text-sm">
                       <Calendar className="h-5 w-5 text-violet-500 flex-shrink-0" />
-                      <span>Add the event to your calendar from the email</span>
+                      <span>Add the show to your calendar from the email</span>
                     </div>
                   </div>
 
@@ -128,7 +128,7 @@ export default function TicketSuccessPage() {
                   >
                     <Link href="../">
                       <ArrowLeft className="mr-2 h-4 w-4" />
-                      Back to Event
+                      Back to Show
                     </Link>
                   </Button>
                   <Button
