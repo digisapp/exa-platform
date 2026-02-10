@@ -588,6 +588,7 @@ export default function AdminCrmPage() {
               <SelectItem value="all">All Sources</SelectItem>
               <SelectItem value="instagram">Instagram</SelectItem>
               <SelectItem value="email">Email</SelectItem>
+              <SelectItem value="gig-email">Gig Email</SelectItem>
               <SelectItem value="dashboard">Dashboard</SelectItem>
               <SelectItem value="website">Website</SelectItem>
             </SelectContent>
