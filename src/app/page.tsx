@@ -131,21 +131,21 @@ export default async function HomePage() {
           href="https://digis.cc"
           target="_blank"
           rel="noopener noreferrer"
-          className="block bg-gradient-to-r from-violet-600 via-pink-500 to-violet-600 bg-[length:200%_100%] animate-gradient py-2 hover:opacity-90 transition-opacity cursor-pointer"
+          className="block bg-gradient-to-r from-violet-600 via-pink-500 to-violet-600 bg-[length:200%_100%] animate-gradient py-3.5 hover:opacity-90 transition-opacity cursor-pointer"
         >
           <div className="overflow-hidden whitespace-nowrap">
             <div className="inline-block animate-marquee">
-              <span className="mx-8 text-sm font-medium text-white inline-flex items-center gap-2">
-                ✨ Join our <Image src="/digis-logo-white.png" alt="Digis" width={60} height={16} className="h-4 w-auto inline-block" /> Community — Live Streams, Virtual Gifts, AI Twin & Chats ✨
+              <span className="mx-8 text-base font-semibold text-white inline-flex items-center gap-2">
+                ✨ Join our <Image src="/digis-logo-white.png" alt="Digis" width={72} height={20} className="h-5 w-auto inline-block" /> Community — Live Streams, Virtual Gifts, AI Twin & Chats ✨
               </span>
-              <span className="mx-8 text-sm font-medium text-white inline-flex items-center gap-2">
-                🎁 Join our <Image src="/digis-logo-white.png" alt="Digis" width={60} height={16} className="h-4 w-auto inline-block" /> Community — Live Streams, Virtual Gifts, AI Twin & Chats 🎁
+              <span className="mx-8 text-base font-semibold text-white inline-flex items-center gap-2">
+                🎁 Join our <Image src="/digis-logo-white.png" alt="Digis" width={72} height={20} className="h-5 w-auto inline-block" /> Community — Live Streams, Virtual Gifts, AI Twin & Chats 🎁
               </span>
-              <span className="mx-8 text-sm font-medium text-white inline-flex items-center gap-2">
-                ✨ Join our <Image src="/digis-logo-white.png" alt="Digis" width={60} height={16} className="h-4 w-auto inline-block" /> Community — Live Streams, Virtual Gifts, AI Twin & Chats ✨
+              <span className="mx-8 text-base font-semibold text-white inline-flex items-center gap-2">
+                ✨ Join our <Image src="/digis-logo-white.png" alt="Digis" width={72} height={20} className="h-5 w-auto inline-block" /> Community — Live Streams, Virtual Gifts, AI Twin & Chats ✨
               </span>
-              <span className="mx-8 text-sm font-medium text-white inline-flex items-center gap-2">
-                🎁 Join our <Image src="/digis-logo-white.png" alt="Digis" width={60} height={16} className="h-4 w-auto inline-block" /> Community — Live Streams, Virtual Gifts, AI Twin & Chats 🎁
+              <span className="mx-8 text-base font-semibold text-white inline-flex items-center gap-2">
+                🎁 Join our <Image src="/digis-logo-white.png" alt="Digis" width={72} height={20} className="h-5 w-auto inline-block" /> Community — Live Streams, Virtual Gifts, AI Twin & Chats 🎁
               </span>
             </div>
           </div>
