@@ -42,6 +42,7 @@ import {
   TrendingUp,
   BarChart3,
   Copy,
+  Trash2,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
@@ -108,6 +109,8 @@ const CALL_OUTCOMES = [
   { value: "no_decision", label: "No Decision Yet", color: "bg-amber-500" },
 ];
 
+const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
 export default function AdminCrmPage() {
   const [callRequests, setCallRequests] = useState<CallRequest[]>([]);
   const [tags, setTags] = useState<CrmTag[]>([]);
@@ -115,6 +118,7 @@ export default function AdminCrmPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sourceFilter, setSourceFilter] = useState("all");
+  const [dayFilter, setDayFilter] = useState("all");
 
   // Dialog states
   const [selectedRequest, setSelectedRequest] = useState<CallRequest | null>(null);
@@ -414,6 +418,21 @@ export default function AdminCrmPage() {
     }
   };
 
+  const deleteRequest = async (id: string) => {
+    const supabase = createClient();
+    try {
+      const { error } = await (supabase as any)
+        .from("call_requests")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+      toast.success("Call request deleted");
+      fetchData();
+    } catch {
+      toast.error("Failed to delete");
+    }
+  };
+
   const openDetails = (request: CallRequest) => {
     setSelectedRequest(request);
     setDetailsOpen(true);
@@ -461,12 +480,25 @@ export default function AdminCrmPage() {
 
   const filteredRequests = callRequests.filter((req) => {
     const query = searchQuery.toLowerCase();
-    return (
+    const matchesSearch =
       req.name.toLowerCase().includes(query) ||
       req.phone.includes(query) ||
       req.instagram_handle?.toLowerCase().includes(query) ||
-      req.email?.toLowerCase().includes(query)
-    );
+      req.email?.toLowerCase().includes(query);
+
+    if (!matchesSearch) return false;
+
+    if (dayFilter !== "all" && req.scheduled_at) {
+      const dayIndex = DAY_NAMES.indexOf(dayFilter);
+      if (dayIndex >= 0) {
+        const scheduledDay = new Date(req.scheduled_at).getDay();
+        if (scheduledDay !== dayIndex) return false;
+      }
+    } else if (dayFilter !== "all" && !req.scheduled_at) {
+      return false;
+    }
+
+    return true;
   });
 
   // Stats
@@ -596,6 +628,38 @@ export default function AdminCrmPage() {
         </div>
       </div>
 
+      {/* Day Tabs */}
+      <div className="flex gap-1 overflow-x-auto pb-1">
+        <Button
+          variant={dayFilter === "all" ? "default" : "outline"}
+          size="sm"
+          className={`text-xs h-8 ${dayFilter === "all" ? "bg-pink-500 hover:bg-pink-600" : ""}`}
+          onClick={() => setDayFilter("all")}
+        >
+          All
+        </Button>
+        {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => {
+          const count = callRequests.filter((r) => {
+            if (!r.scheduled_at) return false;
+            return DAY_NAMES[new Date(r.scheduled_at).getDay()] === day;
+          }).length;
+          return (
+            <Button
+              key={day}
+              variant={dayFilter === day ? "default" : "outline"}
+              size="sm"
+              className={`text-xs h-8 ${dayFilter === day ? "bg-pink-500 hover:bg-pink-600" : ""}`}
+              onClick={() => setDayFilter(day)}
+            >
+              {day}
+              {count > 0 && (
+                <span className="ml-1 text-[10px] opacity-70">({count})</span>
+              )}
+            </Button>
+          );
+        })}
+      </div>
+
       {/* Call Requests List - Mobile optimized */}
       {loading ? (
         <div className="flex justify-center py-12">
@@ -671,13 +735,25 @@ export default function AdminCrmPage() {
                     )}
                   </div>
 
-                  {/* Quick Call Button - Always visible */}
-                  <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                  {/* Quick Actions */}
+                  <div className="flex gap-1.5" onClick={(e) => e.stopPropagation()}>
                     <a href={`tel:${request.phone}`}>
                       <Button size="sm" className="bg-green-500 hover:bg-green-600 h-9 w-9 md:h-10 md:w-10 p-0">
                         <PhoneCall className="h-4 w-4" />
                       </Button>
                     </a>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-9 w-9 md:h-10 md:w-10 p-0 text-red-500 hover:bg-red-500/10 hover:text-red-500 border-red-500/30"
+                      onClick={() => {
+                        if (confirm(`Delete call request from ${request.name}?`)) {
+                          deleteRequest(request.id);
+                        }
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               </CardContent>
