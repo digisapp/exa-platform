@@ -147,7 +147,7 @@ export default async function WorkshopsPage() {
 
           {/* Workshops Grid */}
           {workshops && workshops.length > 0 ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {workshops.map((workshop) => {
                 const workshopDate = new Date(workshop.date);
                 const spotsLeft = workshop.spots_available
@@ -158,68 +158,65 @@ export default async function WorkshopsPage() {
 
                 return (
                   <Link key={workshop.id} href={`/workshops/${workshop.slug}`} className="group">
-                    <Card className="overflow-hidden h-full transition-all group-hover:ring-2 group-hover:ring-pink-500/50 group-hover:shadow-lg group-hover:shadow-pink-500/10">
-                      {/* Cover Image */}
-                      <div className="aspect-video relative bg-gradient-to-br from-pink-500/30 via-violet-500/30 to-cyan-500/30">
-                        {workshop.cover_image_url ? (
-                          <Image
-                            src={workshop.cover_image_url}
-                            alt={workshop.title}
-                            fill
-                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                            className="object-cover transition-transform group-hover:scale-105"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <span className="text-6xl">👠</span>
-                          </div>
-                        )}
-                        <div className="absolute top-3 left-3 flex flex-wrap gap-2">
-                          {workshop.is_featured && (
-                            <Badge className="bg-pink-500/90 text-white border-0">
-                              Featured
-                            </Badge>
-                          )}
-                          {isSoldOut && (
-                            <Badge className="bg-red-500/90 text-white border-0">
-                              Sold Out
-                            </Badge>
-                          )}
-                          {isLimitedSpots && (
-                            <Badge className="bg-amber-500/90 text-white border-0 animate-pulse">
-                              Only {spotsLeft} spots left!
-                            </Badge>
-                          )}
+                    <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-gradient-to-br from-pink-500/30 via-violet-500/30 to-cyan-500/30 transition-all group-hover:ring-2 group-hover:ring-pink-500/50 group-hover:shadow-lg group-hover:shadow-pink-500/10">
+                      {/* Flyer Image */}
+                      {workshop.cover_image_url ? (
+                        <Image
+                          src={workshop.cover_image_url}
+                          alt={workshop.title}
+                          fill
+                          sizes="(max-width: 640px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          className="object-cover transition-transform group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <span className="text-8xl">👠</span>
                         </div>
+                      )}
+
+                      {/* Top Badges */}
+                      <div className="absolute top-3 left-3 flex flex-wrap gap-2 z-10">
+                        {workshop.is_featured && (
+                          <Badge className="bg-pink-500/90 text-white border-0 backdrop-blur-sm">
+                            Featured
+                          </Badge>
+                        )}
+                        {isSoldOut && (
+                          <Badge className="bg-red-500/90 text-white border-0 backdrop-blur-sm">
+                            Sold Out
+                          </Badge>
+                        )}
+                        {isLimitedSpots && (
+                          <Badge className="bg-amber-500/90 text-white border-0 backdrop-blur-sm animate-pulse">
+                            Only {spotsLeft} spots left!
+                          </Badge>
+                        )}
                       </div>
 
-                      <CardContent className="p-5">
-                        <h2 className="text-xl font-bold mb-1 group-hover:text-pink-500 transition-colors line-clamp-2">
+                      {/* Bottom Overlay */}
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent pt-20 pb-5 px-5">
+                        <h2 className="text-xl font-bold text-white mb-1 line-clamp-2 drop-shadow-lg">
                           {workshop.title}
                         </h2>
                         {workshop.subtitle && (
-                          <p className="text-sm text-muted-foreground mb-3 line-clamp-1">
+                          <p className="text-sm text-white/70 mb-3 line-clamp-1">
                             {workshop.subtitle}
                           </p>
                         )}
 
-                        <div className="space-y-2 text-sm text-muted-foreground mb-4">
+                        <div className="space-y-1.5 text-sm text-white/80 mb-3">
                           <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 flex-shrink-0" />
-                            <span>{format(workshopDate, "EEEE, MMMM d, yyyy")}</span>
-                          </div>
-                          {workshop.start_time && (
-                            <div className="flex items-center gap-2">
-                              <Clock className="h-4 w-4 flex-shrink-0" />
-                              <span>
+                            <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
+                            <span>{format(workshopDate, "MMM d, yyyy")}</span>
+                            {workshop.start_time && (
+                              <span className="text-white/60">
                                 {format(new Date(`2000-01-01T${workshop.start_time}`), "h:mm a")}
-                                {workshop.end_time && ` - ${format(new Date(`2000-01-01T${workshop.end_time}`), "h:mm a")}`}
                               </span>
-                            </div>
-                          )}
+                            )}
+                          </div>
                           {(workshop.location_city || workshop.location_state) && (
                             <div className="flex items-center gap-2">
-                              <MapPin className="h-4 w-4 flex-shrink-0" />
+                              <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
                               <span>
                                 {workshop.location_city && workshop.location_state
                                   ? `${workshop.location_city}, ${workshop.location_state}`
@@ -227,33 +224,27 @@ export default async function WorkshopsPage() {
                               </span>
                             </div>
                           )}
-                          {spotsLeft !== null && spotsLeft > 0 && (
-                            <div className="flex items-center gap-2">
-                              <Users className="h-4 w-4 flex-shrink-0" />
-                              <span>{spotsLeft} spots remaining</span>
-                            </div>
-                          )}
                         </div>
 
                         {/* Price and CTA */}
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <span className="text-2xl font-bold text-pink-500">
+                            <span className="text-2xl font-bold text-white">
                               ${(workshop.price_cents / 100).toFixed(0)}
                             </span>
                             {workshop.original_price_cents && workshop.original_price_cents > workshop.price_cents && (
-                              <span className="text-sm text-muted-foreground line-through">
+                              <span className="text-sm text-white/50 line-through">
                                 ${(workshop.original_price_cents / 100).toFixed(0)}
                               </span>
                             )}
                           </div>
-                          <div className="flex items-center text-pink-500 font-medium text-sm group-hover:gap-2 transition-all">
+                          <div className="flex items-center text-pink-400 font-medium text-sm group-hover:gap-2 transition-all">
                             <span>{isSoldOut ? "View Details" : "Register"}</span>
                             <ArrowRight className="h-4 w-4 ml-1 transition-transform group-hover:translate-x-1" />
                           </div>
                         </div>
-                      </CardContent>
-                    </Card>
+                      </div>
+                    </div>
                   </Link>
                 );
               })}
