@@ -496,7 +496,9 @@ export default function AdminCrmPage() {
 
     if (!matchesSearch) return false;
 
-    if (dayFilter !== "all" && req.scheduled_at) {
+    if (dayFilter === "completed") {
+      if (req.status !== "completed") return false;
+    } else if (dayFilter !== "all" && req.scheduled_at) {
       const dayIndex = DAY_NAMES.indexOf(dayFilter);
       if (dayIndex >= 0) {
         const scheduledDay = new Date(req.scheduled_at).getDay();
@@ -666,6 +668,18 @@ export default function AdminCrmPage() {
             </Button>
           );
         })}
+        <Button
+          variant={dayFilter === "completed" ? "default" : "outline"}
+          size="sm"
+          className={`text-xs h-8 ${dayFilter === "completed" ? "bg-green-500 hover:bg-green-600" : "text-green-500 border-green-500/30"}`}
+          onClick={() => setDayFilter("completed")}
+        >
+          <CheckCircle2 className="h-3 w-3 mr-1" />
+          Completed
+          {stats.completed > 0 && (
+            <span className="ml-1 text-[10px] opacity-70">({stats.completed})</span>
+          )}
+        </Button>
       </div>
 
       {/* Call Requests List - Mobile optimized */}
