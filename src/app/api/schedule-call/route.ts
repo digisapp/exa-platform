@@ -23,10 +23,11 @@ export async function POST(request: NextRequest) {
     const name = `${firstName.trim()} ${lastName.trim()}`;
 
     // Parse the selected day + time into a scheduled_at date
+    // Append EST so Vercel (UTC) parses as Eastern Time, not UTC
     let scheduledAt: string | null = null;
     try {
       const year = new Date().getFullYear();
-      const dateStr = `${day}, ${year} ${time}`;
+      const dateStr = `${day}, ${year} ${time} EST`;
       const parsed = new Date(dateStr);
       if (!isNaN(parsed.getTime())) {
         if (parsed < new Date()) {
