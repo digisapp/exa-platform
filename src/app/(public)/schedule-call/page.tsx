@@ -1,24 +1,12 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, CheckCircle, AlertTriangle, Phone } from "lucide-react";
-
-interface ModelInfo {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-}
-
-interface GigInfo {
-  id: string;
-  title: string;
-}
+import { Loader2, CheckCircle, Phone } from "lucide-react";
 
 function getNext14Weekdays(): string[] {
   const days: string[] = [];
@@ -29,7 +17,6 @@ function getNext14Weekdays(): string[] {
   while (days.length < 14) {
     const dow = current.getDay();
     if (dow !== 0 && dow !== 6) {
-      // Format as "Mon Jan 6"
       const label = current.toLocaleDateString("en-US", {
         weekday: "short",
         month: "short",
@@ -53,45 +40,21 @@ const TIME_SLOTS = [
 
 function ScheduleCallContent() {
   const searchParams = useSearchParams();
-  const token = searchParams.get("token");
+  const gigTitle = searchParams.get("gig") || "";
 
-  const hasToken = !!token;
-  const [state, setState] = useState<"loading" | "form" | "submitting" | "success" | "error" | "already_scheduled">(hasToken ? "loading" : "error");
-  const [model, setModel] = useState<ModelInfo | null>(null);
-  const [gig, setGig] = useState<GigInfo | null>(null);
-
+  const [state, setState] = useState<"form" | "submitting" | "success">("form");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [instagram, setInstagram] = useState("");
   const [phone, setPhone] = useState("");
   const [selectedDay, setSelectedDay] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("");
 
   const weekdays = getNext14Weekdays();
 
-  useEffect(() => {
-    if (!token) return;
-
-    async function validate() {
-      try {
-        const res = await fetch(`/api/schedule-call?token=${encodeURIComponent(token!)}`);
-        if (!res.ok) {
-          setState("error");
-          return;
-        }
-        const data = await res.json();
-        setModel(data.model);
-        setGig(data.gig);
-        setPhone(data.model?.phone || "");
-        setState("form");
-      } catch {
-        setState("error");
-      }
-    }
-
-    validate();
-  }, [token]);
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!token || !selectedDay || !selectedTime) return;
+    if (!firstName || !lastName || !phone || !selectedDay || !selectedTime) return;
 
     setState("submitting");
     try {
@@ -99,84 +62,36 @@ function ScheduleCallContent() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          token,
-          preferred_days: [selectedDay],
-          preferred_time_range: selectedTime,
-          timezone: "America/New_York",
+          firstName,
+          lastName,
+          instagram: instagram || undefined,
           phone,
+          day: selectedDay,
+          time: selectedTime,
+          gigTitle: gigTitle || undefined,
         }),
       });
 
-      const data = await res.json();
-
-      if (res.status === 409 && data.error === "already_scheduled") {
-        setState("already_scheduled");
-        return;
-      }
-
       if (!res.ok) {
-        setState("error");
+        setState("form");
         return;
       }
 
       setState("success");
     } catch {
-      setState("error");
+      setState("form");
     }
   }
 
-  if (state === "loading") {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-pink-500" />
-      </div>
-    );
-  }
-
-  if (state === "error") {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="max-w-md w-full">
-          <CardContent className="pt-6 text-center space-y-4">
-            <AlertTriangle className="h-12 w-12 text-amber-500 mx-auto" />
-            <h2 className="text-xl font-bold">Invalid or Expired Link</h2>
-            <p className="text-muted-foreground">
-              This scheduling link is no longer valid. It may have expired or already been used.
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Need help? Contact us at{" "}
-              <a href="mailto:info@examodels.com" className="text-pink-500 underline">
-                info@examodels.com
-              </a>{" "}
-              or DM us on Instagram{" "}
-              <a
-                href="https://instagram.com/eaboratory"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-pink-500 underline"
-              >
-                @eaboratory
-              </a>
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (state === "success" || state === "already_scheduled") {
+  if (state === "success") {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
           <CardContent className="pt-6 text-center space-y-4">
             <CheckCircle className="h-12 w-12 text-green-500 mx-auto" />
-            <h2 className="text-xl font-bold">
-              {state === "already_scheduled" ? "Already Scheduled!" : "Call Scheduled!"}
-            </h2>
+            <h2 className="text-xl font-bold">Call Scheduled!</h2>
             <p className="text-muted-foreground">
-              {state === "already_scheduled"
-                ? "You've already submitted your preferences for this gig. We'll be in touch soon!"
-                : "Thanks for letting us know your availability. We'll call you soon!"}
+              Thanks for letting us know your availability. We&apos;ll call you soon!
             </p>
           </CardContent>
         </Card>
@@ -192,19 +107,52 @@ function ScheduleCallContent() {
             <Phone className="h-6 w-6 text-white" />
           </div>
           <CardTitle className="text-2xl">Schedule a Call</CardTitle>
-          {gig && (
+          {gigTitle && (
             <p className="text-muted-foreground text-sm mt-1">
-              Re: {gig.title}
+              Re: {gigTitle}
             </p>
           )}
-          {model && (
-            <p className="text-muted-foreground text-sm">
-              Hey {model.firstName}! Pick a time that works for you.
-            </p>
-          )}
+          <p className="text-muted-foreground text-sm">
+            Pick a time that works for you and we&apos;ll give you a call!
+          </p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Name */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name</Label>
+                <Input
+                  id="firstName"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="First name"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input
+                  id="lastName"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="Last name"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Instagram */}
+            <div className="space-y-2">
+              <Label htmlFor="instagram">Instagram</Label>
+              <Input
+                id="instagram"
+                value={instagram}
+                onChange={(e) => setInstagram(e.target.value)}
+                placeholder="@username"
+              />
+            </div>
+
             {/* Phone */}
             <div className="space-y-2">
               <Label htmlFor="phone">Phone Number</Label>
@@ -268,7 +216,7 @@ function ScheduleCallContent() {
             <Button
               type="submit"
               className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700"
-              disabled={state === "submitting" || !selectedDay || !selectedTime || !phone}
+              disabled={state === "submitting" || !selectedDay || !selectedTime || !phone || !firstName || !lastName}
             >
               {state === "submitting" ? (
                 <>

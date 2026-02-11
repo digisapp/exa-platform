@@ -2,7 +2,6 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendScheduleCallEmail } from "@/lib/email";
-import { createEmailToken } from "@/lib/email-token";
 import { format } from "date-fns";
 
 const BASE_URL =
@@ -149,8 +148,7 @@ export async function POST(request: NextRequest) {
 
     async function sendOne(r: any): Promise<void> {
       try {
-        const token = createEmailToken(r.modelId, gig.id);
-        const scheduleUrl = `${BASE_URL}/schedule-call?token=${token}`;
+        const scheduleUrl = `${BASE_URL}/schedule-call?gig=${encodeURIComponent(gig.title)}`;
 
         const result = await sendScheduleCallEmail({
           to: r.email,
