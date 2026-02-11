@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
       let allModelsQuery = supabase.from("models")
         .select("id, user_id, created_at, claimed_at, last_active_at", { count: "exact" });
       allModelsQuery = applyFilters(allModelsQuery);
-      allModelsQuery = allModelsQuery.range(0, MAX_COMPUTED_SORT_MODELS - 1);
+      allModelsQuery = allModelsQuery.order("created_at", { ascending: false }).range(0, MAX_COMPUTED_SORT_MODELS - 1);
 
       const { data: allModels, count, error: allError } = await allModelsQuery;
       if (allError) {
