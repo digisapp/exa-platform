@@ -38,6 +38,8 @@ import {
   Calendar,
   Clock,
   CheckCircle,
+  CheckCircle2,
+  PhoneOff,
   Target,
   TrendingUp,
   BarChart3,
@@ -750,6 +752,24 @@ export default function AdminCrmPage() {
                         <PhoneCall className="h-4 w-4" />
                       </Button>
                     </a>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-9 w-9 md:h-10 md:w-10 p-0 text-green-500 hover:bg-green-500/10 hover:text-green-500 border-green-500/30"
+                      title="Mark Completed"
+                      onClick={() => updateStatus(request.id, "completed")}
+                    >
+                      <CheckCircle2 className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-9 w-9 md:h-10 md:w-10 p-0 text-red-500 hover:bg-red-500/10 hover:text-red-500 border-red-500/30"
+                      title="No Answer"
+                      onClick={() => updateStatus(request.id, "no_answer")}
+                    >
+                      <PhoneOff className="h-4 w-4" />
+                    </Button>
                     <Button
                       size="sm"
                       variant="outline"
