@@ -117,7 +117,7 @@ export default async function WorkshopsPage() {
         <div className="relative overflow-hidden">
           <div className="aspect-[21/9] md:aspect-[3/1] relative">
             <iframe
-              src="https://www.youtube.com/embed/Iu68o0MCuvw?autoplay=1&mute=1&loop=1&playlist=Iu68o0MCuvw&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1"
+              src="https://www.youtube.com/embed/TnoZi5vL7Vk?autoplay=1&mute=1&loop=1&playlist=TnoZi5vL7Vk&start=121&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1"
               title="EXA Workshops"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
