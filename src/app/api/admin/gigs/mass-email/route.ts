@@ -2,7 +2,6 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendScheduleCallEmail } from "@/lib/email";
-import { format } from "date-fns";
 
 const BASE_URL =
   process.env.NEXT_PUBLIC_APP_URL || "https://www.examodels.com";
@@ -48,7 +47,7 @@ export async function GET(request: NextRequest) {
     // Get gig details
     const { data: gig } = await adminClient
       .from("gigs")
-      .select("id, title, start_at, location_city, location_state")
+      .select("id, title")
       .eq("id", gigId)
       .single();
 
@@ -78,15 +77,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Build recipient list with tokens
-    const gigDate = gig.start_at
-      ? format(new Date(gig.start_at), "MMMM d, yyyy")
-      : undefined;
-    const gigLocation =
-      gig.location_city && gig.location_state
-        ? `${gig.location_city}, ${gig.location_state}`
-        : gig.location_city || gig.location_state || undefined;
-
+    // Build recipient list
     const recipients = (applications || [])
       .filter((app: any) => app.model?.email)
       .map((app: any) => ({
@@ -100,8 +91,6 @@ export async function GET(request: NextRequest) {
       gig: {
         id: gig.id,
         title: gig.title,
-        date: gigDate,
-        location: gigLocation,
       },
     });
   } catch (error) {
@@ -154,8 +143,6 @@ export async function POST(request: NextRequest) {
           to: r.email,
           modelName: r.modelName,
           gigTitle: gig.title,
-          gigDate: gig.date,
-          gigLocation: gig.location,
           scheduleUrl,
         });
 
@@ -174,8 +161,6 @@ export async function POST(request: NextRequest) {
               to: r.email,
               modelName: r.modelName,
               gigTitle: gig.title,
-              gigDate: gig.date,
-              gigLocation: gig.location,
               scheduleUrl,
             });
             if (retry.success && !(retry as any).skipped) {

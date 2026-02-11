@@ -4137,15 +4137,11 @@ export async function sendScheduleCallEmail({
   to,
   modelName,
   gigTitle,
-  gigDate,
-  gigLocation,
   scheduleUrl,
 }: {
   to: string;
   modelName: string;
   gigTitle: string;
-  gigDate?: string;
-  gigLocation?: string;
   scheduleUrl: string;
 }) {
   try {
@@ -4157,19 +4153,6 @@ export async function sendScheduleCallEmail({
     const unsubscribeToken = await getUnsubscribeToken(to);
     const safeName = escapeHtml(modelName);
     const safeTitle = escapeHtml(gigTitle);
-
-    const gigDetailsHtml =
-      gigDate || gigLocation
-        ? `
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
-                <tr>
-                  <td style="padding: 15px; background-color: #262626; border-radius: 8px;">
-                    ${gigDate ? `<p style="margin: 0 0 ${gigLocation ? "8px" : "0"}; color: #a1a1aa; font-size: 14px;">&#128197; ${escapeHtml(gigDate)}</p>` : ""}
-                    ${gigLocation ? `<p style="margin: 0; color: #a1a1aa; font-size: 14px;">&#128205; ${escapeHtml(gigLocation)}</p>` : ""}
-                  </td>
-                </tr>
-              </table>`
-        : "";
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
@@ -4210,8 +4193,6 @@ export async function sendScheduleCallEmail({
                 We'd love to discuss <strong style="color: #ffffff;">${safeTitle}</strong> with you! Let's hop on a quick call to go over the details and answer any questions you might have.
               </p>
 
-              ${gigDetailsHtml}
-
               <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
                 Pick a time that works best for you and we'll give you a call:
               </p>
@@ -4227,9 +4208,6 @@ export async function sendScheduleCallEmail({
                 </tr>
               </table>
 
-              <p style="margin: 0; color: #71717a; font-size: 13px; text-align: center;">
-                This link expires in 30 days
-              </p>
             </td>
           </tr>
 

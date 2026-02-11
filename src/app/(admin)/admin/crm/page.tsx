@@ -113,7 +113,7 @@ export default function AdminCrmPage() {
   const [tags, setTags] = useState<CrmTag[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("pending");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [sourceFilter, setSourceFilter] = useState("all");
 
   // Dialog states
