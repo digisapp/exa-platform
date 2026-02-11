@@ -14,6 +14,7 @@ import {
   ArrowLeft,
   CheckCircle,
   Briefcase,
+  Camera,
 } from "lucide-react";
 import { format } from "date-fns";
 import type { Metadata } from "next";
@@ -43,6 +44,7 @@ interface Workshop {
   spots_sold: number;
   highlights: string[] | null;
   what_to_bring: string[] | null;
+  gallery_media: string[] | null;
   instructors: string[] | null;
   status: string;
   meta_title: string | null;
@@ -282,6 +284,37 @@ export default async function WorkshopPage({ params }: Props) {
                     </ul>
                   </CardContent>
                 </Card>
+              )}
+
+              {/* Gallery */}
+              {workshop.gallery_media && workshop.gallery_media.length > 0 && (
+                <div>
+                  <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <Camera className="h-5 w-5" />
+                    Gallery
+                  </h2>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {workshop.gallery_media.map((url, i) => (
+                      <div key={i} className="relative aspect-square rounded-xl overflow-hidden bg-muted group">
+                        {url.match(/\.(mp4|mov)$/i) ? (
+                          <video
+                            src={url}
+                            controls
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <Image
+                            src={url}
+                            alt={`${workshop.title} gallery ${i + 1}`}
+                            fill
+                            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                            className="object-cover transition-transform group-hover:scale-105"
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
 

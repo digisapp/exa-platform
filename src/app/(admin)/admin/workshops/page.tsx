@@ -30,8 +30,11 @@ import {
   DollarSign,
   Eye,
   GraduationCap,
+  ImageIcon,
+  X,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { format } from "date-fns";
 
 interface Workshop {
@@ -54,6 +57,7 @@ interface Workshop {
   spots_sold: number;
   highlights: string[] | null;
   what_to_bring: string[] | null;
+  gallery_media: string[] | null;
   status: string;
   is_featured: boolean;
   meta_title: string | null;
@@ -84,6 +88,8 @@ export default function AdminWorkshopsPage() {
   const [editingWorkshop, setEditingWorkshop] = useState<Workshop | null>(null);
   const [selectedWorkshop, setSelectedWorkshop] = useState<Workshop | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -91,6 +97,8 @@ export default function AdminWorkshopsPage() {
     subtitle: "",
     slug: "",
     description: "",
+    cover_image_url: "",
+    gallery_media: [] as string[],
     location_city: "",
     location_state: "",
     location_address: "",
@@ -166,6 +174,8 @@ export default function AdminWorkshopsPage() {
       subtitle: "",
       slug: "",
       description: "",
+      cover_image_url: "",
+      gallery_media: [],
       location_city: "",
       location_state: "",
       location_address: "",
@@ -192,6 +202,8 @@ export default function AdminWorkshopsPage() {
       subtitle: workshop.subtitle || "",
       slug: workshop.slug,
       description: workshop.description || "",
+      cover_image_url: workshop.cover_image_url || "",
+      gallery_media: workshop.gallery_media || [],
       location_city: workshop.location_city || "",
       location_state: workshop.location_state || "",
       location_address: workshop.location_address || "",
@@ -211,6 +223,126 @@ export default function AdminWorkshopsPage() {
     setShowForm(true);
   };
 
+  const handleFlyerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Invalid file type. Use JPEG, PNG, WebP, or GIF.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File too large. Maximum size is 10MB.");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const response = await fetch("/api/admin/workshops/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename: file.name, contentType: file.type }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        toast.error(data.error || "Failed to get upload URL");
+        return;
+      }
+
+      const uploadResponse = await fetch(data.signedUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      if (!uploadResponse.ok) {
+        toast.error("Failed to upload file");
+        return;
+      }
+
+      setFormData(prev => ({ ...prev, cover_image_url: data.publicUrl }));
+      toast.success("Flyer uploaded!");
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("Failed to upload flyer");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const remainingSlots = 10 - formData.gallery_media.length;
+    if (files.length > remainingSlots) {
+      toast.error(`You can only add ${remainingSlots} more item${remainingSlots !== 1 ? "s" : ""} (max 10 total)`);
+      return;
+    }
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif", "video/mp4", "video/quicktime"];
+    for (const file of Array.from(files)) {
+      if (!allowedTypes.includes(file.type)) {
+        toast.error(`Invalid file type for ${file.name}. Use JPEG, PNG, WebP, GIF, MP4, or MOV.`);
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error(`${file.name} is too large. Maximum size is 10MB.`);
+        return;
+      }
+    }
+
+    setUploadingGallery(true);
+    const uploadedUrls: string[] = [];
+
+    try {
+      for (const file of Array.from(files)) {
+        const response = await fetch("/api/admin/workshops/upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ filename: file.name, contentType: file.type }),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          toast.error(data.error || `Failed to upload ${file.name}`);
+          continue;
+        }
+
+        const uploadResponse = await fetch(data.signedUrl, {
+          method: "PUT",
+          headers: { "Content-Type": file.type },
+          body: file,
+        });
+        if (uploadResponse.ok) {
+          uploadedUrls.push(data.publicUrl);
+        } else {
+          toast.error(`Failed to upload ${file.name}`);
+        }
+      }
+
+      if (uploadedUrls.length > 0) {
+        setFormData(prev => ({
+          ...prev,
+          gallery_media: [...prev.gallery_media, ...uploadedUrls],
+        }));
+        toast.success(`${uploadedUrls.length} file${uploadedUrls.length !== 1 ? "s" : ""} uploaded!`);
+      }
+    } catch (error) {
+      console.error("Gallery upload error:", error);
+      toast.error("Failed to upload media");
+    } finally {
+      setUploadingGallery(false);
+      e.target.value = "";
+    }
+  };
+
+  const removeGalleryItem = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      gallery_media: prev.gallery_media.filter((_, i) => i !== index),
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -220,6 +352,8 @@ export default function AdminWorkshopsPage() {
       subtitle: formData.subtitle || null,
       slug: formData.slug,
       description: formData.description || null,
+      cover_image_url: formData.cover_image_url || null,
+      gallery_media: formData.gallery_media.length > 0 ? formData.gallery_media : null,
       location_city: formData.location_city || null,
       location_state: formData.location_state || null,
       location_address: formData.location_address || null,
@@ -582,6 +716,114 @@ export default function AdminWorkshopsPage() {
                   placeholder="Describe the workshop..."
                   rows={4}
                 />
+              </div>
+
+              {/* Flyer Upload */}
+              <div className="col-span-2 space-y-2">
+                <Label>Event Flyer <span className="text-muted-foreground text-xs">(optional)</span></Label>
+                <div className="flex items-start gap-4">
+                  {formData.cover_image_url ? (
+                    <div className="relative">
+                      <Image
+                        src={formData.cover_image_url}
+                        alt="Workshop flyer"
+                        width={128}
+                        height={160}
+                        className="w-32 h-40 object-cover rounded-lg border"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute -top-2 -right-2 h-6 w-6"
+                        onClick={() => setFormData(prev => ({ ...prev, cover_image_url: "" }))}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center w-32 h-40 border-2 border-dashed border-muted-foreground/25 rounded-lg cursor-pointer hover:border-muted-foreground/50 transition-colors">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleFlyerUpload}
+                        disabled={uploading}
+                      />
+                      {uploading ? (
+                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                      ) : (
+                        <>
+                          <ImageIcon className="h-8 w-8 text-muted-foreground mb-2" />
+                          <span className="text-xs text-muted-foreground text-center px-2">Upload Flyer</span>
+                        </>
+                      )}
+                    </label>
+                  )}
+                  <div className="text-sm text-muted-foreground">
+                    <p>Upload a flyer or promotional image.</p>
+                    <p className="mt-1">Recommended: Portrait orientation (e.g., 800x1000px)</p>
+                    <p>Max size: 10MB</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Gallery Media */}
+              <div className="col-span-2 space-y-2">
+                <Label>Gallery Media <span className="text-muted-foreground text-xs">(optional, up to 10)</span></Label>
+                <div className="flex flex-wrap gap-3">
+                  {formData.gallery_media.map((url, index) => (
+                    <div key={index} className="relative">
+                      {url.match(/\.(mp4|mov)$/i) ? (
+                        <video
+                          src={url}
+                          className="w-24 h-24 object-cover rounded-lg border"
+                          muted
+                        />
+                      ) : (
+                        <Image
+                          src={url}
+                          alt={`Gallery ${index + 1}`}
+                          width={96}
+                          height={96}
+                          className="w-24 h-24 object-cover rounded-lg border"
+                        />
+                      )}
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute -top-2 -right-2 h-5 w-5"
+                        onClick={() => removeGalleryItem(index)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                  {formData.gallery_media.length < 10 && (
+                    <label className="flex flex-col items-center justify-center w-24 h-24 border-2 border-dashed border-muted-foreground/25 rounded-lg cursor-pointer hover:border-muted-foreground/50 transition-colors">
+                      <input
+                        type="file"
+                        accept="image/*,video/*"
+                        multiple
+                        className="hidden"
+                        onChange={handleGalleryUpload}
+                        disabled={uploadingGallery}
+                      />
+                      {uploadingGallery ? (
+                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                      ) : (
+                        <>
+                          <ImageIcon className="h-6 w-6 text-muted-foreground mb-1" />
+                          <span className="text-xs text-muted-foreground">Add</span>
+                        </>
+                      )}
+                    </label>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {formData.gallery_media.length}/10 media • Photos and videos to show the vibe
+                </p>
               </div>
 
               <div className="col-span-2">

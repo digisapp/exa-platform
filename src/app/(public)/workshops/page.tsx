@@ -113,18 +113,37 @@ export default async function WorkshopsPage() {
           actorType={actorType}
         />
 
-        <main className="container px-4 md:px-8 py-8">
-          {/* Header */}
-          <div className="mb-8 text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-pink-500/10 text-pink-500 text-sm font-medium mb-4">
-              <Sparkles className="h-4 w-4" />
-              Professional Training
-            </div>
-            <h1 className="text-4xl font-bold mb-3">Model Workshops</h1>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Elevate your modeling career with our professional workshops. Learn from industry experts and gain the skills you need to succeed.
-            </p>
+        {/* Hero Section with YouTube Video */}
+        <div className="relative overflow-hidden">
+          <div className="aspect-[21/9] md:aspect-[3/1] relative">
+            <iframe
+              src="https://www.youtube.com/embed/Iu68o0MCuvw?autoplay=1&mute=1&loop=1&playlist=Iu68o0MCuvw&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1"
+              title="EXA Workshops"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="absolute inset-0 w-full h-full"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-r from-background/60 to-transparent pointer-events-none" />
           </div>
+
+          {/* Hero Text Overlay */}
+          <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 pointer-events-none">
+            <div className="container px-4 md:px-8">
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="h-5 w-5 text-pink-500" />
+                <Badge className="bg-gradient-to-r from-pink-500 to-violet-500 text-white border-0 px-3 py-1">
+                  Professional Training
+                </Badge>
+              </div>
+              <h1 className="text-4xl md:text-6xl font-bold text-white mb-3 drop-shadow-lg">
+                Model Workshops
+              </h1>
+            </div>
+          </div>
+        </div>
+
+        <main className="container px-4 md:px-8 py-8">
 
           {/* Workshops Grid */}
           {workshops && workshops.length > 0 ? (
