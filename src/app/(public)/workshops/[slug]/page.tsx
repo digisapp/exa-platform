@@ -165,19 +165,20 @@ export default async function WorkshopPage({ params }: Props) {
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Cover Image */}
-              <div className="aspect-video relative rounded-xl overflow-hidden bg-gradient-to-br from-pink-500/30 via-violet-500/30 to-cyan-500/30">
+              {/* Cover Image / Flyer */}
+              <div className="relative rounded-xl overflow-hidden bg-gradient-to-br from-pink-500/30 via-violet-500/30 to-cyan-500/30">
                 {workshop.cover_image_url ? (
                   <Image
                     src={workshop.cover_image_url}
                     alt={workshop.title}
-                    fill
+                    width={800}
+                    height={1000}
                     sizes="(max-width: 1024px) 100vw, 66vw"
-                    className="object-cover"
+                    className="w-full h-auto"
                     priority
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center">
+                  <div className="aspect-video flex items-center justify-center">
                     <span className="text-8xl">👠</span>
                   </div>
                 )}
