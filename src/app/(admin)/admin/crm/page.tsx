@@ -111,6 +111,12 @@ const CALL_OUTCOMES = [
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return (parts[0]?.[0] || "?").toUpperCase();
+}
+
 export default function AdminCrmPage() {
   const [callRequests, setCallRequests] = useState<CallRequest[]>([]);
   const [tags, setTags] = useState<CrmTag[]>([]);
@@ -696,7 +702,9 @@ export default function AdminCrmPage() {
                         className="object-cover"
                       />
                     ) : (
-                      <User className="h-5 w-5 md:h-6 md:w-6 text-muted-foreground" />
+                      <span className="text-sm md:text-base font-semibold text-muted-foreground">
+                        {getInitials(request.name)}
+                      </span>
                     )}
                   </div>
 
@@ -787,7 +795,9 @@ export default function AdminCrmPage() {
                           className="object-cover"
                         />
                       ) : (
-                        <User className="h-7 w-7 text-muted-foreground" />
+                        <span className="text-lg font-semibold text-muted-foreground">
+                          {getInitials(selectedRequest.name)}
+                        </span>
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
