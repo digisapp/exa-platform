@@ -17,10 +17,13 @@ import {
   Clock,
   Tv,
   Play,
+  Calendar,
+  MapPin,
 } from "lucide-react";
 import { TopModelsCarousel } from "@/components/home/TopModelsCarousel";
 import { UpcomingEventsCarousel } from "@/components/home/UpcomingEventsCarousel";
 import { formatCoins } from "@/lib/coin-config";
+import { format } from "date-fns";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 // Cache homepage for 5 minutes - model list changes infrequently
@@ -101,6 +104,17 @@ export default async function HomePage() {
     .eq("status", "active")
     .order("ends_at", { ascending: true })
     .limit(4);
+
+  // Fetch upcoming workshop for flyer banner
+  const { data: upcomingWorkshop } = await (supabase as any)
+    .from("workshops")
+    .select("slug, title, subtitle, cover_image_url, date, location_city, location_state, price_cents, spots_available, spots_sold")
+    .eq("status", "upcoming")
+    .eq("is_published", true)
+    .gte("date", new Date().toISOString().split("T")[0])
+    .order("date", { ascending: true })
+    .limit(1)
+    .single();
 
   // Get actual EXA Boost leaderboard from top_model_leaderboard table
   const { data: leaderboardModels } = await (supabase as any)
@@ -429,6 +443,69 @@ export default async function HomePage() {
             </div>
           </Link>
         </section>
+
+        {/* Runway Workshop Flyer */}
+        {upcomingWorkshop?.cover_image_url && (
+          <section className="container px-8 md:px-16 py-6">
+            <Link href={`/workshops/${upcomingWorkshop.slug}`} className="block group">
+              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-pink-500 via-violet-500 to-cyan-500 p-[2px]">
+                <div className="relative rounded-3xl bg-black/90 backdrop-blur-xl overflow-hidden">
+                  <div className="grid md:grid-cols-2 gap-0">
+                    {/* Flyer Image */}
+                    <div className="relative aspect-[3/4] md:aspect-auto md:min-h-[500px] overflow-hidden">
+                      <Image
+                        src={upcomingWorkshop.cover_image_url}
+                        alt={upcomingWorkshop.title}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                        className="object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                      />
+                    </div>
+                    {/* Details */}
+                    <div className="p-8 md:p-12 flex flex-col justify-center">
+                      <span className="inline-block w-fit px-4 py-1.5 rounded-full text-sm font-semibold bg-gradient-to-r from-pink-500 to-violet-500 text-white mb-6">
+                        Workshop
+                      </span>
+                      <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">
+                        {upcomingWorkshop.title}
+                      </h2>
+                      {upcomingWorkshop.subtitle && (
+                        <p className="text-lg text-white/60 mb-6">{upcomingWorkshop.subtitle}</p>
+                      )}
+                      <div className="space-y-3 mb-8">
+                        <div className="flex items-center gap-3 text-white/70">
+                          <Calendar className="h-5 w-5 text-pink-400" />
+                          <span>{format(new Date(upcomingWorkshop.date), "EEEE, MMMM d, yyyy")}</span>
+                        </div>
+                        {(upcomingWorkshop.location_city || upcomingWorkshop.location_state) && (
+                          <div className="flex items-center gap-3 text-white/70">
+                            <MapPin className="h-5 w-5 text-pink-400" />
+                            <span>
+                              {upcomingWorkshop.location_city && upcomingWorkshop.location_state
+                                ? `${upcomingWorkshop.location_city}, ${upcomingWorkshop.location_state}`
+                                : upcomingWorkshop.location_city || upcomingWorkshop.location_state}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="px-8 py-3 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 text-white text-base font-semibold group-hover:scale-105 transition-transform flex items-center gap-2">
+                          Register Now — ${(upcomingWorkshop.price_cents / 100).toFixed(0)}
+                          <ArrowRight className="h-5 w-5" />
+                        </div>
+                        {upcomingWorkshop.spots_available && (
+                          <span className="text-sm text-white/40">
+                            {upcomingWorkshop.spots_available - upcomingWorkshop.spots_sold} spots left
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          </section>
+        )}
 
         {/* Book Top Models Section */}
         <section className="py-12">
