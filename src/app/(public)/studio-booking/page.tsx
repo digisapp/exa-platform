@@ -1,14 +1,9 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Camera,
-  Lightbulb,
-  Clock,
-  Palette,
   UserPlus,
   CalendarCheck,
-  Sparkles,
 } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -22,29 +17,6 @@ export const metadata: Metadata = {
       "Book free 1-hour studio sessions for your photoshoots and content creation. Professional lighting, backdrops, and sets — available to EXA models.",
   },
 };
-
-const features = [
-  {
-    icon: Lightbulb,
-    title: "Professional Lighting",
-    description: "Studio-grade lighting setups ready for any look or mood.",
-  },
-  {
-    icon: Palette,
-    title: "Backdrops & Sets",
-    description: "Multiple backdrop options and set pieces to elevate your shoots.",
-  },
-  {
-    icon: Clock,
-    title: "1-Hour Time Slots",
-    description: "Each booking gives you a full hour to shoot at your own pace.",
-  },
-  {
-    icon: Sparkles,
-    title: "Free for EXA Models",
-    description: "No cost — studio access is included for all EXA models.",
-  },
-];
 
 const steps = [
   {
@@ -82,28 +54,6 @@ export default function StudioBookingPage() {
             Book free 1-hour studio sessions for your photoshoots and content
             creation
           </p>
-        </section>
-
-        {/* What's Included */}
-        <section className="py-12">
-          <h2 className="text-2xl font-bold text-center mb-8">
-            What&apos;s Included
-          </h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {features.map((feature) => (
-              <Card key={feature.title}>
-                <CardContent className="pt-6 text-center space-y-3">
-                  <div className="mx-auto w-12 h-12 rounded-full bg-teal-500/10 flex items-center justify-center">
-                    <feature.icon className="h-6 w-6 text-teal-400" />
-                  </div>
-                  <h3 className="font-semibold">{feature.title}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {feature.description}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
         </section>
 
         {/* How It Works */}
