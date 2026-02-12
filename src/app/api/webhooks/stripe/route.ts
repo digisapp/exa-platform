@@ -196,9 +196,22 @@ export async function POST(request: NextRequest) {
         break;
       }
 
+      case "payment_intent.succeeded": {
+        const paymentIntent = event.data.object as Stripe.PaymentIntent;
+        // Handle workshop installment payment success (from cron off-session charges)
+        if (paymentIntent.metadata?.type === "workshop_installment") {
+          await handleWorkshopInstallmentSuccess(paymentIntent);
+        }
+        break;
+      }
+
       case "payment_intent.payment_failed": {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
         console.error("Payment failed:", paymentIntent.id, paymentIntent.last_payment_error?.message);
+        // Handle workshop installment payment failure
+        if (paymentIntent.metadata?.type === "workshop_installment") {
+          await handleWorkshopInstallmentFailure(paymentIntent);
+        }
         break;
       }
 
@@ -630,6 +643,8 @@ async function handleWorkshopRegistration(session: Stripe.Checkout.Session) {
   const quantity = parseInt(session.metadata?.quantity || "1", 10);
   const buyerEmail = session.metadata?.buyer_email;
   const buyerName = session.metadata?.buyer_name;
+  const paymentType = session.metadata?.payment_type || "full";
+  const isInstallment = paymentType === "installment";
 
   if (!workshopId || !buyerEmail) {
     console.error("Missing workshop registration metadata:", session.id);
@@ -640,21 +655,41 @@ async function handleWorkshopRegistration(session: Stripe.Checkout.Session) {
     ? session.payment_intent
     : session.payment_intent?.id;
 
+  // Get Stripe customer ID for installment plans (needed for future charges)
+  let stripeCustomerId: string | null = null;
+  if (isInstallment && session.customer) {
+    stripeCustomerId = typeof session.customer === "string"
+      ? session.customer
+      : session.customer.id;
+  }
+
   // Update workshop registration to completed
-  const { error: updateError } = await supabaseAdmin
+  const updateData: Record<string, any> = {
+    status: "completed",
+    stripe_payment_intent_id: paymentIntentId,
+    completed_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  if (isInstallment) {
+    updateData.stripe_customer_id = stripeCustomerId;
+    updateData.installments_paid = 1;
+    updateData.payment_type = "installment";
+    updateData.installments_total = 3;
+  }
+
+  const { data: registration, error: updateError } = await supabaseAdmin
     .from("workshop_registrations")
-    .update({
-      status: "completed",
-      stripe_payment_intent_id: paymentIntentId,
-      completed_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    .eq("stripe_checkout_session_id", session.id);
+    .update(updateData)
+    .eq("stripe_checkout_session_id", session.id)
+    .select("id")
+    .single();
 
   if (updateError) {
     console.error("Error updating workshop registration:", updateError);
     // Try to create the registration if it doesn't exist
-    const { error: insertError } = await supabaseAdmin
+    const installmentAmountCents = 12500;
+    const { data: inserted, error: insertError } = await supabaseAdmin
       .from("workshop_registrations")
       .insert({
         workshop_id: workshopId,
@@ -664,18 +699,81 @@ async function handleWorkshopRegistration(session: Stripe.Checkout.Session) {
         stripe_checkout_session_id: session.id,
         stripe_payment_intent_id: paymentIntentId,
         quantity: quantity,
-        unit_price_cents: Math.round((session.amount_total || 0) / quantity),
-        total_price_cents: session.amount_total || 0,
+        unit_price_cents: isInstallment
+          ? installmentAmountCents
+          : Math.round((session.amount_total || 0) / quantity),
+        total_price_cents: isInstallment ? 37500 : (session.amount_total || 0),
         status: "completed",
         completed_at: new Date().toISOString(),
-      });
+        payment_type: paymentType,
+        stripe_customer_id: stripeCustomerId,
+        installments_total: isInstallment ? 3 : 1,
+        installments_paid: isInstallment ? 1 : 0,
+      })
+      .select("id")
+      .single();
 
     if (insertError) {
       console.error("Error creating workshop registration:", insertError);
       return;
     }
+
+    // Create installment records for newly inserted registration
+    if (isInstallment && inserted?.id) {
+      await createInstallmentRecords(inserted.id, paymentIntentId ?? null);
+    }
+    return;
   }
 
+  // Create installment records for existing registration
+  if (isInstallment && registration?.id) {
+    await createInstallmentRecords(registration.id, paymentIntentId ?? null);
+  }
+}
+
+async function createInstallmentRecords(registrationId: string, firstPaymentIntentId: string | null) {
+  const installmentAmountCents = 12500;
+  const now = new Date();
+  const dueDates = [
+    now.toISOString().split("T")[0], // Today (already paid)
+    new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0], // +30 days
+    new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000).toISOString().split("T")[0], // +60 days
+  ];
+
+  const installments = [
+    {
+      registration_id: registrationId,
+      installment_number: 1,
+      amount_cents: installmentAmountCents,
+      status: "completed",
+      due_date: dueDates[0],
+      stripe_payment_intent_id: firstPaymentIntentId,
+      paid_at: now.toISOString(),
+    },
+    {
+      registration_id: registrationId,
+      installment_number: 2,
+      amount_cents: installmentAmountCents,
+      status: "pending",
+      due_date: dueDates[1],
+    },
+    {
+      registration_id: registrationId,
+      installment_number: 3,
+      amount_cents: installmentAmountCents,
+      status: "pending",
+      due_date: dueDates[2],
+    },
+  ];
+
+  // workshop_installments is a new table not yet in generated types
+  const { error } = await (supabaseAdmin as any)
+    .from("workshop_installments")
+    .insert(installments);
+
+  if (error) {
+    console.error("Error creating installment records:", error);
+  }
 }
 
 async function handleShopOrderPayment(session: Stripe.Checkout.Session) {
@@ -931,5 +1029,74 @@ async function handleContentProgramSubscription(session: Stripe.Checkout.Session
     }
   }
 
+}
+
+async function handleWorkshopInstallmentSuccess(paymentIntent: Stripe.PaymentIntent) {
+  const installmentId = paymentIntent.metadata?.installment_id;
+  const registrationId = paymentIntent.metadata?.registration_id;
+
+  if (!installmentId || !registrationId) {
+    console.error("Missing workshop installment metadata:", paymentIntent.id);
+    return;
+  }
+
+  // Mark installment as completed (workshop_installments not yet in generated types)
+  const { error: installmentError } = await (supabaseAdmin as any)
+    .from("workshop_installments")
+    .update({
+      status: "completed",
+      stripe_payment_intent_id: paymentIntent.id,
+      paid_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", installmentId);
+
+  if (installmentError) {
+    console.error("Error updating installment:", installmentError);
+    return;
+  }
+
+  // Increment installments_paid on registration
+  const { data: reg } = await (supabaseAdmin as any)
+    .from("workshop_registrations")
+    .select("installments_paid")
+    .eq("id", registrationId)
+    .single();
+
+  if (reg) {
+    await (supabaseAdmin as any)
+      .from("workshop_registrations")
+      .update({
+        installments_paid: (reg.installments_paid || 0) + 1,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", registrationId);
+  }
+}
+
+async function handleWorkshopInstallmentFailure(paymentIntent: Stripe.PaymentIntent) {
+  const installmentId = paymentIntent.metadata?.installment_id;
+
+  if (!installmentId) {
+    console.error("Missing workshop installment metadata for failure:", paymentIntent.id);
+    return;
+  }
+
+  // Increment retry_count on the installment
+  const { data: installment } = await (supabaseAdmin as any)
+    .from("workshop_installments")
+    .select("retry_count")
+    .eq("id", installmentId)
+    .single();
+
+  if (installment) {
+    await (supabaseAdmin as any)
+      .from("workshop_installments")
+      .update({
+        retry_count: (installment.retry_count || 0) + 1,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", installmentId);
+  }
 }
 

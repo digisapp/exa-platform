@@ -75,6 +75,9 @@ interface Registration {
   status: string;
   completed_at: string | null;
   created_at: string;
+  payment_type: string | null;
+  installments_total: number | null;
+  installments_paid: number | null;
 }
 
 const supabase = createClient();
@@ -919,12 +922,21 @@ export default function AdminWorkshopsPage() {
                           <div className="text-sm text-muted-foreground">{reg.buyer_phone}</div>
                         )}
                       </div>
-                      <div className="text-right">
+                      <div className="text-right space-y-1">
                         <div className="font-medium">${(reg.total_price_cents / 100).toFixed(2)}</div>
                         <div className="text-sm text-muted-foreground">{reg.quantity} spot{reg.quantity > 1 ? "s" : ""}</div>
-                        <Badge className={reg.status === "completed" ? "bg-green-500/20 text-green-400" : "bg-yellow-500/20 text-yellow-400"}>
-                          {reg.status}
-                        </Badge>
+                        <div className="flex items-center gap-1 justify-end flex-wrap">
+                          <Badge className={reg.status === "completed" ? "bg-green-500/20 text-green-400" : reg.status === "cancelled" ? "bg-red-500/20 text-red-400" : "bg-yellow-500/20 text-yellow-400"}>
+                            {reg.status}
+                          </Badge>
+                          {reg.payment_type === "installment" ? (
+                            <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
+                              Plan {reg.installments_paid || 0}/{reg.installments_total || 3}
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-xs">Full</Badge>
+                          )}
+                        </div>
                       </div>
                     </div>
                     {reg.completed_at && (

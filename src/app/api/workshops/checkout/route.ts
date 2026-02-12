@@ -10,6 +10,7 @@ const workshopCheckoutSchema = z.object({
   buyerEmail: z.string().email(),
   buyerName: z.string().min(1),
   buyerPhone: z.string().optional(),
+  paymentType: z.enum(["full", "installment"]).default("full"),
 });
 
 // Admin client for bypassing RLS
@@ -30,7 +31,8 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    const { workshopId, quantity, buyerEmail, buyerName, buyerPhone } = parsed.data;
+    const { workshopId, quantity: requestedQuantity, buyerEmail, buyerName, buyerPhone, paymentType } = parsed.data;
+    const quantity = paymentType === "installment" ? 1 : requestedQuantity;
 
     // Get workshop info
     const { data: workshop, error: workshopError } = await adminClient
@@ -67,7 +69,10 @@ export async function POST(request: NextRequest) {
 
     // Calculate totals
     const unitPriceCents = workshop.price_cents;
-    const totalPriceCents = unitPriceCents * quantity;
+    const isInstallment = paymentType === "installment";
+    const installmentAmountCents = 12500; // $125 per installment
+    const installmentTotalCents = 37500; // $375 total
+    const totalPriceCents = isInstallment ? installmentTotalCents : unitPriceCents * quantity;
 
     // Format date for product description
     const workshopDate = new Date(workshop.date);
@@ -78,21 +83,25 @@ export async function POST(request: NextRequest) {
       year: "numeric",
     });
 
-    // Create Stripe checkout session
-    const session = await stripe.checkout.sessions.create({
+    // Build Stripe checkout session config
+    const checkoutConfig: any = {
       payment_method_types: ["card"],
       line_items: [
         {
           price_data: {
             currency: "usd",
             product_data: {
-              name: workshop.title,
-              description: `${quantity} spot${quantity > 1 ? "s" : ""} - ${dateStr}${workshop.location_city ? ` - ${workshop.location_city}, ${workshop.location_state}` : ""}`,
+              name: isInstallment
+                ? `${workshop.title} — Installment 1 of 3`
+                : workshop.title,
+              description: isInstallment
+                ? `Payment plan: 3 x $125 — ${dateStr}${workshop.location_city ? ` — ${workshop.location_city}, ${workshop.location_state}` : ""}`
+                : `${quantity} spot${quantity > 1 ? "s" : ""} - ${dateStr}${workshop.location_city ? ` - ${workshop.location_city}, ${workshop.location_state}` : ""}`,
               images: workshop.cover_image_url ? [workshop.cover_image_url] : [],
             },
-            unit_amount: unitPriceCents,
+            unit_amount: isInstallment ? installmentAmountCents : unitPriceCents,
           },
-          quantity: quantity,
+          quantity: isInstallment ? 1 : quantity,
         },
       ],
       mode: "payment",
@@ -107,14 +116,30 @@ export async function POST(request: NextRequest) {
         buyer_email: buyerEmail,
         buyer_name: buyerName,
         buyer_phone: buyerPhone || "",
+        payment_type: paymentType,
+        ...(isInstallment && {
+          installment_number: "1",
+          installments_total: "3",
+          installment_amount: installmentAmountCents.toString(),
+        }),
       },
       payment_intent_data: {
         metadata: {
           type: "workshop_registration",
           workshop_id: workshopId,
+          payment_type: paymentType,
+          ...(isInstallment && {
+            installment_number: "1",
+            installments_total: "3",
+          }),
         },
+        ...(isInstallment && {
+          setup_future_usage: "off_session" as const,
+        }),
       },
-    });
+    };
+
+    const session = await stripe.checkout.sessions.create(checkoutConfig);
 
     // Create pending registration record
     const { error: registrationError } = await adminClient
@@ -126,9 +151,12 @@ export async function POST(request: NextRequest) {
         buyer_phone: buyerPhone || null,
         stripe_checkout_session_id: session.id,
         quantity: quantity,
-        unit_price_cents: unitPriceCents,
+        unit_price_cents: isInstallment ? installmentAmountCents : unitPriceCents,
         total_price_cents: totalPriceCents,
         status: "pending",
+        payment_type: paymentType,
+        installments_total: isInstallment ? 3 : 1,
+        installments_paid: 0,
       });
 
     if (registrationError) {
