@@ -178,7 +178,7 @@ INSERT INTO public.workshops (
   meta_title,
   meta_description
 ) VALUES (
-  'miami-swim-week-runway-workshop-2026',
+  'runway-workshop-2026',
   'Miami Swim Week Runway Workshop',
   'Perfect your Catwalk & Camera Ready Skills',
   'Join us for an exclusive runway workshop designed to prepare you for Miami Swim Week and beyond. Learn from industry professionals who have coached models for top fashion events worldwide. This intensive workshop will cover runway techniques, posture, posing, and the confidence you need to shine on any catwalk.

@@ -48,6 +48,11 @@ const nextConfig: NextConfig = {
         destination: '/shows/:slug*',
         permanent: true,
       },
+      {
+        source: '/workshops/miami-swim-week-runway-workshop-2026',
+        destination: '/workshops/runway-workshop-2026',
+        permanent: true,
+      },
     ];
   },
   // Security headers
