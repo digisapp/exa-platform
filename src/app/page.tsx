@@ -110,7 +110,6 @@ export default async function HomePage() {
     .from("workshops")
     .select("slug, title, subtitle, cover_image_url, date, location_city, location_state, price_cents, spots_available, spots_sold")
     .eq("status", "upcoming")
-    .eq("is_published", true)
     .gte("date", new Date().toISOString().split("T")[0])
     .order("date", { ascending: true })
     .limit(1)
