@@ -179,7 +179,7 @@ INSERT INTO public.workshops (
   meta_description
 ) VALUES (
   'runway-workshop',
-  'Miami Swim Week Runway Workshop',
+  'Swim Week Runway Workshop',
   'Perfect your Catwalk & Camera Ready Skills',
   'Join us for an exclusive runway workshop designed to prepare you for Miami Swim Week and beyond. Learn from industry professionals who have coached models for top fashion events worldwide. This intensive workshop will cover runway techniques, posture, posing, and the confidence you need to shine on any catwalk.
 
@@ -206,8 +206,8 @@ Whether you''re a beginner looking to break into the industry or an experienced 
   ],
   'upcoming',
   true,
-  'Miami Swim Week Runway Workshop | EXA Models',
-  'Perfect your catwalk and camera-ready skills at our Miami Swim Week Runway Workshop. Workshop attendees get priority casting for our Miami Swim Week Shows.'
+  'Swim Week Runway Workshop | EXA Models',
+  'Perfect your catwalk and camera-ready skills at our Swim Week Runway Workshop. Workshop attendees get priority casting for our Miami Swim Week Shows.'
 )
 ON CONFLICT (slug) DO UPDATE SET
   title = EXCLUDED.title,
