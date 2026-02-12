@@ -183,8 +183,6 @@ INSERT INTO public.workshops (
   'Perfect your Catwalk & Camera Ready Skills',
   'Join us for an exclusive runway workshop designed to prepare you for Miami Swim Week and beyond. Learn from industry professionals who have coached models for top fashion events worldwide. This intensive workshop will cover runway techniques, posture, posing, and the confidence you need to shine on any catwalk.
 
-**90% of our runway workshop attendees walk in our Miami Swim Week Shows!**
-
 Whether you''re a beginner looking to break into the industry or an experienced model wanting to refine your skills, this workshop is your gateway to the runway.',
   'Miami Beach',
   'FL',
@@ -197,7 +195,6 @@ Whether you''re a beginner looking to break into the industry or an experienced 
     'Learn professional runway walking techniques from industry experts',
     'Master swimwear and resort wear presentation',
     'Get camera-ready with posing and expression coaching',
-    '90% of attendees walk in our Miami Swim Week Shows',
     'Networking opportunities with designers and industry professionals',
     'Certificate of completion'
   ],
@@ -210,7 +207,7 @@ Whether you''re a beginner looking to break into the industry or an experienced 
   'upcoming',
   true,
   'Miami Swim Week Runway Workshop | EXA Models',
-  'Perfect your catwalk and camera-ready skills at our Miami Swim Week Runway Workshop. 90% of attendees walk in our Miami Swim Week Shows!'
+  'Perfect your catwalk and camera-ready skills at our Miami Swim Week Runway Workshop. Workshop attendees get priority casting for our Miami Swim Week Shows.'
 )
 ON CONFLICT (slug) DO UPDATE SET
   title = EXCLUDED.title,

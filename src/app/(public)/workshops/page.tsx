@@ -275,9 +275,9 @@ export default async function WorkshopsPage() {
               </Card>
               <Card className="p-6 text-center">
                 <div className="text-4xl mb-4">⭐</div>
-                <h3 className="font-semibold mb-2">90% Success Rate</h3>
+                <h3 className="font-semibold mb-2">Show Opportunities</h3>
                 <p className="text-sm text-muted-foreground">
-                  90% of our runway workshop attendees walk in our Miami Swim Week Shows.
+                  Workshop attendees get priority casting for our Miami Swim Week Shows.
                 </p>
               </Card>
               <Card className="p-6 text-center">
