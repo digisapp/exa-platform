@@ -56,8 +56,14 @@ export default async function MessagesPage({ searchParams }: PageProps) {
 
       const data = await response.json();
 
-      if (response.ok && data.success && data.conversationId) {
-        redirect(`/chats/${data.conversationId}`);
+      if (response.ok && data.success) {
+        if (data.conversationId) {
+          // Existing conversation found — go to it
+          redirect(`/chats/${data.conversationId}`);
+        } else {
+          // No conversation yet — redirect to compose page
+          redirect(`/chats/new?model=${encodeURIComponent(modelUsername)}`);
+        }
       } else {
         console.error("[Chat] API error:", response.status, data.error);
       }

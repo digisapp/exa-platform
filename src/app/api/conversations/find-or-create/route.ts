@@ -138,46 +138,14 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Create new conversation using admin client
-    const { data: conversation, error: convError } = await adminClient
-      .from("conversations")
-      .insert({
-        type: "direct",
-        title: null,
-      })
-      .select()
-      .single();
-
-    if (convError || !conversation) {
-      console.error("[API] Failed to create conversation:", convError);
-      return NextResponse.json(
-        { error: "Failed to create conversation" },
-        { status: 500 }
-      );
-    }
-
-    // Add both participants using admin client
-    const { error: partError } = await adminClient
-      .from("conversation_participants")
-      .insert([
-        { conversation_id: conversation.id, actor_id: actor.id },
-        { conversation_id: conversation.id, actor_id: targetActor.id },
-      ]);
-
-    if (partError) {
-      console.error("[API] Failed to add participants:", partError);
-      // Cleanup orphaned conversation
-      await adminClient.from("conversations").delete().eq("id", conversation.id);
-      return NextResponse.json(
-        { error: "Failed to add participants" },
-        { status: 500 }
-      );
-    }
-
+    // No existing conversation — return model info so caller can defer
+    // creation until the first message is actually sent
     return NextResponse.json({
       success: true,
-      conversationId: conversation.id,
+      conversationId: null,
       isNew: true,
+      targetModelUsername: targetModel.username,
+      targetActorId: targetActor.id,
     });
   } catch (error) {
     console.error("[API] Find or create conversation error:", error);

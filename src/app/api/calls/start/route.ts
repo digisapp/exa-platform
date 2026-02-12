@@ -210,6 +210,14 @@ export async function POST(request: NextRequest) {
           { conversation_id: conversationId, actor_id: callerActor.id },
           { conversation_id: conversationId, actor_id: recipientActor.id },
         ]);
+
+        // Insert system message so the conversation isn't empty
+        await supabase.from("messages").insert({
+          conversation_id: conversationId,
+          sender_id: callerActor.id,
+          content: callType === "voice" ? "Voice call started" : "Video call started",
+          is_system: true,
+        });
       }
     }
 

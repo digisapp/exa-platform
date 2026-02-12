@@ -1,13 +1,19 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { escapeIlike } from "@/lib/utils";
 
 const DEFAULT_MESSAGE_COST = 10; // Default coins if model hasn't set a rate
 
+// Service role client for creating conversations (bypasses RLS)
+const adminClient = createServiceRoleClient();
+
 // Zod schema for message validation
 const sendMessageSchema = z.object({
-  conversationId: z.string().uuid("Invalid conversation ID"),
+  conversationId: z.string().uuid("Invalid conversation ID").optional().nullable(),
+  targetModelUsername: z.string().min(1).max(100).optional().nullable(),
   content: z.string().max(5000, "Message is too long").optional().nullable(),
   mediaUrl: z.string().url("Invalid media URL").max(2048, "URL is too long").optional().nullable(),
   mediaType: z.enum(["image", "video", "audio"]).optional().nullable(),
@@ -15,6 +21,9 @@ const sendMessageSchema = z.object({
 }).refine(
   (data) => data.content?.trim() || data.mediaUrl,
   { message: "Message content or media required", path: ["content"] }
+).refine(
+  (data) => data.conversationId || data.targetModelUsername,
+  { message: "conversationId or targetModelUsername required", path: ["conversationId"] }
 );
 
 export async function POST(request: NextRequest) {
@@ -47,7 +56,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { conversationId, content, mediaUrl, mediaType, mediaPrice } = validationResult.data;
+    const { conversationId: providedConversationId, targetModelUsername, content, mediaUrl, mediaType, mediaPrice } = validationResult.data;
+    let conversationId = providedConversationId || null;
+    let conversationCreated = false;
 
     // Get sender's actor info
     const { data: sender } = await supabase
@@ -89,6 +100,90 @@ export async function POST(request: NextRequest) {
           code: "SUBSCRIPTION_REQUIRED"
         }, { status: 403 });
       }
+    }
+
+    // If targetModelUsername provided, find or create conversation
+    if (!conversationId && targetModelUsername) {
+      // Look up model
+      const { data: targetModel } = await supabase
+        .from("models")
+        .select("id, user_id, username")
+        .ilike("username", escapeIlike(targetModelUsername.toLowerCase()))
+        .maybeSingle();
+
+      if (!targetModel || !targetModel.user_id) {
+        return NextResponse.json({ error: "Model not found" }, { status: 404 });
+      }
+
+      // Get model's actor ID
+      const { data: targetActor } = await adminClient
+        .from("actors")
+        .select("id")
+        .eq("user_id", targetModel.user_id)
+        .maybeSingle();
+
+      if (!targetActor) {
+        return NextResponse.json({ error: "Model actor not found" }, { status: 404 });
+      }
+
+      if (targetActor.id === sender.id) {
+        return NextResponse.json({ error: "Cannot message yourself" }, { status: 400 });
+      }
+
+      // Check for existing conversation between these two actors
+      const { data: senderParticipations } = await supabase
+        .from("conversation_participants")
+        .select("conversation_id")
+        .eq("actor_id", sender.id);
+
+      if (senderParticipations && senderParticipations.length > 0) {
+        const convIds = senderParticipations.map(p => p.conversation_id);
+        const { data: match } = await adminClient
+          .from("conversation_participants")
+          .select("conversation_id")
+          .eq("actor_id", targetActor.id)
+          .in("conversation_id", convIds)
+          .limit(1)
+          .maybeSingle();
+
+        if (match) {
+          conversationId = match.conversation_id;
+        }
+      }
+
+      // Create new conversation if none found
+      if (!conversationId) {
+        const { data: newConv, error: convError } = await adminClient
+          .from("conversations")
+          .insert({ type: "direct", title: null })
+          .select()
+          .single();
+
+        if (convError || !newConv) {
+          console.error("Failed to create conversation:", convError);
+          return NextResponse.json({ error: "Failed to create conversation" }, { status: 500 });
+        }
+
+        const { error: partInsertError } = await adminClient
+          .from("conversation_participants")
+          .insert([
+            { conversation_id: newConv.id, actor_id: sender.id },
+            { conversation_id: newConv.id, actor_id: targetActor.id },
+          ]);
+
+        if (partInsertError) {
+          console.error("Failed to add participants:", partInsertError);
+          await adminClient.from("conversations").delete().eq("id", newConv.id);
+          return NextResponse.json({ error: "Failed to create conversation" }, { status: 500 });
+        }
+
+        conversationId = newConv.id;
+        conversationCreated = true;
+      }
+    }
+
+    if (!conversationId) {
+      return NextResponse.json({ error: "Conversation ID required" }, { status: 400 });
     }
 
     // Verify sender is part of conversation
@@ -221,6 +316,7 @@ export async function POST(request: NextRequest) {
       success: true,
       message,
       coinsDeducted: result.coins_deducted || 0,
+      conversationId: conversationCreated ? conversationId : undefined,
     });
   } catch (error) {
     console.error("Send message error:", error);
