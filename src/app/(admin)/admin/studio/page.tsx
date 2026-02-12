@@ -264,14 +264,16 @@ export default function AdminStudioPage() {
     currentMonth.getMonth(),
     1
   ).getDay();
-  // Get slots per date
+  // Get slots per date and total booking capacity/counts
   const slotsPerDate = new Map<string, number>();
   const bookedPerDate = new Map<string, number>();
+  const capacityPerDate = new Map<string, number>();
   slots.forEach((s) => {
     slotsPerDate.set(s.date, (slotsPerDate.get(s.date) || 0) + 1);
-    if (s.booking && s.booking.status === "confirmed") {
-      bookedPerDate.set(s.date, (bookedPerDate.get(s.date) || 0) + 1);
-    }
+    const maxBookings = s.max_bookings ?? 3;
+    capacityPerDate.set(s.date, (capacityPerDate.get(s.date) || 0) + maxBookings);
+    const confirmedCount = s.bookings?.length ?? (s.booking && s.booking.status === "confirmed" ? 1 : 0);
+    bookedPerDate.set(s.date, (bookedPerDate.get(s.date) || 0) + confirmedCount);
   });
 
   const formatTime = (time: string) => {
@@ -293,14 +295,12 @@ export default function AdminStudioPage() {
   // Stats
   const thisMonthSlots = slots.length;
   const confirmedBookings = bookings.filter((b) => b.status === "confirmed");
-  const utilization =
-    thisMonthSlots > 0
-      ? Math.round(
-          (slots.filter((s) => s.booking && s.booking.status === "confirmed").length /
-            thisMonthSlots) *
-            100
-        )
-      : 0;
+  const totalCapacity = slots.reduce((sum, s) => sum + (s.max_bookings ?? 3), 0);
+  const totalBooked = slots.reduce((sum, s) => {
+    const count = s.bookings?.length ?? (s.booking && s.booking.status === "confirmed" ? 1 : 0);
+    return sum + count;
+  }, 0);
+  const utilization = totalCapacity > 0 ? Math.round((totalBooked / totalCapacity) * 100) : 0;
 
   return (
     <div className="container px-8 md:px-16 py-8 space-y-6">
@@ -610,17 +610,17 @@ export default function AdminStudioPage() {
               const existingSlot = slots.find(
                 (s) => s.date === selectedDate && s.start_time === h.start
               );
-              const isBooked =
-                existingSlot?.booking &&
-                existingSlot.booking.status === "confirmed";
+              const confirmedCount = existingSlot?.bookings?.length ?? (existingSlot?.booking && existingSlot.booking.status === "confirmed" ? 1 : 0);
+              const hasBookings = confirmedCount > 0;
+              const maxBookings = existingSlot?.max_bookings ?? 3;
               const isEnabled = daySlotToggles[h.start] || false;
 
               return (
                 <button
                   key={h.start}
                   onClick={() => {
-                    if (isBooked) {
-                      toast.error("Cannot disable a slot with an active booking");
+                    if (hasBookings) {
+                      toast.error("Cannot disable a slot with active bookings");
                       return;
                     }
                     setDaySlotToggles((prev) => ({
@@ -630,7 +630,7 @@ export default function AdminStudioPage() {
                   }}
                   className={cn(
                     "p-3 rounded-lg border text-center transition-colors",
-                    isBooked
+                    hasBookings
                       ? "border-orange-500/30 bg-orange-500/10 cursor-not-allowed"
                       : isEnabled
                         ? "border-teal-500/50 bg-teal-500/20 hover:bg-teal-500/30"
@@ -639,7 +639,7 @@ export default function AdminStudioPage() {
                 >
                   <div className="text-sm font-medium">{h.label}</div>
                   <div className="text-xs text-muted-foreground mt-0.5">
-                    {isBooked ? "Booked" : isEnabled ? "Available" : "Off"}
+                    {hasBookings ? `${confirmedCount}/${maxBookings} booked` : isEnabled ? "Available" : "Off"}
                   </div>
                 </button>
               );

@@ -97,10 +97,13 @@ export default function StudioPage() {
     }
   }, [tab, fetchMyBookings]);
 
-  // Get available dates (dates that have at least one unboooked slot)
+  // Get available dates (dates that have at least one slot with remaining spots)
   const availableDates = new Set(
     slots
-      .filter((s) => !s.booking || s.booking.status === "cancelled")
+      .filter((s) => {
+        const confirmedCount = s.bookings?.length ?? (s.booking && s.booking.status !== "cancelled" ? 1 : 0);
+        return confirmedCount < (s.max_bookings ?? 3);
+      })
       .map((s) => s.date)
   );
 
@@ -332,19 +335,21 @@ export default function StudioPage() {
                 <h3 className="font-semibold text-lg">{formatDate(selectedDate)}</h3>
                 <div className="grid grid-cols-3 gap-2">
                   {daySlots.map((slot) => {
-                    const isBooked =
-                      slot.booking && slot.booking.status !== "cancelled";
+                    const confirmedCount = slot.bookings?.length ?? (slot.booking && slot.booking.status !== "cancelled" ? 1 : 0);
+                    const maxBookings = slot.max_bookings ?? 3;
+                    const spotsLeft = maxBookings - confirmedCount;
+                    const isFull = spotsLeft <= 0;
                     return (
                       <button
                         key={slot.id}
-                        disabled={!!isBooked}
+                        disabled={isFull}
                         onClick={() => {
                           setSelectedSlot(slot);
                           setShowConfirm(true);
                         }}
                         className={cn(
                           "p-3 rounded-lg border text-center transition-colors",
-                          isBooked
+                          isFull
                             ? "border-border bg-muted/50 text-muted-foreground cursor-not-allowed"
                             : "border-teal-500/30 bg-teal-500/10 hover:bg-teal-500/20 text-foreground cursor-pointer"
                         )}
@@ -354,7 +359,7 @@ export default function StudioPage() {
                           {formatTime(slot.start_time)}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {isBooked ? "Booked" : "Available"}
+                          {isFull ? "Full" : `${spotsLeft}/${maxBookings} spots`}
                         </div>
                       </button>
                     );

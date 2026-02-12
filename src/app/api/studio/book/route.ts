@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     // Verify slot exists and is available
     const { data: slot } = await supabase
       .from("studio_slots")
-      .select("id, date, start_time, is_available")
+      .select("id, date, start_time, is_available, max_bookings")
       .eq("id", slot_id)
       .eq("is_available", true)
       .single();
@@ -58,7 +58,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Cannot book a slot in the past" }, { status: 400 });
     }
 
-    // Insert booking - UNIQUE(slot_id) constraint prevents double-booking
+    // Check how many confirmed bookings exist for this slot
+    const { count } = await supabase
+      .from("studio_bookings")
+      .select("id", { count: "exact", head: true })
+      .eq("slot_id", slot_id)
+      .eq("status", "confirmed");
+
+    const maxBookings = slot.max_bookings ?? 3;
+    if ((count ?? 0) >= maxBookings) {
+      return NextResponse.json({ error: "This slot is fully booked" }, { status: 409 });
+    }
+
+    // Insert booking - UNIQUE(slot_id, model_id) prevents same model booking twice
     const { data: booking, error } = await supabase
       .from("studio_bookings")
       .insert({
@@ -72,7 +84,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       if (error.code === "23505") {
-        return NextResponse.json({ error: "This slot has already been booked" }, { status: 409 });
+        return NextResponse.json({ error: "You have already booked this slot" }, { status: 409 });
       }
       console.error("Studio booking error:", error);
       return NextResponse.json({ error: "Failed to book slot" }, { status: 500 });

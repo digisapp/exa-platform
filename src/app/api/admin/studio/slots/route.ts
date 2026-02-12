@@ -47,7 +47,8 @@ export async function GET(request: NextRequest) {
 
     const transformedSlots = (slots || []).map((slot: any) => ({
       ...slot,
-      booking: slot.booking?.[0] || null,
+      bookings: (slot.booking || []).filter((b: any) => b.status === "confirmed"),
+      booking: slot.booking?.[0] || null, // backward compat
     }));
 
     return NextResponse.json({ slots: transformedSlots });

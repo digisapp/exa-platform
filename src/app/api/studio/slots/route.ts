@@ -38,10 +38,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Failed to fetch slots" }, { status: 500 });
     }
 
-    // Transform: booking is an array due to join, take first element
+    // Return all bookings per slot for multi-booking support
     const transformedSlots = (slots || []).map((slot: any) => ({
       ...slot,
-      booking: slot.booking?.[0] || null,
+      bookings: (slot.booking || []).filter((b: any) => b.status === "confirmed"),
+      booking: slot.booking?.[0] || null, // backward compat
     }));
 
     return NextResponse.json({ slots: transformedSlots });

@@ -4,10 +4,12 @@ export interface StudioSlot {
   start_time: string;
   end_time: string;
   is_available: boolean;
+  max_bookings: number;
   notes: string | null;
   created_at: string;
   updated_at: string;
-  // Joined field
+  // Joined fields
+  bookings?: StudioBooking[];
   booking?: StudioBooking | null;
 }
 
