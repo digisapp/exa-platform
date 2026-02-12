@@ -12,7 +12,7 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.examodels.com"),
   title: {
-    default: "EXA Models – Book Professional Models for Photoshoots & Events",
+    default: "EXA Models – Global Model Community",
     template: "%s | EXA Models",
   },
   description: "Book professional models for photoshoots, events, and brand collaborations. Connect directly with verified models worldwide. The premier model booking platform.",
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "https://www.examodels.com",
     siteName: "EXA Models",
-    title: "EXA Models – Book Professional Models for Photoshoots & Events",
+    title: "EXA Models – Global Model Community",
     description: "Book professional models for photoshoots, events, and brand collaborations. Connect directly with verified models worldwide. The premier model booking platform.",
   },
   twitter: {
