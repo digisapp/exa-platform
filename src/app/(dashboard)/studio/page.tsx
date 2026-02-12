@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -37,7 +36,6 @@ export default function StudioPage() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [slots, setSlots] = useState<StudioSlot[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<StudioSlot | null>(null);
-  const [bookingNotes, setBookingNotes] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [booking, setBooking] = useState(false);
 
@@ -122,7 +120,6 @@ export default function StudioPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           slot_id: selectedSlot.id,
-          notes: bookingNotes || undefined,
         }),
       });
       const data = await res.json();
@@ -130,7 +127,6 @@ export default function StudioPage() {
         toast.success("Studio time booked!");
         setShowConfirm(false);
         setSelectedSlot(null);
-        setBookingNotes("");
         fetchSlots();
         fetchMyBookings();
       } else {
@@ -495,29 +491,13 @@ export default function StudioPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-3">
-            <div>
-              <label className="text-sm font-medium">
-                Notes <span className="text-muted-foreground">(optional)</span>
-              </label>
-              <Textarea
-                value={bookingNotes}
-                onChange={(e) => setBookingNotes(e.target.value)}
-                placeholder="What will you be shooting? Any special setup needs?"
-                rows={3}
-                maxLength={500}
-              />
-            </div>
-          </div>
-
           <DialogFooter>
             <Button
               variant="outline"
               onClick={() => {
                 setShowConfirm(false);
                 setSelectedSlot(null);
-                setBookingNotes("");
-              }}
+                      }}
             >
               Cancel
             </Button>
