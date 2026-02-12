@@ -58,6 +58,11 @@ const nextConfig: NextConfig = {
         destination: '/workshops/runway-workshop',
         permanent: true,
       },
+      {
+        source: '/runway-workshop',
+        destination: '/workshops/runway-workshop',
+        permanent: false,
+      },
     ];
   },
   // Security headers
