@@ -50,7 +50,12 @@ const nextConfig: NextConfig = {
       },
       {
         source: '/workshops/miami-swim-week-runway-workshop-2026',
-        destination: '/workshops/runway-workshop-2026',
+        destination: '/workshops/runway-workshop',
+        permanent: true,
+      },
+      {
+        source: '/workshops/runway-workshop-2026',
+        destination: '/workshops/runway-workshop',
         permanent: true,
       },
     ];
