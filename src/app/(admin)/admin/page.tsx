@@ -20,6 +20,7 @@ import {
   Phone,
   Flame,
   MessageCircle,
+  Camera,
 } from "lucide-react";
 
 export default async function AdminPage() {
@@ -207,6 +208,13 @@ export default async function AdminPage() {
           <Link href="/admin/messages">
             <MessageCircle className="h-6 w-6 text-indigo-500" />
             <span>Messages</span>
+          </Link>
+        </Button>
+
+        <Button variant="outline" asChild className="h-auto py-4 flex-col gap-2">
+          <Link href="/admin/studio">
+            <Camera className="h-6 w-6 text-teal-500" />
+            <span>Studio</span>
           </Link>
         </Button>
       </div>

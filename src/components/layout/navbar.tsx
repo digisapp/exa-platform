@@ -27,6 +27,7 @@ import {
   FolderHeart,
   Plus,
   Flame,
+  Camera,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/auth/logout-button";
@@ -50,6 +51,7 @@ const modelLinks = [
   { href: "/dashboard", label: "Home", icon: Home },
   { href: "/chats", label: "Chats", icon: MessageCircle },
   { href: "/content", label: "Content", icon: Images },
+  { href: "/studio", label: "Studio", icon: Camera },
 ];
 
 const fanLinks = [
