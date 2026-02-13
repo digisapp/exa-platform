@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Loader2, CheckCircle, XCircle, UserMinus, UserPlus, ChevronDown, Trash2, Eye, EyeOff, FileText } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, UserMinus, UserPlus, ChevronDown, Trash2, Eye, EyeOff, FileText, Pencil } from "lucide-react";
 import Link from "next/link";
 import {
   AlertDialog,
@@ -17,6 +17,16 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -523,14 +533,17 @@ export function ModelActionsDropdown({ id, modelName, isApproved, onAction }: {
   );
 }
 
-export function FanActionsDropdown({ id, fanName, isSuspended, onAction }: {
+export function FanActionsDropdown({ id, fanName, fanUsername = null, isSuspended, onAction }: {
   id: string;
   fanName: string;
+  fanUsername?: string | null;
   isSuspended: boolean;
   onAction?: () => void;
 }) {
   const [loading, setLoading] = useState(false);
-  const [dialogType, setDialogType] = useState<"model" | "delete" | null>(null);
+  const [dialogType, setDialogType] = useState<"model" | "delete" | "edit" | null>(null);
+  const [editDisplayName, setEditDisplayName] = useState("");
+  const [editUsername, setEditUsername] = useState("");
   const router = useRouter();
 
   const handleSetSuspended = async (suspended: boolean) => {
@@ -608,6 +621,52 @@ export function FanActionsDropdown({ id, fanName, isSuspended, onAction }: {
     }
   };
 
+  const openEditDialog = () => {
+    setEditDisplayName(fanName || "");
+    setEditUsername(fanUsername || "");
+    setDialogType("edit");
+  };
+
+  const handleEditSave = async () => {
+    setLoading(true);
+    try {
+      const updates: Record<string, string> = {};
+      if (editDisplayName.trim() && editDisplayName.trim() !== fanName) {
+        updates.display_name = editDisplayName.trim();
+      }
+      const cleanUsername = editUsername.trim().toLowerCase();
+      if (cleanUsername && cleanUsername !== (fanUsername || "")) {
+        updates.username = cleanUsername;
+      }
+
+      if (Object.keys(updates).length === 0) {
+        setDialogType(null);
+        return;
+      }
+
+      const res = await fetch(`/api/admin/fans/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to update");
+      }
+
+      toast.success("Fan name updated");
+      setDialogType(null);
+      onAction?.();
+      router.refresh();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Action failed";
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <>
       <DropdownMenu>
@@ -655,6 +714,10 @@ export function FanActionsDropdown({ id, fanName, isSuspended, onAction }: {
             </DropdownMenuItem>
           )}
           <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={openEditDialog}>
+            <Pencil className="h-4 w-4 mr-2" />
+            EDIT NAME
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setDialogType("model")}>
             <UserPlus className="h-4 w-4 mr-2" />
             MODEL
@@ -714,6 +777,51 @@ export function FanActionsDropdown({ id, fanName, isSuspended, onAction }: {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={dialogType === "edit"} onOpenChange={(open) => !open && setDialogType(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Fan Name</DialogTitle>
+            <DialogDescription>
+              Change the display name or username for this fan.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="edit-display-name">Display Name</Label>
+              <Input
+                id="edit-display-name"
+                value={editDisplayName}
+                onChange={(e) => setEditDisplayName(e.target.value)}
+                maxLength={50}
+                placeholder="Display name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-username">Username</Label>
+              <Input
+                id="edit-username"
+                value={editUsername}
+                onChange={(e) => setEditUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
+                maxLength={30}
+                placeholder="username"
+              />
+              <p className="text-xs text-muted-foreground">
+                Letters, numbers, and underscores only
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogType(null)} disabled={loading}>
+              Cancel
+            </Button>
+            <Button onClick={handleEditSave} disabled={loading || !editDisplayName.trim()}>
+              {loading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

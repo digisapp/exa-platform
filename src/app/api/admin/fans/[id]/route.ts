@@ -4,7 +4,22 @@ import { logAdminAction, AdminActions } from "@/lib/admin-audit";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 
-const fanPatchSchema = z.object({ is_suspended: z.boolean() }).strict();
+const fanPatchSchema = z.object({
+  is_suspended: z.boolean().optional(),
+  username: z
+    .string()
+    .min(3, "Username must be at least 3 characters")
+    .max(30, "Username must be 30 characters or less")
+    .regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores")
+    .transform((val) => val.toLowerCase().trim())
+    .optional(),
+  display_name: z
+    .string()
+    .min(1, "Display name is required")
+    .max(50, "Display name must be 50 characters or less")
+    .transform((val) => val.trim())
+    .optional(),
+});
 
 async function isAdmin(supabase: any, userId: string) {
   const { data: actor } = await supabase
@@ -15,7 +30,7 @@ async function isAdmin(supabase: any, userId: string) {
   return actor?.type === "admin";
 }
 
-// PATCH - Update fan (suspend/unsuspend)
+// PATCH - Update fan (suspend/unsuspend, edit username/display_name)
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -44,11 +59,36 @@ export async function PATCH(
         { status: 400 }
       );
     }
-    const { is_suspended } = parsed.data;
+    const { is_suspended, username, display_name } = parsed.data;
 
-    const { error } = await supabase
-      .from("fans")
-      .update({ is_suspended, updated_at: new Date().toISOString() })
+    // If username is being changed, check availability
+    if (username) {
+      const [
+        { data: existingModel },
+        { data: existingFan },
+        { data: existingBrand },
+      ] = await Promise.all([
+        supabase.from("models").select("id").eq("username", username).single(),
+        supabase.from("fans").select("id").eq("username", username).neq("id", fanId).single(),
+        supabase.from("brands").select("id").eq("username", username).single(),
+      ]);
+
+      if (existingModel || existingFan || existingBrand) {
+        return NextResponse.json(
+          { error: "This username is already taken" },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Build update object with only provided fields
+    const updateData: Record<string, any> = { updated_at: new Date().toISOString() };
+    if (is_suspended !== undefined) updateData.is_suspended = is_suspended;
+    if (username) updateData.username = username;
+    if (display_name) updateData.display_name = display_name;
+
+    const { error } = await (supabase.from("fans") as any)
+      .update(updateData)
       .eq("id", fanId);
 
     if (error) {
@@ -57,13 +97,17 @@ export async function PATCH(
     }
 
     // Log the admin action
+    const action = is_suspended !== undefined
+      ? (is_suspended ? AdminActions.FAN_SUSPENDED : AdminActions.FAN_UNSUSPENDED)
+      : AdminActions.FAN_UPDATED;
+
     await logAdminAction({
       supabase,
       adminUserId: user.id,
-      action: is_suspended ? AdminActions.FAN_SUSPENDED : AdminActions.FAN_UNSUSPENDED,
+      action,
       targetType: "fan",
       targetId: fanId,
-      newValues: { is_suspended },
+      newValues: { ...parsed.data },
     });
 
     return NextResponse.json({ success: true });

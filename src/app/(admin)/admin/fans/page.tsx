@@ -47,6 +47,7 @@ interface Fan {
   user_id: string;
   actor_id?: string;
   display_name: string | null;
+  username: string | null;
   email: string | null;
   avatar_url: string | null;
   coin_balance: number;
@@ -130,6 +131,7 @@ export default function AdminFansPage() {
         id,
         user_id,
         display_name,
+        username,
         email,
         avatar_url,
         coin_balance,
@@ -550,6 +552,7 @@ export default function AdminFansPage() {
                         <FanActionsDropdown
                           id={fan.id}
                           fanName={fan.display_name || fan.email || "Fan"}
+                          fanUsername={fan.username}
                           isSuspended={fan.is_suspended || false}
                           onAction={loadFans}
                         />
