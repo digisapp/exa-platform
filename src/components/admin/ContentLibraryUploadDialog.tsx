@@ -119,7 +119,7 @@ export function ContentLibraryUploadDialog({
   };
 
   const uploadFileViaSigned = async (itemId: string, file: File, index: number) => {
-    const signedRes = await fetch(`/api/admin/content-library/${itemId}/upload/signed-url`, {
+    const signedRes = await fetch(`/api/admin/media-hub/${itemId}/upload/signed-url`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -150,7 +150,7 @@ export function ContentLibraryUploadDialog({
 
     setFiles((prev) => prev.map((f, i) => i === index ? { ...f, progress: 70 } : f));
 
-    const completeRes = await fetch(`/api/admin/content-library/${itemId}/upload/complete`, {
+    const completeRes = await fetch(`/api/admin/media-hub/${itemId}/upload/complete`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -175,7 +175,7 @@ export function ContentLibraryUploadDialog({
 
     setFiles((prev) => prev.map((f, i) => i === index ? { ...f, progress: 50 } : f));
 
-    const res = await fetch(`/api/admin/content-library/${itemId}/upload/direct`, {
+    const res = await fetch(`/api/admin/media-hub/${itemId}/upload/direct`, {
       method: "POST",
       body: formData,
     });
@@ -202,7 +202,7 @@ export function ContentLibraryUploadDialog({
 
     try {
       // Step 1: Create library item
-      const createRes = await fetch("/api/admin/content-library", {
+      const createRes = await fetch("/api/admin/media-hub", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -255,9 +255,9 @@ export function ContentLibraryUploadDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Upload Content</DialogTitle>
+          <DialogTitle>Upload Media</DialogTitle>
           <DialogDescription>
-            Upload photos and videos to the content library
+            Upload photos and videos to the media hub
           </DialogDescription>
         </DialogHeader>
 

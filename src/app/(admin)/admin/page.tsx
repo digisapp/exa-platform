@@ -220,9 +220,9 @@ export default async function AdminPage() {
         </Button>
 
         <Button variant="outline" asChild className="h-auto py-4 flex-col gap-2">
-          <Link href="/admin/content-library">
+          <Link href="/admin/media-hub">
             <FolderOpen className="h-6 w-6 text-amber-500" />
-            <span>Content Library</span>
+            <span>Media Hub</span>
           </Link>
         </Button>
       </div>

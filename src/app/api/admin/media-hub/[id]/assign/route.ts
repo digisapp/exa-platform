@@ -83,8 +83,8 @@ export async function POST(
         await adminClient.from("notifications" as any).insert({
           actor_id: recipientId,
           type: "content_shared",
-          title: "Content Shared",
-          body: `EXA has shared content with you: "${item.title}"`,
+          title: "Media Shared",
+          body: `EXA has shared media with you: "${item.title}"`,
           data: {
             library_item_id: itemId,
           },

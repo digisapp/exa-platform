@@ -56,7 +56,7 @@ export function LibraryContentDetailSheet({
     if (!libraryItemId) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/content-library/assigned/${libraryItemId}`);
+      const res = await fetch(`/api/media-hub/assigned/${libraryItemId}`);
       if (res.ok) {
         const data = await res.json();
         setItem(data.item);
@@ -73,7 +73,7 @@ export function LibraryContentDetailSheet({
     setDownloading(true);
 
     try {
-      const res = await fetch(`/api/content-library/assigned/${libraryItemId}/download`, {
+      const res = await fetch(`/api/media-hub/assigned/${libraryItemId}/download`, {
         method: "POST",
       });
 
@@ -107,7 +107,7 @@ export function LibraryContentDetailSheet({
   const handleDownloadSingle = async (file: any) => {
     if (!libraryItemId) return;
     try {
-      const res = await fetch(`/api/content-library/assigned/${libraryItemId}/download`, {
+      const res = await fetch(`/api/media-hub/assigned/${libraryItemId}/download`, {
         method: "POST",
       });
       if (!res.ok) return;

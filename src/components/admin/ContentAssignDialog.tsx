@@ -157,7 +157,7 @@ export function ContentAssignDialog({
 
     setAssigning(true);
     try {
-      const res = await fetch(`/api/admin/content-library/${libraryItemId}/assign`, {
+      const res = await fetch(`/api/admin/media-hub/${libraryItemId}/assign`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -172,12 +172,12 @@ export function ContentAssignDialog({
       }
 
       const label = recipientType === "brands" ? "brand" : "model";
-      toast.success(`Content assigned to ${selectedIds.size} ${label}${selectedIds.size !== 1 ? "s" : ""}`);
+      toast.success(`Media shared with ${selectedIds.size} ${label}${selectedIds.size !== 1 ? "s" : ""}`);
       onOpenChange(false);
       onAssigned?.();
     } catch (error: any) {
       console.error("Assign error:", error);
-      toast.error(error.message || "Failed to assign content");
+      toast.error(error.message || "Failed to share media");
     } finally {
       setAssigning(false);
     }
@@ -190,7 +190,7 @@ export function ContentAssignDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Assign Content</DialogTitle>
+          <DialogTitle>Share Media</DialogTitle>
           <DialogDescription>
             Share &quot;{libraryItemTitle}&quot; with brands or models
           </DialogDescription>

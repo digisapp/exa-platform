@@ -165,7 +165,7 @@ export default function ContentPage() {
 
   const loadLibraryItems = useCallback(async () => {
     try {
-      const res = await fetch("/api/content-library/assigned");
+      const res = await fetch("/api/media-hub/assigned");
       if (res.ok) {
         const data = await res.json();
         setLibraryItems(data.items || []);

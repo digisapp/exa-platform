@@ -51,7 +51,7 @@ export default function AdminContentLibraryPage() {
       const params = new URLSearchParams();
       if (searchQuery) params.set("search", searchQuery);
 
-      const res = await fetch(`/api/admin/content-library?${params.toString()}`);
+      const res = await fetch(`/api/admin/media-hub?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
         setItems(data.items || []);
@@ -81,16 +81,16 @@ export default function AdminContentLibraryPage() {
 
   const handleDelete = async (e: React.MouseEvent, itemId: string) => {
     e.stopPropagation();
-    if (!confirm("Delete this content and all its files? This cannot be undone.")) return;
+    if (!confirm("Delete this media and all its files? This cannot be undone.")) return;
 
     setDeletingId(itemId);
     try {
-      const res = await fetch(`/api/admin/content-library/${itemId}`, {
+      const res = await fetch(`/api/admin/media-hub/${itemId}`, {
         method: "DELETE",
       });
 
       if (res.ok) {
-        toast.success("Content deleted");
+        toast.success("Media deleted");
         loadItems();
       } else {
         toast.error("Failed to delete");
@@ -117,9 +117,9 @@ export default function AdminContentLibraryPage() {
               <FolderOpen className="h-5 w-5 text-pink-500" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">Content Library</h1>
+              <h1 className="text-2xl font-bold">Media Hub</h1>
               <p className="text-sm text-muted-foreground">
-                Upload content and assign to brands
+                Upload media and share with brands & models
               </p>
             </div>
           </div>
@@ -129,7 +129,7 @@ export default function AdminContentLibraryPage() {
           onClick={() => setUploadDialogOpen(true)}
         >
           <Plus className="h-4 w-4 mr-2" />
-          New Content
+          New Media
         </Button>
       </div>
 
@@ -153,10 +153,10 @@ export default function AdminContentLibraryPage() {
         <div className="text-center py-16 text-muted-foreground">
           <FolderOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
           <p className="font-medium">
-            {searchQuery ? "No content matches your search" : "No content uploaded yet"}
+            {searchQuery ? "No media matches your search" : "No media uploaded yet"}
           </p>
           <p className="text-sm mt-1">
-            {searchQuery ? "Try a different search term" : "Click \"New Content\" to upload photos and videos"}
+            {searchQuery ? "Try a different search term" : "Click \"New Media\" to upload photos and videos"}
           </p>
         </div>
       ) : (

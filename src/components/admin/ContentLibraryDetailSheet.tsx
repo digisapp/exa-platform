@@ -98,7 +98,7 @@ export function ContentLibraryDetailSheet({
     if (!itemId) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/content-library/${itemId}`);
+      const res = await fetch(`/api/admin/media-hub/${itemId}`);
       if (res.ok) {
         const data = await res.json();
         setItem(data.item);
@@ -114,7 +114,7 @@ export function ContentLibraryDetailSheet({
     if (!itemId || !editTitle.trim()) return;
     setSaving(true);
     try {
-      const res = await fetch(`/api/admin/content-library/${itemId}`, {
+      const res = await fetch(`/api/admin/media-hub/${itemId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -142,7 +142,7 @@ export function ContentLibraryDetailSheet({
     if (!itemId) return;
     setDeleting(fileId);
     try {
-      const res = await fetch(`/api/admin/content-library/${itemId}/files/${fileId}`, {
+      const res = await fetch(`/api/admin/media-hub/${itemId}/files/${fileId}`, {
         method: "DELETE",
       });
 
@@ -164,7 +164,7 @@ export function ContentLibraryDetailSheet({
     if (!itemId) return;
     setDownloading(true);
     try {
-      const res = await fetch(`/api/content-library/assigned/${itemId}/download`, {
+      const res = await fetch(`/api/media-hub/assigned/${itemId}/download`, {
         method: "POST",
       });
 
@@ -198,7 +198,7 @@ export function ContentLibraryDetailSheet({
   const handleDownloadSingle = async (file: any) => {
     if (!itemId) return;
     try {
-      const res = await fetch(`/api/content-library/assigned/${itemId}/download`, {
+      const res = await fetch(`/api/media-hub/assigned/${itemId}/download`, {
         method: "POST",
       });
       if (!res.ok) return;
@@ -222,7 +222,7 @@ export function ContentLibraryDetailSheet({
     setRevokingId(assignmentId);
     try {
       const res = await fetch(
-        `/api/admin/content-library/${itemId}/assignments/${assignmentId}`,
+        `/api/admin/media-hub/${itemId}/assignments/${assignmentId}`,
         { method: "DELETE" }
       );
 
