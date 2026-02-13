@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,7 +14,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Loader2, CheckCircle, Eye, EyeOff } from "lucide-react";
+import { Loader2, Mail, Eye, EyeOff } from "lucide-react";
 
 interface FanSignupDialogProps {
   children: React.ReactNode;
@@ -32,7 +31,6 @@ export function FanSignupDialog({ children }: FanSignupDialogProps) {
   const [password, setPassword] = useState("");
 
   const router = useRouter();
-  const supabase = createClient();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,34 +86,19 @@ export function FanSignupDialog({ children }: FanSignupDialogProps) {
         throw new Error(data.error || "Failed to create account");
       }
 
-      // Sign in the user after successful signup
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: email.toLowerCase().trim(),
-        password,
+      // Send confirmation email via Resend
+      await fetch("/api/auth/send-confirmation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.toLowerCase().trim(),
+          displayName: cleanUsername,
+          signupType: "fan",
+        }),
       });
 
-      if (signInError) {
-        console.error("Sign in error:", signInError);
-        // Account was created, just couldn't auto-sign in
-      }
-
-      // Send our custom confirmation email via Resend
-      try {
-        await fetch("/api/auth/send-confirmation", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: email.toLowerCase().trim(),
-            displayName: cleanUsername,
-            signupType: "fan",
-          }),
-        });
-      } catch {
-        // Non-blocking
-      }
-
       setSubmitted(true);
-      toast.success("Welcome to EXA! You got 10 free coins!");
+      toast.success("Check your email to confirm your account!");
 
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Something went wrong";
@@ -135,8 +118,9 @@ export function FanSignupDialog({ children }: FanSignupDialogProps) {
     }, 300);
   };
 
-  const handleGoToDashboard = () => {
-    router.push("/dashboard");
+  const handleGoToSignIn = () => {
+    handleClose();
+    router.push("/signin");
   };
 
   return (
@@ -147,20 +131,21 @@ export function FanSignupDialog({ children }: FanSignupDialogProps) {
       <DialogContent className="sm:max-w-md">
         {submitted ? (
           <div className="text-center py-6">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/20 flex items-center justify-center">
-              <CheckCircle className="h-8 w-8 text-green-500" />
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-pink-500/20 flex items-center justify-center">
+              <Mail className="h-8 w-8 text-pink-500" />
             </div>
             <DialogHeader className="text-center">
-              <DialogTitle className="text-xl">Welcome to EXA!</DialogTitle>
+              <DialogTitle className="text-xl">Check Your Email</DialogTitle>
               <p className="text-muted-foreground mt-2">
-                Your account is ready. You got 10 free coins!
+                We sent a confirmation link to <strong>{email}</strong>. Click the link to activate your account.
               </p>
             </DialogHeader>
             <Button
-              onClick={handleGoToDashboard}
-              className="mt-6 bg-gradient-to-r from-pink-500 to-violet-500"
+              onClick={handleGoToSignIn}
+              variant="outline"
+              className="mt-6"
             >
-              Get Started
+              Go to Sign In
             </Button>
           </div>
         ) : (

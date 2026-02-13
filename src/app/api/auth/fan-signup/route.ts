@@ -69,11 +69,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create auth user
+    // Create auth user (email_confirm: false = requires email verification)
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: email.toLowerCase().trim(),
       password,
-      email_confirm: true,
+      email_confirm: false,
       user_metadata: {
         display_name: cleanUsername,
       },
