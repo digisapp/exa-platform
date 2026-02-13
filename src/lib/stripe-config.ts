@@ -7,6 +7,8 @@ export const COIN_PACKAGES = [
   { coins: 500, price: 7499, priceDisplay: "$74.99" },
   { coins: 1000, price: 14299, priceDisplay: "$142.99" },
   { coins: 3000, price: 42999, priceDisplay: "$429.99" },
+  { coins: 5000, price: 69999, priceDisplay: "$699.99" },
+  { coins: 10000, price: 134999, priceDisplay: "$1,349.99" },
 ] as const;
 
 export type CoinPackage = (typeof COIN_PACKAGES)[number];

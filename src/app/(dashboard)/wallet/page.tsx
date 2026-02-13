@@ -422,20 +422,11 @@ export default function WalletPage() {
                 </DialogHeader>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
                   {COIN_PACKAGES.map((pack, index) => {
-                    const isPopular = index === 2;
                     return (
                       <div
                         key={pack.coins}
-                        className={cn(
-                          "relative p-4 rounded-lg border transition-all hover:shadow-md",
-                          isPopular && "border-pink-500 ring-2 ring-pink-500/20"
-                        )}
+                        className="relative p-4 rounded-lg border transition-all hover:shadow-md"
                       >
-                        {isPopular && (
-                          <Badge className="absolute -top-2 right-2 bg-gradient-to-r from-pink-500 to-violet-500">
-                            Popular
-                          </Badge>
-                        )}
                         <div className="flex items-center gap-2 mb-2">
                           <Coins className="h-5 w-5 text-pink-500" />
                           <span className="text-xl font-bold">{pack.coins.toLocaleString()}</span>
@@ -444,8 +435,8 @@ export default function WalletPage() {
                         <Button
                           onClick={() => handlePurchase(pack.coins)}
                           disabled={purchasing !== null}
-                          className={cn("w-full", isPopular && "bg-gradient-to-r from-pink-500 to-violet-500")}
-                          variant={isPopular ? "default" : "outline"}
+                          className="w-full"
+                          variant="outline"
                         >
                           {purchasing === pack.coins ? (
                             <Loader2 className="h-4 w-4 animate-spin" />

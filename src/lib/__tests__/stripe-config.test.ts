@@ -35,11 +35,11 @@ describe("COIN_PACKAGES", () => {
 
   it("has expected package sizes", () => {
     const coinValues = COIN_PACKAGES.map((p) => p.coins);
-    expect(coinValues).toEqual([20, 50, 100, 250, 500, 1000, 3000]);
+    expect(coinValues).toEqual([20, 50, 100, 250, 500, 1000, 3000, 5000, 10000]);
   });
 
-  it("has 7 packages", () => {
-    expect(COIN_PACKAGES).toHaveLength(7);
+  it("has 9 packages", () => {
+    expect(COIN_PACKAGES).toHaveLength(9);
   });
 });
 

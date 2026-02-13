@@ -51,11 +51,13 @@ export default function BuyCoinsPage() {
     switch (index) {
       case 0: return "Starter";
       case 1: return "Basic";
-      case 2: return "Popular";
+      case 2: return "Value";
       case 3: return "Pro";
       case 4: return "Super";
       case 5: return "Elite";
       case 6: return "Ultimate";
+      case 7: return "Mega";
+      case 8: return "Whale";
       default: return "";
     }
   };
