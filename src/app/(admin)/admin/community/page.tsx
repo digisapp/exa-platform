@@ -201,6 +201,7 @@ interface Fan {
   user_id: string;
   actor_id?: string;
   display_name: string | null;
+  username: string | null;
   email: string | null;
   avatar_url: string | null;
   coin_balance: number;
@@ -478,7 +479,7 @@ export default function AdminCommunityPage() {
     setFansLoading(true);
 
     let query = (supabase.from("fans") as any)
-      .select(`id, user_id, display_name, email, avatar_url, coin_balance, total_coins_purchased, state, is_suspended, created_at`, { count: "exact" });
+      .select(`id, user_id, display_name, username, email, avatar_url, coin_balance, total_coins_purchased, state, is_suspended, created_at`, { count: "exact" });
 
     if (fansSearch) query = query.or(`display_name.ilike.%${escapeIlike(fansSearch)}%,email.ilike.%${escapeIlike(fansSearch)}%`);
     if (fansStateFilter !== "all") query = query.eq("state", fansStateFilter);
@@ -1100,7 +1101,7 @@ export default function AdminCommunityPage() {
                           </TableCell>
                           <TableCell><span className="text-sm text-muted-foreground">{fan.state || "-"}</span></TableCell>
                           <TableCell><span className="text-sm text-muted-foreground">{new Date(fan.created_at).toLocaleDateString()}</span></TableCell>
-                          <TableCell><FanActionsDropdown id={fan.id} fanName={fan.display_name || fan.email || "Fan"} isSuspended={fan.is_suspended || false} onAction={loadFans} /></TableCell>
+                          <TableCell><FanActionsDropdown id={fan.id} fanName={fan.display_name || fan.email || "Fan"} fanUsername={fan.username} isSuspended={fan.is_suspended || false} onAction={loadFans} /></TableCell>
                           <TableCell>
                             {(fan.report_count || 0) > 0 ? (
                               <span className="inline-flex items-center gap-1 text-red-500 font-medium"><AlertTriangle className="h-4 w-4" />{fan.report_count}</span>
