@@ -29,7 +29,9 @@ import {
   User,
   Building2,
   RefreshCw,
+  Upload,
 } from "lucide-react";
+import { DeliveryUploadDialog } from "@/components/deliveries/DeliveryUploadDialog";
 
 interface Booking {
   id: string;
@@ -121,6 +123,7 @@ export default function BookingsPage() {
   const [responseNotes, setResponseNotes] = useState("");
   const [counterAmount, setCounterAmount] = useState("");
   const [counterNotes, setCounterNotes] = useState("");
+  const [deliveryDialogBookingId, setDeliveryDialogBookingId] = useState<string | null>(null);
 
   // Determine user role on mount
   useEffect(() => {
@@ -494,6 +497,18 @@ export default function BookingsPage() {
                             </Button>
                           </>
                         )}
+                        {/* Upload Deliverables - for models on confirmed/completed bookings */}
+                        {["confirmed", "completed"].includes(booking.status) && userRole === "model" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1 border-pink-500/50 text-pink-500 hover:bg-pink-500/10"
+                            onClick={() => setDeliveryDialogBookingId(booking.id)}
+                          >
+                            <Upload className="h-4 w-4 mr-2" />
+                            Upload Deliverables
+                          </Button>
+                        )}
                         {/* Cancel button - only for clients on pending, or either party on accepted/confirmed */}
                         {(
                           (["accepted", "confirmed"].includes(booking.status)) ||
@@ -638,6 +653,16 @@ export default function BookingsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delivery Upload Dialog */}
+      <DeliveryUploadDialog
+        open={deliveryDialogBookingId !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeliveryDialogBookingId(null);
+        }}
+        bookingId={deliveryDialogBookingId || undefined}
+        onDeliveryCreated={fetchBookings}
+      />
     </div>
   );
 }

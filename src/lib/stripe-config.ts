@@ -139,11 +139,3 @@ export const BRAND_SUBSCRIPTION_TIERS = {
 
 export type BrandTier = keyof typeof BRAND_SUBSCRIPTION_TIERS;
 export type BrandSubscriptionTier = typeof BRAND_SUBSCRIPTION_TIERS[BrandTier];
-
-// Extra coin packages for brands (when they run out)
-export const BRAND_COIN_PACKAGES = [
-  { coins: 100, price: 2000, priceDisplay: "$20" }, // $0.20/coin
-  { coins: 250, price: 4500, priceDisplay: "$45" }, // $0.18/coin
-  { coins: 500, price: 8500, priceDisplay: "$85" }, // $0.17/coin
-  { coins: 1000, price: 15000, priceDisplay: "$150" }, // $0.15/coin
-] as const;

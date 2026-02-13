@@ -25,6 +25,7 @@ import {
   Megaphone,
   BarChart3,
   FolderHeart,
+  FolderDown,
   Plus,
   Flame,
   Camera,
@@ -66,6 +67,7 @@ const brandLinks = [
   { href: "/favorites", label: "Favorites", icon: Heart },
   { href: "/chats", label: "Chats", icon: MessageCircle },
   { href: "/campaigns", label: "Campaigns", icon: Megaphone },
+  { href: "/brands/content", label: "Content", icon: FolderDown },
 ];
 
 const adminLinks = [
@@ -257,6 +259,12 @@ export function Navbar({ user, actorType, unreadCount = 0 }: NavbarProps) {
                   )}
                   {actorType === "brand" && (
                     <>
+                      <DropdownMenuItem asChild>
+                        <Link href="/brands/content" className="cursor-pointer">
+                          <FolderDown className="mr-2 h-4 w-4" />
+                          Content
+                        </Link>
+                      </DropdownMenuItem>
                       <DropdownMenuItem asChild>
                         <Link href="/brands/analytics" className="cursor-pointer">
                           <BarChart3 className="mr-2 h-4 w-4" />

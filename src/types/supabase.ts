@@ -1328,18 +1328,22 @@ export type Database = {
           agora_token: string | null
           assigned_to: string | null
           call_duration: number | null
-          call_type: string
-          caller_id: string
+          call_type: string | null
+          caller_id: string | null
           caller_name: string | null
           channel_name: string | null
           completed_at: string | null
           created_at: string | null
           duration_seconds: number | null
+          email: string | null
           id: string
+          instagram_handle: string | null
           message: string | null
-          model_id: string
+          model_id: string | null
           model_name: string | null
+          name: string | null
           outcome: string | null
+          phone: string | null
           priority: string | null
           responded_at: string | null
           scheduled_at: string | null
@@ -1354,18 +1358,22 @@ export type Database = {
           agora_token?: string | null
           assigned_to?: string | null
           call_duration?: number | null
-          call_type: string
-          caller_id: string
+          call_type?: string | null
+          caller_id?: string | null
           caller_name?: string | null
           channel_name?: string | null
           completed_at?: string | null
           created_at?: string | null
           duration_seconds?: number | null
+          email?: string | null
           id?: string
+          instagram_handle?: string | null
           message?: string | null
-          model_id: string
+          model_id?: string | null
           model_name?: string | null
+          name?: string | null
           outcome?: string | null
+          phone?: string | null
           priority?: string | null
           responded_at?: string | null
           scheduled_at?: string | null
@@ -1380,18 +1388,22 @@ export type Database = {
           agora_token?: string | null
           assigned_to?: string | null
           call_duration?: number | null
-          call_type?: string
-          caller_id?: string
+          call_type?: string | null
+          caller_id?: string | null
           caller_name?: string | null
           channel_name?: string | null
           completed_at?: string | null
           created_at?: string | null
           duration_seconds?: number | null
+          email?: string | null
           id?: string
+          instagram_handle?: string | null
           message?: string | null
-          model_id?: string
+          model_id?: string | null
           model_name?: string | null
+          name?: string | null
           outcome?: string | null
+          phone?: string | null
           priority?: string | null
           responded_at?: string | null
           scheduled_at?: string | null
@@ -1668,6 +1680,93 @@ export type Database = {
             columns: ["message_id"]
             isOneToOne: false
             referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_deliveries: {
+        Row: {
+          approved_at: string | null
+          booking_id: string | null
+          created_at: string
+          delivered_at: string
+          id: string
+          model_id: string
+          notes: string | null
+          offer_id: string | null
+          recipient_actor_id: string
+          revision_notes: string | null
+          revision_requested_at: string | null
+          status: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          booking_id?: string | null
+          created_at?: string
+          delivered_at?: string
+          id?: string
+          model_id: string
+          notes?: string | null
+          offer_id?: string | null
+          recipient_actor_id: string
+          revision_notes?: string | null
+          revision_requested_at?: string | null
+          status?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          booking_id?: string | null
+          created_at?: string
+          delivered_at?: string
+          id?: string
+          model_id?: string
+          notes?: string | null
+          offer_id?: string | null
+          recipient_actor_id?: string
+          revision_notes?: string | null
+          revision_requested_at?: string | null
+          status?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_deliveries_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_deliveries_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_deliveries_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_deliveries_recipient_actor_id_fkey"
+            columns: ["recipient_actor_id"]
+            isOneToOne: false
+            referencedRelation: "actors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_deliveries_recipient_actor_id_fkey"
+            columns: ["recipient_actor_id"]
+            isOneToOne: false
+            referencedRelation: "public_model_actors"
             referencedColumns: ["id"]
           },
         ]
@@ -2296,6 +2395,56 @@ export type Database = {
             columns: ["model_id"]
             isOneToOne: false
             referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_files: {
+        Row: {
+          created_at: string
+          delivery_id: string
+          file_name: string
+          file_type: string
+          height: number | null
+          id: string
+          mime_type: string
+          size_bytes: number
+          storage_path: string
+          url: string
+          width: number | null
+        }
+        Insert: {
+          created_at?: string
+          delivery_id: string
+          file_name: string
+          file_type: string
+          height?: number | null
+          id?: string
+          mime_type: string
+          size_bytes: number
+          storage_path: string
+          url: string
+          width?: number | null
+        }
+        Update: {
+          created_at?: string
+          delivery_id?: string
+          file_name?: string
+          file_type?: string
+          height?: number | null
+          id?: string
+          mime_type?: string
+          size_bytes?: number
+          storage_path?: string
+          url?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_files_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: false
+            referencedRelation: "content_deliveries"
             referencedColumns: ["id"]
           },
         ]
@@ -6782,6 +6931,93 @@ export type Database = {
           },
         ]
       }
+      studio_bookings: {
+        Row: {
+          cancelled_at: string | null
+          cancelled_by: string | null
+          created_at: string
+          id: string
+          model_id: string
+          notes: string | null
+          slot_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          id?: string
+          model_id: string
+          notes?: string | null
+          slot_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          id?: string
+          model_id?: string
+          notes?: string | null
+          slot_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "studio_bookings_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "studio_bookings_slot_id_fkey"
+            columns: ["slot_id"]
+            isOneToOne: false
+            referencedRelation: "studio_slots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      studio_slots: {
+        Row: {
+          created_at: string
+          date: string
+          end_time: string
+          id: string
+          is_available: boolean
+          max_bookings: number
+          notes: string | null
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          end_time: string
+          id?: string
+          is_available?: boolean
+          max_bookings?: number
+          notes?: string | null
+          start_time: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          end_time?: string
+          id?: string
+          is_available?: boolean
+          max_bookings?: number
+          notes?: string | null
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tags: {
         Row: {
           category: Database["public"]["Enums"]["tag_category"]
@@ -7636,6 +7872,56 @@ export type Database = {
           },
         ]
       }
+      workshop_installments: {
+        Row: {
+          amount_cents: number
+          created_at: string | null
+          due_date: string
+          id: string
+          installment_number: number
+          paid_at: string | null
+          registration_id: string | null
+          retry_count: number | null
+          status: string | null
+          stripe_payment_intent_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string | null
+          due_date: string
+          id?: string
+          installment_number: number
+          paid_at?: string | null
+          registration_id?: string | null
+          retry_count?: number | null
+          status?: string | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string | null
+          due_date?: string
+          id?: string
+          installment_number?: number
+          paid_at?: string | null
+          registration_id?: string | null
+          retry_count?: number | null
+          status?: string | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workshop_installments_registration_id_fkey"
+            columns: ["registration_id"]
+            isOneToOne: false
+            referencedRelation: "workshop_registrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workshop_registrations: {
         Row: {
           buyer_email: string
@@ -7644,9 +7930,13 @@ export type Database = {
           completed_at: string | null
           created_at: string | null
           id: string
+          installments_paid: number | null
+          installments_total: number | null
+          payment_type: string | null
           quantity: number
           status: string | null
           stripe_checkout_session_id: string | null
+          stripe_customer_id: string | null
           stripe_payment_intent_id: string | null
           total_price_cents: number
           unit_price_cents: number
@@ -7660,9 +7950,13 @@ export type Database = {
           completed_at?: string | null
           created_at?: string | null
           id?: string
+          installments_paid?: number | null
+          installments_total?: number | null
+          payment_type?: string | null
           quantity?: number
           status?: string | null
           stripe_checkout_session_id?: string | null
+          stripe_customer_id?: string | null
           stripe_payment_intent_id?: string | null
           total_price_cents: number
           unit_price_cents: number
@@ -7676,9 +7970,13 @@ export type Database = {
           completed_at?: string | null
           created_at?: string | null
           id?: string
+          installments_paid?: number | null
+          installments_total?: number | null
+          payment_type?: string | null
           quantity?: number
           status?: string | null
           stripe_checkout_session_id?: string | null
+          stripe_customer_id?: string | null
           stripe_payment_intent_id?: string | null
           total_price_cents?: number
           unit_price_cents?: number
@@ -7703,6 +8001,7 @@ export type Database = {
           description: string | null
           end_time: string | null
           event_id: string | null
+          gallery_media: string[] | null
           highlights: string[] | null
           id: string
           instructors: string[] | null
@@ -7732,6 +8031,7 @@ export type Database = {
           description?: string | null
           end_time?: string | null
           event_id?: string | null
+          gallery_media?: string[] | null
           highlights?: string[] | null
           id?: string
           instructors?: string[] | null
@@ -7761,6 +8061,7 @@ export type Database = {
           description?: string | null
           end_time?: string | null
           event_id?: string | null
+          gallery_media?: string[] | null
           highlights?: string[] | null
           id?: string
           instructors?: string[] | null

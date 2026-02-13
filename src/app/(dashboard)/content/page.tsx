@@ -34,11 +34,15 @@ import {
   ExternalLink,
   Sparkles,
   TrendingUp,
+  FolderDown,
+  Inbox,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { LibraryContentCard } from "@/components/deliveries/LibraryContentCard";
+import { LibraryContentDetailSheet } from "@/components/deliveries/LibraryContentDetailSheet";
 
 interface MediaAsset {
   id: string;
@@ -62,6 +66,17 @@ interface PremiumContent {
   created_at: string | null;
 }
 
+interface LibraryItem {
+  assignmentId: string;
+  libraryItemId: string;
+  title: string;
+  description: string | null;
+  notes: string | null;
+  assignedAt: string;
+  fileCount: number;
+  totalSize: number;
+}
+
 export default function ContentPage() {
   const supabase = createClient();
 
@@ -74,6 +89,9 @@ export default function ContentPage() {
   const [modelUsername, setModelUsername] = useState<string | null>(null);
   const [totalEarnings, setTotalEarnings] = useState(0);
   const [activeTab, setActiveTab] = useState("portfolio");
+  const [libraryItems, setLibraryItems] = useState<LibraryItem[]>([]);
+  const [selectedLibraryItemId, setSelectedLibraryItemId] = useState<string | null>(null);
+  const [librarySheetOpen, setLibrarySheetOpen] = useState(false);
 
   // Form state
   const [title, setTitle] = useState("");
@@ -145,9 +163,22 @@ export default function ContentPage() {
     setLoading(false);
   }, [supabase]);
 
+  const loadLibraryItems = useCallback(async () => {
+    try {
+      const res = await fetch("/api/content-library/assigned");
+      if (res.ok) {
+        const data = await res.json();
+        setLibraryItems(data.items || []);
+      }
+    } catch (error) {
+      console.error("Failed to load library items:", error);
+    }
+  }, []);
+
   useEffect(() => {
     fetchContent();
-  }, [fetchContent]);
+    loadLibraryItems();
+  }, [fetchContent, loadLibraryItems]);
 
   // Format file size for display
   const formatFileSize = (bytes: number): string => {
@@ -502,7 +533,7 @@ export default function ContentPage() {
       {/* Tabs - sticky on scroll */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-md -mx-4 px-4 py-2 md:-mx-8 md:px-8">
-          <TabsList className="grid w-full grid-cols-2 h-12">
+          <TabsList className="grid w-full grid-cols-3 h-12">
           <TabsTrigger value="portfolio" className="flex items-center gap-2 text-base">
             <Camera className="h-4 w-4" />
             Portfolio
@@ -510,6 +541,10 @@ export default function ContentPage() {
           <TabsTrigger value="ppv" className="flex items-center gap-2 text-base">
             <Sparkles className="h-4 w-4" />
             PPV Content
+          </TabsTrigger>
+          <TabsTrigger value="exa" className="flex items-center gap-2 text-base">
+            <FolderDown className="h-4 w-4" />
+            From EXA {libraryItems.length > 0 && `(${libraryItems.length})`}
           </TabsTrigger>
           </TabsList>
         </div>
@@ -636,6 +671,32 @@ export default function ContentPage() {
           )}
         </TabsContent>
 
+        {/* From EXA Tab */}
+        <TabsContent value="exa" className="space-y-4">
+          {libraryItems.length === 0 ? (
+            <div className="text-center py-16 text-muted-foreground">
+              <Inbox className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p className="font-medium">No shared content yet</p>
+              <p className="text-sm mt-1">
+                Content shared by EXA will appear here
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {libraryItems.map((item) => (
+                <LibraryContentCard
+                  key={item.assignmentId}
+                  item={item}
+                  onClick={() => {
+                    setSelectedLibraryItemId(item.libraryItemId);
+                    setLibrarySheetOpen(true);
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
         {/* PPV Tab */}
         <TabsContent value="ppv" className="space-y-4">
           {content.length === 0 ? (
@@ -741,6 +802,13 @@ export default function ContentPage() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Library Content Detail Sheet */}
+      <LibraryContentDetailSheet
+        open={librarySheetOpen}
+        onOpenChange={setLibrarySheetOpen}
+        libraryItemId={selectedLibraryItemId}
+      />
 
       {/* Upload Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
