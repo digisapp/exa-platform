@@ -30,10 +30,34 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     },
     {
+      url: `${baseUrl}/models`,
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/studio-booking`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/workshops`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.7,
+    },
+    {
       url: `${baseUrl}/apply`,
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.6,
+    },
+    {
+      url: `${baseUrl}/schedule-call`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.5,
     },
     {
       url: `${baseUrl}/signup`,
@@ -95,5 +119,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ] : [];
 
-  return [...staticPages, ...modelPages, ...modelRatesPages, ...eventsListingPage, ...eventPages];
+  // Fetch workshops
+  const { data: workshops } = await supabase
+    .from("workshops")
+    .select("slug, updated_at")
+    .not("slug", "is", null);
+
+  const workshopPages: MetadataRoute.Sitemap = (workshops || []).map((workshop) => ({
+    url: `${baseUrl}/workshops/${workshop.slug}`,
+    lastModified: workshop.updated_at ? new Date(workshop.updated_at) : new Date(),
+    changeFrequency: "weekly" as const,
+    priority: 0.7,
+  }));
+
+  return [...staticPages, ...modelPages, ...modelRatesPages, ...eventsListingPage, ...eventPages, ...workshopPages];
 }
