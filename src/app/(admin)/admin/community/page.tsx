@@ -773,7 +773,7 @@ export default function AdminCommunityPage() {
                               <div className="flex items-center gap-3 text-sm text-muted-foreground">
                                 {app.instagram_username && (
                                   <a
-                                    href={`https://instagram.com/${app.instagram_username}`}
+                                    href={`https://instagram.com/${app.instagram_username?.replace(/^@/, '')}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-pink-500 hover:text-pink-400 flex items-center gap-1"

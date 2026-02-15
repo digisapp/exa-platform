@@ -261,12 +261,12 @@ export default async function ModelProfilePage({ params }: Props) {
 
   // Social media links
   const socialLinks = [
-    { platform: "instagram", username: model.instagram_name, url: (model.instagram_url && model.instagram_url.includes("instagram.com")) ? model.instagram_url : `https://www.instagram.com/${model.instagram_name}` },
-    { platform: "tiktok", username: model.tiktok_username, url: `https://tiktok.com/@${model.tiktok_username}` },
-    { platform: "snapchat", username: model.snapchat_username, url: `https://snapchat.com/add/${model.snapchat_username}` },
-    { platform: "x", username: model.x_username, url: `https://x.com/${model.x_username}` },
-    { platform: "youtube", username: model.youtube_username, url: `https://youtube.com/@${model.youtube_username}` },
-    { platform: "twitch", username: model.twitch_username, url: `https://twitch.tv/${model.twitch_username}` },
+    { platform: "instagram", username: model.instagram_name, url: (model.instagram_url && model.instagram_url.includes("instagram.com")) ? model.instagram_url : `https://www.instagram.com/${model.instagram_name?.replace(/^@/, '')}` },
+    { platform: "tiktok", username: model.tiktok_username, url: `https://tiktok.com/@${model.tiktok_username?.replace(/^@/, '')}` },
+    { platform: "snapchat", username: model.snapchat_username, url: `https://snapchat.com/add/${model.snapchat_username?.replace(/^@/, '')}` },
+    { platform: "x", username: model.x_username, url: `https://x.com/${model.x_username?.replace(/^@/, '')}` },
+    { platform: "youtube", username: model.youtube_username, url: `https://youtube.com/@${model.youtube_username?.replace(/^@/, '')}` },
+    { platform: "twitch", username: model.twitch_username, url: `https://twitch.tv/${model.twitch_username?.replace(/^@/, '')}` },
   ].filter(link => link.username);
 
   // JSON-LD structured data for SEO

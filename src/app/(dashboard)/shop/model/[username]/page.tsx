@@ -176,7 +176,7 @@ export default function ModelStorefrontPage() {
                 <div className="flex flex-wrap justify-center md:justify-start gap-3">
                   {model.instagram && (
                     <a
-                      href={`https://instagram.com/${model.instagram}`}
+                      href={`https://instagram.com/${model.instagram?.replace(/^@/, '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
