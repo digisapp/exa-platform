@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { logAdminAction, AdminActions } from "@/lib/admin-audit";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { sendBrandApprovalEmail } from "@/lib/email";
 import { z } from "zod";
 
 const brandPatchSchema = z.object({ is_verified: z.boolean() }).strict();
@@ -49,6 +50,13 @@ export async function PATCH(
     // Use service role client to bypass RLS for brand updates
     const adminClient = createServiceRoleClient();
 
+    // Fetch brand before updating so we can send approval email
+    const { data: brand } = await adminClient
+      .from("brands")
+      .select("email, company_name, is_verified")
+      .eq("id", id)
+      .single();
+
     const { error } = await adminClient
       .from("brands")
       .update({
@@ -58,6 +66,19 @@ export async function PATCH(
       .eq("id", id);
 
     if (error) throw error;
+
+    // Send approval email when brand is newly verified
+    if (is_verified && brand && !brand.is_verified && brand.email) {
+      try {
+        await sendBrandApprovalEmail({
+          to: brand.email,
+          companyName: brand.company_name || "Brand",
+        });
+      } catch (emailError) {
+        console.error("Failed to send brand approval email:", emailError);
+        // Don't fail the request if email fails
+      }
+    }
 
     return NextResponse.json({ success: true });
   } catch (error: unknown) {

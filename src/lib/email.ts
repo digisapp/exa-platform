@@ -277,6 +277,154 @@ export async function sendModelApprovalEmail({
   }
 }
 
+export async function sendBrandApprovalEmail({
+  to,
+  companyName,
+}: {
+  to: string;
+  companyName: string;
+}) {
+  try {
+    if (await isEmailUnsubscribed(to, "notification")) {
+      return { success: true, skipped: true };
+    }
+
+    const resend = getResendClient();
+    const dashboardUrl = `${BASE_URL}/dashboard`;
+    const unsubscribeToken = await getUnsubscribeToken(to);
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      subject: "Your Brand Account is Verified - Welcome to EXA Models!",
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%); padding: 40px 30px; text-align: center;">
+              <h1 style="margin: 0; color: white; font-size: 28px; font-weight: bold;">
+                Welcome to EXA Models
+              </h1>
+              <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
+                Your brand account has been verified!
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
+                Hey ${escapeHtml(companyName)},
+              </p>
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                Great news! Your brand account has been verified. You now have full access to the EXA Models platform and can start connecting with talent.
+              </p>
+
+              <!-- What You Can Do -->
+              <h2 style="margin: 0 0 20px; color: #ffffff; font-size: 20px; font-weight: 600;">
+                What You Can Do Now
+              </h2>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+                <tr>
+                  <td style="padding: 15px; background-color: #262626; border-radius: 8px;">
+                    <table cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="width: 40px; vertical-align: top;">
+                          <div style="width: 28px; height: 28px; background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%); border-radius: 50%; text-align: center; line-height: 28px; color: white; font-weight: bold;">1</div>
+                        </td>
+                        <td style="vertical-align: top;">
+                          <p style="margin: 0 0 5px; color: #ffffff; font-weight: 600;">Browse Models</p>
+                          <p style="margin: 0; color: #a1a1aa; font-size: 14px;">Discover talented models for your campaigns and collaborations.</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr><td style="height: 10px;"></td></tr>
+
+                <tr>
+                  <td style="padding: 15px; background-color: #262626; border-radius: 8px;">
+                    <table cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="width: 40px; vertical-align: top;">
+                          <div style="width: 28px; height: 28px; background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%); border-radius: 50%; text-align: center; line-height: 28px; color: white; font-weight: bold;">2</div>
+                        </td>
+                        <td style="vertical-align: top;">
+                          <p style="margin: 0 0 5px; color: #ffffff; font-weight: 600;">Post Gigs & Castings</p>
+                          <p style="margin: 0; color: #a1a1aa; font-size: 14px;">Create opportunities and let models apply to work with your brand.</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr><td style="height: 10px;"></td></tr>
+
+                <tr>
+                  <td style="padding: 15px; background-color: #262626; border-radius: 8px;">
+                    <table cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="width: 40px; vertical-align: top;">
+                          <div style="width: 28px; height: 28px; background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%); border-radius: 50%; text-align: center; line-height: 28px; color: white; font-weight: bold;">3</div>
+                        </td>
+                        <td style="vertical-align: top;">
+                          <p style="margin: 0 0 5px; color: #ffffff; font-weight: 600;">Book Models Directly</p>
+                          <p style="margin: 0; color: #a1a1aa; font-size: 14px;">Schedule video calls, photo shoots, and other bookings with models.</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Dashboard Link -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="${dashboardUrl}" style="display: inline-block; background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                      Go to Dashboard
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          ${generateEmailFooter(unsubscribeToken)}
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      console.error("Resend error:", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error("Email send error:", error);
+    return { success: false, error };
+  }
+}
+
 export async function sendModelInviteEmail({
   to,
   modelName,

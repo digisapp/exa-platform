@@ -6,7 +6,12 @@ import { Navbar } from "@/components/layout/navbar";
 import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import {
   MapPin,
   Calendar,
@@ -17,105 +22,120 @@ import {
   Palmtree,
   Camera,
   ArrowRight,
+  Home,
+  UtensilsCrossed,
+  Wifi,
+  Sun,
+  Heart,
+  Sparkles,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
 import { format } from "date-fns";
 
 export const metadata: Metadata = {
-  title: "Model Travel Trips | Designer Swimwear Photoshoots in Paradise",
-  description: "Exclusive travel trips for models. Designer swimwear photoshoots in exotic tropical locations. Shoot alongside top models in Dominican Republic, Miami, and more. 50+ photos, 10+ videos per trip.",
+  title: "EXA Travel | A New Country Every Month — Model Travel Community",
+  description:
+    "Join the EXA Travel community. A new country every month. 8 models per week. Share a luxury villa, create content, and connect with models from around the world. $1,000 for 7 days including villa and meals.",
   robots: { index: true, follow: true },
 };
 
-// Cache page for 2 minutes
 export const revalidate = 120;
 
 export default async function TravelPage() {
   const supabase = await createClient();
-
-  // Check if user is logged in
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   let actorType: "model" | "fan" | "brand" | "admin" | null = null;
   let profileData: any = null;
   let coinBalance = 0;
   let myApplications: any[] = [];
 
   if (user) {
-    // Get actor info
-    const { data: actor } = await supabase
+    const { data: actor } = (await supabase
       .from("actors")
       .select("id, type")
       .eq("user_id", user.id)
-      .single() as { data: { id: string; type: "admin" | "model" | "brand" | "fan" } | null };
+      .single()) as {
+      data: { id: string; type: "admin" | "model" | "brand" | "fan" } | null;
+    };
 
     actorType = actor?.type || null;
 
-    // Get profile info based on actor type
     if (actor?.type === "model" || actor?.type === "admin") {
-      const { data } = await supabase
+      const { data } = (await supabase
         .from("models")
-        .select("id, username, first_name, last_name, profile_photo_url, coin_balance")
+        .select(
+          "id, username, first_name, last_name, profile_photo_url, coin_balance"
+        )
         .eq("user_id", user.id)
-        .single() as { data: any };
+        .single()) as { data: any };
       profileData = data;
       coinBalance = data?.coin_balance ?? 0;
 
-      // Get model's travel applications
       if (data?.id) {
-        const { data: applications } = await (supabase
-          .from("gig_applications") as any)
-          .select(`
-            id,
-            status,
-            gig_id
-          `)
+        const { data: applications } = await (
+          supabase.from("gig_applications") as any
+        )
+          .select("id, status, gig_id")
           .eq("model_id", data.id);
         myApplications = applications || [];
       }
     } else if (actor?.type === "fan") {
-      const { data } = await supabase
+      const { data } = (await supabase
         .from("fans")
         .select("display_name, avatar_url, coin_balance")
         .eq("id", actor.id)
-        .single() as { data: any };
+        .single()) as { data: any };
       profileData = data;
       coinBalance = data?.coin_balance ?? 0;
     }
   }
 
-  // Get all travel gigs (both open and upcoming)
-  const { data: travelGigs } = await supabase
+  // Get all travel gigs
+  const { data: travelGigs } = (await supabase
     .from("gigs")
     .select("*")
     .eq("type", "travel")
     .eq("visibility", "public")
     .in("status", ["open", "upcoming"])
-    .order("start_at", { ascending: true }) as { data: any[] | null };
+    .order("start_at", { ascending: true })) as { data: any[] | null };
 
-  const displayName = actorType === "fan"
-    ? profileData?.display_name
-    : profileData?.first_name
-      ? `${profileData.first_name} ${profileData.last_name || ""}`.trim()
-      : profileData?.username || undefined;
+  const displayName =
+    actorType === "fan"
+      ? profileData?.display_name
+      : profileData?.first_name
+        ? `${profileData.first_name} ${profileData.last_name || ""}`.trim()
+        : (profileData?.username || undefined);
 
-  // Separate current/open trips from upcoming
-  const openTrips = travelGigs?.filter(g => g.status === "open") || [];
-  const upcomingTrips = travelGigs?.filter(g => g.status === "upcoming") || [];
+  const openTrips = travelGigs?.filter((g) => g.status === "open") || [];
+  const upcomingTrips = travelGigs?.filter((g) => g.status === "upcoming") || [];
 
   return (
     <CoinBalanceProvider initialBalance={coinBalance}>
       <div className="min-h-screen bg-background">
         <Navbar
-          user={user ? {
-            id: user.id,
-            email: user.email || "",
-            avatar_url: profileData?.profile_photo_url || profileData?.avatar_url || undefined,
-            name: displayName,
-            username: profileData?.username || undefined,
-          } : undefined}
+          user={
+            user
+              ? {
+                  id: user.id,
+                  email: user.email || "",
+                  avatar_url:
+                    profileData?.profile_photo_url ||
+                    profileData?.avatar_url ||
+                    undefined,
+                  name: displayName,
+                  username: profileData?.username || undefined,
+                }
+              : undefined
+          }
           actorType={actorType}
         />
 
-        {/* Hero Section with Full-Screen Video */}
+        {/* ═══════════════════════════════════════════ */}
+        {/* HERO */}
+        {/* ═══════════════════════════════════════════ */}
         <main className="container px-4 md:px-16 py-4 md:py-8">
           <div className="relative rounded-2xl md:rounded-3xl overflow-hidden mb-4 md:mb-8">
             <div className="aspect-video relative">
@@ -126,46 +146,123 @@ export default async function TravelPage() {
                 allowFullScreen
                 className="absolute inset-0 w-full h-full"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none" />
             </div>
 
-            {/* Content Overlay - Minimal on mobile, full on desktop */}
             <div className="absolute bottom-0 left-0 right-0 p-4 md:p-10 pointer-events-none">
               <Badge className="mb-2 md:mb-4 bg-gradient-to-r from-pink-500 to-violet-500 text-white border-0 px-3 md:px-4 py-1 md:py-1.5 text-xs md:text-sm font-semibold">
                 <Plane className="h-3 w-3 md:h-4 md:w-4 mr-1.5 md:mr-2" />
                 EXA Travel
               </Badge>
-              <h1 className="text-2xl md:text-5xl lg:text-6xl font-bold text-white mb-2 md:mb-4 drop-shadow-lg">
-                Shoot in Paradise
+              <h1 className="text-2xl md:text-5xl lg:text-6xl font-bold text-white mb-1 md:mb-3 drop-shadow-lg">
+                A New Country Every Month
               </h1>
-              {/* Description - hidden on mobile */}
-              <p className="hidden md:block text-lg md:text-xl text-white/80 mb-6 max-w-2xl">
-                Designer swimwear photoshoots in the most exotic tropical locations. Shoot stunning content
-                alongside other top models and gain massive exposure for your portfolio.
+              <p className="text-sm md:text-xl text-white/80 mb-4 md:mb-6 max-w-2xl">
+                8 models. 1 villa. 7 days. Unlimited content.
               </p>
-              {/* Feature pills - hidden on mobile */}
-              <div className="hidden md:flex flex-wrap gap-4 md:gap-6 text-white/90">
-                <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
-                  <Camera className="h-5 w-5 text-pink-400" />
-                  <span className="font-medium">Designer Swimwear Shoots</span>
-                </div>
+              <div className="hidden md:flex flex-wrap gap-4 text-white/90">
                 <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
                   <Globe className="h-5 w-5 text-cyan-400" />
-                  <span className="font-medium">Exotic Locations</span>
+                  <span className="font-medium">New Destination Monthly</span>
+                </div>
+                <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
+                  <Home className="h-5 w-5 text-pink-400" />
+                  <span className="font-medium">Luxury Villa Included</span>
                 </div>
                 <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
                   <Users className="h-5 w-5 text-violet-400" />
-                  <span className="font-medium">Top Model Network</span>
+                  <span className="font-medium">8 Models Per Trip</span>
+                </div>
+                <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
+                  <Camera className="h-5 w-5 text-amber-400" />
+                  <span className="font-medium">Create Content Together</span>
                 </div>
               </div>
             </div>
           </div>
-
         </main>
 
-        {/* Trips Section */}
-        <section id="trips" className="py-8 md:py-12 bg-muted/30">
-          <div className="container px-8 md:px-16">
+        {/* ═══════════════════════════════════════════ */}
+        {/* HOW IT WORKS */}
+        {/* ═══════════════════════════════════════════ */}
+        <section className="py-12 md:py-20">
+          <div className="container px-6 md:px-16">
+            <div className="text-center mb-10 md:mb-14">
+              <Badge className="mb-3 bg-violet-500/10 text-violet-400 border-violet-500/20">
+                <Sparkles className="h-3 w-3 mr-1.5" />
+                The Program
+              </Badge>
+              <h2 className="text-3xl md:text-4xl font-bold mb-3">
+                How EXA Travel Works
+              </h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Every month we pick a new destination, rent a beautiful villa,
+                and bring together 8 models for a week of content creation,
+                networking, and adventure.
+              </p>
+            </div>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="relative group">
+                <div className="glass-card rounded-2xl p-6 h-full border-border/50 hover:border-border transition-colors">
+                  <span className="text-5xl font-black text-cyan-500/10 absolute top-4 right-5">01</span>
+                  <div className="h-11 w-11 rounded-xl bg-cyan-500/10 flex items-center justify-center mb-4">
+                    <Globe className="h-5 w-5 text-cyan-500" />
+                  </div>
+                  <h3 className="font-semibold text-lg mb-2">We Pick the Destination</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    A new country each month — from Bali to Tulum to Lisbon. We find the best locations with stunning backdrops.
+                  </p>
+                </div>
+              </div>
+
+              <div className="relative group">
+                <div className="glass-card rounded-2xl p-6 h-full border-border/50 hover:border-border transition-colors">
+                  <span className="text-5xl font-black text-pink-500/10 absolute top-4 right-5">02</span>
+                  <div className="h-11 w-11 rounded-xl bg-pink-500/10 flex items-center justify-center mb-4">
+                    <Calendar className="h-5 w-5 text-pink-500" />
+                  </div>
+                  <h3 className="font-semibold text-lg mb-2">You Book Your Week</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    Each month has up to 4 weeks available. Pick the week that works for you and lock in your spot.
+                  </p>
+                </div>
+              </div>
+
+              <div className="relative group">
+                <div className="glass-card rounded-2xl p-6 h-full border-border/50 hover:border-border transition-colors">
+                  <span className="text-5xl font-black text-violet-500/10 absolute top-4 right-5">03</span>
+                  <div className="h-11 w-11 rounded-xl bg-violet-500/10 flex items-center justify-center mb-4">
+                    <Home className="h-5 w-5 text-violet-500" />
+                  </div>
+                  <h3 className="font-semibold text-lg mb-2">Share a Luxury Villa</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    8 models per week share a beautiful villa. Meals included, content spaces ready, everything handled.
+                  </p>
+                </div>
+              </div>
+
+              <div className="relative group">
+                <div className="glass-card rounded-2xl p-6 h-full border-border/50 hover:border-border transition-colors">
+                  <span className="text-5xl font-black text-amber-500/10 absolute top-4 right-5">04</span>
+                  <div className="h-11 w-11 rounded-xl bg-amber-500/10 flex items-center justify-center mb-4">
+                    <Camera className="h-5 w-5 text-amber-500" />
+                  </div>
+                  <h3 className="font-semibold text-lg mb-2">Create & Connect</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    Shoot content, explore the city, build real friendships, and grow your portfolio and network.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════ */}
+        {/* UPCOMING TRIPS FROM DB */}
+        {/* ═══════════════════════════════════════════ */}
+        <section id="trips" className="py-10 md:py-16 bg-muted/30">
+          <div className="container px-6 md:px-16">
             {/* Open Trips */}
             {openTrips.length > 0 && (
               <div className="mb-16">
@@ -174,8 +271,10 @@ export default async function TravelPage() {
                     <Plane className="h-5 w-5 text-green-500" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-bold">Upcoming Trips</h2>
-                    <p className="text-muted-foreground text-sm">Apply now to secure your spot</p>
+                    <h2 className="text-2xl font-bold">Now Booking</h2>
+                    <p className="text-muted-foreground text-sm">
+                      Secure your spot — limited to 8 models per week
+                    </p>
                   </div>
                 </div>
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -183,8 +282,12 @@ export default async function TravelPage() {
                     <TravelCard
                       key={trip.id}
                       trip={trip}
-                      hasApplied={myApplications.some(a => a.gig_id === trip.id)}
-                      applicationStatus={myApplications.find(a => a.gig_id === trip.id)?.status}
+                      hasApplied={myApplications.some(
+                        (a) => a.gig_id === trip.id
+                      )}
+                      applicationStatus={
+                        myApplications.find((a) => a.gig_id === trip.id)?.status
+                      }
                     />
                   ))}
                 </div>
@@ -200,7 +303,9 @@ export default async function TravelPage() {
                   </div>
                   <div>
                     <h2 className="text-2xl font-bold">Coming Soon</h2>
-                    <p className="text-muted-foreground text-sm">Stay tuned for these upcoming adventures</p>
+                    <p className="text-muted-foreground text-sm">
+                      Stay tuned — bookings open soon
+                    </p>
                   </div>
                 </div>
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -215,86 +320,437 @@ export default async function TravelPage() {
             {(!travelGigs || travelGigs.length === 0) && (
               <div className="text-center py-16">
                 <Globe className="h-20 w-20 mx-auto text-muted-foreground/30 mb-6" />
-                <h3 className="text-2xl font-semibold mb-2">No trips scheduled yet</h3>
-                <p className="text-muted-foreground mb-6">
-                  Check back soon for exciting new travel opportunities!
+                <h3 className="text-2xl font-semibold mb-2">
+                  Next destination coming soon
+                </h3>
+                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                  We&apos;re scouting the next location. Apply as a model to get
+                  notified when bookings open.
                 </p>
                 <Button variant="outline" asChild>
-                  <Link href="/gigs">Browse All Gigs</Link>
+                  <Link href="/apply">Apply as a Model</Link>
                 </Button>
               </div>
             )}
           </div>
         </section>
 
-        {/* What's Included Section */}
-        <section className="py-16 md:py-24">
-          <div className="container px-8 md:px-16">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4">What&apos;s Included</h2>
+        {/* ═══════════════════════════════════════════ */}
+        {/* A WEEK AT EXA TRAVEL */}
+        {/* ═══════════════════════════════════════════ */}
+        <section className="py-12 md:py-20">
+          <div className="container px-6 md:px-16">
+            <div className="text-center mb-10 md:mb-14">
+              <Badge className="mb-3 bg-pink-500/10 text-pink-400 border-pink-500/20">
+                <Sun className="h-3 w-3 mr-1.5" />
+                The Experience
+              </Badge>
+              <h2 className="text-3xl md:text-4xl font-bold mb-3">
+                A Week at EXA Travel
+              </h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Everything you need to create viral content and level up your modeling career
+                Seven days of creating, connecting, and exploring a new country
+                with 7 other models
               </p>
             </div>
-            <div className="grid md:grid-cols-3 gap-6">
-              <Card className="glass-card border-pink-500/20 hover:border-pink-500/40 transition-colors">
-                <CardContent className="pt-6">
-                  <div className="h-12 w-12 rounded-full bg-pink-500/10 flex items-center justify-center mb-4">
-                    <Camera className="h-6 w-6 text-pink-500" />
-                  </div>
-                  <h3 className="font-semibold text-lg mb-2">Designer Swimwear Shoots</h3>
-                  <p className="text-muted-foreground text-sm">
-                    50+ professional photos and 10+ video clips wearing designer swimwear from top brands
+
+            <div className="grid md:grid-cols-2 gap-4 max-w-4xl mx-auto">
+              <div className="flex gap-4 p-4 rounded-xl border border-pink-500/10 bg-pink-500/5">
+                <div className="shrink-0 h-12 w-12 rounded-xl bg-pink-500/10 flex items-center justify-center">
+                  <span className="text-xs font-bold text-pink-400">Day 1</span>
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-1">Arrival & Welcome</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    Arrive at the villa, meet your housemates, settle in, and kick off the week with a welcome dinner together.
                   </p>
-                </CardContent>
-              </Card>
-              <Card className="glass-card border-violet-500/20 hover:border-violet-500/40 transition-colors">
-                <CardContent className="pt-6">
-                  <div className="h-12 w-12 rounded-full bg-violet-500/10 flex items-center justify-center mb-4">
-                    <Users className="h-6 w-6 text-violet-500" />
-                  </div>
-                  <h3 className="font-semibold text-lg mb-2">Shoot with Top Models</h3>
-                  <p className="text-muted-foreground text-sm">
-                    Create stunning group content with other top EXA models and expand your network
+                </div>
+              </div>
+
+              <div className="flex gap-4 p-4 rounded-xl border border-violet-500/10 bg-violet-500/5">
+                <div className="shrink-0 h-12 w-12 rounded-xl bg-violet-500/10 flex items-center justify-center">
+                  <span className="text-xs font-bold text-violet-400">Day 2-3</span>
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-1">Content Creation</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    Professional and self-directed shoots at the villa and nearby locations. Group content, solo shoots, and behind-the-scenes footage.
                   </p>
-                </CardContent>
-              </Card>
-              <Card className="glass-card border-cyan-500/20 hover:border-cyan-500/40 transition-colors">
-                <CardContent className="pt-6">
-                  <div className="h-12 w-12 rounded-full bg-cyan-500/10 flex items-center justify-center mb-4">
-                    <Palmtree className="h-6 w-6 text-cyan-500" />
-                  </div>
-                  <h3 className="font-semibold text-lg mb-2">Exotic Paradise Locations</h3>
-                  <p className="text-muted-foreground text-sm">
-                    Crystal clear waters, pristine beaches, and jaw-dropping backdrops for your content
+                </div>
+              </div>
+
+              <div className="flex gap-4 p-4 rounded-xl border border-cyan-500/10 bg-cyan-500/5">
+                <div className="shrink-0 h-12 w-12 rounded-xl bg-cyan-500/10 flex items-center justify-center">
+                  <span className="text-xs font-bold text-cyan-400">Day 4</span>
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-1">Explore the City</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    Free day to explore local culture, restaurants, and hidden gems. Content opportunities everywhere you go.
                   </p>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
+
+              <div className="flex gap-4 p-4 rounded-xl border border-amber-500/10 bg-amber-500/5">
+                <div className="shrink-0 h-12 w-12 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                  <span className="text-xs font-bold text-amber-400">Day 5-6</span>
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-1">Beach & Adventure</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    Beach shoots, water activities, and adventure content. This is where the best group photos and videos happen.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-4 p-4 rounded-xl border border-green-500/10 bg-green-500/5">
+                <div className="shrink-0 h-12 w-12 rounded-xl bg-green-500/10 flex items-center justify-center">
+                  <span className="text-xs font-bold text-green-400">Day 7</span>
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-1">Final Shoots & Farewell</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    Last content sessions, swap socials, exchange edits, and say goodbye to new friends until the next trip.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-4 p-4 rounded-xl border border-pink-500/10 bg-pink-500/5">
+                <div className="shrink-0 h-12 w-12 rounded-xl bg-pink-500/10 flex items-center justify-center">
+                  <span className="text-xs font-bold text-pink-400">After</span>
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-1">Stay Connected</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    Join the EXA Travel community group, share your edits, plan your next trip, and stay in touch with the models you met.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* CTA Section */}
-        <section className="py-20 md:py-32 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-pink-500/10 to-violet-500/10" />
-          <div className="container relative px-8 md:px-16 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Take Your Modeling Career Global?</h2>
-            <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Join EXA Models and get exclusive access to international photoshoots, designer swimwear,
-              and opportunities to shoot alongside top models in paradise.
+        {/* ═══════════════════════════════════════════ */}
+        {/* WHAT'S INCLUDED / WHAT YOU'LL NEED */}
+        {/* ═══════════════════════════════════════════ */}
+        <section className="py-12 md:py-20 bg-muted/30">
+          <div className="container px-6 md:px-16">
+            <div className="text-center mb-10 md:mb-14">
+              <h2 className="text-3xl md:text-4xl font-bold mb-3">
+                What&apos;s Included
+              </h2>
+              <p className="text-muted-foreground max-w-xl mx-auto">
+                $1,000 per model for 7 days — here&apos;s what&apos;s covered
+                and what you&apos;ll need to bring
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+              {/* Included */}
+              <div>
+                <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-green-500" />
+                  Included in $1,000
+                </h3>
+                <div className="space-y-3">
+                  {[
+                    {
+                      icon: Home,
+                      title: "Luxury Villa",
+                      desc: "Shared villa in a prime location with pool, content areas, and stunning views",
+                    },
+                    {
+                      icon: UtensilsCrossed,
+                      title: "All Meals",
+                      desc: "Breakfast, lunch, and dinner for 7 days — local cuisine and group dining",
+                    },
+                    {
+                      icon: Wifi,
+                      title: "WiFi & Workspace",
+                      desc: "High-speed internet so you can edit and post content in real-time",
+                    },
+                    {
+                      icon: Camera,
+                      title: "Content Opportunities",
+                      desc: "Group and solo shoot setups at the villa and curated local spots",
+                    },
+                    {
+                      icon: Users,
+                      title: "Community & Networking",
+                      desc: "Connect with 7 other models, share audiences, and build lasting friendships",
+                    },
+                    {
+                      icon: Heart,
+                      title: "Trip Coordination",
+                      desc: "Everything organized — villa, meals, activities, and local guides",
+                    },
+                  ].map((item) => (
+                    <div
+                      key={item.title}
+                      className="flex gap-3 p-3 rounded-lg bg-green-500/5 border border-green-500/10"
+                    >
+                      <div className="h-9 w-9 shrink-0 rounded-lg bg-green-500/10 flex items-center justify-center">
+                        <item.icon className="h-4 w-4 text-green-500" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">{item.title}</p>
+                        <p className="text-muted-foreground text-xs">
+                          {item.desc}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Not Included */}
+              <div>
+                <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                  <XCircle className="h-5 w-5 text-muted-foreground" />
+                  What You&apos;ll Need
+                </h3>
+                <div className="space-y-3">
+                  {[
+                    {
+                      icon: Plane,
+                      title: "Your Flight",
+                      desc: "Book your own airline ticket to the destination. We'll share the best flight options and airport details.",
+                    },
+                    {
+                      icon: Globe,
+                      title: "Travel Documents",
+                      desc: "Valid passport and any visas required for the destination country.",
+                    },
+                    {
+                      icon: Camera,
+                      title: "Your Camera/Phone",
+                      desc: "Bring your content creation gear — phone, camera, tripod, whatever you shoot with.",
+                    },
+                  ].map((item) => (
+                    <div
+                      key={item.title}
+                      className="flex gap-3 p-3 rounded-lg bg-muted/50 border border-border"
+                    >
+                      <div className="h-9 w-9 shrink-0 rounded-lg bg-muted flex items-center justify-center">
+                        <item.icon className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">{item.title}</p>
+                        <p className="text-muted-foreground text-xs">
+                          {item.desc}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Price Highlight */}
+                <div className="mt-6 p-5 rounded-xl bg-gradient-to-br from-pink-500/10 to-violet-500/10 border border-pink-500/20">
+                  <div className="flex items-baseline gap-2 mb-2">
+                    <span className="text-3xl font-bold">$1,000</span>
+                    <span className="text-muted-foreground text-sm">
+                      / model / 7 days
+                    </span>
+                  </div>
+                  <p className="text-muted-foreground text-sm">
+                    Villa + all meals + coordination. The most affordable way to
+                    travel the world and create content as a model.
+                  </p>
+                  <Button
+                    className="mt-4 w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
+                    asChild
+                  >
+                    <Link href="#trips">
+                      View Available Trips
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════ */}
+        {/* FAQ */}
+        {/* ═══════════════════════════════════════════ */}
+        <section className="py-12 md:py-20">
+          <div className="container px-6 md:px-16 max-w-3xl mx-auto">
+            <div className="text-center mb-10">
+              <h2 className="text-3xl md:text-4xl font-bold mb-3">
+                Frequently Asked Questions
+              </h2>
+              <p className="text-muted-foreground">
+                Everything you need to know about EXA Travel
+              </p>
+            </div>
+
+            <Accordion type="single" collapsible className="space-y-3">
+              <AccordionItem
+                value="how-it-works"
+                className="glass-card rounded-xl border px-5"
+              >
+                <AccordionTrigger className="text-left font-medium hover:no-underline">
+                  How does booking a trip work?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  Browse our upcoming destinations and pick the week that works
+                  for you. Apply through the trip page, and once accepted
+                  you&apos;ll receive payment instructions. Your $1,000 covers
+                  the villa and all meals for 7 days. You book your own flight.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem
+                value="who-can-join"
+                className="glass-card rounded-xl border px-5"
+              >
+                <AccordionTrigger className="text-left font-medium hover:no-underline">
+                  Who can join EXA Travel trips?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  EXA Travel is open to approved EXA models. If you&apos;re not
+                  yet on the platform, apply as a model first. We review
+                  applications to ensure a great group dynamic and experience
+                  for everyone.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem
+                value="how-many"
+                className="glass-card rounded-xl border px-5"
+              >
+                <AccordionTrigger className="text-left font-medium hover:no-underline">
+                  How many models per trip?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  Each week is limited to 8 models. This keeps the villa
+                  comfortable, the group tight-knit, and ensures everyone gets
+                  quality content. Each month may have multiple weeks available
+                  at the same destination.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem
+                value="whats-included"
+                className="glass-card rounded-xl border px-5"
+              >
+                <AccordionTrigger className="text-left font-medium hover:no-underline">
+                  What exactly does the $1,000 cover?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  Your $1,000 covers 7 nights at a luxury shared villa and all
+                  meals (breakfast, lunch, dinner). It also includes trip
+                  coordination, local guides, and organized activities. You are
+                  responsible for booking your own flight and any personal
+                  expenses.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem
+                value="content"
+                className="glass-card rounded-xl border px-5"
+              >
+                <AccordionTrigger className="text-left font-medium hover:no-underline">
+                  Is there a photographer or do we shoot ourselves?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  It&apos;s a mix. We organize group content sessions and set up
+                  shoot-ready spaces at the villa and local spots. Models
+                  collaborate and shoot each other — this is about building real
+                  connections and content, not a traditional agency shoot.
+                  Some trips may include a professional photographer.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem
+                value="cancellation"
+                className="glass-card rounded-xl border px-5"
+              >
+                <AccordionTrigger className="text-left font-medium hover:no-underline">
+                  What&apos;s the cancellation policy?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  Full refund if you cancel 30+ days before the trip. 50% refund
+                  for 15-29 days. No refund within 14 days of the trip start
+                  date, as the villa and meals are already committed. If we
+                  cancel a trip, you get a full refund.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem
+                value="solo"
+                className="glass-card rounded-xl border px-5"
+              >
+                <AccordionTrigger className="text-left font-medium hover:no-underline">
+                  Can I come alone or do I need to bring a friend?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  Most models come solo — that&apos;s the whole point! You&apos;ll
+                  meet 7 other models and leave with new friends. We add you to
+                  the trip group chat before departure so you can connect with
+                  your housemates beforehand.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem
+                value="community"
+                className="glass-card rounded-xl border px-5"
+              >
+                <AccordionTrigger className="text-left font-medium hover:no-underline">
+                  Is there a community between trips?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  Yes! All EXA Travel models are part of our community group
+                  where we share upcoming destinations, travel tips, and content
+                  from past trips. It&apos;s also where models plan to meet up
+                  outside of official trips.
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════ */}
+        {/* CTA */}
+        {/* ═══════════════════════════════════════════ */}
+        <section className="py-16 md:py-24 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-pink-500/10 via-violet-500/10 to-cyan-500/10" />
+          <div className="container relative px-6 md:px-16 text-center">
+            <Palmtree className="h-12 w-12 mx-auto text-pink-400 mb-4" />
+            <h2 className="text-3xl md:text-4xl font-bold mb-3">
+              Ready to Travel the World?
+            </h2>
+            <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
+              Join the EXA Travel community. New destinations every month, real
+              connections, and content that sets you apart.
             </p>
             {!user ? (
               <div className="flex flex-wrap justify-center gap-4">
-                <Button size="lg" className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600" asChild>
-                  <Link href="/apply">Apply as a Model</Link>
+                <Button
+                  size="lg"
+                  className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
+                  asChild
+                >
+                  <Link href="/apply">
+                    Apply as a Model
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Link>
                 </Button>
                 <Button size="lg" variant="outline" asChild>
                   <Link href="/signin?redirect=/travel">Sign In</Link>
                 </Button>
               </div>
             ) : (
-              <Button size="lg" className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600" asChild>
-                <Link href="/gigs">View All Opportunities</Link>
+              <Button
+                size="lg"
+                className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
+                asChild
+              >
+                <Link href="#trips">
+                  View Available Trips
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Link>
               </Button>
             )}
           </div>
@@ -303,6 +759,10 @@ export default async function TravelPage() {
     </CoinBalanceProvider>
   );
 }
+
+/* ═══════════════════════════════════════════ */
+/* TRAVEL CARD COMPONENT */
+/* ═══════════════════════════════════════════ */
 
 function TravelCard({
   trip,
@@ -315,13 +775,14 @@ function TravelCard({
   hasApplied?: boolean;
   applicationStatus?: string;
 }) {
-  const spotsLeft = trip.spots ? trip.spots - (trip.spots_filled || 0) : null;
-  const isUrgent = spotsLeft !== null && spotsLeft <= 5 && !isUpcoming;
+  const spotsLeft = trip.spots
+    ? trip.spots - (trip.spots_filled || 0)
+    : null;
+  const isUrgent = spotsLeft !== null && spotsLeft <= 3 && !isUpcoming;
 
   return (
     <Link href={`/gigs/${trip.slug}`}>
       <div className="glass-card rounded-2xl overflow-hidden hover:scale-[1.02] transition-all h-full group">
-        {/* Portrait Image with Overlay */}
         <div className="aspect-[3/4] relative bg-gradient-to-br from-violet-500/20 to-cyan-500/20 overflow-hidden">
           {trip.cover_image_url ? (
             <Image
@@ -352,27 +813,35 @@ function TravelCard({
 
           {/* Application Status Badge */}
           {hasApplied && (
-            <Badge className={`absolute top-3 right-3 ${
-              applicationStatus === "accepted" ? "bg-green-500 text-white" :
-              applicationStatus === "rejected" ? "bg-gray-500 text-white" :
-              "bg-amber-500 text-white"
-            }`}>
-              {applicationStatus === "accepted" ? "Accepted" :
-               applicationStatus === "rejected" ? "Not Selected" :
-               "Applied"}
+            <Badge
+              className={`absolute top-3 right-3 ${
+                applicationStatus === "accepted"
+                  ? "bg-green-500 text-white"
+                  : applicationStatus === "rejected"
+                    ? "bg-gray-500 text-white"
+                    : "bg-amber-500 text-white"
+              }`}
+            >
+              {applicationStatus === "accepted"
+                ? "Accepted"
+                : applicationStatus === "rejected"
+                  ? "Not Selected"
+                  : "Applied"}
             </Badge>
           )}
 
           {/* Urgency Badge */}
           {isUrgent && !hasApplied && (
-            <Badge variant="destructive" className="absolute top-3 right-3">
-              {spotsLeft} spots left!
+            <Badge variant="destructive" className="absolute top-3 right-3 animate-pulse">
+              {spotsLeft} {spotsLeft === 1 ? "spot" : "spots"} left!
             </Badge>
           )}
 
-          {/* Bottom Title Bar - Always Visible */}
+          {/* Bottom Title Bar */}
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-4 pt-12">
-            <h3 className="font-semibold text-white text-lg line-clamp-2">{trip.title}</h3>
+            <h3 className="font-semibold text-white text-lg line-clamp-2">
+              {trip.title}
+            </h3>
             {(trip.location_city || trip.location_state) && (
               <p className="text-sm text-white/80 flex items-center gap-1 mt-1">
                 <MapPin className="h-3.5 w-3.5 text-pink-400" />
@@ -383,7 +852,7 @@ function TravelCard({
             )}
           </div>
 
-          {/* Hover Overlay with Full Details */}
+          {/* Hover Overlay */}
           <div className="absolute inset-0 bg-black/85 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-4">
             <div className="space-y-3">
               <h3 className="font-bold text-white text-xl">{trip.title}</h3>
@@ -408,19 +877,23 @@ function TravelCard({
                   <div className="flex items-center gap-2 text-white/90">
                     <Calendar className="h-4 w-4 text-violet-400" />
                     {format(new Date(trip.start_at), "MMMM d, yyyy")}
-                    {trip.end_at && ` - ${format(new Date(trip.end_at), "MMMM d, yyyy")}`}
+                    {trip.end_at &&
+                      ` - ${format(new Date(trip.end_at), "MMMM d, yyyy")}`}
                   </div>
                 )}
 
                 {trip.compensation_type && (
                   <div className="flex items-center gap-2 text-white/90">
                     <DollarSign className="h-4 w-4 text-green-400" />
-                    {trip.compensation_type === "paid" && trip.compensation_amount > 0 ? (
+                    {trip.compensation_type === "paid" &&
+                    trip.compensation_amount > 0 ? (
                       <span className="font-medium text-green-400">
-                        ${(trip.compensation_amount / 100).toFixed(0)}
+                        ${(trip.compensation_amount / 100).toFixed(0)} per model
                       </span>
                     ) : (
-                      <span className="capitalize">{trip.compensation_type}</span>
+                      <span className="capitalize">
+                        {trip.compensation_type}
+                      </span>
                     )}
                   </div>
                 )}
@@ -433,10 +906,13 @@ function TravelCard({
                 )}
               </div>
 
-              {/* View Details Button */}
               <div className="pt-2">
                 <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 text-white text-sm font-medium">
-                  {isUpcoming ? "View Details" : hasApplied ? "View Status" : "Apply Now"}
+                  {isUpcoming
+                    ? "View Details"
+                    : hasApplied
+                      ? "View Status"
+                      : "Apply Now"}
                   <ArrowRight className="h-4 w-4" />
                 </span>
               </div>
