@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     // Get the model's ID (models are linked by user_id, not actor)
     const { data: model } = await supabase
       .from("models")
-      .select("id, is_approved")
+      .select("id, is_approved, first_name, last_name, instagram_url")
       .eq("user_id", user.id)
       .single();
 
@@ -46,6 +46,17 @@ export async function POST(request: NextRequest) {
 
     if (!model.is_approved) {
       return NextResponse.json({ error: "Your profile must be approved to apply" }, { status: 403 });
+    }
+
+    // Require basic profile info before applying
+    if (!model.first_name || !model.last_name || !model.instagram_url) {
+      const missing: string[] = [];
+      if (!model.first_name || !model.last_name) missing.push("full name");
+      if (!model.instagram_url) missing.push("Instagram");
+      return NextResponse.json(
+        { error: `Please complete your profile before applying. Missing: ${missing.join(", ")}. Go to Settings to update.` },
+        { status: 400 }
+      );
     }
 
     // Check if already applied
