@@ -71,16 +71,11 @@ export async function GET(request: NextRequest) {
         const escapedSearch = escapeIlike(search);
         const words = escapedSearch.trim().split(/\s+/).filter(w => w.length > 0);
 
-        if (words.length === 1) {
-          q = q.or(`username.ilike.%${words[0]}%,first_name.ilike.%${words[0]}%,last_name.ilike.%${words[0]}%,email.ilike.%${words[0]}%`);
-        } else {
-          const first = words[0];
-          const last = words[words.length - 1];
+        // Each word must match at least one searchable field.
+        // Chaining .or() calls ANDs them together, so all words must be present.
+        for (const word of words) {
           q = q.or(
-            `username.ilike.%${escapedSearch}%,` +
-            `email.ilike.%${escapedSearch}%,` +
-            `and(first_name.ilike.%${first}%,last_name.ilike.%${last}%),` +
-            `and(first_name.ilike.%${last}%,last_name.ilike.%${first}%)`
+            `username.ilike.%${word}%,first_name.ilike.%${word}%,last_name.ilike.%${word}%,email.ilike.%${word}%,instagram_name.ilike.%${word}%,phone.ilike.%${word}%,city.ilike.%${word}%`
           );
         }
       }

@@ -270,6 +270,7 @@ export default function AdminModelsPage() {
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [stateFilter, setStateFilter] = useState<string>("all");
   const [approvalFilter, setApprovalFilter] = useState<string>("all");
   const [ratingFilter, setRatingFilter] = useState<string>("all");
@@ -428,7 +429,7 @@ export default function AdminModelsPage() {
       const params = new URLSearchParams({
         page: page.toString(),
         pageSize: pageSize.toString(),
-        search,
+        search: debouncedSearch,
         state: stateFilter,
         approval: approvalFilter,
         rating: ratingFilter,
@@ -449,17 +450,18 @@ export default function AdminModelsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, stateFilter, approvalFilter, ratingFilter, claimFilter, sortField, sortDirection]);
+  }, [page, debouncedSearch, stateFilter, approvalFilter, ratingFilter, claimFilter, sortField, sortDirection]);
 
   useEffect(() => {
     loadModels();
   }, [loadModels]);
 
-  // Debounced search
+  // Debounced search - wait for user to stop typing before firing API call
   useEffect(() => {
     const timer = setTimeout(() => {
+      setDebouncedSearch(search);
       setPage(1);
-    }, 300);
+    }, 400);
     return () => clearTimeout(timer);
   }, [search]);
 
