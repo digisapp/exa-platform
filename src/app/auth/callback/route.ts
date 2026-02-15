@@ -227,6 +227,45 @@ export async function GET(request: Request) {
           }
         }
 
+        // Brand signup - create brand profile (fallback if /api/auth/create-brand didn't run)
+        if (signupType === "brand") {
+          const companyName = userMeta.company_name || displayName;
+          const contactName = userMeta.contact_name || null;
+
+          // Check if brand already exists (create-brand API may have already run)
+          const { data: existingActor } = await supabase
+            .from("actors")
+            .select("id, type")
+            .eq("user_id", data.user.id)
+            .single();
+
+          if (!existingActor) {
+            // Create actor + brand profile
+            const { data: actor } = await (supabase.from("actors") as any)
+              .upsert({ user_id: data.user.id, type: "brand" }, { onConflict: "user_id" })
+              .select()
+              .single();
+
+            if (actor) {
+              let baseUsername = companyName.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 20);
+              if (baseUsername.length < 3) baseUsername = baseUsername + "brand";
+
+              await (supabase.from("brands") as any)
+                .upsert({
+                  id: actor.id,
+                  username: baseUsername,
+                  company_name: companyName,
+                  contact_name: contactName,
+                  email: data.user.email,
+                  is_verified: false,
+                  subscription_tier: "free",
+                }, { onConflict: "id" });
+            }
+          }
+
+          return NextResponse.redirect(`${origin}/dashboard`);
+        }
+
         // Create fan profile for new user
         const fanId = await createFanProfile(
           supabase,

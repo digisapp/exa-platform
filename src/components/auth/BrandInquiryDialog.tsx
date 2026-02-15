@@ -102,10 +102,18 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
     }
 
     try {
-      // Create auth user
+      // Create auth user with brand metadata so auth callback knows the signup type
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: email.toLowerCase().trim(),
         password,
+        options: {
+          data: {
+            signup_type: "brand",
+            display_name: companyName.trim(),
+            company_name: companyName.trim(),
+            contact_name: contactName.trim(),
+          },
+        },
       });
 
       if (authError) {
