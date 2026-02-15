@@ -36,7 +36,7 @@ import { format } from "date-fns";
 export const metadata: Metadata = {
   title: "EXA Travel | A New Country Every Month — Model Travel Community",
   description:
-    "Join the EXA Travel community. A new country every month. 8 models per week. Share a luxury villa, create content, and connect with models from around the world. $1,000 for 7 days including villa and meals.",
+    "Join the EXA Travel community. A new country every month. 8 models per trip. Share a luxury villa Thursday–Monday, create content, and connect with models worldwide. $1,000 for 5 days / 4 nights including villa and meals.",
   robots: { index: true, follow: true },
 };
 
@@ -158,7 +158,7 @@ export default async function TravelPage() {
                 A New Country Every Month
               </h1>
               <p className="text-sm md:text-xl text-white/80 mb-4 md:mb-6 max-w-2xl">
-                8 models. 1 villa. 7 days. Unlimited content.
+                8 models. 1 villa. Thursday to Monday. Unlimited content.
               </p>
               <div className="hidden md:flex flex-wrap gap-4 text-white/90">
                 <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
@@ -196,9 +196,9 @@ export default async function TravelPage() {
                 How EXA Travel Works
               </h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Every month we pick a new destination, rent a beautiful villa,
-                and bring together 8 models for a week of content creation,
-                networking, and adventure.
+                Every month we pick a new destination and rent a beautiful villa.
+                4 trips per month, each running Thursday to Monday — 8 models
+                per trip, 5 days of content creation, networking, and adventure.
               </p>
             </div>
 
@@ -222,9 +222,9 @@ export default async function TravelPage() {
                   <div className="h-11 w-11 rounded-xl bg-pink-500/10 flex items-center justify-center mb-4">
                     <Calendar className="h-5 w-5 text-pink-500" />
                   </div>
-                  <h3 className="font-semibold text-lg mb-2">You Book Your Week</h3>
+                  <h3 className="font-semibold text-lg mb-2">You Pick Your Trip</h3>
                   <p className="text-muted-foreground text-sm leading-relaxed">
-                    Each month has up to 4 weeks available. Pick the week that works for you and lock in your spot.
+                    4 trips per month, each Thursday to Monday. Pick the dates that work for you and lock in your spot.
                   </p>
                 </div>
               </div>
@@ -237,7 +237,7 @@ export default async function TravelPage() {
                   </div>
                   <h3 className="font-semibold text-lg mb-2">Share a Luxury Villa</h3>
                   <p className="text-muted-foreground text-sm leading-relaxed">
-                    8 models per week share a beautiful villa. Meals included, content spaces ready, everything handled.
+                    8 models per trip share a beautiful villa for 4 nights. Meals included, content spaces ready, everything handled.
                   </p>
                 </div>
               </div>
@@ -273,7 +273,7 @@ export default async function TravelPage() {
                   <div>
                     <h2 className="text-2xl font-bold">Now Booking</h2>
                     <p className="text-muted-foreground text-sm">
-                      Secure your spot — limited to 8 models per week
+                      Secure your spot — 8 models per trip, Thursday to Monday
                     </p>
                   </div>
                 </div>
@@ -336,7 +336,76 @@ export default async function TravelPage() {
         </section>
 
         {/* ═══════════════════════════════════════════ */}
-        {/* A WEEK AT EXA TRAVEL */}
+        {/* UPCOMING DESTINATIONS CALENDAR */}
+        {/* ═══════════════════════════════════════════ */}
+        <section className="py-12 md:py-20">
+          <div className="container px-6 md:px-16">
+            <div className="text-center mb-10 md:mb-14">
+              <Badge className="mb-3 bg-cyan-500/10 text-cyan-400 border-cyan-500/20">
+                <Globe className="h-3 w-3 mr-1.5" />
+                Upcoming Destinations
+              </Badge>
+              <h2 className="text-3xl md:text-4xl font-bold mb-3">
+                Where We&apos;re Going
+              </h2>
+              <p className="text-muted-foreground max-w-xl mx-auto">
+                A new country every month. 4 trips per destination, each
+                Thursday to Monday. Plan ahead and book your flight early.
+              </p>
+            </div>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl mx-auto">
+              <div className="relative overflow-hidden rounded-2xl border border-pink-500/20 bg-gradient-to-br from-pink-500/10 to-pink-500/5 p-5">
+                <span className="text-xs font-semibold text-pink-400 uppercase tracking-wider">March 2026</span>
+                <h3 className="text-lg font-bold mt-1 flex items-center gap-2">
+                  Dominican Republic
+                  <span className="text-xl">🇩🇴</span>
+                </h3>
+                <p className="text-muted-foreground text-xs mt-1">4 trips available</p>
+                <Badge className="mt-3 bg-green-500/90 text-white border-0 text-xs">
+                  Now Booking
+                </Badge>
+              </div>
+
+              <div className="relative overflow-hidden rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/10 to-violet-500/5 p-5">
+                <span className="text-xs font-semibold text-violet-400 uppercase tracking-wider">April 2026</span>
+                <h3 className="text-lg font-bold mt-1">
+                  To Be Announced
+                </h3>
+                <p className="text-muted-foreground text-xs mt-1">Destination reveal soon</p>
+                <Badge className="mt-3 bg-violet-500/20 text-violet-400 border-violet-500/30 text-xs">
+                  Coming Soon
+                </Badge>
+              </div>
+
+              <div className="relative overflow-hidden rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-cyan-500/10 to-cyan-500/5 p-5">
+                <span className="text-xs font-semibold text-cyan-400 uppercase tracking-wider">May 2026</span>
+                <h3 className="text-lg font-bold mt-1">
+                  To Be Announced
+                </h3>
+                <p className="text-muted-foreground text-xs mt-1">Destination reveal soon</p>
+                <Badge className="mt-3 bg-cyan-500/20 text-cyan-400 border-cyan-500/30 text-xs">
+                  Coming Soon
+                </Badge>
+              </div>
+
+              <div className="relative overflow-hidden rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/10 to-amber-500/5 p-5">
+                <span className="text-xs font-semibold text-amber-400 uppercase tracking-wider">June 2026</span>
+                <h3 className="text-lg font-bold mt-1 flex items-center gap-2">
+                  Bali, Indonesia
+                  <span className="text-xl">🇮🇩</span>
+                </h3>
+                <p className="text-muted-foreground text-xs mt-1">4 trips available</p>
+                <Badge className="mt-3 bg-amber-500/20 text-amber-400 border-amber-500/30 text-xs">
+                  Coming Soon
+                </Badge>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════ */}
+        {/* THURSDAY TO MONDAY EXPERIENCE */}
         {/* ═══════════════════════════════════════════ */}
         <section className="py-12 md:py-20">
           <div className="container px-6 md:px-16">
@@ -346,71 +415,71 @@ export default async function TravelPage() {
                 The Experience
               </Badge>
               <h2 className="text-3xl md:text-4xl font-bold mb-3">
-                A Week at EXA Travel
+                Thursday to Monday
               </h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Seven days of creating, connecting, and exploring a new country
-                with 7 other models
+                5 days and 4 nights of creating, connecting, and exploring a new
+                country with 7 other models
               </p>
             </div>
 
             <div className="grid md:grid-cols-2 gap-4 max-w-4xl mx-auto">
               <div className="flex gap-4 p-4 rounded-xl border border-pink-500/10 bg-pink-500/5">
                 <div className="shrink-0 h-12 w-12 rounded-xl bg-pink-500/10 flex items-center justify-center">
-                  <span className="text-xs font-bold text-pink-400">Day 1</span>
+                  <span className="text-[10px] font-bold text-pink-400 leading-tight text-center">THU</span>
                 </div>
                 <div>
                   <h3 className="font-semibold mb-1">Arrival & Welcome</h3>
                   <p className="text-muted-foreground text-sm leading-relaxed">
-                    Arrive at the villa, meet your housemates, settle in, and kick off the week with a welcome dinner together.
+                    Fly in and arrive at the villa. Meet your 7 housemates, settle in, and kick off the trip with a welcome dinner together.
                   </p>
                 </div>
               </div>
 
               <div className="flex gap-4 p-4 rounded-xl border border-violet-500/10 bg-violet-500/5">
                 <div className="shrink-0 h-12 w-12 rounded-xl bg-violet-500/10 flex items-center justify-center">
-                  <span className="text-xs font-bold text-violet-400">Day 2-3</span>
+                  <span className="text-[10px] font-bold text-violet-400 leading-tight text-center">FRI</span>
                 </div>
                 <div>
-                  <h3 className="font-semibold mb-1">Content Creation</h3>
+                  <h3 className="font-semibold mb-1">Content Day</h3>
                   <p className="text-muted-foreground text-sm leading-relaxed">
-                    Professional and self-directed shoots at the villa and nearby locations. Group content, solo shoots, and behind-the-scenes footage.
+                    Full day of shoots at the villa and nearby locations. Group content, solo shoots, and behind-the-scenes footage.
                   </p>
                 </div>
               </div>
 
               <div className="flex gap-4 p-4 rounded-xl border border-cyan-500/10 bg-cyan-500/5">
                 <div className="shrink-0 h-12 w-12 rounded-xl bg-cyan-500/10 flex items-center justify-center">
-                  <span className="text-xs font-bold text-cyan-400">Day 4</span>
+                  <span className="text-[10px] font-bold text-cyan-400 leading-tight text-center">SAT</span>
                 </div>
                 <div>
-                  <h3 className="font-semibold mb-1">Explore the City</h3>
+                  <h3 className="font-semibold mb-1">Beach & Adventure</h3>
                   <p className="text-muted-foreground text-sm leading-relaxed">
-                    Free day to explore local culture, restaurants, and hidden gems. Content opportunities everywhere you go.
+                    Beach shoots, water activities, and adventure content. Explore the area and create content at the best local spots.
                   </p>
                 </div>
               </div>
 
               <div className="flex gap-4 p-4 rounded-xl border border-amber-500/10 bg-amber-500/5">
                 <div className="shrink-0 h-12 w-12 rounded-xl bg-amber-500/10 flex items-center justify-center">
-                  <span className="text-xs font-bold text-amber-400">Day 5-6</span>
+                  <span className="text-[10px] font-bold text-amber-400 leading-tight text-center">SUN</span>
                 </div>
                 <div>
-                  <h3 className="font-semibold mb-1">Beach & Adventure</h3>
+                  <h3 className="font-semibold mb-1">Explore & Create</h3>
                   <p className="text-muted-foreground text-sm leading-relaxed">
-                    Beach shoots, water activities, and adventure content. This is where the best group photos and videos happen.
+                    Explore local culture, restaurants, and hidden gems. Free time to shoot, relax, or collaborate on group content.
                   </p>
                 </div>
               </div>
 
               <div className="flex gap-4 p-4 rounded-xl border border-green-500/10 bg-green-500/5">
                 <div className="shrink-0 h-12 w-12 rounded-xl bg-green-500/10 flex items-center justify-center">
-                  <span className="text-xs font-bold text-green-400">Day 7</span>
+                  <span className="text-[10px] font-bold text-green-400 leading-tight text-center">MON</span>
                 </div>
                 <div>
-                  <h3 className="font-semibold mb-1">Final Shoots & Farewell</h3>
+                  <h3 className="font-semibold mb-1">Final Shoots & Departure</h3>
                   <p className="text-muted-foreground text-sm leading-relaxed">
-                    Last content sessions, swap socials, exchange edits, and say goodbye to new friends until the next trip.
+                    Last content sessions in the morning, swap socials, exchange edits, and head to the airport. New friends, new content.
                   </p>
                 </div>
               </div>
@@ -440,8 +509,8 @@ export default async function TravelPage() {
                 What&apos;s Included
               </h2>
               <p className="text-muted-foreground max-w-xl mx-auto">
-                $1,000 per model for 7 days — here&apos;s what&apos;s covered
-                and what you&apos;ll need to bring
+                $1,000 per model for 5 days / 4 nights — here&apos;s what&apos;s
+                covered and what you&apos;ll need to bring
               </p>
             </div>
 
@@ -457,12 +526,12 @@ export default async function TravelPage() {
                     {
                       icon: Home,
                       title: "Luxury Villa",
-                      desc: "Shared villa in a prime location with pool, content areas, and stunning views",
+                      desc: "4 nights in a shared villa with pool, content areas, and stunning views",
                     },
                     {
                       icon: UtensilsCrossed,
                       title: "All Meals",
-                      desc: "Breakfast, lunch, and dinner for 7 days — local cuisine and group dining",
+                      desc: "Breakfast, lunch, and dinner for 5 days — local cuisine and group dining",
                     },
                     {
                       icon: Wifi,
@@ -549,7 +618,7 @@ export default async function TravelPage() {
                   <div className="flex items-baseline gap-2 mb-2">
                     <span className="text-3xl font-bold">$1,000</span>
                     <span className="text-muted-foreground text-sm">
-                      / model / 7 days
+                      / model / 5 days
                     </span>
                   </div>
                   <p className="text-muted-foreground text-sm">
@@ -594,10 +663,11 @@ export default async function TravelPage() {
                   How does booking a trip work?
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">
-                  Browse our upcoming destinations and pick the week that works
-                  for you. Apply through the trip page, and once accepted
+                  Browse our upcoming destinations and pick the trip dates that
+                  work for you. Each trip runs Thursday to Monday (5 days / 4
+                  nights). Apply through the trip page, and once accepted
                   you&apos;ll receive payment instructions. Your $1,000 covers
-                  the villa and all meals for 7 days. You book your own flight.
+                  the villa and all meals. You book your own flight.
                 </AccordionContent>
               </AccordionItem>
 
@@ -624,10 +694,10 @@ export default async function TravelPage() {
                   How many models per trip?
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">
-                  Each week is limited to 8 models. This keeps the villa
+                  Each trip is limited to 8 models. This keeps the villa
                   comfortable, the group tight-knit, and ensures everyone gets
-                  quality content. Each month may have multiple weeks available
-                  at the same destination.
+                  quality content. There are 4 trips per month at the same
+                  destination, each running Thursday to Monday.
                 </AccordionContent>
               </AccordionItem>
 
@@ -639,11 +709,11 @@ export default async function TravelPage() {
                   What exactly does the $1,000 cover?
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">
-                  Your $1,000 covers 7 nights at a luxury shared villa and all
-                  meals (breakfast, lunch, dinner). It also includes trip
-                  coordination, local guides, and organized activities. You are
-                  responsible for booking your own flight and any personal
-                  expenses.
+                  Your $1,000 covers 4 nights (Thursday through Monday) at a
+                  luxury shared villa and all meals (breakfast, lunch, dinner).
+                  It also includes trip coordination, local guides, and organized
+                  activities. You are responsible for booking your own flight and
+                  any personal expenses.
                 </AccordionContent>
               </AccordionItem>
 
