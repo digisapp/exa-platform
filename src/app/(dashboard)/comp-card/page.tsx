@@ -600,7 +600,7 @@ export default function CompCardPage() {
               <p className="text-xs text-muted-foreground mb-2">Front</p>
               <Card className="overflow-hidden">
                 <CardContent className="p-0">
-                  <div className="bg-black aspect-[8.5/11] relative">
+                  <div className="bg-black aspect-[5.5/8.5] relative">
                     {/* Hero photo full-bleed */}
                     {previewUrls.length > 0 ? (
                       <>
@@ -646,7 +646,7 @@ export default function CompCardPage() {
               <p className="text-xs text-muted-foreground mb-2">Back</p>
               <Card className="overflow-hidden">
                 <CardContent className="p-0">
-                  <div className="bg-white p-5 aspect-[8.5/11] flex flex-col justify-between">
+                  <div className="bg-white p-5 aspect-[5.5/8.5] flex flex-col justify-between">
                     {/* Top section: Logo + Name + Measurements + Photos */}
                     <div>
                       {/* EXA Models Logo */}

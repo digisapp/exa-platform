@@ -36,6 +36,9 @@ interface CompCardPDFProps {
   qrCodeUrl: string; // base64 data URL of QR code
 }
 
+// 5.5 x 8.5 inches = 396 x 612 points
+const CARD_SIZE = { width: 396, height: 612 };
+
 const styles = StyleSheet.create({
   // ── FRONT PAGE ──
   frontPage: {
@@ -62,20 +65,20 @@ const styles = StyleSheet.create({
   },
   frontLogoContainer: {
     alignItems: "center",
-    paddingTop: 60,
+    paddingTop: 40,
   },
   frontLogo: {
-    width: 200,
-    height: 65,
+    width: 140,
+    height: 45,
     objectFit: "contain",
   },
   frontNameContainer: {
     alignItems: "center",
-    paddingBottom: 40,
-    paddingHorizontal: 20,
+    paddingBottom: 30,
+    paddingHorizontal: 16,
   },
   frontFirstName: {
-    fontSize: 120,
+    fontSize: 80,
     fontFamily: "Helvetica-Bold",
     color: "#ffffff",
     textTransform: "uppercase",
@@ -87,22 +90,22 @@ const styles = StyleSheet.create({
   // ── BACK PAGE ──
   backPage: {
     backgroundColor: "#ffffff",
-    padding: 30,
-    paddingBottom: 20,
+    padding: 20,
+    paddingBottom: 15,
     fontFamily: "Helvetica",
     justifyContent: "space-between",
   },
   // Header logo
   backHeaderLogo: {
-    width: 90,
-    height: 28,
+    width: 70,
+    height: 22,
     objectFit: "contain",
     alignSelf: "center",
     marginBottom: 3,
   },
   // Name header
   backName: {
-    fontSize: 18,
+    fontSize: 14,
     fontFamily: "Helvetica-Bold",
     color: "#111111",
     textTransform: "uppercase",
@@ -122,18 +125,18 @@ const styles = StyleSheet.create({
   },
   measurementItem: {
     paddingVertical: 2,
-    paddingHorizontal: 5,
+    paddingHorizontal: 4,
     alignItems: "center",
   },
   measurementLabel: {
-    fontSize: 7,
+    fontSize: 6,
     color: "#999999",
     textTransform: "uppercase",
     letterSpacing: 0,
     marginBottom: 1,
   },
   measurementValue: {
-    fontSize: 11,
+    fontSize: 9,
     fontFamily: "Helvetica-Bold",
     color: "#111111",
   },
@@ -151,14 +154,14 @@ const styles = StyleSheet.create({
   },
   gridPhoto: {
     width: "49%",
-    height: 265,
+    height: 200,
     objectFit: "cover",
-    borderRadius: 4,
+    borderRadius: 3,
     marginBottom: 4,
   },
   // Footer
   footerContainer: {
-    paddingTop: 10,
+    paddingTop: 8,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -167,21 +170,21 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
   },
   footerText: {
-    fontSize: 12,
+    fontSize: 10,
     color: "#000000",
-    marginBottom: 3,
+    marginBottom: 2,
   },
   footerRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 3,
+    marginBottom: 2,
   },
   instagramIcon: {
-    marginRight: 5,
+    marginRight: 4,
   },
   footerQr: {
-    width: 70,
-    height: 70,
+    width: 55,
+    height: 55,
   },
 });
 
@@ -206,7 +209,7 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, backLogoUrl, 
   return (
     <Document>
       {/* ═══════════ FRONT PAGE ═══════════ */}
-      <Page size="LETTER" style={styles.frontPage}>
+      <Page size={CARD_SIZE} style={styles.frontPage}>
         {/* Background photo layer */}
         <View style={styles.frontPhotoWrapper}>
           {heroPhoto && (
@@ -228,7 +231,7 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, backLogoUrl, 
       </Page>
 
       {/* ═══════════ BACK PAGE ═══════════ */}
-      <Page size="LETTER" style={styles.backPage}>
+      <Page size={CARD_SIZE} style={styles.backPage}>
         {/* Top section: Logo + Name + Measurements */}
         <View>
           <Image src={backLogoUrl} style={styles.backHeaderLogo} />
@@ -263,7 +266,7 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, backLogoUrl, 
             <Text style={styles.footerText}>team@examodels.com</Text>
             {model.instagram_name && (
               <View style={styles.footerRow}>
-                <Svg width={12} height={12} viewBox="0 0 24 24" style={styles.instagramIcon}>
+                <Svg width={10} height={10} viewBox="0 0 24 24" style={styles.instagramIcon}>
                   <Rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke="#000000" strokeWidth="2" fill="none" />
                   <Circle cx="12" cy="12" r="5" stroke="#000000" strokeWidth="2" fill="none" />
                   <Circle cx="17.5" cy="6.5" r="1.5" fill="#000000" />
