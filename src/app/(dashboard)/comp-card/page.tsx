@@ -15,6 +15,7 @@ import {
   Upload,
   X,
   Move,
+  ZoomIn,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -55,30 +56,42 @@ const MAX_PHOTOS = 5;
 const UPLOAD_PREFIX = "upload-";
 const CARD_ASPECT = 5.5 / 8.5; // width / height
 
-// Pre-crop an image to the comp card aspect ratio at a given object-position.
+// Pre-crop an image to the comp card aspect ratio at a given object-position and zoom.
 // posX/posY are percentages (0–100) controlling which region is visible.
+// zoom is a multiplier (1 = fit, 2 = 2x zoom in).
 function cropToPosition(
   dataUrl: string,
   posX: number,
   posY: number,
+  zoom: number = 1,
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     const img = new window.Image();
     img.onload = () => {
-      const imgAspect = img.naturalWidth / img.naturalHeight;
-      let srcX = 0, srcY = 0, srcW = img.naturalWidth, srcH = img.naturalHeight;
+      const imgW = img.naturalWidth;
+      const imgH = img.naturalHeight;
 
+      // At zoom=1, crop the largest region that matches CARD_ASPECT.
+      // At higher zoom, shrink that region proportionally.
+      let baseW: number, baseH: number;
+      const imgAspect = imgW / imgH;
       if (imgAspect > CARD_ASPECT) {
-        // Image is wider — crop horizontally
-        srcW = img.naturalHeight * CARD_ASPECT;
-        const maxOffsetX = img.naturalWidth - srcW;
-        srcX = maxOffsetX * (posX / 100);
+        baseH = imgH;
+        baseW = imgH * CARD_ASPECT;
       } else {
-        // Image is taller — crop vertically
-        srcH = img.naturalWidth / CARD_ASPECT;
-        const maxOffsetY = img.naturalHeight - srcH;
-        srcY = maxOffsetY * (posY / 100);
+        baseW = imgW;
+        baseH = imgW / CARD_ASPECT;
       }
+
+      // Apply zoom: shrink the crop region
+      const srcW = baseW / zoom;
+      const srcH = baseH / zoom;
+
+      // Position the crop region within the image
+      const maxOffsetX = imgW - srcW;
+      const maxOffsetY = imgH - srcH;
+      const srcX = maxOffsetX * (posX / 100);
+      const srcY = maxOffsetY * (posY / 100);
 
       const outW = Math.min(Math.round(srcW), 2000);
       const outH = Math.round(outW / CARD_ASPECT);
@@ -159,19 +172,23 @@ export default function CompCardPage() {
   const [exporting, setExporting] = useState(false);
   const [qrCodePreview, setQrCodePreview] = useState<string | null>(null);
 
-  // Hero photo repositioning (object-position %)
+  // Hero photo repositioning (object-position %) and zoom
   const [heroPos, setHeroPos] = useState({ x: 50, y: 50 });
+  const [heroZoom, setHeroZoom] = useState(1);
   const heroRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
   const dragStart = useRef({ x: 0, y: 0, startX: 50, startY: 50 });
   const prevHeroId = useRef<string | null>(null);
 
-  // Reset position when front photo changes
+  // Reset position and zoom when front photo changes
   const currentHeroId = selectedIds[0] ?? null;
   if (currentHeroId !== prevHeroId.current) {
     prevHeroId.current = currentHeroId;
     if (heroPos.x !== 50 || heroPos.y !== 50) {
       setHeroPos({ x: 50, y: 50 });
+    }
+    if (heroZoom !== 1) {
+      setHeroZoom(1);
     }
   }
 
@@ -369,9 +386,9 @@ export default function CompCardPage() {
           b64 = await photoToBase64(photo?.photo_url || photo?.url || "");
         }
 
-        // Pre-crop the hero photo (first) to match the user's repositioning
+        // Pre-crop the hero photo (first) to match the user's repositioning + zoom
         if (idx === 0 && b64) {
-          b64 = await cropToPosition(b64, heroPos.x, heroPos.y);
+          b64 = await cropToPosition(b64, heroPos.x, heroPos.y, heroZoom);
         }
 
         if (b64) photoBase64.push(b64);
@@ -708,7 +725,7 @@ export default function CompCardPage() {
                 <CardContent className="p-0">
                   <div
                     ref={heroRef}
-                    className="bg-black aspect-[5.5/8.5] relative select-none touch-none"
+                    className="bg-black aspect-[5.5/8.5] relative select-none touch-none overflow-hidden"
                     style={{ cursor: previewUrls.length > 0 ? "grab" : undefined }}
                   >
                     {/* Hero photo full-bleed */}
@@ -719,11 +736,15 @@ export default function CompCardPage() {
                           src={previewUrls[0].url}
                           alt="Hero"
                           className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-                          style={{ objectPosition: `${heroPos.x}% ${heroPos.y}%` }}
+                          style={{
+                            objectPosition: `${heroPos.x}% ${heroPos.y}%`,
+                            transform: heroZoom > 1 ? `scale(${heroZoom})` : undefined,
+                            transformOrigin: `${heroPos.x}% ${heroPos.y}%`,
+                          }}
                           draggable={false}
                         />
                         {/* Reposition hint */}
-                        <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-black/50 backdrop-blur-sm rounded-full px-2 py-1">
+                        <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-black/50 backdrop-blur-sm rounded-full px-2 py-1 pointer-events-none">
                           <Move className="h-3 w-3 text-white/80" />
                           <span className="text-[10px] text-white/80">Drag to reposition</span>
                         </div>
@@ -756,6 +777,23 @@ export default function CompCardPage() {
                   </div>
                 </CardContent>
               </Card>
+              {/* Zoom slider */}
+              {previewUrls.length > 0 && (
+                <div className="flex items-center gap-2 mt-2">
+                  <ZoomIn className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  <input
+                    type="range"
+                    min={100}
+                    max={200}
+                    value={Math.round(heroZoom * 100)}
+                    onChange={(e) => setHeroZoom(Number(e.target.value) / 100)}
+                    className="w-full h-1.5 accent-pink-500 cursor-pointer"
+                  />
+                  <span className="text-[10px] text-muted-foreground tabular-nums w-8 text-right shrink-0">
+                    {Math.round(heroZoom * 100)}%
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* ── BACK PREVIEW ── */}
