@@ -68,8 +68,8 @@ const styles = StyleSheet.create({
     paddingTop: 40,
   },
   frontLogo: {
-    width: 140,
-    height: 45,
+    width: 170,
+    height: 55,
     objectFit: "contain",
   },
   frontNameContainer: {
@@ -91,7 +91,6 @@ const styles = StyleSheet.create({
   backPage: {
     backgroundColor: "#ffffff",
     padding: 20,
-    paddingBottom: 15,
     fontFamily: "Helvetica",
   },
   // Header logo
@@ -231,8 +230,8 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, backLogoUrl, 
 
       {/* ═══════════ BACK PAGE ═══════════ */}
       <Page size={CARD_SIZE} style={styles.backPage}>
-        {/* Top section: Logo + Name + Measurements */}
-        <View>
+        {/* Top section: Logo + Name + Measurements + Photos */}
+        <View style={{ flex: 1 }}>
           <Image src={backLogoUrl} style={styles.backHeaderLogo} />
           <Text style={styles.backName}>{fullName}</Text>
 
