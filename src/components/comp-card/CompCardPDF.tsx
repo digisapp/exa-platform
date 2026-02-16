@@ -32,7 +32,6 @@ interface CompCardPDFProps {
   model: CompCardModel;
   photos: string[]; // base64 data URLs
   frontLogoUrl: string; // base64 data URL (white logo for dark background)
-  backLogoUrl: string; // base64 data URL (black logo for white background)
   qrCodeUrl: string; // base64 data URL of QR code
 }
 
@@ -92,14 +91,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
     padding: 20,
     fontFamily: "Helvetica",
-  },
-  // Header logo
-  backHeaderLogo: {
-    width: 70,
-    height: 22,
-    objectFit: "contain",
-    alignSelf: "center",
-    marginBottom: 3,
   },
   // Name header
   backName: {
@@ -186,7 +177,7 @@ const styles = StyleSheet.create({
   },
 });
 
-export default function CompCardPDF({ model, photos, frontLogoUrl, backLogoUrl, qrCodeUrl }: CompCardPDFProps) {
+export default function CompCardPDF({ model, photos, frontLogoUrl, qrCodeUrl }: CompCardPDFProps) {
   const firstName = model.first_name || "";
   const lastName = model.last_name || "";
   const fullName = [firstName, lastName].filter(Boolean).join(" ") || "Model";
@@ -232,7 +223,6 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, backLogoUrl, 
       <Page size={CARD_SIZE} style={styles.backPage}>
         {/* Top section: Logo + Name + Measurements + Photos */}
         <View>
-          <Image src={backLogoUrl} style={styles.backHeaderLogo} />
           <Text style={styles.backName}>{fullName}</Text>
 
           {measurements.length > 0 && (

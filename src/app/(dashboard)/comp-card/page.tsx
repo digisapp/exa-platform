@@ -16,6 +16,7 @@ import {
   X,
   Move,
   ZoomIn,
+  ImageDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -170,6 +171,7 @@ export default function CompCardPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
+  const [exportingJpeg, setExportingJpeg] = useState(false);
   const [qrCodePreview, setQrCodePreview] = useState<string | null>(null);
 
   // Hero photo repositioning (object-position %) and zoom
@@ -397,9 +399,8 @@ export default function CompCardPage() {
       // Load logos + generate QR code
       const QRCode = (await import("qrcode")).default;
       const profileUrl = `https://www.examodels.com/${model.username || ""}`;
-      const [frontLogoBase64, backLogoBase64, qrCodeBase64] = await Promise.all([
+      const [frontLogoBase64, qrCodeBase64] = await Promise.all([
         toBase64("/exa-models-logo-white.png"),
-        toBase64("/exa-models-logo-black.png"),
         QRCode.toDataURL(profileUrl, { width: 200, margin: 1 }),
       ]);
 
@@ -410,7 +411,7 @@ export default function CompCardPage() {
       );
 
       const blob = await pdf(
-        CompCardPDF({ model, photos: photoBase64, frontLogoUrl: frontLogoBase64, backLogoUrl: backLogoBase64, qrCodeUrl: qrCodeBase64 })
+        CompCardPDF({ model, photos: photoBase64, frontLogoUrl: frontLogoBase64, qrCodeUrl: qrCodeBase64 })
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
@@ -430,6 +431,243 @@ export default function CompCardPage() {
       toast.error("Failed to generate comp card. Please try again.");
     } finally {
       setExporting(false);
+    }
+  };
+
+  const handleExportJPEG = async () => {
+    if (!model || selectedIds.length === 0) {
+      toast.error("Select at least one photo");
+      return;
+    }
+
+    setExportingJpeg(true);
+    try {
+      // Shared helpers
+      const loadImg = (src: string): Promise<HTMLImageElement> =>
+        new Promise((resolve, reject) => {
+          const img = new window.Image();
+          img.onload = () => resolve(img);
+          img.onerror = () => reject(new Error("Failed to load image"));
+          img.src = src;
+        });
+
+      const downloadCanvas = (canvas: HTMLCanvasElement, filename: string) => {
+        const url = canvas.toDataURL("image/jpeg", 0.95);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      };
+
+      // Convert selected photos to base64 (same as PDF flow)
+      const photoBase64: string[] = [];
+      for (let idx = 0; idx < selectedIds.length; idx++) {
+        const id = selectedIds[idx];
+        let b64: string;
+        if (id.startsWith(UPLOAD_PREFIX)) {
+          const uploaded = uploadedPhotos.find((p) => p.id === id);
+          b64 = uploaded?.dataUrl || "";
+        } else {
+          const photo = photos.find((p) => p.id === id);
+          b64 = await photoToBase64(photo?.photo_url || photo?.url || "");
+        }
+        if (idx === 0 && b64) {
+          b64 = await cropToPosition(b64, heroPos.x, heroPos.y, heroZoom);
+        }
+        if (b64) photoBase64.push(b64);
+      }
+
+      const firstName = model.first_name || "Model";
+      const lastName = model.last_name || "";
+      const filePrefix = `${firstName}${lastName ? `-${lastName}` : ""}`;
+
+      // ── FRONT CARD ──
+      // 5.5 x 8.5 at 200 DPI = 1100 x 1700
+      const FW = 1100;
+      const FH = 1700;
+      const frontCanvas = document.createElement("canvas");
+      frontCanvas.width = FW;
+      frontCanvas.height = FH;
+      const fCtx = frontCanvas.getContext("2d")!;
+
+      // Black background
+      fCtx.fillStyle = "#000000";
+      fCtx.fillRect(0, 0, FW, FH);
+
+      // Hero photo full-bleed
+      if (photoBase64[0]) {
+        const heroImg = await loadImg(photoBase64[0]);
+        // Cover fit
+        const imgAspect = heroImg.naturalWidth / heroImg.naturalHeight;
+        const canvasAspect = FW / FH;
+        let drawW: number, drawH: number, drawX: number, drawY: number;
+        if (imgAspect > canvasAspect) {
+          drawH = FH;
+          drawW = FH * imgAspect;
+          drawX = (FW - drawW) / 2;
+          drawY = 0;
+        } else {
+          drawW = FW;
+          drawH = FW / imgAspect;
+          drawX = 0;
+          drawY = (FH - drawH) / 2;
+        }
+        fCtx.drawImage(heroImg, drawX, drawY, drawW, drawH);
+      }
+
+      // Logo at top center
+      const frontLogoImg = await loadImg("/exa-models-logo-white.png");
+      const logoW = 470;
+      const logoH = Math.round(logoW * (frontLogoImg.naturalHeight / frontLogoImg.naturalWidth));
+      fCtx.drawImage(frontLogoImg, (FW - logoW) / 2, 110, logoW, logoH);
+
+      // First name at bottom
+      if (model.first_name) {
+        fCtx.font = "bold 220px Helvetica, Arial, sans-serif";
+        fCtx.fillStyle = "#ffffff";
+        fCtx.textAlign = "center";
+        fCtx.textBaseline = "bottom";
+        fCtx.letterSpacing = "4px";
+        fCtx.fillText(model.first_name.toUpperCase(), FW / 2, FH - 80);
+      }
+
+      downloadCanvas(frontCanvas, `${filePrefix}-CompCard-Front.jpg`);
+
+      // ── BACK CARD ──
+      const BW = 1100;
+      const BH = 1700;
+      const PAD = 55; // ~20pt at 200dpi
+      const bCanvas = document.createElement("canvas");
+      bCanvas.width = BW;
+      bCanvas.height = BH;
+      const bCtx = bCanvas.getContext("2d")!;
+
+      // White background
+      bCtx.fillStyle = "#ffffff";
+      bCtx.fillRect(0, 0, BW, BH);
+
+      let curY = PAD;
+
+      // Full name
+      const fullNameStr = [model.first_name, model.last_name].filter(Boolean).join(" ") || "Model";
+      bCtx.font = "bold 39px Helvetica, Arial, sans-serif";
+      bCtx.fillStyle = "#111111";
+      bCtx.textAlign = "center";
+      bCtx.textBaseline = "top";
+      bCtx.letterSpacing = "5px";
+      bCtx.fillText(fullNameStr.toUpperCase(), BW / 2, curY);
+      curY += 48;
+
+      // Measurements
+      const meas: { label: string; value: string }[] = [];
+      if (model.height) meas.push({ label: "HEIGHT", value: model.height });
+      if (model.bust) meas.push({ label: "BUST", value: model.bust });
+      if (model.waist) meas.push({ label: "WAIST", value: model.waist });
+      if (model.hips) meas.push({ label: "HIPS", value: model.hips });
+      if (model.eye_color) meas.push({ label: "EYES", value: model.eye_color });
+      if (model.hair_color) meas.push({ label: "HAIR", value: model.hair_color });
+      if (model.dress_size) meas.push({ label: "DRESS", value: model.dress_size });
+      if (model.shoe_size) meas.push({ label: "SHOES", value: model.shoe_size });
+
+      if (meas.length > 0) {
+        const measItemW = BW / meas.length;
+        bCtx.textAlign = "center";
+        for (let i = 0; i < meas.length; i++) {
+          const cx = measItemW * i + measItemW / 2;
+          bCtx.font = "16px Helvetica, Arial, sans-serif";
+          bCtx.fillStyle = "#999999";
+          bCtx.letterSpacing = "0px";
+          bCtx.fillText(meas[i].label, cx, curY);
+          bCtx.font = "bold 25px Helvetica, Arial, sans-serif";
+          bCtx.fillStyle = "#111111";
+          bCtx.fillText(meas[i].value, cx, curY + 20);
+        }
+        curY += 55;
+      }
+
+      // Photo grid: 2x2
+      const backPhotos = photoBase64.slice(1, 5);
+      if (backPhotos.length > 0) {
+        const gridGap = 11;
+        const gridW = BW - PAD * 2;
+        const photoW = Math.floor((gridW - gridGap) / 2);
+        const photoH = 600; // ~218pt at 200dpi scale
+        const rows = Math.ceil(backPhotos.length / 2);
+
+        for (let i = 0; i < backPhotos.length; i++) {
+          const col = i % 2;
+          const row = Math.floor(i / 2);
+          const px = PAD + col * (photoW + gridGap);
+          const py = curY + row * (photoH + gridGap);
+
+          const pImg = await loadImg(backPhotos[i]);
+
+          // Cover fit into photoW x photoH
+          const pAspect = pImg.naturalWidth / pImg.naturalHeight;
+          const slotAspect = photoW / photoH;
+          let sx: number, sy: number, sw: number, sh: number;
+          if (pAspect > slotAspect) {
+            sh = pImg.naturalHeight;
+            sw = sh * slotAspect;
+            sx = (pImg.naturalWidth - sw) / 2;
+            sy = 0;
+          } else {
+            sw = pImg.naturalWidth;
+            sh = sw / slotAspect;
+            sx = 0;
+            sy = (pImg.naturalHeight - sh) / 2;
+          }
+
+          // Rounded corners via clip
+          bCtx.save();
+          const r = 8;
+          bCtx.beginPath();
+          bCtx.roundRect(px, py, photoW, photoH, r);
+          bCtx.clip();
+          bCtx.drawImage(pImg, sx, sy, sw, sh, px, py, photoW, photoH);
+          bCtx.restore();
+        }
+        curY += rows * (photoH + gridGap);
+      }
+
+      // Footer: contact left, QR right
+      const footerY = BH - PAD - 150;
+      bCtx.textAlign = "left";
+      bCtx.textBaseline = "top";
+      bCtx.font = "28px Helvetica, Arial, sans-serif";
+      bCtx.fillStyle = "#000000";
+      bCtx.letterSpacing = "0px";
+      let fTextY = footerY;
+      bCtx.fillText("team@examodels.com", PAD, fTextY);
+      fTextY += 36;
+      if (model.instagram_name) {
+        bCtx.fillText(`@${model.instagram_name}`, PAD, fTextY);
+        fTextY += 36;
+      }
+      if (model.username) {
+        bCtx.fillText(`examodels.com/${model.username}`, PAD, fTextY);
+      }
+
+      // QR code
+      const QRCode = (await import("qrcode")).default;
+      const profileUrl = `https://www.examodels.com/${model.username || ""}`;
+      const qrDataUrl = await QRCode.toDataURL(profileUrl, { width: 300, margin: 1 });
+      const qrImg = await loadImg(qrDataUrl);
+      const qrSize = 150;
+      bCtx.drawImage(qrImg, BW - PAD - qrSize, footerY, qrSize, qrSize);
+
+      // Small delay so both downloads trigger
+      await new Promise((r) => setTimeout(r, 500));
+      downloadCanvas(bCanvas, `${filePrefix}-CompCard-Back.jpg`);
+
+      toast.success("Comp card images downloaded!");
+    } catch (error) {
+      console.error("JPEG export error:", error);
+      toast.error("Failed to generate images. Please try again.");
+    } finally {
+      setExportingJpeg(false);
     }
   };
 
@@ -507,23 +745,42 @@ export default function CompCardPage() {
             the back
           </p>
         </div>
-        <Button
-          onClick={handleExportPDF}
-          disabled={exporting || selectedIds.length === 0}
-          className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
-        >
-          {exporting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Generating...
-            </>
-          ) : (
-            <>
-              <Download className="mr-2 h-4 w-4" />
-              Download PDF
+        <div className="flex gap-2">
+          <Button
+            onClick={handleExportJPEG}
+            disabled={exportingJpeg || selectedIds.length === 0}
+            variant="outline"
+          >
+            {exportingJpeg ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <ImageDown className="mr-2 h-4 w-4" />
+                Download JPEG
+              </>
+            )}
+          </Button>
+          <Button
+            onClick={handleExportPDF}
+            disabled={exporting || selectedIds.length === 0}
+            className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
+          >
+            {exporting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Download className="mr-2 h-4 w-4" />
+                Download PDF
             </>
           )}
         </Button>
+        </div>
       </div>
 
       {/* Missing measurements warning */}
@@ -804,17 +1061,6 @@ export default function CompCardPage() {
                   <div className="bg-white p-5 aspect-[5.5/8.5] flex flex-col justify-between">
                     {/* Top section: Logo + Name + Measurements + Photos */}
                     <div>
-                      {/* EXA Models Logo */}
-                      <div className="flex justify-center mb-2">
-                        <Image
-                          src="/exa-models-logo-black.png"
-                          alt="EXA Models"
-                          width={80}
-                          height={28}
-                          className="h-5 w-auto"
-                        />
-                      </div>
-
                       {/* Model Name */}
                       <p className="text-lg font-bold text-black uppercase tracking-[0.15em] text-center mb-2">
                         {fullName}
@@ -901,8 +1147,26 @@ export default function CompCardPage() {
             </div>
           </div>
 
-          {/* Export button (mobile) */}
-          <div className="mt-4 lg:hidden">
+          {/* Export buttons (mobile) */}
+          <div className="mt-4 lg:hidden flex flex-col gap-2">
+            <Button
+              onClick={handleExportJPEG}
+              disabled={exportingJpeg || selectedIds.length === 0}
+              variant="outline"
+              className="w-full"
+            >
+              {exportingJpeg ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <ImageDown className="mr-2 h-4 w-4" />
+                  Download JPEG
+                </>
+              )}
+            </Button>
             <Button
               onClick={handleExportPDF}
               disabled={exporting || selectedIds.length === 0}
