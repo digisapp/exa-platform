@@ -213,7 +213,6 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, backLogoUrl, 
         </View>
         <View style={styles.frontOverlay}>
           {firstName && <Text style={styles.frontFirstName}>{firstName}</Text>}
-          {lastName && <Text style={styles.frontLastName}>{lastName}</Text>}
         </View>
       </Page>
 

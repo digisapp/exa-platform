@@ -584,11 +584,6 @@ export default function CompCardPage() {
                               {model.first_name}
                             </p>
                           )}
-                          {model.last_name && (
-                            <p className="text-white text-6xl sm:text-7xl font-black uppercase tracking-[0.03em] leading-tight">
-                              {model.last_name}
-                            </p>
-                          )}
                         </div>
                       </>
                     ) : (
