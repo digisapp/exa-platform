@@ -42,10 +42,10 @@ export default function ClaimPage() {
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const [usernameError, setUsernameError] = useState<string | null>(null);
 
-  // Load model data with rate limiting to prevent token enumeration
+  // Load model data via API route (bypasses RLS)
   useEffect(() => {
     async function loadModel() {
-      // Validate token format before making any request - tokens should be UUIDs
+      // Validate token format before making any request
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       if (!token || !uuidRegex.test(token)) {
         setError("Invalid or expired invite link");
@@ -53,58 +53,27 @@ export default function ClaimPage() {
         return;
       }
 
-      // Client-side rate limiting: track attempts in sessionStorage to slow enumeration
-      const RATE_LIMIT_KEY = "claim_attempts";
-      const RATE_LIMIT_WINDOW = 60000; // 1 minute window
-      const MAX_ATTEMPTS = 5;
-
       try {
-        const stored = sessionStorage.getItem(RATE_LIMIT_KEY);
-        const attempts: number[] = stored ? JSON.parse(stored) : [];
-        const now = Date.now();
-        // Filter to only attempts within the window
-        const recentAttempts = attempts.filter((t: number) => now - t < RATE_LIMIT_WINDOW);
+        const res = await fetch(`/api/auth/claim?token=${token}`);
+        const data = await res.json();
 
-        if (recentAttempts.length >= MAX_ATTEMPTS) {
-          setError("Too many attempts. Please try again in a minute.");
+        if (!res.ok) {
+          setError(data.error || "Invalid or expired invite link");
           setLoading(false);
           return;
         }
 
-        recentAttempts.push(now);
-        sessionStorage.setItem(RATE_LIMIT_KEY, JSON.stringify(recentAttempts));
+        setModel(data.model);
+        setUsername(data.model.username || "");
+        setLoading(false);
       } catch {
-        // sessionStorage unavailable (e.g. private browsing) - continue without client rate limiting
-      }
-
-      // Add a minimum delay to prevent rapid enumeration even if sessionStorage is bypassed
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      const { data, error } = await (supabase
-        .from("models") as any)
-        .select("id, email, username, first_name, last_name, profile_photo_url, claimed_at, user_id")
-        .eq("invite_token", token)
-        .single();
-
-      if (error || !data) {
-        setError("Invalid or expired invite link");
+        setError("Something went wrong. Please try again.");
         setLoading(false);
-        return;
       }
-
-      if (data.claimed_at || data.user_id) {
-        setError("This profile has already been claimed");
-        setLoading(false);
-        return;
-      }
-
-      setModel(data);
-      setUsername(data.username || "");
-      setLoading(false);
     }
 
     loadModel();
-  }, [token, supabase]);
+  }, [token]);
 
   // Check username availability with debounce
   useEffect(() => {
@@ -179,75 +148,29 @@ export default function ClaimPage() {
     setSubmitting(true);
 
     try {
-      // Create auth account
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: model.email,
-        password,
-        options: {
-          data: {
-            model_id: model.id,
-          },
-        },
+      // Call the API route to handle claim server-side
+      const res = await fetch("/api/auth/claim", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token,
+          username,
+          password,
+        }),
       });
 
-      if (authError) {
-        // Check if user already exists
-        if (authError.message.includes("already registered")) {
-          toast.error("An account with this email already exists. Try signing in instead.");
-          return;
-        }
-        throw authError;
-      }
+      const data = await res.json();
 
-      if (!authData.user) {
-        throw new Error("Failed to create account");
-      }
-
-      // Update model with user_id, username, and claimed_at
-      const { error: updateError } = await (supabase
-        .from("models") as any)
-        .update({
-          user_id: authData.user.id,
-          username: username.toLowerCase(),
-          claimed_at: new Date().toISOString(),
-        })
-        .eq("id", model.id);
-
-      if (updateError) throw updateError;
-
-      // Create actor record
-      const { error: actorError } = await (supabase
-        .from("actors") as any)
-        .insert({
-          user_id: authData.user.id,
-          type: "model",
-        });
-
-      if (actorError) {
-        console.error("Actor error:", actorError);
-        // Don't fail - actor might already exist
-      }
-
-      // Send our custom confirmation email via Resend (more reliable than Supabase SMTP)
-      try {
-        await fetch("/api/auth/send-confirmation", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: model.email,
-            displayName: model.first_name || username,
-            signupType: "model",
-          }),
-        });
-      } catch {
-        // Non-blocking
+      if (!res.ok) {
+        toast.error(data.error || "Failed to claim profile");
+        return;
       }
 
       toast.success("Profile claimed! Welcome to EXA!");
 
       // Sign in the user
       await supabase.auth.signInWithPassword({
-        email: model.email,
+        email: data.email,
         password,
       });
 
