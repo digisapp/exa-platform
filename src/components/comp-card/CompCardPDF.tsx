@@ -41,6 +41,7 @@ const styles = StyleSheet.create({
   frontPage: {
     backgroundColor: "#000000",
     position: "relative",
+    flexDirection: "column",
   },
   frontPhoto: {
     position: "absolute",
@@ -49,13 +50,8 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
     objectFit: "cover",
-    zIndex: 1,
   },
   frontLogoContainer: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
     alignItems: "center",
     paddingTop: 60,
     zIndex: 2,
@@ -65,11 +61,10 @@ const styles = StyleSheet.create({
     height: 65,
     objectFit: "contain",
   },
+  frontSpacer: {
+    flex: 1,
+  },
   frontNameContainer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
     alignItems: "center",
     paddingBottom: 40,
     paddingHorizontal: 20,
@@ -152,14 +147,14 @@ const styles = StyleSheet.create({
   },
   gridPhoto: {
     width: "49%",
-    height: 280,
+    height: 295,
     objectFit: "cover",
     borderRadius: 4,
     marginBottom: 4,
   },
   // Footer
   footerContainer: {
-    paddingTop: 6,
+    paddingTop: 10,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -168,21 +163,21 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
   },
   footerText: {
-    fontSize: 10,
+    fontSize: 12,
     color: "#000000",
-    marginBottom: 2,
+    marginBottom: 3,
   },
   footerRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 2,
+    marginBottom: 3,
   },
   instagramIcon: {
-    marginRight: 4,
+    marginRight: 5,
   },
   footerQr: {
-    width: 50,
-    height: 50,
+    width: 70,
+    height: 70,
   },
 });
 
@@ -214,6 +209,7 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, backLogoUrl, 
         <View style={styles.frontLogoContainer}>
           <Image src={frontLogoUrl} style={styles.frontLogo} />
         </View>
+        <View style={styles.frontSpacer} />
         {firstName && (
           <View style={styles.frontNameContainer}>
             <Text style={styles.frontFirstName}>{firstName}</Text>
@@ -257,7 +253,7 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, backLogoUrl, 
             <Text style={styles.footerText}>team@examodels.com</Text>
             {model.instagram_name && (
               <View style={styles.footerRow}>
-                <Svg width={10} height={10} viewBox="0 0 24 24" style={styles.instagramIcon}>
+                <Svg width={12} height={12} viewBox="0 0 24 24" style={styles.instagramIcon}>
                   <Rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke="#000000" strokeWidth="2" fill="none" />
                   <Circle cx="12" cy="12" r="5" stroke="#000000" strokeWidth="2" fill="none" />
                   <Circle cx="17.5" cy="6.5" r="1.5" fill="#000000" />
