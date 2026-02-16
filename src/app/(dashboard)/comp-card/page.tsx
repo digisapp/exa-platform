@@ -53,34 +53,57 @@ interface UploadedPhoto {
 const MAX_PHOTOS = 5;
 const UPLOAD_PREFIX = "upload-";
 
+// For logos and non-photo assets — preserves original format (PNG transparency)
 async function toBase64(url: string): Promise<string> {
   const res = await fetch(url);
   const blob = await res.blob();
-
-  // Draw on canvas to normalize EXIF orientation before converting to base64.
-  // Modern browsers auto-apply EXIF rotation when drawing to canvas via createImageBitmap.
-  const bitmap = await createImageBitmap(blob);
-  const canvas = document.createElement("canvas");
-  canvas.width = bitmap.width;
-  canvas.height = bitmap.height;
-  const ctx = canvas.getContext("2d")!;
-  ctx.drawImage(bitmap, 0, 0);
-  bitmap.close();
-
-  return canvas.toDataURL("image/jpeg", 0.92);
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
 }
 
-async function fileToBase64(file: File): Promise<string> {
-  // Draw on canvas to normalize EXIF orientation
-  const bitmap = await createImageBitmap(file);
-  const canvas = document.createElement("canvas");
-  canvas.width = bitmap.width;
-  canvas.height = bitmap.height;
-  const ctx = canvas.getContext("2d")!;
-  ctx.drawImage(bitmap, 0, 0);
-  bitmap.close();
+// For photos — loads via <img> element which reliably applies EXIF rotation
+// in all modern browsers, then draws to canvas to produce a normalized JPEG.
+function photoToBase64(url: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0);
+      resolve(canvas.toDataURL("image/jpeg", 0.92));
+    };
+    img.onerror = () => reject(new Error("Failed to load image"));
+    img.src = url;
+  });
+}
 
-  return canvas.toDataURL("image/jpeg", 0.92);
+// For uploaded files — loads via <img> + object URL to normalize EXIF
+async function fileToBase64(file: File): Promise<string> {
+  const objectUrl = URL.createObjectURL(file);
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(objectUrl);
+      resolve(canvas.toDataURL("image/jpeg", 0.92));
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Failed to load image"));
+    };
+    img.src = objectUrl;
+  });
 }
 
 export default function CompCardPage() {
@@ -234,7 +257,7 @@ export default function CompCardPage() {
           // Portfolio photo — fetch and convert
           const photo = photos.find((p) => p.id === id);
           if (photo) {
-            const b64 = await toBase64(photo.photo_url || photo.url || "");
+            const b64 = await photoToBase64(photo.photo_url || photo.url || "");
             photoBase64.push(b64);
           }
         }
@@ -586,14 +609,6 @@ export default function CompCardPage() {
                             height={40}
                             className="h-8 w-auto"
                           />
-                        </div>
-                        {/* Name overlay at bottom — centered, extra large */}
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-3 pb-6 pt-20 text-center">
-                          {model.first_name && (
-                            <p className="text-white text-6xl sm:text-7xl font-black uppercase tracking-[0.03em] leading-tight">
-                              {model.first_name}
-                            </p>
-                          )}
                         </div>
                       </>
                     ) : (

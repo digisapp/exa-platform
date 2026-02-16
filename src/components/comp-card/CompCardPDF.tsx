@@ -57,87 +57,57 @@ const styles = StyleSheet.create({
     height: 65,
     objectFit: "contain",
   },
-  frontOverlay: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 160,
-    backgroundColor: "rgba(0,0,0,0.55)",
-    justifyContent: "flex-end",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-  },
-  frontFirstName: {
-    fontSize: 120,
-    fontFamily: "Helvetica-Bold",
-    color: "#ffffff",
-    textTransform: "uppercase",
-    letterSpacing: 2,
-    lineHeight: 1.1,
-    textAlign: "center",
-  },
-  frontLastName: {
-    fontSize: 120,
-    fontFamily: "Helvetica-Bold",
-    color: "#ffffff",
-    textTransform: "uppercase",
-    letterSpacing: 2,
-    lineHeight: 1.1,
-    textAlign: "center",
-  },
 
   // ── BACK PAGE ──
   backPage: {
     backgroundColor: "#ffffff",
     padding: 30,
-    paddingBottom: 24,
+    paddingBottom: 20,
     fontFamily: "Helvetica",
     justifyContent: "space-between",
   },
   // Header logo
   backHeaderLogo: {
-    width: 100,
-    height: 34,
+    width: 90,
+    height: 28,
     objectFit: "contain",
     alignSelf: "center",
-    marginBottom: 8,
+    marginBottom: 3,
   },
   // Name header
   backName: {
-    fontSize: 24,
+    fontSize: 18,
     fontFamily: "Helvetica-Bold",
     color: "#111111",
     textTransform: "uppercase",
     letterSpacing: 2,
     textAlign: "center",
-    marginBottom: 10,
+    marginBottom: 3,
   },
   // Measurements
   measurementsContainer: {
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 4,
   },
   measurementsGrid: {
     flexDirection: "row",
-    flexWrap: "wrap",
+    flexWrap: "nowrap",
     justifyContent: "center",
   },
   measurementItem: {
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingVertical: 2,
+    paddingHorizontal: 5,
     alignItems: "center",
   },
   measurementLabel: {
-    fontSize: 9,
+    fontSize: 7,
     color: "#999999",
     textTransform: "uppercase",
-    letterSpacing: 1,
-    marginBottom: 2,
+    letterSpacing: 0,
+    marginBottom: 1,
   },
   measurementValue: {
-    fontSize: 14,
+    fontSize: 11,
     fontFamily: "Helvetica-Bold",
     color: "#111111",
   },
@@ -145,26 +115,26 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: "#e5e5e5",
-    marginBottom: 12,
+    marginBottom: 4,
   },
   // Photos grid: 2x2
   photosGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
-    marginBottom: 12,
+    justifyContent: "space-between",
   },
   gridPhoto: {
-    width: "48.5%",
-    height: 190,
+    width: "49%",
+    height: 280,
     objectFit: "cover",
     borderRadius: 4,
+    marginBottom: 4,
   },
   // Footer
   footerContainer: {
     borderTopWidth: 1,
     borderTopColor: "#e5e5e5",
-    paddingTop: 10,
+    paddingTop: 6,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -178,8 +148,8 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   footerQr: {
-    width: 60,
-    height: 60,
+    width: 50,
+    height: 50,
   },
 });
 
@@ -210,9 +180,6 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, backLogoUrl, 
         )}
         <View style={styles.frontLogoContainer}>
           <Image src={frontLogoUrl} style={styles.frontLogo} />
-        </View>
-        <View style={styles.frontOverlay}>
-          {firstName && <Text style={styles.frontFirstName}>{firstName}</Text>}
         </View>
       </Page>
 
