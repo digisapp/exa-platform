@@ -555,13 +555,13 @@ export default function CompCardPage() {
                           className="absolute inset-0 w-full h-full object-cover"
                         />
                         {/* Logo at top center */}
-                        <div className="absolute top-0 left-0 right-0 flex justify-center pt-5 z-10">
+                        <div className="absolute top-0 left-0 right-0 flex justify-center pt-7 z-10">
                           <Image
                             src="/exa-models-logo-white.png"
                             alt="EXA Models"
-                            width={100}
-                            height={34}
-                            className="h-6 w-auto"
+                            width={120}
+                            height={40}
+                            className="h-8 w-auto"
                           />
                         </div>
                         {/* Name overlay at bottom — centered, extra large */}

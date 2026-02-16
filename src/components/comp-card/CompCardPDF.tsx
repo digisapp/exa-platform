@@ -49,12 +49,12 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: "center",
-    paddingTop: 45,
+    paddingTop: 60,
     zIndex: 2,
   },
   frontLogo: {
-    width: 160,
-    height: 52,
+    width: 200,
+    height: 65,
     objectFit: "contain",
   },
   frontOverlay: {
