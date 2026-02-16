@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
   },
   gridPhoto: {
     width: "49%",
-    height: 200,
+    height: 218,
     objectFit: "cover",
     borderRadius: 3,
     marginBottom: 4,
@@ -231,7 +231,7 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, backLogoUrl, 
       {/* ═══════════ BACK PAGE ═══════════ */}
       <Page size={CARD_SIZE} style={styles.backPage}>
         {/* Top section: Logo + Name + Measurements + Photos */}
-        <View style={{ flex: 1 }}>
+        <View>
           <Image src={backLogoUrl} style={styles.backHeaderLogo} />
           <Text style={styles.backName}>{fullName}</Text>
 
