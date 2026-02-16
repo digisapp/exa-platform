@@ -145,6 +145,8 @@ export default function CompCardPage() {
 
   const getSelectionIndex = (id: string) => selectedIds.indexOf(id);
 
+  const PHOTO_LABELS = ["Front", "Back Top Left", "Back Top Right", "Back Bottom Left", "Back Bottom Right"];
+
   // Handle file upload from device
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -419,9 +421,9 @@ export default function CompCardPage() {
                         )}
                       />
                       {isSelected && (
-                        <div className="absolute top-2 left-2 h-6 w-6 rounded-full bg-pink-500 flex items-center justify-center">
-                          <span className="text-white text-xs font-bold">
-                            {idx + 1}
+                        <div className="absolute top-2 left-2 bg-pink-500 rounded-full px-2 py-0.5 flex items-center justify-center">
+                          <span className="text-white text-[9px] font-bold whitespace-nowrap">
+                            {PHOTO_LABELS[idx]}
                           </span>
                         </div>
                       )}
@@ -471,9 +473,9 @@ export default function CompCardPage() {
                           )}
                         />
                         {isSelected && (
-                          <div className="absolute top-2 left-2 h-6 w-6 rounded-full bg-pink-500 flex items-center justify-center">
-                            <span className="text-white text-xs font-bold">
-                              {idx + 1}
+                          <div className="absolute top-2 left-2 bg-pink-500 rounded-full px-2 py-0.5 flex items-center justify-center">
+                            <span className="text-white text-[9px] font-bold whitespace-nowrap">
+                              {PHOTO_LABELS[idx]}
                             </span>
                           </div>
                         )}
@@ -567,12 +569,12 @@ export default function CompCardPage() {
                         {/* Name overlay at bottom — centered, extra large */}
                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-3 pb-6 pt-20 text-center">
                           {model.first_name && (
-                            <p className="text-white text-6xl sm:text-7xl font-black uppercase tracking-[0.12em] leading-tight">
+                            <p className="text-white text-6xl sm:text-7xl font-black uppercase tracking-[0.03em] leading-tight">
                               {model.first_name}
                             </p>
                           )}
                           {model.last_name && (
-                            <p className="text-white text-6xl sm:text-7xl font-black uppercase tracking-[0.12em] leading-tight">
+                            <p className="text-white text-6xl sm:text-7xl font-black uppercase tracking-[0.03em] leading-tight">
                               {model.last_name}
                             </p>
                           )}
