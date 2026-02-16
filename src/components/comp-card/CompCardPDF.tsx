@@ -43,32 +43,36 @@ const styles = StyleSheet.create({
     position: "relative",
     flexDirection: "column",
   },
-  frontPhoto: {
+  frontPhotoWrapper: {
     position: "absolute",
     top: 0,
     left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  frontPhoto: {
     width: "100%",
     height: "100%",
     objectFit: "cover",
   },
+  frontOverlay: {
+    flex: 1,
+    flexDirection: "column",
+    justifyContent: "space-between",
+  },
   frontLogoContainer: {
     alignItems: "center",
     paddingTop: 60,
-    zIndex: 2,
   },
   frontLogo: {
     width: 200,
     height: 65,
     objectFit: "contain",
   },
-  frontSpacer: {
-    flex: 1,
-  },
   frontNameContainer: {
     alignItems: "center",
     paddingBottom: 40,
     paddingHorizontal: 20,
-    zIndex: 2,
   },
   frontFirstName: {
     fontSize: 120,
@@ -147,7 +151,7 @@ const styles = StyleSheet.create({
   },
   gridPhoto: {
     width: "49%",
-    height: 295,
+    height: 265,
     objectFit: "cover",
     borderRadius: 4,
     marginBottom: 4,
@@ -203,18 +207,24 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, backLogoUrl, 
     <Document>
       {/* ═══════════ FRONT PAGE ═══════════ */}
       <Page size="LETTER" style={styles.frontPage}>
-        {heroPhoto && (
-          <Image src={heroPhoto} style={styles.frontPhoto} />
-        )}
-        <View style={styles.frontLogoContainer}>
-          <Image src={frontLogoUrl} style={styles.frontLogo} />
+        {/* Background photo layer */}
+        <View style={styles.frontPhotoWrapper}>
+          {heroPhoto && (
+            <Image src={heroPhoto} style={styles.frontPhoto} />
+          )}
         </View>
-        <View style={styles.frontSpacer} />
-        {firstName && (
-          <View style={styles.frontNameContainer}>
-            <Text style={styles.frontFirstName}>{firstName}</Text>
+        {/* Content overlay layer */}
+        <View style={styles.frontOverlay}>
+          <View style={styles.frontLogoContainer}>
+            <Image src={frontLogoUrl} style={styles.frontLogo} />
           </View>
-        )}
+          <View />
+          {firstName && (
+            <View style={styles.frontNameContainer}>
+              <Text style={styles.frontFirstName}>{firstName}</Text>
+            </View>
+          )}
+        </View>
       </Page>
 
       {/* ═══════════ BACK PAGE ═══════════ */}
