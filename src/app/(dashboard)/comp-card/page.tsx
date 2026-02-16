@@ -50,7 +50,7 @@ interface UploadedPhoto {
   dataUrl: string;
 }
 
-const MAX_PHOTOS = 4;
+const MAX_PHOTOS = 5;
 const UPLOAD_PREFIX = "upload-";
 
 async function toBase64(url: string): Promise<string> {
@@ -323,8 +323,8 @@ export default function CompCardPage() {
         <div>
           <h1 className="text-2xl font-bold">Comp Card</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Select up to {MAX_PHOTOS} photos from your portfolio or upload from
-            your device
+            Select {MAX_PHOTOS} photos — first is the front cover, next 4 go on
+            the back
           </p>
         </div>
         <Button
@@ -608,9 +608,9 @@ export default function CompCardPage() {
                     </div>
 
                     {/* 2x2 photo grid */}
-                    {previewUrls.length > 0 ? (
+                    {previewUrls.length > 1 ? (
                       <div className="grid grid-cols-2 gap-1 mb-3 flex-1 min-h-0">
-                        {previewUrls.slice(0, 4).map((item) => (
+                        {previewUrls.slice(1, 5).map((item) => (
                           <div
                             key={item.id}
                             className="relative rounded overflow-hidden bg-gray-100"
@@ -635,16 +635,16 @@ export default function CompCardPage() {
                     {/* Measurements */}
                     {measurements.length > 0 && (
                       <div className="border-t border-gray-200 pt-2">
-                        <p className="text-[7px] text-gray-400 uppercase tracking-widest mb-1.5">
+                        <p className="text-[8px] text-gray-400 uppercase tracking-widest mb-1.5">
                           Measurements
                         </p>
                         <div className="grid grid-cols-4 gap-1">
                           {measurements.map((m) => (
                             <div key={m.label}>
-                              <p className="text-[6px] text-gray-400 uppercase tracking-wider">
+                              <p className="text-[7px] text-gray-400 uppercase tracking-wider">
                                 {m.label}
                               </p>
-                              <p className="text-[9px] font-bold text-black">
+                              <p className="text-[10px] font-bold text-black">
                                 {m.value}
                               </p>
                             </div>
@@ -657,22 +657,26 @@ export default function CompCardPage() {
                     <div className="border-t border-gray-200 pt-1.5 mt-2 flex items-center justify-between">
                       <div>
                         {model.instagram_name && (
-                          <p className="text-[7px] text-gray-400">
+                          <p className="text-[8px] text-gray-500">
                             @{model.instagram_name}
                           </p>
                         )}
                         {model.username && (
-                          <p className="text-[7px] text-gray-400">
+                          <p className="text-[8px] text-gray-500">
                             examodels.com/{model.username}
                           </p>
                         )}
-                        <p className="text-[7px] text-gray-400">
+                        <p className="text-[8px] text-gray-500">
                           team@examodels.com
                         </p>
                       </div>
-                      <p className="text-[7px] font-bold text-pink-500 tracking-widest">
-                        EXA MODELS
-                      </p>
+                      <Image
+                        src="/exa-models-logo-black.png"
+                        alt="EXA Models"
+                        width={40}
+                        height={16}
+                        className="h-3 w-auto"
+                      />
                     </div>
                   </div>
                 </CardContent>

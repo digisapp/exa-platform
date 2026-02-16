@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   measurementsTitle: {
-    fontSize: 9,
+    fontSize: 11,
     fontFamily: "Helvetica-Bold",
     color: "#999999",
     textTransform: "uppercase",
@@ -147,14 +147,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   measurementLabel: {
-    fontSize: 8,
+    fontSize: 10,
     color: "#999999",
     textTransform: "uppercase",
     letterSpacing: 1,
     marginBottom: 2,
   },
   measurementValue: {
-    fontSize: 13,
+    fontSize: 16,
     fontFamily: "Helvetica-Bold",
     color: "#111111",
   },
@@ -168,19 +168,18 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
   },
   contactText: {
-    fontSize: 9,
+    fontSize: 11,
     color: "#666666",
     marginBottom: 3,
   },
   contactEmail: {
-    fontSize: 9,
+    fontSize: 11,
     color: "#666666",
   },
-  footerBrand: {
-    fontSize: 10,
-    color: "#ec4899",
-    fontFamily: "Helvetica-Bold",
-    letterSpacing: 2,
+  footerLogo: {
+    width: 60,
+    height: 24,
+    objectFit: "contain",
   },
 });
 
@@ -189,7 +188,7 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, backLogoUrl }
   const lastName = model.last_name || "";
   const fullName = [firstName, lastName].filter(Boolean).join(" ") || "Model";
   const heroPhoto = photos[0];
-  const backPhotos = photos.slice(0, 4);
+  const backPhotos = photos.slice(1, 5);
 
   // Build measurements array - only include filled fields
   const measurements: { label: string; value: string }[] = [];
@@ -266,7 +265,7 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, backLogoUrl }
             )}
             <Text style={styles.contactEmail}>team@examodels.com</Text>
           </View>
-          <Text style={styles.footerBrand}>EXA MODELS</Text>
+          <Image src={backLogoUrl} style={styles.footerLogo} />
         </View>
       </Page>
     </Document>
