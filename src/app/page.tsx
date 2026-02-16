@@ -200,7 +200,7 @@ export default async function HomePage() {
                 <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-4">
                   Gigs. Bookings.
                   <br />
-                  <span className="exa-gradient-text">Get Paid.</span>
+                  <span className="exa-gradient-text">Get Discovered.</span>
                 </h2>
 
                 <p className="text-sm text-zinc-400 mb-4">
