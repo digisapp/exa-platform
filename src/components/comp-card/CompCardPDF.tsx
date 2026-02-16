@@ -57,6 +57,24 @@ const styles = StyleSheet.create({
     height: 65,
     objectFit: "contain",
   },
+  frontNameContainer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+    paddingBottom: 40,
+    paddingHorizontal: 20,
+  },
+  frontFirstName: {
+    fontSize: 120,
+    fontFamily: "Helvetica-Bold",
+    color: "#ffffff",
+    textTransform: "uppercase",
+    letterSpacing: 2,
+    lineHeight: 1.1,
+    textAlign: "center",
+  },
 
   // ── BACK PAGE ──
   backPage: {
@@ -125,15 +143,13 @@ const styles = StyleSheet.create({
   },
   gridPhoto: {
     width: "49%",
-    height: 280,
+    height: 300,
     objectFit: "cover",
     borderRadius: 4,
     marginBottom: 4,
   },
   // Footer
   footerContainer: {
-    borderTopWidth: 1,
-    borderTopColor: "#e5e5e5",
     paddingTop: 6,
     flexDirection: "row",
     justifyContent: "space-between",
@@ -181,6 +197,11 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, backLogoUrl, 
         <View style={styles.frontLogoContainer}>
           <Image src={frontLogoUrl} style={styles.frontLogo} />
         </View>
+        {firstName && (
+          <View style={styles.frontNameContainer}>
+            <Text style={styles.frontFirstName}>{firstName}</Text>
+          </View>
+        )}
       </Page>
 
       {/* ═══════════ BACK PAGE ═══════════ */}
@@ -202,8 +223,6 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, backLogoUrl, 
               </View>
             </View>
           )}
-
-          <View style={styles.divider} />
 
           {/* Photos: 2x2 grid */}
           {backPhotos.length > 0 && (

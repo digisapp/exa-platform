@@ -610,6 +610,14 @@ export default function CompCardPage() {
                             className="h-8 w-auto"
                           />
                         </div>
+                        {/* Name at bottom — no overlay */}
+                        {model.first_name && (
+                          <div className="absolute bottom-0 left-0 right-0 px-3 pb-6 text-center">
+                            <p className="text-white text-6xl sm:text-7xl font-black uppercase tracking-[0.03em] leading-tight">
+                              {model.first_name}
+                            </p>
+                          </div>
+                        )}
                       </>
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center">
@@ -663,9 +671,6 @@ export default function CompCardPage() {
                         </div>
                       )}
 
-                      {/* Divider */}
-                      <div className="h-px bg-gray-200 mb-2" />
-
                       {/* 2x2 photo grid */}
                       {previewUrls.length > 1 ? (
                         <div className="grid grid-cols-2 gap-1 flex-1 min-h-0">
@@ -693,7 +698,7 @@ export default function CompCardPage() {
                     </div>
 
                     {/* Footer: contact (left) | QR (right) */}
-                    <div className="border-t border-gray-200 pt-2 mt-2 flex items-center justify-between">
+                    <div className="pt-2 mt-2 flex items-center justify-between">
                       <div>
                         <p className="text-[7px] text-black">
                           team@examodels.com
