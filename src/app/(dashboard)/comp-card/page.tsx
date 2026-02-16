@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 import Link from "next/link";
@@ -12,6 +12,8 @@ import {
   Image as ImageIcon,
   FileText,
   AlertCircle,
+  Upload,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -43,7 +45,13 @@ interface PortfolioPhoto {
   display_order: number | null;
 }
 
+interface UploadedPhoto {
+  id: string;
+  dataUrl: string;
+}
+
 const MAX_PHOTOS = 4;
+const UPLOAD_PREFIX = "upload-";
 
 async function toBase64(url: string): Promise<string> {
   const res = await fetch(url);
@@ -56,11 +64,22 @@ async function toBase64(url: string): Promise<string> {
   });
 }
 
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function CompCardPage() {
   const supabase = createClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [model, setModel] = useState<ModelData | null>(null);
   const [photos, setPhotos] = useState<PortfolioPhoto[]>([]);
+  const [uploadedPhotos, setUploadedPhotos] = useState<UploadedPhoto[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
@@ -98,7 +117,7 @@ export default function CompCardPage() {
     const allPhotos = portfolioData || [];
     setPhotos(allPhotos);
 
-    // Pre-select: profile photo as hero + first 3 portfolio photos
+    // Pre-select first 4 portfolio photos
     if (allPhotos.length > 0) {
       const initial = allPhotos.slice(0, Math.min(MAX_PHOTOS, allPhotos.length));
       setSelectedIds(initial.map((p) => p.id));
@@ -126,6 +145,52 @@ export default function CompCardPage() {
 
   const getSelectionIndex = (id: string) => selectedIds.indexOf(id);
 
+  // Handle file upload from device
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const totalSelected = selectedIds.length;
+    const remainingSlots = MAX_PHOTOS - totalSelected;
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+
+      if (!file.type.startsWith("image/")) {
+        toast.error(`${file.name} is not an image`);
+        continue;
+      }
+
+      if (file.size > 20 * 1024 * 1024) {
+        toast.error(`${file.name} is too large (max 20MB)`);
+        continue;
+      }
+
+      const dataUrl = await fileToBase64(file);
+      const id = `${UPLOAD_PREFIX}${Date.now()}-${i}`;
+
+      setUploadedPhotos((prev) => [...prev, { id, dataUrl }]);
+
+      // Auto-select if there's room
+      if (i < remainingSlots) {
+        setSelectedIds((prev) => {
+          if (prev.length >= MAX_PHOTOS) return prev;
+          return [...prev, id];
+        });
+      }
+    }
+
+    // Reset input so the same file can be re-uploaded
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const removeUploadedPhoto = (id: string) => {
+    setUploadedPhotos((prev) => prev.filter((p) => p.id !== id));
+    setSelectedIds((prev) => prev.filter((p) => p !== id));
+  };
+
   const handleExportPDF = async () => {
     if (!model || selectedIds.length === 0) {
       toast.error("Select at least one photo");
@@ -135,16 +200,28 @@ export default function CompCardPage() {
     setExporting(true);
     try {
       // Convert selected photos to base64
-      const selectedPhotos = selectedIds
-        .map((id) => photos.find((p) => p.id === id))
-        .filter(Boolean) as PortfolioPhoto[];
+      const photoBase64: string[] = [];
 
-      const photoBase64 = await Promise.all(
-        selectedPhotos.map((p) => toBase64(p.photo_url || p.url || ""))
-      );
+      for (const id of selectedIds) {
+        if (id.startsWith(UPLOAD_PREFIX)) {
+          // Uploaded photo — already base64
+          const uploaded = uploadedPhotos.find((p) => p.id === id);
+          if (uploaded) photoBase64.push(uploaded.dataUrl);
+        } else {
+          // Portfolio photo — fetch and convert
+          const photo = photos.find((p) => p.id === id);
+          if (photo) {
+            const b64 = await toBase64(photo.photo_url || photo.url || "");
+            photoBase64.push(b64);
+          }
+        }
+      }
 
-      // Load logo
-      const logoBase64 = await toBase64("/exa-logo-black.png");
+      // Load logos
+      const [frontLogoBase64, backLogoBase64] = await Promise.all([
+        toBase64("/exa-models-logo-white.png"),
+        toBase64("/exa-models-logo-black.png"),
+      ]);
 
       // Dynamic import to avoid SSR issues
       const { pdf } = await import("@react-pdf/renderer");
@@ -153,7 +230,7 @@ export default function CompCardPage() {
       );
 
       const blob = await pdf(
-        CompCardPDF({ model, photos: photoBase64, logoUrl: logoBase64 })
+        CompCardPDF({ model, photos: photoBase64, frontLogoUrl: frontLogoBase64, backLogoUrl: backLogoBase64 })
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
@@ -178,8 +255,7 @@ export default function CompCardPage() {
 
   // Check if model has measurements
   const hasMeasurements =
-    model &&
-    (model.height || model.bust || model.waist || model.hips);
+    model && (model.height || model.bust || model.waist || model.hips);
 
   const measurements = model
     ? [
@@ -204,10 +280,21 @@ export default function CompCardPage() {
       ? [model.city, model.state].filter(Boolean).join(", ")
       : null;
 
-  // Selected photos for preview
-  const previewPhotos = selectedIds
-    .map((id) => photos.find((p) => p.id === id))
-    .filter(Boolean) as PortfolioPhoto[];
+  // Get preview image URL for a selected ID
+  const getPreviewUrl = (id: string): string => {
+    if (id.startsWith(UPLOAD_PREFIX)) {
+      const uploaded = uploadedPhotos.find((p) => p.id === id);
+      return uploaded?.dataUrl || "";
+    }
+    const photo = photos.find((p) => p.id === id);
+    return photo?.photo_url || photo?.url || "";
+  };
+
+  // Selected photo URLs for preview
+  const previewUrls = selectedIds.map((id) => ({
+    id,
+    url: getPreviewUrl(id),
+  }));
 
   if (loading) {
     return (
@@ -236,8 +323,8 @@ export default function CompCardPage() {
         <div>
           <h1 className="text-2xl font-bold">Comp Card</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Select up to {MAX_PHOTOS} photos and download your professional comp
-            card
+            Select up to {MAX_PHOTOS} photos from your portfolio or upload from
+            your device
           </p>
         </div>
         <Button
@@ -292,71 +379,152 @@ export default function CompCardPage() {
             </span>
           </h2>
 
-          {photos.length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <ImageIcon className="h-10 w-10 text-muted-foreground mb-3" />
-                <p className="text-muted-foreground text-center">
-                  No portfolio photos yet.
-                  <br />
-                  <Link
-                    href="/content"
-                    className="text-pink-500 hover:text-pink-400"
-                  >
-                    Upload photos
-                  </Link>{" "}
-                  to create your comp card.
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-              {photos.map((photo) => {
-                const idx = getSelectionIndex(photo.id);
-                const isSelected = idx !== -1;
-                return (
-                  <button
-                    key={photo.id}
-                    onClick={() => togglePhoto(photo.id)}
-                    className={cn(
-                      "relative aspect-[3/4] rounded-lg overflow-hidden border-2 transition-all group",
-                      isSelected
-                        ? "border-pink-500 ring-2 ring-pink-500/30"
-                        : "border-transparent hover:border-white/20"
-                    )}
-                  >
-                    <Image
-                      src={photo.photo_url || photo.url || ""}
-                      alt="Portfolio"
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 640px) 33vw, 25vw"
-                    />
-                    {/* Dark overlay on hover */}
-                    <div
+          {/* Portfolio Photos */}
+          {photos.length > 0 && (
+            <>
+              <p className="text-xs text-muted-foreground mb-2">
+                Portfolio Photos
+              </p>
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-4">
+                {photos.map((photo) => {
+                  const idx = getSelectionIndex(photo.id);
+                  const isSelected = idx !== -1;
+                  return (
+                    <button
+                      key={photo.id}
+                      onClick={() => togglePhoto(photo.id)}
                       className={cn(
-                        "absolute inset-0 transition-opacity",
+                        "relative aspect-[3/4] rounded-lg overflow-hidden border-2 transition-all group",
                         isSelected
-                          ? "bg-black/30"
-                          : "bg-black/0 group-hover:bg-black/20"
+                          ? "border-pink-500 ring-2 ring-pink-500/30"
+                          : "border-transparent hover:border-white/20"
                       )}
-                    />
-                    {/* Selection badge */}
-                    {isSelected && (
-                      <div className="absolute top-2 left-2 h-6 w-6 rounded-full bg-pink-500 flex items-center justify-center">
-                        <span className="text-white text-xs font-bold">
-                          {idx + 1}
-                        </span>
-                      </div>
-                    )}
-                    {/* Unselected indicator */}
-                    {!isSelected && (
-                      <div className="absolute top-2 left-2 h-6 w-6 rounded-full border-2 border-white/60 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+                    >
+                      <Image
+                        src={photo.photo_url || photo.url || ""}
+                        alt="Portfolio"
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 640px) 33vw, 25vw"
+                      />
+                      <div
+                        className={cn(
+                          "absolute inset-0 transition-opacity",
+                          isSelected
+                            ? "bg-black/30"
+                            : "bg-black/0 group-hover:bg-black/20"
+                        )}
+                      />
+                      {isSelected && (
+                        <div className="absolute top-2 left-2 h-6 w-6 rounded-full bg-pink-500 flex items-center justify-center">
+                          <span className="text-white text-xs font-bold">
+                            {idx + 1}
+                          </span>
+                        </div>
+                      )}
+                      {!isSelected && (
+                        <div className="absolute top-2 left-2 h-6 w-6 rounded-full border-2 border-white/60 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {/* Uploaded Photos */}
+          {uploadedPhotos.length > 0 && (
+            <>
+              <p className="text-xs text-muted-foreground mb-2">
+                Uploaded Photos
+              </p>
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-4">
+                {uploadedPhotos.map((photo) => {
+                  const idx = getSelectionIndex(photo.id);
+                  const isSelected = idx !== -1;
+                  return (
+                    <div key={photo.id} className="relative">
+                      <button
+                        onClick={() => togglePhoto(photo.id)}
+                        className={cn(
+                          "relative aspect-[3/4] rounded-lg overflow-hidden border-2 transition-all group w-full",
+                          isSelected
+                            ? "border-pink-500 ring-2 ring-pink-500/30"
+                            : "border-transparent hover:border-white/20"
+                        )}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={photo.dataUrl}
+                          alt="Uploaded"
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
+                        <div
+                          className={cn(
+                            "absolute inset-0 transition-opacity",
+                            isSelected
+                              ? "bg-black/30"
+                              : "bg-black/0 group-hover:bg-black/20"
+                          )}
+                        />
+                        {isSelected && (
+                          <div className="absolute top-2 left-2 h-6 w-6 rounded-full bg-pink-500 flex items-center justify-center">
+                            <span className="text-white text-xs font-bold">
+                              {idx + 1}
+                            </span>
+                          </div>
+                        )}
+                        {!isSelected && (
+                          <div className="absolute top-2 left-2 h-6 w-6 rounded-full border-2 border-white/60 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        )}
+                      </button>
+                      {/* Remove button */}
+                      <button
+                        onClick={() => removeUploadedPhoto(photo.id)}
+                        className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-red-500 flex items-center justify-center hover:bg-red-600 transition-colors z-10"
+                      >
+                        <X className="h-3 w-3 text-white" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {/* Upload Button */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            multiple
+            onChange={handleFileUpload}
+            className="hidden"
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full border-2 border-dashed border-border hover:border-pink-500/50 rounded-lg p-6 flex flex-col items-center gap-2 transition-colors group"
+          >
+            <Upload className="h-6 w-6 text-muted-foreground group-hover:text-pink-500 transition-colors" />
+            <span className="text-sm text-muted-foreground group-hover:text-pink-500 transition-colors">
+              Upload from device
+            </span>
+            <span className="text-xs text-muted-foreground">
+              JPG, PNG, or WebP
+            </span>
+          </button>
+
+          {photos.length === 0 && uploadedPhotos.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center mt-4">
+              Upload photos or{" "}
+              <Link
+                href="/content"
+                className="text-pink-500 hover:text-pink-400"
+              >
+                add portfolio photos
+              </Link>{" "}
+              to create your comp card.
+            </p>
           )}
         </div>
 
@@ -367,111 +535,152 @@ export default function CompCardPage() {
             Preview
           </h2>
 
-          <Card className="overflow-hidden">
-            <CardContent className="p-0">
-              {/* Comp card preview (HTML-based, matches PDF layout) */}
-              <div className="bg-white p-6 aspect-[8.5/11] flex flex-col">
-                {/* Logo */}
-                <div className="flex justify-center mb-2">
-                  <Image
-                    src="/exa-logo-black.png"
-                    alt="EXA Models"
-                    width={60}
-                    height={24}
-                    className="h-5 w-auto"
-                  />
-                </div>
-
-                {/* Name */}
-                <div className="text-center mb-2">
-                  <h3 className="text-lg font-bold text-black uppercase tracking-widest leading-tight">
-                    {fullName}
-                  </h3>
-                  {location && (
-                    <p className="text-[10px] text-gray-500 mt-0.5">
-                      {location}
-                    </p>
-                  )}
-                </div>
-
-                {/* Hero Photo */}
-                {previewPhotos.length > 0 ? (
-                  <div className="relative flex-1 min-h-0 mb-2 rounded overflow-hidden bg-gray-100">
-                    <Image
-                      src={
-                        previewPhotos[0].photo_url || previewPhotos[0].url || ""
-                      }
-                      alt="Hero"
-                      fill
-                      className="object-cover"
-                      sizes="400px"
-                    />
-                  </div>
-                ) : (
-                  <div className="flex-1 min-h-0 mb-2 rounded bg-gray-100 flex items-center justify-center">
-                    <p className="text-gray-400 text-xs">Select a photo</p>
-                  </div>
-                )}
-
-                {/* Supporting Photos */}
-                {previewPhotos.length > 1 && (
-                  <div className="flex gap-1 mb-2">
-                    {previewPhotos.slice(1, 4).map((photo) => (
-                      <div
-                        key={photo.id}
-                        className="relative flex-1 aspect-square rounded overflow-hidden bg-gray-100"
-                      >
-                        <Image
-                          src={photo.photo_url || photo.url || ""}
-                          alt="Supporting"
-                          fill
-                          className="object-cover"
-                          sizes="130px"
+          <div className="space-y-4">
+            {/* ── FRONT PREVIEW ── */}
+            <div>
+              <p className="text-xs text-muted-foreground mb-2">Front</p>
+              <Card className="overflow-hidden">
+                <CardContent className="p-0">
+                  <div className="bg-black aspect-[8.5/11] relative">
+                    {/* Hero photo full-bleed */}
+                    {previewUrls.length > 0 ? (
+                      <>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={previewUrls[0].url}
+                          alt="Hero"
+                          className="absolute inset-0 w-full h-full object-cover"
                         />
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Measurements */}
-                {measurements.length > 0 && (
-                  <div className="border-t border-gray-200 pt-2 mt-auto">
-                    <div className="grid grid-cols-4 gap-1">
-                      {measurements.map((m) => (
-                        <div key={m.label}>
-                          <p className="text-[7px] text-gray-400 uppercase tracking-wider">
-                            {m.label}
-                          </p>
-                          <p className="text-[10px] font-bold text-black">
-                            {m.value}
-                          </p>
+                        {/* Overlay at bottom with name */}
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6 pt-20">
+                          <Image
+                            src="/exa-models-logo-white.png"
+                            alt="EXA Models"
+                            width={40}
+                            height={16}
+                            className="h-3 w-auto mb-2 opacity-80"
+                          />
+                          {model.first_name && (
+                            <p className="text-white text-2xl font-bold uppercase tracking-[0.3em] leading-tight">
+                              {model.first_name}
+                            </p>
+                          )}
+                          {model.last_name && (
+                            <p className="text-white text-2xl font-bold uppercase tracking-[0.3em] leading-tight">
+                              {model.last_name}
+                            </p>
+                          )}
+                          {location && (
+                            <p className="text-white/60 text-[9px] uppercase tracking-widest mt-1">
+                              {location}
+                            </p>
+                          )}
                         </div>
-                      ))}
+                      </>
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <p className="text-gray-500 text-xs">
+                          Select a photo for the front
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* ── BACK PREVIEW ── */}
+            <div>
+              <p className="text-xs text-muted-foreground mb-2">Back</p>
+              <Card className="overflow-hidden">
+                <CardContent className="p-0">
+                  <div className="bg-white p-5 aspect-[8.5/11] flex flex-col">
+                    {/* Header */}
+                    <div className="text-center mb-3">
+                      <Image
+                        src="/exa-models-logo-black.png"
+                        alt="EXA Models"
+                        width={50}
+                        height={20}
+                        className="h-4 w-auto mx-auto mb-1.5"
+                      />
+                      <h3 className="text-sm font-bold text-black uppercase tracking-[0.2em]">
+                        {fullName}
+                      </h3>
+                    </div>
+
+                    {/* 2x2 photo grid */}
+                    {previewUrls.length > 0 ? (
+                      <div className="grid grid-cols-2 gap-1 mb-3 flex-1 min-h-0">
+                        {previewUrls.slice(0, 4).map((item) => (
+                          <div
+                            key={item.id}
+                            className="relative rounded overflow-hidden bg-gray-100"
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={item.url}
+                              alt="Photo"
+                              className="absolute inset-0 w-full h-full object-cover"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex-1 min-h-0 rounded bg-gray-100 flex items-center justify-center mb-3">
+                        <p className="text-gray-400 text-xs">
+                          Select photos
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Measurements */}
+                    {measurements.length > 0 && (
+                      <div className="border-t border-gray-200 pt-2">
+                        <p className="text-[7px] text-gray-400 uppercase tracking-widest mb-1.5">
+                          Measurements
+                        </p>
+                        <div className="grid grid-cols-4 gap-1">
+                          {measurements.map((m) => (
+                            <div key={m.label}>
+                              <p className="text-[6px] text-gray-400 uppercase tracking-wider">
+                                {m.label}
+                              </p>
+                              <p className="text-[9px] font-bold text-black">
+                                {m.value}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Footer */}
+                    <div className="border-t border-gray-200 pt-1.5 mt-2 flex items-center justify-between">
+                      <div>
+                        {model.instagram_name && (
+                          <p className="text-[7px] text-gray-400">
+                            @{model.instagram_name}
+                          </p>
+                        )}
+                        {model.username && (
+                          <p className="text-[7px] text-gray-400">
+                            examodels.com/{model.username}
+                          </p>
+                        )}
+                        <p className="text-[7px] text-gray-400">
+                          team@examodels.com
+                        </p>
+                      </div>
+                      <p className="text-[7px] font-bold text-pink-500 tracking-widest">
+                        EXA MODELS
+                      </p>
                     </div>
                   </div>
-                )}
-
-                {/* Footer */}
-                <div className="border-t border-gray-200 pt-1.5 mt-2 flex items-center justify-between">
-                  <div>
-                    {model.instagram_name && (
-                      <p className="text-[8px] text-gray-400">
-                        @{model.instagram_name}
-                      </p>
-                    )}
-                    {model.username && (
-                      <p className="text-[8px] text-gray-400">
-                        examodels.com/{model.username}
-                      </p>
-                    )}
-                  </div>
-                  <p className="text-[8px] font-bold text-pink-500">
-                    EXA MODELS
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
 
           {/* Export button (mobile) */}
           <div className="mt-4 lg:hidden">

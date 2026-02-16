@@ -27,59 +27,96 @@ interface CompCardModel {
 interface CompCardPDFProps {
   model: CompCardModel;
   photos: string[]; // base64 data URLs
-  logoUrl: string; // base64 data URL
+  frontLogoUrl: string; // base64 data URL (white logo for dark background)
+  backLogoUrl: string; // base64 data URL (black logo for white background)
 }
 
 const styles = StyleSheet.create({
-  page: {
+  // ── FRONT PAGE ──
+  frontPage: {
+    backgroundColor: "#000000",
+    position: "relative",
+  },
+  frontPhoto: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+  },
+  // Dark gradient overlay at the bottom of the front photo
+  frontOverlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 200,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "flex-end",
+    padding: 40,
+    paddingBottom: 50,
+  },
+  frontLogo: {
+    width: 60,
+    height: 24,
+    objectFit: "contain",
+    marginBottom: 12,
+  },
+  frontFirstName: {
+    fontSize: 48,
+    fontFamily: "Helvetica-Bold",
+    color: "#ffffff",
+    textTransform: "uppercase",
+    letterSpacing: 8,
+    lineHeight: 1.1,
+  },
+  frontLastName: {
+    fontSize: 48,
+    fontFamily: "Helvetica-Bold",
+    color: "#ffffff",
+    textTransform: "uppercase",
+    letterSpacing: 8,
+    lineHeight: 1.1,
+  },
+  frontLocation: {
+    fontSize: 11,
+    color: "rgba(255,255,255,0.7)",
+    marginTop: 8,
+    letterSpacing: 3,
+    textTransform: "uppercase",
+  },
+
+  // ── BACK PAGE ──
+  backPage: {
     backgroundColor: "#ffffff",
     padding: 30,
     fontFamily: "Helvetica",
   },
-  // Header
-  header: {
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  logo: {
-    width: 80,
-    height: 32,
+  backLogo: {
+    width: 70,
+    height: 28,
     objectFit: "contain",
-    marginBottom: 8,
+    marginBottom: 16,
   },
-  name: {
-    fontSize: 24,
+  backHeader: {
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  backName: {
+    fontSize: 20,
     fontFamily: "Helvetica-Bold",
     color: "#111111",
     textTransform: "uppercase",
-    letterSpacing: 2,
+    letterSpacing: 4,
   },
-  location: {
-    fontSize: 10,
-    color: "#666666",
-    marginTop: 4,
-  },
-  // Hero photo
-  heroContainer: {
-    marginTop: 10,
-    marginBottom: 10,
-    alignItems: "center",
-  },
-  heroPhoto: {
-    width: "100%",
-    height: 340,
-    objectFit: "cover",
-    borderRadius: 4,
-  },
-  // Supporting photos row
-  photosRow: {
+  // Photos grid: 2x2
+  photosGrid: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: 8,
-    marginBottom: 14,
+    marginBottom: 20,
   },
-  supportingPhoto: {
-    flex: 1,
-    height: 160,
+  gridPhoto: {
+    width: "48.5%",
+    height: 230,
     objectFit: "cover",
     borderRadius: 4,
   },
@@ -87,13 +124,20 @@ const styles = StyleSheet.create({
   measurementsContainer: {
     borderTopWidth: 1,
     borderTopColor: "#e5e5e5",
-    paddingTop: 12,
-    marginTop: 4,
+    paddingTop: 16,
+    marginBottom: 16,
+  },
+  measurementsTitle: {
+    fontSize: 9,
+    fontFamily: "Helvetica-Bold",
+    color: "#999999",
+    textTransform: "uppercase",
+    letterSpacing: 2,
+    marginBottom: 10,
   },
   measurementsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 0,
   },
   measurementItem: {
     width: "25%",
@@ -108,38 +152,45 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   measurementValue: {
-    fontSize: 12,
+    fontSize: 13,
     fontFamily: "Helvetica-Bold",
     color: "#111111",
   },
-  // Footer
-  footer: {
+  // Contact / Footer
+  contactContainer: {
     borderTopWidth: 1,
     borderTopColor: "#e5e5e5",
-    paddingTop: 10,
-    marginTop: 10,
+    paddingTop: 14,
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-end",
   },
-  footerText: {
+  contactText: {
     fontSize: 9,
-    color: "#888888",
+    color: "#666666",
+    marginBottom: 3,
+  },
+  contactEmail: {
+    fontSize: 9,
+    color: "#666666",
   },
   footerBrand: {
-    fontSize: 9,
+    fontSize: 10,
     color: "#ec4899",
     fontFamily: "Helvetica-Bold",
+    letterSpacing: 2,
   },
 });
 
-export default function CompCardPDF({ model, photos, logoUrl }: CompCardPDFProps) {
-  const fullName = [model.first_name, model.last_name].filter(Boolean).join(" ") || "Model";
+export default function CompCardPDF({ model, photos, frontLogoUrl, backLogoUrl }: CompCardPDFProps) {
+  const firstName = model.first_name || "";
+  const lastName = model.last_name || "";
+  const fullName = [firstName, lastName].filter(Boolean).join(" ") || "Model";
   const locationParts = [model.city, model.state].filter(Boolean);
   const location = locationParts.length > 0 ? locationParts.join(", ") : null;
 
   const heroPhoto = photos[0];
-  const supportingPhotos = photos.slice(1, 4);
+  const backPhotos = photos.slice(0, 4);
 
   // Build measurements array - only include filled fields
   const measurements: { label: string; value: string }[] = [];
@@ -154,26 +205,35 @@ export default function CompCardPDF({ model, photos, logoUrl }: CompCardPDFProps
 
   return (
     <Document>
-      <Page size="LETTER" style={styles.page}>
-        {/* Header: Logo + Name */}
-        <View style={styles.header}>
-          <Image src={logoUrl} style={styles.logo} />
-          <Text style={styles.name}>{fullName}</Text>
-          {location && <Text style={styles.location}>{location}</Text>}
-        </View>
-
-        {/* Hero Photo */}
+      {/* ═══════════ FRONT PAGE ═══════════ */}
+      <Page size="LETTER" style={styles.frontPage}>
+        {/* Full-bleed hero photo */}
         {heroPhoto && (
-          <View style={styles.heroContainer}>
-            <Image src={heroPhoto} style={styles.heroPhoto} />
-          </View>
+          <Image src={heroPhoto} style={styles.frontPhoto} />
         )}
 
-        {/* Supporting Photos */}
-        {supportingPhotos.length > 0 && (
-          <View style={styles.photosRow}>
-            {supportingPhotos.map((photo, i) => (
-              <Image key={i} src={photo} style={styles.supportingPhoto} />
+        {/* Overlay with name at the bottom */}
+        <View style={styles.frontOverlay}>
+          <Image src={frontLogoUrl} style={styles.frontLogo} />
+          {firstName && <Text style={styles.frontFirstName}>{firstName}</Text>}
+          {lastName && <Text style={styles.frontLastName}>{lastName}</Text>}
+          {location && <Text style={styles.frontLocation}>{location}</Text>}
+        </View>
+      </Page>
+
+      {/* ═══════════ BACK PAGE ═══════════ */}
+      <Page size="LETTER" style={styles.backPage}>
+        {/* Header */}
+        <View style={styles.backHeader}>
+          <Image src={backLogoUrl} style={styles.backLogo} />
+          <Text style={styles.backName}>{fullName}</Text>
+        </View>
+
+        {/* Photos: 2x2 grid */}
+        {backPhotos.length > 0 && (
+          <View style={styles.photosGrid}>
+            {backPhotos.map((photo, i) => (
+              <Image key={i} src={photo} style={styles.gridPhoto} />
             ))}
           </View>
         )}
@@ -181,6 +241,7 @@ export default function CompCardPDF({ model, photos, logoUrl }: CompCardPDFProps
         {/* Measurements */}
         {measurements.length > 0 && (
           <View style={styles.measurementsContainer}>
+            <Text style={styles.measurementsTitle}>Measurements</Text>
             <View style={styles.measurementsGrid}>
               {measurements.map((m) => (
                 <View key={m.label} style={styles.measurementItem}>
@@ -192,15 +253,16 @@ export default function CompCardPDF({ model, photos, logoUrl }: CompCardPDFProps
           </View>
         )}
 
-        {/* Footer */}
-        <View style={styles.footer}>
+        {/* Contact Info */}
+        <View style={styles.contactContainer}>
           <View>
             {model.instagram_name && (
-              <Text style={styles.footerText}>@{model.instagram_name}</Text>
+              <Text style={styles.contactText}>@{model.instagram_name}</Text>
             )}
             {model.username && (
-              <Text style={styles.footerText}>examodels.com/{model.username}</Text>
+              <Text style={styles.contactText}>examodels.com/{model.username}</Text>
             )}
+            <Text style={styles.contactEmail}>team@examodels.com</Text>
           </View>
           <Text style={styles.footerBrand}>EXA MODELS</Text>
         </View>
