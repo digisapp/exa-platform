@@ -593,7 +593,7 @@ export default function CompCardPage() {
         const gridGap = 11;
         const gridW = BW - PAD * 2;
         const photoW = Math.floor((gridW - gridGap) / 2);
-        const photoH = 633; // ~230pt at 200dpi scale
+        const photoH = 611; // ~222pt at 200dpi scale
         const rows = Math.ceil(backPhotos.length / 2);
 
         for (let i = 0; i < backPhotos.length; i++) {
