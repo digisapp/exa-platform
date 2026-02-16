@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 240,
+    height: 280,
     backgroundColor: "rgba(0,0,0,0.55)",
     justifyContent: "flex-end",
     alignItems: "center",
@@ -70,21 +70,21 @@ const styles = StyleSheet.create({
     paddingBottom: 45,
   },
   frontFirstName: {
-    fontSize: 82,
+    fontSize: 100,
     fontFamily: "Helvetica-Bold",
     color: "#ffffff",
     textTransform: "uppercase",
-    letterSpacing: 22,
-    lineHeight: 1.05,
+    letterSpacing: 24,
+    lineHeight: 1.1,
     textAlign: "center",
   },
   frontLastName: {
-    fontSize: 82,
+    fontSize: 100,
     fontFamily: "Helvetica-Bold",
     color: "#ffffff",
     textTransform: "uppercase",
-    letterSpacing: 22,
-    lineHeight: 1.05,
+    letterSpacing: 24,
+    lineHeight: 1.1,
     textAlign: "center",
   },
 
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
   },
   measurementItem: {
     paddingVertical: 5,
-    paddingHorizontal: 12,
+    paddingHorizontal: 20,
     alignItems: "center",
   },
   measurementLabel: {
@@ -157,18 +157,17 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#e5e5e5",
     paddingTop: 14,
+    alignItems: "center",
+  },
+  footerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    width: "100%",
+    marginBottom: 12,
   },
-  footerLeft: {
+  footerContactLeft: {
     alignItems: "flex-start",
-  },
-  footerLogo: {
-    width: 80,
-    height: 28,
-    objectFit: "contain",
-    marginBottom: 6,
   },
   footerText: {
     fontSize: 10,
@@ -178,6 +177,11 @@ const styles = StyleSheet.create({
   footerQr: {
     width: 70,
     height: 70,
+  },
+  footerLogo: {
+    width: 100,
+    height: 34,
+    objectFit: "contain",
   },
 });
 
@@ -246,21 +250,23 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, backLogoUrl, 
           )}
         </View>
 
-        {/* Footer: Logo + contact info (left) | QR code (right) */}
+        {/* Footer: contact (left) + QR (right), then centered logo */}
         <View style={styles.footerContainer}>
-          <View style={styles.footerLeft}>
-            <Image src={backLogoUrl} style={styles.footerLogo} />
-            <Text style={styles.footerText}>team@examodels.com</Text>
-            {model.instagram_name && (
-              <Text style={styles.footerText}>@{model.instagram_name}</Text>
-            )}
-            {model.username && (
-              <Text style={styles.footerText}>examodels.com/{model.username}</Text>
+          <View style={styles.footerRow}>
+            <View style={styles.footerContactLeft}>
+              <Text style={styles.footerText}>team@examodels.com</Text>
+              {model.instagram_name && (
+                <Text style={styles.footerText}>@{model.instagram_name}</Text>
+              )}
+              {model.username && (
+                <Text style={styles.footerText}>examodels.com/{model.username}</Text>
+              )}
+            </View>
+            {qrCodeUrl && (
+              <Image src={qrCodeUrl} style={styles.footerQr} />
             )}
           </View>
-          {qrCodeUrl && (
-            <Image src={qrCodeUrl} style={styles.footerQr} />
-          )}
+          <Image src={backLogoUrl} style={styles.footerLogo} />
         </View>
       </Page>
     </Document>
