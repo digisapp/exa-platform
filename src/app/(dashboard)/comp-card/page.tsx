@@ -551,28 +551,26 @@ export default function CompCardPage() {
                           alt="Hero"
                           className="absolute inset-0 w-full h-full object-cover"
                         />
-                        {/* Overlay at bottom with name */}
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6 pt-20">
+                        {/* Logo at top center */}
+                        <div className="absolute top-0 left-0 right-0 flex justify-center pt-4 z-10">
                           <Image
                             src="/exa-models-logo-white.png"
                             alt="EXA Models"
-                            width={40}
-                            height={16}
-                            className="h-3 w-auto mb-2 opacity-80"
+                            width={80}
+                            height={28}
+                            className="h-5 w-auto"
                           />
+                        </div>
+                        {/* Name overlay at bottom */}
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-4 pb-5 pt-16">
                           {model.first_name && (
-                            <p className="text-white text-2xl font-bold uppercase tracking-[0.3em] leading-tight">
+                            <p className="text-white text-3xl font-bold uppercase tracking-[0.4em] leading-tight">
                               {model.first_name}
                             </p>
                           )}
                           {model.last_name && (
-                            <p className="text-white text-2xl font-bold uppercase tracking-[0.3em] leading-tight">
+                            <p className="text-white text-3xl font-bold uppercase tracking-[0.4em] leading-tight">
                               {model.last_name}
-                            </p>
-                          )}
-                          {location && (
-                            <p className="text-white/60 text-[9px] uppercase tracking-widest mt-1">
-                              {location}
                             </p>
                           )}
                         </div>

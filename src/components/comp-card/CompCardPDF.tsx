@@ -42,46 +42,48 @@ const styles = StyleSheet.create({
     height: "100%",
     objectFit: "cover",
   },
+  // Logo at top of front page
+  frontLogoContainer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+    paddingTop: 30,
+    zIndex: 2,
+  },
+  frontLogo: {
+    width: 120,
+    height: 40,
+    objectFit: "contain",
+  },
   // Dark gradient overlay at the bottom of the front photo
   frontOverlay: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    height: 200,
-    backgroundColor: "rgba(0,0,0,0.6)",
+    height: 180,
+    backgroundColor: "rgba(0,0,0,0.55)",
     justifyContent: "flex-end",
-    padding: 40,
-    paddingBottom: 50,
-  },
-  frontLogo: {
-    width: 60,
-    height: 24,
-    objectFit: "contain",
-    marginBottom: 12,
+    paddingHorizontal: 30,
+    paddingBottom: 40,
   },
   frontFirstName: {
-    fontSize: 48,
+    fontSize: 64,
     fontFamily: "Helvetica-Bold",
     color: "#ffffff",
     textTransform: "uppercase",
-    letterSpacing: 8,
-    lineHeight: 1.1,
+    letterSpacing: 14,
+    lineHeight: 1.05,
   },
   frontLastName: {
-    fontSize: 48,
+    fontSize: 64,
     fontFamily: "Helvetica-Bold",
     color: "#ffffff",
     textTransform: "uppercase",
-    letterSpacing: 8,
-    lineHeight: 1.1,
-  },
-  frontLocation: {
-    fontSize: 11,
-    color: "rgba(255,255,255,0.7)",
-    marginTop: 8,
-    letterSpacing: 3,
-    textTransform: "uppercase",
+    letterSpacing: 14,
+    lineHeight: 1.05,
   },
 
   // ── BACK PAGE ──
@@ -186,9 +188,6 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, backLogoUrl }
   const firstName = model.first_name || "";
   const lastName = model.last_name || "";
   const fullName = [firstName, lastName].filter(Boolean).join(" ") || "Model";
-  const locationParts = [model.city, model.state].filter(Boolean);
-  const location = locationParts.length > 0 ? locationParts.join(", ") : null;
-
   const heroPhoto = photos[0];
   const backPhotos = photos.slice(0, 4);
 
@@ -212,12 +211,15 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, backLogoUrl }
           <Image src={heroPhoto} style={styles.frontPhoto} />
         )}
 
-        {/* Overlay with name at the bottom */}
-        <View style={styles.frontOverlay}>
+        {/* Logo at top center */}
+        <View style={styles.frontLogoContainer}>
           <Image src={frontLogoUrl} style={styles.frontLogo} />
+        </View>
+
+        {/* Name overlay at the bottom */}
+        <View style={styles.frontOverlay}>
           {firstName && <Text style={styles.frontFirstName}>{firstName}</Text>}
           {lastName && <Text style={styles.frontLastName}>{lastName}</Text>}
-          {location && <Text style={styles.frontLocation}>{location}</Text>}
         </View>
       </Page>
 
