@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useLayoutEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 import Link from "next/link";
@@ -14,6 +14,7 @@ import {
   AlertCircle,
   Upload,
   X,
+  Move,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -52,6 +53,46 @@ interface UploadedPhoto {
 
 const MAX_PHOTOS = 5;
 const UPLOAD_PREFIX = "upload-";
+const CARD_ASPECT = 5.5 / 8.5; // width / height
+
+// Pre-crop an image to the comp card aspect ratio at a given object-position.
+// posX/posY are percentages (0–100) controlling which region is visible.
+function cropToPosition(
+  dataUrl: string,
+  posX: number,
+  posY: number,
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    img.onload = () => {
+      const imgAspect = img.naturalWidth / img.naturalHeight;
+      let srcX = 0, srcY = 0, srcW = img.naturalWidth, srcH = img.naturalHeight;
+
+      if (imgAspect > CARD_ASPECT) {
+        // Image is wider — crop horizontally
+        srcW = img.naturalHeight * CARD_ASPECT;
+        const maxOffsetX = img.naturalWidth - srcW;
+        srcX = maxOffsetX * (posX / 100);
+      } else {
+        // Image is taller — crop vertically
+        srcH = img.naturalWidth / CARD_ASPECT;
+        const maxOffsetY = img.naturalHeight - srcH;
+        srcY = maxOffsetY * (posY / 100);
+      }
+
+      const outW = Math.min(Math.round(srcW), 2000);
+      const outH = Math.round(outW / CARD_ASPECT);
+      const canvas = document.createElement("canvas");
+      canvas.width = outW;
+      canvas.height = outH;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, outW, outH);
+      resolve(canvas.toDataURL("image/jpeg", 0.92));
+    };
+    img.onerror = () => reject(new Error("Failed to crop image"));
+    img.src = dataUrl;
+  });
+}
 
 // For logos and non-photo assets — preserves original format (PNG transparency)
 async function toBase64(url: string): Promise<string> {
@@ -117,6 +158,66 @@ export default function CompCardPage() {
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [qrCodePreview, setQrCodePreview] = useState<string | null>(null);
+
+  // Hero photo repositioning (object-position %)
+  const [heroPos, setHeroPos] = useState({ x: 50, y: 50 });
+  const heroRef = useRef<HTMLDivElement>(null);
+  const dragging = useRef(false);
+  const dragStart = useRef({ x: 0, y: 0, startX: 50, startY: 50 });
+  const prevHeroId = useRef<string | null>(null);
+
+  // Reset position when front photo changes
+  const currentHeroId = selectedIds[0] ?? null;
+  if (currentHeroId !== prevHeroId.current) {
+    prevHeroId.current = currentHeroId;
+    if (heroPos.x !== 50 || heroPos.y !== 50) {
+      setHeroPos({ x: 50, y: 50 });
+    }
+  }
+
+  // Drag handlers for hero photo repositioning
+  useLayoutEffect(() => {
+    const el = heroRef.current;
+    if (!el) return;
+
+    const onPointerDown = (e: PointerEvent) => {
+      // Only on the photo area
+      if ((e.target as HTMLElement).tagName === "IMG" || el.contains(e.target as Node)) {
+        dragging.current = true;
+        dragStart.current = { x: e.clientX, y: e.clientY, startX: heroPos.x, startY: heroPos.y };
+        el.setPointerCapture(e.pointerId);
+        e.preventDefault();
+      }
+    };
+
+    const onPointerMove = (e: PointerEvent) => {
+      if (!dragging.current) return;
+      const rect = el.getBoundingClientRect();
+      // Map pixel delta to percentage of the container
+      const dx = ((e.clientX - dragStart.current.x) / rect.width) * 100;
+      const dy = ((e.clientY - dragStart.current.y) / rect.height) * 100;
+      // Invert: dragging right moves the visible region left (decreases posX)
+      const newX = Math.max(0, Math.min(100, dragStart.current.startX - dx));
+      const newY = Math.max(0, Math.min(100, dragStart.current.startY - dy));
+      setHeroPos({ x: newX, y: newY });
+    };
+
+    const onPointerUp = () => {
+      dragging.current = false;
+    };
+
+    el.addEventListener("pointerdown", onPointerDown);
+    el.addEventListener("pointermove", onPointerMove);
+    el.addEventListener("pointerup", onPointerUp);
+    el.addEventListener("pointercancel", onPointerUp);
+
+    return () => {
+      el.removeEventListener("pointerdown", onPointerDown);
+      el.removeEventListener("pointermove", onPointerMove);
+      el.removeEventListener("pointerup", onPointerUp);
+      el.removeEventListener("pointercancel", onPointerUp);
+    };
+  });
 
   const fetchData = useCallback(async () => {
     const {
@@ -256,19 +357,24 @@ export default function CompCardPage() {
       // Convert selected photos to base64
       const photoBase64: string[] = [];
 
-      for (const id of selectedIds) {
+      for (let idx = 0; idx < selectedIds.length; idx++) {
+        const id = selectedIds[idx];
+        let b64: string;
+
         if (id.startsWith(UPLOAD_PREFIX)) {
-          // Uploaded photo — already base64
           const uploaded = uploadedPhotos.find((p) => p.id === id);
-          if (uploaded) photoBase64.push(uploaded.dataUrl);
+          b64 = uploaded?.dataUrl || "";
         } else {
-          // Portfolio photo — fetch and convert
           const photo = photos.find((p) => p.id === id);
-          if (photo) {
-            const b64 = await photoToBase64(photo.photo_url || photo.url || "");
-            photoBase64.push(b64);
-          }
+          b64 = await photoToBase64(photo?.photo_url || photo?.url || "");
         }
+
+        // Pre-crop the hero photo (first) to match the user's repositioning
+        if (idx === 0 && b64) {
+          b64 = await cropToPosition(b64, heroPos.x, heroPos.y);
+        }
+
+        if (b64) photoBase64.push(b64);
       }
 
       // Load logos + generate QR code
@@ -600,7 +706,11 @@ export default function CompCardPage() {
               <p className="text-xs text-muted-foreground mb-2">Front</p>
               <Card className="overflow-hidden">
                 <CardContent className="p-0">
-                  <div className="bg-black aspect-[5.5/8.5] relative">
+                  <div
+                    ref={heroRef}
+                    className="bg-black aspect-[5.5/8.5] relative select-none touch-none"
+                    style={{ cursor: previewUrls.length > 0 ? "grab" : undefined }}
+                  >
                     {/* Hero photo full-bleed */}
                     {previewUrls.length > 0 ? (
                       <>
@@ -608,10 +718,17 @@ export default function CompCardPage() {
                         <img
                           src={previewUrls[0].url}
                           alt="Hero"
-                          className="absolute inset-0 w-full h-full object-cover"
+                          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                          style={{ objectPosition: `${heroPos.x}% ${heroPos.y}%` }}
+                          draggable={false}
                         />
+                        {/* Reposition hint */}
+                        <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-black/50 backdrop-blur-sm rounded-full px-2 py-1">
+                          <Move className="h-3 w-3 text-white/80" />
+                          <span className="text-[10px] text-white/80">Drag to reposition</span>
+                        </div>
                         {/* Logo at top center */}
-                        <div className="absolute top-0 left-0 right-0 flex justify-center pt-7 z-10">
+                        <div className="absolute top-0 left-0 right-0 flex justify-center pt-7 z-10 pointer-events-none">
                           <Image
                             src="/exa-models-logo-white.png"
                             alt="EXA Models"
@@ -620,9 +737,9 @@ export default function CompCardPage() {
                             className="h-8 w-auto"
                           />
                         </div>
-                        {/* Name at bottom — no overlay */}
+                        {/* Name at bottom */}
                         {model.first_name && (
-                          <div className="absolute bottom-0 left-0 right-0 px-3 pb-6 text-center">
+                          <div className="absolute bottom-0 left-0 right-0 px-3 pb-6 text-center pointer-events-none">
                             <p className="text-white text-6xl sm:text-7xl font-black uppercase tracking-[0.03em] leading-tight">
                               {model.first_name}
                             </p>

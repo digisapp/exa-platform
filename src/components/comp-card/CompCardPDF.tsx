@@ -93,7 +93,6 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 15,
     fontFamily: "Helvetica",
-    justifyContent: "space-between",
   },
   // Header logo
   backHeaderLogo: {
