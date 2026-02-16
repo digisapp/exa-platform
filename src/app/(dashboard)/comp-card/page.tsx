@@ -83,6 +83,7 @@ export default function CompCardPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
+  const [qrCodePreview, setQrCodePreview] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     const {
@@ -104,6 +105,16 @@ export default function CompCardPage() {
     }
 
     setModel(modelData);
+
+    // Generate QR code for preview
+    try {
+      const QRCode = (await import("qrcode")).default;
+      const profileUrl = `https://www.examodels.com/${modelData.username || ""}`;
+      const qrDataUrl = await QRCode.toDataURL(profileUrl, { width: 200, margin: 1 });
+      setQrCodePreview(qrDataUrl);
+    } catch {
+      // QR code preview is non-critical
+    }
 
     const { data: portfolioData } = await supabase
       .from("media_assets")
@@ -678,9 +689,14 @@ export default function CompCardPage() {
                           </p>
                         )}
                       </div>
-                      <div className="w-10 h-10 bg-gray-100 border border-gray-200 rounded flex items-center justify-center">
-                        <span className="text-[5px] text-gray-400">QR</span>
-                      </div>
+                      {qrCodePreview ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={qrCodePreview} alt="QR" className="w-10 h-10 rounded" />
+                      ) : (
+                        <div className="w-10 h-10 bg-gray-100 border border-gray-200 rounded flex items-center justify-center">
+                          <span className="text-[5px] text-gray-400">QR</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </CardContent>
