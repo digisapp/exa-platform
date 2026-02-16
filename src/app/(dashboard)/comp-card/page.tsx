@@ -552,24 +552,24 @@ export default function CompCardPage() {
                           className="absolute inset-0 w-full h-full object-cover"
                         />
                         {/* Logo at top center */}
-                        <div className="absolute top-0 left-0 right-0 flex justify-center pt-4 z-10">
+                        <div className="absolute top-0 left-0 right-0 flex justify-center pt-5 z-10">
                           <Image
                             src="/exa-models-logo-white.png"
                             alt="EXA Models"
-                            width={80}
-                            height={28}
-                            className="h-5 w-auto"
+                            width={100}
+                            height={34}
+                            className="h-6 w-auto"
                           />
                         </div>
-                        {/* Name overlay at bottom */}
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-4 pb-5 pt-16">
+                        {/* Name overlay at bottom — centered, extra large */}
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-3 pb-6 pt-20 text-center">
                           {model.first_name && (
-                            <p className="text-white text-3xl font-bold uppercase tracking-[0.4em] leading-tight">
+                            <p className="text-white text-4xl sm:text-5xl font-bold uppercase tracking-[0.5em] leading-tight">
                               {model.first_name}
                             </p>
                           )}
                           {model.last_name && (
-                            <p className="text-white text-3xl font-bold uppercase tracking-[0.4em] leading-tight">
+                            <p className="text-white text-4xl sm:text-5xl font-bold uppercase tracking-[0.5em] leading-tight">
                               {model.last_name}
                             </p>
                           )}
@@ -593,20 +593,6 @@ export default function CompCardPage() {
               <Card className="overflow-hidden">
                 <CardContent className="p-0">
                   <div className="bg-white p-5 aspect-[8.5/11] flex flex-col">
-                    {/* Header */}
-                    <div className="text-center mb-3">
-                      <Image
-                        src="/exa-models-logo-black.png"
-                        alt="EXA Models"
-                        width={50}
-                        height={20}
-                        className="h-4 w-auto mx-auto mb-1.5"
-                      />
-                      <h3 className="text-sm font-bold text-black uppercase tracking-[0.2em]">
-                        {fullName}
-                      </h3>
-                    </div>
-
                     {/* 2x2 photo grid */}
                     {previewUrls.length > 1 ? (
                       <div className="grid grid-cols-2 gap-1 mb-3 flex-1 min-h-0">

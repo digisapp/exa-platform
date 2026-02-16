@@ -49,12 +49,12 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: "center",
-    paddingTop: 30,
+    paddingTop: 45,
     zIndex: 2,
   },
   frontLogo: {
-    width: 120,
-    height: 40,
+    width: 160,
+    height: 52,
     objectFit: "contain",
   },
   // Dark gradient overlay at the bottom of the front photo
@@ -63,27 +63,30 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 180,
+    height: 240,
     backgroundColor: "rgba(0,0,0,0.55)",
     justifyContent: "flex-end",
-    paddingHorizontal: 30,
-    paddingBottom: 40,
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingBottom: 45,
   },
   frontFirstName: {
-    fontSize: 64,
+    fontSize: 82,
     fontFamily: "Helvetica-Bold",
     color: "#ffffff",
     textTransform: "uppercase",
-    letterSpacing: 14,
+    letterSpacing: 22,
     lineHeight: 1.05,
+    textAlign: "center",
   },
   frontLastName: {
-    fontSize: 64,
+    fontSize: 82,
     fontFamily: "Helvetica-Bold",
     color: "#ffffff",
     textTransform: "uppercase",
-    letterSpacing: 14,
+    letterSpacing: 22,
     lineHeight: 1.05,
+    textAlign: "center",
   },
 
   // ── BACK PAGE ──
@@ -91,23 +94,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
     padding: 30,
     fontFamily: "Helvetica",
-  },
-  backLogo: {
-    width: 70,
-    height: 28,
-    objectFit: "contain",
-    marginBottom: 16,
-  },
-  backHeader: {
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  backName: {
-    fontSize: 20,
-    fontFamily: "Helvetica-Bold",
-    color: "#111111",
-    textTransform: "uppercase",
-    letterSpacing: 4,
   },
   // Photos grid: 2x2
   photosGrid: {
@@ -224,12 +210,6 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, backLogoUrl }
 
       {/* ═══════════ BACK PAGE ═══════════ */}
       <Page size="LETTER" style={styles.backPage}>
-        {/* Header */}
-        <View style={styles.backHeader}>
-          <Image src={backLogoUrl} style={styles.backLogo} />
-          <Text style={styles.backName}>{fullName}</Text>
-        </View>
-
         {/* Photos: 2x2 grid */}
         {backPhotos.length > 0 && (
           <View style={styles.photosGrid}>
