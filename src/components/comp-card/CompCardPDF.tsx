@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
   },
   gridPhoto: {
     width: "49%",
-    height: 300,
+    height: 280,
     objectFit: "cover",
     borderRadius: 4,
     marginBottom: 4,
