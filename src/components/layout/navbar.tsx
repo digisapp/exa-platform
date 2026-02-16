@@ -29,6 +29,7 @@ import {
   Plus,
   Flame,
   Camera,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/auth/logout-button";
@@ -278,6 +279,14 @@ export function Navbar({ user, actorType, unreadCount = 0 }: NavbarProps) {
                         </Link>
                       </DropdownMenuItem>
                     </>
+                  )}
+                  {actorType === "model" && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/comp-card" className="cursor-pointer">
+                        <FileText className="mr-2 h-4 w-4" />
+                        Comp Card
+                      </Link>
+                    </DropdownMenuItem>
                   )}
                   <DropdownMenuItem asChild>
                     <Link href="/boost" className="cursor-pointer">
