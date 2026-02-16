@@ -56,21 +56,31 @@ const UPLOAD_PREFIX = "upload-";
 async function toBase64(url: string): Promise<string> {
   const res = await fetch(url);
   const blob = await res.blob();
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
+
+  // Draw on canvas to normalize EXIF orientation before converting to base64.
+  // Modern browsers auto-apply EXIF rotation when drawing to canvas via createImageBitmap.
+  const bitmap = await createImageBitmap(blob);
+  const canvas = document.createElement("canvas");
+  canvas.width = bitmap.width;
+  canvas.height = bitmap.height;
+  const ctx = canvas.getContext("2d")!;
+  ctx.drawImage(bitmap, 0, 0);
+  bitmap.close();
+
+  return canvas.toDataURL("image/jpeg", 0.92);
 }
 
-function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
+async function fileToBase64(file: File): Promise<string> {
+  // Draw on canvas to normalize EXIF orientation
+  const bitmap = await createImageBitmap(file);
+  const canvas = document.createElement("canvas");
+  canvas.width = bitmap.width;
+  canvas.height = bitmap.height;
+  const ctx = canvas.getContext("2d")!;
+  ctx.drawImage(bitmap, 0, 0);
+  bitmap.close();
+
+  return canvas.toDataURL("image/jpeg", 0.92);
 }
 
 export default function CompCardPage() {

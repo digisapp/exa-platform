@@ -62,12 +62,12 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 320,
+    height: 160,
     backgroundColor: "rgba(0,0,0,0.55)",
     justifyContent: "flex-end",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingBottom: 45,
+    paddingBottom: 40,
   },
   frontFirstName: {
     fontSize: 120,
@@ -98,26 +98,26 @@ const styles = StyleSheet.create({
   },
   // Header logo
   backHeaderLogo: {
-    width: 120,
-    height: 40,
+    width: 100,
+    height: 34,
     objectFit: "contain",
     alignSelf: "center",
-    marginBottom: 12,
+    marginBottom: 8,
   },
   // Name header
   backName: {
-    fontSize: 28,
+    fontSize: 24,
     fontFamily: "Helvetica-Bold",
     color: "#111111",
     textTransform: "uppercase",
-    letterSpacing: 6,
+    letterSpacing: 2,
     textAlign: "center",
-    marginBottom: 14,
+    marginBottom: 10,
   },
   // Measurements
   measurementsContainer: {
     alignItems: "center",
-    marginBottom: 18,
+    marginBottom: 12,
   },
   measurementsGrid: {
     flexDirection: "row",
@@ -125,8 +125,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   measurementItem: {
-    paddingVertical: 5,
-    paddingHorizontal: 20,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
     alignItems: "center",
   },
   measurementLabel: {
@@ -145,18 +145,18 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: "#e5e5e5",
-    marginBottom: 18,
+    marginBottom: 12,
   },
   // Photos grid: 2x2
   photosGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
-    marginBottom: 18,
+    marginBottom: 12,
   },
   gridPhoto: {
     width: "48.5%",
-    height: 220,
+    height: 190,
     objectFit: "cover",
     borderRadius: 4,
   },
@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   footerContainer: {
     borderTopWidth: 1,
     borderTopColor: "#e5e5e5",
-    paddingTop: 14,
+    paddingTop: 10,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -178,8 +178,8 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   footerQr: {
-    width: 70,
-    height: 70,
+    width: 60,
+    height: 60,
   },
 });
 
