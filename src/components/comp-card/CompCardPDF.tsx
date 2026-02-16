@@ -29,6 +29,7 @@ interface CompCardPDFProps {
   photos: string[]; // base64 data URLs
   frontLogoUrl: string; // base64 data URL (white logo for dark background)
   backLogoUrl: string; // base64 data URL (black logo for white background)
+  qrCodeUrl: string; // base64 data URL of QR code
 }
 
 const styles = StyleSheet.create({
@@ -42,7 +43,6 @@ const styles = StyleSheet.create({
     height: "100%",
     objectFit: "cover",
   },
-  // Logo at top of front page
   frontLogoContainer: {
     position: "absolute",
     top: 0,
@@ -57,7 +57,6 @@ const styles = StyleSheet.create({
     height: 52,
     objectFit: "contain",
   },
-  // Dark gradient overlay at the bottom of the front photo
   frontOverlay: {
     position: "absolute",
     bottom: 0,
@@ -93,83 +92,96 @@ const styles = StyleSheet.create({
   backPage: {
     backgroundColor: "#ffffff",
     padding: 30,
+    paddingBottom: 24,
     fontFamily: "Helvetica",
+    justifyContent: "space-between",
   },
-  // Photos grid: 2x2
-  photosGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    marginBottom: 20,
-  },
-  gridPhoto: {
-    width: "48.5%",
-    height: 230,
-    objectFit: "cover",
-    borderRadius: 4,
+  // Name header
+  backName: {
+    fontSize: 28,
+    fontFamily: "Helvetica-Bold",
+    color: "#111111",
+    textTransform: "uppercase",
+    letterSpacing: 6,
+    textAlign: "center",
+    marginBottom: 14,
   },
   // Measurements
   measurementsContainer: {
-    borderTopWidth: 1,
-    borderTopColor: "#e5e5e5",
-    paddingTop: 16,
-    marginBottom: 16,
-  },
-  measurementsTitle: {
-    fontSize: 11,
-    fontFamily: "Helvetica-Bold",
-    color: "#999999",
-    textTransform: "uppercase",
-    letterSpacing: 2,
-    marginBottom: 10,
+    alignItems: "center",
+    marginBottom: 18,
   },
   measurementsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
+    justifyContent: "center",
   },
   measurementItem: {
-    width: "25%",
-    paddingVertical: 6,
-    paddingHorizontal: 4,
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+    alignItems: "center",
   },
   measurementLabel: {
-    fontSize: 10,
+    fontSize: 9,
     color: "#999999",
     textTransform: "uppercase",
     letterSpacing: 1,
     marginBottom: 2,
   },
   measurementValue: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: "Helvetica-Bold",
     color: "#111111",
   },
-  // Contact / Footer
-  contactContainer: {
+  // Divider
+  divider: {
+    height: 1,
+    backgroundColor: "#e5e5e5",
+    marginBottom: 18,
+  },
+  // Photos grid: 2x2
+  photosGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 18,
+  },
+  gridPhoto: {
+    width: "48.5%",
+    height: 220,
+    objectFit: "cover",
+    borderRadius: 4,
+  },
+  // Footer
+  footerContainer: {
     borderTopWidth: 1,
     borderTopColor: "#e5e5e5",
     paddingTop: 14,
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-end",
+    alignItems: "center",
   },
-  contactText: {
-    fontSize: 11,
-    color: "#666666",
-    marginBottom: 3,
-  },
-  contactEmail: {
-    fontSize: 11,
-    color: "#666666",
+  footerLeft: {
+    alignItems: "flex-start",
   },
   footerLogo: {
-    width: 60,
-    height: 24,
+    width: 80,
+    height: 28,
     objectFit: "contain",
+    marginBottom: 6,
+  },
+  footerText: {
+    fontSize: 10,
+    color: "#666666",
+    marginBottom: 2,
+  },
+  footerQr: {
+    width: 70,
+    height: 70,
   },
 });
 
-export default function CompCardPDF({ model, photos, frontLogoUrl, backLogoUrl }: CompCardPDFProps) {
+export default function CompCardPDF({ model, photos, frontLogoUrl, backLogoUrl, qrCodeUrl }: CompCardPDFProps) {
   const firstName = model.first_name || "";
   const lastName = model.last_name || "";
   const fullName = [firstName, lastName].filter(Boolean).join(" ") || "Model";
@@ -191,17 +203,12 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, backLogoUrl }
     <Document>
       {/* ═══════════ FRONT PAGE ═══════════ */}
       <Page size="LETTER" style={styles.frontPage}>
-        {/* Full-bleed hero photo */}
         {heroPhoto && (
           <Image src={heroPhoto} style={styles.frontPhoto} />
         )}
-
-        {/* Logo at top center */}
         <View style={styles.frontLogoContainer}>
           <Image src={frontLogoUrl} style={styles.frontLogo} />
         </View>
-
-        {/* Name overlay at the bottom */}
         <View style={styles.frontOverlay}>
           {firstName && <Text style={styles.frontFirstName}>{firstName}</Text>}
           {lastName && <Text style={styles.frontLastName}>{lastName}</Text>}
@@ -210,42 +217,50 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, backLogoUrl }
 
       {/* ═══════════ BACK PAGE ═══════════ */}
       <Page size="LETTER" style={styles.backPage}>
-        {/* Photos: 2x2 grid */}
-        {backPhotos.length > 0 && (
-          <View style={styles.photosGrid}>
-            {backPhotos.map((photo, i) => (
-              <Image key={i} src={photo} style={styles.gridPhoto} />
-            ))}
-          </View>
-        )}
+        {/* Top section: Name + Measurements */}
+        <View>
+          <Text style={styles.backName}>{fullName}</Text>
 
-        {/* Measurements */}
-        {measurements.length > 0 && (
-          <View style={styles.measurementsContainer}>
-            <Text style={styles.measurementsTitle}>Measurements</Text>
-            <View style={styles.measurementsGrid}>
-              {measurements.map((m) => (
-                <View key={m.label} style={styles.measurementItem}>
-                  <Text style={styles.measurementLabel}>{m.label}</Text>
-                  <Text style={styles.measurementValue}>{m.value}</Text>
-                </View>
+          {measurements.length > 0 && (
+            <View style={styles.measurementsContainer}>
+              <View style={styles.measurementsGrid}>
+                {measurements.map((m) => (
+                  <View key={m.label} style={styles.measurementItem}>
+                    <Text style={styles.measurementLabel}>{m.label}</Text>
+                    <Text style={styles.measurementValue}>{m.value}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
+          <View style={styles.divider} />
+
+          {/* Photos: 2x2 grid */}
+          {backPhotos.length > 0 && (
+            <View style={styles.photosGrid}>
+              {backPhotos.map((photo, i) => (
+                <Image key={i} src={photo} style={styles.gridPhoto} />
               ))}
             </View>
-          </View>
-        )}
+          )}
+        </View>
 
-        {/* Contact Info */}
-        <View style={styles.contactContainer}>
-          <View>
+        {/* Footer: Logo + contact info (left) | QR code (right) */}
+        <View style={styles.footerContainer}>
+          <View style={styles.footerLeft}>
+            <Image src={backLogoUrl} style={styles.footerLogo} />
+            <Text style={styles.footerText}>team@examodels.com</Text>
             {model.instagram_name && (
-              <Text style={styles.contactText}>@{model.instagram_name}</Text>
+              <Text style={styles.footerText}>@{model.instagram_name}</Text>
             )}
             {model.username && (
-              <Text style={styles.contactText}>examodels.com/{model.username}</Text>
+              <Text style={styles.footerText}>examodels.com/{model.username}</Text>
             )}
-            <Text style={styles.contactEmail}>team@examodels.com</Text>
           </View>
-          <Image src={backLogoUrl} style={styles.footerLogo} />
+          {qrCodeUrl && (
+            <Image src={qrCodeUrl} style={styles.footerQr} />
+          )}
         </View>
       </Page>
     </Document>

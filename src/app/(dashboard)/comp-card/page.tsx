@@ -217,10 +217,13 @@ export default function CompCardPage() {
         }
       }
 
-      // Load logos
-      const [frontLogoBase64, backLogoBase64] = await Promise.all([
+      // Load logos + generate QR code
+      const QRCode = (await import("qrcode")).default;
+      const profileUrl = `https://www.examodels.com/${model.username || ""}`;
+      const [frontLogoBase64, backLogoBase64, qrCodeBase64] = await Promise.all([
         toBase64("/exa-models-logo-white.png"),
         toBase64("/exa-models-logo-black.png"),
+        QRCode.toDataURL(profileUrl, { width: 200, margin: 1 }),
       ]);
 
       // Dynamic import to avoid SSR issues
@@ -230,7 +233,7 @@ export default function CompCardPage() {
       );
 
       const blob = await pdf(
-        CompCardPDF({ model, photos: photoBase64, frontLogoUrl: frontLogoBase64, backLogoUrl: backLogoBase64 })
+        CompCardPDF({ model, photos: photoBase64, frontLogoUrl: frontLogoBase64, backLogoUrl: backLogoBase64, qrCodeUrl: qrCodeBase64 })
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
@@ -592,77 +595,86 @@ export default function CompCardPage() {
               <p className="text-xs text-muted-foreground mb-2">Back</p>
               <Card className="overflow-hidden">
                 <CardContent className="p-0">
-                  <div className="bg-white p-5 aspect-[8.5/11] flex flex-col">
-                    {/* 2x2 photo grid */}
-                    {previewUrls.length > 1 ? (
-                      <div className="grid grid-cols-2 gap-1 mb-3 flex-1 min-h-0">
-                        {previewUrls.slice(1, 5).map((item) => (
-                          <div
-                            key={item.id}
-                            className="relative rounded overflow-hidden bg-gray-100"
-                          >
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={item.url}
-                              alt="Photo"
-                              className="absolute inset-0 w-full h-full object-cover"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="flex-1 min-h-0 rounded bg-gray-100 flex items-center justify-center mb-3">
-                        <p className="text-gray-400 text-xs">
-                          Select photos
-                        </p>
-                      </div>
-                    )}
+                  <div className="bg-white p-5 aspect-[8.5/11] flex flex-col justify-between">
+                    {/* Top section: Name + Measurements + Photos */}
+                    <div>
+                      {/* Model Name */}
+                      <p className="text-lg font-bold text-black uppercase tracking-[0.15em] text-center mb-2">
+                        {fullName}
+                      </p>
 
-                    {/* Measurements */}
-                    {measurements.length > 0 && (
-                      <div className="border-t border-gray-200 pt-2">
-                        <p className="text-[8px] text-gray-400 uppercase tracking-widest mb-1.5">
-                          Measurements
-                        </p>
-                        <div className="grid grid-cols-4 gap-1">
+                      {/* Measurements */}
+                      {measurements.length > 0 && (
+                        <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 mb-2">
                           {measurements.map((m) => (
-                            <div key={m.label}>
-                              <p className="text-[7px] text-gray-400 uppercase tracking-wider">
+                            <div key={m.label} className="text-center">
+                              <p className="text-[6px] text-gray-400 uppercase tracking-wider">
                                 {m.label}
                               </p>
-                              <p className="text-[10px] font-bold text-black">
+                              <p className="text-[9px] font-bold text-black">
                                 {m.value}
                               </p>
                             </div>
                           ))}
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    {/* Footer */}
-                    <div className="border-t border-gray-200 pt-1.5 mt-2 flex items-center justify-between">
+                      {/* Divider */}
+                      <div className="h-px bg-gray-200 mb-2" />
+
+                      {/* 2x2 photo grid */}
+                      {previewUrls.length > 1 ? (
+                        <div className="grid grid-cols-2 gap-1 flex-1 min-h-0">
+                          {previewUrls.slice(1, 5).map((item) => (
+                            <div
+                              key={item.id}
+                              className="relative aspect-[3/4] rounded overflow-hidden bg-gray-100"
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={item.url}
+                                alt="Photo"
+                                className="absolute inset-0 w-full h-full object-cover"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="aspect-[4/3] rounded bg-gray-100 flex items-center justify-center">
+                          <p className="text-gray-400 text-xs">
+                            Select photos
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Footer: Logo + contact (left) | QR placeholder (right) */}
+                    <div className="border-t border-gray-200 pt-2 mt-2 flex items-center justify-between">
                       <div>
+                        <Image
+                          src="/exa-models-logo-black.png"
+                          alt="EXA Models"
+                          width={50}
+                          height={18}
+                          className="h-3 w-auto mb-1"
+                        />
+                        <p className="text-[7px] text-gray-500">
+                          team@examodels.com
+                        </p>
                         {model.instagram_name && (
-                          <p className="text-[8px] text-gray-500">
+                          <p className="text-[7px] text-gray-500">
                             @{model.instagram_name}
                           </p>
                         )}
                         {model.username && (
-                          <p className="text-[8px] text-gray-500">
+                          <p className="text-[7px] text-gray-500">
                             examodels.com/{model.username}
                           </p>
                         )}
-                        <p className="text-[8px] text-gray-500">
-                          team@examodels.com
-                        </p>
                       </div>
-                      <Image
-                        src="/exa-models-logo-black.png"
-                        alt="EXA Models"
-                        width={40}
-                        height={16}
-                        className="h-3 w-auto"
-                      />
+                      <div className="w-10 h-10 bg-gray-100 border border-gray-200 rounded flex items-center justify-center">
+                        <span className="text-[5px] text-gray-400">QR</span>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
