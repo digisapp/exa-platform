@@ -675,16 +675,16 @@ export default function CompCardPage() {
                     {/* Footer: contact (left) | QR (right) */}
                     <div className="border-t border-gray-200 pt-2 mt-2 flex items-center justify-between">
                       <div>
-                        <p className="text-[7px] text-gray-500">
+                        <p className="text-[7px] text-black">
                           team@examodels.com
                         </p>
                         {model.instagram_name && (
-                          <p className="text-[7px] text-gray-500">
+                          <p className="text-[7px] text-black">
                             @{model.instagram_name}
                           </p>
                         )}
                         {model.username && (
-                          <p className="text-[7px] text-gray-500">
+                          <p className="text-[7px] text-black">
                             examodels.com/{model.username}
                           </p>
                         )}

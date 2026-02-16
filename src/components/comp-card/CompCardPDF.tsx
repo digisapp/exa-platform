@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 10,
-    color: "#666666",
+    color: "#000000",
     marginBottom: 2,
   },
   footerQr: {
