@@ -96,6 +96,14 @@ const styles = StyleSheet.create({
     fontFamily: "Helvetica",
     justifyContent: "space-between",
   },
+  // Header logo
+  backHeaderLogo: {
+    width: 120,
+    height: 40,
+    objectFit: "contain",
+    alignSelf: "center",
+    marginBottom: 12,
+  },
   // Name header
   backName: {
     fontSize: 28,
@@ -164,18 +172,10 @@ const styles = StyleSheet.create({
   footerContactLeft: {
     alignItems: "flex-start",
   },
-  footerCenter: {
-    alignItems: "center",
-  },
   footerText: {
     fontSize: 10,
     color: "#666666",
     marginBottom: 2,
-  },
-  footerLogo: {
-    width: 100,
-    height: 34,
-    objectFit: "contain",
   },
   footerQr: {
     width: 70,
@@ -219,8 +219,9 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, backLogoUrl, 
 
       {/* ═══════════ BACK PAGE ═══════════ */}
       <Page size="LETTER" style={styles.backPage}>
-        {/* Top section: Name + Measurements */}
+        {/* Top section: Logo + Name + Measurements */}
         <View>
+          <Image src={backLogoUrl} style={styles.backHeaderLogo} />
           <Text style={styles.backName}>{fullName}</Text>
 
           {measurements.length > 0 && (
@@ -248,7 +249,7 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, backLogoUrl, 
           )}
         </View>
 
-        {/* Footer: contact (left) | logo (center) | QR (right) */}
+        {/* Footer: contact (left) | QR (right) */}
         <View style={styles.footerContainer}>
           <View style={styles.footerContactLeft}>
             <Text style={styles.footerText}>team@examodels.com</Text>
@@ -258,9 +259,6 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, backLogoUrl, 
             {model.username && (
               <Text style={styles.footerText}>examodels.com/{model.username}</Text>
             )}
-          </View>
-          <View style={styles.footerCenter}>
-            <Image src={backLogoUrl} style={styles.footerLogo} />
           </View>
           {qrCodeUrl && (
             <Image src={qrCodeUrl} style={styles.footerQr} />

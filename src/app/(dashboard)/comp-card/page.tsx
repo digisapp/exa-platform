@@ -596,8 +596,19 @@ export default function CompCardPage() {
               <Card className="overflow-hidden">
                 <CardContent className="p-0">
                   <div className="bg-white p-5 aspect-[8.5/11] flex flex-col justify-between">
-                    {/* Top section: Name + Measurements + Photos */}
+                    {/* Top section: Logo + Name + Measurements + Photos */}
                     <div>
+                      {/* EXA Models Logo */}
+                      <div className="flex justify-center mb-2">
+                        <Image
+                          src="/exa-models-logo-black.png"
+                          alt="EXA Models"
+                          width={80}
+                          height={28}
+                          className="h-5 w-auto"
+                        />
+                      </div>
+
                       {/* Model Name */}
                       <p className="text-lg font-bold text-black uppercase tracking-[0.15em] text-center mb-2">
                         {fullName}
@@ -648,7 +659,7 @@ export default function CompCardPage() {
                       )}
                     </div>
 
-                    {/* Footer: contact (left) | logo (center) | QR (right) */}
+                    {/* Footer: contact (left) | QR (right) */}
                     <div className="border-t border-gray-200 pt-2 mt-2 flex items-center justify-between">
                       <div>
                         <p className="text-[7px] text-gray-500">
@@ -665,13 +676,6 @@ export default function CompCardPage() {
                           </p>
                         )}
                       </div>
-                      <Image
-                        src="/exa-models-logo-black.png"
-                        alt="EXA Models"
-                        width={60}
-                        height={20}
-                        className="h-3.5 w-auto"
-                      />
                       <div className="w-10 h-10 bg-gray-100 border border-gray-200 rounded flex items-center justify-center">
                         <span className="text-[5px] text-gray-400">QR</span>
                       </div>
