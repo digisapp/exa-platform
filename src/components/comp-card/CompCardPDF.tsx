@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 280,
+    height: 320,
     backgroundColor: "rgba(0,0,0,0.55)",
     justifyContent: "flex-end",
     alignItems: "center",
@@ -70,20 +70,20 @@ const styles = StyleSheet.create({
     paddingBottom: 45,
   },
   frontFirstName: {
-    fontSize: 100,
+    fontSize: 120,
     fontFamily: "Helvetica-Bold",
     color: "#ffffff",
     textTransform: "uppercase",
-    letterSpacing: 24,
+    letterSpacing: 8,
     lineHeight: 1.1,
     textAlign: "center",
   },
   frontLastName: {
-    fontSize: 100,
+    fontSize: 120,
     fontFamily: "Helvetica-Bold",
     color: "#ffffff",
     textTransform: "uppercase",
-    letterSpacing: 24,
+    letterSpacing: 8,
     lineHeight: 1.1,
     textAlign: "center",
   },
@@ -157,31 +157,29 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#e5e5e5",
     paddingTop: 14,
-    alignItems: "center",
-  },
-  footerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    width: "100%",
-    marginBottom: 12,
   },
   footerContactLeft: {
     alignItems: "flex-start",
+  },
+  footerCenter: {
+    alignItems: "center",
   },
   footerText: {
     fontSize: 10,
     color: "#666666",
     marginBottom: 2,
   },
-  footerQr: {
-    width: 70,
-    height: 70,
-  },
   footerLogo: {
     width: 100,
     height: 34,
     objectFit: "contain",
+  },
+  footerQr: {
+    width: 70,
+    height: 70,
   },
 });
 
@@ -250,23 +248,23 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, backLogoUrl, 
           )}
         </View>
 
-        {/* Footer: contact (left) + QR (right), then centered logo */}
+        {/* Footer: contact (left) | logo (center) | QR (right) */}
         <View style={styles.footerContainer}>
-          <View style={styles.footerRow}>
-            <View style={styles.footerContactLeft}>
-              <Text style={styles.footerText}>team@examodels.com</Text>
-              {model.instagram_name && (
-                <Text style={styles.footerText}>@{model.instagram_name}</Text>
-              )}
-              {model.username && (
-                <Text style={styles.footerText}>examodels.com/{model.username}</Text>
-              )}
-            </View>
-            {qrCodeUrl && (
-              <Image src={qrCodeUrl} style={styles.footerQr} />
+          <View style={styles.footerContactLeft}>
+            <Text style={styles.footerText}>team@examodels.com</Text>
+            {model.instagram_name && (
+              <Text style={styles.footerText}>@{model.instagram_name}</Text>
+            )}
+            {model.username && (
+              <Text style={styles.footerText}>examodels.com/{model.username}</Text>
             )}
           </View>
-          <Image src={backLogoUrl} style={styles.footerLogo} />
+          <View style={styles.footerCenter}>
+            <Image src={backLogoUrl} style={styles.footerLogo} />
+          </View>
+          {qrCodeUrl && (
+            <Image src={qrCodeUrl} style={styles.footerQr} />
+          )}
         </View>
       </Page>
     </Document>

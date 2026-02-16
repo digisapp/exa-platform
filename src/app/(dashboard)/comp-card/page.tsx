@@ -567,12 +567,12 @@ export default function CompCardPage() {
                         {/* Name overlay at bottom — centered, extra large */}
                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-3 pb-6 pt-20 text-center">
                           {model.first_name && (
-                            <p className="text-white text-5xl sm:text-6xl font-black uppercase tracking-[0.5em] leading-tight">
+                            <p className="text-white text-6xl sm:text-7xl font-black uppercase tracking-[0.12em] leading-tight">
                               {model.first_name}
                             </p>
                           )}
                           {model.last_name && (
-                            <p className="text-white text-5xl sm:text-6xl font-black uppercase tracking-[0.5em] leading-tight">
+                            <p className="text-white text-6xl sm:text-7xl font-black uppercase tracking-[0.12em] leading-tight">
                               {model.last_name}
                             </p>
                           )}
@@ -648,36 +648,32 @@ export default function CompCardPage() {
                       )}
                     </div>
 
-                    {/* Footer: contact (left) + QR (right), then centered logo */}
-                    <div className="border-t border-gray-200 pt-2 mt-2">
-                      <div className="flex items-center justify-between mb-2">
-                        <div>
+                    {/* Footer: contact (left) | logo (center) | QR (right) */}
+                    <div className="border-t border-gray-200 pt-2 mt-2 flex items-center justify-between">
+                      <div>
+                        <p className="text-[7px] text-gray-500">
+                          team@examodels.com
+                        </p>
+                        {model.instagram_name && (
                           <p className="text-[7px] text-gray-500">
-                            team@examodels.com
+                            @{model.instagram_name}
                           </p>
-                          {model.instagram_name && (
-                            <p className="text-[7px] text-gray-500">
-                              @{model.instagram_name}
-                            </p>
-                          )}
-                          {model.username && (
-                            <p className="text-[7px] text-gray-500">
-                              examodels.com/{model.username}
-                            </p>
-                          )}
-                        </div>
-                        <div className="w-10 h-10 bg-gray-100 border border-gray-200 rounded flex items-center justify-center">
-                          <span className="text-[5px] text-gray-400">QR</span>
-                        </div>
+                        )}
+                        {model.username && (
+                          <p className="text-[7px] text-gray-500">
+                            examodels.com/{model.username}
+                          </p>
+                        )}
                       </div>
-                      <div className="flex justify-center">
-                        <Image
-                          src="/exa-models-logo-black.png"
-                          alt="EXA Models"
-                          width={60}
-                          height={20}
-                          className="h-3.5 w-auto"
-                        />
+                      <Image
+                        src="/exa-models-logo-black.png"
+                        alt="EXA Models"
+                        width={60}
+                        height={20}
+                        className="h-3.5 w-auto"
+                      />
+                      <div className="w-10 h-10 bg-gray-100 border border-gray-200 rounded flex items-center justify-center">
+                        <span className="text-[5px] text-gray-400">QR</span>
                       </div>
                     </div>
                   </div>
