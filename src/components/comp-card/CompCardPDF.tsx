@@ -5,6 +5,10 @@ import {
   Text,
   Image,
   StyleSheet,
+  Svg,
+  Path,
+  Circle,
+  Rect,
 } from "@react-pdf/renderer";
 
 interface CompCardModel {
@@ -39,9 +43,13 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   frontPhoto: {
+    position: "absolute",
+    top: 0,
+    left: 0,
     width: "100%",
     height: "100%",
     objectFit: "cover",
+    zIndex: 1,
   },
   frontLogoContainer: {
     position: "absolute",
@@ -65,6 +73,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingBottom: 40,
     paddingHorizontal: 20,
+    zIndex: 2,
   },
   frontFirstName: {
     fontSize: 120,
@@ -163,6 +172,14 @@ const styles = StyleSheet.create({
     color: "#000000",
     marginBottom: 2,
   },
+  footerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 2,
+  },
+  instagramIcon: {
+    marginRight: 4,
+  },
   footerQr: {
     width: 50,
     height: 50,
@@ -239,7 +256,14 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, backLogoUrl, 
           <View style={styles.footerContactLeft}>
             <Text style={styles.footerText}>team@examodels.com</Text>
             {model.instagram_name && (
-              <Text style={styles.footerText}>@{model.instagram_name}</Text>
+              <View style={styles.footerRow}>
+                <Svg width={10} height={10} viewBox="0 0 24 24" style={styles.instagramIcon}>
+                  <Rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke="#000000" strokeWidth="2" fill="none" />
+                  <Circle cx="12" cy="12" r="5" stroke="#000000" strokeWidth="2" fill="none" />
+                  <Circle cx="17.5" cy="6.5" r="1.5" fill="#000000" />
+                </Svg>
+                <Text style={styles.footerText}>{model.instagram_name}</Text>
+              </View>
             )}
             {model.username && (
               <Text style={styles.footerText}>examodels.com/{model.username}</Text>

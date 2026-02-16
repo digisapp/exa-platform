@@ -714,9 +714,16 @@ export default function CompCardPage() {
                           team@examodels.com
                         </p>
                         {model.instagram_name && (
-                          <p className="text-[7px] text-black">
-                            @{model.instagram_name}
-                          </p>
+                          <div className="flex items-center gap-0.5">
+                            <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5">
+                              <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                              <circle cx="12" cy="12" r="5" />
+                              <circle cx="17.5" cy="6.5" r="1.5" fill="black" stroke="none" />
+                            </svg>
+                            <p className="text-[7px] text-black">
+                              {model.instagram_name}
+                            </p>
+                          </div>
                         )}
                         {model.username && (
                           <p className="text-[7px] text-black">
