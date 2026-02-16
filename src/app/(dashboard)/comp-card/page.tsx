@@ -196,10 +196,16 @@ export default function CompCardPage() {
     const files = e.target.files;
     if (!files) return;
 
-    const totalSelected = selectedIds.length;
-    const remainingSlots = MAX_PHOTOS - totalSelected;
+    const remainingSlots = MAX_PHOTOS - selectedIds.length;
+    if (remainingSlots <= 0) {
+      toast.error(`Maximum ${MAX_PHOTOS} photos allowed. Deselect a photo first.`);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
 
-    for (let i = 0; i < files.length; i++) {
+    const filesToProcess = Math.min(files.length, remainingSlots);
+
+    for (let i = 0; i < filesToProcess; i++) {
       const file = files[i];
 
       if (!file.type.startsWith("image/")) {
@@ -217,13 +223,15 @@ export default function CompCardPage() {
 
       setUploadedPhotos((prev) => [...prev, { id, dataUrl }]);
 
-      // Auto-select if there's room
-      if (i < remainingSlots) {
-        setSelectedIds((prev) => {
-          if (prev.length >= MAX_PHOTOS) return prev;
-          return [...prev, id];
-        });
-      }
+      // Auto-select uploaded photos
+      setSelectedIds((prev) => {
+        if (prev.length >= MAX_PHOTOS) return prev;
+        return [...prev, id];
+      });
+    }
+
+    if (files.length > filesToProcess) {
+      toast.error(`Only ${filesToProcess} photo${filesToProcess === 1 ? "" : "s"} added — ${MAX_PHOTOS} max`);
     }
 
     // Reset input so the same file can be re-uploaded
@@ -550,18 +558,20 @@ export default function CompCardPage() {
             onChange={handleFileUpload}
             className="hidden"
           />
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="w-full border-2 border-dashed border-border hover:border-pink-500/50 rounded-lg p-6 flex flex-col items-center gap-2 transition-colors group"
-          >
-            <Upload className="h-6 w-6 text-muted-foreground group-hover:text-pink-500 transition-colors" />
-            <span className="text-sm text-muted-foreground group-hover:text-pink-500 transition-colors">
-              Upload from device
-            </span>
-            <span className="text-xs text-muted-foreground">
-              JPG, PNG, or WebP
-            </span>
-          </button>
+          {selectedIds.length < MAX_PHOTOS && (
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full border-2 border-dashed border-border hover:border-pink-500/50 rounded-lg p-6 flex flex-col items-center gap-2 transition-colors group"
+            >
+              <Upload className="h-6 w-6 text-muted-foreground group-hover:text-pink-500 transition-colors" />
+              <span className="text-sm text-muted-foreground group-hover:text-pink-500 transition-colors">
+                Upload from device
+              </span>
+              <span className="text-xs text-muted-foreground">
+                JPG, PNG, or WebP — {MAX_PHOTOS - selectedIds.length} slot{MAX_PHOTOS - selectedIds.length === 1 ? "" : "s"} remaining
+              </span>
+            </button>
+          )}
 
           {photos.length === 0 && uploadedPhotos.length === 0 && (
             <p className="text-sm text-muted-foreground text-center mt-4">
