@@ -156,7 +156,7 @@ export async function POST(request: NextRequest) {
       const { data: existingModelByInsta } = await adminClient
         .from("models")
         .select("id, email, user_id")
-        .ilike("instagram_name", escapeIlike(normalizedInstagram))
+        .ilike("instagram_handle", escapeIlike(normalizedInstagram))
         .not("user_id", "is", null)  // Only check claimed models
         .single();
 
@@ -184,7 +184,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if email already exists in auth
-    const { data: existingUsers } = await adminClient.auth.admin.listUsers();
+    // Use generateLink as a probe - it only succeeds for existing users
+    const { data: existingUsers } = await adminClient.auth.admin.listUsers({ perPage: 1000 });
     const existingUser = existingUsers?.users?.find(
       (u) => u.email?.toLowerCase() === normalizedEmail
     );

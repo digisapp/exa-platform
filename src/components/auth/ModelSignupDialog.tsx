@@ -193,7 +193,7 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         {submitted ? (
           // Success state
           <div className="text-center py-6">
