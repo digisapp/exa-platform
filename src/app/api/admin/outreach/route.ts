@@ -1,8 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { escapeIlike } from "@/lib/utils";
 import { NextRequest, NextResponse } from "next/server";
 
 const PAGE_SIZE = 50;
+
+const VALID_STATUSES = ["new", "contacted", "responded", "interested", "not_interested", "converted", "do_not_contact"];
+const VALID_CATEGORIES = ["swimwear", "resort_wear", "luxury", "fashion"];
 
 async function isAdmin(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
   const { data: actor } = await supabase
@@ -19,6 +24,10 @@ export async function GET(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
+
     if (!(await isAdmin(supabase, user.id))) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -38,16 +47,17 @@ export async function GET(request: NextRequest) {
       .select("*", { count: "exact" });
 
     if (search) {
+      const escaped = escapeIlike(search);
       query = query.or(
-        `brand_name.ilike.%${search}%,contact_name.ilike.%${search}%,email.ilike.%${search}%`
+        `brand_name.ilike.%${escaped}%,contact_name.ilike.%${escaped}%,email.ilike.%${escaped}%`
       ) as typeof query;
     }
 
-    if (status !== "all") {
+    if (status !== "all" && VALID_STATUSES.includes(status)) {
       query = query.eq("status", status) as typeof query;
     }
 
-    if (category !== "all") {
+    if (category !== "all" && VALID_CATEGORIES.includes(category)) {
       query = query.eq("category", category) as typeof query;
     }
 
@@ -61,6 +71,6 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("Admin outreach list error:", message);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: "Failed to load outreach contacts" }, { status: 500 });
   }
 }

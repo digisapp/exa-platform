@@ -329,11 +329,13 @@ interface OutreachContact {
 const OUTREACH_PAGE_SIZE = 50;
 
 const statusConfig: Record<string, { label: string; color: string }> = {
-  new:       { label: "New",       color: "bg-muted text-muted-foreground" },
-  contacted: { label: "Contacted", color: "bg-blue-500/20 text-blue-400" },
-  replied:   { label: "Replied",   color: "bg-amber-500/20 text-amber-400" },
-  onboarded: { label: "Onboarded", color: "bg-green-500/20 text-green-400" },
-  declined:  { label: "Declined",  color: "bg-red-500/20 text-red-400" },
+  new:              { label: "New",            color: "bg-muted text-muted-foreground" },
+  contacted:        { label: "Contacted",      color: "bg-blue-500/20 text-blue-400" },
+  responded:        { label: "Responded",      color: "bg-amber-500/20 text-amber-400" },
+  interested:       { label: "Interested",     color: "bg-violet-500/20 text-violet-400" },
+  not_interested:   { label: "Not Interested", color: "bg-red-500/20 text-red-400" },
+  converted:        { label: "Converted",      color: "bg-green-500/20 text-green-400" },
+  do_not_contact:   { label: "Do Not Contact", color: "bg-red-500/20 text-red-400" },
 };
 
 const categoryColors: Record<string, string> = {
@@ -464,8 +466,8 @@ function OutreachTab() {
         <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Total</p><p className="text-2xl font-bold">{total}</p></CardContent></Card>
         <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">New</p><p className="text-2xl font-bold text-muted-foreground">{statusCounts.new || 0}</p></CardContent></Card>
         <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Contacted</p><p className="text-2xl font-bold text-blue-400">{statusCounts.contacted || 0}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Replied</p><p className="text-2xl font-bold text-amber-400">{statusCounts.replied || 0}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Onboarded</p><p className="text-2xl font-bold text-green-400">{statusCounts.onboarded || 0}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Interested</p><p className="text-2xl font-bold text-violet-400">{statusCounts.interested || 0}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Converted</p><p className="text-2xl font-bold text-green-400">{statusCounts.converted || 0}</p></CardContent></Card>
       </div>
 
       {/* Filters */}
@@ -478,14 +480,16 @@ function OutreachTab() {
               <Input placeholder="Search brand, contact, or email..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-40"><SelectValue placeholder="Status" /></SelectTrigger>
+              <SelectTrigger className="w-full sm:w-44"><SelectValue placeholder="Status" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="new">New</SelectItem>
                 <SelectItem value="contacted">Contacted</SelectItem>
-                <SelectItem value="replied">Replied</SelectItem>
-                <SelectItem value="onboarded">Onboarded</SelectItem>
-                <SelectItem value="declined">Declined</SelectItem>
+                <SelectItem value="responded">Responded</SelectItem>
+                <SelectItem value="interested">Interested</SelectItem>
+                <SelectItem value="not_interested">Not Interested</SelectItem>
+                <SelectItem value="converted">Converted</SelectItem>
+                <SelectItem value="do_not_contact">Do Not Contact</SelectItem>
               </SelectContent>
             </Select>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>

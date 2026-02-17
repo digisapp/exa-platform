@@ -1,15 +1,18 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-const VALID_STATUSES = ["new", "contacted", "replied", "onboarded", "declined"] as const;
+const VALID_STATUSES = ["new", "contacted", "responded", "interested", "not_interested", "converted", "do_not_contact"] as const;
 
 const patchSchema = z.object({
   status: z.enum(VALID_STATUSES).optional(),
   notes: z.string().max(2000).optional(),
   mark_contacted: z.boolean().optional(),
-}).strict();
+}).strict().refine((data) => Object.keys(data).length > 0, {
+  message: "At least one field is required",
+});
 
 async function isAdmin(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
   const { data: actor } = await supabase
@@ -30,11 +33,21 @@ export async function PATCH(
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
+
     if (!(await isAdmin(supabase, user.id))) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+
     const parsed = patchSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
@@ -62,6 +75,6 @@ export async function PATCH(
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("Admin outreach update error:", message);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: "Failed to update contact" }, { status: 500 });
   }
 }
