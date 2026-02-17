@@ -55,6 +55,8 @@ export default function FreeCompCardPage() {
   const [shoeSize, setShoeSize] = useState("");
   const [instagramName, setInstagramName] = useState("");
   const [website, setWebsite] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
 
   // Photo state
   const [uploadedPhotos, setUploadedPhotos] = useState<UploadedPhoto[]>([]);
@@ -252,6 +254,8 @@ export default function FreeCompCardPage() {
       );
 
       const contactInfo = {
+        email: contactEmail || undefined,
+        phone: phoneNumber || undefined,
         instagram: instagramName || undefined,
         website: website || undefined,
       };
@@ -446,6 +450,14 @@ export default function FreeCompCardPage() {
       bCtx.fillStyle = "#000000";
       bCtx.letterSpacing = "0px";
       let fTextY = footerY;
+      if (contactEmail) {
+        bCtx.fillText(contactEmail, PAD, fTextY);
+        fTextY += 36;
+      }
+      if (phoneNumber) {
+        bCtx.fillText(phoneNumber, PAD, fTextY);
+        fTextY += 36;
+      }
       if (instagramName) {
         bCtx.fillText(`@${instagramName}`, PAD, fTextY);
         fTextY += 36;
@@ -570,6 +582,26 @@ export default function FreeCompCardPage() {
                 Contact (shown on card)
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label htmlFor="contactEmail">Email</Label>
+                  <Input
+                    id="contactEmail"
+                    type="email"
+                    value={contactEmail}
+                    onChange={(e) => setContactEmail(e.target.value)}
+                    placeholder="you@example.com"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="phone">Phone</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    placeholder="+1 (555) 123-4567"
+                  />
+                </div>
                 <div className="space-y-1">
                   <Label htmlFor="instagram">Instagram</Label>
                   <Input
@@ -801,7 +833,7 @@ export default function FreeCompCardPage() {
                 <CardContent className="p-0">
                   <div className="bg-black aspect-[5.5/8.5] relative flex flex-col justify-between">
                     {previewUrls[0]?.url && (
-                      <div className="absolute inset-0">
+                      <div className="absolute inset-0 overflow-hidden">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={previewUrls[0].url}
@@ -809,6 +841,8 @@ export default function FreeCompCardPage() {
                           className="w-full h-full object-cover"
                           style={{
                             objectPosition: `${heroPos.x}% ${heroPos.y}%`,
+                            transform: `scale(${heroZoom})`,
+                            transformOrigin: `${heroPos.x}% ${heroPos.y}%`,
                           }}
                         />
                       </div>
@@ -872,6 +906,12 @@ export default function FreeCompCardPage() {
 
                     {/* Footer */}
                     <div className="pt-1">
+                      {contactEmail && (
+                        <p className="text-[9px] text-black">{contactEmail}</p>
+                      )}
+                      {phoneNumber && (
+                        <p className="text-[9px] text-black">{phoneNumber}</p>
+                      )}
                       {instagramName && (
                         <p className="text-[9px] text-black">
                           @{instagramName}

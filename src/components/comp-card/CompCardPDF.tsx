@@ -35,6 +35,7 @@ interface CompCardPDFProps {
   qrCodeUrl?: string; // base64 data URL of QR code
   contactInfo?: {
     email?: string;
+    phone?: string;
     instagram?: string;
     website?: string;
   };
@@ -202,9 +203,10 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, qrCodeUrl, co
 
   // Determine footer contact info
   const footerEmail = contactInfo?.email || (contactInfo ? undefined : "team@examodels.com");
+  const footerPhone = contactInfo?.phone;
   const footerInstagram = contactInfo?.instagram || model.instagram_name;
   const footerWebsite = contactInfo?.website || (contactInfo ? undefined : (model.username ? `examodels.com/${model.username}` : undefined));
-  const hasFooter = footerEmail || footerInstagram || footerWebsite || qrCodeUrl;
+  const hasFooter = footerEmail || footerPhone || footerInstagram || footerWebsite || qrCodeUrl;
 
   return (
     <Document>
@@ -269,6 +271,9 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, qrCodeUrl, co
             <View style={styles.footerContactLeft}>
               {footerEmail && (
                 <Text style={styles.footerText}>{footerEmail}</Text>
+              )}
+              {footerPhone && (
+                <Text style={styles.footerText}>{footerPhone}</Text>
               )}
               {footerInstagram && (
                 <View style={styles.footerRow}>
