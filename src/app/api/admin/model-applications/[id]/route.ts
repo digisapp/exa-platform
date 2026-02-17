@@ -73,9 +73,12 @@ export async function PATCH(
       // Use admin client to bypass RLS for actor updates
       const adminClient = createServiceRoleClient();
 
+      // Track the actual model username for email/chat (may differ from application data)
+      let modelUsername = "";
+
       // Check if model already exists by user_id
       const { data: existingModelByUser } = await adminClient.from("models")
-        .select("id")
+        .select("id, username")
         .eq("user_id", application.user_id)
         .single();
 
@@ -111,6 +114,7 @@ export async function PATCH(
 
       if (existingModel && !existingModelByUser) {
         // Found existing model by Instagram/email - link user_id to it
+        modelUsername = existingModel.username || "";
         const { error: linkError } = await adminClient.from("models")
           .update({
             user_id: application.user_id,
@@ -166,6 +170,8 @@ export async function PATCH(
           }
         }
 
+        modelUsername = finalUsername;
+
         // Create the model record
         const { error: modelError } = await adminClient.from("models")
           .insert({
@@ -203,6 +209,7 @@ export async function PATCH(
         }
       } else {
         // Model already exists by user_id, just approve it
+        modelUsername = existingModelByUser!.username || "";
         await adminClient.from("models")
           .update({ is_approved: true, status: "approved" })
           .eq("user_id", application.user_id);
@@ -224,13 +231,11 @@ export async function PATCH(
         }
       }
 
-      // Send approval email
+      // Send approval email with the actual model username (not raw application data)
       const emailResult = await sendModelApprovalEmail({
         to: application.email,
         modelName: application.display_name || "Model",
-        username: application.instagram_username ||
-                  application.tiktok_username ||
-                  application.email.split("@")[0],
+        username: modelUsername,
       });
 
       if (!emailResult.success) {
@@ -297,7 +302,7 @@ Your profile has been approved and you're now part of our community.
 
 Here's how to get started:
 • Complete your profile with photos and bio
-• Share your examodels.com/${application.instagram_username || application.tiktok_username || application.email.split("@")[0]} on Instagram Bio + Story
+• Share your examodels.com/${modelUsername} on Instagram Bio + Story
 • Engage with the community 😊`;
 
             await adminClient.from("messages").insert({
