@@ -89,6 +89,24 @@ export default function SignupPage() {
           throw new Error("This email is already registered. Please sign in or check your email for a confirmation link.");
         }
 
+        // Create model application immediately so the lead is never lost
+        // (even if confirmation email goes to spam, admin sees the application)
+        try {
+          await fetch("/api/auth/model-signup", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: name,
+              email: email.toLowerCase().trim(),
+              instagram_username: instagram.trim().replace("@", "") || null,
+              tiktok_username: tiktok.trim().replace("@", "") || null,
+            }),
+          });
+        } catch {
+          // Non-blocking — application creation is best-effort here
+          // The callback handler is a fallback
+        }
+
         // Send our custom confirmation email via Resend (more reliable than Supabase SMTP)
         try {
           await fetch("/api/auth/send-confirmation", {
