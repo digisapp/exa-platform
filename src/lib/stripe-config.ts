@@ -139,3 +139,12 @@ export const BRAND_SUBSCRIPTION_TIERS = {
 
 export type BrandTier = keyof typeof BRAND_SUBSCRIPTION_TIERS;
 export type BrandSubscriptionTier = typeof BRAND_SUBSCRIPTION_TIERS[BrandTier];
+
+// Comp card print packages (event-only, toggled via NEXT_PUBLIC_PRINT_PICKUP_ENABLED)
+export const PRINT_PACKAGES = [
+  { id: "print_10", quantity: 10, price: 2900, priceDisplay: "$29", name: "10 Cards" },
+  { id: "print_25", quantity: 25, price: 5900, priceDisplay: "$59", name: "25 Cards" },
+  { id: "print_50", quantity: 50, price: 9900, priceDisplay: "$99", name: "50 Cards" },
+] as const;
+
+export type PrintPackage = (typeof PRINT_PACKAGES)[number];

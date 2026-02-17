@@ -91,6 +91,12 @@ export async function POST(request: NextRequest) {
           break;
         }
 
+        // Check if this is a comp card print order
+        if (session.metadata?.type === "comp_card_print") {
+          await handleCompCardPrintPayment(session);
+          break;
+        }
+
         // Check if this is a shop order
         if (session.metadata?.order_id) {
           await handleShopOrderPayment(session);
@@ -1071,6 +1077,35 @@ async function handleWorkshopInstallmentSuccess(paymentIntent: Stripe.PaymentInt
         updated_at: new Date().toISOString(),
       })
       .eq("id", registrationId);
+  }
+}
+
+async function handleCompCardPrintPayment(session: Stripe.Checkout.Session) {
+  const orderId = session.metadata?.order_id;
+
+  if (!orderId) {
+    console.error("Missing comp card print order metadata:", session.id);
+    return;
+  }
+
+  const paymentIntentId =
+    typeof session.payment_intent === "string"
+      ? session.payment_intent
+      : session.payment_intent?.id;
+
+  // Update order to paid (guard on status for idempotency)
+  const { error: updateError } = await (supabaseAdmin as any)
+    .from("comp_card_print_orders")
+    .update({
+      status: "paid",
+      stripe_payment_intent_id: paymentIntentId,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", orderId)
+    .eq("status", "pending_payment");
+
+  if (updateError) {
+    console.error("Error updating comp card print order:", updateError);
   }
 }
 

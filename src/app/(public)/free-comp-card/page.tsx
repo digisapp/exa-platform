@@ -16,6 +16,7 @@ import {
   ZoomIn,
   ImageDown,
   Sparkles,
+  Printer,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -24,6 +25,7 @@ import {
   fileToBase64,
 } from "@/lib/comp-card-utils";
 import EmailCaptureDialog from "@/components/comp-card/EmailCaptureDialog";
+import PrintOrderDialog from "@/components/comp-card/PrintOrderDialog";
 
 interface UploadedPhoto {
   id: string;
@@ -77,6 +79,9 @@ export default function FreeCompCardPage() {
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const [pendingExportType, setPendingExportType] = useState<"pdf" | "jpeg" | null>(null);
   const [emailCaptured, setEmailCaptured] = useState(false);
+
+  // Print order state
+  const [printDialogOpen, setPrintDialogOpen] = useState(false);
 
   // Build model data object from form
   const model = {
@@ -241,6 +246,45 @@ export default function FreeCompCardPage() {
       if (b64) photoBase64.push(b64);
     }
     return photoBase64;
+  };
+
+  // Generate PDF and return as base64 string (for print order upload)
+  const generatePdfBase64 = async (): Promise<string> => {
+    const photoBase64 = await buildPhotoBase64();
+    const { pdf } = await import("@react-pdf/renderer");
+    const { default: CompCardPDF } = await import(
+      "@/components/comp-card/CompCardPDF"
+    );
+    const contactInfo = {
+      email: contactEmail || undefined,
+      phone: phoneNumber || undefined,
+      instagram: instagramName || undefined,
+      website: website || undefined,
+    };
+    const blob = await pdf(
+      CompCardPDF({ model, photos: photoBase64, contactInfo })
+    ).toBlob();
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result as string;
+        resolve(dataUrl.split(",")[1]); // Strip data:application/pdf;base64, prefix
+      };
+      reader.onerror = () => reject(new Error("Failed to read PDF"));
+      reader.readAsDataURL(blob);
+    });
+  };
+
+  const startPrintOrder = () => {
+    if (selectedIds.length === 0) {
+      toast.error("Upload and select at least one photo");
+      return;
+    }
+    if (!firstName.trim()) {
+      toast.error("Please enter your first name");
+      return;
+    }
+    setPrintDialogOpen(true);
   };
 
   const doExportPDF = async () => {
@@ -781,42 +825,55 @@ export default function FreeCompCardPage() {
           )}
 
           {/* Download buttons (desktop) */}
-          <div className="hidden lg:flex gap-2">
-            <Button
-              onClick={() => startExport("jpeg")}
-              disabled={exportingJpeg || selectedIds.length === 0 || !firstName.trim()}
-              variant="outline"
-              className="flex-1"
-            >
-              {exportingJpeg ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <ImageDown className="mr-2 h-4 w-4" />
-                  Download JPEG
-                </>
-              )}
-            </Button>
-            <Button
-              onClick={() => startExport("pdf")}
-              disabled={exporting || selectedIds.length === 0 || !firstName.trim()}
-              className="flex-1 bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
-            >
-              {exporting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Download className="mr-2 h-4 w-4" />
-                  Download PDF
-                </>
-              )}
-            </Button>
+          <div className="hidden lg:flex flex-col gap-2">
+            <div className="flex gap-2">
+              <Button
+                onClick={() => startExport("jpeg")}
+                disabled={exportingJpeg || selectedIds.length === 0 || !firstName.trim()}
+                variant="outline"
+                className="flex-1"
+              >
+                {exportingJpeg ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <ImageDown className="mr-2 h-4 w-4" />
+                    Download JPEG
+                  </>
+                )}
+              </Button>
+              <Button
+                onClick={() => startExport("pdf")}
+                disabled={exporting || selectedIds.length === 0 || !firstName.trim()}
+                className="flex-1 bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
+              >
+                {exporting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Download className="mr-2 h-4 w-4" />
+                    Download PDF
+                  </>
+                )}
+              </Button>
+            </div>
+            {process.env.NEXT_PUBLIC_PRINT_PICKUP_ENABLED === "true" && (
+              <Button
+                onClick={startPrintOrder}
+                disabled={selectedIds.length === 0 || !firstName.trim()}
+                variant="outline"
+                className="w-full border-pink-500/30 hover:border-pink-500/50"
+              >
+                <Printer className="mr-2 h-4 w-4" />
+                Print & Pick Up — From $29
+              </Button>
+            )}
           </div>
         </div>
 
@@ -964,6 +1021,17 @@ export default function FreeCompCardPage() {
                 </>
               )}
             </Button>
+            {process.env.NEXT_PUBLIC_PRINT_PICKUP_ENABLED === "true" && (
+              <Button
+                onClick={startPrintOrder}
+                disabled={selectedIds.length === 0 || !firstName.trim()}
+                variant="outline"
+                className="w-full border-pink-500/30 hover:border-pink-500/50"
+              >
+                <Printer className="mr-2 h-4 w-4" />
+                Print & Pick Up — From $29
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -992,6 +1060,19 @@ export default function FreeCompCardPage() {
         onSuccess={handleEmailSuccess}
         firstName={firstName}
       />
+
+      {/* Print order dialog */}
+      {process.env.NEXT_PUBLIC_PRINT_PICKUP_ENABLED === "true" && (
+        <PrintOrderDialog
+          open={printDialogOpen}
+          onOpenChange={setPrintDialogOpen}
+          email={contactEmail}
+          firstName={firstName}
+          lastName={lastName}
+          phone={phoneNumber}
+          onGeneratePdf={generatePdfBase64}
+        />
+      )}
     </div>
   );
 }
