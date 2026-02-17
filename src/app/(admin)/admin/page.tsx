@@ -167,6 +167,16 @@ export default async function AdminPage() {
         </Button>
 
         <Button variant="outline" asChild className="h-auto py-4 flex-col gap-2">
+          <Link href="/admin/brands">
+            <Building2 className="h-6 w-6 text-violet-500" />
+            <span>Brands</span>
+            {(pendingBrands || 0) > 0 && (
+              <span className="text-xs text-muted-foreground">{pendingBrands} unverified</span>
+            )}
+          </Link>
+        </Button>
+
+        <Button variant="outline" asChild className="h-auto py-4 flex-col gap-2">
           <Link href="/admin/offers">
             <Send className="h-6 w-6 text-cyan-500" />
             <span>Brand Offers</span>
