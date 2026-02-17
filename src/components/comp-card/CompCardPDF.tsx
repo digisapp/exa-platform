@@ -31,8 +31,13 @@ interface CompCardModel {
 interface CompCardPDFProps {
   model: CompCardModel;
   photos: string[]; // base64 data URLs
-  frontLogoUrl: string; // base64 data URL (white logo for dark background)
-  qrCodeUrl: string; // base64 data URL of QR code
+  frontLogoUrl?: string; // base64 data URL (white logo for dark background)
+  qrCodeUrl?: string; // base64 data URL of QR code
+  contactInfo?: {
+    email?: string;
+    instagram?: string;
+    website?: string;
+  };
 }
 
 // 5.5 x 8.5 inches = 396 x 612 points
@@ -177,7 +182,7 @@ const styles = StyleSheet.create({
   },
 });
 
-export default function CompCardPDF({ model, photos, frontLogoUrl, qrCodeUrl }: CompCardPDFProps) {
+export default function CompCardPDF({ model, photos, frontLogoUrl, qrCodeUrl, contactInfo }: CompCardPDFProps) {
   const firstName = model.first_name || "";
   const lastName = model.last_name || "";
   const fullName = [firstName, lastName].filter(Boolean).join(" ") || "Model";
@@ -195,6 +200,12 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, qrCodeUrl }: 
   if (model.dress_size) measurements.push({ label: "Dress", value: model.dress_size });
   if (model.shoe_size) measurements.push({ label: "Shoes", value: model.shoe_size });
 
+  // Determine footer contact info
+  const footerEmail = contactInfo?.email || (contactInfo ? undefined : "team@examodels.com");
+  const footerInstagram = contactInfo?.instagram || model.instagram_name;
+  const footerWebsite = contactInfo?.website || (contactInfo ? undefined : (model.username ? `examodels.com/${model.username}` : undefined));
+  const hasFooter = footerEmail || footerInstagram || footerWebsite || qrCodeUrl;
+
   return (
     <Document>
       {/* ═══════════ FRONT PAGE ═══════════ */}
@@ -207,9 +218,13 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, qrCodeUrl }: 
         </View>
         {/* Content overlay layer */}
         <View style={styles.frontOverlay}>
-          <View style={styles.frontLogoContainer}>
-            <Image src={frontLogoUrl} style={styles.frontLogo} />
-          </View>
+          {frontLogoUrl ? (
+            <View style={styles.frontLogoContainer}>
+              <Image src={frontLogoUrl} style={styles.frontLogo} />
+            </View>
+          ) : (
+            <View />
+          )}
           <View />
           {firstName && (
             <View style={styles.frontNameContainer}>
@@ -221,7 +236,7 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, qrCodeUrl }: 
 
       {/* ═══════════ BACK PAGE ═══════════ */}
       <Page size={CARD_SIZE} style={styles.backPage}>
-        {/* Top section: Logo + Name + Measurements + Photos */}
+        {/* Top section: Name + Measurements + Photos */}
         <View>
           <Text style={styles.backName}>{fullName}</Text>
 
@@ -249,27 +264,31 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, qrCodeUrl }: 
         </View>
 
         {/* Footer: contact (left) | QR (right) */}
-        <View style={styles.footerContainer}>
-          <View style={styles.footerContactLeft}>
-            <Text style={styles.footerText}>team@examodels.com</Text>
-            {model.instagram_name && (
-              <View style={styles.footerRow}>
-                <Svg width={10} height={10} viewBox="0 0 24 24" style={styles.instagramIcon}>
-                  <Rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke="#000000" strokeWidth="2" fill="none" />
-                  <Circle cx="12" cy="12" r="5" stroke="#000000" strokeWidth="2" fill="none" />
-                  <Circle cx="17.5" cy="6.5" r="1.5" fill="#000000" />
-                </Svg>
-                <Text style={styles.footerText}>{model.instagram_name}</Text>
-              </View>
-            )}
-            {model.username && (
-              <Text style={styles.footerText}>examodels.com/{model.username}</Text>
+        {hasFooter && (
+          <View style={styles.footerContainer}>
+            <View style={styles.footerContactLeft}>
+              {footerEmail && (
+                <Text style={styles.footerText}>{footerEmail}</Text>
+              )}
+              {footerInstagram && (
+                <View style={styles.footerRow}>
+                  <Svg width={10} height={10} viewBox="0 0 24 24" style={styles.instagramIcon}>
+                    <Rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke="#000000" strokeWidth="2" fill="none" />
+                    <Circle cx="12" cy="12" r="5" stroke="#000000" strokeWidth="2" fill="none" />
+                    <Circle cx="17.5" cy="6.5" r="1.5" fill="#000000" />
+                  </Svg>
+                  <Text style={styles.footerText}>{footerInstagram}</Text>
+                </View>
+              )}
+              {footerWebsite && (
+                <Text style={styles.footerText}>{footerWebsite}</Text>
+              )}
+            </View>
+            {qrCodeUrl && (
+              <Image src={qrCodeUrl} style={styles.footerQr} />
             )}
           </View>
-          {qrCodeUrl && (
-            <Image src={qrCodeUrl} style={styles.footerQr} />
-          )}
-        </View>
+        )}
       </Page>
     </Document>
   );
