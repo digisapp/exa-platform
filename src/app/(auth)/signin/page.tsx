@@ -71,7 +71,18 @@ function LoginForm() {
         } else if (actor?.type === "model") {
           window.location.href = "/dashboard";
         } else if (actor?.type === "fan") {
-          window.location.href = "/dashboard";
+          // Check if fan has a pending model application
+          const { data: pendingApp } = await (supabase.from("model_applications") as any)
+            .select("id")
+            .eq("user_id", data.user.id)
+            .eq("status", "pending")
+            .limit(1)
+            .single();
+          if (pendingApp) {
+            window.location.href = "/pending-approval";
+          } else {
+            window.location.href = "/dashboard";
+          }
         } else if (actor?.type === "brand") {
           window.location.href = "/dashboard";
         } else {

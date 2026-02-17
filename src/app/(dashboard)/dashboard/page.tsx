@@ -69,8 +69,19 @@ export default async function DashboardPage() {
     redirect("/admin");
   }
 
-  // For fans, show fan dashboard
+  // For fans, check if they have a pending model application
   if (actor.type === "fan") {
+    const { data: pendingApp } = await (supabase.from("model_applications") as any)
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("status", "pending")
+      .limit(1)
+      .single();
+
+    if (pendingApp) {
+      redirect("/pending-approval");
+    }
+
     return <FanDashboard actorId={actor.id} />;
   }
 
