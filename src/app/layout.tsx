@@ -43,11 +43,20 @@ export const metadata: Metadata = {
     siteName: "EXA Models",
     title: "EXA Models – Global Model Community",
     description: "Book professional models for photoshoots, events, and brand collaborations. Connect directly with verified models worldwide. The premier model booking platform.",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "EXA Models – Global Model Community",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "EXA Models – Book Professional Models",
     description: "Book professional models for photoshoots, events, and brand collaborations. Connect directly with verified models worldwide.",
+    images: ["/twitter-image"],
   },
   robots: {
     index: true,
