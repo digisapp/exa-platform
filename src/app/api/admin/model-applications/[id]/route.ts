@@ -120,6 +120,7 @@ export async function PATCH(
             user_id: application.user_id,
             is_approved: true,
             status: "approved",
+            claimed_at: new Date().toISOString(),
           })
           .eq("id", existingModel.id);
 
