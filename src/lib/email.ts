@@ -4562,3 +4562,81 @@ export async function sendContractSignedEmail({
     return { success: false, error };
   }
 }
+
+export async function sendPayoutProcessedEmail({
+  to,
+  modelName,
+  amount,
+  method,
+}: {
+  to: string;
+  modelName: string;
+  amount: number;
+  method: string;
+}) {
+  try {
+    const isUnsubscribed = await isEmailUnsubscribed(to, "notification");
+    if (isUnsubscribed) return { success: true, data: null };
+
+    const resend = getResendClient();
+    const walletUrl = `${BASE_URL}/wallet`;
+    const unsubscribeToken = await getUnsubscribeToken(to);
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      subject: `Your payout of $${amount.toFixed(2)} has been processed`,
+      html: `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body style="margin:0;padding:0;background-color:#0a0a0a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="background-color:#0a0a0a;padding:40px 20px;"><tr><td align="center"><table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background-color:#1a1a1a;border-radius:16px;overflow:hidden;"><tr><td style="background:linear-gradient(135deg,#ec4899 0%,#8b5cf6 100%);padding:30px;text-align:center;"><p style="margin:0;font-size:48px;">💸</p><h1 style="margin:10px 0 0;color:white;font-size:24px;font-weight:bold;">Payout Processed!</h1></td></tr><tr><td style="padding:40px 30px;"><p style="margin:0 0 20px;color:#ffffff;font-size:18px;">Hey ${escapeHtml(modelName)}!</p><p style="margin:0 0 30px;color:#a1a1aa;font-size:16px;line-height:1.6;">Great news — your payout has been processed and is on its way.</p><table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:30px;"><tr><td align="center" style="padding:30px;background-color:#262626;border-radius:12px;"><p style="margin:0 0 5px;color:#71717a;font-size:14px;">Payout Amount</p><p style="margin:0;color:#ec4899;font-size:42px;font-weight:bold;">$${amount.toFixed(2)}</p><p style="margin:10px 0 0;color:#a1a1aa;font-size:14px;">via ${escapeHtml(method)}</p></td></tr></table><p style="margin:0 0 30px;color:#a1a1aa;font-size:14px;line-height:1.6;">Funds typically arrive within 1–3 business days depending on your payment method.</p><table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center"><a href="${walletUrl}" style="display:inline-block;background:linear-gradient(135deg,#ec4899 0%,#8b5cf6 100%);color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:16px;">View Wallet</a></td></tr></table></td></tr>${generateEmailFooter(unsubscribeToken)}</table></td></tr></table></body></html>`,
+    });
+
+    if (error) {
+      console.error("Resend error:", error);
+      return { success: false, error };
+    }
+    return { success: true, data };
+  } catch (err) {
+    console.error("Email send error:", err);
+    return { success: false, error: err };
+  }
+}
+
+export async function sendAuctionOutbidEmail({
+  to,
+  bidderName,
+  auctionTitle,
+  auctionId,
+  currentBid,
+  yourBid,
+}: {
+  to: string;
+  bidderName: string;
+  auctionTitle: string;
+  auctionId: string;
+  currentBid: number;
+  yourBid: number;
+}) {
+  try {
+    const isUnsubscribed = await isEmailUnsubscribed(to, "notification");
+    if (isUnsubscribed) return { success: true, data: null };
+
+    const resend = getResendClient();
+    const auctionUrl = `${BASE_URL}/bids/${auctionId}`;
+    const unsubscribeToken = await getUnsubscribeToken(to);
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      subject: `You've been outbid on "${auctionTitle}"`,
+      html: `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body style="margin:0;padding:0;background-color:#0a0a0a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="background-color:#0a0a0a;padding:40px 20px;"><tr><td align="center"><table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background-color:#1a1a1a;border-radius:16px;overflow:hidden;"><tr><td style="background:linear-gradient(135deg,#f59e0b 0%,#ef4444 100%);padding:30px;text-align:center;"><p style="margin:0;font-size:48px;">⚡</p><h1 style="margin:10px 0 0;color:white;font-size:24px;font-weight:bold;">You've Been Outbid</h1></td></tr><tr><td style="padding:40px 30px;"><p style="margin:0 0 20px;color:#ffffff;font-size:18px;">Hey ${escapeHtml(bidderName)}!</p><p style="margin:0 0 30px;color:#a1a1aa;font-size:16px;line-height:1.6;">Someone placed a higher bid on <strong style="color:#ffffff;">${escapeHtml(auctionTitle)}</strong>. Don't miss out — bid again to stay in the lead!</p><table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:30px;"><tr><td style="padding:20px;background-color:#262626;border-radius:12px;"><table width="100%" cellpadding="0" cellspacing="0"><tr><td style="padding:10px 0;border-bottom:1px solid #3f3f3f;"><p style="margin:0;color:#71717a;font-size:13px;">Your bid</p><p style="margin:4px 0 0;color:#ffffff;font-size:18px;font-weight:600;">${yourBid} coins</p></td></tr><tr><td style="padding:10px 0 0;"><p style="margin:0;color:#71717a;font-size:13px;">Current highest bid</p><p style="margin:4px 0 0;color:#f59e0b;font-size:22px;font-weight:bold;">${currentBid} coins</p></td></tr></table></td></tr></table><table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center"><a href="${auctionUrl}" style="display:inline-block;background:linear-gradient(135deg,#f59e0b 0%,#ef4444 100%);color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:16px;">Bid Again</a></td></tr></table></td></tr>${generateEmailFooter(unsubscribeToken)}</table></td></tr></table></body></html>`,
+    });
+
+    if (error) {
+      console.error("Resend error:", error);
+      return { success: false, error };
+    }
+    return { success: true, data };
+  } catch (err) {
+    console.error("Email send error:", err);
+    return { success: false, error: err };
+  }
+}

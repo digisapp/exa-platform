@@ -1,7 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 import { logAdminAction, AdminActions } from "@/lib/admin-audit";
+import { sendPayoutProcessedEmail } from "@/lib/email";
 import { z } from "zod";
+
+const adminClient = createServiceRoleClient();
 
 const payoutSchema = z.object({
   status: z.enum(["completed", "failed", "processing"]),
@@ -73,6 +77,13 @@ export async function PATCH(
 
     // Use database functions for proper accounting
     if (status === "completed") {
+      // Fetch withdrawal details before completing (for email)
+      const { data: withdrawal } = await adminClient
+        .from("withdrawal_requests")
+        .select("amount, payment_method, user_id")
+        .eq("id", id)
+        .single() as { data: { amount: number; payment_method: string; user_id: string } | null };
+
       // Complete withdrawal - removes from withheld balance
       const { error: completeError } = await supabase.rpc("complete_withdrawal", {
         p_withdrawal_id: id,
@@ -92,6 +103,35 @@ export async function PATCH(
             processed_by: actor.id,
           })
           .eq("id", id);
+      }
+
+      // Send payout processed email to the model
+      if (withdrawal) {
+        try {
+          const { data: modelData } = await adminClient
+            .from("models")
+            .select("first_name, last_name")
+            .eq("user_id", withdrawal.user_id)
+            .single() as { data: { first_name: string; last_name: string } | null };
+
+          const { data: authUser } = await adminClient.auth.admin.getUserById(withdrawal.user_id);
+          const email = authUser?.user?.email;
+
+          if (email) {
+            const modelName = modelData
+              ? [modelData.first_name, modelData.last_name].filter(Boolean).join(" ")
+              : "Model";
+            const amountUsd = withdrawal.amount / 10; // coins → dollars
+            await sendPayoutProcessedEmail({
+              to: email,
+              modelName,
+              amount: amountUsd,
+              method: withdrawal.payment_method || "Bank Transfer",
+            });
+          }
+        } catch (emailErr) {
+          console.error("Failed to send payout email:", emailErr);
+        }
       }
     } else if (status === "failed") {
       // Cancel/reject withdrawal - refunds to available balance

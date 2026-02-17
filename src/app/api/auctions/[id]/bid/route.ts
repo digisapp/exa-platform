@@ -1,9 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { enrichBidsWithBidderInfo } from "@/lib/auction-utils";
 import type { PlaceBidResponse } from "@/types/auctions";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { sendAuctionOutbidEmail } from "@/lib/email";
+
+const adminClient = createServiceRoleClient();
 
 const placeBidSchema = z.object({
   amount: z.number().int().min(10).max(1000000),
@@ -58,6 +62,13 @@ export async function POST(
       );
     }
 
+    // Capture current leading bid + auction info before placing (for outbid notification)
+    const { data: auctionBefore } = await adminClient
+      .from("auctions")
+      .select("title, current_bid, leading_bidder_id")
+      .eq("id", auctionId)
+      .single() as { data: { title: string; current_bid: number; leading_bidder_id: string | null } | null };
+
     // Call the RPC function to place the bid
     const { data: result, error } = await supabase.rpc("place_auction_bid", {
       p_auction_id: auctionId,
@@ -93,6 +104,46 @@ export async function POST(
         { error: "Failed to place bid" },
         { status: 500 }
       );
+    }
+
+    // Notify the outbid user if they were previously leading and have notify_outbid enabled
+    if (auctionBefore?.leading_bidder_id && auctionBefore.leading_bidder_id !== actor.id) {
+      try {
+        const { data: watchlistEntry } = await adminClient
+          .from("auction_watchlist")
+          .select("notify_outbid")
+          .eq("auction_id", auctionId)
+          .eq("actor_id", auctionBefore.leading_bidder_id)
+          .single() as { data: { notify_outbid: boolean } | null };
+
+        if (watchlistEntry?.notify_outbid !== false) {
+          const { data: outbidActor } = await adminClient
+            .from("actors")
+            .select("user_id, fans(display_name), models(first_name, last_name)")
+            .eq("id", auctionBefore.leading_bidder_id)
+            .single() as { data: any };
+
+          if (outbidActor?.user_id) {
+            const { data: authUser } = await adminClient.auth.admin.getUserById(outbidActor.user_id);
+            const email = authUser?.user?.email;
+            if (email) {
+              const bidderName = outbidActor.fans?.display_name
+                || [outbidActor.models?.first_name, outbidActor.models?.last_name].filter(Boolean).join(" ")
+                || "Bidder";
+              await sendAuctionOutbidEmail({
+                to: email,
+                bidderName,
+                auctionTitle: auctionBefore.title,
+                auctionId,
+                currentBid: amount,
+                yourBid: auctionBefore.current_bid,
+              });
+            }
+          }
+        }
+      } catch (emailErr) {
+        console.error("Failed to send outbid email:", emailErr);
+      }
     }
 
     // Get updated balance

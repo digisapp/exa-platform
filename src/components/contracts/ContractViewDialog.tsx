@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import DOMPurify from "isomorphic-dompurify";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -193,7 +194,7 @@ export function ContractViewDialog({
               {contract.content ? (
                 <div
                   className="prose prose-sm dark:prose-invert max-w-none p-4 rounded-lg bg-muted/30 border"
-                  dangerouslySetInnerHTML={{ __html: contract.content }}
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(contract.content) }}
                 />
               ) : contract.pdf_url ? (
                 <div className="p-4 rounded-lg bg-muted/30 border text-center space-y-3">
