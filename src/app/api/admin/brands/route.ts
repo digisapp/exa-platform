@@ -63,7 +63,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ brands: brands || [], total: count || 0 });
   } catch (error) {
-    console.error("Admin brands list error:", error);
-    return NextResponse.json({ error: "Failed to fetch brands" }, { status: 500 });
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Admin brands list error:", message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
