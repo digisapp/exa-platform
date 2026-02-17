@@ -1,7 +1,13 @@
-import { type NextRequest } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 
 export async function middleware(request: NextRequest) {
+  // Redirect compcards.co to free comp card page
+  const hostname = request.headers.get('host') || ''
+  if (hostname.replace('www.', '') === 'compcards.co') {
+    return NextResponse.redirect('https://www.examodels.com/free-comp-card', 301)
+  }
+
   return await updateSession(request)
 }
 
