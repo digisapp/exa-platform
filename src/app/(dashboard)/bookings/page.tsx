@@ -30,8 +30,10 @@ import {
   Building2,
   RefreshCw,
   Upload,
+  FileText,
 } from "lucide-react";
 import { DeliveryUploadDialog } from "@/components/deliveries/DeliveryUploadDialog";
+import { ContractSendDialog } from "@/components/contracts/ContractSendDialog";
 
 interface Booking {
   id: string;
@@ -124,6 +126,7 @@ export default function BookingsPage() {
   const [counterAmount, setCounterAmount] = useState("");
   const [counterNotes, setCounterNotes] = useState("");
   const [deliveryDialogBookingId, setDeliveryDialogBookingId] = useState<string | null>(null);
+  const [contractDialog, setContractDialog] = useState<{ bookingId: string; modelId: string; modelName: string } | null>(null);
 
   // Determine user role on mount
   useEffect(() => {
@@ -509,6 +512,22 @@ export default function BookingsPage() {
                             Upload Deliverables
                           </Button>
                         )}
+                        {/* Send Contract - for clients on accepted/confirmed bookings */}
+                        {["accepted", "confirmed"].includes(booking.status) && userRole === "client" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1 border-blue-500/50 text-blue-500 hover:bg-blue-500/10"
+                            onClick={() => setContractDialog({
+                              bookingId: booking.id,
+                              modelId: booking.model_id,
+                              modelName: booking.model ? [booking.model.first_name, booking.model.last_name].filter(Boolean).join(" ") : "Model",
+                            })}
+                          >
+                            <FileText className="h-4 w-4 mr-2" />
+                            Send Contract
+                          </Button>
+                        )}
                         {/* Cancel button - only for clients on pending, or either party on accepted/confirmed */}
                         {(
                           (["accepted", "confirmed"].includes(booking.status)) ||
@@ -662,6 +681,17 @@ export default function BookingsPage() {
         }}
         bookingId={deliveryDialogBookingId || undefined}
         onDeliveryCreated={fetchBookings}
+      />
+
+      {/* Contract Send Dialog */}
+      <ContractSendDialog
+        open={contractDialog !== null}
+        onOpenChange={(open) => {
+          if (!open) setContractDialog(null);
+        }}
+        bookingId={contractDialog?.bookingId}
+        modelId={contractDialog?.modelId}
+        modelName={contractDialog?.modelName}
       />
     </div>
   );

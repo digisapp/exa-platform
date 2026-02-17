@@ -4380,3 +4380,185 @@ export async function sendScheduleCallEmail({
     return { success: false, error };
   }
 }
+
+export async function sendContractSentEmail({
+  to,
+  modelName,
+  brandName,
+  contractTitle,
+}: {
+  to: string;
+  modelName: string;
+  brandName: string;
+  contractTitle: string;
+}) {
+  try {
+    const isUnsubscribed = await isEmailUnsubscribed(to, "notification");
+    if (isUnsubscribed) return { success: true, data: null };
+
+    const resend = getResendClient();
+    const contractsUrl = `${BASE_URL}/contracts`;
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      subject: `New Contract from ${brandName} - Action Required`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+          <tr>
+            <td style="background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); padding: 30px; text-align: center;">
+              <h1 style="margin: 0; color: white; font-size: 24px; font-weight: bold;">New Contract to Review</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">Hey ${escapeHtml(modelName)}!</p>
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                <strong style="color: #ffffff;">${escapeHtml(brandName)}</strong> has sent you a contract to review and sign.
+              </p>
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px; background-color: #262626; border-radius: 12px; overflow: hidden;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 5px; color: #71717a; font-size: 12px; text-transform: uppercase;">Contract</p>
+                    <p style="margin: 0 0 15px; color: #ffffff; font-size: 16px; font-weight: 500;">${escapeHtml(contractTitle)}</p>
+                    <p style="margin: 0 0 5px; color: #71717a; font-size: 12px; text-transform: uppercase;">From</p>
+                    <p style="margin: 0; color: #ffffff; font-size: 16px;">${escapeHtml(brandName)}</p>
+                  </td>
+                </tr>
+              </table>
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="${contractsUrl}" style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                      Review &amp; Sign Contract
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 20px 30px; border-top: 1px solid #262626; text-align: center;">
+              <p style="margin: 0; color: #71717a; font-size: 12px;">EXA Models - Where Models Shine</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      console.error("Resend error:", error);
+      return { success: false, error };
+    }
+    return { success: true, data };
+  } catch (error) {
+    console.error("Email send error:", error);
+    return { success: false, error };
+  }
+}
+
+export async function sendContractSignedEmail({
+  to,
+  brandName,
+  modelName,
+  contractTitle,
+}: {
+  to: string;
+  brandName: string;
+  modelName: string;
+  contractTitle: string;
+}) {
+  try {
+    const isUnsubscribed = await isEmailUnsubscribed(to, "notification");
+    if (isUnsubscribed) return { success: true, data: null };
+
+    const resend = getResendClient();
+    const contractsUrl = `${BASE_URL}/contracts`;
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      subject: `Contract Signed by ${modelName}`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+          <tr>
+            <td style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 30px; text-align: center;">
+              <h1 style="margin: 0; color: white; font-size: 24px; font-weight: bold;">Contract Signed!</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">Great news, ${escapeHtml(brandName)}!</p>
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                <strong style="color: #ffffff;">${escapeHtml(modelName)}</strong> has signed the contract.
+              </p>
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px; background-color: #262626; border-radius: 12px; overflow: hidden;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 5px; color: #71717a; font-size: 12px; text-transform: uppercase;">Contract</p>
+                    <p style="margin: 0 0 15px; color: #ffffff; font-size: 16px; font-weight: 500;">${escapeHtml(contractTitle)}</p>
+                    <p style="margin: 0 0 5px; color: #71717a; font-size: 12px; text-transform: uppercase;">Signed By</p>
+                    <p style="margin: 0; color: #10b981; font-size: 16px; font-weight: 500;">${escapeHtml(modelName)}</p>
+                  </td>
+                </tr>
+              </table>
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="${contractsUrl}" style="display: inline-block; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                      View Contract
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 20px 30px; border-top: 1px solid #262626; text-align: center;">
+              <p style="margin: 0; color: #71717a; font-size: 12px;">EXA Models - Where Models Shine</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      console.error("Resend error:", error);
+      return { success: false, error };
+    }
+    return { success: true, data };
+  } catch (error) {
+    console.error("Email send error:", error);
+    return { success: false, error };
+  }
+}

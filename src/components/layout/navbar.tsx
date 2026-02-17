@@ -261,6 +261,12 @@ export function Navbar({ user, actorType, unreadCount = 0 }: NavbarProps) {
                   {actorType === "brand" && (
                     <>
                       <DropdownMenuItem asChild>
+                        <Link href="/contracts" className="cursor-pointer">
+                          <FileText className="mr-2 h-4 w-4" />
+                          Contracts
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
                         <Link href="/brands/content" className="cursor-pointer">
                           <FolderDown className="mr-2 h-4 w-4" />
                           Content
@@ -281,12 +287,20 @@ export function Navbar({ user, actorType, unreadCount = 0 }: NavbarProps) {
                     </>
                   )}
                   {actorType === "model" && (
-                    <DropdownMenuItem asChild>
-                      <Link href="/comp-card" className="cursor-pointer">
-                        <FileText className="mr-2 h-4 w-4" />
-                        Comp Card
-                      </Link>
-                    </DropdownMenuItem>
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link href="/contracts" className="cursor-pointer">
+                          <FileText className="mr-2 h-4 w-4" />
+                          Contracts
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/comp-card" className="cursor-pointer">
+                          <FileText className="mr-2 h-4 w-4" />
+                          Comp Card
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
                   )}
                   <DropdownMenuItem asChild>
                     <Link href="/boost" className="cursor-pointer">
