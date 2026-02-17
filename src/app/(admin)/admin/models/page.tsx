@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -46,6 +47,11 @@ import {
   Check,
   MessageSquare,
   Phone,
+  Mail,
+  Send,
+  AlertTriangle,
+  Calendar,
+  TrendingUp,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ModelActionsDropdown } from "@/components/admin/AdminActions";
@@ -274,7 +280,7 @@ export default function AdminModelsPage() {
   const [stateFilter, setStateFilter] = useState<string>("all");
   const [approvalFilter, setApprovalFilter] = useState<string>("all");
   const [ratingFilter, setRatingFilter] = useState<string>("all");
-  const [claimFilter, setClaimFilter] = useState<string>("all");
+  const [activeView, setActiveView] = useState<"active" | "onboarding">("active");
   const [sortField, setSortField] = useState<ModelSortField>("joined_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
@@ -282,6 +288,27 @@ export default function AdminModelsPage() {
   const [selectedModels, setSelectedModels] = useState<Set<string>>(new Set());
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [showSMSModal, setShowSMSModal] = useState(false);
+
+  // Invite stats state
+  const [inviteStats, setInviteStats] = useState({
+    pending: 0,
+    invited: 0,
+    claimed: 0,
+    warmup: {
+      started: false,
+      startDate: null as string | null,
+      day: 0,
+      dailyLimit: 0,
+      sentToday: 0,
+      remainingToday: 0,
+      schedule: [] as { day: number; limit: number }[],
+    },
+  });
+  const [sendingInvites, setSendingInvites] = useState(false);
+  const [inviteProgress, setInviteProgress] = useState({ sent: 0, total: 0 });
+
+  // Derive claimFilter from active view
+  const claimFilter = activeView === "active" ? "claimed" : "unclaimed";
 
   // Toggle single model selection
   const toggleModelSelection = (modelId: string) => {
@@ -450,11 +477,111 @@ export default function AdminModelsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, debouncedSearch, stateFilter, approvalFilter, ratingFilter, claimFilter, sortField, sortDirection]);
+  }, [page, debouncedSearch, stateFilter, approvalFilter, ratingFilter, activeView, sortField, sortDirection]);
+
+  // Load invite stats
+  const loadInviteStats = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/invites/send");
+      if (res.ok) {
+        const data = await res.json();
+        setInviteStats(data);
+      }
+    } catch (error) {
+      console.error("Failed to load invite stats:", error);
+    }
+  }, []);
+
+  // Send bulk invites
+  const sendBulkInvites = async () => {
+    if (sendingInvites) return;
+
+    if (!inviteStats.warmup.started) {
+      toast.error("Email warmup not started. Add EMAIL_WARMUP_START_DATE to Vercel environment variables first.");
+      return;
+    }
+
+    if (inviteStats.warmup.remainingToday === 0) {
+      toast.info(`Daily limit reached (${inviteStats.warmup.dailyLimit}). Try again tomorrow.`);
+      return;
+    }
+
+    if (inviteStats.pending === 0) {
+      toast.info("No pending invites to send");
+      return;
+    }
+
+    const toSend = Math.min(inviteStats.pending, inviteStats.warmup.remainingToday);
+    const confirmed = window.confirm(
+      `Send invite emails?\n\n` +
+      `Day ${inviteStats.warmup.day} of warmup\n` +
+      `Daily limit: ${inviteStats.warmup.dailyLimit}\n` +
+      `Already sent today: ${inviteStats.warmup.sentToday}\n` +
+      `Will send: up to ${toSend} emails\n\n` +
+      `Continue?`
+    );
+
+    if (!confirmed) return;
+
+    setSendingInvites(true);
+    setInviteProgress({ sent: 0, total: toSend });
+
+    try {
+      let totalSent = 0;
+      let hasMore = true;
+
+      while (hasMore) {
+        const res = await fetch("/api/admin/invites/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sendAll: true }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          if (data.warmupNotStarted) {
+            toast.error("Email warmup not started. Set EMAIL_WARMUP_START_DATE in Vercel.");
+            break;
+          }
+          throw new Error(data.error || "Failed to send invites");
+        }
+
+        totalSent += data.sent;
+        setInviteProgress({ sent: totalSent, total: toSend });
+
+        hasMore = data.hasMore && data.remainingToday > 0;
+
+        if (data.failed > 0) {
+          console.warn(`${data.failed} emails failed to send`);
+        }
+
+        if (data.remainingToday === 0) {
+          toast.info(`Daily limit reached. Sent ${totalSent} today.`);
+          break;
+        }
+      }
+
+      if (totalSent > 0) {
+        toast.success(`Successfully sent ${totalSent} invite emails!`);
+      }
+      await loadInviteStats();
+      await loadModels();
+    } catch (error) {
+      console.error("Failed to send invites:", error);
+      toast.error("Failed to send invites");
+    } finally {
+      setSendingInvites(false);
+    }
+  };
 
   useEffect(() => {
     loadModels();
   }, [loadModels]);
+
+  useEffect(() => {
+    loadInviteStats();
+  }, [loadInviteStats]);
 
   // Debounced search - wait for user to stop typing before firing API call
   useEffect(() => {
@@ -471,6 +598,12 @@ export default function AdminModelsPage() {
 
   const handleNewFaceToggle = (modelId: string, newFace: boolean) => {
     setModels(prev => prev.map(m => m.id === modelId ? { ...m, new_face: newFace } : m));
+  };
+
+  const handleViewChange = (view: string) => {
+    setActiveView(view as "active" | "onboarding");
+    setPage(1);
+    setSelectedModels(new Set());
   };
 
   const handleSort = (field: ModelSortField) => {
@@ -497,11 +630,112 @@ export default function AdminModelsPage() {
           <div>
             <h1 className="text-3xl font-bold">Models Database</h1>
             <p className="text-muted-foreground">
-              {totalCount.toLocaleString()} total models
+              {activeView === "active"
+                ? `${totalCount.toLocaleString()} active models`
+                : `${totalCount.toLocaleString()} models to onboard`}
             </p>
           </div>
         </div>
       </div>
+
+      {/* View Tabs */}
+      <Tabs value={activeView} onValueChange={handleViewChange}>
+        <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="active" className="gap-2">
+            <UserCheck className="h-4 w-4" />
+            Active Models
+          </TabsTrigger>
+          <TabsTrigger value="onboarding" className="gap-2">
+            <Mail className="h-4 w-4" />
+            Onboarding
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      {/* Invite Stats - Onboarding only */}
+      {activeView === "onboarding" && (
+        <Card className="border-amber-500/50 bg-amber-500/5">
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              {/* Stats Row */}
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-5 w-5 text-amber-500" />
+                    <div>
+                      <p className="text-2xl font-bold">{inviteStats.pending.toLocaleString()}</p>
+                      <p className="text-xs text-muted-foreground">Not Contacted</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Send className="h-5 w-5 text-blue-500" />
+                    <div>
+                      <p className="text-2xl font-bold">{inviteStats.invited.toLocaleString()}</p>
+                      <p className="text-xs text-muted-foreground">Emails Sent</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <UserCheck className="h-5 w-5 text-green-500" />
+                    <div>
+                      <p className="text-2xl font-bold">{inviteStats.claimed.toLocaleString()}</p>
+                      <p className="text-xs text-muted-foreground">Joined</p>
+                    </div>
+                  </div>
+                </div>
+                <Button
+                  onClick={sendBulkInvites}
+                  disabled={sendingInvites || inviteStats.pending === 0 || !inviteStats.warmup.started || inviteStats.warmup.remainingToday === 0}
+                  className="bg-gradient-to-r from-pink-500 to-violet-500"
+                >
+                  {sendingInvites ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending... ({inviteProgress.sent}/{inviteProgress.total})
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="mr-2 h-4 w-4" />
+                      Send Invite Emails
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {/* Warmup Status */}
+              {!inviteStats.warmup.started ? (
+                <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
+                  <p className="text-sm text-yellow-500 font-medium flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4" />
+                    Email warmup not started
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Add <code className="bg-muted px-1 rounded">EMAIL_WARMUP_START_DATE</code> to Vercel environment variables (format: YYYY-MM-DD) to begin sending invites.
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-wrap items-center gap-4 text-sm">
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <span>Day {inviteStats.warmup.day} of warmup</span>
+                  </div>
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted">
+                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                    <span>Daily limit: {inviteStats.warmup.dailyLimit}</span>
+                  </div>
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 text-green-500">
+                    <Check className="h-4 w-4" />
+                    <span>Sent today: {inviteStats.warmup.sentToday}</span>
+                  </div>
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 text-blue-500">
+                    <Clock className="h-4 w-4" />
+                    <span>Remaining: {inviteStats.warmup.remainingToday}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Filters */}
       <Card>
@@ -544,14 +778,6 @@ export default function AdminModelsPage() {
                 <SelectItem value="unrated">Unrated Only</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={claimFilter} onValueChange={(v) => { setClaimFilter(v); setPage(1); }}>
-              <SelectTrigger className="w-[180px]"><SelectValue placeholder="Filter by claim" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Models</SelectItem>
-                <SelectItem value="claimed">Claimed (Has Login)</SelectItem>
-                <SelectItem value="unclaimed">Unclaimed (Needs Invite)</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </CardContent>
       </Card>
@@ -561,7 +787,7 @@ export default function AdminModelsPage() {
         <CardHeader>
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
-              <CardTitle>All Models</CardTitle>
+              <CardTitle>{activeView === "active" ? "Active Models" : "Onboarding Pipeline"}</CardTitle>
               <CardDescription>
                 {totalCount > 0
                   ? `Showing ${((page - 1) * pageSize) + 1} - ${Math.min(page * pageSize, totalCount)} of ${totalCount.toLocaleString()}`
