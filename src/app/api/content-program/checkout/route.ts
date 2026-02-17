@@ -8,6 +8,7 @@ const adminClient = createServiceRoleClient();
 
 // Content Program pricing - $500/month subscription
 const MONTHLY_RATE_CENTS = 50000; // $500
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || "https://www.examodels.com";
 
 export async function POST(request: NextRequest) {
   try {
@@ -68,8 +69,8 @@ export async function POST(request: NextRequest) {
         },
       ],
       mode: "subscription",
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/swimwear-content/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/swimwear-content?cancelled=true`,
+      success_url: `${BASE_URL}/swimwear-content/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${BASE_URL}/swimwear-content?cancelled=true`,
       customer: customer.id,
       subscription_data: {
         metadata: {
@@ -123,8 +124,9 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Content program checkout error:", error);
+    const message = error instanceof Error ? error.message : "Failed to create checkout session";
     return NextResponse.json(
-      { error: "Failed to create checkout session" },
+      { error: message },
       { status: 500 }
     );
   }
