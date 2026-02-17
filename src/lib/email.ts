@@ -428,11 +428,11 @@ export async function sendBrandApprovalEmail({
 export async function sendModelInviteEmail({
   to,
   modelName,
-  claimUrl,
+  signupUrl,
 }: {
   to: string;
   modelName: string;
-  claimUrl: string;
+  signupUrl: string;
 }) {
   try {
     const resend = getResendClient();
@@ -440,7 +440,7 @@ export async function sendModelInviteEmail({
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
       to: [to],
-      subject: `${modelName}, your EXA Models profile is ready!`,
+      subject: `${modelName}, you're invited to join EXA Models!`,
       html: `
 <!DOCTYPE html>
 <html>
@@ -458,10 +458,10 @@ export async function sendModelInviteEmail({
           <tr>
             <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 40px 30px; text-align: center;">
               <h1 style="margin: 0; color: white; font-size: 28px; font-weight: bold;">
-                Your Profile is Ready!
+                You're Invited!
               </h1>
               <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
-                Claim your EXA Models profile
+                Join the EXA Models community
               </p>
             </td>
           </tr>
@@ -473,18 +473,18 @@ export async function sendModelInviteEmail({
                 Hey ${escapeHtml(modelName)}!
               </p>
               <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
-                Great news - your profile has been created on EXA Models! We've imported your info and you're ready to start connecting with brands, getting booked for gigs, and growing your modeling career.
+                We'd love to have you on EXA Models - a growing community where models connect with brands, get booked for gigs, and grow their careers.
               </p>
               <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
-                Click the button below to set up your password and claim your profile:
+                Sign up with this email address and your profile will be automatically linked. It only takes a minute!
               </p>
 
               <!-- CTA Button -->
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
                 <tr>
                   <td align="center">
-                    <a href="${claimUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: 600; font-size: 18px;">
-                      Claim My Profile
+                    <a href="${signupUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: 600; font-size: 18px;">
+                      Join EXA Models
                     </a>
                   </td>
                 </tr>
@@ -530,7 +530,7 @@ export async function sendModelInviteEmail({
               </table>
 
               <p style="margin: 0; color: #71717a; font-size: 13px; line-height: 1.5;">
-                This link is unique to you. If you have any questions, just reply to this email.
+                If you have any questions, just reply to this email.
               </p>
             </td>
           </tr>

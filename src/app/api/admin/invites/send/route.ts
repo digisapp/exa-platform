@@ -122,17 +122,16 @@ export async function POST(request: NextRequest) {
     }
     const { modelIds, sendAll } = parsed.data;
 
-    let modelsToInvite: { id: string; email: string; first_name: string | null; invite_token: string | null }[] = [];
+    let modelsToInvite: { id: string; email: string; first_name: string | null }[] = [];
 
     // Limit query to remaining daily quota
     const batchLimit = Math.min(50, remainingToday); // Max 50 per request for safety
 
     if (sendAll) {
-      // Get models with invite tokens who haven't been invited yet and haven't claimed
+      // Get unclaimed models who haven't been invited yet
       const { data: models, error } = await supabase
         .from("models")
-        .select("id, email, first_name, invite_token")
-        .not("invite_token", "is", null)
+        .select("id, email, first_name")
         .is("user_id", null)
         .is("invite_sent_at", null)
         .not("email", "is", null)
@@ -145,9 +144,8 @@ export async function POST(request: NextRequest) {
       const limitedIds = modelIds.slice(0, batchLimit);
       const { data: models, error } = await supabase
         .from("models")
-        .select("id, email, first_name, invite_token")
+        .select("id, email, first_name")
         .in("id", limitedIds)
-        .not("invite_token", "is", null)
         .is("user_id", null);
 
       if (error) throw error;
@@ -175,13 +173,14 @@ export async function POST(request: NextRequest) {
     modelsToInvite = modelsToInvite.filter(m =>
       m.email &&
       m.email.includes("@") &&
-      !m.email.includes("roster-import.examodels.com") && // Skip placeholder emails
-      m.invite_token
+      !m.email.includes("roster-import.examodels.com") // Skip placeholder emails
     );
 
     let sent = 0;
     let failed = 0;
     const errors: string[] = [];
+
+    const signupUrl = `${BASE_URL}/signup`;
 
     // Send emails with delay between each to avoid rate limits
     for (const model of modelsToInvite) {
@@ -190,12 +189,10 @@ export async function POST(request: NextRequest) {
         break;
       }
 
-      const claimUrl = `${BASE_URL}/claim/${model.invite_token}`;
-
       const result = await sendModelInviteEmail({
         to: model.email,
         modelName: model.first_name || "Model",
-        claimUrl,
+        signupUrl,
       });
 
       if (result.success) {
@@ -217,7 +214,6 @@ export async function POST(request: NextRequest) {
     const { count: remainingPending } = await supabase
       .from("models")
       .select("id", { count: "exact", head: true })
-      .not("invite_token", "is", null)
       .is("user_id", null)
       .is("invite_sent_at", null)
       .not("email", "is", null);
@@ -270,7 +266,6 @@ export async function GET() {
     const { count: pendingCount } = await supabase
       .from("models")
       .select("id", { count: "exact", head: true })
-      .not("invite_token", "is", null)
       .is("user_id", null)
       .is("invite_sent_at", null)
       .not("email", "is", null)
@@ -280,7 +275,6 @@ export async function GET() {
     const { count: invitedCount } = await supabase
       .from("models")
       .select("id", { count: "exact", head: true })
-      .not("invite_token", "is", null)
       .is("user_id", null)
       .not("invite_sent_at", "is", null);
 
