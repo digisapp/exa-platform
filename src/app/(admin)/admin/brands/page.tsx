@@ -99,7 +99,10 @@ export default function AdminBrandsPage() {
         verified: verifiedFilter,
       });
       const res = await fetch(`/api/admin/brands?${params}`);
-      if (!res.ok) throw new Error("Failed to fetch brands");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `HTTP ${res.status}`);
+      }
       const data = await res.json();
       setBrands(data.brands || []);
       setTotal(data.total || 0);

@@ -29,37 +29,38 @@ export async function GET(request: NextRequest) {
 
     const adminClient = createServiceRoleClient();
 
+    const from = (page - 1) * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+
+    // Build the query — select * to avoid missing-column errors
     let query = adminClient
       .from("brands")
-      .select(
-        "id, company_name, contact_name, email, website, phone, username, logo_url, subscription_tier, is_verified, coin_balance, created_at",
-        { count: "exact" }
-      );
+      .select("*", { count: "exact" });
 
     if (search) {
       query = query.or(
         `company_name.ilike.%${search}%,email.ilike.%${search}%,contact_name.ilike.%${search}%`
-      );
+      ) as typeof query;
     }
 
     if (tierFilter !== "all") {
-      query = query.eq("subscription_tier", tierFilter);
+      query = query.eq("subscription_tier", tierFilter) as typeof query;
     }
 
     if (verifiedFilter === "verified") {
-      query = query.eq("is_verified", true);
+      query = query.eq("is_verified", true) as typeof query;
     } else if (verifiedFilter === "unverified") {
-      query = query.eq("is_verified", false);
+      query = query.eq("is_verified", false) as typeof query;
     }
-
-    const from = (page - 1) * PAGE_SIZE;
-    const to = from + PAGE_SIZE - 1;
 
     const { data: brands, count, error } = await query
       .order("created_at", { ascending: false })
       .range(from, to);
 
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase query error:", JSON.stringify(error));
+      throw new Error(error.message || JSON.stringify(error));
+    }
 
     return NextResponse.json({ brands: brands || [], total: count || 0 });
   } catch (error) {
