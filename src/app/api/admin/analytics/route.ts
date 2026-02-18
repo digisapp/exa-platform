@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
       supabase.rpc("get_top_pages", { start_date: startDateStr, limit_count: 10 }),
 
       // Top model profiles
-      supabase.rpc("get_top_model_profiles", { start_date: startDateStr, limit_count: 10 }),
+      supabase.rpc("get_top_model_profiles", { start_date: startDateStr, limit_count: 50 }),
 
       // Daily views
       supabase.rpc("get_daily_views", { start_date: startDateStr }),
