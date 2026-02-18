@@ -56,9 +56,9 @@ export async function POST(request: NextRequest) {
     const result = rpcData as Record<string, any>;
 
     if (unlockError) {
-      console.error("Unlock error:", unlockError);
+      console.error("Unlock error:", unlockError.message, unlockError.details, unlockError.hint, unlockError.code);
       return NextResponse.json(
-        { error: "Failed to unlock content" },
+        { error: unlockError.message || "Failed to unlock content" },
         { status: 500 }
       );
     }
