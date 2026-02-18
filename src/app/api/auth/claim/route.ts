@@ -202,22 +202,6 @@ export async function POST(request: NextRequest) {
       // Non-blocking
     }
 
-    // Send confirmation email (non-blocking)
-    try {
-      const origin = process.env.NEXT_PUBLIC_SITE_URL || "https://www.examodels.com";
-      await fetch(`${origin}/api/auth/send-confirmation`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: model.email,
-          displayName: model.first_name || normalizedUsername,
-          signupType: "model",
-        }),
-      });
-    } catch {
-      // Non-blocking
-    }
-
     return NextResponse.json({
       success: true,
       email: model.email,
