@@ -39,6 +39,7 @@ import {
   Loader2,
   MessageSquare,
   RefreshCw,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -227,6 +228,48 @@ export default function BrandOutreachPage() {
       toast.error("Failed to update status");
     } else {
       toast.success("Status updated");
+      loadContacts();
+    }
+  }
+
+  // Delete a single contact
+  async function deleteContact(contactId: string, brandName: string) {
+    if (!confirm(`Delete ${brandName} from outreach list?`)) return;
+
+    const { error } = await (supabase as any)
+      .from("brand_outreach_contacts")
+      .delete()
+      .eq("id", contactId);
+
+    if (error) {
+      toast.error("Failed to delete contact");
+    } else {
+      toast.success(`${brandName} deleted`);
+      setSelectedContacts((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(contactId);
+        return newSet;
+      });
+      loadContacts();
+    }
+  }
+
+  // Delete selected contacts
+  async function deleteSelectedContacts() {
+    if (selectedContacts.size === 0) return;
+    if (!confirm(`Delete ${selectedContacts.size} selected contact${selectedContacts.size > 1 ? "s" : ""}?`)) return;
+
+    const ids = Array.from(selectedContacts);
+    const { error } = await (supabase as any)
+      .from("brand_outreach_contacts")
+      .delete()
+      .in("id", ids);
+
+    if (error) {
+      toast.error("Failed to delete contacts");
+    } else {
+      toast.success(`${ids.length} contact${ids.length > 1 ? "s" : ""} deleted`);
+      setSelectedContacts(new Set());
       loadContacts();
     }
   }
@@ -569,6 +612,10 @@ www.examodels.com`;
               <Button variant="outline" onClick={() => setSelectedContacts(new Set())}>
                 Clear ({selectedContacts.size})
               </Button>
+              <Button variant="outline" className="text-red-500 hover:bg-red-500/10 border-red-500/50" onClick={deleteSelectedContacts}>
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete ({selectedContacts.size})
+              </Button>
               <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
                 <DialogTrigger asChild>
                   <Button className="bg-gradient-to-r from-pink-500 to-violet-500">
@@ -739,7 +786,7 @@ www.examodels.com`;
                     </div>
 
                     {/* Actions */}
-                    <div className="flex-shrink-0">
+                    <div className="flex-shrink-0 flex items-center gap-2">
                       <Select
                         value={contact.status}
                         onValueChange={(v) => updateContactStatus(contact.id, v)}
@@ -757,6 +804,14 @@ www.examodels.com`;
                           <SelectItem value="do_not_contact">Do Not Contact</SelectItem>
                         </SelectContent>
                       </Select>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-red-500"
+                        onClick={() => deleteContact(contact.id, contact.brand_name)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 </div>
