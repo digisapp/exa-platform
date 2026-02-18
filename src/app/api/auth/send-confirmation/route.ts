@@ -55,10 +55,18 @@ export async function POST(request: Request) {
     }
 
     // Send our custom email via Resend
+    // Extract token from action_link and build our own confirm URL
+    // This bypasses PKCE code_verifier requirement (server-generated links don't have one)
     if (data?.properties?.action_link) {
+      const actionUrl = new URL(data.properties.action_link);
+      const token_hash = actionUrl.searchParams.get("token");
+      const linkType = actionUrl.searchParams.get("type") || "magiclink";
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.examodels.com";
+      const confirmUrl = `${appUrl}/auth/confirm?token_hash=${token_hash}&type=${linkType}`;
+
       const emailResult = await sendEmailConfirmationEmail({
         to: normalizedEmail,
-        confirmUrl: data.properties.action_link,
+        confirmUrl,
         displayName: displayName || undefined,
         signupType: signupType || "fan",
       });

@@ -123,7 +123,16 @@ async function createModelApplication(
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
+  const token_hash = searchParams.get("token_hash");
   const type = searchParams.get("type");
+
+  // If token_hash is present, redirect to /auth/confirm which handles verifyOtp
+  if (token_hash) {
+    const confirmUrl = new URL(`${origin}/auth/confirm`);
+    confirmUrl.searchParams.set("token_hash", token_hash);
+    if (type) confirmUrl.searchParams.set("type", type);
+    return NextResponse.redirect(confirmUrl.toString());
+  }
 
   if (code) {
     const supabase = await createClient();
