@@ -261,7 +261,7 @@ export default async function ModelProfilePage({ params }: Props) {
 
   // Social media links
   const socialLinks = [
-    { platform: "instagram", username: model.instagram_handle || model.instagram_name, url: (model.instagram_url && model.instagram_url.includes("instagram.com")) ? model.instagram_url : `https://www.instagram.com/${(model.instagram_handle || model.instagram_name)?.replace(/^@/, '')}` },
+    { platform: "instagram", username: model.instagram_name, url: (model.instagram_url && model.instagram_url.includes("instagram.com")) ? model.instagram_url : `https://www.instagram.com/${model.instagram_name?.replace(/^@/, '')}` },
     { platform: "tiktok", username: model.tiktok_username, url: `https://tiktok.com/@${model.tiktok_username?.replace(/^@/, '')}` },
     { platform: "snapchat", username: model.snapchat_username, url: `https://snapchat.com/add/${model.snapchat_username?.replace(/^@/, '')}` },
     { platform: "x", username: model.x_username, url: `https://x.com/${model.x_username?.replace(/^@/, '')}` },
