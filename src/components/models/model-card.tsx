@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { MapPin, Instagram, Heart, Star } from "lucide-react";
+import { MapPin, Heart, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, memo } from "react";
 import { toast } from "sonner";
@@ -225,12 +225,7 @@ export const ModelCard = memo(function ModelCard({
                 </div>
               )}
 
-              {model.show_social_media && model.instagram_name && (
-                <div className="flex items-center gap-1 text-sm text-white/80">
-                  <Instagram className="h-3.5 w-3.5" />
-                  @{model.instagram_name}
-                </div>
-              )}
+              {/* Instagram shown on profile page, not on cards */}
 
               {model.height && model.show_measurements && (
                 <p className="text-sm text-white/80">{model.height}</p>
