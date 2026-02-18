@@ -8,6 +8,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect('https://www.examodels.com/free-comp-card', 301)
   }
 
+  // Vanity URL for Miami Swim Week 2026
+  if (request.nextUrl.pathname === '/swimweek') {
+    return NextResponse.redirect(new URL('/shows/miami-swim-week-2026', request.url), 301)
+  }
+
   return await updateSession(request)
 }
 

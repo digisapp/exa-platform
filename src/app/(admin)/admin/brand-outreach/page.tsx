@@ -268,7 +268,10 @@ export default function BrandOutreachPage() {
 
 I hope this message finds you well! I'm reaching out from EXA Models regarding an exciting opportunity for {{brand_name}} at Miami Swim Week 2026 (May 26-31).
 
-We're connecting premium swimwear and resort wear brands with our roster of professional runway models for the upcoming shows. Our models have walked for brands like Sports Illustrated, Maaji, and Beach Bunny.
+We're connecting premium brands with our roster of professional runway models for the upcoming shows. Our models have walked for brands like Sports Illustrated, Maaji, and Beach Bunny.
+
+You can view our Miami Swim Week 2026 showcase and available models here:
+www.examodels.com/swimweek
 
 We'd love to discuss how we can support {{brand_name}}'s presence at Swim Week, whether you're looking for:
 - Runway models for your show
