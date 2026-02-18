@@ -569,9 +569,17 @@ export default function ProfilePage() {
         shoe_size: model.shoe_size,
         hair_color: model.hair_color,
         eye_color: model.eye_color,
-        instagram_name: model.instagram_name,
+        instagram_name: model.instagram_name
+          ? model.instagram_name
+              .replace(/^https?:\/\/(www\.)?instagram\.com\//i, "")
+              .replace(/^(www\.)?instagram\.com\//i, "")
+              .replace(/^@/, "")
+              .split("/")[0]
+              .split("?")[0]
+              .trim()
+          : null,
         instagram_url: model.instagram_name
-          ? `https://www.instagram.com/${model.instagram_name.replace(/^@/, "").trim()}`
+          ? `https://www.instagram.com/${model.instagram_name.replace(/^https?:\/\/(www\.)?instagram\.com\//i, "").replace(/^(www\.)?instagram\.com\//i, "").replace(/^@/, "").split("/")[0].split("?")[0].trim()}`
           : null,
         tiktok_username: model.tiktok_username,
         snapchat_username: model.snapchat_username,
@@ -1385,7 +1393,18 @@ export default function ProfilePage() {
                   <Input
                     id="instagram"
                     value={model.instagram_name || ""}
-                    onChange={(e) => setModel({ ...model, instagram_name: e.target.value.replace("@", "") })}
+                    onChange={(e) => {
+                      let val = e.target.value.trim();
+                      // Strip full Instagram URLs to just the username
+                      val = val
+                        .replace(/^https?:\/\/(www\.)?instagram\.com\//i, "")
+                        .replace(/^(www\.)?instagram\.com\//i, "")
+                        .replace(/^@/, "")
+                        .split("/")[0]
+                        .split("?")[0]
+                        .trim();
+                      setModel({ ...model, instagram_name: val });
+                    }}
                     placeholder="username"
                   />
                 </div>
