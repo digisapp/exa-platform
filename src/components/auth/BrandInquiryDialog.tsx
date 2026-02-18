@@ -133,7 +133,7 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
       await fetch("/api/auth/auto-confirm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.toLowerCase().trim() }),
+        body: JSON.stringify({ userId: authData.user.id }),
       });
 
       // Sign in directly (now that email is confirmed)

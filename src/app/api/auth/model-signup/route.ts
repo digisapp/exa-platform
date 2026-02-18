@@ -11,6 +11,7 @@ import { z } from "zod";
 const modelSignupSchema = z.object({
   name: z.string().min(1, "Name is required").max(100, "Name is too long").trim(),
   email: z.string().email("Invalid email address").max(254, "Email is too long").toLowerCase().trim(),
+  userId: z.string().uuid().optional().nullable(),
   instagram_username: z.string().max(30, "Instagram username is too long").optional().nullable(),
   tiktok_username: z.string().max(24, "TikTok username is too long").optional().nullable(),
   phone: z.string().max(20, "Phone number is too long").optional().nullable(),
@@ -124,6 +125,7 @@ export async function POST(request: NextRequest) {
     const {
       name,
       email,
+      userId: clientUserId,
       instagram_username,
       tiktok_username,
       phone,
@@ -183,12 +185,21 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Check if email already exists in auth
-    // Use generateLink as a probe - it only succeeds for existing users
-    const { data: existingUsers } = await adminClient.auth.admin.listUsers({ perPage: 1000 });
-    const existingUser = existingUsers?.users?.find(
-      (u) => u.email?.toLowerCase() === normalizedEmail
-    );
+    // Check if user already exists in auth
+    // Use getUserById if clientUserId provided (reliable), otherwise fall back to listUsers
+    let existingUser: { id: string; email?: string; email_confirmed_at?: string | null } | null = null;
+    if (clientUserId) {
+      const { data: userData } = await adminClient.auth.admin.getUserById(clientUserId);
+      if (userData?.user && userData.user.email?.toLowerCase() === normalizedEmail) {
+        existingUser = userData.user;
+      }
+    }
+    if (!existingUser) {
+      const { data: existingUsers } = await adminClient.auth.admin.listUsers({ perPage: 1000 });
+      existingUser = existingUsers?.users?.find(
+        (u) => u.email?.toLowerCase() === normalizedEmail
+      ) || null;
+    }
 
     if (existingUser) {
       // Auto-confirm email (no confirmation email needed)

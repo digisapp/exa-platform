@@ -89,6 +89,7 @@ export default function SignupPage() {
         body: JSON.stringify({
           name: name,
           email: email.toLowerCase().trim(),
+          userId: authData.user.id,
           instagram_username: instagram.trim().replace("@", "") || null,
           tiktok_username: tiktok.trim().replace("@", "") || null,
         }),

@@ -122,7 +122,7 @@ export default function FanSignupPage() {
           await fetch("/api/auth/auto-confirm", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: email.toLowerCase().trim() }),
+            body: JSON.stringify({ userId: authData.user.id }),
           });
 
           // Step 3: Sign in directly (email is auto-confirmed)
