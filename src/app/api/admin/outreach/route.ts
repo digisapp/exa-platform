@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 const PAGE_SIZE = 50;
 
 const VALID_STATUSES = ["new", "contacted", "responded", "interested", "not_interested", "converted", "do_not_contact"];
-const VALID_CATEGORIES = ["swimwear", "resort_wear", "luxury", "fashion"];
+const VALID_CATEGORIES = ["swimwear", "resort_wear", "luxury", "fashion", "lingerie", "activewear", "accessories", "beauty"];
 
 async function isAdmin(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
   const { data: actor } = await supabase

@@ -420,8 +420,11 @@ www.examodels.com`;
                       <SelectContent>
                         <SelectItem value="swimwear">Swimwear</SelectItem>
                         <SelectItem value="resort_wear">Resort Wear</SelectItem>
+                        <SelectItem value="lingerie">Lingerie</SelectItem>
                         <SelectItem value="luxury">Luxury</SelectItem>
+                        <SelectItem value="fashion">Fashion</SelectItem>
                         <SelectItem value="activewear">Activewear</SelectItem>
+                        <SelectItem value="beauty">Beauty</SelectItem>
                         <SelectItem value="accessories">Accessories</SelectItem>
                       </SelectContent>
                     </Select>
@@ -548,8 +551,12 @@ www.examodels.com`;
                 <SelectItem value="all">All Categories</SelectItem>
                 <SelectItem value="swimwear">Swimwear</SelectItem>
                 <SelectItem value="resort_wear">Resort Wear</SelectItem>
+                <SelectItem value="lingerie">Lingerie</SelectItem>
                 <SelectItem value="luxury">Luxury</SelectItem>
+                <SelectItem value="fashion">Fashion</SelectItem>
                 <SelectItem value="activewear">Activewear</SelectItem>
+                <SelectItem value="beauty">Beauty</SelectItem>
+                <SelectItem value="accessories">Accessories</SelectItem>
               </SelectContent>
             </Select>
           </div>
