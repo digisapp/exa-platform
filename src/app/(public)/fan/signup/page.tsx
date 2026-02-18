@@ -98,6 +98,7 @@ export default function FanSignupPage() {
           return;
         }
 
+        // Step 1: Create auth account
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email,
           password,
@@ -107,35 +108,47 @@ export default function FanSignupPage() {
               display_name: displayName.trim() || email.split("@")[0],
               referrer_model_id: referrerModelId,
             },
-            emailRedirectTo: `${window.location.origin}/auth/callback?type=signup`,
           },
         });
 
         if (authError) throw authError;
 
         if (authData.user) {
-          // Check if user already exists (identities will be empty for existing unconfirmed users)
           if (authData.user.identities && authData.user.identities.length === 0) {
-            throw new Error("This email is already registered. Please sign in or check your email for a confirmation link.");
+            throw new Error("This email is already registered. Please sign in instead.");
           }
 
-          // Send our custom confirmation email via Resend (more reliable than Supabase SMTP)
-          try {
-            await fetch("/api/auth/send-confirmation", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                email,
-                displayName: displayName.trim() || email.split("@")[0],
-                signupType: "fan",
-              }),
-            });
-          } catch {
-            // Non-blocking - Supabase's email is a backup
+          // Step 2: Auto-confirm email (no verification step)
+          await fetch("/api/auth/auto-confirm", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: email.toLowerCase().trim() }),
+          });
+
+          // Step 3: Sign in directly (email is auto-confirmed)
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+
+          if (signInError) {
+            toast.success("Account created! Please sign in.");
+            window.location.href = "/signin";
+            return;
           }
 
-          // Redirect to email confirmation page
-          window.location.href = `/confirm-email?email=${encodeURIComponent(email)}&type=fan`;
+          // Step 4: Create fan profile (now authenticated)
+          await fetch("/api/auth/create-fan", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              displayName: displayName.trim() || email.split("@")[0],
+              referrerModelId,
+            }),
+          });
+
+          toast.success("Welcome to EXA! You got 10 free coins!");
+          window.location.href = "/dashboard";
         }
       }
     } catch (error: unknown) {

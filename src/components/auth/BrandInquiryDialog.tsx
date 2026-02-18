@@ -129,7 +129,20 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
         throw new Error("Failed to create account");
       }
 
-      // Use API route to create actor and brand profile (bypasses RLS)
+      // Auto-confirm email (no verification step needed)
+      await fetch("/api/auth/auto-confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.toLowerCase().trim() }),
+      });
+
+      // Sign in directly (now that email is confirmed)
+      await supabase.auth.signInWithPassword({
+        email: email.toLowerCase().trim(),
+        password,
+      });
+
+      // Use API route to create actor and brand profile (now authenticated)
       const res = await fetch("/api/auth/create-brand", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -145,23 +158,8 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
         throw new Error(data.error || "Failed to create brand profile");
       }
 
-      // Send our custom confirmation email via Resend (more reliable than Supabase SMTP)
-      try {
-        await fetch("/api/auth/send-confirmation", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: email.toLowerCase().trim(),
-            displayName: contactName.trim(),
-            signupType: "brand",
-          }),
-        });
-      } catch {
-        // Non-blocking
-      }
-
       setSubmitted(true);
-      toast.success("Application submitted!");
+      toast.success("Account created!");
 
     } catch (error: unknown) {
       const errMessage = error instanceof Error ? error.message : "Something went wrong";

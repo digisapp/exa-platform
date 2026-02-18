@@ -54,8 +54,8 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
-      // Create the auth account with metadata for post-confirmation profile creation
-      const { data, error } = await supabase.auth.signUp({
+      // Step 1: Create auth account (client-side, with user's chosen password)
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: email.toLowerCase().trim(),
         password,
         options: {
@@ -65,66 +65,54 @@ export default function SignupPage() {
             instagram_username: instagram.replace("@", "").trim(),
             tiktok_username: tiktok.replace("@", "").trim(),
           },
-          emailRedirectTo: `${window.location.origin}/auth/callback?type=signup`,
         },
       });
 
-      if (error) {
-        // Provide better error messages
-        if (error.message.includes("already registered") || error.message.includes("already been registered")) {
+      if (authError) {
+        if (authError.message.includes("already registered") || authError.message.includes("already been registered")) {
           throw new Error("This email is already registered. Please sign in instead.");
         }
-        if (error.message.includes("Database error")) {
-          throw new Error("This email may already be registered. Try signing in, or use a different email.");
-        }
-        if (error.message.includes("rate limit")) {
+        if (authError.message.includes("rate limit")) {
           throw new Error("Too many attempts. Please wait a moment and try again.");
         }
-        throw error;
+        throw authError;
       }
 
-      if (data.user) {
-        // Check if user already exists (identities will be empty for existing unconfirmed users)
-        if (data.user.identities && data.user.identities.length === 0) {
-          throw new Error("This email is already registered. Please sign in or check your email for a confirmation link.");
-        }
-
-        // Create model application immediately so the lead is never lost
-        // (even if confirmation email goes to spam, admin sees the application)
-        try {
-          await fetch("/api/auth/model-signup", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              name: name,
-              email: email.toLowerCase().trim(),
-              instagram_username: instagram.trim().replace("@", "") || null,
-              tiktok_username: tiktok.trim().replace("@", "") || null,
-            }),
-          });
-        } catch {
-          // Non-blocking — application creation is best-effort here
-          // The callback handler is a fallback
-        }
-
-        // Send our custom confirmation email via Resend (more reliable than Supabase SMTP)
-        try {
-          await fetch("/api/auth/send-confirmation", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email: email.toLowerCase().trim(),
-              displayName: displayName.trim() || instagram.replace("@", "").trim() || tiktok.replace("@", "").trim() || email.split("@")[0],
-              signupType: "model",
-            }),
-          });
-        } catch {
-          // Non-blocking - Supabase's email is a backup
-        }
-
-        // Redirect to email confirmation page
-        window.location.href = `/confirm-email?email=${encodeURIComponent(email.toLowerCase().trim())}&type=model`;
+      if (!authData.user) {
+        throw new Error("Failed to create account");
       }
+
+      // Step 2: Create application + auto-confirm via API
+      const signupRes = await fetch("/api/auth/model-signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name,
+          email: email.toLowerCase().trim(),
+          instagram_username: instagram.trim().replace("@", "") || null,
+          tiktok_username: tiktok.trim().replace("@", "") || null,
+        }),
+      });
+
+      if (!signupRes.ok) {
+        const signupData = await signupRes.json();
+        throw new Error(signupData.error || "Failed to create account");
+      }
+
+      // Step 3: Sign in directly (email is auto-confirmed by the API)
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: email.toLowerCase().trim(),
+        password,
+      });
+
+      if (signInError) {
+        toast.success("Account created! Please sign in.");
+        window.location.href = "/signin";
+        return;
+      }
+
+      // Step 4: Redirect to pending approval
+      window.location.href = "/pending-approval";
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to create account";
       toast.error(message);

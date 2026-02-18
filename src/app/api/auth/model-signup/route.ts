@@ -191,6 +191,13 @@ export async function POST(request: NextRequest) {
     );
 
     if (existingUser) {
+      // Auto-confirm email (no confirmation email needed)
+      if (!existingUser.email_confirmed_at) {
+        await adminClient.auth.admin.updateUserById(existingUser.id, {
+          email_confirm: true,
+        });
+      }
+
       // User already exists - check if they have a pending application
       const { data: existingApp } = await adminClient
         .from("model_applications")
@@ -222,7 +229,7 @@ export async function POST(request: NextRequest) {
       }
 
       // User exists but no application - create one
-      const wasImported = await createFanAndApplication(
+      await createFanAndApplication(
         existingUser.id,
         normalizedEmail,
         name.trim(),
@@ -235,10 +242,7 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        message: wasImported
-          ? "Welcome back! Please check your email to confirm your account."
-          : "Application submitted! Please check your email to confirm your account.",
-        isImported: wasImported,
+        message: "Application submitted!",
       });
     }
 
@@ -278,14 +282,23 @@ export async function POST(request: NextRequest) {
 
     // Check for duplicate signup (empty identities means existing unconfirmed user)
     if (authData.user.identities && authData.user.identities.length === 0) {
+      // Auto-confirm the existing unconfirmed user so they can sign in
+      await adminClient.auth.admin.updateUserById(authData.user.id, {
+        email_confirm: true,
+      });
       return NextResponse.json(
-        { error: "This email is already registered. Please check your email for confirmation link." },
+        { error: "This email is already registered. Please sign in instead." },
         { status: 400 }
       );
     }
 
-    // Step 2: Create fan profile and application using admin client
-    const wasImported = await createFanAndApplication(
+    // Step 2: Auto-confirm email immediately (no confirmation email needed)
+    await adminClient.auth.admin.updateUserById(authData.user.id, {
+      email_confirm: true,
+    });
+
+    // Step 3: Create fan profile and application using admin client
+    await createFanAndApplication(
       authData.user.id,
       normalizedEmail,
       name.trim(),
@@ -296,49 +309,9 @@ export async function POST(request: NextRequest) {
       height
     );
 
-    // Step 3: Send custom confirmation email via Resend (if not imported - imported models get password reset email)
-    if (!wasImported) {
-      try {
-        const origin = process.env.NEXT_PUBLIC_SITE_URL || "https://www.examodels.com";
-        const redirectUrl = `${origin}/auth/callback?type=signup`;
-
-        // Generate confirmation link
-        const { data: linkData } = await adminClient.auth.admin.generateLink({
-          type: "magiclink",
-          email: normalizedEmail,
-          options: {
-            redirectTo: redirectUrl,
-          },
-        });
-
-        // Extract token from action_link and build our own confirm URL
-        // This bypasses PKCE code_verifier requirement (server-generated links don't have one)
-        if (linkData?.properties?.action_link) {
-          const actionUrl = new URL(linkData.properties.action_link);
-          const token_hash = actionUrl.searchParams.get("token");
-          const linkType = actionUrl.searchParams.get("type") || "magiclink";
-          const confirmUrl = `${origin}/auth/confirm?token_hash=${token_hash}&type=${linkType}`;
-
-          const { sendEmailConfirmationEmail } = await import("@/lib/email");
-          await sendEmailConfirmationEmail({
-            to: normalizedEmail,
-            confirmUrl,
-            displayName: name.trim(),
-            signupType: "model",
-          });
-        }
-      } catch (emailError) {
-        // Non-blocking - Supabase's email is a backup
-        console.error("Failed to send custom confirmation email:", emailError);
-      }
-    }
-
     return NextResponse.json({
       success: true,
-      message: wasImported
-        ? "Welcome back! Please check your email to confirm your account."
-        : "Application submitted! Please check your email to confirm your account.",
-      isImported: wasImported,
+      message: "Application submitted!",
     });
 
   } catch (error) {
