@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
             product_data: {
               name: `Models Creator House - ${gig.title}`,
               description: `${dateRange}${location ? ` • ${location}` : ""} • Your spot at the Creator House`,
-              images: [`${process.env.NEXT_PUBLIC_APP_URL || "https://www.examodels.com"}/og-image.png`],
+              images: [`${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || "https://www.examodels.com"}/og-image.png`],
             },
             unit_amount: CREATOR_HOUSE_PRICE_CENTS,
           },
@@ -107,8 +107,8 @@ export async function POST(request: NextRequest) {
         },
       ],
       mode: "payment",
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/gigs/${gig.slug}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/gigs/${gig.slug}?payment=cancelled`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL}/gigs/${gig.slug}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL}/gigs/${gig.slug}?payment=cancelled`,
       customer_email: model.email || user.email,
       metadata: {
         type: "creator_house_payment",
@@ -136,10 +136,11 @@ export async function POST(request: NextRequest) {
       .eq("id", applicationId);
 
     return NextResponse.json({ checkoutUrl: session.url });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Creator House checkout error:", error);
+    const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { error: "Failed to create checkout session" },
+      { error: `Failed to create checkout session: ${message}` },
       { status: 500 }
     );
   }

@@ -36,7 +36,7 @@ import { format } from "date-fns";
 export const metadata: Metadata = {
   title: "EXA Travel | A New Country Every Month — Model Travel Community",
   description:
-    "Join the EXA Travel community. A new country every month. 8 models per trip. Share a luxury villa Thursday–Monday, create content, and connect with models worldwide. $1,000 for 5 days / 4 nights including villa and meals.",
+    "Join the EXA Travel community. A new country every month. 8 models per trip. Share a luxury villa Thursday–Monday, create content, and connect with models worldwide. 5 days / 4 nights including villa and meals.",
   robots: { index: true, follow: true },
 };
 
@@ -509,7 +509,7 @@ export default async function TravelPage() {
                 What&apos;s Included
               </h2>
               <p className="text-muted-foreground max-w-xl mx-auto">
-                $1,000 per model for 5 days / 4 nights — here&apos;s what&apos;s
+                5 days / 4 nights — here&apos;s what&apos;s
                 covered and what you&apos;ll need to bring
               </p>
             </div>
@@ -519,7 +519,7 @@ export default async function TravelPage() {
               <div>
                 <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
                   <CheckCircle className="h-5 w-5 text-green-500" />
-                  Included in $1,000
+                  Included
                 </h3>
                 <div className="space-y-3">
                   {[
@@ -613,20 +613,14 @@ export default async function TravelPage() {
                   ))}
                 </div>
 
-                {/* Price Highlight */}
+                {/* CTA */}
                 <div className="mt-6 p-5 rounded-xl bg-gradient-to-br from-pink-500/10 to-violet-500/10 border border-pink-500/20">
-                  <div className="flex items-baseline gap-2 mb-2">
-                    <span className="text-3xl font-bold">$1,000</span>
-                    <span className="text-muted-foreground text-sm">
-                      / model / 5 days
-                    </span>
-                  </div>
-                  <p className="text-muted-foreground text-sm">
+                  <p className="text-muted-foreground text-sm mb-4">
                     Villa + all meals + coordination. The most affordable way to
                     travel the world and create content as a model.
                   </p>
                   <Button
-                    className="mt-4 w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
+                    className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
                     asChild
                   >
                     <Link href="#trips">
@@ -666,7 +660,7 @@ export default async function TravelPage() {
                   Browse our upcoming destinations and pick the trip dates that
                   work for you. Each trip runs Thursday to Monday (5 days / 4
                   nights). Apply through the trip page, and once accepted
-                  you&apos;ll receive payment instructions. Your $1,000 covers
+                  you&apos;ll receive payment details. The trip fee covers
                   the villa and all meals. You book your own flight.
                 </AccordionContent>
               </AccordionItem>
@@ -706,10 +700,10 @@ export default async function TravelPage() {
                 className="glass-card rounded-xl border px-5"
               >
                 <AccordionTrigger className="text-left font-medium hover:no-underline">
-                  What exactly does the $1,000 cover?
+                  What does the trip fee cover?
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">
-                  Your $1,000 covers 4 nights (Thursday through Monday) at a
+                  The trip fee covers 4 nights (Thursday through Monday) at a
                   luxury shared villa and all meals (breakfast, lunch, dinner).
                   It also includes trip coordination, local guides, and organized
                   activities. You are responsible for booking your own flight and
