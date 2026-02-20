@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2, User, Lock, DollarSign, Camera, BarChart3, Trash2, AlertTriangle, Building2, Globe, Users, MessageCircle, LogOut } from "lucide-react";
+import { Loader2, User, Lock, DollarSign, Camera, BarChart3, Trash2, AlertTriangle, Building2, Globe, Users, MessageCircle, LogOut, Handshake } from "lucide-react";
 import { LogoutButton } from "@/components/auth/logout-button";
 import Image from "next/image";
 import { formatDistanceToNow } from "date-fns";
@@ -613,6 +613,12 @@ export default function ProfilePage() {
         allow_video_call: (model as any).allow_video_call ?? true,
         allow_voice_call: (model as any).allow_voice_call ?? true,
         allow_tips: (model as any).allow_tips ?? true,
+        // Brand collab fields
+        open_to_collabs: (model as any).open_to_collabs ?? false,
+        avg_instagram_impressions: (model as any).avg_instagram_impressions || null,
+        avg_tiktok_views: (model as any).avg_tiktok_views || null,
+        instagram_collab_rate: (model as any).instagram_collab_rate || null,
+        tiktok_collab_rate: (model as any).tiktok_collab_rate || null,
         updated_at: new Date().toISOString(),
       };
 
@@ -1148,6 +1154,10 @@ export default function ProfilePage() {
           <TabsTrigger value="rates">
             <DollarSign className="h-4 w-4 mr-2" />
             Rates
+          </TabsTrigger>
+          <TabsTrigger value="collabs">
+            <Handshake className="h-4 w-4 mr-2" />
+            Collabs
           </TabsTrigger>
           <TabsTrigger value="followers" onClick={loadFollowers}>
             <Users className="h-4 w-4 mr-2" />
@@ -2133,6 +2143,134 @@ export default function ProfilePage() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* ═══ COLLABS TAB ═══ */}
+        <TabsContent value="collabs" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Handshake className="h-5 w-5 text-pink-500" />
+                Brand Collaborations
+              </CardTitle>
+              <CardDescription>
+                Let brands know you&apos;re open to sponsored posts and content deals. Your average impressions help brands estimate their reach.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Open to collabs toggle */}
+              <div className="flex items-center justify-between gap-3 p-4 rounded-lg border bg-gradient-to-r from-pink-500/10 to-violet-500/10">
+                <div className="min-w-0">
+                  <Label className="text-base font-semibold">Open to Brand Collabs</Label>
+                  <p className="text-sm text-muted-foreground">Show brands that you&apos;re available for sponsored content deals</p>
+                </div>
+                <Switch
+                  checked={(model as any).open_to_collabs ?? false}
+                  onCheckedChange={(v) => setModel({ ...model, open_to_collabs: v } as any)}
+                />
+              </div>
+
+              {(model as any).open_to_collabs && (
+                <>
+                  {/* Instagram stats */}
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Instagram</h4>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="avg_ig_impressions">Avg Impressions per Post</Label>
+                        <Input
+                          id="avg_ig_impressions"
+                          type="number"
+                          inputMode="numeric"
+                          min="0"
+                          placeholder="e.g. 25000"
+                          value={(model as any).avg_instagram_impressions || ""}
+                          onChange={(e) => setModel({ ...model, avg_instagram_impressions: parseInt(e.target.value) || null } as any)}
+                        />
+                        <p className="text-xs text-muted-foreground">Find this in Instagram Insights → Reach/Impressions</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="ig_collab_rate">Your Rate per Sponsored Post ($)</Label>
+                        <Input
+                          id="ig_collab_rate"
+                          type="number"
+                          inputMode="numeric"
+                          min="0"
+                          placeholder="e.g. 300"
+                          value={(model as any).instagram_collab_rate || ""}
+                          onChange={(e) => setModel({ ...model, instagram_collab_rate: parseInt(e.target.value) || null } as any)}
+                        />
+                        <p className="text-xs text-muted-foreground">Flat fee you charge for a sponsored Instagram post/Reel</p>
+                      </div>
+                    </div>
+                    {(model as any).avg_instagram_impressions && (model as any).instagram_collab_rate && (
+                      <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-sm">
+                        <span className="font-medium text-green-400">Your Instagram CPM: </span>
+                        <span className="text-green-300">
+                          ${(((model as any).instagram_collab_rate / (model as any).avg_instagram_impressions) * 1000).toFixed(2)}
+                        </span>
+                        <span className="text-muted-foreground"> per 1,000 impressions</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* TikTok stats */}
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">TikTok</h4>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="avg_tiktok_views">Avg Views per Video</Label>
+                        <Input
+                          id="avg_tiktok_views"
+                          type="number"
+                          inputMode="numeric"
+                          min="0"
+                          placeholder="e.g. 50000"
+                          value={(model as any).avg_tiktok_views || ""}
+                          onChange={(e) => setModel({ ...model, avg_tiktok_views: parseInt(e.target.value) || null } as any)}
+                        />
+                        <p className="text-xs text-muted-foreground">Find this in TikTok Analytics → Content → Video Views</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="tiktok_collab_rate">Your Rate per Sponsored TikTok ($)</Label>
+                        <Input
+                          id="tiktok_collab_rate"
+                          type="number"
+                          inputMode="numeric"
+                          min="0"
+                          placeholder="e.g. 250"
+                          value={(model as any).tiktok_collab_rate || ""}
+                          onChange={(e) => setModel({ ...model, tiktok_collab_rate: parseInt(e.target.value) || null } as any)}
+                        />
+                        <p className="text-xs text-muted-foreground">Flat fee you charge for a sponsored TikTok video</p>
+                      </div>
+                    </div>
+                    {(model as any).avg_tiktok_views && (model as any).tiktok_collab_rate && (
+                      <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-sm">
+                        <span className="font-medium text-green-400">Your TikTok CPM: </span>
+                        <span className="text-green-300">
+                          ${(((model as any).tiktok_collab_rate / (model as any).avg_tiktok_views) * 1000).toFixed(2)}
+                        </span>
+                        <span className="text-muted-foreground"> per 1,000 views</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="p-3 rounded-lg bg-muted/50 text-xs text-muted-foreground">
+                    <strong className="text-foreground">CPM formula:</strong> (Your Rate ÷ Avg Impressions) × 1,000. Industry average is $5–$20 CPM depending on your niche.
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          <Button
+            onClick={handleSave}
+            disabled={saving}
+            className="w-full bg-gradient-to-r from-pink-500 to-violet-500"
+          >
+            {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : "Save Changes"}
+          </Button>
         </TabsContent>
 
         <TabsContent value="privacy" className="space-y-6">

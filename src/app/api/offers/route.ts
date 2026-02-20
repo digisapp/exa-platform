@@ -18,6 +18,7 @@ const createOfferSchema = z.object({
   compensation_type: z.enum(["paid", "tfp", "perks", "negotiable"]).default("perks"),
   compensation_amount: z.number().min(0, "Amount cannot be negative").optional().nullable(),
   compensation_description: z.string().max(500, "Compensation description is too long").optional().nullable(),
+  deliverables: z.string().max(500, "Deliverables is too long").optional().nullable(),
   spots: z.number().int("Spots must be a whole number").min(1, "At least 1 spot required").max(1000, "Maximum 1000 spots").default(1),
   // Recurring offer fields
   is_recurring: z.boolean().default(false),
@@ -232,6 +233,7 @@ export async function POST(request: NextRequest) {
       compensation_type,
       compensation_amount,
       compensation_description,
+      deliverables,
       spots,
       is_recurring,
       recurrence_pattern,
@@ -273,6 +275,7 @@ export async function POST(request: NextRequest) {
         compensation_type: compensation_type || "perks",
         compensation_amount: compensation_amount || 0,
         compensation_description,
+        deliverables: deliverables || null,
         spots: spots || 1,
         status: "open",
         // Recurring offer fields

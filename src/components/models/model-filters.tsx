@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Search, X, Loader2 } from "lucide-react";
+import { Search, X, Loader2, Handshake } from "lucide-react";
 import { useCallback, useState, useEffect, useRef } from "react";
 
 const US_STATES = [
@@ -134,7 +134,8 @@ export function ModelFilters() {
     router.push("/models");
   };
 
-  const hasFilters = searchParams.get("q") || searchParams.get("state") || searchParams.get("focus") || searchParams.get("height");
+  const collabsOnly = searchParams.get("collabs") === "1";
+  const hasFilters = searchParams.get("q") || searchParams.get("state") || searchParams.get("focus") || searchParams.get("height") || searchParams.get("collabs");
 
   return (
     <div className="space-y-4">
@@ -219,6 +220,15 @@ export function ModelFilters() {
             ))}
           </SelectContent>
         </Select>
+
+        <Button
+          variant={collabsOnly ? "default" : "outline"}
+          onClick={() => updateParams("collabs", collabsOnly ? null : "1")}
+          className={collabsOnly ? "bg-gradient-to-r from-pink-500 to-violet-500 text-white border-0" : ""}
+        >
+          <Handshake className="h-4 w-4 mr-2" />
+          Open to Collabs
+        </Button>
 
         {hasFilters && (
           <Button variant="ghost" onClick={clearFilters} className="text-muted-foreground">

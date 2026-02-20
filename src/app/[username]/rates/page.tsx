@@ -16,6 +16,9 @@ import {
   Clock,
   CheckCircle2,
   EyeOff,
+  Handshake,
+  Instagram,
+  TrendingUp,
 } from "lucide-react";
 import { ClickableRateCard } from "@/components/bookings/ClickableRateCard";
 
@@ -413,6 +416,67 @@ export default async function ModelRatesPage({ params }: Props) {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Brand Collab Rates */}
+        {model.open_to_collabs && (model.instagram_collab_rate || model.tiktok_collab_rate) && (
+          <div className="mt-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Handshake className="h-5 w-5 text-pink-400" />
+              <h3 className="text-lg font-semibold text-white">Brand Collab Rates</h3>
+              <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 font-medium">Open to Collabs</span>
+            </div>
+            <div className="space-y-3">
+              {model.instagram_collab_rate && (
+                <div className="profile-card rounded-2xl p-5">
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-3">
+                      <Instagram className="h-5 w-5 text-pink-400" />
+                      <div>
+                        <p className="text-white font-medium">Instagram</p>
+                        {model.avg_instagram_impressions && (
+                          <p className="text-sm text-white/50">~{model.avg_instagram_impressions.toLocaleString()} avg impressions</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xl font-bold text-pink-400">${model.instagram_collab_rate.toLocaleString()}</p>
+                      <p className="text-xs text-white/50">per post</p>
+                      {model.avg_instagram_impressions && model.instagram_collab_rate && (
+                        <p className="text-xs text-white/40 mt-1">
+                          CPM ${((model.instagram_collab_rate / model.avg_instagram_impressions) * 1000).toFixed(2)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {model.tiktok_collab_rate && (
+                <div className="profile-card rounded-2xl p-5">
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-3">
+                      <TrendingUp className="h-5 w-5 text-violet-400" />
+                      <div>
+                        <p className="text-white font-medium">TikTok</p>
+                        {model.avg_tiktok_views && (
+                          <p className="text-sm text-white/50">~{model.avg_tiktok_views.toLocaleString()} avg views</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xl font-bold text-violet-400">${model.tiktok_collab_rate.toLocaleString()}</p>
+                      <p className="text-xs text-white/50">per post</p>
+                      {model.avg_tiktok_views && model.tiktok_collab_rate && (
+                        <p className="text-xs text-white/40 mt-1">
+                          CPM ${((model.tiktok_collab_rate / model.avg_tiktok_views) * 1000).toFixed(2)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
 

@@ -46,6 +46,7 @@ export function SendOfferDialog({ campaignId, campaignName, modelCount }: SendOf
     compensation_type: "perks",
     compensation_amount: 0,
     compensation_description: "",
+    deliverables: "",
     spots: 1,
     // Recurring offer fields
     is_recurring: false,
@@ -105,6 +106,7 @@ export function SendOfferDialog({ campaignId, campaignName, modelCount }: SendOf
         compensation_type: "perks",
         compensation_amount: 0,
         compensation_description: "",
+        deliverables: "",
         spots: 1,
         is_recurring: false,
         recurrence_pattern: "weekly",
@@ -260,6 +262,17 @@ export function SendOfferDialog({ campaignId, campaignName, modelCount }: SendOf
               }
               value={formData.compensation_description}
               onChange={(e) => setFormData({ ...formData, compensation_description: e.target.value })}
+            />
+          </div>
+
+          {/* Deliverables */}
+          <div className="space-y-2">
+            <Label htmlFor="deliverables">Deliverables <span className="text-muted-foreground font-normal">(optional)</span></Label>
+            <Input
+              id="deliverables"
+              placeholder="e.g., 1 Instagram Reel + 2 Stories + 1 TikTok"
+              value={formData.deliverables}
+              onChange={(e) => setFormData({ ...formData, deliverables: e.target.value })}
             />
           </div>
 

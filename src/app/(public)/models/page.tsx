@@ -30,6 +30,7 @@ interface SearchParams {
   sort?: string;
   focus?: string;
   height?: string;
+  collabs?: string;
   page?: string;
 }
 
@@ -85,6 +86,11 @@ export default async function ModelsPage({
   // Filter by focus
   if (params.focus) {
     query = query.contains("focus_tags", [params.focus]);
+  }
+
+  // Filter by open to collabs
+  if (params.collabs === "1") {
+    query = query.eq("open_to_collabs", true);
   }
 
   // Filter by height range
