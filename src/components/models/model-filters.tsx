@@ -65,6 +65,8 @@ const SORT_OPTIONS = [
   { value: "newest", label: "Newest" },
   { value: "followers", label: "Most Followers" },
   { value: "name", label: "Name A-Z" },
+  { value: "cpm_low", label: "Lowest CPM" },
+  { value: "cpm_high", label: "Highest CPM" },
 ];
 
 const HEIGHT_RANGES = [
@@ -135,7 +137,7 @@ export function ModelFilters() {
   };
 
   const collabsOnly = searchParams.get("collabs") === "1";
-  const hasFilters = searchParams.get("q") || searchParams.get("state") || searchParams.get("focus") || searchParams.get("height") || searchParams.get("collabs");
+  const hasFilters = searchParams.get("q") || searchParams.get("state") || searchParams.get("focus") || searchParams.get("height") || searchParams.get("collabs") || searchParams.get("platform") || searchParams.get("cpm") || searchParams.get("engagement");
 
   return (
     <div className="space-y-4">
@@ -223,7 +225,18 @@ export function ModelFilters() {
 
         <Button
           variant={collabsOnly ? "default" : "outline"}
-          onClick={() => updateParams("collabs", collabsOnly ? null : "1")}
+          onClick={() => {
+            const params = new URLSearchParams(searchParams.toString());
+            if (collabsOnly) {
+              params.delete("collabs");
+              params.delete("platform");
+              params.delete("cpm");
+              params.delete("engagement");
+            } else {
+              params.set("collabs", "1");
+            }
+            router.push(`/models?${params.toString()}`);
+          }}
           className={collabsOnly ? "bg-gradient-to-r from-pink-500 to-violet-500 text-white border-0" : ""}
         >
           <Handshake className="h-4 w-4 mr-2" />
@@ -237,6 +250,62 @@ export function ModelFilters() {
           </Button>
         )}
       </div>
+
+      {/* Collab sub-filters — only visible when Open to Collabs is active */}
+      {collabsOnly && (
+        <div className="flex flex-wrap gap-3 p-3 rounded-lg border border-pink-500/20 bg-pink-500/5">
+          <span className="text-xs text-pink-400 font-medium self-center mr-1">Collab filters:</span>
+
+          {/* Platform */}
+          <Select
+            value={searchParams.get("platform") || "all"}
+            onValueChange={(v) => updateParams("platform", v === "all" ? null : v)}
+          >
+            <SelectTrigger className="w-[150px] h-8 text-sm">
+              <SelectValue placeholder="All Platforms" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Platforms</SelectItem>
+              <SelectItem value="instagram">Instagram</SelectItem>
+              <SelectItem value="tiktok">TikTok</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* CPM range */}
+          <Select
+            value={searchParams.get("cpm") || "all"}
+            onValueChange={(v) => updateParams("cpm", v === "all" ? null : v)}
+          >
+            <SelectTrigger className="w-[160px] h-8 text-sm">
+              <SelectValue placeholder="Any CPM" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Any CPM</SelectItem>
+              <SelectItem value="under5">Under $5 CPM</SelectItem>
+              <SelectItem value="5to15">$5 – $15 CPM</SelectItem>
+              <SelectItem value="15to30">$15 – $30 CPM</SelectItem>
+              <SelectItem value="30plus">$30+ CPM</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Engagement rate */}
+          <Select
+            value={searchParams.get("engagement") || "all"}
+            onValueChange={(v) => updateParams("engagement", v === "all" ? null : v)}
+          >
+            <SelectTrigger className="w-[175px] h-8 text-sm">
+              <SelectValue placeholder="Any Engagement" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Any Engagement</SelectItem>
+              <SelectItem value="1">1%+ Engagement</SelectItem>
+              <SelectItem value="3">3%+ Engagement</SelectItem>
+              <SelectItem value="5">5%+ Engagement</SelectItem>
+              <SelectItem value="10">10%+ Engagement</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
     </div>
   );
 }

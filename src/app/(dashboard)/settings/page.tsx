@@ -619,6 +619,14 @@ export default function ProfilePage() {
         avg_tiktok_views: (model as any).avg_tiktok_views || null,
         instagram_collab_rate: (model as any).instagram_collab_rate || null,
         tiktok_collab_rate: (model as any).tiktok_collab_rate || null,
+        instagram_engagement_rate: (model as any).instagram_engagement_rate || null,
+        // Stored CPM for efficient filtering (rate / impressions * 1000)
+        instagram_cpm: (model as any).avg_instagram_impressions && (model as any).instagram_collab_rate
+          ? parseFloat((((model as any).instagram_collab_rate / (model as any).avg_instagram_impressions) * 1000).toFixed(2))
+          : null,
+        tiktok_cpm: (model as any).avg_tiktok_views && (model as any).tiktok_collab_rate
+          ? parseFloat((((model as any).tiktok_collab_rate / (model as any).avg_tiktok_views) * 1000).toFixed(2))
+          : null,
         updated_at: new Date().toISOString(),
       };
 
@@ -2202,6 +2210,21 @@ export default function ProfilePage() {
                         />
                         <p className="text-xs text-muted-foreground">Flat fee you charge for a sponsored Instagram post/Reel</p>
                       </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="ig_engagement_rate">Avg Engagement Rate (%)</Label>
+                      <Input
+                        id="ig_engagement_rate"
+                        type="number"
+                        inputMode="decimal"
+                        min="0"
+                        max="100"
+                        step="0.1"
+                        placeholder="e.g. 3.5"
+                        value={(model as any).instagram_engagement_rate || ""}
+                        onChange={(e) => setModel({ ...model, instagram_engagement_rate: parseFloat(e.target.value) || null } as any)}
+                      />
+                      <p className="text-xs text-muted-foreground">Likes + Comments ÷ Followers × 100 — find in Instagram Insights</p>
                     </div>
                     {(model as any).avg_instagram_impressions && (model as any).instagram_collab_rate && (
                       <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-sm">

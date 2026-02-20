@@ -31,6 +31,9 @@ interface SearchParams {
   focus?: string;
   height?: string;
   collabs?: string;
+  platform?: string;
+  cpm?: string;
+  engagement?: string;
   page?: string;
 }
 
@@ -59,64 +62,66 @@ export default async function ModelsPage({
     redirect("/dashboard");
   }
 
-  // Build query - only show models with profile pictures
-  let query = supabase
-    .from("models")
-    .select("*")
-    .eq("is_approved", true)
-    .not("profile_photo_url", "is", null);
-
-  // Search
-  if (params.q) {
-    query = query.or(`username.ilike.%${escapeIlike(params.q)}%,first_name.ilike.%${escapeIlike(params.q)}%,last_name.ilike.%${escapeIlike(params.q)}%`);
-  }
-
-  // Filter by state
-  if (params.state) {
-    query = query.eq("state", params.state);
-  }
-
-  // Filter by verified status
-  if (params.level === 'verified') {
-    query = query.eq("is_verified", true);
-  } else if (params.level === 'featured') {
-    query = query.eq("is_featured", true);
-  }
-
-  // Filter by focus
-  if (params.focus) {
-    query = query.contains("focus_tags", [params.focus]);
-  }
-
-  // Filter by open to collabs
-  if (params.collabs === "1") {
-    query = query.eq("open_to_collabs", true);
-  }
-
-  // Filter by height range
-  // Note: 5'1 patterns must be exact to avoid matching 5'10/5'11
-  if (params.height) {
-    const heightPatterns: Record<string, string[]> = {
-      // For under 5'4: use exact matches for 5'0-5'3 to avoid 5'1 matching 5'10/5'11
-      under54: ["4'%", "5'0%", "5'1\"", "5'1", "5'2%", "5'3%"],
-      "54up": ["5'4%", "5'5%", "5'6%", "5'7%", "5'8%", "5'9%", "5'10%", "5'11%", "6'%"],
-      "57up": ["5'7%", "5'8%", "5'9%", "5'10%", "5'11%", "6'%"],
-      "510up": ["5'10%", "5'11%", "6'%"],
-    };
-    const patterns = heightPatterns[params.height];
-    if (patterns) {
-      const orConditions = patterns.map(p => `height.ilike.${p}`).join(",");
-      query = query.or(orConditions);
+  // Helper to apply all active filters to a query
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function applyFilters<T extends ReturnType<typeof supabase.from>>(q: any): any {
+    if (params.q) {
+      q = q.or(`username.ilike.%${escapeIlike(params.q)}%,first_name.ilike.%${escapeIlike(params.q)}%,last_name.ilike.%${escapeIlike(params.q)}%`);
     }
+    if (params.state) q = q.eq("state", params.state);
+    if (params.level === "verified") q = q.eq("is_verified", true);
+    else if (params.level === "featured") q = q.eq("is_featured", true);
+    if (params.focus) q = q.contains("focus_tags", [params.focus]);
+    if (params.collabs === "1") {
+      q = q.eq("open_to_collabs", true);
+      // Platform filter — require the platform's rate to be set
+      if (params.platform === "instagram") q = q.not("instagram_collab_rate", "is", null);
+      else if (params.platform === "tiktok") q = q.not("tiktok_collab_rate", "is", null);
+      // CPM filter — uses the stored CPM column for the selected (or default instagram) platform
+      const cpmCol = params.platform === "tiktok" ? "tiktok_cpm" : "instagram_cpm";
+      if (params.cpm) {
+        const cpmRanges: Record<string, [number, number]> = {
+          under5:  [0,     5],
+          "5to15": [5,    15],
+          "15to30":[15,   30],
+          "30plus":[30, 9999],
+        };
+        const range = cpmRanges[params.cpm];
+        if (range) q = q.gte(cpmCol, range[0]).lte(cpmCol, range[1]);
+      }
+      // Engagement rate filter (Instagram only for now)
+      if (params.engagement) {
+        q = q.gte("instagram_engagement_rate", parseFloat(params.engagement));
+      }
+    }
+    if (params.height) {
+      const heightPatterns: Record<string, string[]> = {
+        under54:  ["4'%", "5'0%", "5'1\"", "5'1", "5'2%", "5'3%"],
+        "54up":   ["5'4%", "5'5%", "5'6%", "5'7%", "5'8%", "5'9%", "5'10%", "5'11%", "6'%"],
+        "57up":   ["5'7%", "5'8%", "5'9%", "5'10%", "5'11%", "6'%"],
+        "510up":  ["5'10%", "5'11%", "6'%"],
+      };
+      const patterns = heightPatterns[params.height];
+      if (patterns) q = q.or(patterns.map(p => `height.ilike.${p}`).join(","));
+    }
+    return q;
   }
+
+  // Build query - only show models with profile pictures
+  let query = applyFilters(
+    supabase.from("models").select("*").eq("is_approved", true).not("profile_photo_url", "is", null)
+  );
 
   // Sort
   switch (params.sort) {
     case "followers":
       query = query.order("instagram_followers", { ascending: false, nullsFirst: false });
       break;
-    case "newest":
-      query = query.order("created_at", { ascending: false });
+    case "cpm_low":
+      query = query.order(params.platform === "tiktok" ? "tiktok_cpm" : "instagram_cpm", { ascending: true, nullsFirst: false });
+      break;
+    case "cpm_high":
+      query = query.order(params.platform === "tiktok" ? "tiktok_cpm" : "instagram_cpm", { ascending: false, nullsFirst: false });
       break;
     case "name":
       query = query.order("first_name", { ascending: true });
@@ -130,14 +135,10 @@ export default async function ModelsPage({
   const currentPage = Math.max(1, parseInt(params.page || "1", 10) || 1);
   const offset = (currentPage - 1) * PAGE_SIZE;
 
-  // Get total count for pagination
-  const countQuery = supabase
-    .from("models")
-    .select("*", { count: "exact", head: true })
-    .eq("is_approved", true)
-    .not("profile_photo_url", "is", null);
-
-  const { count: totalCount } = await countQuery;
+  // Count query — same filters, no range/sort
+  const { count: totalCount } = await applyFilters(
+    supabase.from("models").select("*", { count: "exact", head: true }).eq("is_approved", true).not("profile_photo_url", "is", null)
+  );
 
   query = query.range(offset, offset + PAGE_SIZE - 1);
 
