@@ -57,10 +57,12 @@ export default function BeachPOS() {
   const [editingPriceUid, setEditingPriceUid] = useState<string | null>(null);
   const [editingPriceValue, setEditingPriceValue] = useState("");
 
-  // ── Custom item ───────────────────────────────────────────────────────────
-  const [customOpen, setCustomOpen] = useState(false);
-  const [customName, setCustomName] = useState("");
-  const [customPrice, setCustomPrice] = useState("");
+  // ── Quick Charge (inline on main screen) ─────────────────────────────────
+  const [quickName, setQuickName] = useState("");
+  const [quickPrice, setQuickPrice] = useState("");
+
+  // ── Active charge total (for QR/success display) ──────────────────────────
+  const [activeTotal, setActiveTotal] = useState(0);
 
   // ── QR / Checkout ─────────────────────────────────────────────────────────
   const [qrOpen, setQrOpen] = useState(false);
@@ -162,10 +164,10 @@ export default function BeachPOS() {
     toast.success(`Added: ${product.name}`);
   };
 
-  const addCustom = () => {
-    const name = customName.trim();
-    const priceFloat = parseFloat(customPrice);
-    if (!name || isNaN(priceFloat) || priceFloat <= 0) return;
+  const addQuickToCart = () => {
+    const name = quickName.trim() || "Item";
+    const priceFloat = parseFloat(quickPrice);
+    if (isNaN(priceFloat) || priceFloat <= 0) return;
     const priceCents = Math.round(priceFloat * 100);
     setCart(prev => [...prev, {
       uid: `c-${Date.now()}`,
@@ -175,9 +177,8 @@ export default function BeachPOS() {
       quantity: 1,
       isCustom: true,
     }]);
-    setCustomName("");
-    setCustomPrice("");
-    setCustomOpen(false);
+    setQuickName("");
+    setQuickPrice("");
     toast.success(`Added: ${name}`);
   };
 
@@ -205,22 +206,20 @@ export default function BeachPOS() {
     setEditingPriceUid(null);
   };
 
-  // ── Generate QR ───────────────────────────────────────────────────────────
-  const generateQR = async () => {
-    if (cart.length === 0 || generating) return;
+  // ── Core QR creator (shared by cart checkout and quick charge) ───────────
+  const createQR = async (items: CartItem[], closeCart = false) => {
+    if (items.length === 0 || generating) return;
     setGenerating(true);
+    const itemsSubtotal = items.reduce((s, i) => s + i.price * i.quantity, 0);
+    const itemsTax = Math.round(itemsSubtotal * TAX_RATE);
+    setActiveTotal(itemsSubtotal + itemsTax);
     try {
       const res = await fetch("/api/pos/beach-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          items: cart.map(i => ({
-            name: i.name,
-            price: i.price,
-            quantity: i.quantity,
-            image: i.image,
-          })),
-          tax,
+          items: items.map(i => ({ name: i.name, price: i.price, quantity: i.quantity, image: i.image })),
+          tax: itemsTax,
         }),
       });
       const data = await res.json();
@@ -228,7 +227,7 @@ export default function BeachPOS() {
       setCheckoutUrl(data.checkoutUrl);
       setSessionId(data.sessionId);
       setPaymentDone(false);
-      setCartOpen(false);
+      if (closeCart) setCartOpen(false);
       setQrOpen(true);
       startPolling(data.sessionId);
     } catch (err: any) {
@@ -236,6 +235,23 @@ export default function BeachPOS() {
     } finally {
       setGenerating(false);
     }
+  };
+
+  // ── Cart checkout ──────────────────────────────────────────────────────────
+  const generateQR = () => createQR(cart, true);
+
+  // ── Quick charge: skip cart entirely ─────────────────────────────────────
+  const chargeNow = () => {
+    const name = quickName.trim() || "Item";
+    const priceFloat = parseFloat(quickPrice);
+    if (isNaN(priceFloat) || priceFloat <= 0) {
+      toast.error("Enter a valid price");
+      return;
+    }
+    const priceCents = Math.round(priceFloat * 100);
+    createQR([{ uid: "quick", productId: null, name, price: priceCents, quantity: 1, isCustom: true }]);
+    setQuickName("");
+    setQuickPrice("");
   };
 
   const startPolling = (sid: string) => {
@@ -360,20 +376,64 @@ export default function BeachPOS() {
       </header>
 
       <div className="max-w-2xl mx-auto px-4 py-4">
-        {/* Search bar */}
+
+        {/* ── Quick Charge panel ─────────────────────────────────────────────── */}
+        <div className="bg-white/5 border border-white/10 rounded-3xl p-4 mb-5">
+          <p className="text-white/50 text-xs font-semibold uppercase tracking-wider mb-3">Quick Charge</p>
+          <div className="space-y-2 mb-3">
+            <input
+              value={quickName}
+              onChange={e => setQuickName(e.target.value)}
+              placeholder="Item name (optional)"
+              className="w-full px-4 py-3 rounded-2xl bg-white/10 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-sky-400/60 text-sm"
+            />
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 font-semibold pointer-events-none">$</span>
+              <input
+                type="number"
+                min="0.01"
+                step="0.01"
+                value={quickPrice}
+                onChange={e => setQuickPrice(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && chargeNow()}
+                placeholder="0.00"
+                className="w-full pl-8 pr-4 py-3 rounded-2xl bg-white/10 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-sky-400/60 text-sm font-semibold"
+              />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={addQuickToCart}
+              disabled={!quickPrice}
+              className="flex-1 py-3 rounded-2xl bg-white/10 hover:bg-white/15 text-white text-sm font-medium transition-all active:scale-[0.97] disabled:opacity-30 flex items-center justify-center gap-1.5"
+            >
+              <Plus className="h-4 w-4" />
+              Add to Cart
+            </button>
+            <button
+              onClick={chargeNow}
+              disabled={!quickPrice || generating}
+              className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white text-sm font-bold transition-all active:scale-[0.97] disabled:opacity-30 flex items-center justify-center gap-1.5 shadow-lg shadow-sky-500/20"
+            >
+              {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <QrCode className="h-4 w-4" />}
+              Charge Now
+            </button>
+          </div>
+        </div>
+
+        {/* ── Shop catalog ───────────────────────────────────────────────────── */}
         <div className="relative mb-4">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40 pointer-events-none" />
           <input
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="Search swimsuits, cover-ups, accessories…"
+            placeholder="Search shop products…"
             className="w-full pl-10 pr-4 py-3 rounded-2xl bg-white/10 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-sky-400/60 transition-all text-sm"
           />
         </div>
 
-        {/* Product grid */}
         {searching ? (
-          <div className="flex justify-center items-center py-16">
+          <div className="flex justify-center items-center py-12">
             <Loader2 className="h-8 w-8 text-white/40 animate-spin" />
           </div>
         ) : products.length > 0 ? (
@@ -387,11 +447,7 @@ export default function BeachPOS() {
               >
                 {product.images?.[0] ? (
                   <div className="aspect-square overflow-hidden">
-                    <img
-                      src={product.images[0]}
-                      alt={product.name}
-                      className="w-full h-full object-cover"
-                    />
+                    <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
                   </div>
                 ) : (
                   <div className="aspect-square bg-white/5 flex items-center justify-center">
@@ -399,93 +455,22 @@ export default function BeachPOS() {
                   </div>
                 )}
                 <div className="p-3">
-                  <p className="text-white text-sm font-medium leading-tight line-clamp-2 mb-1">
-                    {product.name}
-                  </p>
-                  {product.brand?.name && (
-                    <p className="text-white/40 text-xs mb-1">{product.brand.name}</p>
-                  )}
+                  <p className="text-white text-sm font-medium leading-tight line-clamp-2 mb-1">{product.name}</p>
+                  {product.brand?.name && <p className="text-white/40 text-xs mb-1">{product.brand.name}</p>}
                   <p className="text-sky-300 font-bold">{fmt(product.price)}</p>
-                  {!product.inStock && (
-                    <p className="text-red-400 text-xs mt-1">Out of stock</p>
-                  )}
+                  {!product.inStock && <p className="text-red-400 text-xs mt-1">Out of stock</p>}
                 </div>
               </button>
             ))}
           </div>
         ) : (
-          <div className="text-center py-14 text-white/30">
-            <Package className="h-12 w-12 mx-auto mb-3 opacity-50" />
-            <p className="text-sm">
-              {query ? `No results for "${query}"` : "No featured products — try searching above"}
+          !query && (
+            <p className="text-center text-white/20 text-sm py-4">
+              Search above to browse the shop catalog
             </p>
-          </div>
+          )
         )}
-
-        {/* Custom item button */}
-        <button
-          onClick={() => setCustomOpen(true)}
-          className="w-full py-4 rounded-2xl border-2 border-dashed border-white/15 hover:border-white/30 text-white/50 hover:text-white/80 transition-all flex items-center justify-center gap-2 text-sm"
-        >
-          <Plus className="h-4 w-4" />
-          Add item not in shop
-        </button>
       </div>
-
-      {/* ── Custom Item Dialog ────────────────────────────────────────────────── */}
-      {customOpen && (
-        <div
-          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
-          onClick={e => { if (e.target === e.currentTarget) setCustomOpen(false); }}
-        >
-          <div className="bg-slate-900 border border-white/20 rounded-3xl p-6 w-full max-w-sm">
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-white font-bold text-lg">Custom Item</h3>
-              <button onClick={() => setCustomOpen(false)} className="text-white/40 hover:text-white transition-colors">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="space-y-3">
-              <input
-                autoFocus
-                value={customName}
-                onChange={e => setCustomName(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && addCustom()}
-                placeholder="Item name (e.g. Beach Hat)"
-                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-sky-400/60 text-sm"
-              />
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 text-sm pointer-events-none">$</span>
-                <input
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  value={customPrice}
-                  onChange={e => setCustomPrice(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && addCustom()}
-                  placeholder="0.00"
-                  className="w-full pl-8 pr-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-sky-400/60 text-sm"
-                />
-              </div>
-            </div>
-            <div className="flex gap-3 mt-5">
-              <button
-                onClick={() => setCustomOpen(false)}
-                className="flex-1 py-3 rounded-xl bg-white/10 hover:bg-white/15 text-white text-sm transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={addCustom}
-                disabled={!customName.trim() || !customPrice}
-                className="flex-1 py-3 rounded-xl bg-sky-500 hover:bg-sky-400 text-white text-sm font-semibold transition-all disabled:opacity-40"
-              >
-                Add to Cart
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ── Cart Sheet ────────────────────────────────────────────────────────── */}
       {cartOpen && (
@@ -614,7 +599,7 @@ export default function BeachPOS() {
                 <div className="text-7xl mb-4" style={{ animation: "bounce 1s infinite" }}>🎉</div>
                 <h2 className="text-white text-2xl font-bold mb-1">Payment Complete!</h2>
                 <p className="text-white/50 text-sm mb-3">Total received</p>
-                <p className="text-sky-300 text-5xl font-bold mb-8">{fmt(total)}</p>
+                <p className="text-sky-300 text-5xl font-bold mb-8">{fmt(activeTotal)}</p>
                 <button
                   onClick={newSale}
                   className="w-full py-4 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-bold text-lg transition-all active:scale-[0.98] shadow-lg shadow-green-500/20"
@@ -634,7 +619,7 @@ export default function BeachPOS() {
                     <X className="h-5 w-5" />
                   </button>
                 </div>
-                <p className="text-sky-300 text-4xl font-bold mb-5">{fmt(total)}</p>
+                <p className="text-sky-300 text-4xl font-bold mb-5">{fmt(activeTotal)}</p>
 
                 {checkoutUrl && (
                   <div className="bg-white rounded-2xl p-3 mx-auto inline-block mb-5">
