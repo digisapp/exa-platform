@@ -450,39 +450,31 @@ export default async function ModelProfilePage({ params }: Props) {
 
           {/* Social Media Icons + Follower Counts */}
           {model.show_social_media && socialLinks.length > 0 && (
-            <div className="mb-5">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                {socialLinks.map((link) => (
-                  <a
-                    key={link.platform}
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all hover:scale-110 active:scale-95"
-                    title={`@${link.username}`}
-                  >
+            <div className="flex items-center justify-center gap-3 mb-5 flex-wrap">
+              {socialLinks.map((link) => (
+                <a
+                  key={link.platform}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center gap-1 group"
+                  title={`@${link.username}`}
+                >
+                  <div className="w-8 h-8 rounded-full bg-white/10 group-hover:bg-white/20 flex items-center justify-center transition-all group-hover:scale-110 active:scale-95">
                     {link.platform === "instagram" && <Instagram className="h-4 w-4 text-white" />}
                     {link.platform === "tiktok" && <TikTokIcon className="h-4 w-4 text-white" />}
                     {link.platform === "snapchat" && <SnapchatIcon className="h-4 w-4 text-white" />}
                     {link.platform === "x" && <XIcon className="h-4 w-4 text-white" />}
                     {link.platform === "youtube" && <Youtube className="h-4 w-4 text-white" />}
                     {link.platform === "twitch" && <Twitch className="h-4 w-4 text-white" />}
-                  </a>
-                ))}
-              </div>
-              {/* Follower counts row — only shown when at least one platform has data */}
-              {socialLinks.some(l => l.followers) && (
-                <div className="flex items-center justify-center gap-4 flex-wrap">
-                  {socialLinks.filter(l => l.followers).map((link) => (
-                    <div key={link.platform} className="text-center">
-                      <p className="text-sm font-semibold text-white">{formatFollowers(link.followers!)}</p>
-                      <p className="text-[10px] text-white/50 capitalize">
-                        {link.platform === "youtube" ? "subscribers" : "followers"}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
+                  </div>
+                  {link.followers && (
+                    <span className="text-[10px] text-white/50 group-hover:text-white/70 transition-colors leading-none">
+                      {formatFollowers(link.followers)}
+                    </span>
+                  )}
+                </a>
+              ))}
             </div>
           )}
 
