@@ -508,12 +508,6 @@ export default async function ModelProfilePage({ params }: Props) {
             <div className="mb-6 space-y-3">
               {model.affiliate_links.map((link: { title: string; url: string }, index: number) => {
                 if (!link.title || !link.url) return null;
-                let domain = '';
-                try {
-                  domain = new URL(link.url).hostname;
-                } catch {
-                  domain = '';
-                }
                 return (
                   <a
                     key={index}
@@ -523,20 +517,7 @@ export default async function ModelProfilePage({ params }: Props) {
                     className="group relative flex items-center justify-center w-full px-5 py-4 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 hover:border-white/20 transition-all hover:scale-[1.02] active:scale-[0.97] active:opacity-90 hover:shadow-lg hover:shadow-pink-500/10"
                   >
                     <span className="absolute left-4 w-6 h-6 flex items-center justify-center">
-                      {domain ? (
-                        <img
-                          src={`https://www.google.com/s2/favicons?domain=${domain}&sz=32`}
-                          alt=""
-                          width={24}
-                          height={24}
-                          className="w-6 h-6 rounded"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none';
-                            (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
-                          }}
-                        />
-                      ) : null}
-                      <ExternalLink className={`h-4 w-4 text-white/60 ${domain ? 'hidden' : ''}`} />
+                      <ExternalLink className="h-4 w-4 text-white/60" />
                     </span>
                     <span className="font-medium text-white">{link.title}</span>
                   </a>
