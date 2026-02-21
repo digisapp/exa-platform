@@ -54,6 +54,8 @@ export default function BeachPOS() {
   // ── Cart ──────────────────────────────────────────────────────────────────
   const [cart, setCart] = useState<CartItem[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
+  const [editingPriceUid, setEditingPriceUid] = useState<string | null>(null);
+  const [editingPriceValue, setEditingPriceValue] = useState("");
 
   // ── Custom item ───────────────────────────────────────────────────────────
   const [customOpen, setCustomOpen] = useState(false);
@@ -188,6 +190,20 @@ export default function BeachPOS() {
 
   const removeItem = (uid: string) =>
     setCart(prev => prev.filter(i => i.uid !== uid));
+
+  const startEditPrice = (item: CartItem) => {
+    setEditingPriceUid(item.uid);
+    setEditingPriceValue((item.price / 100).toFixed(2));
+  };
+
+  const commitEditPrice = (uid: string) => {
+    const val = parseFloat(editingPriceValue);
+    if (!isNaN(val) && val > 0) {
+      const cents = Math.round(val * 100);
+      setCart(prev => prev.map(i => i.uid === uid ? { ...i, price: cents } : i));
+    }
+    setEditingPriceUid(null);
+  };
 
   // ── Generate QR ───────────────────────────────────────────────────────────
   const generateQR = async () => {
@@ -504,7 +520,30 @@ export default function BeachPOS() {
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="text-white text-sm font-medium truncate">{item.name}</p>
-                    <p className="text-sky-300 text-sm">{fmt(item.price)}</p>
+                    {editingPriceUid === item.uid ? (
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <span className="text-white/40 text-sm">$</span>
+                        <input
+                          autoFocus
+                          type="number"
+                          min="0.01"
+                          step="0.01"
+                          value={editingPriceValue}
+                          onChange={e => setEditingPriceValue(e.target.value)}
+                          onBlur={() => commitEditPrice(item.uid)}
+                          onKeyDown={e => { if (e.key === "Enter") commitEditPrice(item.uid); if (e.key === "Escape") setEditingPriceUid(null); }}
+                          className="w-20 bg-white/10 border border-sky-400/60 rounded-lg px-2 py-0.5 text-sky-300 text-sm font-bold focus:outline-none"
+                        />
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => startEditPrice(item)}
+                        className="text-sky-300 text-sm font-medium underline underline-offset-2 decoration-dashed hover:text-sky-200 transition-colors"
+                        title="Tap to change price"
+                      >
+                        {fmt(item.price)}
+                      </button>
+                    )}
                   </div>
                   <div className="flex items-center gap-1.5 flex-shrink-0">
                     <button
