@@ -28,6 +28,12 @@ import { ViewTracker } from "@/components/profile/ViewTracker";
 // This dramatically improves performance while keeping data reasonably fresh
 export const revalidate = 60;
 
+function formatFollowers(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${Math.round(n / 1_000)}K`;
+  return n.toLocaleString();
+}
+
 // Reserved paths that should NOT be treated as usernames
 const RESERVED_PATHS = [
   'signin', 'signup', 'models', 'gigs', 'dashboard', 'profile', 'messages',
@@ -161,10 +167,11 @@ export default async function ModelProfilePage({ params }: Props) {
   let eventBadges: any[] | null = null;
   if (modelBadgesRaw && modelBadgesRaw.length > 0) {
     const eventIds = modelBadgesRaw.map(mb => mb.badges?.event_id).filter(Boolean);
-    const { data: eventsData } = await supabase
+    // Guard against empty array — .in("id", []) throws in Supabase-js
+    const { data: eventsData } = eventIds.length > 0 ? await supabase
       .from("events")
       .select("id, slug, name, short_name, year, badge_image_url")
-      .in("id", eventIds) as { data: any[] | null };
+      .in("id", eventIds) as { data: any[] | null } : { data: [] };
 
     // Combine badge and event data
     const eventsMap = new Map(eventsData?.map(e => [e.id, e]) || []);
@@ -269,12 +276,6 @@ export default async function ModelProfilePage({ params }: Props) {
     { platform: "youtube", username: model.youtube_username, followers: model.youtube_subscribers as number | null, url: `https://youtube.com/@${model.youtube_username?.replace(/^@/, '')}` },
     { platform: "twitch", username: model.twitch_username, followers: null as number | null, url: `https://twitch.tv/${model.twitch_username?.replace(/^@/, '')}` },
   ].filter(link => link.username);
-
-  function formatFollowers(n: number): string {
-    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-    if (n >= 1_000) return `${Math.round(n / 1_000)}K`;
-    return n.toLocaleString();
-  }
 
   // JSON-LD structured data for SEO
   const jsonLd = {
