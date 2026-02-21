@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import QRCode from "qrcode";
 import {
   Search,
   ShoppingCart,
@@ -67,10 +68,19 @@ export default function BeachPOS() {
   // ── QR / Checkout ─────────────────────────────────────────────────────────
   const [qrOpen, setQrOpen] = useState(false);
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [paymentDone, setPaymentDone] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Generate QR code locally whenever the checkout URL changes
+  useEffect(() => {
+    if (!checkoutUrl) { setQrDataUrl(null); return; }
+    QRCode.toDataURL(checkoutUrl, { width: 280, margin: 2, color: { dark: "#000000", light: "#ffffff" } })
+      .then(setQrDataUrl)
+      .catch(() => setQrDataUrl(null));
+  }, [checkoutUrl]);
 
   // ── Derived ───────────────────────────────────────────────────────────────
   const subtotal = cart.reduce((s, i) => s + i.price * i.quantity, 0);
@@ -279,6 +289,7 @@ export default function BeachPOS() {
     if (pollRef.current) clearInterval(pollRef.current);
     setQrOpen(false);
     setCheckoutUrl(null);
+    setQrDataUrl(null);
     setSessionId(null);
   };
 
@@ -287,6 +298,7 @@ export default function BeachPOS() {
     setQrOpen(false);
     setPaymentDone(false);
     setCheckoutUrl(null);
+    setQrDataUrl(null);
     setSessionId(null);
     setCart([]);
     toast.success("Ready for next sale! 🏖️");
@@ -621,18 +633,22 @@ export default function BeachPOS() {
                 </div>
                 <p className="text-sky-300 text-4xl font-bold mb-5">{fmt(activeTotal)}</p>
 
-                {checkoutUrl && (
+                {qrDataUrl ? (
                   <div className="bg-white rounded-2xl p-3 mx-auto inline-block mb-5">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(checkoutUrl)}&margin=0`}
+                      src={qrDataUrl}
                       alt="Scan to pay"
                       width={260}
                       height={260}
                       className="block rounded-xl"
                     />
                   </div>
-                )}
+                ) : checkoutUrl ? (
+                  <div className="flex justify-center items-center h-[280px] mb-5">
+                    <Loader2 className="h-8 w-8 text-white/40 animate-spin" />
+                  </div>
+                ) : null}
 
                 <div className="flex items-center justify-center gap-2 text-white/50 text-sm mb-1">
                   <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />
