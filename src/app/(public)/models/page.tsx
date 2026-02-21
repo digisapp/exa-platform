@@ -34,6 +34,8 @@ interface SearchParams {
   platform?: string;
   cpm?: string;
   engagement?: string;
+  ig_followers?: string;
+  tt_followers?: string;
   page?: string;
 }
 
@@ -103,6 +105,16 @@ export default async function ModelsPage({
       };
       const patterns = heightPatterns[params.height];
       if (patterns) q = q.or(patterns.map(p => `height.ilike.${p}`).join(","));
+    }
+    const followerMinMap: Record<string, number> = {
+      "1k": 1_000, "10k": 10_000, "50k": 50_000,
+      "100k": 100_000, "500k": 500_000, "1m": 1_000_000,
+    };
+    if (params.ig_followers && followerMinMap[params.ig_followers]) {
+      q = q.gte("instagram_followers", followerMinMap[params.ig_followers]);
+    }
+    if (params.tt_followers && followerMinMap[params.tt_followers]) {
+      q = q.gte("tiktok_followers", followerMinMap[params.tt_followers]);
     }
     return q;
   }

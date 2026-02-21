@@ -260,15 +260,21 @@ export default async function ModelProfilePage({ params }: Props) {
   // Display name - show first_name + last_name, or fallback to username
   const displayName = model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username;
 
-  // Social media links
+  // Social media links (with follower counts for brand discovery)
   const socialLinks = [
-    { platform: "instagram", username: model.instagram_name, url: (model.instagram_url && model.instagram_url.includes("instagram.com")) ? model.instagram_url : `https://www.instagram.com/${model.instagram_name?.replace(/^@/, '')}` },
-    { platform: "tiktok", username: model.tiktok_username, url: `https://tiktok.com/@${model.tiktok_username?.replace(/^@/, '')}` },
-    { platform: "snapchat", username: model.snapchat_username, url: `https://snapchat.com/add/${model.snapchat_username?.replace(/^@/, '')}` },
-    { platform: "x", username: model.x_username, url: `https://x.com/${model.x_username?.replace(/^@/, '')}` },
-    { platform: "youtube", username: model.youtube_username, url: `https://youtube.com/@${model.youtube_username?.replace(/^@/, '')}` },
-    { platform: "twitch", username: model.twitch_username, url: `https://twitch.tv/${model.twitch_username?.replace(/^@/, '')}` },
+    { platform: "instagram", username: model.instagram_name, followers: model.instagram_followers as number | null, url: (model.instagram_url && model.instagram_url.includes("instagram.com")) ? model.instagram_url : `https://www.instagram.com/${model.instagram_name?.replace(/^@/, '')}` },
+    { platform: "tiktok", username: model.tiktok_username, followers: model.tiktok_followers as number | null, url: `https://tiktok.com/@${model.tiktok_username?.replace(/^@/, '')}` },
+    { platform: "snapchat", username: model.snapchat_username, followers: model.snapchat_followers as number | null, url: `https://snapchat.com/add/${model.snapchat_username?.replace(/^@/, '')}` },
+    { platform: "x", username: model.x_username, followers: model.x_followers as number | null, url: `https://x.com/${model.x_username?.replace(/^@/, '')}` },
+    { platform: "youtube", username: model.youtube_username, followers: model.youtube_subscribers as number | null, url: `https://youtube.com/@${model.youtube_username?.replace(/^@/, '')}` },
+    { platform: "twitch", username: model.twitch_username, followers: null as number | null, url: `https://twitch.tv/${model.twitch_username?.replace(/^@/, '')}` },
   ].filter(link => link.username);
+
+  function formatFollowers(n: number): string {
+    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+    if (n >= 1_000) return `${Math.round(n / 1_000)}K`;
+    return n.toLocaleString();
+  }
 
   // JSON-LD structured data for SEO
   const jsonLd = {
@@ -441,26 +447,41 @@ export default async function ModelProfilePage({ params }: Props) {
             </div>
           )}
 
-          {/* Social Media Icons - Consistent Design */}
+          {/* Social Media Icons + Follower Counts */}
           {model.show_social_media && socialLinks.length > 0 && (
-            <div className="flex items-center justify-center gap-2 mb-5">
-              {socialLinks.map((link) => (
-                <a
-                  key={link.platform}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all hover:scale-110 active:scale-95"
-                  title={`@${link.username}`}
-                >
-                  {link.platform === "instagram" && <Instagram className="h-4 w-4 text-white" />}
-                  {link.platform === "tiktok" && <TikTokIcon className="h-4 w-4 text-white" />}
-                  {link.platform === "snapchat" && <SnapchatIcon className="h-4 w-4 text-white" />}
-                  {link.platform === "x" && <XIcon className="h-4 w-4 text-white" />}
-                  {link.platform === "youtube" && <Youtube className="h-4 w-4 text-white" />}
-                  {link.platform === "twitch" && <Twitch className="h-4 w-4 text-white" />}
-                </a>
-              ))}
+            <div className="mb-5">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                {socialLinks.map((link) => (
+                  <a
+                    key={link.platform}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+                    title={`@${link.username}`}
+                  >
+                    {link.platform === "instagram" && <Instagram className="h-4 w-4 text-white" />}
+                    {link.platform === "tiktok" && <TikTokIcon className="h-4 w-4 text-white" />}
+                    {link.platform === "snapchat" && <SnapchatIcon className="h-4 w-4 text-white" />}
+                    {link.platform === "x" && <XIcon className="h-4 w-4 text-white" />}
+                    {link.platform === "youtube" && <Youtube className="h-4 w-4 text-white" />}
+                    {link.platform === "twitch" && <Twitch className="h-4 w-4 text-white" />}
+                  </a>
+                ))}
+              </div>
+              {/* Follower counts row — only shown when at least one platform has data */}
+              {socialLinks.some(l => l.followers) && (
+                <div className="flex items-center justify-center gap-4 flex-wrap">
+                  {socialLinks.filter(l => l.followers).map((link) => (
+                    <div key={link.platform} className="text-center">
+                      <p className="text-sm font-semibold text-white">{formatFollowers(link.followers!)}</p>
+                      <p className="text-[10px] text-white/50 capitalize">
+                        {link.platform === "youtube" ? "subscribers" : "followers"}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

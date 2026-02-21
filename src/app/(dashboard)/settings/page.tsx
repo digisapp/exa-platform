@@ -627,6 +627,12 @@ export default function ProfilePage() {
         tiktok_cpm: (model as any).avg_tiktok_views && (model as any).tiktok_collab_rate
           ? parseFloat((((model as any).tiktok_collab_rate / (model as any).avg_tiktok_views) * 1000).toFixed(2))
           : null,
+        // Social media follower counts
+        instagram_followers: (model as any).instagram_followers || null,
+        tiktok_followers: (model as any).tiktok_followers || null,
+        snapchat_followers: (model as any).snapchat_followers || null,
+        x_followers: (model as any).x_followers || null,
+        youtube_subscribers: (model as any).youtube_subscribers || null,
         updated_at: new Date().toISOString(),
       };
 
@@ -1403,6 +1409,7 @@ export default function ProfilePage() {
           <Card>
             <CardHeader>
               <CardTitle>Social Media</CardTitle>
+              <CardDescription>Add your username and follower count so brands can discover you</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
@@ -1425,6 +1432,15 @@ export default function ProfilePage() {
                     }}
                     placeholder="username"
                   />
+                  <Input
+                    type="number"
+                    min="0"
+                    inputMode="numeric"
+                    placeholder="Followers (e.g. 45000)"
+                    value={(model as any).instagram_followers || ""}
+                    onChange={(e) => setModel({ ...model, instagram_followers: parseInt(e.target.value) || null } as any)}
+                    className="text-sm"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="tiktok">TikTok</Label>
@@ -1433,6 +1449,15 @@ export default function ProfilePage() {
                     value={model.tiktok_username || ""}
                     onChange={(e) => setModel({ ...model, tiktok_username: e.target.value.replace("@", "") })}
                     placeholder="username"
+                  />
+                  <Input
+                    type="number"
+                    min="0"
+                    inputMode="numeric"
+                    placeholder="Followers (e.g. 120000)"
+                    value={(model as any).tiktok_followers || ""}
+                    onChange={(e) => setModel({ ...model, tiktok_followers: parseInt(e.target.value) || null } as any)}
+                    className="text-sm"
                   />
                 </div>
                 <div className="space-y-2">
@@ -1443,6 +1468,15 @@ export default function ProfilePage() {
                     onChange={(e) => setModel({ ...model, snapchat_username: e.target.value.replace("@", "") })}
                     placeholder="username"
                   />
+                  <Input
+                    type="number"
+                    min="0"
+                    inputMode="numeric"
+                    placeholder="Followers"
+                    value={(model as any).snapchat_followers || ""}
+                    onChange={(e) => setModel({ ...model, snapchat_followers: parseInt(e.target.value) || null } as any)}
+                    className="text-sm"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="x">X (Twitter)</Label>
@@ -1452,6 +1486,15 @@ export default function ProfilePage() {
                     onChange={(e) => setModel({ ...model, x_username: e.target.value.replace("@", "") })}
                     placeholder="username"
                   />
+                  <Input
+                    type="number"
+                    min="0"
+                    inputMode="numeric"
+                    placeholder="Followers"
+                    value={(model as any).x_followers || ""}
+                    onChange={(e) => setModel({ ...model, x_followers: parseInt(e.target.value) || null } as any)}
+                    className="text-sm"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="youtube">YouTube</Label>
@@ -1460,6 +1503,15 @@ export default function ProfilePage() {
                     value={model.youtube_username || ""}
                     onChange={(e) => setModel({ ...model, youtube_username: e.target.value.replace("@", "") })}
                     placeholder="channel name"
+                  />
+                  <Input
+                    type="number"
+                    min="0"
+                    inputMode="numeric"
+                    placeholder="Subscribers"
+                    value={(model as any).youtube_subscribers || ""}
+                    onChange={(e) => setModel({ ...model, youtube_subscribers: parseInt(e.target.value) || null } as any)}
+                    className="text-sm"
                   />
                 </div>
                 <div className="space-y-2">

@@ -3,6 +3,12 @@
 import Link from "next/link";
 import Image from "next/image";
 import { MapPin, Heart, Star } from "lucide-react";
+
+function formatFollowers(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${Math.round(n / 1_000)}K`;
+  return n.toLocaleString();
+}
 import { cn } from "@/lib/utils";
 import { useState, memo } from "react";
 import { toast } from "sonner";
@@ -229,6 +235,18 @@ export const ModelCard = memo(function ModelCard({
 
               {model.height && model.show_measurements && (
                 <p className="text-sm text-white/80">{model.height}</p>
+              )}
+
+              {/* Follower counts */}
+              {(model.instagram_followers || model.tiktok_followers) && (
+                <div className="flex gap-3 text-xs">
+                  {model.instagram_followers > 0 && (
+                    <span className="text-pink-300">IG {formatFollowers(model.instagram_followers)}</span>
+                  )}
+                  {model.tiktok_followers > 0 && (
+                    <span className="text-blue-300">TT {formatFollowers(model.tiktok_followers)}</span>
+                  )}
+                </div>
               )}
 
               {/* Focus Tags */}

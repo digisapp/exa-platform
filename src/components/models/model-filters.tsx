@@ -69,6 +69,15 @@ const SORT_OPTIONS = [
   { value: "cpm_high", label: "Highest CPM" },
 ];
 
+const FOLLOWER_TIERS = [
+  { value: "1k",   label: "1K+ followers" },
+  { value: "10k",  label: "10K+ followers" },
+  { value: "50k",  label: "50K+ followers" },
+  { value: "100k", label: "100K+ followers" },
+  { value: "500k", label: "500K+ followers" },
+  { value: "1m",   label: "1M+ followers" },
+];
+
 const HEIGHT_RANGES = [
   { value: "under54", label: "5'3\" and under" },
   { value: "54up", label: "5'4\" and up" },
@@ -137,7 +146,7 @@ export function ModelFilters() {
   };
 
   const collabsOnly = searchParams.get("collabs") === "1";
-  const hasFilters = searchParams.get("q") || searchParams.get("state") || searchParams.get("focus") || searchParams.get("height") || searchParams.get("collabs") || searchParams.get("platform") || searchParams.get("cpm") || searchParams.get("engagement");
+  const hasFilters = searchParams.get("q") || searchParams.get("state") || searchParams.get("focus") || searchParams.get("height") || searchParams.get("collabs") || searchParams.get("platform") || searchParams.get("cpm") || searchParams.get("engagement") || searchParams.get("ig_followers") || searchParams.get("tt_followers");
 
   return (
     <div className="space-y-4">
@@ -218,6 +227,42 @@ export function ModelFilters() {
             {SORT_OPTIONS.map((option) => (
               <SelectItem key={option.value} value={option.value}>
                 {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* Instagram follower filter */}
+        <Select
+          value={searchParams.get("ig_followers") || "all"}
+          onValueChange={(v) => updateParams("ig_followers", v === "all" ? null : v)}
+        >
+          <SelectTrigger className="w-[165px]">
+            <SelectValue placeholder="IG Followers" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Any IG Followers</SelectItem>
+            {FOLLOWER_TIERS.map((tier) => (
+              <SelectItem key={tier.value} value={tier.value}>
+                IG {tier.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* TikTok follower filter */}
+        <Select
+          value={searchParams.get("tt_followers") || "all"}
+          onValueChange={(v) => updateParams("tt_followers", v === "all" ? null : v)}
+        >
+          <SelectTrigger className="w-[165px]">
+            <SelectValue placeholder="TT Followers" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Any TT Followers</SelectItem>
+            {FOLLOWER_TIERS.map((tier) => (
+              <SelectItem key={tier.value} value={tier.value}>
+                TT {tier.label}
               </SelectItem>
             ))}
           </SelectContent>
