@@ -42,6 +42,14 @@ export default function SignupPage() {
       errors.social = "Please provide at least one social media handle";
     }
 
+    // Catch users who accidentally type their email in the social fields
+    if (instagram && instagram.includes(".") && /\.(com|net|org|io|co)$/i.test(instagram.replace("@", ""))) {
+      errors.instagram = "Please enter your Instagram username, not a website or email address";
+    }
+    if (tiktok && tiktok.includes(".") && /\.(com|net|org|io|co)$/i.test(tiktok.replace("@", ""))) {
+      errors.tiktok = "Please enter your TikTok username, not a website or email address";
+    }
+
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       return;
@@ -252,6 +260,7 @@ export default function SignupPage() {
                     onChange={(e) => setInstagram(e.target.value)}
                     disabled={loading}
                   />
+                  <FormFieldError id="instagram-error" message={fieldErrors.instagram} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="tiktok" className="flex items-center gap-2 text-sm">
@@ -265,6 +274,7 @@ export default function SignupPage() {
                     onChange={(e) => setTiktok(e.target.value)}
                     disabled={loading}
                   />
+                  <FormFieldError id="tiktok-error" message={fieldErrors.tiktok} />
                 </div>
               </div>
               <FormFieldError id="social-error" message={fieldErrors.social} />

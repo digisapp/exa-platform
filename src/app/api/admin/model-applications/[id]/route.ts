@@ -145,9 +145,13 @@ export async function PATCH(
         }
       } else if (!existingModel) {
         // No existing model found - create new one
-        const username = application.instagram_username ||
-          application.tiktok_username ||
-          application.email.split("@")[0];
+        // Sanitize social usernames — reject if they look like an email or URL
+        const looksLikeEmail = (s: string) => s.includes("@") || /\.(com|net|org|io|co)$/i.test(s);
+        const igUsername = application.instagram_username && !looksLikeEmail(application.instagram_username)
+          ? application.instagram_username : null;
+        const ttUsername = application.tiktok_username && !looksLikeEmail(application.tiktok_username)
+          ? application.tiktok_username : null;
+        const username = igUsername || ttUsername || application.email.split("@")[0];
 
         // Make username unique by adding numbers if needed
         let finalUsername = username.toLowerCase().replace(/[^a-z0-9_]/g, "");
