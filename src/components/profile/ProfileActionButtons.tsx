@@ -129,7 +129,7 @@ export function ProfileActionButtons({
 
   const proceedToChat = () => {
     setShowChatConfirm(false);
-    window.location.href = `/chats?new=${modelUsername}`;
+    router.push(`/chats?new=${modelUsername}`);
   };
 
   const proceedToVideoCall = async () => {

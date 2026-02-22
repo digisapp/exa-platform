@@ -208,13 +208,14 @@ export default async function MessagesPage({ searchParams }: PageProps) {
     participantsMap.set(p.conversation_id, existing);
   });
 
-  // Combine data and sort
+  // Combine data, filter out ghost conversations (no messages), and sort
   const conversations = (participations || [])
     .map((p: any) => ({
       ...p,
       lastMessage: lastMessageMap.get(p.conversation_id) || null,
       otherParticipants: participantsMap.get(p.conversation_id) || [],
     }))
+    .filter((c: any) => c.lastMessage !== null)
     .sort((a: any, b: any) => {
       const aDate = a.lastMessage?.created_at || a.conversation?.updated_at || 0;
       const bDate = b.lastMessage?.created_at || b.conversation?.updated_at || 0;

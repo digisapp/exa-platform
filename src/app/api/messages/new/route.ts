@@ -7,7 +7,7 @@ const DEFAULT_MESSAGE_COST = 10; // Default coins if model hasn't set a rate
 
 const newConversationSchema = z.object({
   recipientId: z.string().uuid("Invalid recipient ID"),
-  initialMessage: z.string().max(5000, "Message is too long").optional().nullable(),
+  initialMessage: z.string().min(1, "Message cannot be empty").max(5000, "Message is too long"),
 });
 
 export async function POST(request: NextRequest) {
@@ -180,78 +180,64 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // If initial message provided, send it using atomic RPC
-    if (initialMessage) {
-      // Determine coin cost and recipient model ID
-      let coinsRequired = 0;
-      let recipientModelId: string | null = null;
+    // Send the initial message using atomic RPC (coin transfer + message in one transaction)
+    let coinsRequired = 0;
+    let recipientModelId: string | null = null;
 
-      if (sender.type !== "model" && recipient.type === "model") {
-        // Look up the model's actual ID and message rate using user_id
-        const { data: recipientActor } = await supabase
-          .from("actors")
-          .select("user_id")
-          .eq("id", recipientId)
-          .single() as { data: { user_id: string } | null };
+    if (sender.type !== "model" && recipient.type === "model") {
+      const { data: recipientActor } = await supabase
+        .from("actors")
+        .select("user_id")
+        .eq("id", recipientId)
+        .single() as { data: { user_id: string } | null };
 
-        if (recipientActor) {
-          const { data: recipientModel } = await supabase
-            .from("models")
-            .select("id, message_rate")
-            .eq("user_id", recipientActor.user_id)
-            .maybeSingle() as { data: { id: string; message_rate: number | null } | null };
+      if (recipientActor) {
+        const { data: recipientModel } = await supabase
+          .from("models")
+          .select("id, message_rate")
+          .eq("user_id", recipientActor.user_id)
+          .maybeSingle() as { data: { id: string; message_rate: number | null } | null };
 
-          if (recipientModel) {
-            recipientModelId = recipientModel.id;
-            const modelRate = recipientModel.message_rate ?? DEFAULT_MESSAGE_COST;
-            coinsRequired = Math.max(DEFAULT_MESSAGE_COST, modelRate);
-          }
+        if (recipientModel) {
+          recipientModelId = recipientModel.id;
+          const modelRate = recipientModel.message_rate ?? DEFAULT_MESSAGE_COST;
+          coinsRequired = Math.max(DEFAULT_MESSAGE_COST, modelRate);
         }
       }
+    }
 
-      // Use atomic RPC for message + coin transfer
-      const { data: rpcData, error: rpcError } = await supabase.rpc(
-        "send_message_with_coins",
-        {
-          p_conversation_id: conversation.id,
-          p_sender_id: sender.id,
-          p_recipient_id: recipientModelId || "",
-          p_content: initialMessage,
-          p_media_url: undefined,
-          p_media_type: undefined,
-          p_coin_amount: coinsRequired,
-        }
+    const { data: rpcData, error: rpcError } = await supabase.rpc(
+      "send_message_with_coins",
+      {
+        p_conversation_id: conversation.id,
+        p_sender_id: sender.id,
+        p_recipient_id: recipientModelId || "",
+        p_content: initialMessage,
+        p_media_url: undefined,
+        p_media_type: undefined,
+        p_coin_amount: coinsRequired,
+      }
+    );
+    const result = rpcData as Record<string, any>;
+
+    if (rpcError) {
+      await supabase.from("conversations").delete().eq("id", conversation.id);
+      return NextResponse.json({ error: "Failed to send message" }, { status: 500 });
+    }
+
+    if (!result.success) {
+      await supabase.from("conversations").delete().eq("id", conversation.id);
+
+      if (result.error === "Insufficient coins") {
+        return NextResponse.json(
+          { error: "Insufficient coins to send message", required: result.required, balance: result.balance },
+          { status: 402 }
+        );
+      }
+      return NextResponse.json(
+        { error: result.error || "Failed to send message" },
+        { status: 500 }
       );
-      const result = rpcData as Record<string, any>;
-
-      if (rpcError) {
-        // Cleanup conversation on failure
-        await supabase.from("conversations").delete().eq("id", conversation.id);
-        return NextResponse.json(
-          { error: "Failed to send message" },
-          { status: 500 }
-        );
-      }
-
-      if (!result.success) {
-        // Cleanup conversation on failure
-        await supabase.from("conversations").delete().eq("id", conversation.id);
-
-        if (result.error === "Insufficient coins") {
-          return NextResponse.json(
-            {
-              error: "Insufficient coins to send message",
-              required: result.required,
-              balance: result.balance,
-            },
-            { status: 402 }
-          );
-        }
-        return NextResponse.json(
-          { error: result.error || "Failed to send message" },
-          { status: 500 }
-        );
-      }
     }
 
     return NextResponse.json({
