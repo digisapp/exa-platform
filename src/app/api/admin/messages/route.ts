@@ -125,15 +125,29 @@ export async function GET(request: NextRequest) {
         }
       }
 
+      // Only show conversations that have at least one message (filter ghost conversations)
+      const { data: msgConvoRows } = await adminClient
+        .from("messages")
+        .select("conversation_id");
+
+      const convoIdsWithMessages = [...new Set((msgConvoRows || []).map((m: any) => m.conversation_id))] as string[];
+
+      // Intersect with search results if applicable
+      if (targetConversationIds) {
+        const withMsgsSet = new Set(convoIdsWithMessages);
+        targetConversationIds = targetConversationIds.filter((id) => withMsgsSet.has(id));
+      }
+
       // Get total count
       let totalCount = 0;
       if (targetConversationIds) {
         totalCount = targetConversationIds.length;
       } else {
-        const { count } = await adminClient
-          .from("conversations")
-          .select("*", { count: "exact", head: true });
-        totalCount = count || 0;
+        totalCount = convoIdsWithMessages.length;
+      }
+
+      if (totalCount === 0) {
+        return NextResponse.json({ conversations: [], totalCount: 0 });
       }
 
       // Get conversations
@@ -149,9 +163,9 @@ export async function GET(request: NextRequest) {
         `)
         .order("updated_at", { ascending: false });
 
-      if (targetConversationIds) {
-        query = query.in("id", targetConversationIds);
-      }
+      // Always filter to conversations with messages
+      const filterIds = targetConversationIds ?? convoIdsWithMessages;
+      query = query.in("id", filterIds);
 
       const { data: convos, error } = await query.range((page - 1) * pageSize, page * pageSize - 1);
 
