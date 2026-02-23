@@ -187,7 +187,7 @@ export default function ShopPage() {
           <p className="text-sm text-muted-foreground leading-relaxed mb-6 max-w-xl mx-auto">
             Designers are watching. Buy a designer&apos;s suit, shoot content in it, tag the brand — and get noticed for a chance to get cast for Swim Week!
           </p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
               { step: "1", label: "Buy a suit", desc: "from a Swim Week designer" },
               { step: "2", label: "Shoot content", desc: "in the piece, show it off" },
@@ -202,19 +202,6 @@ export default function ShopPage() {
                 <p className="text-xs text-muted-foreground leading-snug">{desc}</p>
               </div>
             ))}
-          </div>
-          <div className="flex flex-wrap gap-2 justify-center">
-            <Link href="/shows/miami-swim-week-2026">
-              <Button size="sm" className="bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600 text-white">
-                View Swim Week 2026
-                <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-              </Button>
-            </Link>
-            <Link href="/models">
-              <Button size="sm" variant="outline" className="border-violet-500/40 hover:border-violet-500">
-                Browse Models
-              </Button>
-            </Link>
           </div>
         </CardContent>
       </Card>
