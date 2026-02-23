@@ -177,28 +177,6 @@ export default function ShopPage() {
         </Link>
       </div>
 
-      {/* Hero Banner */}
-      <Card className="mb-4 overflow-hidden bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-cyan-500/10 border-pink-500/20">
-        <CardContent className="p-6 md:p-8">
-          <div className="flex flex-col md:flex-row items-center gap-6">
-            <div className="flex-1">
-              <Badge className="mb-3 bg-pink-500">Miami Swim Week · May 26–31, 2026</Badge>
-              <h2 className="text-2xl md:text-3xl font-bold mb-2">Wear the runway. Own the moment.</h2>
-              <p className="text-muted-foreground mb-4 leading-relaxed">
-                Shop exclusive pieces direct from Miami Swim Week designers — the same suits on the runway, available now for models and fans alike.
-              </p>
-              <Button className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600">
-                Shop the Collection
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-            <div className="hidden md:block w-48 h-48 rounded-xl bg-gradient-to-br from-pink-500/20 to-purple-500/20 flex items-center justify-center">
-              <ShoppingBag className="h-20 w-20 text-pink-500/50" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Model Opportunity Banner */}
       <Card className="mb-8 overflow-hidden border-violet-500/30 bg-gradient-to-br from-violet-950/40 via-purple-950/30 to-pink-950/40">
         <CardContent className="p-6 text-center">
