@@ -321,7 +321,7 @@ export default async function EventPage({ params, searchParams }: Props) {
                   <Badge className="mb-3 bg-pink-500">Miami Swim Week · May 26–31, 2026</Badge>
                   <h2 className="text-2xl md:text-3xl font-bold mb-2">Wear the runway. Own the moment.</h2>
                   <p className="text-muted-foreground mb-4 leading-relaxed">
-                    Shop exclusive pieces direct from Miami Swim Week designers — the same suits on the runway, available now for models and fans alike.
+                    Shop exclusive pieces direct from Miami Swim Week designers.
                   </p>
                   <Button asChild className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600">
                     <Link href="/shop">
