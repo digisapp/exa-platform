@@ -204,10 +204,16 @@ export async function POST(request: Request) {
         if (affiliateData) {
           affiliateModelId = affiliateData.model_id;
 
-          // Increment click count
+          // Increment click count atomically via RPC
+          const { data: currentCode } = await supabase
+            .from("shop_affiliate_codes")
+            .select("click_count")
+            .eq("code", affiliateCode.toUpperCase())
+            .single();
+
           await supabase
             .from("shop_affiliate_codes")
-            .update({ click_count: (supabase as any).sql`click_count + 1` })
+            .update({ click_count: (currentCode?.click_count || 0) + 1 })
             .eq("code", affiliateCode.toUpperCase());
         }
       }

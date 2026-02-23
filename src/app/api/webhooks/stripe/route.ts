@@ -879,9 +879,9 @@ async function handleShopOrderPayment(session: Stripe.Checkout.Session) {
         model_id: modelId,
         order_id: orderId,
         order_total: order.total,
-        commission_rate: 10, // Default 10%
+        commission_rate: order.total > 0 ? Math.round((order.affiliate_commission / order.total) * 100) : 10,
         commission_amount: order.affiliate_commission,
-        status: "pending", // Pending until order is delivered + hold period
+        status: "confirmed", // Hold period handled by available_at
         available_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), // 14 day hold
       });
 

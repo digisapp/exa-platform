@@ -73,12 +73,18 @@ export async function GET(request: NextRequest) {
       e.status !== "cancelled" ? sum + e.commission_amount : sum, 0
     ) || 0;
 
+    const now = new Date();
+
+    // Pending = not yet past the hold period
     const pendingEarnings = earnings?.reduce((sum: number, e: any) =>
-      e.status === "pending" ? sum + e.commission_amount : sum, 0
+      e.status !== "cancelled" && e.status !== "paid" && e.available_at && new Date(e.available_at) > now
+        ? sum + e.commission_amount
+        : sum, 0
     ) || 0;
 
+    // Available = hold period passed, not yet paid
     const availableEarnings = earnings?.reduce((sum: number, e: any) =>
-      e.status === "confirmed" && new Date(e.available_at) <= new Date()
+      e.status !== "cancelled" && e.status !== "paid" && e.available_at && new Date(e.available_at) <= now
         ? sum + e.commission_amount
         : sum, 0
     ) || 0;
