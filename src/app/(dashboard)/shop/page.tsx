@@ -213,7 +213,7 @@ export default function ShopPage() {
                 This is how you get on a designer&apos;s radar before Swim Week even starts.
               </h3>
               <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                Buy a suit from one of our Swim Week designers, shoot content in it, tag the brand. Designers are watching. Showing up in their pieces before the show is the fastest way to get noticed, get cast, and get on the runway in Miami.
+                Designers are watching. Showing up in their pieces before the show is the fastest way to get noticed, get cast, and get on the runway in Miami. Buy a suit from one of our Swim Week designers, shoot content in it, tag the brand.
               </p>
               <div className="flex flex-wrap gap-2">
                 <Link href="/shows/miami-swim-week-2026">
