@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   ShoppingBag,
   Package,
@@ -117,6 +118,12 @@ export default function AdminShopPage() {
             Manage EXA Swim Shop brands, products, and orders
           </p>
         </div>
+        <Link href="/shop" target="_blank">
+          <Button variant="outline" className="gap-2">
+            <Store className="h-4 w-4" />
+            View Shop
+          </Button>
+        </Link>
       </div>
 
       {/* Stats Overview */}
