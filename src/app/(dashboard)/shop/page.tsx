@@ -180,15 +180,12 @@ export default function ShopPage() {
       {/* Model Opportunity Banner */}
       <Card className="mb-8 overflow-hidden border-violet-500/30 bg-gradient-to-br from-violet-950/40 via-purple-950/30 to-pink-950/40">
         <CardContent className="p-6 text-center">
-          <div className="flex items-center gap-2 mb-3 justify-center">
-            <span className="text-xl">👙</span>
-            <span className="text-xs font-semibold uppercase tracking-widest text-violet-400">For Models</span>
-          </div>
+          <p className="text-xs font-semibold uppercase tracking-widest text-violet-400 mb-3">For Models</p>
           <h3 className="text-lg font-bold mb-2 leading-snug">
-            This is how you get on a designer&apos;s radar before Swim Week even starts.
+            This is how you get on a designer&apos;s radar before Swim Week.
           </h3>
           <p className="text-sm text-muted-foreground leading-relaxed mb-6 max-w-xl mx-auto">
-            Designers are watching. Showing up in their pieces before the show is the fastest way to get noticed, get cast, and get on the runway in Miami. Buy a suit from one of our Swim Week designers, shoot content in it, tag the brand.
+            Designers are watching. Buy a designer&apos;s suit, shoot content in it, tag the brand — and get noticed for a chance to get cast for Swim Week!
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
             {[
