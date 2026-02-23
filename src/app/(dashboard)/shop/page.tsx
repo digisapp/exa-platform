@@ -165,7 +165,7 @@ export default function ShopPage() {
             EXA Swim Shop
           </h1>
           <p className="text-muted-foreground mt-1">
-            Discover swimwear from 50+ designer brands
+            Exclusive pieces from Miami Swim Week designers
           </p>
         </div>
 
@@ -177,24 +177,45 @@ export default function ShopPage() {
         </Link>
       </div>
 
-      {/* Featured Banner */}
-      <Card className="mb-8 overflow-hidden bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-cyan-500/10 border-pink-500/20">
+      {/* Hero Banner */}
+      <Card className="mb-4 overflow-hidden bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-cyan-500/10 border-pink-500/20">
         <CardContent className="p-6 md:p-8">
           <div className="flex flex-col md:flex-row items-center gap-6">
             <div className="flex-1">
-              <Badge className="mb-2 bg-pink-500">New Collection</Badge>
-              <h2 className="text-2xl font-bold mb-2">Miami Swim Week 2026</h2>
-              <p className="text-muted-foreground mb-4">
-                Shop exclusive pieces from the runway, worn by EXA models
+              <Badge className="mb-3 bg-pink-500">Miami Swim Week · May 26–31, 2026</Badge>
+              <h2 className="text-2xl md:text-3xl font-bold mb-2">Wear the runway. Own the moment.</h2>
+              <p className="text-muted-foreground mb-4 leading-relaxed">
+                Shop exclusive pieces straight from Swim Week designers — the same suits on the runway, available now.
               </p>
               <Button className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600">
-                Shop Collection
+                Shop the Collection
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
             <div className="hidden md:block w-48 h-48 rounded-xl bg-gradient-to-br from-pink-500/20 to-purple-500/20 flex items-center justify-center">
               <ShoppingBag className="h-20 w-20 text-pink-500/50" />
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Model Opportunity Banner */}
+      <Card className="mb-8 overflow-hidden bg-gradient-to-r from-violet-500/10 via-cyan-500/10 to-pink-500/10 border-violet-500/20">
+        <CardContent className="p-5">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="text-3xl flex-shrink-0">👙</div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm mb-0.5">Are you a model?</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Buy a suit from a Swim Week designer, shoot content in it, tag the brand — and get seen during Miami Swim Week 2026. The best way to get on a designer&apos;s radar is showing up in their pieces.
+              </p>
+            </div>
+            <Link href="/shows/miami-swim-week-2026" className="flex-shrink-0">
+              <Button variant="outline" size="sm" className="border-violet-500/40 hover:border-violet-500 whitespace-nowrap">
+                View Swim Week
+                <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+              </Button>
+            </Link>
           </div>
         </CardContent>
       </Card>
