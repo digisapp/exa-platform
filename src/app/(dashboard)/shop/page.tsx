@@ -185,7 +185,7 @@ export default function ShopPage() {
               <Badge className="mb-3 bg-pink-500">Miami Swim Week · May 26–31, 2026</Badge>
               <h2 className="text-2xl md:text-3xl font-bold mb-2">Wear the runway. Own the moment.</h2>
               <p className="text-muted-foreground mb-4 leading-relaxed">
-                Shop exclusive pieces straight from Swim Week designers — the same suits on the runway, available now.
+                Shop exclusive pieces direct from Miami Swim Week designers — the same suits on the runway, available now for models and fans alike.
               </p>
               <Button className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600">
                 Shop the Collection
@@ -200,22 +200,57 @@ export default function ShopPage() {
       </Card>
 
       {/* Model Opportunity Banner */}
-      <Card className="mb-8 overflow-hidden bg-gradient-to-r from-violet-500/10 via-cyan-500/10 to-pink-500/10 border-violet-500/20">
-        <CardContent className="p-5">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <div className="text-3xl flex-shrink-0">👙</div>
+      <Card className="mb-8 overflow-hidden border-violet-500/30 bg-gradient-to-br from-violet-950/40 via-purple-950/30 to-pink-950/40">
+        <CardContent className="p-6">
+          <div className="flex flex-col sm:flex-row gap-6">
+            {/* Left: headline */}
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-sm mb-0.5">Are you a model?</p>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Buy a suit from a Swim Week designer, shoot content in it, tag the brand — and get seen during Miami Swim Week 2026. The best way to get on a designer&apos;s radar is showing up in their pieces.
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xl">👙</span>
+                <span className="text-xs font-semibold uppercase tracking-widest text-violet-400">For Models</span>
+              </div>
+              <h3 className="text-lg font-bold mb-2 leading-snug">
+                This is how you get on a designer&apos;s radar before Swim Week even starts.
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                Whether you&apos;re new to EXA or a seasoned runway model — buy a suit from one of our Swim Week designers, shoot content in it, tag the brand. Designers are watching. Showing up in their pieces before the show is the fastest way to get noticed, get cast, and get on the runway in Miami.
               </p>
+              <div className="flex flex-wrap gap-2">
+                <Link href="/shows/miami-swim-week-2026">
+                  <Button size="sm" className="bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600 text-white">
+                    View Swim Week 2026
+                    <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                  </Button>
+                </Link>
+                <Link href="/models">
+                  <Button size="sm" variant="outline" className="border-violet-500/40 hover:border-violet-500">
+                    Browse Models
+                  </Button>
+                </Link>
+              </div>
             </div>
-            <Link href="/shows/miami-swim-week-2026" className="flex-shrink-0">
-              <Button variant="outline" size="sm" className="border-violet-500/40 hover:border-violet-500 whitespace-nowrap">
-                View Swim Week
-                <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-              </Button>
-            </Link>
+            {/* Right: steps */}
+            <div className="sm:w-56 flex-shrink-0">
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">How it works</p>
+              <div className="space-y-3">
+                {[
+                  { step: "1", label: "Buy a suit", desc: "from a Swim Week designer" },
+                  { step: "2", label: "Shoot content", desc: "in the piece, show it off" },
+                  { step: "3", label: "Tag the brand", desc: "on Instagram & TikTok" },
+                  { step: "4", label: "Get seen", desc: "designers cast from content" },
+                ].map(({ step, label, desc }) => (
+                  <div key={step} className="flex items-start gap-3">
+                    <div className="w-6 h-6 rounded-full bg-violet-500/20 border border-violet-500/40 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-[10px] font-bold text-violet-400">{step}</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold leading-none mb-0.5">{label}</p>
+                      <p className="text-xs text-muted-foreground">{desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
