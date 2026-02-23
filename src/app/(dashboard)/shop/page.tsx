@@ -202,55 +202,38 @@ export default function ShopPage() {
       {/* Model Opportunity Banner */}
       <Card className="mb-8 overflow-hidden border-violet-500/30 bg-gradient-to-br from-violet-950/40 via-purple-950/30 to-pink-950/40">
         <CardContent className="p-6">
-          <div className="flex flex-col sm:flex-row gap-6">
-            {/* Left: headline */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-xl">👙</span>
-                <span className="text-xs font-semibold uppercase tracking-widest text-violet-400">For Models</span>
+          <div className="flex items-center gap-2 mb-5 justify-center">
+            <span className="text-xl">👙</span>
+            <span className="text-xs font-semibold uppercase tracking-widest text-violet-400">For Models — How it works</span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+            {[
+              { step: "1", label: "Buy a suit", desc: "from a Swim Week designer" },
+              { step: "2", label: "Shoot content", desc: "in the piece, show it off" },
+              { step: "3", label: "Tag the brand", desc: "on Instagram & TikTok" },
+              { step: "4", label: "Get seen", desc: "designers cast from content" },
+            ].map(({ step, label, desc }) => (
+              <div key={step} className="flex flex-col items-center text-center gap-2">
+                <div className="w-9 h-9 rounded-full bg-violet-500/20 border border-violet-500/40 flex items-center justify-center">
+                  <span className="text-sm font-bold text-violet-400">{step}</span>
+                </div>
+                <p className="text-sm font-semibold leading-tight">{label}</p>
+                <p className="text-xs text-muted-foreground leading-snug">{desc}</p>
               </div>
-              <h3 className="text-lg font-bold mb-2 leading-snug">
-                This is how you get on a designer&apos;s radar before Swim Week even starts.
-              </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                Designers are watching. Showing up in their pieces before the show is the fastest way to get noticed, get cast, and get on the runway in Miami. Buy a suit from one of our Swim Week designers, shoot content in it, tag the brand.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Link href="/shows/miami-swim-week-2026">
-                  <Button size="sm" className="bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600 text-white">
-                    View Swim Week 2026
-                    <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-                  </Button>
-                </Link>
-                <Link href="/models">
-                  <Button size="sm" variant="outline" className="border-violet-500/40 hover:border-violet-500">
-                    Browse Models
-                  </Button>
-                </Link>
-              </div>
-            </div>
-            {/* Right: steps */}
-            <div className="sm:w-56 flex-shrink-0">
-              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">How it works</p>
-              <div className="space-y-3">
-                {[
-                  { step: "1", label: "Buy a suit", desc: "from a Swim Week designer" },
-                  { step: "2", label: "Shoot content", desc: "in the piece, show it off" },
-                  { step: "3", label: "Tag the brand", desc: "on Instagram & TikTok" },
-                  { step: "4", label: "Get seen", desc: "designers cast from content" },
-                ].map(({ step, label, desc }) => (
-                  <div key={step} className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-violet-500/20 border border-violet-500/40 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-[10px] font-bold text-violet-400">{step}</span>
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold leading-none mb-0.5">{label}</p>
-                      <p className="text-xs text-muted-foreground">{desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-2 justify-center">
+            <Link href="/shows/miami-swim-week-2026">
+              <Button size="sm" className="bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600 text-white">
+                View Swim Week 2026
+                <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+              </Button>
+            </Link>
+            <Link href="/models">
+              <Button size="sm" variant="outline" className="border-violet-500/40 hover:border-violet-500">
+                Browse Models
+              </Button>
+            </Link>
           </div>
         </CardContent>
       </Card>
