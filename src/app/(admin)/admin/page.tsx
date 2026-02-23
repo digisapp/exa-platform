@@ -23,6 +23,7 @@ import {
   Camera,
   FolderOpen,
   Printer,
+  ShoppingBag,
 } from "lucide-react";
 
 export default async function AdminPage() {
@@ -241,6 +242,13 @@ export default async function AdminPage() {
           <Link href="/admin/print-queue">
             <Printer className="h-6 w-6 text-purple-500" />
             <span>Print Queue</span>
+          </Link>
+        </Button>
+
+        <Button variant="outline" asChild className="h-auto py-4 flex-col gap-2">
+          <Link href="/admin/shop">
+            <ShoppingBag className="h-6 w-6 text-emerald-500" />
+            <span>Shop</span>
           </Link>
         </Button>
       </div>
