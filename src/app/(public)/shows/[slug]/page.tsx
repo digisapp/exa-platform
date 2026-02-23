@@ -330,9 +330,6 @@ export default async function EventPage({ params, searchParams }: Props) {
                     </Link>
                   </Button>
                 </div>
-                <div className="hidden md:flex w-48 h-48 rounded-xl bg-gradient-to-br from-pink-500/20 to-purple-500/20 items-center justify-center flex-shrink-0">
-                  <ShoppingBag className="h-20 w-20 text-pink-500/50" />
-                </div>
               </div>
             </CardContent>
           </Card>
