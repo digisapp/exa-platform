@@ -83,6 +83,7 @@ export function ChatView({
   const [isBlocking, setIsBlocking] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [isNearBottom, setIsNearBottom] = useState(true);
+  const [otherLastReadAt, setOtherLastReadAt] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -345,6 +346,44 @@ export function ChatView({
     markAsRead();
   }, [conversation.id, currentActor.id, supabase]);
 
+  // Fetch and subscribe to other participant's last_read_at for read receipts
+  useEffect(() => {
+    // Fetch initial value
+    (supabase
+      .from("conversation_participants") as any)
+      .select("last_read_at")
+      .eq("conversation_id", conversation.id)
+      .eq("actor_id", otherParticipant.actor_id)
+      .single()
+      .then(({ data }: { data: { last_read_at: string | null } | null }) => {
+        if (data?.last_read_at) setOtherLastReadAt(data.last_read_at);
+      });
+
+    // Subscribe to realtime updates
+    const readChannel = supabase
+      .channel(`read:${conversation.id}:${otherParticipant.actor_id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "conversation_participants",
+          filter: `conversation_id=eq.${conversation.id}`,
+        },
+        (payload) => {
+          const updated = payload.new as { actor_id: string; last_read_at: string | null };
+          if (updated.actor_id === otherParticipant.actor_id && updated.last_read_at) {
+            setOtherLastReadAt(updated.last_read_at);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      readChannel.unsubscribe();
+    };
+  }, [conversation.id, otherParticipant.actor_id, supabase]);
+
   // Subscribe to incoming video calls
   useEffect(() => {
     const callChannel = supabase
@@ -559,6 +598,23 @@ export function ChatView({
           )}
         </div>
 
+        {/* Voice Call button */}
+        <VideoCallButton
+          conversationId={conversation.id}
+          coinBalance={localCoinBalance}
+          isModel={currentActor.type === "model"}
+          recipientIsModel={otherParticipant.actor.type === "model"}
+          recipientActorId={otherParticipant.actor_id}
+          recipientName={otherName}
+          recipientAvatar={otherAvatar}
+          videoCallRate={otherParticipant.model?.voice_call_rate || 5}
+          callType="voice"
+          onBalanceChange={(newBalance) => {
+            setLocalCoinBalance(newBalance);
+            coinBalanceContext?.setBalance(newBalance);
+          }}
+        />
+
         {/* Video Call button */}
         <VideoCallButton
           conversationId={conversation.id}
@@ -569,6 +625,7 @@ export function ChatView({
           recipientName={otherName}
           recipientAvatar={otherAvatar}
           videoCallRate={otherParticipant.model?.video_call_rate || 5}
+          callType="video"
           onBalanceChange={(newBalance) => {
             setLocalCoinBalance(newBalance);
             coinBalanceContext?.setBalance(newBalance);
@@ -712,8 +769,22 @@ export function ChatView({
               </p>
             )}
           </div>
-        ) : (
-          messages.map((message, index) => {
+        ) : (() => {
+          // Find the last own message that was read by the other participant
+          const seenMessageId = otherLastReadAt
+            ? messages.reduce<string | null>((last, msg) => {
+                if (
+                  msg.sender_id === currentActor.id &&
+                  msg.created_at &&
+                  new Date(msg.created_at) <= new Date(otherLastReadAt)
+                ) {
+                  return msg.id;
+                }
+                return last;
+              }, null)
+            : null;
+
+          return messages.map((message, index) => {
             const isOwn = message.sender_id === currentActor.id;
             const showAvatar =
               index === 0 ||
@@ -729,6 +800,7 @@ export function ChatView({
             const hasTimeGap = !!(nextMessage && message.created_at && nextMessage.created_at &&
               (new Date(nextMessage.created_at).getTime() - new Date(message.created_at).getTime() > 5 * 60 * 1000));
             const showTimestamp = isLastMessage || isDifferentSender || hasTimeGap;
+            const showSeen = message.id === seenMessageId;
 
             // Build reactions from batch-fetched data
             const rawReactions = reactionsMap[message.id] || [];
@@ -749,29 +821,35 @@ export function ChatView({
             }));
 
             return (
-              <MessageBubble
-                key={message.id}
-                message={message}
-                isOwn={isOwn}
-                senderName={
-                  isOwn
-                    ? currentModel?.first_name
-                      ? `${currentModel.first_name} ${currentModel.last_name || ""}`.trim()
-                      : "You"
-                    : otherName
-                }
-                senderAvatar={
-                  isOwn ? currentModel?.profile_photo_url : otherAvatar
-                }
-                showAvatar={showAvatar}
-                showTimestamp={showTimestamp}
-                currentActorId={currentActor.id}
-                reactions={reactions}
-                onUnlock={handleUnlockMedia}
-              />
+              <div key={message.id}>
+                <MessageBubble
+                  message={message}
+                  isOwn={isOwn}
+                  senderName={
+                    isOwn
+                      ? currentModel?.first_name
+                        ? `${currentModel.first_name} ${currentModel.last_name || ""}`.trim()
+                        : "You"
+                      : otherName
+                  }
+                  senderAvatar={
+                    isOwn ? currentModel?.profile_photo_url : otherAvatar
+                  }
+                  showAvatar={showAvatar}
+                  showTimestamp={showTimestamp}
+                  currentActorId={currentActor.id}
+                  reactions={reactions}
+                  onUnlock={handleUnlockMedia}
+                />
+                {showSeen && (
+                  <div className="flex justify-end pr-2 -mt-1 mb-1">
+                    <span className="text-xs text-muted-foreground">Seen</span>
+                  </div>
+                )}
+              </div>
             );
-          })
-        )}
+          });
+        })()}
 
         {/* Typing indicator */}
         <div aria-live="polite" aria-atomic="true">

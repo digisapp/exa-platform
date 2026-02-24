@@ -10,11 +10,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Video, Loader2, Coins } from "lucide-react";
+import { Video, Phone, Loader2, Coins } from "lucide-react";
 import { toast } from "sonner";
 import { VideoRoom } from "./VideoRoom";
 import { MIN_CALL_BALANCE } from "@/lib/livekit-constants";
-import { cn } from "@/lib/utils";
 
 interface VideoCallButtonProps {
   conversationId: string;
@@ -26,6 +25,7 @@ interface VideoCallButtonProps {
   recipientName?: string;
   recipientAvatar?: string | null;
   videoCallRate?: number;
+  callType?: "video" | "voice";
   onBalanceChange?: (newBalance: number) => void;
 }
 
@@ -39,6 +39,7 @@ export function VideoCallButton({
   recipientName,
   recipientAvatar,
   videoCallRate = 5,
+  callType = "video",
   onBalanceChange,
 }: VideoCallButtonProps) {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -77,7 +78,7 @@ export function VideoCallButton({
       const response = await fetch("/api/calls/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ conversationId }),
+        body: JSON.stringify({ conversationId, callType }),
       });
 
       const data = await response.json();
@@ -128,6 +129,7 @@ export function VideoCallButton({
         recipientActorId={recipientActorId}
         recipientName={recipientName}
         coinBalance={coinBalance}
+        callType={callType}
         onTipSuccess={(_, newBalance) => {
           if (onBalanceChange) {
             onBalanceChange(newBalance);
@@ -147,11 +149,13 @@ export function VideoCallButton({
         title={
           requiresCoins && !hasEnoughCoins
             ? `Need ${MIN_CALL_BALANCE} coins to call`
-            : "Start video call"
+            : callType === "voice" ? "Start voice call" : "Start video call"
         }
       >
         {isStarting ? (
           <Loader2 className="h-5 w-5 animate-spin" />
+        ) : callType === "voice" ? (
+          <Phone className="h-5 w-5" />
         ) : (
           <Video className="h-5 w-5" />
         )}
@@ -161,9 +165,9 @@ export function VideoCallButton({
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Video Call</DialogTitle>
+            <DialogTitle>{callType === "voice" ? "Voice Call" : "Video Call"}</DialogTitle>
             <DialogDescription>
-              Start a video call with {recipientName}
+              Start a {callType === "voice" ? "voice" : "video"} call with {recipientName}
             </DialogDescription>
           </DialogHeader>
 
@@ -201,6 +205,8 @@ export function VideoCallButton({
               >
                 {isStarting ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
+                ) : callType === "voice" ? (
+                  "Start Voice Call"
                 ) : (
                   "Start Call"
                 )}
