@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Camera, Users } from "lucide-react";
 import { toast } from "sonner";
 
-type PackageId = "opening-show" | "day-2" | "day-3" | "day-4" | "day-5" | "daytime-show";
+type PackageId = "opening-show" | "day-2" | "day-3" | "day-4" | "day-5" | "day-6" | "daytime-show";
 
 const PHOTO_VIDEO_PRICE = 700;
 const PHOTO_VIDEO_INSTALLMENT = 234; // $234 × 3 = $702 ≈ $700

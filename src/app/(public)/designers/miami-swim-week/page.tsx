@@ -105,7 +105,7 @@ const PACKAGES = [
   {
     id: "day-5" as const,
     name: "Day 5 Show",
-    date: "Sat–Sun, May 30–31",
+    date: "Saturday, May 30",
     price: 1500,
     installment: 500,
     badge: null,
@@ -113,8 +113,24 @@ const PACKAGES = [
     borderColor: "border-pink-500/20",
     highlight: false,
     features: [
-      "Closing weekend runway show",
-      "Grand finale atmosphere",
+      "Saturday closing show",
+      "Show lineup placement",
+      "15 models — choose from our full roster",
+      "EXA Models talent coordination",
+    ],
+  },
+  {
+    id: "day-6" as const,
+    name: "Day 6 Show",
+    date: "Sunday, May 31",
+    price: 1500,
+    installment: 500,
+    badge: null,
+    badgeGradient: "",
+    borderColor: "border-pink-500/20",
+    highlight: false,
+    features: [
+      "Grand finale closing show",
       "Show lineup placement",
       "15 models — choose from our full roster",
       "EXA Models talent coordination",
@@ -269,7 +285,7 @@ export default async function MswBrandPage() {
             Showcase Your Collection on the Runway
           </h2>
           <p className="text-muted-foreground text-lg leading-relaxed mb-10">
-            EXA Models is producing runway shows at Miami Swim Week 2026, featuring our curated roster of professional models. We&apos;re inviting select swimwear, resortwear, and lingerie designers to showcase their collections on our runway — in front of press, buyers, and influencers from around the world.
+            Miami Swim Week 2026, featuring our curated roster of professional models. We&apos;re inviting select swimwear, resortwear, and lingerie designers to showcase their collections on our runway.
           </p>
         </div>
 
