@@ -18,6 +18,7 @@ import { XIcon } from "@/components/ui/x-icon";
 import type { Metadata } from "next";
 import { ShareButton } from "@/components/ui/share-button";
 import { AddToCampaignButton } from "@/components/ui/add-to-campaign-button";
+import { BioExpand } from "@/components/model/BioExpand";
 import { ModelNotesDialog } from "@/components/brands/ModelNotesDialog";
 import { BackButton } from "@/components/ui/back-button";
 import { ProfileActionButtons } from "@/components/profile/ProfileActionButtons";
@@ -434,11 +435,7 @@ export default async function ModelProfilePage({ params }: Props) {
 
 
           {/* Bio - under name */}
-          {model.bio && (
-            <p className="text-white/70 text-sm leading-relaxed text-center mb-3 max-w-sm mx-auto">
-              {model.bio}
-            </p>
-          )}
+          {model.bio && <BioExpand bio={model.bio} />}
 
           {/* Location */}
           {model.show_location && (model.city || model.state) && (
