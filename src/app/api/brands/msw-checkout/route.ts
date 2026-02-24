@@ -63,8 +63,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid payment type" }, { status: 400 });
     }
 
-    const successUrl = `${BASE_URL}/brands/miami-swim-week/success?session_id={CHECKOUT_SESSION_ID}&pkg=${pkg}&type=${paymentType}&media=${addPhotoVideo ? "1" : "0"}&models=${addExtraModels ? "20" : "15"}`;
-    const cancelUrl = `${BASE_URL}/brands/miami-swim-week`;
+    const successUrl = `${BASE_URL}/designers/miami-swim-week/success?session_id={CHECKOUT_SESSION_ID}&pkg=${pkg}&type=${paymentType}&media=${addPhotoVideo ? "1" : "0"}&models=${addExtraModels ? "20" : "15"}`;
+    const cancelUrl = `${BASE_URL}/designers/miami-swim-week`;
 
     if (paymentType === "full") {
       const lineItems: Parameters<typeof stripe.checkout.sessions.create>[0]["line_items"] = [

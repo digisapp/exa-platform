@@ -19,13 +19,13 @@ import { CheckoutButtons } from "./checkout-buttons";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Brand Partnerships — Miami Swim Week 2026 | EXA Models",
+  title: "Designers — Miami Swim Week 2026 | EXA Models",
   description:
-    "Book your brand's runway show at Miami Swim Week 2026 (May 26–31, Miami, FL). Choose from Opening Night, Day 2, Day 3, or Daytime Show packages with professional EXA Models talent.",
+    "Showcase your swimwear, resortwear, or lingerie collection at Miami Swim Week 2026 (May 26–31, Miami, FL). Book your runway show slot with EXA Models professional talent.",
   openGraph: {
-    title: "Brand Partnerships — Miami Swim Week 2026 | EXA Models",
+    title: "Designers — Miami Swim Week 2026 | EXA Models",
     description:
-      "Secure your runway show slot at Miami Swim Week 2026. Opening Night ($3,500), Day 2 ($2,500), Day 3 ($1,500), Daytime Show ($1,000). Pay in full or 3-month plan.",
+      "Secure your runway show slot at Miami Swim Week 2026. Opening Night ($3,500), Day 2 ($2,500), Day 3–5 ($1,500 each), Daytime Show ($1,000). Pay in full or 3-month plan.",
   },
 };
 
@@ -232,13 +232,13 @@ export default async function MswBrandPage() {
         {/* Overlay */}
         <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 pointer-events-none">
           <Badge className="mb-4 bg-gradient-to-r from-pink-500 to-violet-500 text-white border-0 px-4 py-1.5 text-sm font-semibold tracking-wide">
-            For Brands &amp; Designers
+            For Designers
           </Badge>
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 drop-shadow-lg">
             Miami Swim Week 2026
           </h1>
           <p className="text-white/90 text-lg md:text-xl mb-5 max-w-2xl leading-relaxed">
-            Book your runway show. Showcase your collection. Own the moment.
+            Showcase your collection. Own the runway. Own the moment.
           </p>
           <div className="flex flex-wrap gap-3 text-white/90">
             <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
@@ -264,13 +264,13 @@ export default async function MswBrandPage() {
         {/* Pitch Section */}
         <div className="text-center max-w-3xl mx-auto mb-16">
           <Badge className="mb-4 bg-pink-500/10 text-pink-400 border-pink-500/20 px-4 py-1">
-            Partnership Opportunity
+            Designer Opportunity
           </Badge>
           <h2 className="text-3xl md:text-4xl font-bold mb-5">
-            Put Your Brand on the Runway
+            Showcase Your Collection on the Runway
           </h2>
           <p className="text-muted-foreground text-lg leading-relaxed mb-10">
-            EXA Models is producing runway shows at Miami Swim Week 2026, featuring our curated roster of professional talent. We&apos;re inviting select swimwear, resortwear, and lingerie brands to showcase their collections on our runway — in front of press, buyers, and influencers from around the world.
+            EXA Models is producing runway shows at Miami Swim Week 2026, featuring our curated roster of professional models. We&apos;re inviting select swimwear, resortwear, and lingerie designers to showcase their collections on our runway — in front of press, buyers, and influencers from around the world.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             {PERKS.map((item) => (
@@ -284,6 +284,25 @@ export default async function MswBrandPage() {
               </div>
             ))}
           </div>
+
+          {/* EXA TV Button */}
+          <a
+            href="https://examodels.com/tv"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-8 inline-flex items-center gap-3 px-6 py-4 rounded-2xl bg-gradient-to-r from-violet-500/10 to-pink-500/10 border border-violet-500/25 hover:border-violet-500/50 hover:from-violet-500/15 hover:to-pink-500/15 transition-all group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-violet-500/25">
+              <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </div>
+            <div className="text-left">
+              <p className="font-bold text-sm group-hover:text-violet-400 transition-colors">Watch EXA TV</p>
+              <p className="text-xs text-muted-foreground">See our past runway shows &amp; events</p>
+            </div>
+            <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-violet-400 transition-colors ml-2" />
+          </a>
         </div>
 
         {/* Show Packages */}
@@ -408,7 +427,7 @@ export default async function MswBrandPage() {
         <div className="text-center p-10 md:p-14 rounded-3xl bg-gradient-to-r from-pink-500/10 via-violet-500/10 to-cyan-500/10 border border-pink-500/20">
           <h2 className="text-2xl md:text-3xl font-bold mb-3">Questions? Let&apos;s Talk.</h2>
           <p className="text-muted-foreground mb-8 max-w-md mx-auto leading-relaxed">
-            Email our partnerships team directly for custom packages or any questions about Miami Swim Week 2026.
+            Email us directly for custom packages or any questions about showcasing your collection at Miami Swim Week 2026.
           </p>
           <a
             href="mailto:nathan@examodels.com"
