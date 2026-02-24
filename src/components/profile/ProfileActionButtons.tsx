@@ -109,7 +109,7 @@ export function ProfileActionButtons({
   } | null>(null);
   const [ringSeconds, setRingSeconds] = useState(RING_TIMEOUT);
   const [callOutcome, setCallOutcome] = useState<"declined" | "missed" | null>(null);
-  const [startingCall, setStartingCall] = useState(false);
+  const [startingCall, setStartingCall] = useState<"video" | "voice" | null>(null);
 
   const router = useRouter();
   const firstName = modelName?.split(" ")[0] || modelUsername;
@@ -193,7 +193,7 @@ export function ProfileActionButtons({
   const startCall = async (callType: "video" | "voice") => {
     setShowVideoConfirm(false);
     setShowVoiceConfirm(false);
-    setStartingCall(true);
+    setStartingCall(callType);
     try {
       const res = await fetch("/api/calls/start", {
         method: "POST",
@@ -217,7 +217,7 @@ export function ProfileActionButtons({
     } catch {
       toast.error("Failed to start call");
     } finally {
-      setStartingCall(false);
+      setStartingCall(null);
     }
   };
 
@@ -447,20 +447,20 @@ export function ProfileActionButtons({
             {allowVideoCall && (
               <button
                 onClick={handleVideoCall}
-                disabled={startingCall}
+                disabled={startingCall !== null}
                 className="flex items-center justify-center gap-1.5 h-9 rounded-xl bg-white/8 hover:bg-white/15 border border-white/10 hover:border-white/20 text-white/70 hover:text-white text-xs font-medium transition-all active:scale-95 disabled:opacity-50"
               >
-                {startingCall ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Video className="h-3.5 w-3.5" />}
+                {startingCall === "video" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Video className="h-3.5 w-3.5" />}
                 Video
               </button>
             )}
             {allowVoiceCall && (
               <button
                 onClick={handleVoiceCall}
-                disabled={startingCall}
+                disabled={startingCall !== null}
                 className="flex items-center justify-center gap-1.5 h-9 rounded-xl bg-white/8 hover:bg-white/15 border border-white/10 hover:border-white/20 text-white/70 hover:text-white text-xs font-medium transition-all active:scale-95 disabled:opacity-50"
               >
-                {startingCall ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Phone className="h-3.5 w-3.5" />}
+                {startingCall === "voice" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Phone className="h-3.5 w-3.5" />}
                 Voice
               </button>
             )}
