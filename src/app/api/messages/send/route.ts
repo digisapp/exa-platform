@@ -269,7 +269,7 @@ export async function POST(request: NextRequest) {
       {
         p_conversation_id: conversationId,
         p_sender_id: sender.id,
-        p_recipient_id: recipientModelId || "",  // This is the model's table ID, not actor ID
+        p_recipient_id: recipientModelId || null,  // This is the model's table ID, not actor ID
         p_content: content || "",
         p_media_url: mediaUrl || undefined,
         p_media_type: mediaType || undefined,
@@ -316,7 +316,7 @@ export async function POST(request: NextRequest) {
       success: true,
       message,
       coinsDeducted: result.coins_deducted || 0,
-      conversationId: conversationCreated ? conversationId : undefined,
+      conversationId: conversationId,
     });
   } catch (error) {
     console.error("Send message error:", error);
