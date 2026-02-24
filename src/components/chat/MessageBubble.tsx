@@ -11,12 +11,23 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format, isToday, isYesterday } from "date-fns";
 import { MoreVertical, Trash2, Lock, Coins, Loader2 as Spinner } from "lucide-react";
 import { toast } from "sonner";
 import { ImageLightbox } from "./ImageLightbox";
 import { MessageReactions } from "./MessageReactions";
 import type { Message } from "@/types/database";
+
+function formatMessageTimestamp(dateStr: string): string {
+  const date = new Date(dateStr);
+  const diffMinutes = (Date.now() - date.getTime()) / (1000 * 60);
+  if (diffMinutes < 1) return "Just now";
+  if (diffMinutes < 60) return `${Math.floor(diffMinutes)}m ago`;
+  if (isToday(date)) return format(date, "h:mm a");
+  if (isYesterday(date)) return `Yesterday ${format(date, "h:mm a")}`;
+  if (date.getFullYear() === new Date().getFullYear()) return format(date, "MMM d, h:mm a");
+  return format(date, "MMM d yyyy, h:mm a");
+}
 
 interface Reaction {
   emoji: string;
@@ -156,9 +167,7 @@ export const MessageBubble = memo(function MessageBubble({
               isOwn ? "text-right" : "text-left"
             )}
           >
-            {message.created_at && formatDistanceToNow(new Date(message.created_at), {
-              addSuffix: true,
-            })}
+            {message.created_at && formatMessageTimestamp(message.created_at)}
           </p>
         </div>
       </div>
@@ -347,9 +356,7 @@ export const MessageBubble = memo(function MessageBubble({
       {/* Timestamp to the right/left of the bubble */}
       {showTimestamp && (
         <span className="text-[10px] text-muted-foreground whitespace-nowrap self-end mb-1">
-          {message.created_at && formatDistanceToNow(new Date(message.created_at), {
-            addSuffix: true,
-          })}
+          {message.created_at && formatMessageTimestamp(message.created_at)}
         </span>
       )}
     </div>

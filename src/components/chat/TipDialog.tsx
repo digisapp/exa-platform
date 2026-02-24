@@ -25,6 +25,8 @@ interface TipDialogProps {
   conversationId?: string;
   coinBalance: number;
   onTipSuccess?: (amount: number, newBalance: number) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export function TipDialog({
@@ -33,8 +35,13 @@ export function TipDialog({
   conversationId,
   coinBalance,
   onTipSuccess,
+  open: externalOpen,
+  onOpenChange: externalOnOpenChange,
 }: TipDialogProps) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = externalOnOpenChange !== undefined;
+  const open = isControlled ? (externalOpen ?? false) : internalOpen;
+  const setOpen = isControlled ? externalOnOpenChange : setInternalOpen;
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -82,16 +89,18 @@ export function TipDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-pink-500 hover:text-pink-600 hover:bg-pink-500/10"
-        >
-          <Gift className="h-4 w-4 mr-1" />
-          Tip
-        </Button>
-      </DialogTrigger>
+      {!isControlled && (
+        <DialogTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-pink-500 hover:text-pink-600 hover:bg-pink-500/10"
+          >
+            <Gift className="h-4 w-4 mr-1" />
+            Tip
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

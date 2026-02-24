@@ -15,6 +15,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -27,7 +28,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Loader2, MoreVertical, Ban, Coins, ChevronDown, Users, Building2, Circle } from "lucide-react";
+import { ArrowLeft, Loader2, MoreVertical, Ban, Coins, ChevronDown, Users, Building2, Circle, Gift } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -84,6 +85,7 @@ export function ChatView({
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [isNearBottom, setIsNearBottom] = useState(true);
   const [otherLastReadAt, setOtherLastReadAt] = useState<string | null>(null);
+  const [showTipDialog, setShowTipDialog] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -579,23 +581,17 @@ export function ChatView({
               </Badge>
             )}
           </div>
-          {/* Show username link for models */}
-          {otherInfo.username && (
+          {/* Online status takes priority; fall back to username link */}
+          {otherInfo.lastActive && new Date().getTime() - new Date(otherInfo.lastActive).getTime() < 5 * 60 * 1000 ? (
+            <p className="text-xs font-medium text-green-500">Online</p>
+          ) : otherInfo.username ? (
             <Link
               href={`/${otherInfo.username}`}
-              className="text-sm text-muted-foreground hover:text-primary"
+              className="text-xs text-muted-foreground hover:text-primary"
             >
               @{otherInfo.username}
             </Link>
-          )}
-          {/* Show last active for other types if not online */}
-          {!otherInfo.username && otherInfo.lastActive && (
-            new Date().getTime() - new Date(otherInfo.lastActive).getTime() >= 5 * 60 * 1000
-          ) && (
-            <p className="text-xs text-muted-foreground">
-              Active {formatDistanceToNow(new Date(otherInfo.lastActive), { addSuffix: true })}
-            </p>
-          )}
+          ) : null}
         </div>
 
         {/* Voice Call button */}
@@ -632,21 +628,6 @@ export function ChatView({
           }}
         />
 
-        {/* Tip button */}
-        {canTip && (
-          <TipDialog
-            recipientId={otherParticipant.actor_id}
-            recipientName={otherName}
-            conversationId={conversation.id}
-            coinBalance={localCoinBalance}
-            onTipSuccess={(amount, newBalance) => {
-              setLocalCoinBalance(newBalance);
-              // Also update the global context so navbar updates
-              coinBalanceContext?.setBalance(newBalance);
-            }}
-          />
-        )}
-
         {/* More options menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -655,6 +636,15 @@ export function ChatView({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            {canTip && (
+              <>
+                <DropdownMenuItem onClick={() => setShowTipDialog(true)}>
+                  <Gift className="h-4 w-4 mr-2 text-pink-500" />
+                  Send a Tip
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
             <DropdownMenuItem
               onClick={() => setShowBlockDialog(true)}
               className="text-destructive focus:text-destructive"
@@ -665,6 +655,22 @@ export function ChatView({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      {/* Controlled Tip Dialog (opened from More menu) */}
+      {canTip && (
+        <TipDialog
+          recipientId={otherParticipant.actor_id}
+          recipientName={otherName}
+          conversationId={conversation.id}
+          coinBalance={localCoinBalance}
+          open={showTipDialog}
+          onOpenChange={setShowTipDialog}
+          onTipSuccess={(amount, newBalance) => {
+            setLocalCoinBalance(newBalance);
+            coinBalanceContext?.setBalance(newBalance);
+          }}
+        />
+      )}
 
       {/* Block Confirmation Dialog */}
       <AlertDialog open={showBlockDialog} onOpenChange={setShowBlockDialog}>
@@ -836,14 +842,16 @@ export function ChatView({
                     isOwn ? currentModel?.profile_photo_url : otherAvatar
                   }
                   showAvatar={showAvatar}
-                  showTimestamp={showTimestamp}
+                  showTimestamp={showTimestamp && !showSeen}
                   currentActorId={currentActor.id}
                   reactions={reactions}
                   onUnlock={handleUnlockMedia}
                 />
                 {showSeen && (
                   <div className="flex justify-end pr-2 -mt-1 mb-1">
-                    <span className="text-xs text-muted-foreground">Seen</span>
+                    <span className="text-xs text-muted-foreground">
+                      Seen{otherLastReadAt ? ` · ${formatDistanceToNow(new Date(otherLastReadAt), { addSuffix: true })}` : ""}
+                    </span>
                   </div>
                 )}
               </div>
@@ -882,11 +890,7 @@ export function ChatView({
         disabled={loading}
         coinCost={coinCost}
         coinBalance={localCoinBalance}
-        placeholder={
-          coinCost > 0
-            ? `Message (${coinCost} coins)...`
-            : "Type a message..."
-        }
+        placeholder="Type a message..."
         isModel={currentActor.type === "model"}
         modelId={currentModel?.id}
         conversationId={conversation.id}
