@@ -33,7 +33,7 @@ const PACKAGES = [
   {
     id: "opening-show" as const,
     name: "Opening Show",
-    date: "May 26, 2026",
+    date: "Tuesday, May 26",
     price: 3500,
     installment: 1167,
     badge: "Most Prestigious",
@@ -44,15 +44,14 @@ const PACKAGES = [
       "Premier opening night runway show",
       "Maximum media & influencer coverage",
       "Priority placement in show lineup",
-      "Professional photo & video documentation",
+      "15 models — choose from our full roster",
       "EXA Models talent coordination",
-      "Access to full confirmed model roster",
     ],
   },
   {
     id: "day-2" as const,
     name: "Day 2 Show",
-    date: "May 27, 2026",
+    date: "Wednesday, May 27",
     price: 2500,
     installment: 834,
     badge: null,
@@ -63,15 +62,14 @@ const PACKAGES = [
       "Full runway show on Day 2",
       "Strong media & buyer attendance",
       "Show lineup placement",
-      "Professional photo & video documentation",
+      "15 models — choose from our full roster",
       "EXA Models talent coordination",
-      "Access to full confirmed model roster",
     ],
   },
   {
     id: "day-3" as const,
     name: "Day 3 Show",
-    date: "May 28, 2026",
+    date: "Thursday, May 28",
     price: 1500,
     installment: 500,
     badge: null,
@@ -82,9 +80,44 @@ const PACKAGES = [
       "Full runway show on Day 3",
       "Closing weekend momentum",
       "Show lineup placement",
-      "Professional photo & video documentation",
+      "15 models — choose from our full roster",
       "EXA Models talent coordination",
-      "Access to full confirmed model roster",
+    ],
+  },
+  {
+    id: "day-4" as const,
+    name: "Day 4 Show",
+    date: "Friday, May 29",
+    price: 1500,
+    installment: 500,
+    badge: null,
+    badgeGradient: "",
+    borderColor: "border-pink-500/20",
+    highlight: false,
+    features: [
+      "Full runway show on Day 4",
+      "Weekend build-up energy",
+      "Show lineup placement",
+      "15 models — choose from our full roster",
+      "EXA Models talent coordination",
+    ],
+  },
+  {
+    id: "day-5" as const,
+    name: "Day 5 Show",
+    date: "Sat–Sun, May 30–31",
+    price: 1500,
+    installment: 500,
+    badge: null,
+    badgeGradient: "",
+    borderColor: "border-pink-500/20",
+    highlight: false,
+    features: [
+      "Closing weekend runway show",
+      "Grand finale atmosphere",
+      "Show lineup placement",
+      "15 models — choose from our full roster",
+      "EXA Models talent coordination",
     ],
   },
   {
@@ -101,9 +134,8 @@ const PACKAGES = [
       "Boutique daytime runway showcase",
       "Intimate buyer & press audience",
       "Afternoon runway presentation",
-      "Professional talent lineup",
+      "15 models — choose from our full roster",
       "EXA Models talent coordination",
-      "Access to full confirmed model roster",
     ],
   },
 ];
@@ -117,7 +149,7 @@ const PERKS = [
 const FAQS = [
   {
     q: "What's included with my show package?",
-    a: "Each package includes EXA Models talent coordination, access to our confirmed model roster with measurements, professional runway presentation, and full photo & video documentation of your show.",
+    a: "Each package includes 15 models selected from our confirmed roster (with measurements and profile photos), EXA Models talent coordination, and a professional runway presentation. You can upgrade to 20 models for an additional $500, and add full photo & video documentation for $700.",
   },
   {
     q: "How does the 3-month payment plan work?",
@@ -125,11 +157,11 @@ const FAQS = [
   },
   {
     q: "How many models walk in each show?",
-    a: "The number of models depends on your collection size and show format. Our team will work with you after booking to determine the perfect lineup for your brand.",
+    a: "Every package includes 15 models. You can upgrade to 20 models for an additional $500 — just select the upgrade at checkout. After booking, our team will send you the full model roster with photos and measurements so you can hand-pick exactly who walks for your brand.",
   },
   {
     q: "Can I choose which models walk for my brand?",
-    a: "Yes! Once booked, you'll receive access to our confirmed model profiles and measurements to select the perfect fit for your collection.",
+    a: "Absolutely. Once booked, we send you our full model roster with profile photos and measurements. You select your 15 (or 20) — we handle the rest.",
   },
   {
     q: "What's the deadline to book?",
@@ -379,19 +411,13 @@ export default async function MswBrandPage() {
             Email our partnerships team directly for custom packages or any questions about Miami Swim Week 2026.
           </p>
           <a
-            href="mailto:partnerships@examodels.com"
+            href="mailto:nathan@examodels.com"
             className="inline-flex items-center gap-2 bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white font-semibold px-8 py-4 rounded-xl transition-all hover:shadow-lg hover:shadow-pink-500/25 hover:scale-[1.02]"
           >
             <Mail className="h-5 w-5" />
-            partnerships@examodels.com
+            nathan@examodels.com
             <ArrowRight className="h-4 w-4" />
           </a>
-          <p className="mt-5 text-sm text-muted-foreground">
-            Or view the{" "}
-            <Link href="/shows/miami-swim-week-2026" className="text-pink-400 hover:underline">
-              Miami Swim Week show page
-            </Link>
-          </p>
         </div>
       </main>
     </div>

@@ -2,10 +2,16 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, Camera, Users } from "lucide-react";
 import { toast } from "sonner";
 
-type PackageId = "opening-show" | "day-2" | "day-3" | "daytime-show";
+type PackageId = "opening-show" | "day-2" | "day-3" | "day-4" | "day-5" | "daytime-show";
+
+const PHOTO_VIDEO_PRICE = 700;
+const PHOTO_VIDEO_INSTALLMENT = 234; // $234 × 3 = $702 ≈ $700
+
+const EXTRA_MODELS_PRICE = 500;
+const EXTRA_MODELS_INSTALLMENT = 167; // $167 × 3 = $501 ≈ $500
 
 interface CheckoutButtonsProps {
   pkg: PackageId;
@@ -13,8 +19,61 @@ interface CheckoutButtonsProps {
   installmentPrice: number;
 }
 
+interface AddOnToggleProps {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  icon: React.ReactNode;
+  label: string;
+  sublabel: string;
+  priceLabel: string;
+}
+
+function AddOnToggle({ checked, onChange, icon, label, sublabel, priceLabel }: AddOnToggleProps) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all text-left ${
+        checked
+          ? "border-pink-500/60 bg-pink-500/10 text-foreground"
+          : "border-white/10 bg-muted/30 text-muted-foreground hover:border-pink-500/30 hover:text-foreground"
+      }`}
+    >
+      <div
+        className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+          checked ? "border-pink-500 bg-pink-500" : "border-white/30"
+        }`}
+      >
+        {checked && (
+          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        )}
+      </div>
+      <span className="text-pink-400 flex-shrink-0">{icon}</span>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold leading-tight">{label}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">{sublabel}</p>
+      </div>
+      <span className="text-sm font-bold text-pink-400 flex-shrink-0">{priceLabel}</span>
+    </button>
+  );
+}
+
 export function CheckoutButtons({ pkg, fullPrice, installmentPrice }: CheckoutButtonsProps) {
   const [loading, setLoading] = useState<"full" | "installment" | null>(null);
+  const [addPhotoVideo, setAddPhotoVideo] = useState(false);
+  const [addExtraModels, setAddExtraModels] = useState(false);
+
+  const totalFull =
+    fullPrice +
+    (addPhotoVideo ? PHOTO_VIDEO_PRICE : 0) +
+    (addExtraModels ? EXTRA_MODELS_PRICE : 0);
+
+  const totalInstallment =
+    installmentPrice +
+    (addPhotoVideo ? PHOTO_VIDEO_INSTALLMENT : 0) +
+    (addExtraModels ? EXTRA_MODELS_INSTALLMENT : 0);
 
   async function handleCheckout(paymentType: "full" | "installment") {
     setLoading(paymentType);
@@ -22,7 +81,7 @@ export function CheckoutButtons({ pkg, fullPrice, installmentPrice }: CheckoutBu
       const res = await fetch("/api/brands/msw-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ package: pkg, paymentType }),
+        body: JSON.stringify({ package: pkg, paymentType, addPhotoVideo, addExtraModels }),
       });
       const data = await res.json();
       if (data.url) {
@@ -40,23 +99,46 @@ export function CheckoutButtons({ pkg, fullPrice, installmentPrice }: CheckoutBu
   return (
     <div className="space-y-3">
       {/* Pricing Display */}
-      <div className="flex items-end justify-between mb-5 pb-5 border-b border-white/10">
+      <div className="flex items-end justify-between mb-4 pb-4 border-b border-white/10">
         <div>
-          <p className="text-4xl font-bold">${fullPrice.toLocaleString()}</p>
+          <p className="text-4xl font-bold">${totalFull.toLocaleString()}</p>
           <p className="text-sm text-muted-foreground mt-0.5">Pay in full</p>
         </div>
         <div className="text-right">
           <p className="text-2xl font-semibold text-pink-400">
-            ${installmentPrice.toLocaleString()}
+            ${totalInstallment.toLocaleString()}
             <span className="text-base font-normal text-muted-foreground">/mo</span>
           </p>
           <p className="text-sm text-muted-foreground">× 3 months</p>
         </div>
       </div>
 
+      {/* Add-ons */}
+      <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold pb-1">
+        Optional Add-ons
+      </p>
+
+      <AddOnToggle
+        checked={addExtraModels}
+        onChange={setAddExtraModels}
+        icon={<Users className="h-4 w-4" />}
+        label="Upgrade to 20 Models"
+        sublabel="5 additional models — more looks, more coverage"
+        priceLabel="+$500"
+      />
+
+      <AddOnToggle
+        checked={addPhotoVideo}
+        onChange={setAddPhotoVideo}
+        icon={<Camera className="h-4 w-4" />}
+        label="Photo & Video Documentation"
+        sublabel="Every walk + full show professionally documented"
+        priceLabel="+$700"
+      />
+
       {/* Full Payment Button */}
       <Button
-        className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white font-semibold py-6 rounded-xl text-base shadow-lg shadow-pink-500/20 transition-all hover:shadow-pink-500/30 hover:scale-[1.01]"
+        className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white font-semibold py-6 rounded-xl text-base shadow-lg shadow-pink-500/20 transition-all hover:shadow-pink-500/30 hover:scale-[1.01] mt-1"
         onClick={() => handleCheckout("full")}
         disabled={loading !== null}
       >
@@ -72,7 +154,7 @@ export function CheckoutButtons({ pkg, fullPrice, installmentPrice }: CheckoutBu
         disabled={loading !== null}
       >
         {loading === "installment" && <Loader2 className="h-5 w-5 animate-spin mr-2" />}
-        3-Month Plan — ${installmentPrice.toLocaleString()}/mo
+        3-Month Plan — ${totalInstallment.toLocaleString()}/mo
       </Button>
     </div>
   );

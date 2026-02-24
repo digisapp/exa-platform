@@ -9,20 +9,24 @@ export const metadata: Metadata = {
 };
 
 const PACKAGE_NAMES: Record<string, string> = {
-  "opening-show": "Opening Show — May 26, 2026",
-  "day-2": "Day 2 Show — May 27, 2026",
-  "day-3": "Day 3 Show — May 28, 2026",
-  "daytime-show": "Daytime Show — Thursday, May 28, 2026",
+  "opening-show": "Opening Show — Tuesday, May 26",
+  "day-2": "Day 2 Show — Wednesday, May 27",
+  "day-3": "Day 3 Show — Thursday, May 28",
+  "day-4": "Day 4 Show — Friday, May 29",
+  "day-5": "Day 5 Show — May 30–31",
+  "daytime-show": "Daytime Show — Thursday, May 28",
 };
 
 interface Props {
-  searchParams: Promise<{ pkg?: string; type?: string }>;
+  searchParams: Promise<{ pkg?: string; type?: string; media?: string; models?: string }>;
 }
 
 export default async function MswBrandSuccessPage({ searchParams }: Props) {
-  const { pkg, type } = await searchParams;
+  const { pkg, type, media, models } = await searchParams;
   const packageName = (pkg && PACKAGE_NAMES[pkg]) || "Your Show";
   const isInstallment = type === "installment";
+  const hasMedia = media === "1";
+  const modelCount = models === "20" ? 20 : 15;
 
   return (
     <div className="min-h-screen bg-background">
@@ -38,6 +42,10 @@ export default async function MswBrandSuccessPage({ searchParams }: Props) {
 
         <p className="text-xl text-muted-foreground mb-2">
           <strong className="text-foreground">{packageName}</strong>
+          <span className="block text-sm mt-1 text-muted-foreground">{modelCount} models</span>
+          {hasMedia && (
+            <span className="block text-sm mt-0.5 text-pink-400">+ Photo &amp; Video Documentation</span>
+          )}
         </p>
 
         <p className="text-muted-foreground mb-6 max-w-md leading-relaxed">
