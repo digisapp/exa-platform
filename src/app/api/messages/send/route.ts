@@ -237,11 +237,8 @@ export async function POST(request: NextRequest) {
     let coinsRequired = 0;
     let recipientModelId: string | null = null;
 
-    if (sender.type === "model" && recipient?.actors?.type === "model") {
-      // Model-to-model: FREE
-      coinsRequired = 0;
-    } else if (sender.type === "model") {
-      // Model replying to fan/brand: FREE
+    if (sender.type === "model" || sender.type === "admin") {
+      // Models and admins message for free
       coinsRequired = 0;
     } else {
       // Fan/Brand messaging model: COSTS COINS
@@ -277,8 +274,6 @@ export async function POST(request: NextRequest) {
         p_media_price: mediaPrice || undefined,
       }
     );
-    const result = rpcData as Record<string, any>;
-
     if (rpcError) {
       console.error("RPC error:", rpcError);
       return NextResponse.json(
@@ -287,7 +282,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const result = (rpcData ?? {}) as Record<string, any>;
+
     if (!result.success) {
+      console.error("RPC returned failure:", result);
       // Handle specific errors
       if (result.error === "Insufficient coins") {
         return NextResponse.json(
