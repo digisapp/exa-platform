@@ -15,7 +15,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -628,6 +627,19 @@ export function ChatView({
           }}
         />
 
+        {/* Tip button (icon only, fans/brands tipping models) */}
+        {canTip && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowTipDialog(true)}
+            title="Send a tip"
+            className="text-pink-500 hover:text-pink-600 hover:bg-pink-500/10"
+          >
+            <Gift className="h-5 w-5" />
+          </Button>
+        )}
+
         {/* More options menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -636,15 +648,6 @@ export function ChatView({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            {canTip && (
-              <>
-                <DropdownMenuItem onClick={() => setShowTipDialog(true)}>
-                  <Gift className="h-4 w-4 mr-2 text-pink-500" />
-                  Send a Tip
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-              </>
-            )}
             <DropdownMenuItem
               onClick={() => setShowBlockDialog(true)}
               className="text-destructive focus:text-destructive"
