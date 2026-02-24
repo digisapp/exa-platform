@@ -539,10 +539,21 @@ export default function AdminCommunityPage() {
         });
       }
 
+      // Check which fans have pending model applications
+      const pendingModelAppSet = new Set<string>();
+      if (userIds.length > 0) {
+        const { data: pendingApps } = await (supabase.from("model_applications") as any)
+          .select("user_id")
+          .in("user_id", userIds)
+          .eq("status", "pending");
+        pendingApps?.forEach((app: any) => pendingModelAppSet.add(app.user_id));
+      }
+
       data.forEach((fan: any) => {
         fan.coins_spent = spentMap.get(fan.id) || 0;
         fan.following_count = followMap.get(fan.id) || 0;
         fan.report_count = fan.actor_id ? (reportMap.get(fan.actor_id) || 0) : 0;
+        fan.has_pending_model_app = pendingModelAppSet.has(fan.user_id);
       });
 
       // Filter by reports
@@ -1094,7 +1105,14 @@ export default function AdminCommunityPage() {
                                 )}
                               </div>
                               <div className="min-w-0">
-                                <p className="font-medium truncate">{fan.display_name || "Fan"}</p>
+                                <div className="flex items-center gap-2">
+                                  <p className="font-medium truncate">{fan.display_name || "Fan"}</p>
+                                  {fan.has_pending_model_app && (
+                                    <span className="flex-shrink-0 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-semibold bg-pink-500/15 text-pink-400 border border-pink-500/25">
+                                      Model Applicant
+                                    </span>
+                                  )}
+                                </div>
                                 <p className="text-sm text-muted-foreground truncate">{fan.email}</p>
                               </div>
                             </div>
