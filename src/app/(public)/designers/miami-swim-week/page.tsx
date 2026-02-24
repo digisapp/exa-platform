@@ -140,11 +140,6 @@ const PACKAGES = [
   },
 ];
 
-const PERKS = [
-  { icon: "🎬", title: "Media Coverage", body: "Industry press, influencers & buyers in attendance" },
-  { icon: "📸", title: "Professional Models", body: "Curated roster of runway-ready talent" },
-  { icon: "🏖️", title: "Miami Setting", body: "The world's premier swim & resort fashion event" },
-];
 
 const FAQS = [
   {
@@ -272,19 +267,6 @@ export default async function MswBrandPage() {
           <p className="text-muted-foreground text-lg leading-relaxed mb-10">
             EXA Models is producing runway shows at Miami Swim Week 2026, featuring our curated roster of professional models. We&apos;re inviting select swimwear, resortwear, and lingerie designers to showcase their collections on our runway — in front of press, buyers, and influencers from around the world.
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-            {PERKS.map((item) => (
-              <div
-                key={item.title}
-                className="text-center p-6 rounded-2xl bg-muted/30 border border-white/5"
-              >
-                <div className="text-4xl mb-3">{item.icon}</div>
-                <p className="font-semibold mb-1">{item.title}</p>
-                <p className="text-sm text-muted-foreground leading-relaxed">{item.body}</p>
-              </div>
-            ))}
-          </div>
-
         </div>
 
         {/* Show Packages */}
