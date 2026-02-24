@@ -10,8 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Video, Loader2, Coins, Clock, Wallet } from "lucide-react";
+import { Video, Loader2, Coins } from "lucide-react";
 import { toast } from "sonner";
 import { VideoRoom } from "./VideoRoom";
 import { MIN_CALL_BALANCE } from "@/lib/livekit-constants";
@@ -117,19 +116,6 @@ export function VideoCallButton({
   // Can tip if the other participant is a model and we're not a model
   const canTip = !isModel && recipientIsModel;
 
-  // Calculate estimated call duration with current balance
-  const estimatedMinutes = Math.floor(coinBalance / ratePerMinute);
-
-  // Get initials for avatar fallback
-  const initials = recipientName
-    ? recipientName
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2)
-    : "?";
-
   if (callSession) {
     return (
       <VideoRoom
@@ -173,109 +159,53 @@ export function VideoCallButton({
 
       {/* Video Call Confirmation Dialog */}
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader className="text-center sm:text-center">
-            <DialogTitle className="flex items-center justify-center gap-2">
-              <div className="p-2 rounded-full bg-gradient-to-br from-pink-500/20 to-violet-500/20">
-                <Video className="h-5 w-5 text-pink-500" />
-              </div>
-              Start Video Call
-            </DialogTitle>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Video Call</DialogTitle>
             <DialogDescription>
-              Connect with {recipientName} via video
+              Start a video call with {recipientName}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-6 py-4">
-            {/* Recipient Info */}
-            <div className="flex flex-col items-center gap-3">
-              <div className="relative">
-                <Avatar className="h-20 w-20 ring-4 ring-pink-500/20">
-                  <AvatarImage src={recipientAvatar || undefined} />
-                  <AvatarFallback className="text-xl font-semibold bg-gradient-to-br from-pink-500 to-violet-500 text-white">
-                    {initials}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-green-500 border-2 border-background">
-                  <Video className="h-3 w-3 text-white" />
-                </div>
-              </div>
-              <p className="font-semibold text-lg">{recipientName}</p>
-            </div>
-
-            {/* Call Cost Info */}
-            <div className="space-y-3 p-4 rounded-xl bg-muted/50 border">
-              {/* Rate per minute */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Clock className="h-4 w-4" />
-                  <span className="text-sm">Rate per minute</span>
-                </div>
-                <div className="flex items-center gap-1 font-semibold">
-                  <Coins className="h-4 w-4 text-pink-500" />
-                  <span>{ratePerMinute} coins</span>
-                </div>
-              </div>
-
+          <div className="space-y-4 py-2">
+            {/* Rate */}
+            <div className="flex items-center justify-center gap-2 text-2xl font-bold">
+              <Coins className="h-6 w-6 text-pink-500" />
+              <span>{ratePerMinute}</span>
+              <span className="text-base font-normal text-muted-foreground">coins per minute</span>
             </div>
 
             {/* Low balance warning */}
             {!hasEnoughCoins && (
-              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
-                <p className="text-sm text-destructive text-center">
-                  You need at least {MIN_CALL_BALANCE} coins to start a call
-                </p>
-              </div>
-            )}
-
-            {/* Low balance suggestion */}
-            {hasEnoughCoins && estimatedMinutes < 5 && (
-              <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                <p className="text-sm text-amber-600 dark:text-amber-400 text-center">
-                  Consider adding more coins for a longer call
+              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-center">
+                <p className="text-sm text-destructive">
+                  You need at least {MIN_CALL_BALANCE} coins to start a call.{" "}
+                  <Link href="/coins" className="underline font-medium">Buy coins</Link>
                 </p>
               </div>
             )}
 
             {/* Action Buttons */}
-            <div className="flex flex-col gap-2">
-              <Button
-                onClick={startCall}
-                disabled={!hasEnoughCoins || isStarting}
-                className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white"
-                size="lg"
-              >
-                {isStarting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Connecting...
-                  </>
-                ) : (
-                  <>
-                    <Video className="mr-2 h-4 w-4" />
-                    Start Call
-                  </>
-                )}
-              </Button>
-
+            <div className="flex gap-3">
               <Button
                 variant="outline"
+                className="flex-1"
                 onClick={() => setShowConfirmDialog(false)}
-                className="w-full"
               >
                 Cancel
               </Button>
+              <Button
+                onClick={startCall}
+                disabled={!hasEnoughCoins || isStarting}
+                className="flex-1 bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white"
+              >
+                {isStarting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "Start Call"
+                )}
+              </Button>
             </div>
-
-            {/* Buy coins link */}
-            {coinBalance < 50 && (
-              <p className="text-center text-sm text-muted-foreground">
-                Need more coins?{" "}
-                <Link href="/coins" className="text-pink-500 hover:underline">
-                  Buy coins
-                </Link>
-              </p>
-            )}
           </div>
         </DialogContent>
       </Dialog>
