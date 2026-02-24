@@ -16,6 +16,7 @@ import {
   Mail,
 } from "lucide-react";
 import { CheckoutButtons } from "./checkout-buttons";
+import { Footer } from "@/components/layout/footer";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -25,7 +26,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Designers — Miami Swim Week 2026 | EXA Models",
     description:
-      "Secure your runway show slot at Miami Swim Week 2026. Opening Night ($3,500), Day 2 ($2,500), Day 3–5 ($1,500 each), Daytime Show ($1,000). Pay in full or 3-month plan.",
+      "Secure your runway show slot at Miami Swim Week 2026. Opening Night ($3,500), Day 2 ($2,500), Day 3–6 ($1,500 each), Daytime Show ($1,000). Pay in full or 3-month plan.",
   },
 };
 
@@ -78,7 +79,7 @@ const PACKAGES = [
     highlight: false,
     features: [
       "Full runway show on Day 3",
-      "Closing weekend momentum",
+      "Mid-week prime-time energy",
       "Show lineup placement",
       "15 models — choose from our full roster",
       "EXA Models talent coordination",
@@ -96,7 +97,7 @@ const PACKAGES = [
     highlight: false,
     features: [
       "Full runway show on Day 4",
-      "Weekend build-up energy",
+      "Friday night pre-weekend momentum",
       "Show lineup placement",
       "15 models — choose from our full roster",
       "EXA Models talent coordination",
@@ -285,7 +286,7 @@ export default async function MswBrandPage() {
             Showcase Your Collection on the Runway
           </h2>
           <p className="text-muted-foreground text-lg leading-relaxed mb-10">
-            Miami Swim Week 2026, featuring our curated roster of professional models. We&apos;re inviting select swimwear, resortwear, and lingerie designers to showcase their collections on our runway.
+            We&apos;re producing runway shows at Miami Swim Week 2026 and inviting select swimwear, resortwear, and lingerie designers to showcase their collections on our runway.
           </p>
         </div>
 
@@ -296,15 +297,18 @@ export default async function MswBrandPage() {
             <p className="text-muted-foreground">
               Pay in full or split your investment over 3 months
             </p>
+            <p className="text-sm text-pink-400 font-medium mt-2">
+              Limited slots available — book early to secure your preferred date.
+            </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
-            {PACKAGES.map((pkg) => (
+            {PACKAGES.map((pkg, index) => (
               <Card
                 key={pkg.id}
                 className={`relative overflow-hidden border ${pkg.borderColor} ${
                   pkg.highlight ? "shadow-2xl shadow-yellow-500/10" : ""
-                }`}
+                } ${PACKAGES.length % 2 !== 0 && index === PACKAGES.length - 1 ? "md:col-span-2 max-w-xl mx-auto w-full" : ""}`}
               >
                 {pkg.badge && (
                   <div className="absolute top-5 right-5 z-10">
@@ -353,7 +357,7 @@ export default async function MswBrandPage() {
               <div>
                 <h2 className="text-2xl font-bold">Confirmed Models</h2>
                 <p className="text-sm text-muted-foreground">
-                  {eventModels.length} professional models walking our runway
+                  {eventModels.length} professional models walking our runway &mdash; after booking, you hand-pick your 15
                 </p>
               </div>
             </div>
@@ -519,6 +523,7 @@ export default async function MswBrandPage() {
           </a>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }
