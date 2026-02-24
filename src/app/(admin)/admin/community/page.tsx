@@ -212,6 +212,7 @@ interface Fan {
   coins_spent?: number;
   following_count?: number;
   report_count?: number;
+  has_pending_model_app?: boolean;
 }
 
 interface Brand {
