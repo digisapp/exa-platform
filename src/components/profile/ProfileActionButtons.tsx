@@ -492,9 +492,6 @@ export function ProfileActionButtons({
               <span className="text-2xl font-bold">{videoCallRate}</span>
               <span className="text-muted-foreground">coins per minute</span>
             </div>
-            <p className="text-sm text-muted-foreground text-center">
-              The model must accept your call before it connects. You&apos;ll only be charged once the call starts.
-            </p>
             <div className="flex gap-3">
               <Button variant="outline" className="flex-1" onClick={() => setShowVideoConfirm(false)}>Cancel</Button>
               <Button className="flex-1 exa-gradient-button" onClick={() => startCall("video")}>Call Now</Button>
@@ -518,9 +515,6 @@ export function ProfileActionButtons({
               <span className="text-2xl font-bold">{voiceCallRate}</span>
               <span className="text-muted-foreground">coins per minute</span>
             </div>
-            <p className="text-sm text-muted-foreground text-center">
-              The model must accept your call before it connects. You&apos;ll only be charged once the call starts.
-            </p>
             <div className="flex gap-3">
               <Button variant="outline" className="flex-1" onClick={() => setShowVoiceConfirm(false)}>Cancel</Button>
               <Button className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white" onClick={() => startCall("voice")}>Call Now</Button>
