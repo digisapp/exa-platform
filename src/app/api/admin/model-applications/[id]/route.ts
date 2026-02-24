@@ -121,6 +121,8 @@ export async function PATCH(
             is_approved: true,
             status: "approved",
             claimed_at: new Date().toISOString(),
+            // Update instagram_name from the application to ensure dots are preserved
+            ...(application.instagram_username ? { instagram_name: application.instagram_username } : {}),
           })
           .eq("id", existingModel.id);
 

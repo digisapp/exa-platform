@@ -348,7 +348,7 @@ export default function AdminModelDetailPage() {
     return age;
   };
 
-  const instagramHandle = model.instagram_handle || model.instagram_name;
+  const instagramHandle = model.instagram_name || model.instagram_handle;
 
   return (
     <div className="container px-8 md:px-16 py-8 space-y-6 max-w-6xl">

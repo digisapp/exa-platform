@@ -270,7 +270,7 @@ export default async function ModelProfilePage({ params }: Props) {
 
   // Social media links (with follower counts for brand discovery)
   const socialLinks = [
-    { platform: "instagram", username: model.instagram_name, followers: model.instagram_followers as number | null, url: (model.instagram_url && model.instagram_url.includes("instagram.com")) ? model.instagram_url : `https://www.instagram.com/${model.instagram_name?.replace(/^@/, '')}` },
+    { platform: "instagram", username: model.instagram_name, followers: model.instagram_followers as number | null, url: model.instagram_name ? `https://www.instagram.com/${model.instagram_name.replace(/^@/, '')}` : (model.instagram_url?.includes("instagram.com") ? model.instagram_url : null) },
     { platform: "tiktok", username: model.tiktok_username, followers: model.tiktok_followers as number | null, url: `https://tiktok.com/@${model.tiktok_username?.replace(/^@/, '')}` },
     { platform: "snapchat", username: model.snapchat_username, followers: model.snapchat_followers as number | null, url: `https://snapchat.com/add/${model.snapchat_username?.replace(/^@/, '')}` },
     { platform: "x", username: model.x_username, followers: model.x_followers as number | null, url: `https://x.com/${model.x_username?.replace(/^@/, '')}` },
