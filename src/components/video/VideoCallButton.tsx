@@ -217,34 +217,6 @@ export function VideoCallButton({
                 </div>
               </div>
 
-              {/* Your balance */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Wallet className="h-4 w-4" />
-                  <span className="text-sm">Your balance</span>
-                </div>
-                <div className={cn(
-                  "flex items-center gap-1 font-semibold",
-                  hasEnoughCoins ? "text-foreground" : "text-destructive"
-                )}>
-                  <Coins className="h-4 w-4 text-pink-500" />
-                  <span>{coinBalance} coins</span>
-                </div>
-              </div>
-
-              {/* Divider */}
-              <div className="border-t my-2" />
-
-              {/* Estimated call time */}
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Estimated call time</span>
-                <span className={cn(
-                  "font-semibold",
-                  estimatedMinutes < 2 ? "text-amber-500" : "text-green-500"
-                )}>
-                  ~{estimatedMinutes} minute{estimatedMinutes !== 1 ? "s" : ""}
-                </span>
-              </div>
             </div>
 
             {/* Low balance warning */}
