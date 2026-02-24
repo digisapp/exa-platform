@@ -1,5 +1,6 @@
 import { stripe } from "@/lib/stripe";
 import { NextRequest, NextResponse } from "next/server";
+import type Stripe from "stripe";
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.examodels.com";
 
@@ -67,7 +68,7 @@ export async function POST(request: NextRequest) {
     const cancelUrl = `${BASE_URL}/designers/miami-swim-week`;
 
     if (paymentType === "full") {
-      const lineItems: Parameters<typeof stripe.checkout.sessions.create>[0]["line_items"] = [
+      const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
         {
           price_data: {
             currency: "usd",
@@ -127,7 +128,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ url: session.url });
     } else {
       // 3-month installment plan via Stripe subscription
-      const lineItems: Parameters<typeof stripe.checkout.sessions.create>[0]["line_items"] = [
+      const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
         {
           price_data: {
             currency: "usd",
