@@ -266,7 +266,7 @@ export async function POST(request: NextRequest) {
       {
         p_conversation_id: conversationId,
         p_sender_id: sender.id,
-        ...(recipientModelId ? { p_recipient_id: recipientModelId } : {}),
+        p_recipient_id: (recipientModelId || null) as unknown as string,
         p_content: content || "",
         p_media_url: mediaUrl || undefined,
         p_media_type: mediaType || undefined,
