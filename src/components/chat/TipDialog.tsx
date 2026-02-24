@@ -98,9 +98,6 @@ export function TipDialog({
             <Gift className="h-5 w-5 text-pink-500" />
             Send a Tip
           </DialogTitle>
-          <DialogDescription>
-            Show your appreciation for {recipientName}
-          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">

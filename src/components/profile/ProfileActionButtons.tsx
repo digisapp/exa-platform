@@ -530,7 +530,6 @@ export function ProfileActionButtons({
             <DialogTitle className="flex items-center gap-2">
               <Gift className="h-5 w-5 text-pink-500" /> Send a Tip
             </DialogTitle>
-            <DialogDescription>Show your appreciation for {modelName || modelUsername}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="flex items-center justify-between text-sm">
