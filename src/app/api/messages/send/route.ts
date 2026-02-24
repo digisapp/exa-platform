@@ -266,7 +266,7 @@ export async function POST(request: NextRequest) {
       {
         p_conversation_id: conversationId,
         p_sender_id: sender.id,
-        p_recipient_id: recipientModelId || null,  // This is the model's table ID, not actor ID
+        p_recipient_id: recipientModelId as string,  // This is the model's table ID, not actor ID
         p_content: content || "",
         p_media_url: mediaUrl || undefined,
         p_media_type: mediaType || undefined,

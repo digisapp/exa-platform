@@ -35,7 +35,7 @@ export function IncomingCallDialog({
     roomName: string;
     callType: "video" | "voice";
   } | null>(null);
-  const [timeLeft, setTimeLeft] = useState(30);
+  const [timeLeft, setTimeLeft] = useState(120);
   const [callType] = useState<"video" | "voice">(initialCallType);
 
   // Use refs for values needed in the timer callback to avoid stale closures
@@ -56,7 +56,7 @@ export function IncomingCallDialog({
     onCloseRef.current();
   }, []);
 
-  // Auto-miss after 30 seconds (timeout = missed, not declined)
+  // Auto-miss after 120 seconds (timeout = missed, not declined)
   useEffect(() => {
     if (timeLeft <= 0) {
       handleMissed();

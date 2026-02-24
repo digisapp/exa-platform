@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -14,6 +14,8 @@ import {
   Gift,
   SendHorizontal,
   CheckCircle,
+  PhoneOff,
+  PhoneCall,
 } from "lucide-react";
 import {
   Dialog,
@@ -27,8 +29,8 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { hapticFeedback } from "@/hooks/useHapticFeedback";
 import { showTipSuccessToast } from "@/lib/tip-toast";
+import { createClient } from "@/lib/supabase/client";
 
-// Dynamic import for VideoRoom - only loads when call starts (saves ~200KB)
 const VideoRoom = dynamic(() => import("@/components/video").then(mod => mod.VideoRoom), {
   ssr: false,
   loading: () => (
@@ -39,6 +41,7 @@ const VideoRoom = dynamic(() => import("@/components/video").then(mod => mod.Vid
 });
 
 const TIP_AMOUNTS = [1, 5, 10, 25, 50, 100];
+const RING_TIMEOUT = 120;
 
 interface ProfileActionButtonsProps {
   isLoggedIn: boolean;
@@ -77,8 +80,6 @@ export function ProfileActionButtons({
   const [showVoiceConfirm, setShowVoiceConfirm] = useState(false);
   const [selectedTipAmount, setSelectedTipAmount] = useState<number | null>(null);
   const [sending, setSending] = useState(false);
-  const [startingCall, setStartingCall] = useState(false);
-  const [startingVoiceCall, setStartingVoiceCall] = useState(false);
 
   // Chat input state
   const [chatMessage, setChatMessage] = useState("");
@@ -87,7 +88,7 @@ export function ProfileActionButtons({
   const [inputFocused, setInputFocused] = useState(false);
   const chatInputRef = useRef<HTMLInputElement>(null);
 
-  const router = useRouter();
+  // Active call session (model accepted)
   const [callSession, setCallSession] = useState<{
     sessionId: string;
     token: string;
@@ -97,8 +98,143 @@ export function ProfileActionButtons({
     callType: "video" | "voice";
   } | null>(null);
 
-  // First name for placeholder
+  // Ringing / waiting for model to accept
+  const [callingState, setCallingState] = useState<{
+    sessionId: string;
+    token: string;
+    roomName: string;
+    recipientName: string;
+    callRate: number;
+    callType: "video" | "voice";
+  } | null>(null);
+  const [ringSeconds, setRingSeconds] = useState(RING_TIMEOUT);
+  const [callOutcome, setCallOutcome] = useState<"declined" | "missed" | null>(null);
+  const [startingCall, setStartingCall] = useState(false);
+
+  const router = useRouter();
   const firstName = modelName?.split(" ")[0] || modelUsername;
+
+  // ── Ringing countdown ──────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!callingState) return;
+    if (ringSeconds <= 0) {
+      cancelCall("missed");
+      return;
+    }
+    const t = setTimeout(() => setRingSeconds(s => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [callingState, ringSeconds]);
+
+  // ── Supabase realtime: watch session for model accept/decline ──────────────
+  useEffect(() => {
+    if (!callingState) return;
+
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`call-session-${callingState.sessionId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "video_call_sessions",
+          filter: `id=eq.${callingState.sessionId}`,
+        },
+        (payload) => {
+          const status = (payload.new as any).status;
+          if (status === "active") {
+            // Model accepted — connect to LiveKit
+            setCallSession({
+              sessionId: callingState.sessionId,
+              token: callingState.token,
+              roomName: callingState.roomName,
+              recipientName: callingState.recipientName,
+              callRate: callingState.callRate,
+              callType: callingState.callType,
+            });
+            setCallingState(null);
+            setRingSeconds(RING_TIMEOUT);
+          } else if (status === "declined") {
+            setCallOutcome("declined");
+            setCallingState(null);
+            setRingSeconds(RING_TIMEOUT);
+          } else if (status === "missed") {
+            setCallOutcome("missed");
+            setCallingState(null);
+            setRingSeconds(RING_TIMEOUT);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [callingState?.sessionId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-clear outcome message after 3s
+  useEffect(() => {
+    if (!callOutcome) return;
+    const t = setTimeout(() => setCallOutcome(null), 3000);
+    return () => clearTimeout(t);
+  }, [callOutcome]);
+
+  // ── Cancel outgoing call ───────────────────────────────────────────────────
+  const cancelCall = async (reason: "missed" | "declined" = "declined") => {
+    if (!callingState) return;
+    try {
+      await fetch(`/api/calls/join?sessionId=${callingState.sessionId}&reason=${reason}`, {
+        method: "DELETE",
+      });
+    } catch { /* best-effort */ }
+    setCallingState(null);
+    setRingSeconds(RING_TIMEOUT);
+  };
+
+  // ── Start call ─────────────────────────────────────────────────────────────
+  const startCall = async (callType: "video" | "voice") => {
+    setShowVideoConfirm(false);
+    setShowVoiceConfirm(false);
+    setStartingCall(true);
+    try {
+      const res = await fetch("/api/calls/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ recipientUsername: modelUsername, callType }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Failed to start call");
+        return;
+      }
+      setRingSeconds(RING_TIMEOUT);
+      setCallingState({
+        sessionId: data.sessionId,
+        token: data.token,
+        roomName: data.roomName,
+        recipientName: data.recipientName,
+        callRate: data.callRate,
+        callType,
+      });
+    } catch {
+      toast.error("Failed to start call");
+    } finally {
+      setStartingCall(false);
+    }
+  };
+
+  const handleVideoCall = () => {
+    if (!isLoggedIn) { setShowAuthDialog(true); return; }
+    if (videoCallRate > 0) { setShowVideoConfirm(true); } else { startCall("video"); }
+  };
+
+  const handleVoiceCall = () => {
+    if (!isLoggedIn) { setShowAuthDialog(true); return; }
+    if (voiceCallRate > 0) { setShowVoiceConfirm(true); } else { startCall("voice"); }
+  };
+
+  const handleTip = () => {
+    if (!isLoggedIn) { setShowAuthDialog(true); return; }
+    setShowTipDialog(true);
+  };
 
   const handleChatInputFocus = () => {
     if (!isLoggedIn) {
@@ -110,25 +246,16 @@ export function ProfileActionButtons({
   };
 
   const handleSendChatMessage = async () => {
-    if (!isLoggedIn) {
-      setShowAuthDialog(true);
-      return;
-    }
+    if (!isLoggedIn) { setShowAuthDialog(true); return; }
     if (!chatMessage.trim() || sendingMessage) return;
-
     setSendingMessage(true);
     try {
       const res = await fetch("/api/messages/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          targetModelUsername: modelUsername,
-          content: chatMessage.trim(),
-        }),
+        body: JSON.stringify({ targetModelUsername: modelUsername, content: chatMessage.trim() }),
       });
-
       const data = await res.json();
-
       if (!res.ok) {
         if (res.status === 402) {
           toast.error(`Need ${data.required} coins — you have ${data.balance}.`, {
@@ -139,7 +266,6 @@ export function ProfileActionButtons({
         }
         return;
       }
-
       hapticFeedback("success");
       setSentConversationId(data.conversationId);
       setChatMessage("");
@@ -149,57 +275,6 @@ export function ProfileActionButtons({
       setSendingMessage(false);
     }
   };
-
-  const handleVideoCall = () => {
-    if (!isLoggedIn) { setShowAuthDialog(true); return; }
-    if (videoCallRate > 0) { setShowVideoConfirm(true); } else { proceedToVideoCall(); }
-  };
-
-  const handleVoiceCall = () => {
-    if (!isLoggedIn) { setShowAuthDialog(true); return; }
-    if (voiceCallRate > 0) { setShowVoiceConfirm(true); } else { proceedToVoiceCall(); }
-  };
-
-  const handleTip = () => {
-    if (!isLoggedIn) { setShowAuthDialog(true); return; }
-    setShowTipDialog(true);
-  };
-
-  const proceedToVideoCall = async () => {
-    setShowVideoConfirm(false);
-    setStartingCall(true);
-    try {
-      const response = await fetch("/api/calls/start", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recipientUsername: modelUsername, callType: "video" }),
-      });
-      const data = await response.json();
-      if (!response.ok) { toast.error(data.error || "Failed to start call"); return; }
-      setCallSession({ sessionId: data.sessionId, token: data.token, roomName: data.roomName, recipientName: data.recipientName, callRate: data.callRate, callType: "video" });
-      toast.success("Calling " + data.recipientName + "...");
-    } catch { toast.error("Failed to start video call"); }
-    finally { setStartingCall(false); }
-  };
-
-  const proceedToVoiceCall = async () => {
-    setShowVoiceConfirm(false);
-    setStartingVoiceCall(true);
-    try {
-      const response = await fetch("/api/calls/start", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recipientUsername: modelUsername, callType: "voice" }),
-      });
-      const data = await response.json();
-      if (!response.ok) { toast.error(data.error || "Failed to start call"); return; }
-      setCallSession({ sessionId: data.sessionId, token: data.token, roomName: data.roomName, recipientName: data.recipientName, callRate: data.callRate, callType: "voice" });
-      toast.success("Calling " + data.recipientName + "...");
-    } catch { toast.error("Failed to start voice call"); }
-    finally { setStartingVoiceCall(false); }
-  };
-
-  const handleCallEnd = () => setCallSession(null);
 
   const sendTip = async () => {
     if (!selectedTipAmount || !modelActorId) return;
@@ -212,8 +287,8 @@ export function ProfileActionButtons({
       });
       const data = await res.json();
       if (!res.ok) {
-        if (res.status === 402) { toast.error(`Insufficient coins. Need ${data.required}, have ${data.balance}`); }
-        else { toast.error(data.error || "Failed to send tip"); }
+        if (res.status === 402) toast.error(`Insufficient coins. Need ${data.required}, have ${data.balance}`);
+        else toast.error(data.error || "Failed to send tip");
         return;
       }
       hapticFeedback("success");
@@ -222,9 +297,13 @@ export function ProfileActionButtons({
       setSelectedTipAmount(null);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to send tip");
-    } finally { setSending(false); }
+    } finally {
+      setSending(false); }
   };
 
+  const handleCallEnd = () => setCallSession(null);
+
+  // ── Active call ────────────────────────────────────────────────────────────
   if (callSession) {
     return (
       <VideoRoom
@@ -236,6 +315,50 @@ export function ProfileActionButtons({
         recipientName={callSession.recipientName}
         callType={callSession.callType}
       />
+    );
+  }
+
+  // ── Ringing screen ─────────────────────────────────────────────────────────
+  if (callingState) {
+    const isVideo = callingState.callType === "video";
+    return (
+      <div className="flex flex-col items-center py-6 mb-6 animate-in fade-in duration-300">
+        {/* Pulsing rings */}
+        <div className="relative flex items-center justify-center mb-6">
+          <div className="absolute w-28 h-28 rounded-full bg-green-500/10 animate-ping" />
+          <div className="absolute w-20 h-20 rounded-full bg-green-500/20 animate-ping [animation-delay:150ms]" />
+          <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-green-500/30">
+            {isVideo
+              ? <Video className="h-7 w-7 text-white" />
+              : <PhoneCall className="h-7 w-7 text-white" />
+            }
+          </div>
+        </div>
+
+        <p className="text-white font-semibold text-lg">
+          Calling {callingState.recipientName}…
+        </p>
+        <p className="text-white/50 text-sm mt-1">
+          Waiting for them to answer · {ringSeconds}s
+        </p>
+
+        {/* Ring progress bar */}
+        <div className="w-48 h-1 bg-white/10 rounded-full mt-3 overflow-hidden">
+          <div
+            className="h-full bg-green-400 rounded-full transition-all duration-1000"
+            style={{ width: `${(ringSeconds / RING_TIMEOUT) * 100}%` }}
+          />
+        </div>
+
+        {/* Cancel button */}
+        <button
+          onClick={() => cancelCall("declined")}
+          className="mt-6 w-14 h-14 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center transition-all active:scale-95 shadow-lg shadow-red-500/30"
+        >
+          <PhoneOff className="h-6 w-6 text-white" />
+        </button>
+        <p className="text-white/40 text-xs mt-2">Tap to cancel</p>
+      </div>
     );
   }
 
@@ -251,30 +374,37 @@ export function ProfileActionButtons({
     <>
       <div className={cn("mb-6 space-y-2.5", isPreview && "pointer-events-none")}>
 
+        {/* Call outcome flash */}
+        {callOutcome && (
+          <div className={cn(
+            "flex items-center justify-center gap-2 py-2.5 px-4 rounded-2xl text-sm font-medium animate-in fade-in duration-200",
+            callOutcome === "declined"
+              ? "bg-red-500/15 border border-red-500/25 text-red-400"
+              : "bg-amber-500/15 border border-amber-500/25 text-amber-400"
+          )}>
+            <PhoneOff className="h-4 w-4 flex-shrink-0" />
+            {callOutcome === "declined" ? "Call declined" : "No answer"}
+          </div>
+        )}
+
         {/* Chat Input — primary action */}
         {allowChat && (
           <div>
             {sentConversationId ? (
-              /* Success state */
               <div className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-green-500/15 border border-green-500/25 animate-in fade-in duration-300">
                 <CheckCircle className="h-4 w-4 text-green-400 flex-shrink-0" />
                 <span className="text-sm text-green-400 font-medium">Message sent!</span>
-                <Link
-                  href={`/chats`}
-                  className="text-sm text-white/70 hover:text-white underline underline-offset-2 transition-colors"
-                >
+                <Link href="/chats" className="text-sm text-white/70 hover:text-white underline underline-offset-2 transition-colors">
                   View chat →
                 </Link>
               </div>
             ) : (
-              <div
-                className={cn(
-                  "flex items-center gap-2 w-full rounded-2xl border px-4 py-2.5 transition-all duration-200",
-                  inputFocused
-                    ? "bg-white/15 border-pink-500/50 shadow-[0_0_0_3px_rgba(236,72,153,0.1)]"
-                    : "bg-white/8 border-white/10 hover:bg-white/12 hover:border-white/20"
-                )}
-              >
+              <div className={cn(
+                "flex items-center gap-2 w-full rounded-2xl border px-4 py-2.5 transition-all duration-200",
+                inputFocused
+                  ? "bg-white/15 border-pink-500/50 shadow-[0_0_0_3px_rgba(236,72,153,0.1)]"
+                  : "bg-white/8 border-white/10 hover:bg-white/12 hover:border-white/20"
+              )}>
                 <MessageCircle className="h-4 w-4 text-white/30 flex-shrink-0" />
                 <input
                   ref={chatInputRef}
@@ -283,12 +413,7 @@ export function ProfileActionButtons({
                   onChange={(e) => setChatMessage(e.target.value)}
                   onFocus={handleChatInputFocus}
                   onBlur={() => setInputFocused(false)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendChatMessage();
-                    }
-                  }}
+                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendChatMessage(); } }}
                   placeholder={`Say hi to ${firstName}…`}
                   className="flex-1 bg-transparent text-white placeholder:text-white/35 text-sm outline-none min-w-0"
                   maxLength={500}
@@ -311,9 +436,7 @@ export function ProfileActionButtons({
               </div>
             )}
             {messageRate > 0 && !sentConversationId && (
-              <p className="text-[11px] text-white/25 text-center mt-1.5">
-                {messageRate} coins per message
-              </p>
+              <p className="text-[11px] text-white/25 text-center mt-1.5">{messageRate} coins per message</p>
             )}
           </div>
         )}
@@ -325,25 +448,19 @@ export function ProfileActionButtons({
               <button
                 onClick={handleVideoCall}
                 disabled={startingCall}
-                className="flex items-center justify-center gap-1.5 h-9 rounded-xl bg-white/8 hover:bg-white/15 border border-white/10 hover:border-white/20 text-white/70 hover:text-white text-xs font-medium transition-all active:scale-95"
+                className="flex items-center justify-center gap-1.5 h-9 rounded-xl bg-white/8 hover:bg-white/15 border border-white/10 hover:border-white/20 text-white/70 hover:text-white text-xs font-medium transition-all active:scale-95 disabled:opacity-50"
               >
-                {startingCall
-                  ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  : <Video className="h-3.5 w-3.5" />
-                }
+                {startingCall ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Video className="h-3.5 w-3.5" />}
                 Video
               </button>
             )}
             {allowVoiceCall && (
               <button
                 onClick={handleVoiceCall}
-                disabled={startingVoiceCall}
-                className="flex items-center justify-center gap-1.5 h-9 rounded-xl bg-white/8 hover:bg-white/15 border border-white/10 hover:border-white/20 text-white/70 hover:text-white text-xs font-medium transition-all active:scale-95"
+                disabled={startingCall}
+                className="flex items-center justify-center gap-1.5 h-9 rounded-xl bg-white/8 hover:bg-white/15 border border-white/10 hover:border-white/20 text-white/70 hover:text-white text-xs font-medium transition-all active:scale-95 disabled:opacity-50"
               >
-                {startingVoiceCall
-                  ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  : <Phone className="h-3.5 w-3.5" />
-                }
+                {startingCall ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Phone className="h-3.5 w-3.5" />}
                 Voice
               </button>
             )}
@@ -360,13 +477,12 @@ export function ProfileActionButtons({
         )}
       </div>
 
-      {/* Video Call Confirmation Dialog */}
+      {/* Video Call Confirmation */}
       <Dialog open={showVideoConfirm} onOpenChange={setShowVideoConfirm}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Video className="h-5 w-5 text-pink-500" />
-              Video Call
+              <Video className="h-5 w-5 text-pink-500" /> Video Call
             </DialogTitle>
             <DialogDescription>Start a video call with {modelUsername}</DialogDescription>
           </DialogHeader>
@@ -377,23 +493,22 @@ export function ProfileActionButtons({
               <span className="text-muted-foreground">coins per minute</span>
             </div>
             <p className="text-sm text-muted-foreground text-center">
-              You will be charged {videoCallRate} coins for each minute of the call
+              The model must accept your call before it connects. You&apos;ll only be charged once the call starts.
             </p>
             <div className="flex gap-3">
               <Button variant="outline" className="flex-1" onClick={() => setShowVideoConfirm(false)}>Cancel</Button>
-              <Button className="flex-1 exa-gradient-button" onClick={proceedToVideoCall}>Start Call</Button>
+              <Button className="flex-1 exa-gradient-button" onClick={() => startCall("video")}>Call Now</Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Voice Call Confirmation Dialog */}
+      {/* Voice Call Confirmation */}
       <Dialog open={showVoiceConfirm} onOpenChange={setShowVoiceConfirm}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Phone className="h-5 w-5 text-blue-500" />
-              Voice Call
+              <Phone className="h-5 w-5 text-blue-500" /> Voice Call
             </DialogTitle>
             <DialogDescription>Start a voice call with {modelUsername}</DialogDescription>
           </DialogHeader>
@@ -404,11 +519,11 @@ export function ProfileActionButtons({
               <span className="text-muted-foreground">coins per minute</span>
             </div>
             <p className="text-sm text-muted-foreground text-center">
-              You will be charged {voiceCallRate} coins for each minute of the call
+              The model must accept your call before it connects. You&apos;ll only be charged once the call starts.
             </p>
             <div className="flex gap-3">
               <Button variant="outline" className="flex-1" onClick={() => setShowVoiceConfirm(false)}>Cancel</Button>
-              <Button className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white" onClick={proceedToVoiceCall}>Start Call</Button>
+              <Button className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white" onClick={() => startCall("voice")}>Call Now</Button>
             </div>
           </div>
         </DialogContent>
@@ -419,8 +534,7 @@ export function ProfileActionButtons({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Gift className="h-5 w-5 text-pink-500" />
-              Send a Tip
+              <Gift className="h-5 w-5 text-pink-500" /> Send a Tip
             </DialogTitle>
             <DialogDescription>Show your appreciation for {modelName || modelUsername}</DialogDescription>
           </DialogHeader>
@@ -428,8 +542,7 @@ export function ProfileActionButtons({
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Your balance:</span>
               <span className="flex items-center gap-1 font-medium">
-                <Coins className="h-4 w-4 text-pink-500" />
-                {coinBalance} coins
+                <Coins className="h-4 w-4 text-pink-500" />{coinBalance} coins
               </span>
             </div>
             <div className="grid grid-cols-3 gap-2">
@@ -459,11 +572,9 @@ export function ProfileActionButtons({
               disabled={!selectedTipAmount || sending}
               className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
             >
-              {sending ? (
-                <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Sending...</>
-              ) : selectedTipAmount ? (
-                <><Gift className="mr-2 h-4 w-4" />Send {selectedTipAmount} Coins</>
-              ) : "Select an amount"}
+              {sending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Sending...</>
+                : selectedTipAmount ? <><Gift className="mr-2 h-4 w-4" />Send {selectedTipAmount} Coins</>
+                : "Select an amount"}
             </Button>
             {coinBalance < 100 && (
               <p className="text-center text-sm text-muted-foreground">
