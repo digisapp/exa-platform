@@ -162,6 +162,10 @@ const FAQS = [
     q: "What's the deadline to book?",
     a: "Show slots are limited and selling fast. We recommend booking as soon as possible to secure your preferred date.",
   },
+  {
+    q: "I'm an international designer — can I still participate?",
+    a: "Absolutely. You don't need to be in Miami. Ship your collection to us ahead of show week and our team handles everything — receiving, steaming, dressing the models, and running your full runway presentation. Email nathan@examodels.com to discuss shipping timelines and logistics.",
+  },
 ];
 
 export default async function MswBrandPage() {
@@ -416,6 +420,52 @@ export default async function MswBrandPage() {
               <ArrowRight className="h-5 w-5 text-violet-400 group-hover:translate-x-1 transition-transform" />
             </div>
           </a>
+        </div>
+
+        {/* International Designers */}
+        <div className="mb-20">
+          <div className="relative overflow-hidden rounded-3xl border border-cyan-500/20 bg-gradient-to-br from-cyan-500/5 via-violet-500/5 to-pink-500/5 p-8 md:p-12">
+            {/* Decorative globe */}
+            <div className="absolute top-6 right-6 text-7xl opacity-10 select-none pointer-events-none">🌍</div>
+
+            <Badge className="mb-5 bg-cyan-500/10 text-cyan-400 border-cyan-500/20 px-4 py-1">
+              International Designers
+            </Badge>
+
+            <h2 className="text-2xl md:text-3xl font-bold mb-4 max-w-xl">
+              Can&apos;t Make It to Miami? We&apos;ll Run Your Show.
+            </h2>
+            <p className="text-muted-foreground text-lg leading-relaxed mb-8 max-w-2xl">
+              You don&apos;t need to be in Miami to have your collection walk the runway. Ship your pieces to us and our team will handle everything — steaming, dressing, styling, and running your full show — so your collection gets the spotlight it deserves, no matter where you are in the world.
+            </p>
+
+            <div className="grid sm:grid-cols-3 gap-4 mb-8">
+              {[
+                { step: "01", title: "Book Your Show", body: "Choose any show package and check out online. No travel required." },
+                { step: "02", title: "Ship Your Collection", body: "Send your pieces to our Miami studio before show week. We handle receiving & prep." },
+                { step: "03", title: "We Run the Show", body: "Our team dresses the models, manages fittings, and produces your full runway presentation." },
+              ].map((item) => (
+                <div key={item.step} className="p-5 rounded-2xl bg-black/20 border border-white/5">
+                  <p className="text-xs font-bold text-cyan-400 tracking-widest uppercase mb-2">{item.step}</p>
+                  <p className="font-semibold mb-1">{item.title}</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{item.body}</p>
+                </div>
+              ))}
+            </div>
+
+            <p className="text-sm text-muted-foreground mb-5">
+              All show packages are available to international designers. Email us to discuss shipping logistics, timelines, and any custom requirements.
+            </p>
+
+            <a
+              href="mailto:nathan@examodels.com"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-violet-500 hover:from-cyan-600 hover:to-violet-600 text-white font-semibold px-6 py-3.5 rounded-xl transition-all hover:shadow-lg hover:shadow-cyan-500/25 hover:scale-[1.02] text-sm"
+            >
+              <Mail className="h-4 w-4" />
+              Contact Us — nathan@examodels.com
+              <ArrowRight className="h-4 w-4" />
+            </a>
+          </div>
         </div>
 
         {/* FAQ */}
