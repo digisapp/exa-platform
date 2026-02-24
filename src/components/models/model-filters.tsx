@@ -4,7 +4,15 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Search, X, Loader2, Handshake } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Search, X, Loader2, Handshake, SlidersHorizontal } from "lucide-react";
 import { useCallback, useState, useEffect, useRef } from "react";
 
 const US_STATES = [
@@ -103,9 +111,9 @@ export function ModelFilters() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [search, setSearch] = useState(searchParams.get("q") || "");
+  const [sheetOpen, setSheetOpen] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Derive isSearching from comparing input to URL (no setState needed)
   const currentQuery = searchParams.get("q") || "";
   const isSearching = search !== currentQuery;
 
@@ -121,22 +129,14 @@ export function ModelFilters() {
 
   // Debounced live search
   useEffect(() => {
-    // Clear previous timeout
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
-
-    // Only trigger if search value differs from URL
+    if (debounceRef.current) clearTimeout(debounceRef.current);
     if (search !== currentQuery) {
       debounceRef.current = setTimeout(() => {
         updateParams("q", search || null);
       }, 300);
     }
-
     return () => {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-      }
+      if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [search, currentQuery, updateParams]);
 
@@ -146,211 +146,254 @@ export function ModelFilters() {
   };
 
   const collabsOnly = searchParams.get("collabs") === "1";
-  const hasFilters = searchParams.get("q") || searchParams.get("state") || searchParams.get("focus") || searchParams.get("height") || searchParams.get("collabs") || searchParams.get("platform") || searchParams.get("cpm") || searchParams.get("engagement") || searchParams.get("ig_followers") || searchParams.get("tt_followers");
+  const hasFilters = !!(
+    searchParams.get("q") ||
+    searchParams.get("state") ||
+    searchParams.get("focus") ||
+    searchParams.get("height") ||
+    searchParams.get("collabs") ||
+    searchParams.get("platform") ||
+    searchParams.get("cpm") ||
+    searchParams.get("engagement") ||
+    searchParams.get("ig_followers") ||
+    searchParams.get("tt_followers")
+  );
+
+  // Count active filters (excluding search, shown separately)
+  const activeFilterCount = [
+    searchParams.get("state"),
+    searchParams.get("focus"),
+    searchParams.get("height"),
+    searchParams.get("ig_followers"),
+    searchParams.get("tt_followers"),
+    searchParams.get("collabs"),
+  ].filter(Boolean).length;
+
+  // All the dropdown/button filter controls (shared between desktop bar and mobile sheet)
+  const filterControls = (
+    <div className="flex flex-wrap gap-3">
+      <Select
+        value={searchParams.get("focus") || "all"}
+        onValueChange={(v) => updateParams("focus", v === "all" ? null : v)}
+      >
+        <SelectTrigger className="w-[150px]">
+          <SelectValue placeholder="All Focus" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Focus</SelectItem>
+          {FOCUS_OPTIONS.map((focus) => (
+            <SelectItem key={focus.value} value={focus.value}>{focus.label}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Select
+        value={searchParams.get("state") || "all"}
+        onValueChange={(v) => updateParams("state", v === "all" ? null : v)}
+      >
+        <SelectTrigger className="w-[150px]">
+          <SelectValue placeholder="All States" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All States</SelectItem>
+          {US_STATES.map((state) => (
+            <SelectItem key={state.value} value={state.value}>{state.label}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Select
+        value={searchParams.get("height") || "all"}
+        onValueChange={(v) => updateParams("height", v === "all" ? null : v)}
+      >
+        <SelectTrigger className="w-[150px]">
+          <SelectValue placeholder="All Heights" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Heights</SelectItem>
+          {HEIGHT_RANGES.map((range) => (
+            <SelectItem key={range.value} value={range.value}>{range.label}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Select
+        value={searchParams.get("sort") || "newest"}
+        onValueChange={(v) => updateParams("sort", v)}
+      >
+        <SelectTrigger className="w-[150px]">
+          <SelectValue placeholder="Sort by" />
+        </SelectTrigger>
+        <SelectContent>
+          {SORT_OPTIONS.map((option) => (
+            <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Select
+        value={searchParams.get("ig_followers") || "all"}
+        onValueChange={(v) => updateParams("ig_followers", v === "all" ? null : v)}
+      >
+        <SelectTrigger className="w-[165px]">
+          <SelectValue placeholder="IG Followers" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Any IG Followers</SelectItem>
+          {FOLLOWER_TIERS.map((tier) => (
+            <SelectItem key={tier.value} value={tier.value}>IG {tier.label}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Select
+        value={searchParams.get("tt_followers") || "all"}
+        onValueChange={(v) => updateParams("tt_followers", v === "all" ? null : v)}
+      >
+        <SelectTrigger className="w-[165px]">
+          <SelectValue placeholder="TT Followers" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Any TT Followers</SelectItem>
+          {FOLLOWER_TIERS.map((tier) => (
+            <SelectItem key={tier.value} value={tier.value}>TT {tier.label}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Button
+        variant={collabsOnly ? "default" : "outline"}
+        onClick={() => {
+          const params = new URLSearchParams(searchParams.toString());
+          if (collabsOnly) {
+            params.delete("collabs");
+            params.delete("platform");
+            params.delete("cpm");
+            params.delete("engagement");
+          } else {
+            params.set("collabs", "1");
+          }
+          router.push(`/models?${params.toString()}`);
+        }}
+        className={collabsOnly ? "bg-gradient-to-r from-pink-500 to-violet-500 text-white border-0" : ""}
+      >
+        <Handshake className="h-4 w-4 mr-2" />
+        Open to Collabs
+      </Button>
+
+      {hasFilters && (
+        <Button variant="ghost" onClick={clearFilters} className="text-muted-foreground">
+          <X className="h-4 w-4 mr-2" />
+          Clear filters
+        </Button>
+      )}
+    </div>
+  );
+
+  // Collab sub-filters
+  const collabSubFilters = collabsOnly && (
+    <div className="flex flex-wrap gap-3 p-3 rounded-lg border border-pink-500/20 bg-pink-500/5">
+      <span className="text-xs text-pink-400 font-medium self-center mr-1">Collab filters:</span>
+
+      <Select
+        value={searchParams.get("platform") || "all"}
+        onValueChange={(v) => updateParams("platform", v === "all" ? null : v)}
+      >
+        <SelectTrigger className="w-[150px] h-8 text-sm">
+          <SelectValue placeholder="All Platforms" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Platforms</SelectItem>
+          <SelectItem value="instagram">Instagram</SelectItem>
+          <SelectItem value="tiktok">TikTok</SelectItem>
+        </SelectContent>
+      </Select>
+
+      <Select
+        value={searchParams.get("cpm") || "all"}
+        onValueChange={(v) => updateParams("cpm", v === "all" ? null : v)}
+      >
+        <SelectTrigger className="w-[160px] h-8 text-sm">
+          <SelectValue placeholder="Any CPM" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Any CPM</SelectItem>
+          <SelectItem value="under5">Under $5 CPM</SelectItem>
+          <SelectItem value="5to15">$5 – $15 CPM</SelectItem>
+          <SelectItem value="15to30">$15 – $30 CPM</SelectItem>
+          <SelectItem value="30plus">$30+ CPM</SelectItem>
+        </SelectContent>
+      </Select>
+
+      <Select
+        value={searchParams.get("engagement") || "all"}
+        onValueChange={(v) => updateParams("engagement", v === "all" ? null : v)}
+      >
+        <SelectTrigger className="w-[175px] h-8 text-sm">
+          <SelectValue placeholder="Any Engagement" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Any Engagement</SelectItem>
+          <SelectItem value="1">1%+ Engagement</SelectItem>
+          <SelectItem value="3">3%+ Engagement</SelectItem>
+          <SelectItem value="5">5%+ Engagement</SelectItem>
+          <SelectItem value="10">10%+ Engagement</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+  );
 
   return (
     <div className="space-y-4">
-      <div className="relative flex-1">
-        {isSearching ? (
-          <Loader2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground animate-spin" />
-        ) : (
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        )}
-        <Input
-          placeholder="Search by name or username..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-10"
-        />
-      </div>
-
-      <div className="flex flex-wrap gap-3">
-        <Select
-          value={searchParams.get("focus") || "all"}
-          onValueChange={(v) => updateParams("focus", v === "all" ? null : v)}
-        >
-          <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="All Focus" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Focus</SelectItem>
-            {FOCUS_OPTIONS.map((focus) => (
-              <SelectItem key={focus.value} value={focus.value}>
-                {focus.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select
-          value={searchParams.get("state") || "all"}
-          onValueChange={(v) => updateParams("state", v === "all" ? null : v)}
-        >
-          <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="All States" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All States</SelectItem>
-            {US_STATES.map((state) => (
-              <SelectItem key={state.value} value={state.value}>
-                {state.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select
-          value={searchParams.get("height") || "all"}
-          onValueChange={(v) => updateParams("height", v === "all" ? null : v)}
-        >
-          <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="All Heights" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Heights</SelectItem>
-            {HEIGHT_RANGES.map((range) => (
-              <SelectItem key={range.value} value={range.value}>
-                {range.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select
-          value={searchParams.get("sort") || "newest"}
-          onValueChange={(v) => updateParams("sort", v)}
-        >
-          <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="Sort by" />
-          </SelectTrigger>
-          <SelectContent>
-            {SORT_OPTIONS.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {/* Instagram follower filter */}
-        <Select
-          value={searchParams.get("ig_followers") || "all"}
-          onValueChange={(v) => updateParams("ig_followers", v === "all" ? null : v)}
-        >
-          <SelectTrigger className="w-[165px]">
-            <SelectValue placeholder="IG Followers" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Any IG Followers</SelectItem>
-            {FOLLOWER_TIERS.map((tier) => (
-              <SelectItem key={tier.value} value={tier.value}>
-                IG {tier.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {/* TikTok follower filter */}
-        <Select
-          value={searchParams.get("tt_followers") || "all"}
-          onValueChange={(v) => updateParams("tt_followers", v === "all" ? null : v)}
-        >
-          <SelectTrigger className="w-[165px]">
-            <SelectValue placeholder="TT Followers" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Any TT Followers</SelectItem>
-            {FOLLOWER_TIERS.map((tier) => (
-              <SelectItem key={tier.value} value={tier.value}>
-                TT {tier.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Button
-          variant={collabsOnly ? "default" : "outline"}
-          onClick={() => {
-            const params = new URLSearchParams(searchParams.toString());
-            if (collabsOnly) {
-              params.delete("collabs");
-              params.delete("platform");
-              params.delete("cpm");
-              params.delete("engagement");
-            } else {
-              params.set("collabs", "1");
-            }
-            router.push(`/models?${params.toString()}`);
-          }}
-          className={collabsOnly ? "bg-gradient-to-r from-pink-500 to-violet-500 text-white border-0" : ""}
-        >
-          <Handshake className="h-4 w-4 mr-2" />
-          Open to Collabs
-        </Button>
-
-        {hasFilters && (
-          <Button variant="ghost" onClick={clearFilters} className="text-muted-foreground">
-            <X className="h-4 w-4 mr-2" />
-            Clear filters
-          </Button>
-        )}
-      </div>
-
-      {/* Collab sub-filters — only visible when Open to Collabs is active */}
-      {collabsOnly && (
-        <div className="flex flex-wrap gap-3 p-3 rounded-lg border border-pink-500/20 bg-pink-500/5">
-          <span className="text-xs text-pink-400 font-medium self-center mr-1">Collab filters:</span>
-
-          {/* Platform */}
-          <Select
-            value={searchParams.get("platform") || "all"}
-            onValueChange={(v) => updateParams("platform", v === "all" ? null : v)}
-          >
-            <SelectTrigger className="w-[150px] h-8 text-sm">
-              <SelectValue placeholder="All Platforms" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Platforms</SelectItem>
-              <SelectItem value="instagram">Instagram</SelectItem>
-              <SelectItem value="tiktok">TikTok</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {/* CPM range */}
-          <Select
-            value={searchParams.get("cpm") || "all"}
-            onValueChange={(v) => updateParams("cpm", v === "all" ? null : v)}
-          >
-            <SelectTrigger className="w-[160px] h-8 text-sm">
-              <SelectValue placeholder="Any CPM" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any CPM</SelectItem>
-              <SelectItem value="under5">Under $5 CPM</SelectItem>
-              <SelectItem value="5to15">$5 – $15 CPM</SelectItem>
-              <SelectItem value="15to30">$15 – $30 CPM</SelectItem>
-              <SelectItem value="30plus">$30+ CPM</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {/* Engagement rate */}
-          <Select
-            value={searchParams.get("engagement") || "all"}
-            onValueChange={(v) => updateParams("engagement", v === "all" ? null : v)}
-          >
-            <SelectTrigger className="w-[175px] h-8 text-sm">
-              <SelectValue placeholder="Any Engagement" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any Engagement</SelectItem>
-              <SelectItem value="1">1%+ Engagement</SelectItem>
-              <SelectItem value="3">3%+ Engagement</SelectItem>
-              <SelectItem value="5">5%+ Engagement</SelectItem>
-              <SelectItem value="10">10%+ Engagement</SelectItem>
-            </SelectContent>
-          </Select>
+      {/* Search + mobile Filters button */}
+      <div className="flex gap-3">
+        <div className="relative flex-1">
+          {isSearching ? (
+            <Loader2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground animate-spin" />
+          ) : (
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          )}
+          <Input
+            placeholder="Search by name or username..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-10"
+          />
         </div>
-      )}
+
+        {/* Mobile: Filters button + sheet */}
+        <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+          <SheetTrigger asChild>
+            <Button variant="outline" className="relative md:hidden shrink-0">
+              <SlidersHorizontal className="h-4 w-4 mr-2" />
+              Filters
+              {activeFilterCount > 0 && (
+                <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-[10px] bg-pink-500 hover:bg-pink-500">
+                  {activeFilterCount}
+                </Badge>
+              )}
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="bottom" className="h-auto max-h-[85vh] overflow-y-auto rounded-t-2xl">
+            <SheetHeader className="pb-2">
+              <SheetTitle className="flex items-center gap-2">
+                <SlidersHorizontal className="h-4 w-4" />
+                Filters
+              </SheetTitle>
+            </SheetHeader>
+            <div className="space-y-4 py-2 pb-8">
+              {filterControls}
+              {collabSubFilters}
+            </div>
+          </SheetContent>
+        </Sheet>
+      </div>
+
+      {/* Desktop: full filter bar */}
+      <div className="hidden md:block space-y-4">
+        {filterControls}
+        {collabSubFilters}
+      </div>
     </div>
   );
 }

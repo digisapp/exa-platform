@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { ModelCard } from "./model-card";
 import { AuthRequiredDialog } from "@/components/auth/AuthRequiredDialog";
+import { cn } from "@/lib/utils";
 
 interface ModelsGridProps {
   models: any[];
@@ -11,16 +13,53 @@ interface ModelsGridProps {
   actorType?: "model" | "fan" | "brand" | "admin" | null;
 }
 
-export function ModelsGrid({ models, isLoggedIn, favoriteModelIds, actorType }: ModelsGridProps) {
-  const [showAuthDialog, setShowAuthDialog] = useState(false);
+function ModelCardSkeleton() {
+  return (
+    <div className="rounded-xl overflow-hidden border bg-card">
+      <div className="aspect-[3/4] bg-muted animate-pulse" />
+      <div className="p-2 space-y-2">
+        <div className="h-3 bg-muted animate-pulse rounded w-3/4" />
+        <div className="h-3 bg-muted animate-pulse rounded w-1/2" />
+      </div>
+    </div>
+  );
+}
 
-  // Memoize the callback to prevent unnecessary re-renders
+export function ModelsGrid({ models, isLoggedIn, favoriteModelIds, actorType }: ModelsGridProps) {
+  const searchParams = useSearchParams();
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const paramsRef = useRef(searchParams.toString());
+
+  // When URL params change (filter applied), immediately show skeleton
+  useEffect(() => {
+    const current = searchParams.toString();
+    if (paramsRef.current !== current) {
+      setIsLoading(true);
+      paramsRef.current = current;
+    }
+  }, [searchParams]);
+
+  // When models prop updates (server data arrived), hide skeleton
+  useEffect(() => {
+    setIsLoading(false);
+  }, [models]);
+
   const handleAuthRequired = useCallback(() => {
     setShowAuthDialog(true);
   }, []);
 
-  // Memoize the favoriteModelIds set for O(1) lookups
   const favoriteSet = useMemo(() => new Set(favoriteModelIds), [favoriteModelIds]);
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        {Array.from({ length: 20 }).map((_, i) => (
+          <ModelCardSkeleton key={i} />
+        ))}
+      </div>
+    );
+  }
 
   return (
     <>
