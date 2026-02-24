@@ -277,7 +277,7 @@ export async function POST(request: NextRequest) {
     if (rpcError) {
       console.error("RPC error:", rpcError);
       return NextResponse.json(
-        { error: "Failed to send message" },
+        { error: rpcError.message || "Failed to send message" },
         { status: 500 }
       );
     }
