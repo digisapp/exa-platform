@@ -285,24 +285,6 @@ export default async function MswBrandPage() {
             ))}
           </div>
 
-          {/* EXA TV Button */}
-          <a
-            href="https://examodels.com/tv"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-8 inline-flex items-center gap-3 px-6 py-4 rounded-2xl bg-gradient-to-r from-violet-500/10 to-pink-500/10 border border-violet-500/25 hover:border-violet-500/50 hover:from-violet-500/15 hover:to-pink-500/15 transition-all group"
-          >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-violet-500/25">
-              <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            </div>
-            <div className="text-left">
-              <p className="font-bold text-sm group-hover:text-violet-400 transition-colors">Watch EXA TV</p>
-              <p className="text-xs text-muted-foreground">See our past runway shows &amp; events</p>
-            </div>
-            <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-violet-400 transition-colors ml-2" />
-          </a>
         </div>
 
         {/* Show Packages */}
@@ -403,6 +385,56 @@ export default async function MswBrandPage() {
             </div>
           </div>
         )}
+
+        {/* EXA TV Section */}
+        <div className="mb-20">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2.5 rounded-xl bg-gradient-to-br from-violet-500/20 to-pink-500/20">
+              <svg className="h-6 w-6 text-violet-400" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold">EXA TV</h2>
+              <p className="text-sm text-muted-foreground">Watch our past runway shows &amp; events</p>
+            </div>
+          </div>
+
+          <a
+            href="https://examodels.com/tv"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group block rounded-2xl overflow-hidden border border-violet-500/20 hover:border-violet-500/50 transition-all shadow-xl hover:shadow-violet-500/10"
+          >
+            {/* Thumbnail — YouTube video iframe preview */}
+            <div className="relative aspect-video bg-black">
+              <iframe
+                src="https://www.youtube.com/embed/Iu68o0MCuvw?mute=1&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1"
+                title="EXA TV — Past Runway Shows"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="absolute inset-0 w-full h-full pointer-events-none"
+              />
+              {/* Dark overlay with centered play button */}
+              <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                <div className="w-16 h-16 rounded-full bg-white/15 backdrop-blur-sm border border-white/30 flex items-center justify-center group-hover:scale-110 group-hover:bg-white/25 transition-all shadow-2xl">
+                  <svg className="w-7 h-7 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {/* Card Footer */}
+            <div className="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-violet-500/10 to-pink-500/10">
+              <div>
+                <p className="font-bold text-sm">Watch on EXA TV</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Past runway shows, backstage, and more</p>
+              </div>
+              <ArrowRight className="h-5 w-5 text-violet-400 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </a>
+        </div>
 
         {/* FAQ */}
         <div className="max-w-2xl mx-auto mb-20">
