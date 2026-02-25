@@ -384,38 +384,27 @@ export default async function MswBrandPage() {
 
         {/* Additional Brand Opportunities */}
         <div className="mb-20">
-          <div className="text-center mb-10">
-            <Badge className="mb-4 bg-violet-500/10 text-violet-400 border-violet-500/20 px-4 py-1">
+          <div className="flex items-center gap-3 mb-5">
+            <Badge className="bg-violet-500/10 text-violet-400 border-violet-500/20 px-3 py-0.5">
               More Ways to Participate
             </Badge>
-            <h2 className="text-3xl font-bold mb-3">Additional Opportunities</h2>
-            <p className="text-muted-foreground">
-              Maximize your brand&apos;s presence throughout the full week of events
-            </p>
+            <h2 className="text-xl font-bold">Additional Opportunities</h2>
           </div>
 
-          <div className="max-w-2xl mx-auto">
+          <div className="max-w-3xl space-y-3">
             {/* Miami Beach Shoot Day */}
-            <Card className="border-sky-500/20 relative overflow-hidden">
-              <CardContent className="p-6 md:p-8">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2.5 rounded-xl bg-sky-500/10 flex-shrink-0">
-                    <Camera className="h-5 w-5 text-sky-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold">Miami Beach Shoot Day</h3>
-                    <p className="text-xs text-sky-400 font-medium">Half Day (~4 hrs) · Professional Content · You Keep Everything</p>
-                  </div>
-                </div>
-                <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                  A professional photo & video shoot with EXA models in your swimwear at a Miami Beach location during Swim Week. All content is yours — ready for campaigns, social, and lookbooks.
-                </p>
-                <p className="text-sm text-muted-foreground mb-6">
-                  <span className="text-sky-400 font-semibold">Includes 3 EXA models</span> — additional models available at <span className="font-semibold">$350 each</span>.
-                </p>
-                <SimpleCheckoutButton packageId="beach-shoot-halfday" price={1500} label="Book Beach Shoot Day" colorClass="from-sky-500 to-blue-500 hover:from-sky-600 hover:to-blue-600 shadow-sky-500/20 hover:shadow-sky-500/30" />
-              </CardContent>
-            </Card>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 px-5 py-4 rounded-2xl border border-sky-500/20 bg-sky-500/5">
+              <div className="p-2 rounded-xl bg-sky-500/10 flex-shrink-0 self-start sm:self-auto">
+                <Camera className="h-4 w-4 text-sky-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm">Miami Beach Shoot Day</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Half day (~4 hrs) · 3 EXA models included · +$350/additional model · All content yours</p>
+              </div>
+              <div className="flex-shrink-0 w-full sm:w-56">
+                <SimpleCheckoutButton packageId="beach-shoot-halfday" price={1500} label="Book Now" colorClass="from-sky-500 to-blue-500 hover:from-sky-600 hover:to-blue-600 shadow-sky-500/20 hover:shadow-sky-500/30" />
+              </div>
+            </div>
           </div>
         </div>
 
