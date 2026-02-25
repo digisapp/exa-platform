@@ -17,10 +17,8 @@ import {
   ShoppingBag,
   Building2,
   Camera,
-  Monitor,
-  PartyPopper,
 } from "lucide-react";
-import { CheckoutButtons, SwimShopButton, ShowroomButton, AfterPartyButton, SimpleCheckoutButton } from "./checkout-buttons";
+import { CheckoutButtons, SwimShopButton, ShowroomButton, SimpleCheckoutButton } from "./checkout-buttons";
 import { Footer } from "@/components/layout/footer";
 import type { Metadata } from "next";
 
@@ -338,6 +336,86 @@ export default async function MswBrandPage() {
           </div>
         </div>
 
+        {/* International Designers */}
+        <div className="mb-20">
+          <div className="relative overflow-hidden rounded-3xl border border-cyan-500/20 bg-gradient-to-br from-cyan-500/5 via-violet-500/5 to-pink-500/5 p-8 md:p-12">
+            {/* Decorative globe */}
+            <div className="absolute top-6 right-6 text-7xl opacity-10 select-none pointer-events-none">🌍</div>
+
+            <Badge className="mb-5 bg-cyan-500/10 text-cyan-400 border-cyan-500/20 px-4 py-1">
+              International Designers
+            </Badge>
+
+            <h2 className="text-2xl md:text-3xl font-bold mb-4 max-w-xl">
+              Can&apos;t Make It to Miami? We&apos;ll Run Your Show.
+            </h2>
+            <p className="text-muted-foreground text-lg leading-relaxed mb-8 max-w-2xl">
+              You don&apos;t need to be in Miami to have your collection walk the runway. Ship your pieces to us and our team will handle everything — steaming, dressing, styling, and running your full show — so your collection gets the spotlight it deserves, no matter where you are in the world.
+            </p>
+
+            <div className="grid sm:grid-cols-3 gap-4 mb-8">
+              {[
+                { step: "01", title: "Book Your Show", body: "Choose any show package and check out online. No travel required." },
+                { step: "02", title: "Ship Your Collection", body: "Send your pieces to our Miami studio before show week. We handle receiving & prep." },
+                { step: "03", title: "We Run the Show", body: "Our team dresses the models, manages fittings, and produces your full runway presentation." },
+              ].map((item) => (
+                <div key={item.step} className="p-5 rounded-2xl bg-black/20 border border-white/5">
+                  <p className="text-xs font-bold text-cyan-400 tracking-widest uppercase mb-2">{item.step}</p>
+                  <p className="font-semibold mb-1">{item.title}</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{item.body}</p>
+                </div>
+              ))}
+            </div>
+
+            <p className="text-sm text-muted-foreground mb-5">
+              All show packages are available to international designers. Email us to discuss shipping logistics, timelines, and any custom requirements.
+            </p>
+
+            <a
+              href="mailto:nathan@examodels.com"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-violet-500 hover:from-cyan-600 hover:to-violet-600 text-white font-semibold px-6 py-3.5 rounded-xl transition-all hover:shadow-lg hover:shadow-cyan-500/25 hover:scale-[1.02] text-sm"
+            >
+              <Mail className="h-4 w-4" />
+              Contact Us — nathan@examodels.com
+              <ArrowRight className="h-4 w-4" />
+            </a>
+          </div>
+        </div>
+
+        {/* Additional Brand Opportunities */}
+        <div className="mb-20">
+          <div className="text-center mb-10">
+            <Badge className="mb-4 bg-violet-500/10 text-violet-400 border-violet-500/20 px-4 py-1">
+              More Ways to Participate
+            </Badge>
+            <h2 className="text-3xl font-bold mb-3">Additional Opportunities</h2>
+            <p className="text-muted-foreground">
+              Maximize your brand&apos;s presence throughout the full week of events
+            </p>
+          </div>
+
+          <div className="max-w-2xl mx-auto">
+            {/* Miami Beach Shoot Day */}
+            <Card className="border-sky-500/20 relative overflow-hidden">
+              <CardContent className="p-6 md:p-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2.5 rounded-xl bg-sky-500/10 flex-shrink-0">
+                    <Camera className="h-5 w-5 text-sky-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold">Miami Beach Shoot Day</h3>
+                    <p className="text-xs text-sky-400 font-medium">Half Day (~4 hrs) · Professional Content · You Keep Everything</p>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground leading-relaxed mb-6">
+                  A professional photo & video shoot with EXA models in your swimwear at a Miami Beach location during Swim Week. All content is yours — ready for campaigns, social, and lookbooks.
+                </p>
+                <SimpleCheckoutButton packageId="beach-shoot-halfday" price={1500} label="Book Beach Shoot Day" colorClass="from-sky-500 to-blue-500 hover:from-sky-600 hover:to-blue-600 shadow-sky-500/20 hover:shadow-sky-500/30" />
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
         {/* Private Showroom */}
         <div className="mb-20">
           <div className="relative overflow-hidden rounded-3xl border border-amber-500/30 bg-gradient-to-br from-amber-500/5 via-yellow-500/5 to-orange-500/5 p-8 md:p-12">
@@ -429,133 +507,6 @@ export default async function MswBrandPage() {
                 <SwimShopButton />
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Additional Brand Opportunities */}
-        <div className="mb-20">
-          <div className="text-center mb-10">
-            <Badge className="mb-4 bg-violet-500/10 text-violet-400 border-violet-500/20 px-4 py-1">
-              More Ways to Participate
-            </Badge>
-            <h2 className="text-3xl font-bold mb-3">Additional Opportunities</h2>
-            <p className="text-muted-foreground">
-              Maximize your brand&apos;s presence throughout the full week of events
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* Hotel Lobby Display */}
-            <Card className="border-slate-500/20 relative overflow-hidden">
-              <CardContent className="p-6 md:p-8">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2.5 rounded-xl bg-slate-500/10 flex-shrink-0">
-                    <Monitor className="h-5 w-5 text-slate-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold">Hotel Lobby Display</h3>
-                    <p className="text-xs text-slate-400 font-medium">All Week · The National Hotel Miami Beach</p>
-                  </div>
-                </div>
-                <p className="text-sm text-muted-foreground leading-relaxed mb-6">
-                  A branded display in The National Hotel Miami Beach lobby — visible to every guest, model, designer, buyer, and attendee who passes through all week long. Prime real estate, zero effort required.
-                </p>
-                <SimpleCheckoutButton packageId="lobby-display" price={600} label="Reserve Lobby Display" colorClass="from-slate-500 to-zinc-500 hover:from-slate-600 hover:to-zinc-600 shadow-slate-500/20 hover:shadow-slate-500/30" />
-              </CardContent>
-            </Card>
-
-            {/* Miami Beach Shoot Day */}
-            <Card className="border-sky-500/20 relative overflow-hidden">
-              <CardContent className="p-6 md:p-8">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2.5 rounded-xl bg-sky-500/10 flex-shrink-0">
-                    <Camera className="h-5 w-5 text-sky-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold">Miami Beach Shoot Day</h3>
-                    <p className="text-xs text-sky-400 font-medium">Half Day (~4 hrs) · Professional Content · You Keep Everything</p>
-                  </div>
-                </div>
-                <p className="text-sm text-muted-foreground leading-relaxed mb-6">
-                  A professional photo & video shoot with EXA models in your swimwear at a Miami Beach location during Swim Week. All content is yours — ready for campaigns, social, and lookbooks.
-                </p>
-                <SimpleCheckoutButton packageId="beach-shoot-halfday" price={1500} label="Book Beach Shoot Day" colorClass="from-sky-500 to-blue-500 hover:from-sky-600 hover:to-blue-600 shadow-sky-500/20 hover:shadow-sky-500/30" />
-              </CardContent>
-            </Card>
-
-          </div>
-        </div>
-
-        {/* After-Party Sponsorship */}
-        <div className="mb-20">
-          <div className="relative overflow-hidden rounded-3xl border border-orange-500/30 bg-gradient-to-br from-orange-500/5 via-red-500/5 to-pink-500/5 p-8 md:p-12">
-            <div className="absolute top-6 right-6 text-7xl opacity-10 select-none pointer-events-none">🎉</div>
-
-            <Badge className="mb-5 bg-orange-500/10 text-orange-400 border-orange-500/20 px-4 py-1">
-              Premium Sponsorship
-            </Badge>
-
-            <div className="flex items-start gap-4 mb-4">
-              <div className="p-3 rounded-2xl bg-orange-500/10 flex-shrink-0">
-                <PartyPopper className="h-7 w-7 text-orange-400" />
-              </div>
-              <div>
-                <h2 className="text-2xl md:text-3xl font-bold mb-1">Closing Party Sponsorship</h2>
-                <p className="text-sm text-orange-400 font-medium">Official EXA Closing Party · Sunday May 31 · Miami</p>
-              </div>
-            </div>
-
-            <p className="text-muted-foreground text-lg leading-relaxed mb-8 max-w-2xl">
-              Sponsor the official EXA Closing Party on Sunday night, May 31st. Your brand front and center — logo on all event materials, product placement, branded presence, and access to models, designers, buyers, press, and influencers in one room.
-            </p>
-
-            <AfterPartyButton />
-          </div>
-        </div>
-
-        {/* International Designers */}
-        <div className="mb-20">
-          <div className="relative overflow-hidden rounded-3xl border border-cyan-500/20 bg-gradient-to-br from-cyan-500/5 via-violet-500/5 to-pink-500/5 p-8 md:p-12">
-            {/* Decorative globe */}
-            <div className="absolute top-6 right-6 text-7xl opacity-10 select-none pointer-events-none">🌍</div>
-
-            <Badge className="mb-5 bg-cyan-500/10 text-cyan-400 border-cyan-500/20 px-4 py-1">
-              International Designers
-            </Badge>
-
-            <h2 className="text-2xl md:text-3xl font-bold mb-4 max-w-xl">
-              Can&apos;t Make It to Miami? We&apos;ll Run Your Show.
-            </h2>
-            <p className="text-muted-foreground text-lg leading-relaxed mb-8 max-w-2xl">
-              You don&apos;t need to be in Miami to have your collection walk the runway. Ship your pieces to us and our team will handle everything — steaming, dressing, styling, and running your full show — so your collection gets the spotlight it deserves, no matter where you are in the world.
-            </p>
-
-            <div className="grid sm:grid-cols-3 gap-4 mb-8">
-              {[
-                { step: "01", title: "Book Your Show", body: "Choose any show package and check out online. No travel required." },
-                { step: "02", title: "Ship Your Collection", body: "Send your pieces to our Miami studio before show week. We handle receiving & prep." },
-                { step: "03", title: "We Run the Show", body: "Our team dresses the models, manages fittings, and produces your full runway presentation." },
-              ].map((item) => (
-                <div key={item.step} className="p-5 rounded-2xl bg-black/20 border border-white/5">
-                  <p className="text-xs font-bold text-cyan-400 tracking-widest uppercase mb-2">{item.step}</p>
-                  <p className="font-semibold mb-1">{item.title}</p>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{item.body}</p>
-                </div>
-              ))}
-            </div>
-
-            <p className="text-sm text-muted-foreground mb-5">
-              All show packages are available to international designers. Email us to discuss shipping logistics, timelines, and any custom requirements.
-            </p>
-
-            <a
-              href="mailto:nathan@examodels.com"
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-violet-500 hover:from-cyan-600 hover:to-violet-600 text-white font-semibold px-6 py-3.5 rounded-xl transition-all hover:shadow-lg hover:shadow-cyan-500/25 hover:scale-[1.02] text-sm"
-            >
-              <Mail className="h-4 w-4" />
-              Contact Us — nathan@examodels.com
-              <ArrowRight className="h-4 w-4" />
-            </a>
           </div>
         </div>
 
