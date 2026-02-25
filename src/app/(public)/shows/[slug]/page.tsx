@@ -14,7 +14,6 @@ import {
   Calendar,
   Users,
   Ticket,
-  ArrowLeft,
   ExternalLink,
   Sparkles,
   ShoppingBag,
@@ -294,15 +293,6 @@ export default async function EventPage({ params, searchParams }: Props) {
       />
 
       <main className="container px-4 md:px-8 py-8">
-        {/* Back Button */}
-        <Link
-          href="/"
-          className="inline-flex items-center text-muted-foreground hover:text-primary mb-6"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Home
-        </Link>
-
         {/* Hero Section with YouTube Video */}
         <div className="relative rounded-3xl overflow-hidden mb-8">
           <div className="aspect-video relative">
