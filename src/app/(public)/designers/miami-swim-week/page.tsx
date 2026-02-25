@@ -71,16 +71,18 @@ const PACKAGES = [
   },
   {
     id: "day-3" as const,
-    name: "Day 3 Show",
+    name: "Emerging Designers Show",
     date: "Thursday, May 28",
-    price: 1500,
-    installment: 500,
-    badge: null,
-    badgeGradient: "",
-    borderColor: "border-pink-500/20",
+    price: 1000,
+    installment: 334,
+    badge: "Emerging Designers",
+    badgeGradient: "from-teal-500 to-cyan-500",
+    borderColor: "border-teal-500/20",
     highlight: false,
     features: [
-      "15 models",
+      "Dedicated runway show for up-and-coming designers",
+      "15 models — curated by our team",
+      "Perfect for first-time runway debuts",
     ],
   },
   {
@@ -159,7 +161,7 @@ const FAQS = [
   },
   {
     q: "Can I choose which models walk for my brand?",
-    a: "Model selection is available for Opening Show and Day 2 bookings. Once booked, we send you our full roster with profile photos and measurements so you can choose your 15 (or 20). For Day 3 through Day 6 and the Daytime Show, our team curates and assigns your model lineup.",
+    a: "Model selection is available for Opening Show and Day 2 bookings. Once booked, we send you our full roster with profile photos and measurements so you can choose your 15 (or 20). For the Emerging Designers Show, Day 4 through Day 6, and the Daytime Show, our team curates and assigns your model lineup.",
   },
   {
     q: "What's the deadline to book?",

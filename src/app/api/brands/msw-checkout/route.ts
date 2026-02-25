@@ -18,10 +18,10 @@ const PACKAGES = {
     description: "Runway show on Day 2 of Miami Swim Week 2026",
   },
   "day-3": {
-    name: "Day 3 Show — Thursday May 28, 2026",
-    fullPrice: 150000, // $1,500.00 in cents
-    installmentPrice: 50000, // $500.00/month in cents
-    description: "Runway show on Day 3 of Miami Swim Week 2026",
+    name: "Emerging Designers Show — Thursday May 28, 2026",
+    fullPrice: 100000, // $1,000.00 in cents
+    installmentPrice: 33400, // $334.00/month in cents
+    description: "Emerging Designers runway show at Miami Swim Week 2026",
   },
   "day-4": {
     name: "Day 4 Show — Friday May 29, 2026",
