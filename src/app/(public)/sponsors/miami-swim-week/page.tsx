@@ -166,6 +166,7 @@ const PACKAGES = [
       "4 VIP tickets to your sponsored reception",
       "Social media content captured from cocktail hour",
       "Logo on event website",
+      "Logo on Red Carpet Promo Wall",
     ],
   },
   {
@@ -185,6 +186,7 @@ const PACKAGES = [
       "Product sampling, demos, or sales — your call",
       "2 VIP passes",
       "Logo on event website",
+      "Logo on Red Carpet Promo Wall",
     ],
   },
   {
@@ -204,6 +206,7 @@ const PACKAGES = [
       "EXA social media unboxing feature",
       "2 VIP passes",
       "Logo on event website",
+      "Logo on Red Carpet Promo Wall",
     ],
   },
   {
@@ -223,6 +226,7 @@ const PACKAGES = [
       "1 dedicated model content shoot with your product",
       "Social media tag from EXA",
       "Logo on event website",
+      "Logo on Red Carpet Promo Wall",
     ],
   },
 ];
