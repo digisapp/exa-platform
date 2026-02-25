@@ -35,12 +35,15 @@ export async function POST(request: NextRequest) {
     if (rateLimitResponse) return rateLimitResponse;
 
     const body = await request.json();
-    const { contacts, subject, body: emailBody, ctaUrl, ctaText } = body as {
+    const { contacts, subject, body: emailBody, ctaUrl, ctaText, fromEmail, fromName, template } = body as {
       contacts: ContactToEmail[];
       subject: string;
       body: string;
       ctaUrl?: string;
       ctaText?: string;
+      fromEmail?: string;
+      fromName?: string;
+      template?: "standard" | "sponsor";
     };
 
     if (!contacts || contacts.length === 0) {
@@ -66,6 +69,9 @@ export async function POST(request: NextRequest) {
           bodyText: emailBody,
           ctaUrl,
           ctaText,
+          fromEmail,
+          fromName,
+          template,
         });
 
         if (result.success) {

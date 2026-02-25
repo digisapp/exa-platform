@@ -97,6 +97,9 @@ export default function BrandOutreachPage() {
   const [emailBody, setEmailBody] = useState("");
   const [emailCtaUrl, setEmailCtaUrl] = useState("https://www.examodels.com/swimweek");
   const [emailCtaText, setEmailCtaText] = useState("View Miami Swim Week 2026");
+  const [emailFromAddress, setEmailFromAddress] = useState("partnerships@examodels.com");
+  const [emailFromName, setEmailFromName] = useState("EXA Models Partnerships");
+  const [emailTemplate, setEmailTemplate] = useState<"standard" | "sponsor">("standard");
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [newContact, setNewContact] = useState({
     brand_name: "",
@@ -211,6 +214,9 @@ export default function BrandOutreachPage() {
           body: emailBody,
           ctaUrl: emailCtaUrl,
           ctaText: emailCtaText,
+          fromEmail: emailFromAddress,
+          fromName: emailFromName,
+          template: emailTemplate,
         }),
       });
 
@@ -347,39 +353,45 @@ www.examodels.com`,
   };
 
   const sponsorEmailTemplate = {
-    subject: "Sponsorship Opportunity — EXA Miami Swim Week 2026",
+    subject: "Join Us for Miami Swim Week 2026",
     body: `Hi {{contact_name}},
 
-I hope this message finds you well. I'm reaching out from EXA Models about a sponsorship opportunity at Miami Swim Week 2026 (May 26–31) in Miami Beach.
+We're producing EXA's Miami Swim Week 2026 — a multi-day runway show event in Miami Beach (May 26–31) featuring 50+ professional models, media, and industry professionals.
 
-We're producing a multi-day runway show event featuring 50+ professional models, photographers, media, and industry professionals — and we're looking for select brand sponsors to be featured throughout the event.
+We'd love to have {{brand_name}} as a sponsor. Packages start at $500 and go up to $20,000.
 
-As a sponsor of EXA's Miami Swim Week, {{brand_name}} would receive:
-- Logo placement across all event materials
-- Brand exposure on our Red Carpet Promo Wall
-- Social media features before, during, and after the event
-- Networking access with designers, models, and media
+Would you be open to a quick call this week?
 
-You can view all sponsorship packages here:
-www.examodels.com/sponsors/miami-swim-week
-
-Packages start at $500 and go up to $20,000, with options to fit every budget.
-
-Would you be open to a quick call this week to learn more?
-
-Best regards,
-EXA Models Team
-www.examodels.com`,
+Warm regards,
+Nathan
+EXA Models`,
     ctaUrl: "https://www.examodels.com/sponsors/miami-swim-week",
     ctaText: "View Sponsorship Packages",
+    fromEmail: "nathan@examodels.com",
+    fromName: "Nathan at EXA Models",
+    template: "sponsor" as const,
   };
 
   const loadTemplate = (type: "designer" | "sponsor") => {
-    const t = type === "sponsor" ? sponsorEmailTemplate : designerEmailTemplate;
-    setEmailSubject(t.subject);
-    setEmailBody(t.body);
-    setEmailCtaUrl(t.ctaUrl);
-    setEmailCtaText(t.ctaText);
+    if (type === "sponsor") {
+      const t = sponsorEmailTemplate;
+      setEmailSubject(t.subject);
+      setEmailBody(t.body);
+      setEmailCtaUrl(t.ctaUrl);
+      setEmailCtaText(t.ctaText);
+      setEmailFromAddress(t.fromEmail);
+      setEmailFromName(t.fromName);
+      setEmailTemplate(t.template);
+    } else {
+      const t = designerEmailTemplate;
+      setEmailSubject(t.subject);
+      setEmailBody(t.body);
+      setEmailCtaUrl(t.ctaUrl);
+      setEmailCtaText(t.ctaText);
+      setEmailFromAddress("partnerships@examodels.com");
+      setEmailFromName("EXA Models Partnerships");
+      setEmailTemplate("standard");
+    }
   };
 
   useEffect(() => {
@@ -729,11 +741,18 @@ www.examodels.com`,
                         className="font-mono text-sm"
                       />
                     </div>
-                    <div className="text-xs text-muted-foreground bg-muted/50 rounded-lg p-3">
-                      <span className="font-medium text-foreground">CTA Button: </span>
-                      <span className="text-pink-400">{emailCtaText}</span>
-                      <span className="mx-1">→</span>
-                      <span>{emailCtaUrl}</span>
+                    <div className="text-xs text-muted-foreground bg-muted/50 rounded-lg p-3 space-y-1">
+                      <div>
+                        <span className="font-medium text-foreground">From: </span>
+                        <span className="text-pink-400">{emailFromName}</span>
+                        <span className="mx-1 text-muted-foreground">&lt;{emailFromAddress}&gt;</span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-foreground">CTA Button: </span>
+                        <span className="text-pink-400">{emailCtaText}</span>
+                        <span className="mx-1">→</span>
+                        <span>{emailCtaUrl}</span>
+                      </div>
                     </div>
                     <Button
                       onClick={sendOutreachEmails}
