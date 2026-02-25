@@ -78,22 +78,22 @@ const PACKAGES = {
     description: "Half-day professional photo & video shoot with EXA models in your swimwear at a Miami Beach location during Swim Week. All content is yours.",
   },
   "afterparty-standard": {
-    name: "After-Party Sponsorship — Standard",
+    name: "Closing Party Sponsorship — Standard",
     fullPrice: 200000, // $2,000.00 in cents
     installmentPrice: 200000, // full only
-    description: "Standard sponsorship of the official EXA Swim Week after-party. Logo on event materials, branded presence, product placement.",
+    description: "Standard sponsorship of the official EXA Closing Party on Sunday May 31, 2026. Logo on event materials, branded presence, product placement.",
   },
   "afterparty-premier": {
-    name: "After-Party Sponsorship — Premier",
+    name: "Closing Party Sponsorship — Premier",
     fullPrice: 350000, // $3,500.00 in cents
     installmentPrice: 350000, // full only
-    description: "Premier sponsorship of the official EXA Swim Week after-party. Featured logo placement, dedicated product moment, social features.",
+    description: "Premier sponsorship of the official EXA Closing Party on Sunday May 31, 2026. Featured logo placement, dedicated product moment, social features.",
   },
   "afterparty-presenting": {
-    name: "After-Party Sponsorship — Presenting Sponsor",
+    name: "Closing Party Sponsorship — Presenting Sponsor",
     fullPrice: 500000, // $5,000.00 in cents
     installmentPrice: 500000, // full only
-    description: "Presenting sponsorship of the official EXA Swim Week after-party. Top billing across all materials, exclusive branded activation, and VIP table.",
+    description: "Presenting sponsorship of the official EXA Closing Party on Sunday May 31, 2026. Top billing across all materials, exclusive branded activation, and VIP table.",
   },
 } as const;
 

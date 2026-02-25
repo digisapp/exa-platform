@@ -358,7 +358,7 @@ export default async function MswBrandPage() {
             </div>
 
             <p className="text-muted-foreground text-lg leading-relaxed mb-8 max-w-2xl">
-              Book a private ballroom at The National Hotel Miami Beach for your own exclusive brand presentation. Invite buyers, press, and VIPs for an intimate showing of your collection — no runway required.
+              Invite buyers, press, and VIPs for an intimate showing of your collection — no runway required.
             </p>
 
             <div className="grid sm:grid-cols-3 gap-4 mb-8">
@@ -375,6 +375,9 @@ export default async function MswBrandPage() {
               ))}
             </div>
 
+            <p className="text-sm text-muted-foreground mb-4">
+              <span className="text-amber-400 font-semibold">Includes 2 EXA models</span> to present your collection — additional models available at <span className="font-semibold">$350 each</span>.
+            </p>
             <ShowroomButton />
           </div>
         </div>
@@ -497,13 +500,13 @@ export default async function MswBrandPage() {
                 <PartyPopper className="h-7 w-7 text-orange-400" />
               </div>
               <div>
-                <h2 className="text-2xl md:text-3xl font-bold mb-1">After-Party Brand Sponsorship</h2>
-                <p className="text-sm text-orange-400 font-medium">Official EXA Swim Week After-Party · Miami</p>
+                <h2 className="text-2xl md:text-3xl font-bold mb-1">Closing Party Sponsorship</h2>
+                <p className="text-sm text-orange-400 font-medium">Official EXA Closing Party · Sunday May 31 · Miami</p>
               </div>
             </div>
 
             <p className="text-muted-foreground text-lg leading-relaxed mb-8 max-w-2xl">
-              Sponsor the official EXA Swim Week after-party. Your brand front and center — logo on all event materials, product placement, branded presence, and access to models, designers, buyers, press, and influencers in one room.
+              Sponsor the official EXA Closing Party on Sunday night, May 31st. Your brand front and center — logo on all event materials, product placement, branded presence, and access to models, designers, buyers, press, and influencers in one room.
             </p>
 
             <AfterPartyButton />
