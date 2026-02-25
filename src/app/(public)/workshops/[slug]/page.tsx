@@ -299,9 +299,9 @@ export default async function WorkshopPage({ params }: Props) {
                 </Card>
               )}
 
-              {/* 3-Month Coaching Program (runway-workshop only) */}
+              {/* 3-Month Coaching Program info (runway-workshop only) */}
               {coachingWorkshopId && (
-                <CoachingProgramSection workshopId={coachingWorkshopId} />
+                <CoachingProgramSection />
               )}
 
               {/* Gallery */}
@@ -348,6 +348,7 @@ export default async function WorkshopPage({ params }: Props) {
                     spotsLeft: spotsLeft,
                     isSoldOut: isSoldOut,
                   }}
+                  coachingWorkshopId={coachingWorkshopId}
                 />
               </div>
             </div>
