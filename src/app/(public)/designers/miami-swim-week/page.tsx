@@ -407,8 +407,11 @@ export default async function MswBrandPage() {
                     <p className="text-xs text-sky-400 font-medium">Half Day (~4 hrs) · Professional Content · You Keep Everything</p>
                   </div>
                 </div>
-                <p className="text-sm text-muted-foreground leading-relaxed mb-6">
+                <p className="text-sm text-muted-foreground leading-relaxed mb-4">
                   A professional photo & video shoot with EXA models in your swimwear at a Miami Beach location during Swim Week. All content is yours — ready for campaigns, social, and lookbooks.
+                </p>
+                <p className="text-sm text-muted-foreground mb-6">
+                  <span className="text-sky-400 font-semibold">Includes 3 EXA models</span> — additional models available at <span className="font-semibold">$350 each</span>.
                 </p>
                 <SimpleCheckoutButton packageId="beach-shoot-halfday" price={1500} label="Book Beach Shoot Day" colorClass="from-sky-500 to-blue-500 hover:from-sky-600 hover:to-blue-600 shadow-sky-500/20 hover:shadow-sky-500/30" />
               </CardContent>
