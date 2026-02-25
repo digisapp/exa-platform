@@ -47,6 +47,12 @@ const PACKAGES = {
     installmentPrice: 33400, // $334.00/month in cents
     description: "Boutique daytime runway showcase on Thursday May 28, 2026",
   },
+  "swim-shop": {
+    name: "EXA Swim Shop — May 26–31, 2026",
+    fullPrice: 50000, // $500.00 in cents
+    installmentPrice: 50000, // full only — no installment for shop spots
+    description: "Sell your swimwear collection in the EXA Swim Shop during Miami Swim Week 2026 (May 26–31). Prime retail pop-up location with show week foot traffic.",
+  },
 } as const;
 
 type PackageKey = keyof typeof PACKAGES;

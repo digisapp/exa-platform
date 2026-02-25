@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2, Camera, Users } from "lucide-react";
+import { Loader2, Camera, Users, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 
-type PackageId = "opening-show" | "day-2" | "day-3" | "day-4" | "day-5" | "day-6" | "daytime-show";
+type PackageId = "opening-show" | "day-2" | "day-3" | "day-4" | "day-5" | "day-6" | "daytime-show" | "swim-shop";
 
 const PHOTO_VIDEO_PRICE = 700;
 const PHOTO_VIDEO_INSTALLMENT = 234; // $234 × 3 = $702 ≈ $700
@@ -57,6 +57,46 @@ function AddOnToggle({ checked, onChange, icon, label, sublabel, priceLabel }: A
       </div>
       <span className="text-sm font-bold text-pink-400 flex-shrink-0">{priceLabel}</span>
     </button>
+  );
+}
+
+export function SwimShopButton() {
+  const [loading, setLoading] = useState(false);
+
+  async function handleCheckout() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/brands/msw-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ package: "swim-shop", paymentType: "full", addPhotoVideo: false, addExtraModels: false }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        toast.error(data.error || "Failed to start checkout. Please try again.");
+        setLoading(false);
+      }
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+      setLoading(false);
+    }
+  }
+
+  return (
+    <Button
+      className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white font-semibold py-6 rounded-xl text-base shadow-lg shadow-teal-500/20 transition-all hover:shadow-teal-500/30 hover:scale-[1.01]"
+      onClick={handleCheckout}
+      disabled={loading}
+    >
+      {loading ? (
+        <Loader2 className="h-5 w-5 animate-spin mr-2" />
+      ) : (
+        <ShoppingBag className="h-5 w-5 mr-2" />
+      )}
+      Reserve Your Spot — $500
+    </Button>
   );
 }
 
