@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Camera, Users, ShoppingBag, Building2 } from "lucide-react";
 import { toast } from "sonner";
 
-type PackageId = "opening-show" | "day-2" | "day-3" | "day-4" | "day-5" | "day-6" | "daytime-show" | "swim-shop" | "showroom-halfday" | "showroom-fullday" | "gifting-suite" | "lobby-display" | "beach-shoot-halfday" | "beach-shoot-fullday" | "model-ambassador" | "afterparty-standard" | "afterparty-premier" | "afterparty-presenting";
+type PackageId = "opening-show" | "day-2" | "day-3" | "day-4" | "day-5" | "day-6" | "daytime-show" | "swim-shop" | "showroom-halfday" | "showroom-fullday" | "lobby-display" | "beach-shoot-halfday" | "afterparty-standard" | "afterparty-premier" | "afterparty-presenting";
 
 const PHOTO_VIDEO_PRICE = 700;
 const PHOTO_VIDEO_INSTALLMENT = 234; // $234 × 3 = $702 ≈ $700
@@ -218,71 +218,6 @@ export function SimpleCheckoutButton({ packageId, price, label, colorClass }: Si
   );
 }
 
-// ─── Beach Shoot (half-day / full-day toggle) ─────────────────────────────────
-
-const BEACH_SHOOT_OPTIONS = [
-  { id: "beach-shoot-halfday" as const, label: "Half Day", duration: "~4 hours", price: 1500 },
-  { id: "beach-shoot-fullday" as const, label: "Full Day", duration: "~8 hours", price: 2500 },
-];
-
-export function BeachShootButton() {
-  const [selected, setSelected] = useState<"beach-shoot-halfday" | "beach-shoot-fullday">("beach-shoot-halfday");
-  const [loading, setLoading] = useState(false);
-
-  async function handleCheckout() {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/brands/msw-checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ package: selected, paymentType: "full", addPhotoVideo: false, addExtraModels: false }),
-      });
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        toast.error(data.error || "Failed to start checkout. Please try again.");
-        setLoading(false);
-      }
-    } catch {
-      toast.error("Something went wrong. Please try again.");
-      setLoading(false);
-    }
-  }
-
-  const selectedOption = BEACH_SHOOT_OPTIONS.find((o) => o.id === selected)!;
-
-  return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-2">
-        {BEACH_SHOOT_OPTIONS.map((opt) => (
-          <button
-            key={opt.id}
-            type="button"
-            onClick={() => setSelected(opt.id)}
-            className={`flex flex-col items-center p-3 rounded-xl border-2 transition-all text-center ${
-              selected === opt.id
-                ? "border-sky-500 bg-sky-500/10 text-foreground"
-                : "border-white/10 bg-muted/30 text-muted-foreground hover:border-sky-500/40 hover:text-foreground"
-            }`}
-          >
-            <p className="font-bold">${opt.price.toLocaleString()}</p>
-            <p className="text-sm font-semibold">{opt.label}</p>
-            <p className="text-xs text-muted-foreground">{opt.duration}</p>
-          </button>
-        ))}
-      </div>
-      <Button
-        className="w-full bg-gradient-to-r from-sky-500 to-blue-500 hover:from-sky-600 hover:to-blue-600 text-white font-semibold py-5 rounded-xl shadow-lg shadow-sky-500/20 transition-all hover:scale-[1.01]"
-        onClick={handleCheckout}
-        disabled={loading}
-      >
-        {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Camera className="h-4 w-4 mr-2" />}
-        Book {selectedOption.label} Shoot — ${selectedOption.price.toLocaleString()}
-      </Button>
-    </div>
-  );
-}
 
 // ─── After-Party Sponsorship (3 tiers) ───────────────────────────────────────
 

@@ -17,11 +17,10 @@ import {
   ShoppingBag,
   Building2,
   Camera,
-  Gift,
   Monitor,
   PartyPopper,
 } from "lucide-react";
-import { CheckoutButtons, SwimShopButton, ShowroomButton, BeachShootButton, AfterPartyButton, SimpleCheckoutButton } from "./checkout-buttons";
+import { CheckoutButtons, SwimShopButton, ShowroomButton, AfterPartyButton, SimpleCheckoutButton } from "./checkout-buttons";
 import { Footer } from "@/components/layout/footer";
 import type { Metadata } from "next";
 
@@ -35,6 +34,8 @@ export const metadata: Metadata = {
       "Secure your runway show slot at Miami Swim Week 2026. Opening Night ($3,500), Day 2 ($2,500), Day 3–6 ($1,500 each), Daytime Show ($1,000). Pay in full or 3-month plan.",
   },
 };
+
+const VENUE = "The National Hotel Miami Beach";
 
 const PACKAGES = [
   {
@@ -246,7 +247,7 @@ export default async function MswBrandPage() {
           <div className="flex flex-wrap gap-3 text-white/90">
             <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
               <MapPin className="h-4 w-4 text-pink-400" />
-              <span className="font-medium text-sm">Miami, FL</span>
+              <span className="font-medium text-sm">The National Hotel Miami Beach</span>
             </div>
             <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
               <Calendar className="h-4 w-4 text-cyan-400" />
@@ -307,8 +308,11 @@ export default async function MswBrandPage() {
                   </div>
                 )}
                 <CardContent className="p-6 md:p-8">
-                  <p className="text-xs text-muted-foreground uppercase tracking-widest font-medium mb-1">
+                  <p className="text-xs text-muted-foreground uppercase tracking-widest font-medium mb-0.5">
                     {pkg.date}
+                  </p>
+                  <p className="text-xs text-muted-foreground/60 flex items-center gap-1 mb-3">
+                    <MapPin className="h-3 w-3 flex-shrink-0" />{VENUE}
                   </p>
                   <h3 className="text-2xl font-bold mb-5">{pkg.name}</h3>
 
@@ -349,17 +353,17 @@ export default async function MswBrandPage() {
               </div>
               <div>
                 <h2 className="text-2xl md:text-3xl font-bold mb-1">Private Showroom</h2>
-                <p className="text-sm text-amber-400 font-medium">Hotel Ballroom · Your Brand&apos;s Own Space · Miami Swim Week</p>
+                <p className="text-sm text-amber-400 font-medium">The National Hotel Miami Beach · Ballroom · Your Brand&apos;s Own Space</p>
               </div>
             </div>
 
             <p className="text-muted-foreground text-lg leading-relaxed mb-8 max-w-2xl">
-              Book a private ballroom at our fully rented Swim Week hotel for your own exclusive brand presentation. Invite buyers, press, and VIPs for an intimate showing of your collection — no runway required.
+              Book a private ballroom at The National Hotel Miami Beach for your own exclusive brand presentation. Invite buyers, press, and VIPs for an intimate showing of your collection — no runway required.
             </p>
 
             <div className="grid sm:grid-cols-3 gap-4 mb-8">
               {[
-                { icon: "🏨", title: "Hotel Ballroom", body: "Private space inside our fully rented Swim Week hotel — a premium, controlled environment for your brand." },
+                { icon: "🏨", title: "Hotel Ballroom", body: "Private ballroom inside The National Hotel Miami Beach — a premium, controlled environment for your brand." },
                 { icon: "👥", title: "Your Guest List", body: "Invite your buyers, press contacts, influencers, and VIPs for an exclusive up-close experience." },
                 { icon: "✨", title: "Your Format", body: "Presentation, lookbook reveal, fitting session, cocktail reception — you set the agenda." },
               ].map((item) => (
@@ -391,7 +395,7 @@ export default async function MswBrandPage() {
               </div>
               <div>
                 <h2 className="text-2xl md:text-3xl font-bold mb-1">EXA Swim Shop</h2>
-                <p className="text-sm text-teal-400 font-medium">May 26–31, 2026 · All Week · Miami, FL</p>
+                <p className="text-sm text-teal-400 font-medium">May 26–31, 2026 · All Week · The National Hotel Miami Beach</p>
               </div>
             </div>
 
@@ -402,7 +406,7 @@ export default async function MswBrandPage() {
             <div className="grid sm:grid-cols-3 gap-4 mb-8">
               {[
                 { icon: "📅", title: "Full Week Exposure", body: "Your products on display and available to purchase every day May 26–31." },
-                { icon: "🏖️", title: "Prime Location", body: "Set up in our Miami swim week venue alongside the runway shows." },
+                { icon: "🏖️", title: "Prime Location", body: "Set up at The National Hotel Miami Beach alongside all the runway shows." },
                 { icon: "🛒", title: "Direct Sales", body: "Sell directly to show attendees, buyers, influencers, and fans." },
               ].map((item) => (
                 <div key={item.title} className="p-5 rounded-2xl bg-black/20 border border-white/5">
@@ -438,25 +442,6 @@ export default async function MswBrandPage() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
-            {/* VIP Gifting Suite */}
-            <Card className="border-rose-500/20 relative overflow-hidden">
-              <CardContent className="p-6 md:p-8">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2.5 rounded-xl bg-rose-500/10 flex-shrink-0">
-                    <Gift className="h-5 w-5 text-rose-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold">VIP Gifting Suite</h3>
-                    <p className="text-xs text-rose-400 font-medium">All Week · May 26–31</p>
-                  </div>
-                </div>
-                <p className="text-sm text-muted-foreground leading-relaxed mb-6">
-                  Place your products in the VIP & influencer lounge. Get picked up, worn organically, and featured on social throughout the week by the talent and guests in our hotel.
-                </p>
-                <SimpleCheckoutButton packageId="gifting-suite" price={650} label="Reserve Gifting Suite Spot" colorClass="from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 shadow-rose-500/20 hover:shadow-rose-500/30" />
-              </CardContent>
-            </Card>
-
             {/* Hotel Lobby Display */}
             <Card className="border-slate-500/20 relative overflow-hidden">
               <CardContent className="p-6 md:p-8">
@@ -466,11 +451,11 @@ export default async function MswBrandPage() {
                   </div>
                   <div>
                     <h3 className="text-lg font-bold">Hotel Lobby Display</h3>
-                    <p className="text-xs text-slate-400 font-medium">All Week · May 26–31</p>
+                    <p className="text-xs text-slate-400 font-medium">All Week · The National Hotel Miami Beach</p>
                   </div>
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed mb-6">
-                  A branded display in the hotel lobby — visible to every guest, model, designer, buyer, and attendee who passes through all week long. Prime real estate, zero effort required.
+                  A branded display in The National Hotel Miami Beach lobby — visible to every guest, model, designer, buyer, and attendee who passes through all week long. Prime real estate, zero effort required.
                 </p>
                 <SimpleCheckoutButton packageId="lobby-display" price={600} label="Reserve Lobby Display" colorClass="from-slate-500 to-zinc-500 hover:from-slate-600 hover:to-zinc-600 shadow-slate-500/20 hover:shadow-slate-500/30" />
               </CardContent>
@@ -485,34 +470,16 @@ export default async function MswBrandPage() {
                   </div>
                   <div>
                     <h3 className="text-lg font-bold">Miami Beach Shoot Day</h3>
-                    <p className="text-xs text-sky-400 font-medium">Professional Content · You Keep Everything</p>
+                    <p className="text-xs text-sky-400 font-medium">Half Day (~4 hrs) · Professional Content · You Keep Everything</p>
                   </div>
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed mb-6">
                   A professional photo & video shoot with EXA models in your swimwear at a Miami Beach location during Swim Week. All content is yours — ready for campaigns, social, and lookbooks.
                 </p>
-                <BeachShootButton />
+                <SimpleCheckoutButton packageId="beach-shoot-halfday" price={1500} label="Book Beach Shoot Day" colorClass="from-sky-500 to-blue-500 hover:from-sky-600 hover:to-blue-600 shadow-sky-500/20 hover:shadow-sky-500/30" />
               </CardContent>
             </Card>
 
-            {/* Model Ambassador Day */}
-            <Card className="border-violet-500/20 relative overflow-hidden">
-              <CardContent className="p-6 md:p-8">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2.5 rounded-xl bg-violet-500/10 flex-shrink-0">
-                    <Users className="h-5 w-5 text-violet-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold">Model Ambassador Day</h3>
-                    <p className="text-xs text-violet-400 font-medium">1 Day · Organic Content Creation</p>
-                  </div>
-                </div>
-                <p className="text-sm text-muted-foreground leading-relaxed mb-6">
-                  A model wears your brand around Miami all day — pool deck, lobby, events, the beach. She creates organic content for your social channels and gets real eyes on your swimwear in the wild.
-                </p>
-                <SimpleCheckoutButton packageId="model-ambassador" price={800} label="Book Model Ambassador Day" colorClass="from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 shadow-violet-500/20 hover:shadow-violet-500/30" />
-              </CardContent>
-            </Card>
           </div>
         </div>
 
