@@ -18,7 +18,7 @@ import {
   Building2,
   Camera,
 } from "lucide-react";
-import { CheckoutButtons, SwimShopButton, ShowroomButton, SimpleCheckoutButton } from "./checkout-buttons";
+import { CheckoutButtons, SwimShopButton, SimpleCheckoutButton } from "./checkout-buttons";
 import { Footer } from "@/components/layout/footer";
 import type { Metadata } from "next";
 
@@ -459,7 +459,7 @@ export default async function MswBrandPage() {
             <p className="text-sm text-muted-foreground mb-4">
               <span className="text-amber-400 font-semibold">Includes 2 EXA models</span> to present your collection — additional models available at <span className="font-semibold">$350 each</span>.
             </p>
-            <ShowroomButton />
+            <SimpleCheckoutButton packageId="showroom-fullday" price={1600} label="Book Private Showroom" colorClass="from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 shadow-amber-500/20 hover:shadow-amber-500/30" />
           </div>
         </div>
 
