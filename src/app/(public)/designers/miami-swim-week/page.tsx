@@ -77,8 +77,6 @@ const PACKAGES = [
     highlight: false,
     features: [
       "Full runway show on Day 3",
-      "Mid-week prime-time energy",
-      "Show lineup placement",
       "15 models",
     ],
   },
