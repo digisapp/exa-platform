@@ -356,16 +356,25 @@ export default async function EventPage({ params, searchParams }: Props) {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Description - always first */}
           <div className="lg:col-span-2 order-1">
-            {event.description && (
-              <div className="glass-card rounded-2xl p-6 md:p-8">
-                <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-                  <span className="text-3xl">🌴</span> About This Show
-                </h2>
+            <div className="glass-card rounded-2xl p-6 md:p-8">
+              <h2 className="text-2xl font-bold mb-1">{event.name}</h2>
+              <p className="text-pink-500 font-medium mb-4 text-sm">
+                {dateDisplay}
+                {(event.location_city || event.location_state) && (
+                  <span className="text-muted-foreground">
+                    {" · "}
+                    {event.location_city && event.location_state
+                      ? `${event.location_city}, ${event.location_state}`
+                      : event.location_city || event.location_state}
+                  </span>
+                )}
+              </p>
+              {event.description && (
                 <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed text-lg">
                   {event.description}
                 </p>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           {/* Sidebar - second on mobile, right column on desktop spanning both rows */}
