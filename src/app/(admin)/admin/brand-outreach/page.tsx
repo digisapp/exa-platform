@@ -356,19 +356,18 @@ www.examodels.com`,
     subject: "Join Us for Miami Swim Week 2026",
     body: `Hi {{contact_name}},
 
-We're producing EXA's Miami Swim Week 2026 — a multi-day runway show event in Miami Beach (May 26–31) featuring 50+ professional models, media, and industry professionals.
+We're producing EXA's Miami Swim Week 2026 in Miami Beach (May 26–31) — featuring 80+ models, 25+ designers, 100+ media & influencers, and 300+ guests. All shows will be live streamed.
 
 We'd love to have {{brand_name}} as a sponsor. Packages start at $500 and go up to $20,000.
 
 Would you be open to a quick call this week?
 
-Warm regards,
-Nathan
+Best regards,
 EXA Models`,
     ctaUrl: "https://www.examodels.com/sponsors/miami-swim-week",
     ctaText: "View Sponsorship Packages",
     fromEmail: "nathan@examodels.com",
-    fromName: "Nathan at EXA Models",
+    fromName: "EXA Models",
     template: "sponsor" as const,
   };
 

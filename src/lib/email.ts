@@ -4014,6 +4014,31 @@ export async function sendBrandOutreachEmail({
               <!-- Divider -->
               <div style="height: 1px; background: linear-gradient(90deg, #ec4899, #8b5cf6, transparent); margin-bottom: 28px;"></div>
 
+              <!-- Event stats -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
+                <tr>
+                  <td style="text-align: center; padding: 14px 6px; background-color: #1a1a1a; border-radius: 8px;">
+                    <p style="margin: 0 0 3px; color: #ec4899; font-size: 22px; font-weight: 800;">80+</p>
+                    <p style="margin: 0; color: #71717a; font-size: 11px;">Models</p>
+                  </td>
+                  <td style="width: 6px;"></td>
+                  <td style="text-align: center; padding: 14px 6px; background-color: #1a1a1a; border-radius: 8px;">
+                    <p style="margin: 0 0 3px; color: #ec4899; font-size: 22px; font-weight: 800;">25+</p>
+                    <p style="margin: 0; color: #71717a; font-size: 11px;">Designers</p>
+                  </td>
+                  <td style="width: 6px;"></td>
+                  <td style="text-align: center; padding: 14px 6px; background-color: #1a1a1a; border-radius: 8px;">
+                    <p style="margin: 0 0 3px; color: #ec4899; font-size: 22px; font-weight: 800;">100+</p>
+                    <p style="margin: 0; color: #71717a; font-size: 11px;">Media &amp; Influencers</p>
+                  </td>
+                  <td style="width: 6px;"></td>
+                  <td style="text-align: center; padding: 14px 6px; background-color: #1a1a1a; border-radius: 8px;">
+                    <p style="margin: 0 0 3px; color: #ec4899; font-size: 22px; font-weight: 800;">300+</p>
+                    <p style="margin: 0; color: #71717a; font-size: 11px;">Guests</p>
+                  </td>
+                </tr>
+              </table>
+
               <!-- Personalized body text -->
               ${htmlBody}
 
@@ -4055,7 +4080,7 @@ export async function sendBrandOutreachEmail({
               </table>
 
               <!-- Benefit 3 -->
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 8px;">
                 <tr>
                   <td style="padding: 14px 16px; background-color: #1a1a1a; border-radius: 10px; border-left: 3px solid #06b6d4;">
                     <table cellpadding="0" cellspacing="0">
@@ -4064,6 +4089,23 @@ export async function sendBrandOutreachEmail({
                         <td>
                           <p style="margin: 0 0 3px; color: #ffffff; font-size: 14px; font-weight: 600;">Social Media Coverage</p>
                           <p style="margin: 0; color: #71717a; font-size: 13px;">Featured across EXA's Instagram before, during &amp; after the event</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Benefit 4 -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
+                <tr>
+                  <td style="padding: 14px 16px; background-color: #1a1a1a; border-radius: 10px; border-left: 3px solid #f59e0b;">
+                    <table cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="vertical-align: middle; padding-right: 14px; font-size: 22px; width: 36px;">🎥</td>
+                        <td>
+                          <p style="margin: 0 0 3px; color: #ffffff; font-size: 14px; font-weight: 600;">Live Streamed Globally</p>
+                          <p style="margin: 0; color: #71717a; font-size: 13px;">All shows streamed live — your brand reaches audiences far beyond the venue</p>
                         </td>
                       </tr>
                     </table>
@@ -4118,7 +4160,7 @@ export async function sendBrandOutreachEmail({
               <table width="100%" cellpadding="0" cellspacing="0" style="border-top: 1px solid #262626; padding-top: 24px;">
                 <tr>
                   <td>
-                    <p style="margin: 0 0 4px; color: #ffffff; font-weight: 600; font-size: 14px;">Nathan &mdash; EXA Models</p>
+                    <p style="margin: 0 0 4px; color: #ffffff; font-weight: 600; font-size: 14px;">${resolvedFromName}</p>
                     <p style="margin: 0 0 10px; color: #71717a; font-size: 13px;">Reply to this email to connect with our team</p>
                     <p style="margin: 0; color: #71717a; font-size: 12px;">
                       <a href="${BASE_URL}" style="color: #ec4899; text-decoration: none;">examodels.com</a>

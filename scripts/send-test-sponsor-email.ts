@@ -10,17 +10,17 @@ const contactName = "Miriam";
 const brandName = "EXA Team";
 const ctaUrl = `${BASE_URL}/sponsors/miami-swim-week`;
 const ctaText = "View Sponsorship Packages";
+const fromName = "EXA Models";
 
 const bodyText = `Hi ${contactName},
 
-We're producing EXA's Miami Swim Week 2026 — a multi-day runway show event in Miami Beach (May 26–31) featuring 50+ professional models, media, and industry professionals.
+We're producing EXA's Miami Swim Week 2026 in Miami Beach (May 26–31) — featuring 80+ models, 25+ designers, 100+ media & influencers, and 300+ guests. All shows will be live streamed.
 
 We'd love to have ${brandName} as a sponsor. Packages start at $500 and go up to $20,000.
 
 Would you be open to a quick call this week?
 
-Warm regards,
-Nathan
+Best regards,
 EXA Models`;
 
 const htmlBody = bodyText
@@ -57,6 +57,31 @@ const html = `
 
               <div style="height: 1px; background: linear-gradient(90deg, #ec4899, #8b5cf6, transparent); margin-bottom: 28px;"></div>
 
+              <!-- Event stats -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
+                <tr>
+                  <td style="text-align: center; padding: 14px 6px; background-color: #1a1a1a; border-radius: 8px;">
+                    <p style="margin: 0 0 3px; color: #ec4899; font-size: 22px; font-weight: 800;">80+</p>
+                    <p style="margin: 0; color: #71717a; font-size: 11px;">Models</p>
+                  </td>
+                  <td style="width: 6px;"></td>
+                  <td style="text-align: center; padding: 14px 6px; background-color: #1a1a1a; border-radius: 8px;">
+                    <p style="margin: 0 0 3px; color: #ec4899; font-size: 22px; font-weight: 800;">25+</p>
+                    <p style="margin: 0; color: #71717a; font-size: 11px;">Designers</p>
+                  </td>
+                  <td style="width: 6px;"></td>
+                  <td style="text-align: center; padding: 14px 6px; background-color: #1a1a1a; border-radius: 8px;">
+                    <p style="margin: 0 0 3px; color: #ec4899; font-size: 22px; font-weight: 800;">100+</p>
+                    <p style="margin: 0; color: #71717a; font-size: 11px;">Media &amp; Influencers</p>
+                  </td>
+                  <td style="width: 6px;"></td>
+                  <td style="text-align: center; padding: 14px 6px; background-color: #1a1a1a; border-radius: 8px;">
+                    <p style="margin: 0 0 3px; color: #ec4899; font-size: 22px; font-weight: 800;">300+</p>
+                    <p style="margin: 0; color: #71717a; font-size: 11px;">Guests</p>
+                  </td>
+                </tr>
+              </table>
+
               ${htmlBody}
 
               <p style="margin: 24px 0 16px; color: #ffffff; font-size: 15px; font-weight: 700; letter-spacing: 0.3px;">What Your Sponsorship Includes:</p>
@@ -89,7 +114,7 @@ const html = `
                 </tr>
               </table>
 
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 8px;">
                 <tr>
                   <td style="padding: 14px 16px; background-color: #1a1a1a; border-radius: 10px; border-left: 3px solid #06b6d4;">
                     <table cellpadding="0" cellspacing="0"><tr>
@@ -97,6 +122,20 @@ const html = `
                       <td>
                         <p style="margin: 0 0 3px; color: #ffffff; font-size: 14px; font-weight: 600;">Social Media Coverage</p>
                         <p style="margin: 0; color: #71717a; font-size: 13px;">Featured across EXA's Instagram before, during &amp; after the event</p>
+                      </td>
+                    </tr></table>
+                  </td>
+                </tr>
+              </table>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
+                <tr>
+                  <td style="padding: 14px 16px; background-color: #1a1a1a; border-radius: 10px; border-left: 3px solid #f59e0b;">
+                    <table cellpadding="0" cellspacing="0"><tr>
+                      <td style="vertical-align: middle; padding-right: 14px; font-size: 22px; width: 36px;">🎥</td>
+                      <td>
+                        <p style="margin: 0 0 3px; color: #ffffff; font-size: 14px; font-weight: 600;">Live Streamed Globally</p>
+                        <p style="margin: 0; color: #71717a; font-size: 13px;">All shows streamed live — your brand reaches audiences far beyond the venue</p>
                       </td>
                     </tr></table>
                   </td>
@@ -150,7 +189,7 @@ const html = `
               <table width="100%" cellpadding="0" cellspacing="0" style="border-top: 1px solid #262626; padding-top: 24px;">
                 <tr>
                   <td>
-                    <p style="margin: 0 0 4px; color: #ffffff; font-weight: 600; font-size: 14px;">Nathan &mdash; EXA Models</p>
+                    <p style="margin: 0 0 4px; color: #ffffff; font-weight: 600; font-size: 14px;">${fromName}</p>
                     <p style="margin: 0 0 10px; color: #71717a; font-size: 13px;">Reply to this email to connect with our team</p>
                     <p style="margin: 0; color: #71717a; font-size: 12px;">
                       <a href="${BASE_URL}" style="color: #ec4899; text-decoration: none;">examodels.com</a>
@@ -172,7 +211,7 @@ const html = `
 </html>`;
 
 const { data, error } = await resend.emails.send({
-  from: "Nathan at EXA Models <nathan@examodels.com>",
+  from: "EXA Models <nathan@examodels.com>",
   to: ["miriam@examodels.com"],
   subject: "Join Us for Miami Swim Week 2026 [TEST]",
   replyTo: "nathan@examodels.com",
