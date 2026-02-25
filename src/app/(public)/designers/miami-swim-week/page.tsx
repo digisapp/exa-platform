@@ -46,7 +46,6 @@ const PACKAGES = [
       "Maximum media & influencer coverage",
       "Priority placement in show lineup",
       "15 models — choose from our full roster",
-      "EXA Models talent coordination",
     ],
   },
   {
@@ -64,7 +63,6 @@ const PACKAGES = [
       "Strong media & buyer attendance",
       "Show lineup placement",
       "15 models — choose from our full roster",
-      "EXA Models talent coordination",
     ],
   },
   {
@@ -81,8 +79,7 @@ const PACKAGES = [
       "Full runway show on Day 3",
       "Mid-week prime-time energy",
       "Show lineup placement",
-      "15 models — choose from our full roster",
-      "EXA Models talent coordination",
+      "15 models",
     ],
   },
   {
@@ -99,8 +96,7 @@ const PACKAGES = [
       "Full runway show on Day 4",
       "Friday night pre-weekend momentum",
       "Show lineup placement",
-      "15 models — choose from our full roster",
-      "EXA Models talent coordination",
+      "15 models",
     ],
   },
   {
@@ -114,10 +110,7 @@ const PACKAGES = [
     borderColor: "border-pink-500/20",
     highlight: false,
     features: [
-      "Saturday closing show",
-      "Show lineup placement",
-      "15 models — choose from our full roster",
-      "EXA Models talent coordination",
+      "15 models",
     ],
   },
   {
@@ -131,10 +124,7 @@ const PACKAGES = [
     borderColor: "border-pink-500/20",
     highlight: false,
     features: [
-      "Grand finale closing show",
-      "Show lineup placement",
-      "15 models — choose from our full roster",
-      "EXA Models talent coordination",
+      "15 models",
     ],
   },
   {
@@ -143,16 +133,14 @@ const PACKAGES = [
     date: "Thursday, May 28",
     price: 1000,
     installment: 334,
-    badge: "Best Value",
-    badgeGradient: "from-cyan-500 to-teal-500",
+    badge: null,
+    badgeGradient: "",
     borderColor: "border-cyan-500/20",
     highlight: false,
     features: [
       "Boutique daytime runway showcase",
-      "Intimate buyer & press audience",
       "Afternoon runway presentation",
-      "15 models — choose from our full roster",
-      "EXA Models talent coordination",
+      "15 models",
     ],
   },
 ];
@@ -161,7 +149,7 @@ const PACKAGES = [
 const FAQS = [
   {
     q: "What's included with my show package?",
-    a: "Each package includes 15 models selected from our confirmed roster (with measurements and profile photos), EXA Models talent coordination, and a professional runway presentation. You can upgrade to 20 models for an additional $500, and add full photo & video documentation for $700.",
+    a: "Each package includes 15 professional models and a full runway presentation. You can upgrade to 20 models for an additional $500, and add full photo & video documentation for $700. Opening Show and Day 2 designers hand-pick their models from our full roster.",
   },
   {
     q: "How does the 3-month payment plan work?",
@@ -169,11 +157,11 @@ const FAQS = [
   },
   {
     q: "How many models walk in each show?",
-    a: "Every package includes 15 models. You can upgrade to 20 models for an additional $500 — just select the upgrade at checkout. After booking, our team will send you the full model roster with photos and measurements so you can hand-pick exactly who walks for your brand.",
+    a: "Every package includes 15 models. You can upgrade to 20 models for an additional $500 — just select the upgrade at checkout. Opening Show and Day 2 bookings include model selection from our full roster.",
   },
   {
     q: "Can I choose which models walk for my brand?",
-    a: "Absolutely. Once booked, we send you our full model roster with profile photos and measurements. You select your 15 (or 20) — we handle the rest.",
+    a: "Model selection is available for Opening Show and Day 2 bookings. Once booked, we send you our full roster with profile photos and measurements so you can choose your 15 (or 20). For Day 3 through Day 6 and the Daytime Show, our team curates and assigns your model lineup.",
   },
   {
     q: "What's the deadline to book?",
@@ -357,7 +345,7 @@ export default async function MswBrandPage() {
               <div>
                 <h2 className="text-2xl font-bold">Confirmed Models</h2>
                 <p className="text-sm text-muted-foreground">
-                  {eventModels.length} professional models walking our runway &mdash; after booking, you hand-pick your 15
+                  {eventModels.length} professional models walking our runway
                 </p>
               </div>
             </div>
