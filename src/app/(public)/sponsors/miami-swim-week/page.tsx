@@ -453,7 +453,7 @@ export default function SponsorMswPage() {
             {[
               { icon: <Sparkles className="h-4 w-4 text-amber-400" />, title: "Access to 90+ Professional Models", desc: "All confirmed for Swim Week 2026 — your brand reaches real talent with real audiences", color: "border-amber-500/20 bg-amber-500/5" },
               { icon: <Camera className="h-4 w-4 text-sky-400" />, title: "Event Photography & Video Exposure", desc: "All sponsor logos and activations captured in official event photography", color: "border-sky-500/20 bg-sky-500/5" },
-              { icon: <Megaphone className="h-4 w-4 text-pink-400" />, title: "EXA Social Media Reach", desc: "Featured across EXA's Instagram, TikTok, and email to 10,000+ followers and subscribers", color: "border-pink-500/20 bg-pink-500/5" },
+              { icon: <Megaphone className="h-4 w-4 text-pink-400" />, title: "EXA Social Media Reach", desc: "Featured across EXA's Instagram", color: "border-pink-500/20 bg-pink-500/5" },
               { icon: <Users className="h-4 w-4 text-violet-400" />, title: "VIP Crowd Access", desc: "Buyers, influencers, press, and fashion insiders — high-value, high-intent attendees", color: "border-violet-500/20 bg-violet-500/5" },
             ].map((item) => (
               <div key={item.title} className={`flex items-start gap-4 px-5 py-4 rounded-2xl border ${item.color}`}>
