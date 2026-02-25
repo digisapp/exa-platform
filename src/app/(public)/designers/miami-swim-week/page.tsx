@@ -18,7 +18,7 @@ import {
   Building2,
   Camera,
 } from "lucide-react";
-import { CheckoutButtons, SwimShopButton, SimpleCheckoutButton } from "./checkout-buttons";
+import { CheckoutButtons, SimpleCheckoutButton } from "./checkout-buttons";
 import { Footer } from "@/components/layout/footer";
 import type { Metadata } from "next";
 
@@ -408,96 +408,33 @@ export default async function MswBrandPage() {
           </div>
         </div>
 
-        {/* Private Showroom */}
-        <div className="mb-20">
-          <div className="relative overflow-hidden rounded-3xl border border-amber-500/30 bg-gradient-to-br from-amber-500/5 via-yellow-500/5 to-orange-500/5 p-8 md:p-12">
-            <div className="absolute top-6 right-6 text-7xl opacity-10 select-none pointer-events-none">🏛️</div>
-
-            <Badge className="mb-5 bg-amber-500/10 text-amber-400 border-amber-500/20 px-4 py-1">
-              Exclusive Venue
-            </Badge>
-
-            <div className="flex items-start gap-4 mb-4">
-              <div className="p-3 rounded-2xl bg-amber-500/10 flex-shrink-0">
-                <Building2 className="h-7 w-7 text-amber-400" />
-              </div>
-              <div>
-                <h2 className="text-2xl md:text-3xl font-bold mb-1">Private Showroom</h2>
-                <p className="text-sm text-amber-400 font-medium">The National Hotel Miami Beach · Ballroom · Your Brand&apos;s Own Space</p>
-              </div>
+        {/* Private Showroom + EXA Swim Shop — compact rows */}
+        <div className="mb-20 max-w-3xl space-y-3">
+          {/* Private Showroom */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 px-5 py-4 rounded-2xl border border-amber-500/20 bg-amber-500/5">
+            <div className="p-2 rounded-xl bg-amber-500/10 flex-shrink-0 self-start sm:self-auto">
+              <Building2 className="h-4 w-4 text-amber-400" />
             </div>
-
-            <p className="text-muted-foreground text-lg leading-relaxed mb-8 max-w-2xl">
-              Invite buyers, press, and VIPs for an intimate showing of your collection — no runway required.
-            </p>
-
-            <div className="grid sm:grid-cols-3 gap-4 mb-8">
-              {[
-                { icon: "🏨", title: "Hotel Ballroom", body: "Private ballroom inside The National Hotel Miami Beach — a premium, controlled environment for your brand." },
-                { icon: "👥", title: "Your Guest List", body: "Invite your buyers, press contacts, influencers, and VIPs for an exclusive up-close experience." },
-                { icon: "✨", title: "Your Format", body: "Presentation, lookbook reveal, fitting session, cocktail reception — you set the agenda." },
-              ].map((item) => (
-                <div key={item.title} className="p-5 rounded-2xl bg-black/20 border border-white/5">
-                  <p className="text-2xl mb-2">{item.icon}</p>
-                  <p className="font-semibold mb-1">{item.title}</p>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{item.body}</p>
-                </div>
-              ))}
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm">Private Showroom</p>
+              <p className="text-xs text-muted-foreground mt-0.5">The National Hotel Miami Beach · Ballroom · 2 EXA models included · +$350/additional model</p>
             </div>
-
-            <p className="text-sm text-muted-foreground mb-4">
-              <span className="text-amber-400 font-semibold">Includes 2 EXA models</span> to present your collection — additional models available at <span className="font-semibold">$350 each</span>.
-            </p>
-            <SimpleCheckoutButton packageId="showroom-fullday" price={1600} label="Book Private Showroom" colorClass="from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 shadow-amber-500/20 hover:shadow-amber-500/30" />
+            <div className="flex-shrink-0 w-full sm:w-56">
+              <SimpleCheckoutButton packageId="showroom-fullday" price={1600} label="Book Now" colorClass="from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 shadow-amber-500/20 hover:shadow-amber-500/30" />
+            </div>
           </div>
-        </div>
 
-        {/* EXA Swim Shop */}
-        <div className="mb-20">
-          <div className="relative overflow-hidden rounded-3xl border border-teal-500/30 bg-gradient-to-br from-teal-500/5 via-cyan-500/5 to-emerald-500/5 p-8 md:p-12">
-            {/* Decorative */}
-            <div className="absolute top-6 right-6 text-7xl opacity-10 select-none pointer-events-none">🛍️</div>
-
-            <Badge className="mb-5 bg-teal-500/10 text-teal-400 border-teal-500/20 px-4 py-1">
-              Retail Opportunity
-            </Badge>
-
-            <div className="flex items-start gap-4 mb-4">
-              <div className="p-3 rounded-2xl bg-teal-500/10 flex-shrink-0">
-                <ShoppingBag className="h-7 w-7 text-teal-400" />
-              </div>
-              <div>
-                <h2 className="text-2xl md:text-3xl font-bold mb-1">EXA Swim Shop</h2>
-                <p className="text-sm text-teal-400 font-medium">May 26–31, 2026 · All Week · The National Hotel Miami Beach</p>
-              </div>
+          {/* EXA Swim Shop */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 px-5 py-4 rounded-2xl border border-teal-500/20 bg-teal-500/5">
+            <div className="p-2 rounded-xl bg-teal-500/10 flex-shrink-0 self-start sm:self-auto">
+              <ShoppingBag className="h-4 w-4 text-teal-400" />
             </div>
-
-            <p className="text-muted-foreground text-lg leading-relaxed mb-8 max-w-2xl">
-              Sell your swimwear, resortwear, or accessories directly to customers during Miami Swim Week. Secure a spot in the EXA Swim Shop and get your brand in front of show attendees, buyers, and fans all week long.
-            </p>
-
-            <div className="grid sm:grid-cols-3 gap-4 mb-8">
-              {[
-                { icon: "📅", title: "Full Week Exposure", body: "Your products on display and available to purchase every day May 26–31." },
-                { icon: "🏖️", title: "Prime Location", body: "Set up at The National Hotel Miami Beach alongside all the runway shows." },
-                { icon: "🛒", title: "Direct Sales", body: "Sell directly to show attendees, buyers, influencers, and fans." },
-              ].map((item) => (
-                <div key={item.title} className="p-5 rounded-2xl bg-black/20 border border-white/5">
-                  <p className="text-2xl mb-2">{item.icon}</p>
-                  <p className="font-semibold mb-1">{item.title}</p>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{item.body}</p>
-                </div>
-              ))}
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm">EXA Swim Shop</p>
+              <p className="text-xs text-muted-foreground mt-0.5">May 26–31 · All week · Sell your swimwear directly to attendees, buyers &amp; fans</p>
             </div>
-
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-              <div>
-                <p className="text-4xl font-bold">$500</p>
-                <p className="text-sm text-muted-foreground mt-0.5">One-time fee · Full week</p>
-              </div>
-              <div className="flex-1 max-w-xs">
-                <SwimShopButton />
-              </div>
+            <div className="flex-shrink-0 w-full sm:w-56">
+              <SimpleCheckoutButton packageId="swim-shop" price={500} label="Reserve Now" colorClass="from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 shadow-teal-500/20 hover:shadow-teal-500/30" />
             </div>
           </div>
         </div>
