@@ -267,9 +267,6 @@ export default async function MswBrandPage() {
           <h2 className="text-3xl md:text-4xl font-bold mb-5">
             Showcase Your Collection on the Runway
           </h2>
-          <p className="text-muted-foreground text-lg leading-relaxed mb-10">
-            We&apos;re producing runway shows at Miami Swim Week 2026 and inviting select swimwear, resortwear, and lingerie designers to showcase their collections on our runway.
-          </p>
         </div>
 
         {/* Show Packages */}
