@@ -418,7 +418,9 @@ export default async function EventPage({ params, searchParams }: Props) {
                 <Card className="bg-gradient-to-br from-pink-500/10 to-violet-500/10 border-pink-500/20">
                   <CardContent className="p-4 text-center">
                     <p className="text-xs uppercase tracking-wider text-muted-foreground mb-3 font-semibold">Event Starts In</p>
-                    <CountdownTimer endsAt={event.start_date} showDays={true} />
+                    <div className="flex justify-center">
+                      <CountdownTimer endsAt={event.start_date} showDays={true} />
+                    </div>
                   </CardContent>
                 </Card>
               )}
