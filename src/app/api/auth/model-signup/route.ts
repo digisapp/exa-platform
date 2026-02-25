@@ -291,24 +291,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check for duplicate signup (empty identities means existing unconfirmed user)
+    // Check for duplicate signup (empty identities means existing user)
     if (authData.user.identities && authData.user.identities.length === 0) {
-      // Auto-confirm the existing unconfirmed user so they can sign in
-      await adminClient.auth.admin.updateUserById(authData.user.id, {
-        email_confirm: true,
-      });
       return NextResponse.json(
         { error: "This email is already registered. Please sign in instead." },
         { status: 400 }
       );
     }
 
-    // Step 2: Auto-confirm email immediately (no confirmation email needed)
-    await adminClient.auth.admin.updateUserById(authData.user.id, {
-      email_confirm: true,
-    });
-
-    // Step 3: Create fan profile and application using admin client
+    // Step 2: Create fan profile and application using admin client
     await createFanAndApplication(
       authData.user.id,
       normalizedEmail,

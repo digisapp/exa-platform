@@ -108,14 +108,7 @@ export function FanSignupDialog({ children }: FanSignupDialogProps) {
         throw new Error("This email is already registered. Please sign in instead.");
       }
 
-      // Step 2: Auto-confirm email (no verification step)
-      await fetch("/api/auth/auto-confirm", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: authData.user.id }),
-      });
-
-      // Step 3: Sign in directly (email is auto-confirmed)
+      // Step 2: Sign in directly
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: email.toLowerCase().trim(),
         password,
@@ -127,7 +120,7 @@ export function FanSignupDialog({ children }: FanSignupDialogProps) {
         return;
       }
 
-      // Step 4: Create fan profile (now authenticated)
+      // Step 3: Create fan profile (now authenticated)
       await fetch("/api/auth/create-fan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

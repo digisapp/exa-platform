@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
@@ -11,7 +10,7 @@ export async function POST(request: NextRequest) {
       return rateLimitResponse;
     }
 
-    const { displayName, referrerModelId: requestReferrerId, autoConfirm } = await request.json();
+    const { displayName, referrerModelId: requestReferrerId } = await request.json();
 
     if (!displayName?.trim()) {
       return NextResponse.json(
@@ -30,14 +29,6 @@ export async function POST(request: NextRequest) {
         { error: "Not authenticated" },
         { status: 401 }
       );
-    }
-
-    // Auto-confirm email if requested (skips email confirmation step)
-    if (autoConfirm && !user.email_confirmed_at) {
-      const adminClient = createServiceRoleClient();
-      await adminClient.auth.admin.updateUserById(user.id, {
-        email_confirm: true,
-      });
     }
 
     // Get referrer model ID from request or user metadata (set during signup)

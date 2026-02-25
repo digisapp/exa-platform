@@ -129,14 +129,7 @@ export function BrandInquiryDialog({ children }: BrandInquiryDialogProps) {
         throw new Error("Failed to create account");
       }
 
-      // Auto-confirm email (no verification step needed)
-      await fetch("/api/auth/auto-confirm", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: authData.user.id }),
-      });
-
-      // Sign in directly (now that email is confirmed)
+      // Sign in directly
       await supabase.auth.signInWithPassword({
         email: email.toLowerCase().trim(),
         password,
