@@ -60,7 +60,6 @@ const PACKAGES = [
     highlight: false,
     features: [
       "Full runway show on Day 2",
-      "Strong media & buyer attendance",
       "Show lineup placement",
       "15 models — choose from our full roster",
     ],
