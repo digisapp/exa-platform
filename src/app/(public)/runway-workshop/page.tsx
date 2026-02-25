@@ -64,16 +64,27 @@ export async function generateMetadata(): Promise<Metadata> {
     };
   }
 
+  const title = data.meta_title || `${data.title} | EXA Models`;
+  const description = data.meta_description || data.description || `Join us for ${data.title}`;
+
   return {
-    title: data.meta_title || `${data.title} | EXA Models`,
-    description:
-      data.meta_description || data.description || `Join us for ${data.title}`,
+    title,
+    description,
+    alternates: {
+      canonical: "https://www.examodels.com/workshops/runway-workshop",
+    },
     openGraph: {
-      title: data.meta_title || `${data.title} | EXA Models`,
-      description:
-        data.meta_description ||
-        data.description ||
-        `Join us for ${data.title}`,
+      title,
+      description,
+      url: "https://www.examodels.com/workshops/runway-workshop",
+      type: "website",
+      siteName: "EXA Models",
+      images: data.cover_image_url ? [{ url: data.cover_image_url, width: 1200, height: 630, alt: data.title }] : [],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
       images: data.cover_image_url ? [data.cover_image_url] : [],
     },
   };

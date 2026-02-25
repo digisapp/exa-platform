@@ -6,6 +6,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Booking Confirmed! | EXA Models × Miami Swim Week 2026",
+  robots: { index: false, follow: false },
 };
 
 const PACKAGE_NAMES: Record<string, string> = {

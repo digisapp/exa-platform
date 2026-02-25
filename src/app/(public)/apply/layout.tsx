@@ -1,11 +1,21 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Apply to Become a Model",
-  description: "Apply to join EXA Models. Share your social media profiles and get verified to access gigs, events, and bookings.",
+  title: "Apply to Join EXA Models",
+  description: "Apply to become a verified model on EXA — book photoshoots, runway shows, brand collaborations, and more. Join the premier model community in Miami and beyond.",
+  alternates: {
+    canonical: "https://www.examodels.com/apply",
+  },
   openGraph: {
-    title: "Apply to Become a Model",
-    description: "Apply to join EXA Models. Share your social media profiles and get verified to access gigs, events, and bookings.",
+    title: "Apply to Join EXA Models",
+    description: "Apply to become a verified model on EXA — book photoshoots, runway shows, brand collaborations, and more. Join the premier model community in Miami and beyond.",
+    url: "https://www.examodels.com/apply",
+    siteName: "EXA Models",
+  },
+  twitter: {
+    card: "summary",
+    title: "Apply to Join EXA Models",
+    description: "Apply to become a verified model on EXA — book photoshoots, runway shows, brand collaborations, and more.",
   },
 };
 

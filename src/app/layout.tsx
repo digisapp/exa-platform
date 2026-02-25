@@ -76,29 +76,49 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    name: "EXA Models",
-    url: "https://www.examodels.com",
-    logo: "https://www.examodels.com/exa-logo-white.png",
-    description: "Book professional models for photoshoots, events, and brand collaborations. Connect directly with verified models worldwide.",
-    sameAs: [
-      "https://www.instagram.com/examodels"
-    ],
-    contactPoint: {
-      "@type": "ContactPoint",
-      contactType: "customer service",
-      url: "https://www.examodels.com"
-    }
-  };
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      name: "EXA Models",
+      url: "https://www.examodels.com",
+      logo: "https://www.examodels.com/exa-logo-white.png",
+      description: "Book professional models for photoshoots, events, and brand collaborations. Connect directly with verified models worldwide.",
+      sameAs: [
+        "https://www.instagram.com/examodels"
+      ],
+      contactPoint: {
+        "@type": "ContactPoint",
+        contactType: "customer service",
+        url: "https://www.examodels.com"
+      }
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: "EXA Models",
+      url: "https://www.examodels.com",
+      potentialAction: {
+        "@type": "SearchAction",
+        target: {
+          "@type": "EntryPoint",
+          urlTemplate: "https://www.examodels.com/models?q={search_term_string}",
+        },
+        "query-input": "required name=search_term_string",
+      },
+    },
+  ];
 
   return (
     <html lang="en" className="dark">
       <head>
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd[0]) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd[1]) }}
         />
       </head>
       <body className={`${inter.className} bg-background text-foreground antialiased min-h-screen`}>

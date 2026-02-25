@@ -43,12 +43,27 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: "Show Not Found | EXA" };
   }
 
+  const title = data.meta_title || `${data.name} | EXA Models`;
+  const description = data.meta_description || data.description || `Join us at ${data.name}`;
+
   return {
-    title: data.meta_title || `${data.name} | EXA Models`,
-    description: data.meta_description || data.description || `Join us at ${data.name}`,
+    title,
+    description,
+    alternates: {
+      canonical: `https://www.examodels.com/shows/${slug}`,
+    },
     openGraph: {
-      title: data.meta_title || `${data.name} | EXA Models`,
-      description: data.meta_description || data.description || `Join us at ${data.name}`,
+      title,
+      description,
+      url: `https://www.examodels.com/shows/${slug}`,
+      type: "website",
+      siteName: "EXA Models",
+      images: data.cover_image_url ? [{ url: data.cover_image_url, width: 1200, height: 630, alt: data.name }] : [],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
       images: data.cover_image_url ? [data.cover_image_url] : [],
     },
   };
@@ -226,9 +241,47 @@ export default async function EventPage({ params, searchParams }: Props) {
       : event.ticket_url
     : null;
 
+  const eventJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    name: event.name,
+    description: event.description || `Join us at ${event.name} — presented by EXA Models.`,
+    url: `https://www.examodels.com/shows/${event.slug}`,
+    ...(event.cover_image_url && { image: event.cover_image_url }),
+    ...(event.start_date && { startDate: event.start_date }),
+    ...(event.end_date && { endDate: event.end_date }),
+    eventStatus: "https://schema.org/EventScheduled",
+    eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+    location: {
+      "@type": "Place",
+      name: event.location_name || `${event.location_city || "Miami Beach"}, ${event.location_state || "FL"}`,
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: event.location_city || "Miami Beach",
+        addressRegion: event.location_state || "FL",
+        addressCountry: "US",
+      },
+    },
+    organizer: {
+      "@type": "Organization",
+      name: "EXA Models",
+      url: "https://www.examodels.com",
+    },
+    offers: {
+      "@type": "Offer",
+      url: `https://www.examodels.com/shows/${event.slug}`,
+      availability: "https://schema.org/InStock",
+      priceCurrency: "USD",
+    },
+  };
+
   return (
     <CoinBalanceProvider initialBalance={coinBalance}>
     <div className="min-h-screen bg-background">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(eventJsonLd) }}
+      />
       <Navbar
         user={user ? {
           id: user.id,

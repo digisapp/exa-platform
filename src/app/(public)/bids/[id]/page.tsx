@@ -25,9 +25,23 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return { title: "Bid Not Found" };
   }
 
+  const title = `${auction.title} | EXA Bids`;
+  const description = auction.description || `Bid on ${auction.title} — exclusive content and experiences from EXA Models.`;
+
   return {
-    title: `${auction.title} - Bids`,
-    description: auction.description || `Bid on ${auction.title}`,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `https://www.examodels.com/bids/${id}`,
+      siteName: "EXA Models",
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description,
+    },
   };
 }
 
