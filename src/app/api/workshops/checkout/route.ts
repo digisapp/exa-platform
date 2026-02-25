@@ -70,8 +70,10 @@ export async function POST(request: NextRequest) {
     // Calculate totals
     const unitPriceCents = workshop.price_cents;
     const isInstallment = paymentType === "installment";
-    const installmentAmountCents = 12500; // $125 per installment
-    const installmentTotalCents = 37500; // $375 total
+    // Coaching program uses dynamic installment (price / 3); standard workshop uses fixed $125/mo plan
+    const isCoachingProgram = workshop.slug === "3-month-runway-coaching";
+    const installmentAmountCents = isCoachingProgram ? Math.round(unitPriceCents / 3) : 12500;
+    const installmentTotalCents = isCoachingProgram ? unitPriceCents : 37500;
     const totalPriceCents = isInstallment ? installmentTotalCents : unitPriceCents * quantity;
 
     // Format date for product description
