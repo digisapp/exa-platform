@@ -7,7 +7,7 @@ import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 import { ModelsGrid } from "@/components/models/models-grid";
-import { CountdownTimer } from "@/components/auctions/CountdownTimer";
+import { EventCountdown } from "./event-countdown";
 import { ShareButton } from "@/components/ui/share-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -414,15 +414,8 @@ export default async function EventPage({ params, searchParams }: Props) {
           <div className="lg:col-span-1 order-2 lg:row-span-2">
             <div className="sticky top-24 space-y-4">
               {/* Countdown Timer */}
-              {event.start_date && new Date(event.start_date) > new Date() && (
-                <Card className="bg-gradient-to-br from-pink-500/10 to-violet-500/10 border-pink-500/20">
-                  <CardContent className="p-4 text-center">
-                    <p className="text-xs uppercase tracking-wider text-muted-foreground mb-3 font-semibold">Event Starts In</p>
-                    <div className="flex justify-center">
-                      <CountdownTimer endsAt={event.start_date} showDays={true} />
-                    </div>
-                  </CardContent>
-                </Card>
+              {event.start_date && (
+                <EventCountdown startsAt={event.start_date} />
               )}
               {event.start_date && new Date(event.start_date) <= new Date() && event.end_date && new Date(event.end_date) >= new Date() && (
                 <div className="text-center py-3 px-4 rounded-xl bg-green-500/10 border border-green-500/30">
