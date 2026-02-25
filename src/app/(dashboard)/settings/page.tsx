@@ -592,9 +592,9 @@ export default function ProfilePage() {
         show_location: model.show_location,
         show_social_media: model.show_social_media,
 
-        video_call_rate: model.video_call_rate || 5,
-        voice_call_rate: model.voice_call_rate || 5,
-        message_rate: Math.max(10, model.message_rate || 10),
+        video_call_rate: model.video_call_rate || 10,
+        voice_call_rate: model.voice_call_rate || 10,
+        message_rate: Math.max(5, model.message_rate || 5),
         // Booking rates
         photoshoot_hourly_rate: model.photoshoot_hourly_rate || 0,
         photoshoot_half_day_rate: model.photoshoot_half_day_rate || 0,
@@ -1692,7 +1692,7 @@ export default function ProfilePage() {
                     </div>
                     <div>
                       <Label className="text-base font-semibold">Video Call Rate</Label>
-                      <p className="text-sm text-muted-foreground">Per minute (min: 5 coins)</p>
+                      <p className="text-sm text-muted-foreground">Per minute (min: 10 coins)</p>
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-1 pl-13 sm:pl-0">
@@ -1700,7 +1700,7 @@ export default function ProfilePage() {
                       <Input
                         type="number"
                         inputMode="numeric"
-                        min="5"
+                        min="10"
                         max="1000"
                         value={model.video_call_rate ?? ""}
                         onChange={(e) => {
@@ -1712,8 +1712,8 @@ export default function ProfilePage() {
                           }
                         }}
                         onBlur={() => {
-                          if (!model.video_call_rate || model.video_call_rate < 5) {
-                            setModel({ ...model, video_call_rate: 5 });
+                          if (!model.video_call_rate || model.video_call_rate < 10) {
+                            setModel({ ...model, video_call_rate: 10 });
                           }
                         }}
                         className="w-20 text-right"
@@ -1736,7 +1736,7 @@ export default function ProfilePage() {
                     </div>
                     <div>
                       <Label className="text-base font-semibold">Voice Call Rate</Label>
-                      <p className="text-sm text-muted-foreground">Per minute (min: 5 coins)</p>
+                      <p className="text-sm text-muted-foreground">Per minute (min: 10 coins)</p>
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-1 pl-13 sm:pl-0">
@@ -1744,7 +1744,7 @@ export default function ProfilePage() {
                       <Input
                         type="number"
                         inputMode="numeric"
-                        min="5"
+                        min="10"
                         max="1000"
                         value={model.voice_call_rate ?? ""}
                         onChange={(e) => {
@@ -1756,8 +1756,8 @@ export default function ProfilePage() {
                           }
                         }}
                         onBlur={() => {
-                          if (!model.voice_call_rate || model.voice_call_rate < 5) {
-                            setModel({ ...model, voice_call_rate: 5 });
+                          if (!model.voice_call_rate || model.voice_call_rate < 10) {
+                            setModel({ ...model, voice_call_rate: 10 });
                           }
                         }}
                         className="w-20 text-right"
@@ -1780,7 +1780,7 @@ export default function ProfilePage() {
                     </div>
                     <div>
                       <Label className="text-base font-semibold">Message Rate</Label>
-                      <p className="text-sm text-muted-foreground">Per message (min: 10 coins)</p>
+                      <p className="text-sm text-muted-foreground">Per message (min: 5 coins)</p>
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-1 pl-13 sm:pl-0">
@@ -1788,7 +1788,7 @@ export default function ProfilePage() {
                       <Input
                         type="number"
                         inputMode="numeric"
-                        min="10"
+                        min="5"
                         max="100"
                         value={model.message_rate ?? ""}
                         onChange={(e) => {
@@ -1800,8 +1800,8 @@ export default function ProfilePage() {
                           }
                         }}
                         onBlur={() => {
-                          if (!model.message_rate || model.message_rate < 10) {
-                            setModel({ ...model, message_rate: 10 });
+                          if (!model.message_rate || model.message_rate < 5) {
+                            setModel({ ...model, message_rate: 5 });
                           }
                         }}
                         className="w-20 text-right"

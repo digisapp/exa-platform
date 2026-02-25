@@ -5,7 +5,7 @@ import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 import { escapeIlike } from "@/lib/utils";
 
-const DEFAULT_MESSAGE_COST = 10; // Default coins if model hasn't set a rate
+const DEFAULT_MESSAGE_COST = 5; // Default coins if model hasn't set a rate
 
 // Service role client for creating conversations (bypasses RLS)
 const adminClient = createServiceRoleClient();

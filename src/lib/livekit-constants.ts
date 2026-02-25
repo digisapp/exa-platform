@@ -1,7 +1,7 @@
 /**
  * Cost per minute for video calls (in coins)
  */
-export const CALL_COST_PER_MINUTE = 5;
+export const CALL_COST_PER_MINUTE = 10;
 
 /**
  * Minimum coin balance required to start a call

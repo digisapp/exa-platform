@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 
-const DEFAULT_MESSAGE_COST = 10; // Default coins if model hasn't set a rate
+const DEFAULT_MESSAGE_COST = 5; // Default coins if model hasn't set a rate
 
 const newConversationSchema = z.object({
   recipientId: z.string().uuid("Invalid recipient ID"),
