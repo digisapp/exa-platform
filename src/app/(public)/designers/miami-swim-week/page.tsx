@@ -90,9 +90,6 @@ const PACKAGES = [
     borderColor: "border-pink-500/20",
     highlight: false,
     features: [
-      "Full runway show on Day 4",
-      "Friday night pre-weekend momentum",
-      "Show lineup placement",
       "15 models",
     ],
   },
