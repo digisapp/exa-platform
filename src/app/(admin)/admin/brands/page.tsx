@@ -717,7 +717,7 @@ function OutreachTab() {
                           onValueChange={(val) => updateStatus(contact, val)}
                           disabled={updatingId === contact.id}
                         >
-                          <SelectTrigger className="h-7 text-xs w-32 border-0 p-0 focus:ring-0">
+                          <SelectTrigger className="h-auto w-auto min-w-[7.5rem] border border-transparent hover:border-border/50 shadow-none bg-transparent p-0.5 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-full [&>svg]:ml-0.5 [&>svg]:opacity-40 [&>svg]:size-3">
                             <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusConfig[contact.status]?.color || statusConfig.new.color}`}>
                               {statusConfig[contact.status]?.label || contact.status}
                             </span>
