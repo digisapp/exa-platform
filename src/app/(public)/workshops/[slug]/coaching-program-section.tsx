@@ -130,8 +130,8 @@ export function CoachingProgramSection({ workshopId }: CoachingProgramSectionPro
                 <CalendarClock className="h-3.5 w-3.5" />
                 3-Month Plan
               </div>
-              <div className="text-lg font-bold text-violet-400">$175<span className="text-sm font-normal">/mo</span></div>
-              <div className="text-xs text-muted-foreground">$525 total</div>
+              <div className="text-lg font-bold text-violet-400">$125<span className="text-sm font-normal">/mo</span></div>
+              <div className="text-xs text-muted-foreground">$375 total</div>
             </button>
             <button
               type="button"
@@ -143,8 +143,8 @@ export function CoachingProgramSection({ workshopId }: CoachingProgramSectionPro
               }`}
             >
               <div className="font-semibold text-sm">Pay in Full</div>
-              <div className="text-lg font-bold text-violet-400">$525</div>
-              <div className="text-xs text-muted-foreground">One-time payment</div>
+              <div className="text-lg font-bold text-violet-400">$350</div>
+              <div className="text-xs text-green-400">Save $25</div>
             </button>
           </div>
         </div>
@@ -152,9 +152,9 @@ export function CoachingProgramSection({ workshopId }: CoachingProgramSectionPro
         {paymentType === "plan" && (
           <div className="text-xs text-muted-foreground bg-muted/50 rounded-lg p-3 space-y-1">
             <p className="font-medium text-foreground">Payment schedule:</p>
-            <p>1st payment of $175 — due today (Month 1 starts)</p>
-            <p>2nd payment of $175 — due in 30 days</p>
-            <p>3rd payment of $175 — due in 60 days</p>
+            <p>1st payment of $125 — due today (Month 1 starts)</p>
+            <p>2nd payment of $125 — due in 30 days</p>
+            <p>3rd payment of $125 — due in 60 days</p>
           </div>
         )}
 
@@ -215,8 +215,8 @@ export function CoachingProgramSection({ workshopId }: CoachingProgramSectionPro
             <>
               <CreditCard className="h-4 w-4 mr-2" />
               {paymentType === "plan"
-                ? "Enroll Now — $175 First Month"
-                : "Enroll Now — Pay in Full $525"}
+                ? "Enroll Now — $125 First Month"
+                : "Enroll Now — Pay in Full $350"}
             </>
           )}
         </Button>
