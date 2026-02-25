@@ -62,6 +62,7 @@ const PACKAGES = [
       "Logo on event website, email blasts & press kits",
       "Backstage content access & photo opportunity",
       "Full photo & video rights from all shows",
+      "Logo on Red Carpet Promo Wall",
     ],
   },
   {
@@ -84,6 +85,7 @@ const PACKAGES = [
       "Product placement in all model gift bags",
       "2 dedicated EXA social media features",
       "Logo on event website & email blasts",
+      "Logo on Red Carpet Promo Wall",
     ],
   },
   {
@@ -106,6 +108,7 @@ const PACKAGES = [
       "1 dedicated EXA social feature",
       "Product in model & VIP gift bags",
       "Logo on event website",
+      "Logo on Red Carpet Promo Wall",
     ],
   },
   {
@@ -126,27 +129,23 @@ const PACKAGES = [
       "Product placement in VIP gift bags",
       "1 dedicated EXA social media feature",
       "Logo on event website",
+      "Logo on Red Carpet Promo Wall",
     ],
   },
   {
-    id: "red-carpet-wall",
-    name: "Red Carpet Promo Wall",
-    tagline: "Your brand in every photo taken at the event",
-    price: 4000,
-    badge: "Max Photo Exposure",
-    badgeGradient: "from-red-500 to-rose-500",
-    borderColor: "border-red-500/30",
+    id: "community-sponsor",
+    name: "Community Sponsor",
+    tagline: "Your logo on the Red Carpet Promo Wall",
+    price: 500,
+    badge: null,
+    badgeGradient: "",
+    borderColor: "border-red-500/20",
     highlight: false,
     color: "from-red-500/10 to-rose-500/5",
     icon: <Frame className="h-5 w-5 text-red-400" />,
     features: [
-      "Fully branded step-and-repeat backdrop — your logo wall-to-wall",
-      "Every model, guest, and photographer shoots in front of it",
-      "Maximum organic reach — every shared photo features your brand",
-      "Logo in 100% of official event photography",
-      "Positioned at the main entrance for full show-week exposure",
-      "4 VIP passes",
-      "Logo on event website",
+      "Your logo on the Red Carpet Promo Wall",
+      "2 GA tickets to the show",
     ],
   },
   {
@@ -304,7 +303,7 @@ export default function SponsorMswPage() {
             Sponsor EXA&apos;s Miami Swim Week
           </h1>
           <p className="text-white/90 text-lg md:text-xl mb-5 max-w-2xl leading-relaxed">
-            Put your brand on the runway. Reach fashion, beauty & lifestyle consumers where they live.
+            Put your brand on the runway. Reach fashion, beauty & lifestyle.
           </p>
           <div className="flex flex-wrap gap-3 text-white/90">
             <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
