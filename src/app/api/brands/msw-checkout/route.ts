@@ -47,11 +47,71 @@ const PACKAGES = {
     installmentPrice: 33400, // $334.00/month in cents
     description: "Boutique daytime runway showcase on Thursday May 28, 2026",
   },
+  "showroom-halfday": {
+    name: "Private Showroom — Half Day (4 hrs)",
+    fullPrice: 120000, // $1,200.00 in cents
+    installmentPrice: 120000, // full only
+    description: "4-hour private ballroom showroom at our Miami Swim Week hotel venue. Your brand, your space — invite buyers, press, and VIPs for an exclusive presentation.",
+  },
+  "showroom-fullday": {
+    name: "Private Showroom — Full Day",
+    fullPrice: 200000, // $2,000.00 in cents
+    installmentPrice: 200000, // full only
+    description: "Full-day exclusive private ballroom showroom at our Miami Swim Week hotel venue. Your brand, your space for an entire day — invite buyers, press, and VIPs.",
+  },
   "swim-shop": {
     name: "EXA Swim Shop — May 26–31, 2026",
     fullPrice: 50000, // $500.00 in cents
-    installmentPrice: 50000, // full only — no installment for shop spots
+    installmentPrice: 50000, // full only
     description: "Sell your swimwear collection in the EXA Swim Shop during Miami Swim Week 2026 (May 26–31). Prime retail pop-up location with show week foot traffic.",
+  },
+  "gifting-suite": {
+    name: "VIP Gifting Suite — May 26–31, 2026",
+    fullPrice: 65000, // $650.00 in cents
+    installmentPrice: 65000, // full only
+    description: "Place your products in the VIP & influencer lounge during Miami Swim Week 2026. Get your brand picked up, worn organically, and featured on social.",
+  },
+  "lobby-display": {
+    name: "Hotel Lobby Display — May 26–31, 2026",
+    fullPrice: 60000, // $600.00 in cents
+    installmentPrice: 60000, // full only
+    description: "Branded display in the hotel lobby all week at Miami Swim Week 2026. Visible to every guest, model, designer, buyer, and attendee.",
+  },
+  "beach-shoot-halfday": {
+    name: "Miami Beach Shoot Day — Half Day",
+    fullPrice: 150000, // $1,500.00 in cents
+    installmentPrice: 150000, // full only
+    description: "Half-day professional photo & video shoot with EXA models in your swimwear at a Miami Beach location during Swim Week. All content is yours.",
+  },
+  "beach-shoot-fullday": {
+    name: "Miami Beach Shoot Day — Full Day",
+    fullPrice: 250000, // $2,500.00 in cents
+    installmentPrice: 250000, // full only
+    description: "Full-day professional photo & video shoot with EXA models in your swimwear at a Miami Beach location during Swim Week. All content is yours.",
+  },
+  "model-ambassador": {
+    name: "Model Ambassador Day — Miami Swim Week",
+    fullPrice: 80000, // $800.00 in cents
+    installmentPrice: 80000, // full only
+    description: "A model wears your brand around Miami all day during Swim Week — pool deck, lobby, events, the beach — creating organic content for your social channels.",
+  },
+  "afterparty-standard": {
+    name: "After-Party Sponsorship — Standard",
+    fullPrice: 200000, // $2,000.00 in cents
+    installmentPrice: 200000, // full only
+    description: "Standard sponsorship of the official EXA Swim Week after-party. Logo on event materials, branded presence, product placement.",
+  },
+  "afterparty-premier": {
+    name: "After-Party Sponsorship — Premier",
+    fullPrice: 350000, // $3,500.00 in cents
+    installmentPrice: 350000, // full only
+    description: "Premier sponsorship of the official EXA Swim Week after-party. Featured logo placement, dedicated product moment, social features.",
+  },
+  "afterparty-presenting": {
+    name: "After-Party Sponsorship — Presenting Sponsor",
+    fullPrice: 500000, // $5,000.00 in cents
+    installmentPrice: 500000, // full only
+    description: "Presenting sponsorship of the official EXA Swim Week after-party. Top billing across all materials, exclusive branded activation, and VIP table.",
   },
 } as const;
 

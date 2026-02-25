@@ -15,8 +15,13 @@ import {
   Star,
   Mail,
   ShoppingBag,
+  Building2,
+  Camera,
+  Gift,
+  Monitor,
+  PartyPopper,
 } from "lucide-react";
-import { CheckoutButtons, SwimShopButton } from "./checkout-buttons";
+import { CheckoutButtons, SwimShopButton, ShowroomButton, BeachShootButton, AfterPartyButton, SimpleCheckoutButton } from "./checkout-buttons";
 import { Footer } from "@/components/layout/footer";
 import type { Metadata } from "next";
 
@@ -329,6 +334,47 @@ export default async function MswBrandPage() {
           </div>
         </div>
 
+        {/* Private Showroom */}
+        <div className="mb-20">
+          <div className="relative overflow-hidden rounded-3xl border border-amber-500/30 bg-gradient-to-br from-amber-500/5 via-yellow-500/5 to-orange-500/5 p-8 md:p-12">
+            <div className="absolute top-6 right-6 text-7xl opacity-10 select-none pointer-events-none">🏛️</div>
+
+            <Badge className="mb-5 bg-amber-500/10 text-amber-400 border-amber-500/20 px-4 py-1">
+              Exclusive Venue
+            </Badge>
+
+            <div className="flex items-start gap-4 mb-4">
+              <div className="p-3 rounded-2xl bg-amber-500/10 flex-shrink-0">
+                <Building2 className="h-7 w-7 text-amber-400" />
+              </div>
+              <div>
+                <h2 className="text-2xl md:text-3xl font-bold mb-1">Private Showroom</h2>
+                <p className="text-sm text-amber-400 font-medium">Hotel Ballroom · Your Brand&apos;s Own Space · Miami Swim Week</p>
+              </div>
+            </div>
+
+            <p className="text-muted-foreground text-lg leading-relaxed mb-8 max-w-2xl">
+              Book a private ballroom at our fully rented Swim Week hotel for your own exclusive brand presentation. Invite buyers, press, and VIPs for an intimate showing of your collection — no runway required.
+            </p>
+
+            <div className="grid sm:grid-cols-3 gap-4 mb-8">
+              {[
+                { icon: "🏨", title: "Hotel Ballroom", body: "Private space inside our fully rented Swim Week hotel — a premium, controlled environment for your brand." },
+                { icon: "👥", title: "Your Guest List", body: "Invite your buyers, press contacts, influencers, and VIPs for an exclusive up-close experience." },
+                { icon: "✨", title: "Your Format", body: "Presentation, lookbook reveal, fitting session, cocktail reception — you set the agenda." },
+              ].map((item) => (
+                <div key={item.title} className="p-5 rounded-2xl bg-black/20 border border-white/5">
+                  <p className="text-2xl mb-2">{item.icon}</p>
+                  <p className="font-semibold mb-1">{item.title}</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{item.body}</p>
+                </div>
+              ))}
+            </div>
+
+            <ShowroomButton />
+          </div>
+        </div>
+
         {/* EXA Swim Shop */}
         <div className="mb-20">
           <div className="relative overflow-hidden rounded-3xl border border-teal-500/30 bg-gradient-to-br from-teal-500/5 via-cyan-500/5 to-emerald-500/5 p-8 md:p-12">
@@ -376,6 +422,124 @@ export default async function MswBrandPage() {
                 <SwimShopButton />
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Additional Brand Opportunities */}
+        <div className="mb-20">
+          <div className="text-center mb-10">
+            <Badge className="mb-4 bg-violet-500/10 text-violet-400 border-violet-500/20 px-4 py-1">
+              More Ways to Participate
+            </Badge>
+            <h2 className="text-3xl font-bold mb-3">Additional Opportunities</h2>
+            <p className="text-muted-foreground">
+              Maximize your brand&apos;s presence throughout the full week of events
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* VIP Gifting Suite */}
+            <Card className="border-rose-500/20 relative overflow-hidden">
+              <CardContent className="p-6 md:p-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2.5 rounded-xl bg-rose-500/10 flex-shrink-0">
+                    <Gift className="h-5 w-5 text-rose-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold">VIP Gifting Suite</h3>
+                    <p className="text-xs text-rose-400 font-medium">All Week · May 26–31</p>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground leading-relaxed mb-6">
+                  Place your products in the VIP & influencer lounge. Get picked up, worn organically, and featured on social throughout the week by the talent and guests in our hotel.
+                </p>
+                <SimpleCheckoutButton packageId="gifting-suite" price={650} label="Reserve Gifting Suite Spot" colorClass="from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 shadow-rose-500/20 hover:shadow-rose-500/30" />
+              </CardContent>
+            </Card>
+
+            {/* Hotel Lobby Display */}
+            <Card className="border-slate-500/20 relative overflow-hidden">
+              <CardContent className="p-6 md:p-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2.5 rounded-xl bg-slate-500/10 flex-shrink-0">
+                    <Monitor className="h-5 w-5 text-slate-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold">Hotel Lobby Display</h3>
+                    <p className="text-xs text-slate-400 font-medium">All Week · May 26–31</p>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground leading-relaxed mb-6">
+                  A branded display in the hotel lobby — visible to every guest, model, designer, buyer, and attendee who passes through all week long. Prime real estate, zero effort required.
+                </p>
+                <SimpleCheckoutButton packageId="lobby-display" price={600} label="Reserve Lobby Display" colorClass="from-slate-500 to-zinc-500 hover:from-slate-600 hover:to-zinc-600 shadow-slate-500/20 hover:shadow-slate-500/30" />
+              </CardContent>
+            </Card>
+
+            {/* Miami Beach Shoot Day */}
+            <Card className="border-sky-500/20 relative overflow-hidden">
+              <CardContent className="p-6 md:p-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2.5 rounded-xl bg-sky-500/10 flex-shrink-0">
+                    <Camera className="h-5 w-5 text-sky-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold">Miami Beach Shoot Day</h3>
+                    <p className="text-xs text-sky-400 font-medium">Professional Content · You Keep Everything</p>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground leading-relaxed mb-6">
+                  A professional photo & video shoot with EXA models in your swimwear at a Miami Beach location during Swim Week. All content is yours — ready for campaigns, social, and lookbooks.
+                </p>
+                <BeachShootButton />
+              </CardContent>
+            </Card>
+
+            {/* Model Ambassador Day */}
+            <Card className="border-violet-500/20 relative overflow-hidden">
+              <CardContent className="p-6 md:p-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2.5 rounded-xl bg-violet-500/10 flex-shrink-0">
+                    <Users className="h-5 w-5 text-violet-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold">Model Ambassador Day</h3>
+                    <p className="text-xs text-violet-400 font-medium">1 Day · Organic Content Creation</p>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground leading-relaxed mb-6">
+                  A model wears your brand around Miami all day — pool deck, lobby, events, the beach. She creates organic content for your social channels and gets real eyes on your swimwear in the wild.
+                </p>
+                <SimpleCheckoutButton packageId="model-ambassador" price={800} label="Book Model Ambassador Day" colorClass="from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 shadow-violet-500/20 hover:shadow-violet-500/30" />
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* After-Party Sponsorship */}
+        <div className="mb-20">
+          <div className="relative overflow-hidden rounded-3xl border border-orange-500/30 bg-gradient-to-br from-orange-500/5 via-red-500/5 to-pink-500/5 p-8 md:p-12">
+            <div className="absolute top-6 right-6 text-7xl opacity-10 select-none pointer-events-none">🎉</div>
+
+            <Badge className="mb-5 bg-orange-500/10 text-orange-400 border-orange-500/20 px-4 py-1">
+              Premium Sponsorship
+            </Badge>
+
+            <div className="flex items-start gap-4 mb-4">
+              <div className="p-3 rounded-2xl bg-orange-500/10 flex-shrink-0">
+                <PartyPopper className="h-7 w-7 text-orange-400" />
+              </div>
+              <div>
+                <h2 className="text-2xl md:text-3xl font-bold mb-1">After-Party Brand Sponsorship</h2>
+                <p className="text-sm text-orange-400 font-medium">Official EXA Swim Week After-Party · Miami</p>
+              </div>
+            </div>
+
+            <p className="text-muted-foreground text-lg leading-relaxed mb-8 max-w-2xl">
+              Sponsor the official EXA Swim Week after-party. Your brand front and center — logo on all event materials, product placement, branded presence, and access to models, designers, buyers, press, and influencers in one room.
+            </p>
+
+            <AfterPartyButton />
           </div>
         </div>
 

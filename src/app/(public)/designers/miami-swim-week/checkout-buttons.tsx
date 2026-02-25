@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2, Camera, Users, ShoppingBag } from "lucide-react";
+import { Loader2, Camera, Users, ShoppingBag, Building2 } from "lucide-react";
 import { toast } from "sonner";
 
-type PackageId = "opening-show" | "day-2" | "day-3" | "day-4" | "day-5" | "day-6" | "daytime-show" | "swim-shop";
+type PackageId = "opening-show" | "day-2" | "day-3" | "day-4" | "day-5" | "day-6" | "daytime-show" | "swim-shop" | "showroom-halfday" | "showroom-fullday" | "gifting-suite" | "lobby-display" | "beach-shoot-halfday" | "beach-shoot-fullday" | "model-ambassador" | "afterparty-standard" | "afterparty-premier" | "afterparty-presenting";
 
 const PHOTO_VIDEO_PRICE = 700;
 const PHOTO_VIDEO_INSTALLMENT = 234; // $234 × 3 = $702 ≈ $700
@@ -97,6 +97,257 @@ export function SwimShopButton() {
       )}
       Reserve Your Spot — $500
     </Button>
+  );
+}
+
+const SHOWROOM_OPTIONS = [
+  { id: "showroom-halfday" as const, label: "Half Day", duration: "4 hours", price: 1200 },
+  { id: "showroom-fullday" as const, label: "Full Day", duration: "All day", price: 2000 },
+];
+
+export function ShowroomButton() {
+  const [selected, setSelected] = useState<"showroom-halfday" | "showroom-fullday">("showroom-fullday");
+  const [loading, setLoading] = useState(false);
+
+  async function handleCheckout() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/brands/msw-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ package: selected, paymentType: "full", addPhotoVideo: false, addExtraModels: false }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        toast.error(data.error || "Failed to start checkout. Please try again.");
+        setLoading(false);
+      }
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+      setLoading(false);
+    }
+  }
+
+  const selectedOption = SHOWROOM_OPTIONS.find((o) => o.id === selected)!;
+
+  return (
+    <div className="space-y-3">
+      {/* Option selector */}
+      <div className="grid grid-cols-2 gap-3">
+        {SHOWROOM_OPTIONS.map((opt) => (
+          <button
+            key={opt.id}
+            type="button"
+            onClick={() => setSelected(opt.id)}
+            className={`flex flex-col items-center p-4 rounded-xl border-2 transition-all text-center ${
+              selected === opt.id
+                ? "border-amber-500 bg-amber-500/10 text-foreground"
+                : "border-white/10 bg-muted/30 text-muted-foreground hover:border-amber-500/40 hover:text-foreground"
+            }`}
+          >
+            <p className="font-bold text-lg">${opt.price.toLocaleString()}</p>
+            <p className="font-semibold text-sm mt-0.5">{opt.label}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{opt.duration}</p>
+          </button>
+        ))}
+      </div>
+
+      <Button
+        className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-semibold py-6 rounded-xl text-base shadow-lg shadow-amber-500/20 transition-all hover:shadow-amber-500/30 hover:scale-[1.01]"
+        onClick={handleCheckout}
+        disabled={loading}
+      >
+        {loading ? (
+          <Loader2 className="h-5 w-5 animate-spin mr-2" />
+        ) : (
+          <Building2 className="h-5 w-5 mr-2" />
+        )}
+        Book {selectedOption.label} — ${selectedOption.price.toLocaleString()}
+      </Button>
+    </div>
+  );
+}
+
+// ─── Simple fixed-price checkout button ───────────────────────────────────────
+
+interface SimpleCheckoutButtonProps {
+  packageId: PackageId;
+  price: number;
+  label: string;
+  colorClass: string;
+}
+
+export function SimpleCheckoutButton({ packageId, price, label, colorClass }: SimpleCheckoutButtonProps) {
+  const [loading, setLoading] = useState(false);
+
+  async function handleCheckout() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/brands/msw-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ package: packageId, paymentType: "full", addPhotoVideo: false, addExtraModels: false }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        toast.error(data.error || "Failed to start checkout. Please try again.");
+        setLoading(false);
+      }
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <p className="text-3xl font-bold">${price.toLocaleString()}</p>
+      <Button
+        className={`flex-1 bg-gradient-to-r ${colorClass} text-white font-semibold py-5 rounded-xl text-sm shadow-lg transition-all hover:scale-[1.01]`}
+        onClick={handleCheckout}
+        disabled={loading}
+      >
+        {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+        {label}
+      </Button>
+    </div>
+  );
+}
+
+// ─── Beach Shoot (half-day / full-day toggle) ─────────────────────────────────
+
+const BEACH_SHOOT_OPTIONS = [
+  { id: "beach-shoot-halfday" as const, label: "Half Day", duration: "~4 hours", price: 1500 },
+  { id: "beach-shoot-fullday" as const, label: "Full Day", duration: "~8 hours", price: 2500 },
+];
+
+export function BeachShootButton() {
+  const [selected, setSelected] = useState<"beach-shoot-halfday" | "beach-shoot-fullday">("beach-shoot-halfday");
+  const [loading, setLoading] = useState(false);
+
+  async function handleCheckout() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/brands/msw-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ package: selected, paymentType: "full", addPhotoVideo: false, addExtraModels: false }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        toast.error(data.error || "Failed to start checkout. Please try again.");
+        setLoading(false);
+      }
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+      setLoading(false);
+    }
+  }
+
+  const selectedOption = BEACH_SHOOT_OPTIONS.find((o) => o.id === selected)!;
+
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-2">
+        {BEACH_SHOOT_OPTIONS.map((opt) => (
+          <button
+            key={opt.id}
+            type="button"
+            onClick={() => setSelected(opt.id)}
+            className={`flex flex-col items-center p-3 rounded-xl border-2 transition-all text-center ${
+              selected === opt.id
+                ? "border-sky-500 bg-sky-500/10 text-foreground"
+                : "border-white/10 bg-muted/30 text-muted-foreground hover:border-sky-500/40 hover:text-foreground"
+            }`}
+          >
+            <p className="font-bold">${opt.price.toLocaleString()}</p>
+            <p className="text-sm font-semibold">{opt.label}</p>
+            <p className="text-xs text-muted-foreground">{opt.duration}</p>
+          </button>
+        ))}
+      </div>
+      <Button
+        className="w-full bg-gradient-to-r from-sky-500 to-blue-500 hover:from-sky-600 hover:to-blue-600 text-white font-semibold py-5 rounded-xl shadow-lg shadow-sky-500/20 transition-all hover:scale-[1.01]"
+        onClick={handleCheckout}
+        disabled={loading}
+      >
+        {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Camera className="h-4 w-4 mr-2" />}
+        Book {selectedOption.label} Shoot — ${selectedOption.price.toLocaleString()}
+      </Button>
+    </div>
+  );
+}
+
+// ─── After-Party Sponsorship (3 tiers) ───────────────────────────────────────
+
+const AFTERPARTY_TIERS = [
+  { id: "afterparty-standard" as const, label: "Standard", price: 2000, perks: "Logo on materials, branded presence" },
+  { id: "afterparty-premier" as const, label: "Premier", price: 3500, perks: "Featured logo, product moment, social feature" },
+  { id: "afterparty-presenting" as const, label: "Presenting Sponsor", price: 5000, perks: "Top billing, exclusive activation, VIP table" },
+];
+
+export function AfterPartyButton() {
+  const [selected, setSelected] = useState<"afterparty-standard" | "afterparty-premier" | "afterparty-presenting">("afterparty-standard");
+  const [loading, setLoading] = useState(false);
+
+  async function handleCheckout() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/brands/msw-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ package: selected, paymentType: "full", addPhotoVideo: false, addExtraModels: false }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        toast.error(data.error || "Failed to start checkout. Please try again.");
+        setLoading(false);
+      }
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+      setLoading(false);
+    }
+  }
+
+  const selectedTier = AFTERPARTY_TIERS.find((t) => t.id === selected)!;
+
+  return (
+    <div className="space-y-3">
+      <div className="grid sm:grid-cols-3 gap-3">
+        {AFTERPARTY_TIERS.map((tier) => (
+          <button
+            key={tier.id}
+            type="button"
+            onClick={() => setSelected(tier.id)}
+            className={`flex flex-col p-4 rounded-xl border-2 transition-all text-left ${
+              selected === tier.id
+                ? "border-orange-500 bg-orange-500/10 text-foreground"
+                : "border-white/10 bg-muted/30 text-muted-foreground hover:border-orange-500/40 hover:text-foreground"
+            }`}
+          >
+            <p className="text-xl font-bold">${tier.price.toLocaleString()}</p>
+            <p className="font-semibold text-sm mt-0.5">{tier.label}</p>
+            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{tier.perks}</p>
+          </button>
+        ))}
+      </div>
+      <Button
+        className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-semibold py-6 rounded-xl text-base shadow-lg shadow-orange-500/20 transition-all hover:shadow-orange-500/30 hover:scale-[1.01]"
+        onClick={handleCheckout}
+        disabled={loading}
+      >
+        {loading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : null}
+        Secure {selectedTier.label} — ${selectedTier.price.toLocaleString()}
+      </Button>
+    </div>
   );
 }
 
