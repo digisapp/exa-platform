@@ -301,7 +301,7 @@ export default function SponsorMswPage() {
             For Brands & Sponsors
           </Badge>
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 drop-shadow-lg">
-            Sponsor Miami Swim Week 2026
+            Sponsor EXA&apos;s Miami Swim Week
           </h1>
           <p className="text-white/90 text-lg md:text-xl mb-5 max-w-2xl leading-relaxed">
             Put your brand on the runway. Reach fashion, beauty & lifestyle consumers where they live.
