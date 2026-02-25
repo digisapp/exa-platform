@@ -4,8 +4,11 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Navbar } from "@/components/layout/navbar";
+import { Footer } from "@/components/layout/footer";
 import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 import { ModelsGrid } from "@/components/models/models-grid";
+import { CountdownTimer } from "@/components/auctions/CountdownTimer";
+import { ShareButton } from "@/components/ui/share-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,6 +19,7 @@ import {
   Ticket,
   ExternalLink,
   Sparkles,
+  ArrowRight,
 } from "lucide-react";
 import { format } from "date-fns";
 import type { Metadata } from "next";
@@ -304,10 +308,15 @@ export default async function EventPage({ params, searchParams }: Props) {
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent pointer-events-none" />
           </div>
 
+          {/* Share button — top right of video */}
+          <div className="absolute top-4 right-4 z-10 pointer-events-auto">
+            <ShareButton title={event.name} url={`https://www.examodels.com/shows/${event.slug}`} />
+          </div>
+
           {/* Event Info Overlay — desktop only */}
           <div className="hidden md:block absolute bottom-0 left-0 right-0 p-6 md:p-10 pointer-events-none">
             <Badge className="mb-4 bg-gradient-to-r from-pink-500 to-violet-500 text-white border-0 px-4 py-1.5 text-sm font-semibold">
-              {event.short_name} {event.year}
+              {event.short_name || event.name} {event.year || ""}
             </Badge>
             <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 drop-shadow-lg">
               {event.name}
@@ -334,6 +343,30 @@ export default async function EventPage({ params, searchParams }: Props) {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+
+        {/* Mobile event info — shown only on mobile since overlay is desktop-only */}
+        <div className="md:hidden mb-6">
+          <Badge className="mb-3 bg-gradient-to-r from-pink-500 to-violet-500 text-white border-0 px-3 py-1 text-xs font-semibold">
+            {event.short_name || event.name} {event.year || ""}
+          </Badge>
+          <h1 className="text-2xl font-bold text-white mb-2">{event.name}</h1>
+          <div className="flex flex-wrap gap-2 text-sm">
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <Calendar className="h-4 w-4 text-cyan-400" />
+              <span>{dateDisplay}</span>
+            </div>
+            {(event.location_city || event.location_state) && (
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <MapPin className="h-4 w-4 text-pink-400" />
+                <span>
+                  {event.location_city && event.location_state
+                    ? `${event.location_city}, ${event.location_state}`
+                    : event.location_city || event.location_state}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -380,6 +413,21 @@ export default async function EventPage({ params, searchParams }: Props) {
           {/* Sidebar - second on mobile, right column on desktop spanning both rows */}
           <div className="lg:col-span-1 order-2 lg:row-span-2">
             <div className="sticky top-24 space-y-4">
+              {/* Countdown Timer */}
+              {event.start_date && new Date(event.start_date) > new Date() && (
+                <Card className="bg-gradient-to-br from-pink-500/10 to-violet-500/10 border-pink-500/20">
+                  <CardContent className="p-4 text-center">
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground mb-3 font-semibold">Event Starts In</p>
+                    <CountdownTimer endsAt={event.start_date} showDays={true} />
+                  </CardContent>
+                </Card>
+              )}
+              {event.start_date && new Date(event.start_date) <= new Date() && event.end_date && new Date(event.end_date) >= new Date() && (
+                <div className="text-center py-3 px-4 rounded-xl bg-green-500/10 border border-green-500/30">
+                  <p className="text-green-400 font-bold text-sm">🎉 Happening Now</p>
+                </div>
+              )}
+
               {/* Ticket Button with Popup */}
               {hasInternalTickets ? (
                 <TicketCheckout
@@ -434,15 +482,6 @@ export default async function EventPage({ params, searchParams }: Props) {
                     </div>
                     <ExternalLink className="h-3.5 w-3.5 text-muted-foreground ml-auto" />
                   </a>
-                </CardContent>
-              </Card>
-              {/* Designers Card */}
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="font-semibold mb-3 text-xs uppercase tracking-wider text-muted-foreground">Designers</h3>
-                  <div className="flex items-center justify-center p-4 rounded-xl bg-muted/50 border border-dashed border-white/10">
-                    <p className="text-sm text-muted-foreground">TBA</p>
-                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -525,7 +564,34 @@ export default async function EventPage({ params, searchParams }: Props) {
             </div>
           )}
         </div>
+        {/* Sponsor / Designer CTA */}
+        <div className="mt-16 grid sm:grid-cols-2 gap-4">
+          <Link
+            href="/sponsors/miami-swim-week"
+            className="group relative overflow-hidden rounded-2xl border border-pink-500/20 bg-gradient-to-br from-pink-500/10 to-pink-500/5 p-6 hover:border-pink-500/50 transition-all hover:scale-[1.02]"
+          >
+            <p className="text-xs uppercase tracking-widest text-pink-400 font-semibold mb-2">Brands & Companies</p>
+            <h3 className="text-xl font-bold mb-2">Become a Sponsor</h3>
+            <p className="text-sm text-muted-foreground mb-4">Get your brand in front of 300+ guests, 100+ media, and a global live stream audience.</p>
+            <div className="flex items-center gap-1 text-pink-400 text-sm font-medium group-hover:gap-2 transition-all">
+              View Packages <ArrowRight className="h-4 w-4" />
+            </div>
+          </Link>
+          <Link
+            href="/designers/miami-swim-week"
+            className="group relative overflow-hidden rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/10 to-violet-500/5 p-6 hover:border-violet-500/50 transition-all hover:scale-[1.02]"
+          >
+            <p className="text-xs uppercase tracking-widest text-violet-400 font-semibold mb-2">Fashion Designers</p>
+            <h3 className="text-xl font-bold mb-2">Show Your Collection</h3>
+            <p className="text-sm text-muted-foreground mb-4">Book a runway slot and showcase your swimwear, resortwear, or lingerie collection.</p>
+            <div className="flex items-center gap-1 text-violet-400 text-sm font-medium group-hover:gap-2 transition-all">
+              Apply Now <ArrowRight className="h-4 w-4" />
+            </div>
+          </Link>
+        </div>
       </main>
+
+      <Footer />
 
       {/* Affiliate Tracking Script - ref is sanitized at top of component to alphanumeric/underscore/hyphen only */}
       {ref && (
