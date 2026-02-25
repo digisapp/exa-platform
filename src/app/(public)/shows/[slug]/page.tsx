@@ -397,37 +397,6 @@ export default async function EventPage({ params, searchParams }: Props) {
                 </Button>
               )}
 
-              {/* Show Details Card */}
-              <Card>
-                <CardContent className="p-6 space-y-4">
-                  <h3 className="font-semibold">Show Details</h3>
-
-                  <div className="space-y-3 text-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
-                        Dates
-                      </span>
-                      <span className="font-medium">{dateDisplay}</span>
-                    </div>
-
-                    {(event.location_city || event.location_state) && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground flex items-center gap-2">
-                          <MapPin className="h-4 w-4" />
-                          Location
-                        </span>
-                        <span className="font-medium">
-                          {event.location_city && event.location_state
-                            ? `${event.location_city}, ${event.location_state}`
-                            : event.location_city || event.location_state}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-
               {/* Sponsor Card */}
               <Card>
                 <CardContent className="p-6">
