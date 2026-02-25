@@ -288,6 +288,12 @@ export function Navbar({ user, actorType, unreadCount = 0 }: NavbarProps) {
                   {actorType === "model" && (
                     <>
                       <DropdownMenuItem asChild>
+                        <Link href="/analytics" className="cursor-pointer">
+                          <BarChart3 className="mr-2 h-4 w-4" />
+                          Analytics
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
                         <Link href="/contracts" className="cursor-pointer">
                           <FileText className="mr-2 h-4 w-4" />
                           Contracts

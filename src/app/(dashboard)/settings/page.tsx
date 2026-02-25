@@ -1534,12 +1534,24 @@ export default function ProfilePage() {
               <CardDescription>Add links to your brand deals, promo codes, merch, or Amazon affiliate products</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {((model.affiliate_links || []) as { title: string; url: string }[]).map((link, index) => (
+              <p className="text-xs text-muted-foreground -mt-1">Add an emoji icon (optional) to make each link stand out on your profile — e.g. 🛍️ for a shop, 🎵 for music, 📸 for portfolio.</p>
+              {((model.affiliate_links || []) as { title: string; url: string; icon?: string }[]).map((link, index) => (
                 <div key={index} className="flex gap-2">
+                  <Input
+                    value={link.icon || ""}
+                    onChange={(e) => {
+                      const links = [...((model.affiliate_links || []) as { title: string; url: string; icon?: string }[])];
+                      links[index] = { ...links[index], icon: e.target.value };
+                      setModel({ ...model, affiliate_links: links as any });
+                    }}
+                    placeholder="🔗"
+                    className="w-14 text-center text-lg shrink-0 px-1"
+                    maxLength={4}
+                  />
                   <Input
                     value={link.title}
                     onChange={(e) => {
-                      const links = [...((model.affiliate_links || []) as { title: string; url: string }[])];
+                      const links = [...((model.affiliate_links || []) as { title: string; url: string; icon?: string }[])];
                       links[index] = { ...links[index], title: e.target.value };
                       setModel({ ...model, affiliate_links: links as any });
                     }}
@@ -1549,7 +1561,7 @@ export default function ProfilePage() {
                   <Input
                     value={link.url}
                     onChange={(e) => {
-                      const links = [...((model.affiliate_links || []) as { title: string; url: string }[])];
+                      const links = [...((model.affiliate_links || []) as { title: string; url: string; icon?: string }[])];
                       links[index] = { ...links[index], url: e.target.value };
                       setModel({ ...model, affiliate_links: links as any });
                     }}
@@ -1561,7 +1573,7 @@ export default function ProfilePage() {
                     variant="outline"
                     size="icon"
                     onClick={() => {
-                      const links = ((model.affiliate_links || []) as { title: string; url: string }[]).filter((_, i) => i !== index);
+                      const links = ((model.affiliate_links || []) as { title: string; url: string; icon?: string }[]).filter((_, i) => i !== index);
                       setModel({ ...model, affiliate_links: links as any });
                     }}
                   >
@@ -1573,7 +1585,7 @@ export default function ProfilePage() {
                 type="button"
                 variant="outline"
                 onClick={() => {
-                  const links = [...((model.affiliate_links || []) as { title: string; url: string }[]), { title: "", url: "" }];
+                  const links = [...((model.affiliate_links || []) as { title: string; url: string; icon?: string }[]), { title: "", url: "", icon: "" }];
                   setModel({ ...model, affiliate_links: links as any });
                 }}
                 className="w-full"

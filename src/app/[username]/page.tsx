@@ -11,6 +11,7 @@ import {
   Youtube,
   Twitch,
   ExternalLink,
+  Mail,
 } from "lucide-react";
 import { TikTokIcon } from "@/components/ui/tiktok-icon";
 import { SnapchatIcon } from "@/components/ui/snapchat-icon";
@@ -446,7 +447,7 @@ export default async function ModelProfilePage({ params }: Props) {
           )}
 
           {/* Social Media Icons + Follower Counts */}
-          {model.show_social_media && socialLinks.length > 0 && (
+          {model.show_social_media && (socialLinks.length > 0 || model.email) && (
             <div className="flex items-center justify-center gap-3 mb-5 flex-wrap">
               {socialLinks.map((link) => (
                 <a
@@ -472,6 +473,21 @@ export default async function ModelProfilePage({ params }: Props) {
                   )}
                 </a>
               ))}
+              {/* Email icon */}
+              {model.email && (
+                <a
+                  href={`mailto:${model.email}`}
+                  className="flex flex-col items-center gap-1 group"
+                  title={model.email}
+                >
+                  <div className="w-8 h-8 rounded-full bg-white/10 group-hover:bg-white/20 flex items-center justify-center transition-all group-hover:scale-110 active:scale-95">
+                    <Mail className="h-4 w-4 text-white" />
+                  </div>
+                  <span className="text-[10px] text-white/50 group-hover:text-white/70 transition-colors leading-none">
+                    Email
+                  </span>
+                </a>
+              )}
             </div>
           )}
 
@@ -495,7 +511,7 @@ export default async function ModelProfilePage({ params }: Props) {
           {/* Affiliate Links - Linktree Style */}
           {model.affiliate_links && model.affiliate_links.length > 0 && (
             <div className="mb-6 space-y-3">
-              {model.affiliate_links.map((link: { title: string; url: string }, index: number) => {
+              {model.affiliate_links.map((link: { title: string; url: string; icon?: string }, index: number) => {
                 if (!link.title || !link.url) return null;
                 return (
                   <a
@@ -506,7 +522,11 @@ export default async function ModelProfilePage({ params }: Props) {
                     className="group relative flex items-center justify-center w-full px-5 py-4 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 hover:border-white/20 transition-all hover:scale-[1.02] active:scale-[0.97] active:opacity-90 hover:shadow-lg hover:shadow-pink-500/10"
                   >
                     <span className="absolute left-4 w-6 h-6 flex items-center justify-center">
-                      <ExternalLink className="h-4 w-4 text-white/60" />
+                      {link.icon ? (
+                        <span className="text-lg leading-none">{link.icon}</span>
+                      ) : (
+                        <ExternalLink className="h-4 w-4 text-white/60" />
+                      )}
                     </span>
                     <span className="font-medium text-white">{link.title}</span>
                   </a>
