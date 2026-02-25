@@ -16,8 +16,6 @@ import {
   Ticket,
   ExternalLink,
   Sparkles,
-  ShoppingBag,
-  ArrowRight,
 } from "lucide-react";
 import { format } from "date-fns";
 import type { Metadata } from "next";
@@ -355,29 +353,6 @@ export default async function EventPage({ params, searchParams }: Props) {
           </Card>
         )}
 
-        {/* Shop Promo Banner — Swim Week only */}
-        {slug === "miami-swim-week-2026" && (
-          <Card className="mb-8 overflow-hidden bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-cyan-500/10 border-pink-500/20">
-            <CardContent className="p-6 md:p-8">
-              <div className="flex flex-col md:flex-row items-center gap-6">
-                <div className="flex-1">
-                  <Badge className="mb-3 bg-pink-500">Miami Swim Week · May 26–31, 2026</Badge>
-                  <h2 className="text-2xl md:text-3xl font-bold mb-2">Wear the runway. Own the moment.</h2>
-                  <p className="text-muted-foreground mb-4 leading-relaxed">
-                    Shop exclusive pieces direct from Miami Swim Week designers.
-                  </p>
-                  <Button asChild className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600">
-                    <Link href="/shop">
-                      Shop the Collection
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Description - always first */}
           <div className="lg:col-span-2 order-1">
@@ -430,15 +405,6 @@ export default async function EventPage({ params, searchParams }: Props) {
                 </Button>
               )}
 
-              {/* Shop Button — Swim Week only */}
-              {slug === "miami-swim-week-2026" && (
-                <Button asChild size="lg" variant="outline" className="w-full rounded-xl border-pink-500/40 hover:border-pink-500 hover:text-pink-500">
-                  <Link href="/shop">
-                    <ShoppingBag className="h-5 w-5 mr-2 text-pink-500" />
-                    Shop Swim Week Designers
-                  </Link>
-                </Button>
-              )}
 
               {/* Sponsor Card */}
               <Card>
