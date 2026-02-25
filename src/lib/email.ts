@@ -3946,12 +3946,16 @@ export async function sendBrandOutreachEmail({
   contactName,
   subject,
   bodyText,
+  ctaUrl,
+  ctaText,
 }: {
   to: string;
   brandName: string;
   contactName: string | null;
   subject: string;
   bodyText: string;
+  ctaUrl?: string;
+  ctaText?: string;
 }) {
   try {
     const resend = getResendClient();
@@ -4010,8 +4014,8 @@ export async function sendBrandOutreachEmail({
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center">
-                    <a href="${BASE_URL}/swimweek" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
-                      View Miami Swim Week 2026
+                    <a href="${ctaUrl || `${BASE_URL}/swimweek`}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                      ${ctaText || "View Miami Swim Week 2026"}
                     </a>
                   </td>
                 </tr>

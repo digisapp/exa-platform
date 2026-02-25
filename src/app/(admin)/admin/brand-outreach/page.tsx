@@ -54,6 +54,7 @@ interface BrandContact {
   website_url: string | null;
   instagram_handle: string | null;
   category: string;
+  contact_type: string | null;
   location_city: string | null;
   location_country: string | null;
   notes: string | null;
@@ -88,11 +89,14 @@ export default function BrandOutreachPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [contactTypeFilter, setContactTypeFilter] = useState<string>("all");
   const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set());
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [emailSubject, setEmailSubject] = useState("Partnership Opportunity - Miami Swim Week 2026");
   const [emailBody, setEmailBody] = useState("");
+  const [emailCtaUrl, setEmailCtaUrl] = useState("https://www.examodels.com/swimweek");
+  const [emailCtaText, setEmailCtaText] = useState("View Miami Swim Week 2026");
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [newContact, setNewContact] = useState({
     brand_name: "",
@@ -136,7 +140,8 @@ export default function BrandOutreachPage() {
       (contact.contact_name?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
     const matchesStatus = statusFilter === "all" || contact.status === statusFilter;
     const matchesCategory = categoryFilter === "all" || contact.category === categoryFilter;
-    return matchesSearch && matchesStatus && matchesCategory;
+    const matchesType = contactTypeFilter === "all" || contact.contact_type === contactTypeFilter;
+    return matchesSearch && matchesStatus && matchesCategory && matchesType;
   });
 
   // Stats
@@ -170,6 +175,13 @@ export default function BrandOutreachPage() {
     }
   };
 
+  // Select next 100 new contacts from filtered list
+  const selectNext100New = () => {
+    const newContacts = filteredContacts.filter((c) => c.status === "new" && !selectedContacts.has(c.id));
+    const next100 = newContacts.slice(0, 100);
+    setSelectedContacts(new Set(next100.map((c) => c.id)));
+  };
+
   // Send emails to selected contacts
   async function sendOutreachEmails() {
     if (selectedContacts.size === 0) {
@@ -197,6 +209,8 @@ export default function BrandOutreachPage() {
           })),
           subject: emailSubject,
           body: emailBody,
+          ctaUrl: emailCtaUrl,
+          ctaText: emailCtaText,
         }),
       });
 
@@ -306,8 +320,10 @@ export default function BrandOutreachPage() {
     }
   }
 
-  // Default email template
-  const defaultEmailTemplate = `Hi {{contact_name}},
+  // Email templates
+  const designerEmailTemplate = {
+    subject: "Partnership Opportunity - Miami Swim Week 2026",
+    body: `Hi {{contact_name}},
 
 I hope this message finds you well! I'm reaching out from EXA Models regarding an exciting opportunity for {{brand_name}} at Miami Swim Week 2026 (May 26-31).
 
@@ -325,11 +341,50 @@ Would you be open to a quick call this week to explore potential collaboration?
 
 Best regards,
 EXA Models Team
-www.examodels.com`;
+www.examodels.com`,
+    ctaUrl: "https://www.examodels.com/swimweek",
+    ctaText: "View Miami Swim Week 2026",
+  };
+
+  const sponsorEmailTemplate = {
+    subject: "Sponsorship Opportunity — EXA Miami Swim Week 2026",
+    body: `Hi {{contact_name}},
+
+I hope this message finds you well. I'm reaching out from EXA Models about a sponsorship opportunity at Miami Swim Week 2026 (May 26–31) in Miami Beach.
+
+We're producing a multi-day runway show event featuring 50+ professional models, photographers, media, and industry professionals — and we're looking for select brand sponsors to be featured throughout the event.
+
+As a sponsor of EXA's Miami Swim Week, {{brand_name}} would receive:
+- Logo placement across all event materials
+- Brand exposure on our Red Carpet Promo Wall
+- Social media features before, during, and after the event
+- Networking access with designers, models, and media
+
+You can view all sponsorship packages here:
+www.examodels.com/sponsors/miami-swim-week
+
+Packages start at $500 and go up to $20,000, with options to fit every budget.
+
+Would you be open to a quick call this week to learn more?
+
+Best regards,
+EXA Models Team
+www.examodels.com`,
+    ctaUrl: "https://www.examodels.com/sponsors/miami-swim-week",
+    ctaText: "View Sponsorship Packages",
+  };
+
+  const loadTemplate = (type: "designer" | "sponsor") => {
+    const t = type === "sponsor" ? sponsorEmailTemplate : designerEmailTemplate;
+    setEmailSubject(t.subject);
+    setEmailBody(t.body);
+    setEmailCtaUrl(t.ctaUrl);
+    setEmailCtaText(t.ctaText);
+  };
 
   useEffect(() => {
     if (!emailBody) {
-      setEmailBody(defaultEmailTemplate);
+      setEmailBody(designerEmailTemplate.body);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -605,6 +660,16 @@ www.examodels.com`;
                 <SelectItem value="accessories">Accessories</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={contactTypeFilter} onValueChange={setContactTypeFilter}>
+              <SelectTrigger className="w-36">
+                <SelectValue placeholder="Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="sponsor">Sponsors</SelectItem>
+                <SelectItem value="outreach">Outreach</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {selectedContacts.size > 0 && (
@@ -628,9 +693,19 @@ www.examodels.com`;
                     <DialogTitle>Send Outreach Email</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4 py-4">
-                    <div className="text-sm text-muted-foreground">
-                      Sending to {selectedContacts.size} brand
-                      {selectedContacts.size > 1 ? "s" : ""}
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm text-muted-foreground">
+                        Sending to {selectedContacts.size} brand
+                        {selectedContacts.size > 1 ? "s" : ""}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={() => loadTemplate("designer")}>
+                          Designer Template
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => loadTemplate("sponsor")} className="border-violet-500/50 text-violet-400 hover:bg-violet-500/10">
+                          Sponsor Template
+                        </Button>
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <Label>Subject</Label>
@@ -653,6 +728,12 @@ www.examodels.com`;
                         rows={12}
                         className="font-mono text-sm"
                       />
+                    </div>
+                    <div className="text-xs text-muted-foreground bg-muted/50 rounded-lg p-3">
+                      <span className="font-medium text-foreground">CTA Button: </span>
+                      <span className="text-pink-400">{emailCtaText}</span>
+                      <span className="mx-1">→</span>
+                      <span>{emailCtaUrl}</span>
                     </div>
                     <Button
                       onClick={sendOutreachEmails}
@@ -686,11 +767,16 @@ www.examodels.com`;
               <CardTitle className="text-lg">
                 {filteredContacts.length} Brand{filteredContacts.length !== 1 ? "s" : ""}
               </CardTitle>
-              <Button variant="ghost" size="sm" onClick={selectAll}>
-                {selectedContacts.size === filteredContacts.length
-                  ? "Deselect All"
-                  : "Select All"}
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="ghost" size="sm" onClick={selectNext100New}>
+                  Select Next 100 New
+                </Button>
+                <Button variant="ghost" size="sm" onClick={selectAll}>
+                  {selectedContacts.size === filteredContacts.length
+                    ? "Deselect All"
+                    : "Select All"}
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>

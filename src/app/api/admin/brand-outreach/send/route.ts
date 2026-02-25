@@ -35,10 +35,12 @@ export async function POST(request: NextRequest) {
     if (rateLimitResponse) return rateLimitResponse;
 
     const body = await request.json();
-    const { contacts, subject, body: emailBody } = body as {
+    const { contacts, subject, body: emailBody, ctaUrl, ctaText } = body as {
       contacts: ContactToEmail[];
       subject: string;
       body: string;
+      ctaUrl?: string;
+      ctaText?: string;
     };
 
     if (!contacts || contacts.length === 0) {
@@ -62,6 +64,8 @@ export async function POST(request: NextRequest) {
           contactName: contact.contact_name,
           subject,
           bodyText: emailBody,
+          ctaUrl,
+          ctaText,
         });
 
         if (result.success) {
