@@ -20,6 +20,7 @@ import {
   ShoppingBag,
   Zap,
   Trophy,
+  Frame,
 } from "lucide-react";
 import { Footer } from "@/components/layout/footer";
 import type { Metadata } from "next";
@@ -124,6 +125,27 @@ const PACKAGES = [
       "4 VIP passes per show (2 shows)",
       "Product placement in VIP gift bags",
       "1 dedicated EXA social media feature",
+      "Logo on event website",
+    ],
+  },
+  {
+    id: "red-carpet-wall",
+    name: "Red Carpet Promo Wall",
+    tagline: "Your brand in every photo taken at the event",
+    price: 4000,
+    badge: "Max Photo Exposure",
+    badgeGradient: "from-red-500 to-rose-500",
+    borderColor: "border-red-500/30",
+    highlight: false,
+    color: "from-red-500/10 to-rose-500/5",
+    icon: <Frame className="h-5 w-5 text-red-400" />,
+    features: [
+      "Fully branded step-and-repeat backdrop — your logo wall-to-wall",
+      "Every model, guest, and photographer shoots in front of it",
+      "Maximum organic reach — every shared photo features your brand",
+      "Logo in 100% of official event photography",
+      "Positioned at the main entrance for full show-week exposure",
+      "4 VIP passes",
       "Logo on event website",
     ],
   },
