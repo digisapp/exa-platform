@@ -53,16 +53,27 @@ export async function GET(request: NextRequest) {
       query = query.eq("is_verified", false) as typeof query;
     }
 
-    const { data: brands, count, error } = await query
-      .order("created_at", { ascending: false })
-      .range(from, to);
+    const [
+      { data: brands, count, error },
+      { count: verifiedTotal },
+      { count: unverifiedTotal },
+    ] = await Promise.all([
+      query.order("created_at", { ascending: false }).range(from, to),
+      adminClient.from("brands").select("id", { count: "exact", head: true }).eq("is_verified", true),
+      adminClient.from("brands").select("id", { count: "exact", head: true }).eq("is_verified", false),
+    ]);
 
     if (error) {
       console.error("Supabase query error:", JSON.stringify(error));
       throw new Error(error.message || JSON.stringify(error));
     }
 
-    return NextResponse.json({ brands: brands || [], total: count || 0 });
+    return NextResponse.json({
+      brands: brands || [],
+      total: count || 0,
+      verifiedTotal: verifiedTotal || 0,
+      unverifiedTotal: unverifiedTotal || 0,
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("Admin brands list error:", message);

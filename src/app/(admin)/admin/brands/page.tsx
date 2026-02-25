@@ -85,6 +85,8 @@ const tierColors: Record<string, string> = {
 function AccountsTab() {
   const [brands, setBrands] = useState<Brand[]>([]);
   const [total, setTotal] = useState(0);
+  const [verifiedTotal, setVerifiedTotal] = useState(0);
+  const [unverifiedTotal, setUnverifiedTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -115,6 +117,8 @@ function AccountsTab() {
       const data = await res.json();
       setBrands(data.brands || []);
       setTotal(data.total || 0);
+      setVerifiedTotal(data.verifiedTotal ?? 0);
+      setUnverifiedTotal(data.unverifiedTotal ?? 0);
     } catch {
       toast.error("Failed to load brands");
     } finally {
@@ -144,16 +148,14 @@ function AccountsTab() {
   };
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
-  const verifiedCount = brands.filter((b) => b.is_verified).length;
-  const unverifiedCount = brands.filter((b) => !b.is_verified).length;
 
   return (
     <div className="space-y-4">
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Total</p><p className="text-2xl font-bold">{total}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Verified</p><p className="text-2xl font-bold text-green-500">{verifiedCount}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Unverified</p><p className="text-2xl font-bold text-amber-500">{unverifiedCount}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Total (filtered)</p><p className="text-2xl font-bold">{total}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Verified</p><p className="text-2xl font-bold text-green-500">{verifiedTotal}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Unverified</p><p className="text-2xl font-bold text-amber-500">{unverifiedTotal}</p></CardContent></Card>
         <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">This page</p><p className="text-2xl font-bold">{brands.length}</p></CardContent></Card>
       </div>
 
@@ -206,6 +208,7 @@ function AccountsTab() {
                     <TableHead>Email</TableHead>
                     <TableHead>Contact</TableHead>
                     <TableHead>Tier</TableHead>
+                    <TableHead>Coins</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Joined</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -225,7 +228,11 @@ function AccountsTab() {
                           )}
                           <div>
                             <p className="font-medium text-sm">{brand.company_name}</p>
-                            {brand.username && <p className="text-xs text-muted-foreground">@{brand.username}</p>}
+                            {brand.username && (
+                              <a href={`/${brand.username}`} target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground hover:text-violet-400 flex items-center gap-0.5">
+                                @{brand.username}<ExternalLink className="h-2.5 w-2.5 ml-0.5" />
+                              </a>
+                            )}
                           </div>
                         </div>
                       </TableCell>
@@ -262,6 +269,11 @@ function AccountsTab() {
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${tierColors[brand.subscription_tier] || tierColors.free}`}>
                           {brand.subscription_tier}
                         </span>
+                      </TableCell>
+                      <TableCell className="text-sm font-medium">
+                        {brand.coin_balance > 0
+                          ? <span className="text-amber-400">{brand.coin_balance.toLocaleString()}</span>
+                          : <span className="text-muted-foreground/40">0</span>}
                       </TableCell>
                       <TableCell>
                         {brand.is_verified ? (
@@ -348,6 +360,7 @@ const categoryColors: Record<string, string> = {
 function OutreachTab() {
   const [contacts, setContacts] = useState<OutreachContact[]>([]);
   const [total, setTotal] = useState(0);
+  const [globalStatusCounts, setGlobalStatusCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -380,6 +393,7 @@ function OutreachTab() {
       const data = await res.json();
       setContacts(data.contacts || []);
       setTotal(data.total || 0);
+      setGlobalStatusCounts(data.statusCounts || {});
     } catch {
       toast.error("Failed to load outreach contacts");
     } finally {
@@ -454,20 +468,15 @@ function OutreachTab() {
 
   const totalPages = Math.ceil(total / OUTREACH_PAGE_SIZE);
 
-  const statusCounts = contacts.reduce((acc, c) => {
-    acc[c.status] = (acc[c.status] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-
   return (
     <div className="space-y-4">
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Total</p><p className="text-2xl font-bold">{total}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">New</p><p className="text-2xl font-bold text-muted-foreground">{statusCounts.new || 0}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Contacted</p><p className="text-2xl font-bold text-blue-400">{statusCounts.contacted || 0}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Interested</p><p className="text-2xl font-bold text-violet-400">{statusCounts.interested || 0}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Converted</p><p className="text-2xl font-bold text-green-400">{statusCounts.converted || 0}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Total (filtered)</p><p className="text-2xl font-bold">{total}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">New</p><p className="text-2xl font-bold text-muted-foreground">{globalStatusCounts.new || 0}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Contacted</p><p className="text-2xl font-bold text-blue-400">{globalStatusCounts.contacted || 0}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Interested</p><p className="text-2xl font-bold text-violet-400">{globalStatusCounts.interested || 0}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Converted</p><p className="text-2xl font-bold text-green-400">{globalStatusCounts.converted || 0}</p></CardContent></Card>
       </div>
 
       {/* Filters */}
@@ -587,7 +596,7 @@ function OutreachTab() {
                         {contact.category && (
                           <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${categoryColors[contact.category] || "bg-muted text-muted-foreground"}`}>
                             <Tag className="h-2.5 w-2.5" />
-                            {contact.category.replace("_", " ")}
+                            {contact.category.replaceAll("_", " ")}
                           </span>
                         )}
                       </TableCell>
@@ -674,7 +683,7 @@ function OutreachTab() {
                         >
                           {updatingId === contact.id
                             ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            : <><RefreshCw className="h-3.5 w-3.5 mr-1" />Contacted</>}
+                            : <><RefreshCw className="h-3.5 w-3.5 mr-1" />Log Contact</>}
                         </Button>
                       </TableCell>
                     </TableRow>

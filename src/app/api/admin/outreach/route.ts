@@ -61,13 +61,32 @@ export async function GET(request: NextRequest) {
       query = query.eq("category", category) as typeof query;
     }
 
-    const { data: contacts, count, error } = await query
-      .order("created_at", { ascending: false })
-      .range(from, to);
+    const [
+      { data: contacts, count, error },
+      { count: newCount },
+      { count: contactedCount },
+      { count: interestedCount },
+      { count: convertedCount },
+    ] = await Promise.all([
+      query.order("created_at", { ascending: false }).range(from, to),
+      adminClient.from("brand_outreach_contacts").select("id", { count: "exact", head: true }).eq("status", "new"),
+      adminClient.from("brand_outreach_contacts").select("id", { count: "exact", head: true }).eq("status", "contacted"),
+      adminClient.from("brand_outreach_contacts").select("id", { count: "exact", head: true }).eq("status", "interested"),
+      adminClient.from("brand_outreach_contacts").select("id", { count: "exact", head: true }).eq("status", "converted"),
+    ]);
 
     if (error) throw new Error(error.message);
 
-    return NextResponse.json({ contacts: contacts || [], total: count || 0 });
+    return NextResponse.json({
+      contacts: contacts || [],
+      total: count || 0,
+      statusCounts: {
+        new: newCount || 0,
+        contacted: contactedCount || 0,
+        interested: interestedCount || 0,
+        converted: convertedCount || 0,
+      },
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("Admin outreach list error:", message);
