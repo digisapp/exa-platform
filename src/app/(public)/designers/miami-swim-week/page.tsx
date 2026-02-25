@@ -168,8 +168,8 @@ const FAQS = [
     a: "Show slots are limited and selling fast. We recommend booking as soon as possible to secure your preferred date.",
   },
   {
-    q: "I'm an international designer — can I still participate?",
-    a: "Absolutely. You don't need to be in Miami. Ship your collection to us ahead of show week and our team handles everything — receiving, steaming, dressing the models, and running your full runway presentation. Email nathan@examodels.com to discuss shipping timelines and logistics.",
+    q: "I can't make it to Miami in person — can I still participate?",
+    a: "Absolutely. Ship your collection to us ahead of show week and our team handles everything — receiving, steaming, dressing the models, and running your full runway presentation. Email nathan@examodels.com to discuss shipping timelines and logistics.",
   },
 ];
 
@@ -253,12 +253,6 @@ export default async function MswBrandPage() {
               <Calendar className="h-4 w-4 text-cyan-400" />
               <span className="font-medium text-sm">May 26–31, 2026</span>
             </div>
-            {eventModels.length > 0 && (
-              <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
-                <Users className="h-4 w-4 text-violet-400" />
-                <span className="font-medium text-sm">{eventModels.length} Confirmed Models</span>
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -338,21 +332,21 @@ export default async function MswBrandPage() {
           </div>
         </div>
 
-        {/* International Designers */}
+        {/* Can't Make It In Person */}
         <div className="mb-20">
           <div className="relative overflow-hidden rounded-3xl border border-cyan-500/20 bg-gradient-to-br from-cyan-500/5 via-violet-500/5 to-pink-500/5 p-8 md:p-12">
             {/* Decorative globe */}
             <div className="absolute top-6 right-6 text-7xl opacity-10 select-none pointer-events-none">🌍</div>
 
             <Badge className="mb-5 bg-cyan-500/10 text-cyan-400 border-cyan-500/20 px-4 py-1">
-              International Designers
+              Can&apos;t Make It In Person?
             </Badge>
 
             <h2 className="text-2xl md:text-3xl font-bold mb-4 max-w-xl">
               Can&apos;t Make It to Miami? We&apos;ll Run Your Show.
             </h2>
             <p className="text-muted-foreground text-lg leading-relaxed mb-8 max-w-2xl">
-              You don&apos;t need to be in Miami to have your collection walk the runway. Ship your pieces to us and our team will handle everything — steaming, dressing, styling, and running your full show — so your collection gets the spotlight it deserves, no matter where you are in the world.
+              Ship your pieces to us and our team will handle everything — steaming, dressing, styling, and running your full show.
             </p>
 
             <div className="grid sm:grid-cols-3 gap-4 mb-8">
@@ -370,7 +364,7 @@ export default async function MswBrandPage() {
             </div>
 
             <p className="text-sm text-muted-foreground mb-5">
-              All show packages are available to international designers. Email us to discuss shipping logistics, timelines, and any custom requirements.
+              Email us to discuss shipping logistics, timelines, and any custom requirements.
             </p>
 
             <a
