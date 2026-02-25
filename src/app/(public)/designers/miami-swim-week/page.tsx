@@ -76,7 +76,6 @@ const PACKAGES = [
     borderColor: "border-pink-500/20",
     highlight: false,
     features: [
-      "Full runway show on Day 3",
       "15 models",
     ],
   },
