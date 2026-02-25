@@ -7,7 +7,13 @@ import { NextRequest, NextResponse } from "next/server";
 const PAGE_SIZE = 50;
 
 const VALID_STATUSES = ["new", "contacted", "responded", "interested", "not_interested", "converted", "do_not_contact"];
-const VALID_CATEGORIES = ["swimwear", "resort_wear", "luxury", "fashion", "lingerie", "activewear", "accessories", "beauty"];
+const VALID_CATEGORIES = [
+  // designer outreach
+  "swimwear", "resort_wear", "luxury", "fashion", "lingerie", "activewear", "accessories",
+  // sponsor
+  "sunscreen", "skincare", "haircare", "beverage", "spirits", "wellness", "beauty", "medspa",
+];
+const VALID_TYPES = ["outreach", "sponsor"];
 
 async function isAdmin(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
   const { data: actor } = await supabase
@@ -37,6 +43,8 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("search") || "";
     const status = searchParams.get("status") || "all";
     const category = searchParams.get("category") || "all";
+    const typeParam = searchParams.get("type") || "outreach";
+    const contactType = VALID_TYPES.includes(typeParam) ? typeParam : "outreach";
 
     const adminClient = createServiceRoleClient();
     const from = (page - 1) * PAGE_SIZE;
@@ -44,7 +52,8 @@ export async function GET(request: NextRequest) {
 
     let query = adminClient
       .from("brand_outreach_contacts")
-      .select("*", { count: "exact" });
+      .select("*", { count: "exact" })
+      .eq("contact_type", contactType);
 
     if (search) {
       const escaped = escapeIlike(search);
@@ -69,10 +78,10 @@ export async function GET(request: NextRequest) {
       { count: convertedCount },
     ] = await Promise.all([
       query.order("created_at", { ascending: false }).range(from, to),
-      adminClient.from("brand_outreach_contacts").select("id", { count: "exact", head: true }).eq("status", "new"),
-      adminClient.from("brand_outreach_contacts").select("id", { count: "exact", head: true }).eq("status", "contacted"),
-      adminClient.from("brand_outreach_contacts").select("id", { count: "exact", head: true }).eq("status", "interested"),
-      adminClient.from("brand_outreach_contacts").select("id", { count: "exact", head: true }).eq("status", "converted"),
+      adminClient.from("brand_outreach_contacts").select("id", { count: "exact", head: true }).eq("status", "new").eq("contact_type", contactType),
+      adminClient.from("brand_outreach_contacts").select("id", { count: "exact", head: true }).eq("status", "contacted").eq("contact_type", contactType),
+      adminClient.from("brand_outreach_contacts").select("id", { count: "exact", head: true }).eq("status", "interested").eq("contact_type", contactType),
+      adminClient.from("brand_outreach_contacts").select("id", { count: "exact", head: true }).eq("status", "converted").eq("contact_type", contactType),
     ]);
 
     if (error) throw new Error(error.message);

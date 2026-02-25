@@ -38,6 +38,7 @@ import {
   MessageSquare,
   RefreshCw,
   Trash2,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -397,9 +398,18 @@ const categoryColors: Record<string, string> = {
   resort_wear: "bg-teal-500/20 text-teal-400",
   luxury:      "bg-amber-500/20 text-amber-400",
   fashion:     "bg-violet-500/20 text-violet-400",
+  sunscreen:   "bg-yellow-500/20 text-yellow-400",
+  skincare:    "bg-rose-500/20 text-rose-400",
+  haircare:    "bg-pink-500/20 text-pink-400",
+  beverage:    "bg-blue-500/20 text-blue-400",
+  spirits:     "bg-orange-500/20 text-orange-400",
+  wellness:    "bg-green-500/20 text-green-400",
+  beauty:      "bg-purple-500/20 text-purple-400",
+  medspa:      "bg-sky-500/20 text-sky-400",
 };
 
-function OutreachTab() {
+function OutreachTab({ contactType = "outreach" }: { contactType?: "outreach" | "sponsor" }) {
+  const isSponsor = contactType === "sponsor";
   const [contacts, setContacts] = useState<OutreachContact[]>([]);
   const [total, setTotal] = useState(0);
   const [globalStatusCounts, setGlobalStatusCounts] = useState<Record<string, number>>({});
@@ -428,6 +438,7 @@ function OutreachTab() {
         search: debouncedSearch,
         status: statusFilter,
         category: categoryFilter,
+        type: contactType,
       });
       const res = await fetch(`/api/admin/outreach?${params}`);
       if (!res.ok) {
@@ -564,14 +575,29 @@ function OutreachTab() {
               <SelectTrigger className="w-full sm:w-40"><SelectValue placeholder="Category" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
-                <SelectItem value="swimwear">Swimwear</SelectItem>
-                <SelectItem value="resort_wear">Resort Wear</SelectItem>
-                <SelectItem value="lingerie">Lingerie</SelectItem>
-                <SelectItem value="luxury">Luxury</SelectItem>
-                <SelectItem value="fashion">Fashion</SelectItem>
-                <SelectItem value="activewear">Activewear</SelectItem>
-                <SelectItem value="beauty">Beauty</SelectItem>
-                <SelectItem value="accessories">Accessories</SelectItem>
+                {isSponsor ? (
+                  <>
+                    <SelectItem value="sunscreen">Sunscreen / SPF</SelectItem>
+                    <SelectItem value="skincare">Skincare</SelectItem>
+                    <SelectItem value="haircare">Haircare</SelectItem>
+                    <SelectItem value="beverage">Beverage</SelectItem>
+                    <SelectItem value="spirits">Spirits / Alcohol</SelectItem>
+                    <SelectItem value="wellness">Wellness</SelectItem>
+                    <SelectItem value="beauty">Beauty / Makeup</SelectItem>
+                    <SelectItem value="medspa">Med Spa</SelectItem>
+                  </>
+                ) : (
+                  <>
+                    <SelectItem value="swimwear">Swimwear</SelectItem>
+                    <SelectItem value="resort_wear">Resort Wear</SelectItem>
+                    <SelectItem value="lingerie">Lingerie</SelectItem>
+                    <SelectItem value="luxury">Luxury</SelectItem>
+                    <SelectItem value="fashion">Fashion</SelectItem>
+                    <SelectItem value="activewear">Activewear</SelectItem>
+                    <SelectItem value="beauty">Beauty</SelectItem>
+                    <SelectItem value="accessories">Accessories</SelectItem>
+                  </>
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -795,7 +821,7 @@ function OutreachTab() {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function AdminBrandsPage() {
-  const [activeTab, setActiveTab] = useState<"accounts" | "outreach">("accounts");
+  const [activeTab, setActiveTab] = useState<"accounts" | "outreach" | "sponsors">("accounts");
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -812,24 +838,29 @@ export default function AdminBrandsPage() {
               <Building2 className="h-6 w-6 text-violet-500" />
               Brands
             </h1>
-            <p className="text-sm text-muted-foreground">Manage brand accounts and outreach pipeline</p>
+            <p className="text-sm text-muted-foreground">Manage brand accounts, outreach pipeline, and event sponsors</p>
           </div>
         </div>
 
         {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "accounts" | "outreach")}>
-          <TabsList className="grid w-full max-w-xs grid-cols-2">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "accounts" | "outreach" | "sponsors")}>
+          <TabsList className="grid w-full max-w-sm grid-cols-3">
             <TabsTrigger value="accounts" className="gap-2">
               <Building2 className="h-4 w-4" />Accounts
             </TabsTrigger>
             <TabsTrigger value="outreach" className="gap-2">
               <Mail className="h-4 w-4" />Outreach
             </TabsTrigger>
+            <TabsTrigger value="sponsors" className="gap-2">
+              <Sparkles className="h-4 w-4" />Sponsors
+            </TabsTrigger>
           </TabsList>
         </Tabs>
 
         {/* Tab content */}
-        {activeTab === "accounts" ? <AccountsTab /> : <OutreachTab />}
+        {activeTab === "accounts" && <AccountsTab />}
+        {activeTab === "outreach" && <OutreachTab contactType="outreach" />}
+        {activeTab === "sponsors" && <OutreachTab contactType="sponsor" />}
       </div>
     </div>
   );

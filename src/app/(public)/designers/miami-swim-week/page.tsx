@@ -382,16 +382,11 @@ export default async function MswBrandPage() {
           </div>
         </div>
 
-        {/* Additional Brand Opportunities */}
+        {/* Additional Opportunities */}
         <div className="mb-20">
-          <div className="flex items-center gap-3 mb-5">
-            <Badge className="bg-violet-500/10 text-violet-400 border-violet-500/20 px-3 py-0.5">
-              More Ways to Participate
-            </Badge>
-            <h2 className="text-xl font-bold">Additional Opportunities</h2>
-          </div>
+          <h2 className="text-2xl font-bold text-center mb-8">Additional Opportunities</h2>
 
-          <div className="max-w-3xl space-y-3">
+          <div className="max-w-3xl mx-auto space-y-3">
             {/* Miami Beach Shoot Day */}
             <div className="flex flex-col sm:flex-row sm:items-center gap-4 px-5 py-4 rounded-2xl border border-sky-500/20 bg-sky-500/5">
               <div className="p-2 rounded-xl bg-sky-500/10 flex-shrink-0 self-start sm:self-auto">
@@ -405,36 +400,33 @@ export default async function MswBrandPage() {
                 <SimpleCheckoutButton packageId="beach-shoot-halfday" price={1500} label="Book Now" colorClass="from-sky-500 to-blue-500 hover:from-sky-600 hover:to-blue-600 shadow-sky-500/20 hover:shadow-sky-500/30" />
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Private Showroom + EXA Swim Shop — compact rows */}
-        <div className="mb-20 max-w-3xl space-y-3">
-          {/* Private Showroom */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4 px-5 py-4 rounded-2xl border border-amber-500/20 bg-amber-500/5">
-            <div className="p-2 rounded-xl bg-amber-500/10 flex-shrink-0 self-start sm:self-auto">
-              <Building2 className="h-4 w-4 text-amber-400" />
+            {/* Private Showroom */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 px-5 py-4 rounded-2xl border border-amber-500/20 bg-amber-500/5">
+              <div className="p-2 rounded-xl bg-amber-500/10 flex-shrink-0 self-start sm:self-auto">
+                <Building2 className="h-4 w-4 text-amber-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm">Private Showroom</p>
+                <p className="text-xs text-muted-foreground mt-0.5">The National Hotel Miami Beach · Ballroom · 2 EXA models included · +$350/additional model</p>
+              </div>
+              <div className="flex-shrink-0 w-full sm:w-56">
+                <SimpleCheckoutButton packageId="showroom-fullday" price={1600} label="Book Now" colorClass="from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 shadow-amber-500/20 hover:shadow-amber-500/30" />
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-sm">Private Showroom</p>
-              <p className="text-xs text-muted-foreground mt-0.5">The National Hotel Miami Beach · Ballroom · 2 EXA models included · +$350/additional model</p>
-            </div>
-            <div className="flex-shrink-0 w-full sm:w-56">
-              <SimpleCheckoutButton packageId="showroom-fullday" price={1600} label="Book Now" colorClass="from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 shadow-amber-500/20 hover:shadow-amber-500/30" />
-            </div>
-          </div>
 
-          {/* EXA Swim Shop */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4 px-5 py-4 rounded-2xl border border-teal-500/20 bg-teal-500/5">
-            <div className="p-2 rounded-xl bg-teal-500/10 flex-shrink-0 self-start sm:self-auto">
-              <ShoppingBag className="h-4 w-4 text-teal-400" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-sm">EXA Swim Shop</p>
-              <p className="text-xs text-muted-foreground mt-0.5">May 26–31 · All week · Sell your swimwear directly to attendees, buyers &amp; fans</p>
-            </div>
-            <div className="flex-shrink-0 w-full sm:w-56">
-              <SimpleCheckoutButton packageId="swim-shop" price={500} label="Reserve Now" colorClass="from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 shadow-teal-500/20 hover:shadow-teal-500/30" />
+            {/* EXA Swim Shop */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 px-5 py-4 rounded-2xl border border-teal-500/20 bg-teal-500/5">
+              <div className="p-2 rounded-xl bg-teal-500/10 flex-shrink-0 self-start sm:self-auto">
+                <ShoppingBag className="h-4 w-4 text-teal-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm">EXA Swim Shop</p>
+                <p className="text-xs text-muted-foreground mt-0.5">May 26–31 · All week · Sell your swimwear directly to attendees, buyers &amp; fans</p>
+              </div>
+              <div className="flex-shrink-0 w-full sm:w-56">
+                <SimpleCheckoutButton packageId="swim-shop" price={500} label="Reserve Now" colorClass="from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 shadow-teal-500/20 hover:shadow-teal-500/30" />
+              </div>
             </div>
           </div>
         </div>
