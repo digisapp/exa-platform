@@ -263,8 +263,8 @@ export default async function EventPage({ params, searchParams }: Props) {
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent pointer-events-none" />
           </div>
 
-          {/* Event Info Overlay */}
-          <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 pointer-events-none">
+          {/* Event Info Overlay — desktop only */}
+          <div className="hidden md:block absolute bottom-0 left-0 right-0 p-6 md:p-10 pointer-events-none">
             <Badge className="mb-4 bg-gradient-to-r from-pink-500 to-violet-500 text-white border-0 px-4 py-1.5 text-sm font-semibold">
               {event.short_name} {event.year}
             </Badge>
