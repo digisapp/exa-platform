@@ -37,6 +37,7 @@ import {
   Tag,
   MessageSquare,
   RefreshCw,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -94,6 +95,8 @@ function AccountsTab() {
   const [verifiedFilter, setVerifiedFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 300);
@@ -144,6 +147,21 @@ function AccountsTab() {
       toast.error("Failed to update brand");
     } finally {
       setTogglingId(null);
+    }
+  };
+
+  const deleteBrand = async (id: string) => {
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/api/admin/brands/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete brand");
+      toast.success("Brand deleted");
+      setConfirmDeleteId(null);
+      fetchBrands();
+    } catch {
+      toast.error("Failed to delete brand");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -286,14 +304,38 @@ function AccountsTab() {
                         {new Date(brand.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          size="sm" variant="outline"
-                          onClick={() => toggleVerified(brand)}
-                          disabled={togglingId === brand.id}
-                          className={brand.is_verified ? "text-amber-500 border-amber-500/30 hover:bg-amber-500/10" : "text-green-500 border-green-500/30 hover:bg-green-500/10"}
-                        >
-                          {togglingId === brand.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : brand.is_verified ? <><ShieldOff className="h-3.5 w-3.5 mr-1" />Unverify</> : <><Shield className="h-3.5 w-3.5 mr-1" />Verify</>}
-                        </Button>
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            size="sm" variant="outline"
+                            onClick={() => toggleVerified(brand)}
+                            disabled={togglingId === brand.id || deletingId === brand.id}
+                            className={brand.is_verified ? "text-amber-500 border-amber-500/30 hover:bg-amber-500/10" : "text-green-500 border-green-500/30 hover:bg-green-500/10"}
+                          >
+                            {togglingId === brand.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : brand.is_verified ? <><ShieldOff className="h-3.5 w-3.5 mr-1" />Unverify</> : <><Shield className="h-3.5 w-3.5 mr-1" />Verify</>}
+                          </Button>
+                          {confirmDeleteId === brand.id ? (
+                            <div className="flex items-center gap-1">
+                              <Button
+                                size="sm" variant="destructive"
+                                onClick={() => deleteBrand(brand.id)}
+                                disabled={deletingId === brand.id}
+                                className="text-xs px-2"
+                              >
+                                {deletingId === brand.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Confirm?"}
+                              </Button>
+                              <Button size="sm" variant="ghost" onClick={() => setConfirmDeleteId(null)} className="text-xs px-2 text-muted-foreground">Cancel</Button>
+                            </div>
+                          ) : (
+                            <Button
+                              size="sm" variant="ghost"
+                              onClick={() => setConfirmDeleteId(brand.id)}
+                              disabled={togglingId === brand.id || deletingId === brand.id}
+                              className="text-red-500/60 hover:text-red-500 hover:bg-red-500/10"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -368,6 +410,8 @@ function OutreachTab() {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [editingNotesId, setEditingNotesId] = useState<string | null>(null);
   const [notesValue, setNotesValue] = useState("");
 
@@ -463,6 +507,21 @@ function OutreachTab() {
       toast.error("Failed to save notes");
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  const deleteContact = async (id: string) => {
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/api/admin/outreach/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete contact");
+      toast.success("Contact deleted");
+      setConfirmDeleteId(null);
+      fetchContacts();
+    } catch {
+      toast.error("Failed to delete contact");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -675,16 +734,40 @@ function OutreachTab() {
 
                       {/* Actions */}
                       <TableCell className="text-right">
-                        <Button
-                          size="sm" variant="outline"
-                          onClick={() => markContacted(contact)}
-                          disabled={updatingId === contact.id}
-                          className="text-blue-400 border-blue-400/30 hover:bg-blue-400/10 whitespace-nowrap"
-                        >
-                          {updatingId === contact.id
-                            ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            : <><RefreshCw className="h-3.5 w-3.5 mr-1" />Log Contact</>}
-                        </Button>
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            size="sm" variant="outline"
+                            onClick={() => markContacted(contact)}
+                            disabled={updatingId === contact.id || deletingId === contact.id}
+                            className="text-blue-400 border-blue-400/30 hover:bg-blue-400/10 whitespace-nowrap"
+                          >
+                            {updatingId === contact.id
+                              ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              : <><RefreshCw className="h-3.5 w-3.5 mr-1" />Log Contact</>}
+                          </Button>
+                          {confirmDeleteId === contact.id ? (
+                            <div className="flex items-center gap-1">
+                              <Button
+                                size="sm" variant="destructive"
+                                onClick={() => deleteContact(contact.id)}
+                                disabled={deletingId === contact.id}
+                                className="text-xs px-2"
+                              >
+                                {deletingId === contact.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Confirm?"}
+                              </Button>
+                              <Button size="sm" variant="ghost" onClick={() => setConfirmDeleteId(null)} className="text-xs px-2 text-muted-foreground">Cancel</Button>
+                            </div>
+                          ) : (
+                            <Button
+                              size="sm" variant="ghost"
+                              onClick={() => setConfirmDeleteId(contact.id)}
+                              disabled={updatingId === contact.id || deletingId === contact.id}
+                              className="text-red-500/60 hover:text-red-500 hover:bg-red-500/10"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}

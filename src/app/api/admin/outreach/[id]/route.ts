@@ -78,3 +78,37 @@ export async function PATCH(
     return NextResponse.json({ error: "Failed to update contact" }, { status: 500 });
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) return rateLimitResponse;
+
+    if (!(await isAdmin(supabase, user.id))) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const adminClient = createServiceRoleClient();
+    const { error } = await adminClient
+      .from("brand_outreach_contacts")
+      .delete()
+      .eq("id", id);
+
+    if (error) throw new Error(error.message);
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Admin outreach delete error:", message);
+    return NextResponse.json({ error: "Failed to delete contact" }, { status: 500 });
+  }
+}
