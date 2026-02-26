@@ -445,7 +445,7 @@ export function ProfileActionButtons({
               <button
                 onClick={handleVideoCall}
                 disabled={startingCall !== null}
-                className="flex items-center justify-center gap-1.5 h-9 rounded-xl bg-white/8 hover:bg-white/15 border border-white/10 hover:border-white/20 text-white/70 hover:text-white text-xs font-medium transition-all active:scale-95 disabled:opacity-50"
+                className="flex items-center justify-center gap-1.5 h-9 rounded-xl bg-pink-500/15 hover:bg-pink-500/25 border border-pink-500/30 hover:border-pink-500/50 text-pink-400 hover:text-pink-300 text-xs font-medium transition-all active:scale-95 disabled:opacity-50"
               >
                 {startingCall === "video" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Video className="h-3.5 w-3.5" />}
                 Video
@@ -455,7 +455,7 @@ export function ProfileActionButtons({
               <button
                 onClick={handleVoiceCall}
                 disabled={startingCall !== null}
-                className="flex items-center justify-center gap-1.5 h-9 rounded-xl bg-white/8 hover:bg-white/15 border border-white/10 hover:border-white/20 text-white/70 hover:text-white text-xs font-medium transition-all active:scale-95 disabled:opacity-50"
+                className="flex items-center justify-center gap-1.5 h-9 rounded-xl bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30 hover:border-blue-500/50 text-blue-400 hover:text-blue-300 text-xs font-medium transition-all active:scale-95 disabled:opacity-50"
               >
                 {startingCall === "voice" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Phone className="h-3.5 w-3.5" />}
                 Voice
@@ -464,7 +464,7 @@ export function ProfileActionButtons({
             {allowTips && (
               <button
                 onClick={handleTip}
-                className="flex items-center justify-center gap-1.5 h-9 rounded-xl bg-white/8 hover:bg-white/15 border border-white/10 hover:border-white/20 text-white/70 hover:text-white text-xs font-medium transition-all active:scale-95"
+                className="flex items-center justify-center gap-1.5 h-9 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 hover:border-amber-500/50 text-amber-400 hover:text-amber-300 text-xs font-medium transition-all active:scale-95"
               >
                 <Gift className="h-3.5 w-3.5" />
                 Tip
