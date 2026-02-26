@@ -22,12 +22,12 @@ import {
 } from "lucide-react";
 import { TopModelsCarousel } from "@/components/home/TopModelsCarousel";
 import { UpcomingEventsCarousel } from "@/components/home/UpcomingEventsCarousel";
-import { formatCoins } from "@/lib/coin-config";
+import { formatCoins, coinsToFanUsd, formatUsd } from "@/lib/coin-config";
 import { format } from "date-fns";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
-// Cache homepage for 5 minutes - model list changes infrequently
-export const revalidate = 300;
+// Cache homepage for 60 seconds so bid counts stay reasonably fresh
+export const revalidate = 60;
 
 // Shuffle array helper
 function shuffleArray<T>(array: T[]): T[] {
@@ -309,13 +309,15 @@ export default async function HomePage() {
                             <p className="text-xs text-white/40">{auction.model?.first_name}</p>
                           </div>
                           <div className="text-right flex-shrink-0">
-                            <div className="flex items-center gap-1 text-amber-400">
-                              <Coins className="h-3 w-3" />
-                              <span className="text-xs font-semibold">
+                            <div className="flex items-center gap-1.5 text-amber-400">
+                              <Coins className="h-4 w-4" />
+                              <span className="text-sm font-bold">
                                 {formatCoins(auction.current_bid || auction.starting_price)}
                               </span>
+                              <span className="text-[11px] text-white/40">
+                                {formatUsd(coinsToFanUsd(auction.current_bid || auction.starting_price))}
+                              </span>
                             </div>
-                            <p className="text-[10px] text-white/30">{auction.bid_count} bids</p>
                           </div>
                         </div>
                       ))}
