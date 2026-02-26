@@ -168,7 +168,7 @@ export default async function BidsPage() {
               <h1 className="text-3xl font-bold">Bids</h1>
             </div>
             <p className="text-muted-foreground">
-              Bid on exclusive experiences and content from your favorite models
+              Bid on content, deliverables, services &amp; experiences from your favorite models
             </p>
           </div>
 
