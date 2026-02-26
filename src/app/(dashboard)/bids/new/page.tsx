@@ -34,6 +34,24 @@ import type { AuctionCategory } from "@/types/auctions";
 
 const QUICK_PRESETS = [
   {
+    emoji: "👙",
+    label: "Swimwear Try-On",
+    title: "Exclusive Swimwear Try-On Haul for You",
+    description: "Bid for a custom swimwear try-on haul — I'll model a curated selection of bikinis and swimwear, exclusively for the winner. Perfect for swim week season.",
+    deliverables: "• 10–15 photos in multiple swimwear looks\n• Delivered privately to winner within 7 days\n• Winner's choice of style direction",
+    category: "custom_content" as AuctionCategory,
+    suggestedPrice: "500",
+  },
+  {
+    emoji: "📸",
+    label: "Photo Set",
+    title: "10 Exclusive Photos — Custom Theme",
+    description: "Bid for a set of 10 exclusive photos shot just for you. You pick the theme, vibe, and direction — completely custom and never posted publicly.",
+    deliverables: "• 10 high-quality exclusive photos\n• Custom theme of your choice\n• Delivered privately within 7 days\n• Never posted publicly",
+    category: "custom_content" as AuctionCategory,
+    suggestedPrice: "350",
+  },
+  {
     emoji: "🎬",
     label: "Brand Reel",
     title: "1 Custom Reel Featuring Your Brand",
@@ -52,6 +70,24 @@ const QUICK_PRESETS = [
     suggestedPrice: "200",
   },
   {
+    emoji: "💼",
+    label: "Brand Deal",
+    title: "Sponsored Campaign — 1 Feed Post + 3 Stories",
+    description: "Bid for a full branded content campaign on my Instagram. Includes 1 polished feed post and 3 story frames — maximum exposure for your brand.",
+    deliverables: "• 1 dedicated Instagram feed post\n• 3 branded Instagram Story frames\n• Swipe-up/link in bio included\n• Content delivered within 14 days",
+    category: "shoutout" as AuctionCategory,
+    suggestedPrice: "800",
+  },
+  {
+    emoji: "📦",
+    label: "Unboxing Video",
+    title: "Unboxing & Review of Your Product",
+    description: "Send me your product and I'll create an authentic unboxing/review video for my followers. Great for new product launches.",
+    deliverables: "• Unboxing + review video posted to Instagram\n• Honest, authentic review\n• Posted within 7 days of receiving the product",
+    category: "custom_content" as AuctionCategory,
+    suggestedPrice: "400",
+  },
+  {
     emoji: "🎂",
     label: "Birthday Video",
     title: "Personalized Birthday Video Message",
@@ -59,6 +95,15 @@ const QUICK_PRESETS = [
     deliverables: "• 1–2 min personalized birthday video\n• Recorded within 48 hours of your event date\n• Sent directly to you via DM",
     category: "shoutout" as AuctionCategory,
     suggestedPrice: "150",
+  },
+  {
+    emoji: "🥗",
+    label: "Lunch Date",
+    title: "Lunch Date in Miami with Me",
+    description: "Bid for a relaxed lunch date in Miami — great food, great conversation. A more intimate, low-key alternative to dinner.",
+    deliverables: "• 1–2 hours at a restaurant of your choice in Miami\n• Winner pays for the meal\n• Scheduled at a mutual time within 30 days",
+    category: "experience" as AuctionCategory,
+    suggestedPrice: "500",
   },
   {
     emoji: "🍣",
@@ -70,6 +115,15 @@ const QUICK_PRESETS = [
     suggestedPrice: "1000",
   },
   {
+    emoji: "🛍️",
+    label: "Shopping Date",
+    title: "Shopping Date in Miami with Me",
+    description: "Win a shopping date with me! We'll hit Wynwood, Bal Harbour, or Lincoln Road — your pick. Great vibes, great company.",
+    deliverables: "• 2–3 hours shopping together in Miami\n• Winner's choice of destination\n• Scheduled at a mutual time within 30 days",
+    category: "experience" as AuctionCategory,
+    suggestedPrice: "800",
+  },
+  {
     emoji: "🛥️",
     label: "Boat Day",
     title: "Boat Day in Miami with Me",
@@ -79,13 +133,13 @@ const QUICK_PRESETS = [
     suggestedPrice: "2000",
   },
   {
-    emoji: "📞",
-    label: "Video Call",
-    title: "30-Min Private Video Call with Me",
-    description: "Win a 30-minute one-on-one video call with me. Chat, ask anything, or just hang — this is your exclusive time.",
-    deliverables: "• 30-minute private video call\n• Scheduled within 14 days of winning\n• Your choice of topic",
-    category: "video_call" as AuctionCategory,
-    suggestedPrice: "300",
+    emoji: "🎫",
+    label: "Event Invite",
+    title: "VIP Invite to My Next Event",
+    description: "Bid for a personal invite to join me at my next event or appearance in Miami. You'll be on my guest list — exclusive access included.",
+    deliverables: "• 1 guest spot on my personal invite list\n• Access to my next public event or party in Miami\n• Meet & greet included",
+    category: "meet_greet" as AuctionCategory,
+    suggestedPrice: "600",
   },
   {
     emoji: "🎉",
@@ -95,15 +149,6 @@ const QUICK_PRESETS = [
     deliverables: "• Personal appearance at your event (Miami area)\n• Up to 3 hours\n• Scheduled at a mutual time within 60 days",
     category: "experience" as AuctionCategory,
     suggestedPrice: "3000",
-  },
-  {
-    emoji: "📦",
-    label: "Unboxing Video",
-    title: "Unboxing & Review of Your Product",
-    description: "Send me your product and I'll create an authentic unboxing/review video for my followers. Great for new product launches.",
-    deliverables: "• Unboxing + review video posted to Instagram\n• Honest, authentic review\n• Posted within 7 days of receiving the product",
-    category: "custom_content" as AuctionCategory,
-    suggestedPrice: "400",
   },
 ] as const;
 
