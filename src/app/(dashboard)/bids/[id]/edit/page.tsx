@@ -44,11 +44,9 @@ export default function EditBidPage({ params }: { params: Promise<{ id: string }
   const [startingPrice, setStartingPrice] = useState("100");
   const [reservePrice, setReservePrice] = useState("");
   const [buyNowPrice, setBuyNowPrice] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [endTime, setEndTime] = useState("");
+  const [duration, setDuration] = useState("7");
   const [category, setCategory] = useState<AuctionCategory>("other");
   const [allowAutoBid, setAllowAutoBid] = useState(true);
-  const [antiSnipeMinutes, setAntiSnipeMinutes] = useState("2");
 
   useEffect(() => {
     const loadAuction = async () => {
@@ -105,15 +103,15 @@ export default function EditBidPage({ params }: { params: Promise<{ id: string }
       setReservePrice(auction.reserve_price?.toString() || "");
       setBuyNowPrice(auction.buy_now_price?.toString() || "");
       setAllowAutoBid(auction.allow_auto_bid ?? true);
-      setAntiSnipeMinutes(auction.anti_snipe_minutes?.toString() || "2");
 
-      // Parse end date/time
+      // Infer duration from remaining time — snap to closest preset
       if (auction.ends_at) {
-        const endDateTime = new Date(auction.ends_at);
-        setEndDate(endDateTime.toISOString().split("T")[0]);
-        setEndTime(
-          endDateTime.toTimeString().slice(0, 5)
-        );
+        const msLeft = new Date(auction.ends_at).getTime() - Date.now();
+        const daysLeft = Math.round(msLeft / (1000 * 60 * 60 * 24));
+        if (daysLeft <= 1) setDuration("1");
+        else if (daysLeft <= 3) setDuration("3");
+        else if (daysLeft <= 7) setDuration("7");
+        else setDuration("14");
       }
 
       setLoading(false);
@@ -134,16 +132,10 @@ export default function EditBidPage({ params }: { params: Promise<{ id: string }
       return;
     }
 
-    if (!endDate || !endTime) {
-      toast.error("End date and time are required");
-      return;
-    }
-
-    const endsAt = new Date(`${endDate}T${endTime}`);
-    if (endsAt <= new Date()) {
-      toast.error("End time must be in the future");
-      return;
-    }
+    // Calculate end time from duration
+    const endsAt = new Date();
+    endsAt.setDate(endsAt.getDate() + parseInt(duration));
+    endsAt.setHours(12, 0, 0, 0);
 
     const parsedReservePrice = reservePrice ? parseInt(reservePrice) : null;
     if (parsedReservePrice && parsedReservePrice <= parsedStartingPrice) {
@@ -173,7 +165,7 @@ export default function EditBidPage({ params }: { params: Promise<{ id: string }
           buy_now_price: parsedBuyNowPrice,
           ends_at: endsAt.toISOString(),
           allow_auto_bid: allowAutoBid,
-          anti_snipe_minutes: parseInt(antiSnipeMinutes) || 2,
+          anti_snipe_minutes: 2,
         }),
       });
 
@@ -423,61 +415,45 @@ export default function EditBidPage({ params }: { params: Promise<{ id: string }
             </div>
           </div>
           <div className="p-6 space-y-5">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="end-date" className="text-sm font-medium">
-                  End Date <span className="text-pink-500">*</span>
-                </Label>
-                <Input
-                  id="end-date"
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  min={new Date().toISOString().split("T")[0]}
-                  className="mt-1.5 bg-background/50 border-blue-500/20 focus:border-blue-500/50"
-                />
+            {/* Duration presets */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">How long should bidding run?</Label>
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  { days: "1", label: "1 Day", sub: "Max FOMO" },
+                  { days: "3", label: "3 Days", sub: "Quick hit" },
+                  { days: "7", label: "7 Days", sub: "Most popular" },
+                  { days: "14", label: "14 Days", sub: "Big ticket" },
+                ].map(({ days, label, sub }) => (
+                  <button
+                    key={days}
+                    type="button"
+                    onClick={() => setDuration(days)}
+                    className={`flex flex-col items-center gap-0.5 py-3 px-2 rounded-xl border transition-all ${
+                      duration === days
+                        ? "border-blue-500/60 bg-blue-500/15 text-blue-300"
+                        : "border-blue-500/15 bg-blue-500/5 text-muted-foreground hover:border-blue-500/40 hover:text-foreground"
+                    }`}
+                  >
+                    <span className="font-semibold text-sm">{label}</span>
+                    <span className="text-[10px] opacity-70">{sub}</span>
+                  </button>
+                ))}
               </div>
-              <div>
-                <Label htmlFor="end-time" className="text-sm font-medium">
-                  End Time <span className="text-pink-500">*</span>
-                </Label>
-                <Input
-                  id="end-time"
-                  type="time"
-                  value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                  className="mt-1.5 bg-background/50 border-blue-500/20 focus:border-blue-500/50"
-                />
-              </div>
+              {/* End date preview */}
+              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5 text-blue-400" />
+                Ends{" "}
+                {(() => {
+                  const d = new Date();
+                  d.setDate(d.getDate() + parseInt(duration));
+                  d.setHours(12, 0, 0, 0);
+                  return d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }) + " at 12:00 PM";
+                })()}
+              </p>
             </div>
 
             <div className="h-px bg-gradient-to-r from-transparent via-blue-500/20 to-transparent" />
-
-            <div className="flex items-center justify-between p-4 rounded-xl bg-blue-500/5 border border-blue-500/10">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-blue-500/10">
-                  <Clock className="h-4 w-4 text-blue-400" />
-                </div>
-                <div>
-                  <Label htmlFor="anti-snipe" className="text-sm font-medium">Anti-Sniping</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Extend auction if bid in final minutes
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Input
-                  id="anti-snipe"
-                  type="number"
-                  min="0"
-                  max="10"
-                  value={antiSnipeMinutes}
-                  onChange={(e) => setAntiSnipeMinutes(e.target.value)}
-                  className="w-20 text-center bg-background/50 border-blue-500/20"
-                />
-                <span className="text-xs text-muted-foreground">min</span>
-              </div>
-            </div>
 
             <div className="flex items-center justify-between p-4 rounded-xl bg-blue-500/5 border border-blue-500/10">
               <div className="flex items-center gap-3">
