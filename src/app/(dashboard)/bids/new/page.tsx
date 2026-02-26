@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { coinsToUsd, formatUsd } from "@/lib/coin-config";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
@@ -25,6 +26,10 @@ import {
   Tag,
   Timer,
   Sparkles,
+  Copy,
+  Check,
+  Instagram,
+  ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AUCTION_CATEGORIES } from "@/types/auctions";
@@ -111,6 +116,9 @@ export default function NewBidPage() {
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [publishedAuction, setPublishedAuction] = useState<{ id: string; title: string; endsAt: string } | null>(null);
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   // Form state
   const [title, setTitle] = useState("");
@@ -163,6 +171,28 @@ export default function NewBidPage() {
 
     checkAuth();
   }, [supabase, router]);
+
+  const getBidCaptions = (bidTitle: string, bidId: string, endsAt: string) => {
+    const url = `https://www.examodels.com/bids/${bidId}`;
+    const endDate = new Date(endsAt).toLocaleDateString("en-US", { month: "long", day: "numeric" });
+    return [
+      `🔥 My new bid just went LIVE!\n\n"${bidTitle}"\n\nBidding closes ${endDate} — link in bio to place your bid 👆`,
+      `⏳ You have until ${endDate} to win this one!\n\n"${bidTitle}"\n\nDon't miss out — grab your bid now! Link in bio 🏆`,
+      `💫 I want YOU to win this!\n\n"${bidTitle}" is now open for bidding 🎉\n\nLink in bio — let's go! ✨`,
+    ];
+  };
+
+  const copyCaption = async (text: string, index: number) => {
+    await navigator.clipboard.writeText(text);
+    setCopiedIndex(index);
+    setTimeout(() => setCopiedIndex(null), 2000);
+  };
+
+  const copyLink = async (bidId: string) => {
+    await navigator.clipboard.writeText(`https://www.examodels.com/bids/${bidId}`);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
 
   const applyPreset = (preset: typeof QUICK_PRESETS[number]) => {
     setTitle(preset.title);
@@ -247,7 +277,9 @@ export default function NewBidPage() {
           return;
         }
 
-        toast.success("EXA Bid published!");
+        // Show caption modal instead of redirecting
+        setPublishedAuction({ id: auction.id, title: title.trim(), endsAt: endsAt.toISOString() });
+        return;
       } else {
         toast.success("EXA Bid saved as draft");
       }
@@ -609,5 +641,79 @@ export default function NewBidPage() {
         </div>
       </div>
     </div>
+
+    {/* Post-Publish Caption Modal */}
+    {publishedAuction && (() => {
+      const captions = getBidCaptions(publishedAuction.title, publishedAuction.id, publishedAuction.endsAt);
+      const bidUrl = `https://www.examodels.com/bids/${publishedAuction.id}`;
+      return (
+        <Dialog open={true} onOpenChange={() => { router.push("/bids/manage"); }}>
+          <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <div className="flex flex-col items-center text-center gap-2 pb-2">
+                <div className="text-4xl">🎉</div>
+                <DialogTitle className="text-xl">Your bid is live!</DialogTitle>
+                <p className="text-sm text-muted-foreground">
+                  Hype it up on Instagram — copy a caption and share with your followers
+                </p>
+              </div>
+            </DialogHeader>
+
+            {/* Bid link */}
+            <div className="space-y-1.5">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Bid link</p>
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-zinc-800/60 border border-zinc-700">
+                <span className="text-sm text-zinc-300 truncate flex-1">{bidUrl}</span>
+                <button
+                  onClick={() => copyLink(publishedAuction.id)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-500/20 hover:bg-violet-500/30 text-violet-400 text-xs font-medium transition-all shrink-0"
+                >
+                  {copiedLink ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                  {copiedLink ? "Copied!" : "Copy"}
+                </button>
+              </div>
+            </div>
+
+            {/* Caption options */}
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                <Instagram className="h-3.5 w-3.5" />
+                Ready-to-post captions
+              </p>
+              {captions.map((caption, i) => (
+                <div key={i} className="p-3 rounded-xl bg-zinc-800/60 border border-zinc-700 space-y-2">
+                  <p className="text-sm text-zinc-300 whitespace-pre-line leading-relaxed">{caption}</p>
+                  <button
+                    onClick={() => copyCaption(caption, i)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-pink-500/15 hover:bg-pink-500/25 text-pink-400 text-xs font-medium transition-all"
+                  >
+                    {copiedIndex === i ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                    {copiedIndex === i ? "Copied!" : "Copy caption"}
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-2 pt-2">
+              <Button
+                variant="outline"
+                className="flex-1 border-zinc-700"
+                onClick={() => router.push("/bids/manage")}
+              >
+                Go to My Bids
+              </Button>
+              <Button
+                className="flex-1 bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white"
+                onClick={() => window.open(`https://www.instagram.com`, "_blank")}
+              >
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Open Instagram
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      );
+    })()}
   );
 }

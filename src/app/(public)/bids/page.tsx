@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Navbar } from "@/components/layout/navbar";
 import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 import { AuctionCard } from "@/components/auctions/AuctionCard";
+import { BidsCategoryFilter } from "@/components/auctions/BidsCategoryFilter";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
@@ -180,10 +181,9 @@ export default async function BidsPage() {
             </TabsList>
 
             <TabsContent value="all" className="space-y-6">
-              <AuctionGrid
+              <BidsCategoryFilter
                 auctions={formattedAuctions}
                 watchedIds={watchedAuctionIds}
-                emptyMessage="No active bids right now. Check back soon!"
               />
             </TabsContent>
 
