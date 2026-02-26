@@ -220,7 +220,7 @@ export function AuctionDetailClient({
                   asChild
                   className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
                 >
-                  <Link href="/auth/login">Sign In</Link>
+                  <Link href={`/signin?redirect=/bids/${auction.id}`}>Sign In</Link>
                 </Button>
               </div>
             )}
