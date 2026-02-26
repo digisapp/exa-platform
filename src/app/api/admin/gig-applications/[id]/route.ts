@@ -106,8 +106,8 @@ export async function PATCH(
       }
     }
 
-    // If cancelling an accepted application, decrement spots_filled and remove badge
-    if ((status === "cancelled" || status === "rejected") && application.status === "accepted") {
+    // If un-accepting an application (cancel, reject, or revert to pending), decrement spots_filled and remove badge
+    if ((status === "cancelled" || status === "rejected" || status === "pending") && application.status === "accepted") {
       const { error: rpcError } = await adminClient.rpc("decrement_gig_spots_filled", { gig_id: application.gig_id });
       if (rpcError) {
         console.error("RPC decrement error:", rpcError);
