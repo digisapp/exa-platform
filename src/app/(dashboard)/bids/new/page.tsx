@@ -212,7 +212,6 @@ export default function NewBidPage() {
     return [
       `🔥 My new bid just went LIVE!\n\n"${bidTitle}"\n\nYou have ${timeframe} to place your bid — link in bio 👆`,
       `⏳ ${daysNum === 1 ? "Only 24 hours" : `Only ${daysNum} days`} to win this one!\n\n"${bidTitle}"\n\nDon't miss out — grab your bid now! Link in bio 🏆`,
-      `💫 I want YOU to win this!\n\n"${bidTitle}" is now open for bidding 🎉\n\nBidding closes in ${timeframe} — link in bio ✨`,
     ];
   };
 
