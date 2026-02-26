@@ -131,7 +131,7 @@ export default async function AuctionDetailPage({ params }: PageProps) {
     .from("auction_bids")
     .select(`
       *,
-      bidder:actors!auction_bids_bidder_id_fkey (
+      bidder:actors (
         id,
         type
       )

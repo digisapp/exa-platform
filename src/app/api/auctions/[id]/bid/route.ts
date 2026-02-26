@@ -187,11 +187,12 @@ export async function GET(
       .from("auction_bids")
       .select(`
         id,
+        bidder_id,
         amount,
         status,
         is_buy_now,
         created_at,
-        bidder:actors!auction_bids_bidder_id_fkey (
+        bidder:actors (
           id,
           type
         )
@@ -202,13 +203,19 @@ export async function GET(
 
     if (error) {
       console.error("Get bids error:", error);
-      throw error;
+      // Return empty rather than 500 so the UI still updates
+      return NextResponse.json({ bids: [] });
     }
 
     // Batch-enrich bids with bidder info (2 queries instead of N+1)
-    const enhancedBids = await enrichBidsWithBidderInfo(supabase, bids || []);
-
-    return NextResponse.json({ bids: enhancedBids });
+    try {
+      const enhancedBids = await enrichBidsWithBidderInfo(supabase, bids || []);
+      return NextResponse.json({ bids: enhancedBids });
+    } catch (enrichErr) {
+      console.error("Bid enrichment error:", enrichErr);
+      // Return raw bids without enrichment so the history still shows
+      return NextResponse.json({ bids: bids || [] });
+    }
   } catch (error) {
     console.error("Get bids error:", error);
     return NextResponse.json(
