@@ -4,10 +4,7 @@ import { Navbar } from "@/components/layout/navbar";
 import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 import { AuctionCard } from "@/components/auctions/AuctionCard";
 import { BidsCategoryFilter } from "@/components/auctions/BidsCategoryFilter";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import Link from "next/link";
-import { Gavel, Clock, Sparkles, Zap, Eye } from "lucide-react";
+import { Gavel, Zap } from "lucide-react";
 import type { AuctionWithModel } from "@/types/auctions";
 
 export const metadata: Metadata = {
@@ -31,7 +28,6 @@ export default async function BidsPage() {
   let watchedAuctionIds: string[] = [];
 
   if (user) {
-    // Get actor info
     const { data: actor } = await supabase
       .from("actors")
       .select("id, type")
@@ -41,7 +37,6 @@ export default async function BidsPage() {
     actorType = actor?.type || null;
     actorId = actor?.id || null;
 
-    // Get profile info based on actor type
     if (actor?.type === "model" || actor?.type === "admin") {
       const { data } = await supabase
         .from("models")
@@ -60,7 +55,6 @@ export default async function BidsPage() {
       coinBalance = data?.coin_balance ?? 0;
     }
 
-    // Get watched auctions
     if (actorId) {
       const { data: watchlist } = await (supabase as any)
         .from("auction_watchlist")
@@ -87,7 +81,6 @@ export default async function BidsPage() {
     .eq("status", "active")
     .order("ends_at", { ascending: true });
 
-  // Format auctions
   const formattedAuctions: AuctionWithModel[] = (auctions || []).map((auction: any) => ({
     ...auction,
     model: auction.model ? {
@@ -101,20 +94,14 @@ export default async function BidsPage() {
     } : undefined,
   }));
 
-  // Filter auctions
+  // Stats
   const now = new Date();
   const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
-  const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-
-  const endingSoon = formattedAuctions.filter(
+  const endingThisHour = formattedAuctions.filter(
     (a) => new Date(a.ends_at) <= oneHourFromNow
   );
-  const newAuctions = formattedAuctions.filter(
-    (a) => new Date(a.created_at) >= oneDayAgo
-  );
-  const withBuyNow = formattedAuctions.filter((a) => a.buy_now_price);
-  const watchedAuctions = formattedAuctions.filter((a) =>
-    watchedAuctionIds.includes(a.id)
+  const totalUsd = Math.round(
+    formattedAuctions.reduce((sum, a) => sum + (a.current_bid || a.starting_price) * 0.10, 0)
   );
 
   const displayName =
@@ -136,6 +123,41 @@ export default async function BidsPage() {
           actorType={actorType}
         />
 
+        {/* Urgency Stats Bar */}
+        <div className="sticky top-16 z-10 border-b border-zinc-800/60 bg-zinc-950/90 backdrop-blur-sm">
+          <div className="container px-8 md:px-16 py-2.5 flex items-center gap-3 flex-wrap text-sm">
+            <div className="flex items-center gap-1.5">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+              </span>
+              <span className="font-bold text-white tracking-wide">LIVE</span>
+            </div>
+            <span className="text-zinc-600">·</span>
+            <span className="text-zinc-400">
+              <span className="text-white font-semibold">{formattedAuctions.length}</span> active bids
+            </span>
+            {endingThisHour.length > 0 && (
+              <>
+                <span className="text-zinc-600">·</span>
+                <span className="flex items-center gap-1 text-amber-400">
+                  <Zap className="h-3.5 w-3.5" />
+                  <span className="font-semibold">{endingThisHour.length}</span>
+                  <span>ending this hour</span>
+                </span>
+              </>
+            )}
+            {totalUsd > 0 && (
+              <>
+                <span className="text-zinc-600">·</span>
+                <span className="text-zinc-400">
+                  <span className="text-white font-semibold">${totalUsd.toLocaleString()}</span> in play
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+
         <main className="container px-8 md:px-16 py-8">
           {/* Header */}
           <div className="mb-8">
@@ -144,132 +166,46 @@ export default async function BidsPage() {
                 <Gavel className="h-6 w-6 text-white" />
               </div>
               <h1 className="text-3xl font-bold">Bids</h1>
-              <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
-                Live
-              </Badge>
             </div>
             <p className="text-muted-foreground">
               Bid on exclusive experiences and content from your favorite models
             </p>
           </div>
 
-          {/* Tabs */}
-          <Tabs defaultValue="all" className="space-y-6">
-            <TabsList className="flex-wrap">
-              <TabsTrigger value="all" className="gap-1">
-                <Gavel className="h-4 w-4" />
-                All ({formattedAuctions.length})
-              </TabsTrigger>
-              <TabsTrigger value="ending-soon" className="gap-1">
-                <Clock className="h-4 w-4" />
-                Ending Soon ({endingSoon.length})
-              </TabsTrigger>
-              <TabsTrigger value="new" className="gap-1">
-                <Sparkles className="h-4 w-4" />
-                New ({newAuctions.length})
-              </TabsTrigger>
-              <TabsTrigger value="buy-now" className="gap-1">
-                <Zap className="h-4 w-4" />
-                Buy Now ({withBuyNow.length})
-              </TabsTrigger>
-              {user && watchedAuctions.length > 0 && (
-                <TabsTrigger value="watching" className="gap-1">
-                  <Eye className="h-4 w-4" />
-                  Watching ({watchedAuctions.length})
-                </TabsTrigger>
-              )}
-            </TabsList>
+          {/* Ending This Hour Strip */}
+          {endingThisHour.length > 0 && (
+            <div className="mb-10">
+              <div className="flex items-center gap-3 mb-4">
+                <span className="relative flex h-2.5 w-2.5 flex-none">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+                </span>
+                <h2 className="font-bold text-white text-lg">Ending This Hour</h2>
+                <span className="text-sm text-zinc-500">— bid before it&apos;s gone</span>
+              </div>
+              <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory">
+                {endingThisHour.map((auction) => (
+                  <div key={auction.id} className="flex-none w-44 snap-start">
+                    <AuctionCard
+                      auction={auction}
+                      isWatching={watchedAuctionIds.includes(auction.id)}
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 border-t border-zinc-800/60" />
+            </div>
+          )}
 
-            <TabsContent value="all" className="space-y-6">
-              <BidsCategoryFilter
-                auctions={formattedAuctions}
-                watchedIds={watchedAuctionIds}
-              />
-            </TabsContent>
-
-            <TabsContent value="ending-soon" className="space-y-6">
-              <AuctionGrid
-                auctions={endingSoon}
-                watchedIds={watchedAuctionIds}
-                emptyMessage="No bids ending soon."
-              />
-            </TabsContent>
-
-            <TabsContent value="new" className="space-y-6">
-              <AuctionGrid
-                auctions={newAuctions}
-                watchedIds={watchedAuctionIds}
-                emptyMessage="No new bids in the last 24 hours."
-              />
-            </TabsContent>
-
-            <TabsContent value="buy-now" className="space-y-6">
-              <AuctionGrid
-                auctions={withBuyNow}
-                watchedIds={watchedAuctionIds}
-                emptyMessage="No listings with Buy Now option available."
-              />
-            </TabsContent>
-
-            {user && (
-              <TabsContent value="watching" className="space-y-6">
-                <AuctionGrid
-                  auctions={watchedAuctions}
-                  watchedIds={watchedAuctionIds}
-                  emptyMessage="You're not watching any bids yet."
-                />
-              </TabsContent>
-            )}
-          </Tabs>
+          {/* All Bids with filter + sort */}
+          <div className={endingThisHour.length > 0 ? "mt-6" : ""}>
+            <BidsCategoryFilter
+              auctions={formattedAuctions}
+              watchedIds={watchedAuctionIds}
+            />
+          </div>
         </main>
       </div>
     </CoinBalanceProvider>
-  );
-}
-
-interface AuctionGridProps {
-  auctions: AuctionWithModel[];
-  watchedIds: string[];
-  emptyMessage: string;
-}
-
-function AuctionGrid({ auctions, watchedIds, emptyMessage }: AuctionGridProps) {
-  if (auctions.length === 0) {
-    return (
-      <div className="text-center py-16 space-y-4">
-        <div className="p-4 bg-gradient-to-br from-pink-500/10 to-violet-500/10 rounded-2xl inline-block">
-          <Gavel className="h-12 w-12 text-muted-foreground/40" />
-        </div>
-        <p className="text-muted-foreground">{emptyMessage}</p>
-        <div className="flex items-center justify-center gap-3 pt-2">
-          <Link
-            href="/models"
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-zinc-800 hover:bg-zinc-700 text-white transition-colors"
-          >
-            <Eye className="h-4 w-4" />
-            Browse Models
-          </Link>
-          <Link
-            href="/coins"
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white transition-colors"
-          >
-            <Sparkles className="h-4 w-4" />
-            Get Coins
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {auctions.map((auction) => (
-        <AuctionCard
-          key={auction.id}
-          auction={auction}
-          isWatching={watchedIds.includes(auction.id)}
-        />
-      ))}
-    </div>
   );
 }
