@@ -79,15 +79,6 @@ const QUICK_PRESETS = [
     suggestedPrice: "800",
   },
   {
-    emoji: "📦",
-    label: "Unboxing Video",
-    title: "Unboxing & Review of Your Product",
-    description: "Send me your product and I'll create an authentic unboxing/review video for my followers. Great for new product launches.",
-    deliverables: "• Unboxing + review video posted to Instagram\n• Honest, authentic review\n• Posted within 7 days of receiving the product",
-    category: "custom_content" as AuctionCategory,
-    suggestedPrice: "400",
-  },
-  {
     emoji: "🎂",
     label: "Birthday Video",
     title: "Personalized Birthday Video Message",
@@ -115,15 +106,6 @@ const QUICK_PRESETS = [
     suggestedPrice: "500",
   },
   {
-    emoji: "🥗",
-    label: "Lunch Date",
-    title: "Lunch Date in Miami with Me",
-    description: "Bid for a relaxed lunch date in Miami — great food, great conversation. A more intimate, low-key alternative to dinner.",
-    deliverables: "• 1–2 hours at a restaurant of your choice in Miami\n• Winner pays for the meal\n• Scheduled at a mutual time within 30 days",
-    category: "experience" as AuctionCategory,
-    suggestedPrice: "500",
-  },
-  {
     emoji: "🍣",
     label: "Dinner Date",
     title: "Dinner Date Night in Miami with Me",
@@ -140,15 +122,6 @@ const QUICK_PRESETS = [
     deliverables: "• 1–2 hour workout or gym session together\n• Miami area\n• Scheduled at a mutual time within 30 days",
     category: "experience" as AuctionCategory,
     suggestedPrice: "600",
-  },
-  {
-    emoji: "🏓",
-    label: "Pickleball Date",
-    title: "Pickleball Game with Me in Miami",
-    description: "Win a fun pickleball match with me! Whether you're a beginner or a pro, we'll play, laugh, and have a great time on the court.",
-    deliverables: "• 1–2 hours of pickleball together\n• Miami area court\n• Scheduled at a mutual time within 30 days",
-    category: "experience" as AuctionCategory,
-    suggestedPrice: "500",
   },
   {
     emoji: "💅",
