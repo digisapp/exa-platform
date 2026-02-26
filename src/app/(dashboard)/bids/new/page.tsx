@@ -88,7 +88,7 @@ const QUICK_PRESETS = [
     suggestedPrice: "150",
   },
   {
-    emoji: "🪞",
+    emoji: "💄",
     label: "GRWM Video",
     title: "Exclusive Get Ready With Me Video",
     description: "Bid for a custom GRWM video made just for you — my real routine, unfiltered. Hair, makeup, outfit, the whole thing. Never posted publicly.",
@@ -97,7 +97,7 @@ const QUICK_PRESETS = [
     suggestedPrice: "300",
   },
   {
-    emoji: "🧘",
+    emoji: "🧘‍♀️",
     label: "Pilates Class",
     title: "Reformer Pilates Class with Me in Miami",
     description: "Win a reformer pilates class with me! We'll sweat, stretch, and have the best time. Perfect for the fitness girls.",
@@ -115,7 +115,7 @@ const QUICK_PRESETS = [
     suggestedPrice: "1000",
   },
   {
-    emoji: "🏋️",
+    emoji: "🏋️‍♀️",
     label: "Gym Session",
     title: "Private Gym Session or Workout with Me",
     description: "Bid for a private workout session with me — gym, personal training, or guided wellness. I'll coach, motivate, and push you.",
