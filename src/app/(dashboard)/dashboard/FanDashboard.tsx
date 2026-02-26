@@ -107,143 +107,146 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* What You Can Do - Feature Cards */}
-      <Card className="border-pink-500/20 bg-gradient-to-br from-pink-500/5 via-violet-500/5 to-cyan-500/5 overflow-hidden">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-pink-500" />
-            Connect With Models
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="p-4 rounded-xl bg-white/50 dark:bg-muted/30 border border-blue-500/20 hover:border-blue-500/40 transition-colors">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2.5 rounded-full bg-blue-500/10">
-                  <MessageCircle className="h-5 w-5 text-blue-500" />
+      {/* Connect With Models + Live Bids row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* What You Can Do - Feature Cards */}
+        <Card className="lg:col-span-2 border-pink-500/20 bg-gradient-to-br from-pink-500/5 via-violet-500/5 to-cyan-500/5 overflow-hidden">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-pink-500" />
+              Connect With Models
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="p-4 rounded-xl bg-white/50 dark:bg-muted/30 border border-blue-500/20 hover:border-blue-500/40 transition-colors">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2.5 rounded-full bg-blue-500/10">
+                    <MessageCircle className="h-5 w-5 text-blue-500" />
+                  </div>
+                  <h3 className="font-semibold">Direct Chat</h3>
                 </div>
-                <h3 className="font-semibold">Direct Chat</h3>
+                <p className="text-sm text-muted-foreground">
+                  Message models directly and get personal responses. Build real connections.
+                </p>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Message models directly and get personal responses. Build real connections.
-              </p>
-            </div>
-            <div className="p-4 rounded-xl bg-white/50 dark:bg-muted/30 border border-violet-500/20 hover:border-violet-500/40 transition-colors">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2.5 rounded-full bg-violet-500/10">
-                  <svg className="h-5 w-5 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
+              <div className="p-4 rounded-xl bg-white/50 dark:bg-muted/30 border border-violet-500/20 hover:border-violet-500/40 transition-colors">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2.5 rounded-full bg-violet-500/10">
+                    <svg className="h-5 w-5 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <h3 className="font-semibold">Video Calls</h3>
                 </div>
-                <h3 className="font-semibold">Video Calls</h3>
+                <p className="text-sm text-muted-foreground">
+                  Face-to-face conversations with models. Get styling tips, advice, or just hang out.
+                </p>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Face-to-face conversations with models. Get styling tips, advice, or just hang out.
-              </p>
-            </div>
-            <div className="p-4 rounded-xl bg-white/50 dark:bg-muted/30 border border-pink-500/20 hover:border-pink-500/40 transition-colors">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2.5 rounded-full bg-pink-500/10">
-                  <Gift className="h-5 w-5 text-pink-500" />
+              <div className="p-4 rounded-xl bg-white/50 dark:bg-muted/30 border border-pink-500/20 hover:border-pink-500/40 transition-colors">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2.5 rounded-full bg-pink-500/10">
+                    <Gift className="h-5 w-5 text-pink-500" />
+                  </div>
+                  <h3 className="font-semibold">Send Tips</h3>
                 </div>
-                <h3 className="font-semibold">Send Tips</h3>
+                <p className="text-sm text-muted-foreground">
+                  Show appreciation and support your favorite models. They&apos;ll love you for it!
+                </p>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Show appreciation and support your favorite models. They&apos;ll love you for it!
-              </p>
             </div>
-          </div>
 
-          {coinBalance < 20 && (
-            <div className="mt-4 p-4 rounded-xl bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border border-amber-500/20 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <Coins className="h-6 w-6 text-amber-500" />
-                <div>
-                  <p className="font-medium">Get coins to start connecting</p>
-                  <p className="text-sm text-muted-foreground">Packages start at just $3.99</p>
+            {coinBalance < 20 && (
+              <div className="mt-4 p-4 rounded-xl bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border border-amber-500/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <Coins className="h-6 w-6 text-amber-500" />
+                  <div>
+                    <p className="font-medium">Get coins to start connecting</p>
+                    <p className="text-sm text-muted-foreground">Packages start at just $3.99</p>
+                  </div>
                 </div>
-              </div>
-              <Button asChild className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-semibold">
-                <Link href="/coins">
-                  <Coins className="mr-2 h-4 w-4" />
-                  Get Coins
-                </Link>
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Live Bids */}
-      <Card className="border-violet-500/20 bg-gradient-to-br from-violet-500/5 to-pink-500/5">
-        <CardHeader className="flex flex-row items-center justify-between pb-3">
-          <CardTitle className="flex items-center gap-2">
-            <Gavel className="h-5 w-5 text-violet-500" />
-            Live Bids
-          </CardTitle>
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/bids" className="text-violet-400 hover:text-violet-300">
-              Browse All
-              <ArrowRight className="ml-1 h-4 w-4" />
-            </Link>
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {activeBids && activeBids.length > 0 ? (
-            <div className="space-y-3">
-              {activeBids.map((bid: any) => {
-                const auction = bid.auction;
-                if (!auction || auction.status !== "active") return null;
-                const isWinning = auction.leading_bidder_id === actorId;
-                return (
-                  <Link
-                    key={bid.id}
-                    href={`/bids/${auction.id}`}
-                    className="flex items-center gap-3 p-3 rounded-xl bg-zinc-800/40 hover:bg-zinc-800/70 transition-colors group"
-                  >
-                    <div className={`p-2 rounded-lg shrink-0 ${isWinning ? "bg-amber-500/20" : "bg-zinc-700/50"}`}>
-                      {isWinning
-                        ? <Crown className="h-4 w-4 text-amber-400" />
-                        : <Gavel className="h-4 w-4 text-zinc-400" />
-                      }
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{auction.title}</p>
-                      <div className="flex items-center gap-2 text-xs text-zinc-500 mt-0.5">
-                        <Coins className="h-3 w-3 text-amber-400" />
-                        <span>Your bid: {formatCoins(bid.amount)} ({formatUsd(coinsToFanUsd(bid.amount))})</span>
-                        {isWinning && <span className="text-amber-400 font-medium">· Winning</span>}
-                        {!isWinning && auction.current_bid > bid.amount && <span className="text-red-400 font-medium">· Outbid</span>}
-                      </div>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <CountdownTimer endsAt={auction.ends_at} compact className="text-xs" />
-                    </div>
-                  </Link>
-                );
-              })}
-              <div className="pt-1">
-                <Button asChild variant="outline" size="sm" className="w-full border-violet-500/30 text-violet-400 hover:bg-violet-500/10">
-                  <Link href="/bids">
-                    <Gavel className="h-3.5 w-3.5 mr-2" />
-                    Browse More Live Bids
+                <Button asChild className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-semibold">
+                  <Link href="/coins">
+                    <Coins className="mr-2 h-4 w-4" />
+                    Get Coins
                   </Link>
                 </Button>
               </div>
-            </div>
-          ) : (
-            <div className="text-center py-6 space-y-3">
-              <p className="text-muted-foreground text-sm">You haven&apos;t placed any bids yet.</p>
-              <Button asChild className="bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600">
-                <Link href="/bids">
-                  <Gavel className="h-4 w-4 mr-2" />
-                  See Live Bids
-                </Link>
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Live Bids */}
+        <Card className="border-violet-500/20 bg-gradient-to-br from-violet-500/5 to-pink-500/5">
+          <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <CardTitle className="flex items-center gap-2">
+              <Gavel className="h-5 w-5 text-violet-500" />
+              Live Bids
+            </CardTitle>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/bids" className="text-violet-400 hover:text-violet-300">
+                Browse All
+                <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {activeBids && activeBids.length > 0 ? (
+              <div className="space-y-3">
+                {activeBids.map((bid: any) => {
+                  const auction = bid.auction;
+                  if (!auction || auction.status !== "active") return null;
+                  const isWinning = auction.leading_bidder_id === actorId;
+                  return (
+                    <Link
+                      key={bid.id}
+                      href={`/bids/${auction.id}`}
+                      className="flex items-center gap-3 p-3 rounded-xl bg-zinc-800/40 hover:bg-zinc-800/70 transition-colors group"
+                    >
+                      <div className={`p-2 rounded-lg shrink-0 ${isWinning ? "bg-amber-500/20" : "bg-zinc-700/50"}`}>
+                        {isWinning
+                          ? <Crown className="h-4 w-4 text-amber-400" />
+                          : <Gavel className="h-4 w-4 text-zinc-400" />
+                        }
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">{auction.title}</p>
+                        <div className="flex items-center gap-2 text-xs text-zinc-500 mt-0.5">
+                          <Coins className="h-3 w-3 text-amber-400" />
+                          <span>Your bid: {formatCoins(bid.amount)} ({formatUsd(coinsToFanUsd(bid.amount))})</span>
+                          {isWinning && <span className="text-amber-400 font-medium">· Winning</span>}
+                          {!isWinning && auction.current_bid > bid.amount && <span className="text-red-400 font-medium">· Outbid</span>}
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <CountdownTimer endsAt={auction.ends_at} compact className="text-xs" />
+                      </div>
+                    </Link>
+                  );
+                })}
+                <div className="pt-1">
+                  <Button asChild variant="outline" size="sm" className="w-full border-violet-500/30 text-violet-400 hover:bg-violet-500/10">
+                    <Link href="/bids">
+                      <Gavel className="h-3.5 w-3.5 mr-2" />
+                      Browse More Live Bids
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-6 space-y-3">
+                <p className="text-muted-foreground text-sm">You haven&apos;t placed any bids yet.</p>
+                <Button asChild className="bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600">
+                  <Link href="/bids">
+                    <Gavel className="h-4 w-4 mr-2" />
+                    See Live Bids
+                  </Link>
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Favorites */}
       {favoriteModels.length > 0 && (
