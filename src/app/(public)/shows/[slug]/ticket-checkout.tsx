@@ -18,6 +18,8 @@ import {
   Plus,
   CheckCircle,
   AlertCircle,
+  Calendar,
+  MapPin,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -37,12 +39,16 @@ interface TicketTier {
 interface TicketCheckoutProps {
   tiers: TicketTier[];
   eventName: string;
+  eventDate?: string;
+  eventLocation?: string;
   referringModelName?: string;
 }
 
 export function TicketCheckout({
   tiers,
   eventName,
+  eventDate,
+  eventLocation,
   referringModelName,
 }: TicketCheckoutProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -119,29 +125,51 @@ export function TicketCheckout({
           className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-lg py-6 rounded-xl shadow-lg shadow-pink-500/25"
         >
           <Ticket className="h-6 w-6 mr-2" />
-          Get Tickets - From ${lowestPrice.toFixed(0)}
+          Get Tickets — From ${lowestPrice.toFixed(0)}
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-center">
-            <div className="flex flex-col items-center gap-2">
-              <div className="p-3 rounded-full bg-gradient-to-r from-pink-500 to-violet-500">
-                <Ticket className="h-6 w-6 text-white" />
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto p-0">
+        {/* Event Header Banner */}
+        <div className="relative overflow-hidden rounded-t-lg bg-gradient-to-br from-pink-600 via-violet-600 to-purple-700 p-6 pb-5">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.15),transparent)] pointer-events-none" />
+          <DialogHeader>
+            <DialogTitle className="text-left">
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="p-1.5 rounded-lg bg-white/20">
+                    <Ticket className="h-4 w-4 text-white" />
+                  </div>
+                  <span className="text-xs font-semibold text-white/70 uppercase tracking-widest">
+                    Get Tickets
+                  </span>
+                </div>
+                <span className="text-xl font-bold text-white leading-tight">
+                  {eventName}
+                </span>
+                <div className="flex flex-wrap gap-3 mt-2">
+                  {eventDate && (
+                    <div className="flex items-center gap-1.5 text-white/80 text-sm">
+                      <Calendar className="h-3.5 w-3.5" />
+                      <span>{eventDate}</span>
+                    </div>
+                  )}
+                  {eventLocation && (
+                    <div className="flex items-center gap-1.5 text-white/80 text-sm">
+                      <MapPin className="h-3.5 w-3.5" />
+                      <span>{eventLocation}</span>
+                    </div>
+                  )}
+                </div>
               </div>
-              <span className="text-xl">Get Tickets</span>
-              <span className="text-sm font-normal text-muted-foreground">
-                {eventName}
-              </span>
-            </div>
-          </DialogTitle>
-        </DialogHeader>
+            </DialogTitle>
+          </DialogHeader>
+        </div>
 
-        <div className="space-y-6 py-4">
+        <div className="space-y-5 p-6">
           {/* Tier Selection */}
           <div className="space-y-3">
-            <Label className="text-sm font-medium">Select Ticket Type</Label>
+            <Label className="text-sm font-semibold">Select Ticket Type</Label>
             {tiers.map((tier) => (
               <button
                 key={tier.id}
@@ -163,29 +191,32 @@ export function TicketCheckout({
                 )}
               >
                 <div className="flex items-center justify-between">
-                  <div className="pr-4">
+                  <div className="pr-8">
                     <p className="font-semibold">{tier.name}</p>
                     {tier.description && (
-                      <p className="text-sm text-muted-foreground mt-1">
+                      <p className="text-sm text-muted-foreground mt-0.5">
                         {tier.description}
                       </p>
                     )}
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <p className="text-lg font-bold">
-                      ${(tier.price_cents / 100).toFixed(0)}
-                    </p>
                     {tier.isSoldOut ? (
-                      <p className="text-xs text-red-500 font-medium">Sold Out</p>
+                      <p className="text-xs text-red-500 font-medium mt-1">Sold Out</p>
+                    ) : !tier.isSaleActive ? (
+                      <p className="text-xs text-muted-foreground mt-1">Sale not active</p>
                     ) : tier.available !== null ? (
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-amber-500 font-medium mt-1">
                         {tier.available} left
                       </p>
                     ) : null}
                   </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-xl font-bold">
+                      ${(tier.price_cents / 100).toFixed(0)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">per ticket</p>
+                  </div>
                 </div>
                 {selectedTier?.id === tier.id && (
-                  <CheckCircle className="absolute top-4 right-4 h-5 w-5 text-pink-500" />
+                  <CheckCircle className="absolute top-3.5 right-3.5 h-5 w-5 text-pink-500" />
                 )}
               </button>
             ))}
@@ -194,17 +225,18 @@ export function TicketCheckout({
           {/* Quantity Selector */}
           {selectedTier && (
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Quantity</Label>
+              <Label className="text-sm font-semibold">Quantity</Label>
               <div className="flex items-center gap-4">
                 <Button
                   variant="outline"
                   size="icon"
                   onClick={() => handleQuantityChange(-1)}
                   disabled={quantity <= 1}
+                  className="h-10 w-10 rounded-xl"
                 >
                   <Minus className="h-4 w-4" />
                 </Button>
-                <span className="text-2xl font-bold w-12 text-center">
+                <span className="text-2xl font-bold w-12 text-center tabular-nums">
                   {quantity}
                 </span>
                 <Button
@@ -216,6 +248,7 @@ export function TicketCheckout({
                     (selectedTier.available !== null &&
                       quantity >= selectedTier.available)
                   }
+                  className="h-10 w-10 rounded-xl"
                 >
                   <Plus className="h-4 w-4" />
                 </Button>
@@ -225,8 +258,8 @@ export function TicketCheckout({
 
           {/* Buyer Info */}
           {selectedTier && (
-            <div className="space-y-4">
-              <div className="space-y-2">
+            <div className="space-y-3">
+              <div className="space-y-1.5">
                 <Label htmlFor="email">Email Address *</Label>
                 <Input
                   id="email"
@@ -240,7 +273,7 @@ export function TicketCheckout({
                   Your tickets will be sent to this email
                 </p>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label htmlFor="name">Full Name (Optional)</Label>
                 <Input
                   id="name"
@@ -253,22 +286,27 @@ export function TicketCheckout({
             </div>
           )}
 
-          {/* Total */}
+          {/* Order Summary */}
           {selectedTier && (
-            <div className="pt-4 border-t">
-              <div className="flex items-center justify-between text-lg">
-                <span className="font-medium">Total</span>
-                <span className="font-bold text-2xl">
-                  ${totalPrice.toFixed(2)}
+            <div className="rounded-xl bg-muted/50 border border-border p-4 space-y-2">
+              <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Order Summary</p>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">
+                  {selectedTier.name} × {quantity}
                 </span>
+                <span>${(selectedTier.price_cents / 100 * quantity).toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between border-t border-border pt-2 mt-2">
+                <span className="font-semibold">Total</span>
+                <span className="font-bold text-xl">${totalPrice.toFixed(2)}</span>
               </div>
             </div>
           )}
 
           {/* Error */}
           {error && (
-            <div className="flex items-center gap-2 text-red-500 text-sm">
-              <AlertCircle className="h-4 w-4" />
+            <div className="flex items-center gap-2 text-red-500 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+              <AlertCircle className="h-4 w-4 flex-shrink-0" />
               {error}
             </div>
           )}
@@ -277,7 +315,7 @@ export function TicketCheckout({
           <Button
             onClick={handleCheckout}
             disabled={!selectedTier || isLoading}
-            className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
+            className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 py-6 text-base font-semibold rounded-xl"
             size="lg"
           >
             {isLoading ? (
@@ -289,18 +327,18 @@ export function TicketCheckout({
               <>
                 <Ticket className="h-5 w-5 mr-2" />
                 {selectedTier
-                  ? `Buy ${quantity} Ticket${quantity > 1 ? "s" : ""}`
+                  ? `Buy ${quantity} Ticket${quantity > 1 ? "s" : ""} — $${totalPrice.toFixed(2)}`
                   : "Select a Ticket"}
               </>
             )}
           </Button>
 
           {/* Affiliate Message */}
-          <p className="text-xs text-center text-muted-foreground">
-            {referringModelName
-              ? `Your purchase supports ${referringModelName}!`
-              : "Support your favorite models by using their referral link"}
-          </p>
+          {referringModelName && (
+            <p className="text-xs text-center text-muted-foreground">
+              ✨ Your purchase supports {referringModelName}!
+            </p>
+          )}
         </div>
       </DialogContent>
     </Dialog>

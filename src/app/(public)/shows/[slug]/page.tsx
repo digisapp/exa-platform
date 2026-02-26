@@ -442,6 +442,12 @@ export default async function EventPage({ params, searchParams }: Props) {
                 <TicketCheckout
                   tiers={ticketTiers}
                   eventName={event.name}
+                  eventDate={dateDisplay}
+                  eventLocation={
+                    event.location_city && event.location_state
+                      ? `${event.location_city}, ${event.location_state}`
+                      : event.location_city || event.location_state || undefined
+                  }
                   referringModelName={
                     referringModel
                       ? referringModel.first_name || referringModel.username
