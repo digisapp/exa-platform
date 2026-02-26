@@ -513,10 +513,6 @@ export default async function ModelProfilePage({ params }: Props) {
             <div className="mb-6 space-y-3">
               {model.affiliate_links.map((link: { title: string; url: string; icon?: string }, index: number) => {
                 if (!link.title || !link.url) return null;
-                // Skip links that duplicate the social media icons already shown above
-                const socialDomains = ["instagram.com", "tiktok.com", "snapchat.com", "twitter.com", "x.com", "youtube.com", "twitch.tv", "facebook.com", "threads.net", "onlyfans.com"];
-                const isSocial = socialDomains.some(domain => link.url.toLowerCase().includes(domain));
-                if (isSocial) return null;
                 return (
                   <a
                     key={index}
