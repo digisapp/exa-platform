@@ -12,7 +12,6 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { coinsToUsd, formatUsd } from "@/lib/coin-config";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Gavel,
   ArrowLeft,
@@ -23,7 +22,6 @@ import {
   Shield,
   Info,
   FileText,
-  Tag,
   Timer,
   Sparkles,
   Copy,
@@ -32,7 +30,6 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
-import { AUCTION_CATEGORIES } from "@/types/auctions";
 import type { AuctionCategory } from "@/types/auctions";
 
 const QUICK_PRESETS = [
@@ -393,24 +390,6 @@ export default function NewBidPage() {
               />
             </div>
 
-            <div>
-              <Label htmlFor="category" className="text-sm font-medium flex items-center gap-2">
-                <Tag className="h-3.5 w-3.5 text-violet-400" />
-                Category
-              </Label>
-              <Select value={category} onValueChange={(v) => setCategory(v as AuctionCategory)}>
-                <SelectTrigger className="mt-1.5 bg-background/50 border-violet-500/20">
-                  <SelectValue placeholder="Select a category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {AUCTION_CATEGORIES.map((cat) => (
-                    <SelectItem key={cat.value} value={cat.value}>
-                      {cat.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
           </div>
         </div>
 
