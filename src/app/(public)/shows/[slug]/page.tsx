@@ -5,7 +5,6 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Navbar } from "@/components/layout/navbar";
-import { Footer } from "@/components/layout/footer";
 import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 import { ModelsGrid } from "@/components/models/models-grid";
 import { EventCountdown } from "./event-countdown";
@@ -21,6 +20,7 @@ import {
   ExternalLink,
   Sparkles,
   ArrowRight,
+  Instagram,
 } from "lucide-react";
 import { format } from "date-fns";
 import type { Metadata } from "next";
@@ -607,7 +607,24 @@ export default async function EventPage({ params, searchParams }: Props) {
         </div>
       </main>
 
-      <Footer />
+      <footer className="py-12 border-t border-[#FF69B4]/20">
+        <div className="container px-8 md:px-16">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-3">
+              <Image src="/exa-logo-white.png" alt="EXA" width={80} height={32} className="h-8 w-auto" />
+              <span className="text-muted-foreground">One Platform. Models Worldwide.</span>
+            </div>
+            <div className="flex items-center gap-6">
+              <a href="https://instagram.com/examodels" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-[#FF69B4] transition-colors">
+                <Instagram className="h-5 w-5" />
+              </a>
+            </div>
+          </div>
+          <div className="text-center mt-8 text-sm text-muted-foreground">
+            &copy; {new Date().getFullYear()} EXA Models. All rights reserved.
+          </div>
+        </div>
+      </footer>
 
       {/* Affiliate Tracking Script - ref is sanitized at top of component to alphanumeric/underscore/hyphen only */}
       {ref && (
