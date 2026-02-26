@@ -632,60 +632,62 @@ export default function NewBidPage() {
       const bidUrl = `https://www.examodels.com/bids/${publishedAuction.id}`;
       return (
         <Dialog open={true} onOpenChange={() => { router.push("/bids/manage"); }}>
-          <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-lg">
             <DialogHeader>
-              <div className="flex flex-col items-center text-center gap-2 pb-2">
-                <div className="text-4xl">🎉</div>
-                <DialogTitle className="text-xl">Your bid is live!</DialogTitle>
-                <p className="text-sm text-muted-foreground">
-                  Hype it up on Instagram — copy a caption and share with your followers
-                </p>
+              <div className="flex items-center gap-3">
+                <span className="text-3xl">🎉</span>
+                <div>
+                  <DialogTitle className="text-lg">Your bid is live!</DialogTitle>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Copy a caption and share with your followers
+                  </p>
+                </div>
               </div>
             </DialogHeader>
 
-            {/* Bid link */}
-            <div className="space-y-1.5">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Bid link</p>
-              <div className="flex items-center gap-2 p-3 rounded-xl bg-zinc-800/60 border border-zinc-700">
-                <span className="text-sm text-zinc-300 truncate flex-1">{bidUrl}</span>
-                <button
-                  onClick={() => copyLink(publishedAuction.id)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-500/20 hover:bg-violet-500/30 text-violet-400 text-xs font-medium transition-all shrink-0"
-                >
-                  {copiedLink ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                  {copiedLink ? "Copied!" : "Copy"}
-                </button>
-              </div>
+            {/* Bid link — compact single row */}
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-zinc-800/60 border border-zinc-700">
+              <span className="text-xs text-zinc-500 shrink-0">Link:</span>
+              <span className="text-xs text-zinc-300 truncate flex-1">{bidUrl}</span>
+              <button
+                onClick={() => copyLink(publishedAuction.id)}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-violet-500/20 hover:bg-violet-500/30 text-violet-400 text-xs font-medium transition-all shrink-0"
+              >
+                {copiedLink ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                {copiedLink ? "Copied!" : "Copy"}
+              </button>
             </div>
 
-            {/* Caption options */}
+            {/* Caption options — internally scrollable */}
             <div className="space-y-2">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
                 <Instagram className="h-3.5 w-3.5" />
                 Ready-to-post captions
               </p>
-              {captions.map((caption, i) => (
-                <div key={i} className="p-3 rounded-xl bg-zinc-800/60 border border-zinc-700 space-y-2">
-                  <p className="text-sm text-zinc-300 whitespace-pre-line leading-relaxed">{caption}</p>
-                  <button
-                    onClick={() => copyCaption(caption, i)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-pink-500/15 hover:bg-pink-500/25 text-pink-400 text-xs font-medium transition-all"
-                  >
-                    {copiedIndex === i ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                    {copiedIndex === i ? "Copied!" : "Copy caption"}
-                  </button>
-                </div>
-              ))}
+              <div className="space-y-2 overflow-y-auto max-h-48 pr-0.5">
+                {captions.map((caption, i) => (
+                  <div key={i} className="p-2.5 rounded-xl bg-zinc-800/60 border border-zinc-700 space-y-2">
+                    <p className="text-xs text-zinc-300 whitespace-pre-line leading-relaxed">{caption}</p>
+                    <button
+                      onClick={() => copyCaption(caption, i)}
+                      className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-pink-500/15 hover:bg-pink-500/25 text-pink-400 text-xs font-medium transition-all"
+                    >
+                      {copiedIndex === i ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                      {copiedIndex === i ? "Copied!" : "Copy caption"}
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Actions */}
-            <div className="flex gap-2 pt-2">
+            <div className="flex gap-2">
               <Button
                 variant="outline"
                 className="flex-1 border-zinc-700"
                 onClick={() => router.push("/bids/manage")}
               >
-                Go to My Bids
+                My Bids
               </Button>
               <Button
                 className="flex-1 bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white"
