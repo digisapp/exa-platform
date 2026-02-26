@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { getModelId } from "@/lib/ids";
 import { NextRequest, NextResponse } from "next/server";
 import { processImage, isProcessableImage } from "@/lib/image-processing";
@@ -130,8 +131,12 @@ export async function POST(request: NextRequest) {
     // Determine bucket based on upload type
     const bucket = uploadType === "avatar" ? "avatars" : "portfolio";
 
+    // Use service role client for avatars bucket (its RLS policy checks auth.uid() against
+    // the folder name, but we use actor.id as the folder which differs from user.id)
+    const storageClient = uploadType === "avatar" ? createServiceRoleClient() : supabase;
+
     // Upload to Supabase Storage
-    const { error: uploadError } = await supabase.storage
+    const { error: uploadError } = await storageClient.storage
       .from(bucket)
       .upload(filename, processedBuffer, {
         contentType: finalContentType,
@@ -149,7 +154,7 @@ export async function POST(request: NextRequest) {
     // Get public URL
     const {
       data: { publicUrl },
-    } = supabase.storage.from(bucket).getPublicUrl(filename);
+    } = storageClient.storage.from(bucket).getPublicUrl(filename);
 
     // Create media_asset record
     const { data: mediaAsset, error: mediaError } = await supabase
