@@ -111,7 +111,7 @@ export default async function BidsPage() {
 
   return (
     <CoinBalanceProvider initialBalance={coinBalance}>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-gradient-to-b from-[#0e0a14] via-[#0c0a11] to-zinc-950">
         <Navbar
           user={user ? {
             id: user.id,
