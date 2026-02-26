@@ -403,10 +403,24 @@ export default async function EventPage({ params, searchParams }: Props) {
                 )}
               </p>
               {event.description && (
-                <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed text-lg">
+                <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed text-lg mb-6">
                   {event.description}
                 </p>
               )}
+
+              {/* Official Spotify Playlist */}
+              <div>
+                <p className="text-[11px] uppercase tracking-widest text-pink-400 font-bold mb-3">🎵 Official Playlist</p>
+                <iframe
+                  src="https://open.spotify.com/embed/playlist/2ECDbEnuIzJYlQMrxnimay?utm_source=generator&theme=0"
+                  width="100%"
+                  height="152"
+                  frameBorder="0"
+                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                  loading="lazy"
+                  className="rounded-xl"
+                />
+              </div>
             </div>
           </div>
 
