@@ -584,22 +584,11 @@ export default function NewBidPage() {
 
         {/* Actions */}
         <div className="sticky bottom-4 z-10">
-          <div className="flex items-center gap-3 p-4 rounded-2xl bg-background/80 backdrop-blur-xl border border-violet-500/20 shadow-lg shadow-black/20">
-            <Button
-              variant="outline"
-              onClick={() => handleSubmit(false)}
-              disabled={submitting}
-              className="flex-1 border-violet-500/30 hover:bg-violet-500/10"
-            >
-              {submitting ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : null}
-              Save Draft
-            </Button>
+          <div className="p-4 rounded-2xl bg-background/80 backdrop-blur-xl border border-violet-500/20 shadow-lg shadow-black/20">
             <Button
               onClick={() => handleSubmit(true)}
               disabled={submitting}
-              className="flex-1 bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white shadow-lg shadow-violet-500/25"
+              className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white shadow-lg shadow-violet-500/25"
             >
               {submitting ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
