@@ -65,10 +65,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
       .single(),
     // All currently live auctions
     (supabase.from("auctions") as any)
-      .select(`
-        id, title, ends_at, current_bid, starting_price, status, leading_bidder_id,
-        model:actors!auctions_model_id_fkey ( display_name, profile_image_url )
-      `)
+      .select("id, title, ends_at, current_bid, starting_price, status, leading_bidder_id")
       .eq("status", "active")
       .gt("ends_at", new Date().toISOString())
       .order("ends_at", { ascending: true })
