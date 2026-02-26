@@ -43,48 +43,68 @@ export function Footer() {
                   Join EXA
                 </Link>
               </li>
+              <li>
+                <Link href="/apply" className="text-muted-foreground hover:text-primary transition-colors">
+                  Apply Now
+                </Link>
+              </li>
+              <li>
+                <Link href="/for-models" className="text-muted-foreground hover:text-primary transition-colors">
+                  Why EXA
+                </Link>
+              </li>
+              <li>
+                <Link href="/gigs" className="text-muted-foreground hover:text-primary transition-colors">
+                  Open Gigs
+                </Link>
+              </li>
             </ul>
           </div>
 
-          {/* For Brands */}
+          {/* Swim Week */}
           <div>
-            <h3 className="font-semibold mb-4">For Brands</h3>
+            <h3 className="font-semibold mb-4">Miami Swim Week</h3>
             <ul className="space-y-3 text-sm">
               <li>
-                <Link href="/brands" className="text-muted-foreground hover:text-primary transition-colors">
-                  Brand Portal
+                <Link href="/shows/miami-swim-week-2026" className="text-muted-foreground hover:text-primary transition-colors">
+                  View Show Page
                 </Link>
               </li>
               <li>
-                <Link href="/pricing" className="text-muted-foreground hover:text-primary transition-colors">
-                  Pricing
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Company */}
-          <div>
-            <h3 className="font-semibold mb-4">Company</h3>
-            <ul className="space-y-3 text-sm">
-              <li>
-                <Link href="/about" className="text-muted-foreground hover:text-primary transition-colors">
-                  About
+                <Link href="/models" className="text-muted-foreground hover:text-primary transition-colors">
+                  Browse Models
                 </Link>
               </li>
               <li>
-                <a href="mailto:team@examodels.com" className="text-muted-foreground hover:text-primary transition-colors">
-                  Contact
+                <a href="mailto:nathan@examodels.com?subject=Sponsorship%20Inquiry%20%E2%80%94%20Miami%20Swim%20Week%202026" className="text-muted-foreground hover:text-primary transition-colors">
+                  Become a Sponsor
                 </a>
               </li>
               <li>
-                <Link href="/privacy" className="text-muted-foreground hover:text-primary transition-colors">
-                  Privacy
-                </Link>
+                <a href="mailto:nathan@examodels.com?subject=Designer%20Inquiry%20%E2%80%94%20Miami%20Swim%20Week%202026" className="text-muted-foreground hover:text-primary transition-colors">
+                  Show Your Collection
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Contact */}
+          <div>
+            <h3 className="font-semibold mb-4">Contact</h3>
+            <ul className="space-y-3 text-sm">
+              <li>
+                <a href="mailto:team@examodels.com" className="text-muted-foreground hover:text-primary transition-colors">
+                  team@examodels.com
+                </a>
               </li>
               <li>
-                <Link href="/terms" className="text-muted-foreground hover:text-primary transition-colors">
-                  Terms
+                <a href="mailto:nathan@examodels.com" className="text-muted-foreground hover:text-primary transition-colors">
+                  nathan@examodels.com
+                </a>
+              </li>
+              <li>
+                <Link href="/signin" className="text-muted-foreground hover:text-primary transition-colors">
+                  Sign In
                 </Link>
               </li>
             </ul>
