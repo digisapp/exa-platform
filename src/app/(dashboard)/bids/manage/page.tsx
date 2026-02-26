@@ -32,6 +32,7 @@ import {
   Megaphone,
   Star,
   MoreHorizontal,
+  XCircle,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -63,6 +64,7 @@ export default function ManageBidsPage() {
   const [auctions, setAuctions] = useState<AuctionWithStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [repostingId, setRepostingId] = useState<string | null>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   const fetchAuctions = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -115,6 +117,24 @@ export default function ManageBidsPage() {
       fetchAuctions();
     } catch (error: any) {
       toast.error(error.message || "Failed to delete auction");
+    }
+  };
+
+  const handleCancel = async (auctionId: string) => {
+    if (!confirm("Cancel this active bid? All bidders will be fully refunded.")) return;
+    setCancellingId(auctionId);
+    try {
+      const response = await fetch(`/api/auctions/${auctionId}/cancel`, { method: "POST" });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to cancel");
+      }
+      toast.success("Bid cancelled — all bidders refunded");
+      fetchAuctions();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to cancel auction");
+    } finally {
+      setCancellingId(null);
     }
   };
 
@@ -298,7 +318,9 @@ export default function ManageBidsPage() {
             onPublish={handlePublish}
             onDelete={handleDelete}
             onRepost={handleRepost}
+            onCancel={handleCancel}
             repostingId={repostingId}
+            cancellingId={cancellingId}
           />
         </TabsContent>
 
@@ -309,7 +331,9 @@ export default function ManageBidsPage() {
             onPublish={handlePublish}
             onDelete={handleDelete}
             onRepost={handleRepost}
+            onCancel={handleCancel}
             repostingId={repostingId}
+            cancellingId={cancellingId}
             showPublish
           />
         </TabsContent>
@@ -321,7 +345,9 @@ export default function ManageBidsPage() {
             onPublish={handlePublish}
             onDelete={handleDelete}
             onRepost={handleRepost}
+            onCancel={handleCancel}
             repostingId={repostingId}
+            cancellingId={cancellingId}
             showRepost
           />
         </TabsContent>
@@ -336,12 +362,14 @@ interface AuctionListProps {
   onPublish: (id: string) => void;
   onDelete: (id: string) => void;
   onRepost: (auction: AuctionWithStats) => void;
+  onCancel: (id: string) => void;
   repostingId: string | null;
+  cancellingId: string | null;
   showPublish?: boolean;
   showRepost?: boolean;
 }
 
-function AuctionList({ auctions, emptyMessage, onPublish, onDelete, onRepost, repostingId, showPublish, showRepost }: AuctionListProps) {
+function AuctionList({ auctions, emptyMessage, onPublish, onDelete, onRepost, onCancel, repostingId, cancellingId, showPublish, showRepost }: AuctionListProps) {
   if (auctions.length === 0) {
     return (
       <div className="text-center py-12">
@@ -360,7 +388,9 @@ function AuctionList({ auctions, emptyMessage, onPublish, onDelete, onRepost, re
           onPublish={onPublish}
           onDelete={onDelete}
           onRepost={onRepost}
+          onCancel={onCancel}
           repostingId={repostingId}
+          cancellingId={cancellingId}
           showPublish={showPublish}
           showRepost={showRepost}
         />
@@ -374,16 +404,19 @@ interface AuctionRowProps {
   onPublish: (id: string) => void;
   onDelete: (id: string) => void;
   onRepost: (auction: AuctionWithStats) => void;
+  onCancel: (id: string) => void;
   repostingId: string | null;
+  cancellingId: string | null;
   showPublish?: boolean;
   showRepost?: boolean;
 }
 
-function AuctionRow({ auction, onPublish, onDelete, onRepost, repostingId, showPublish, showRepost }: AuctionRowProps) {
+function AuctionRow({ auction, onPublish, onDelete, onRepost, onCancel, repostingId, cancellingId, showPublish, showRepost }: AuctionRowProps) {
   const currentPrice = auction.current_bid || auction.starting_price;
   const catConfig = CATEGORY_CONFIG[auction.category] || CATEGORY_CONFIG.other;
   const CatIcon = catConfig.icon;
   const isReposting = repostingId === auction.id;
+  const isCancelling = cancellingId === auction.id;
 
   const statusColors: Record<AuctionStatus, string> = {
     draft:     "bg-zinc-500/20 text-zinc-400",
@@ -519,6 +552,23 @@ function AuctionRow({ auction, onPublish, onDelete, onRepost, repostingId, showP
                         <RefreshCw className="h-4 w-4 mr-2" />
                         Repost as Draft
                       </DropdownMenuItem>
+                      {auction.status === "active" && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => onCancel(auction.id)}
+                            disabled={isCancelling}
+                            className="text-red-400"
+                          >
+                            {isCancelling ? (
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            ) : (
+                              <XCircle className="h-4 w-4 mr-2" />
+                            )}
+                            Cancel Bid
+                          </DropdownMenuItem>
+                        </>
+                      )}
                     </>
                   )}
                 </DropdownMenuContent>
