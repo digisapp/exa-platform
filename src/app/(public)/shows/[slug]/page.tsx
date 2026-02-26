@@ -3,6 +3,7 @@ export const revalidate = 60; // Revalidate every 60 seconds
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
@@ -488,8 +489,8 @@ export default async function EventPage({ params, searchParams }: Props) {
                     rel="noopener noreferrer"
                     className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-pink-500/10 to-violet-500/10 border border-white/10 hover:border-pink-500/30 transition-all hover:scale-[1.02]"
                   >
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center flex-shrink-0">
-                      <span className="text-white font-bold text-sm">D</span>
+                    <div className="w-10 h-10 rounded-lg bg-black flex items-center justify-center flex-shrink-0 p-1.5">
+                      <Image src="/digis-logo-white.png" alt="Digis" width={40} height={40} className="w-full h-full object-contain" />
                     </div>
                     <div>
                       <p className="font-semibold">Digis</p>
