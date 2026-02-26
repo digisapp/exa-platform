@@ -24,10 +24,86 @@ import {
   FileText,
   Tag,
   Timer,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AUCTION_CATEGORIES } from "@/types/auctions";
 import type { AuctionCategory } from "@/types/auctions";
+
+const QUICK_PRESETS = [
+  {
+    emoji: "🎬",
+    label: "Brand Reel",
+    title: "1 Custom Reel Featuring Your Brand",
+    description: "I'll create a professional reel featuring your brand or product, posted to my Instagram. My audience is highly engaged and this is perfect for brand awareness.",
+    deliverables: "• 1 custom Instagram Reel featuring your brand/product\n• Full rights to the video\n• Posted on my Instagram within 7 days of winning",
+    category: "custom_content" as AuctionCategory,
+    suggestedPrice: "500",
+  },
+  {
+    emoji: "📲",
+    label: "Story Shoutout",
+    title: "Instagram Story Shoutout for Your Brand",
+    description: "Bid for a dedicated Instagram Story shoutout to my followers. Perfect for brands, events, or anyone looking to grow their audience fast.",
+    deliverables: "• 3 Instagram Story frames dedicated to your brand\n• Swipe-up link included\n• Story posted within 48 hours of winning",
+    category: "shoutout" as AuctionCategory,
+    suggestedPrice: "200",
+  },
+  {
+    emoji: "🎂",
+    label: "Birthday Video",
+    title: "Personalized Birthday Video Message",
+    description: "Win a personal birthday video from me! I'll record a custom message for you or someone special — perfect gift for fans.",
+    deliverables: "• 1–2 min personalized birthday video\n• Recorded within 48 hours of your event date\n• Sent directly to you via DM",
+    category: "shoutout" as AuctionCategory,
+    suggestedPrice: "150",
+  },
+  {
+    emoji: "🌙",
+    label: "Dinner Date",
+    title: "Dinner Date Night in Miami with Me",
+    description: "Bid for an unforgettable dinner date night in Miami. Winner takes me out to a restaurant of your choice — food, drinks, and great company.",
+    deliverables: "• 1 dinner date night in Miami (winner pays for the meal)\n• 2–3 hours together\n• Scheduled at a mutual time within 30 days",
+    category: "experience" as AuctionCategory,
+    suggestedPrice: "1000",
+  },
+  {
+    emoji: "🛥️",
+    label: "Boat Day",
+    title: "Boat Day in Miami with Me",
+    description: "Win a full boat day with me in Miami! Sun, water, and good vibes — this is a once-in-a-lifetime experience.",
+    deliverables: "• Full day on the water in Miami\n• Scheduled within 30 days of winning\n• Winner coordinates the boat",
+    category: "experience" as AuctionCategory,
+    suggestedPrice: "2000",
+  },
+  {
+    emoji: "📞",
+    label: "Video Call",
+    title: "30-Min Private Video Call with Me",
+    description: "Win a 30-minute one-on-one video call with me. Chat, ask anything, or just hang — this is your exclusive time.",
+    deliverables: "• 30-minute private video call\n• Scheduled within 14 days of winning\n• Your choice of topic",
+    category: "video_call" as AuctionCategory,
+    suggestedPrice: "300",
+  },
+  {
+    emoji: "🎉",
+    label: "Attend Your Event",
+    title: "I'll Attend Your Birthday or Event",
+    description: "Win me at your event! Whether it's your birthday, party, or special occasion — I'll show up and make it unforgettable.",
+    deliverables: "• Personal appearance at your event (Miami area)\n• Up to 3 hours\n• Scheduled at a mutual time within 60 days",
+    category: "experience" as AuctionCategory,
+    suggestedPrice: "3000",
+  },
+  {
+    emoji: "📦",
+    label: "Unboxing Video",
+    title: "Unboxing & Review of Your Product",
+    description: "Send me your product and I'll create an authentic unboxing/review video for my followers. Great for new product launches.",
+    deliverables: "• Unboxing + review video posted to Instagram\n• Honest, authentic review\n• Posted within 7 days of receiving the product",
+    category: "custom_content" as AuctionCategory,
+    suggestedPrice: "400",
+  },
+] as const;
 
 export default function NewBidPage() {
   const router = useRouter();
@@ -87,6 +163,15 @@ export default function NewBidPage() {
 
     checkAuth();
   }, [supabase, router]);
+
+  const applyPreset = (preset: typeof QUICK_PRESETS[number]) => {
+    setTitle(preset.title);
+    setDescription(preset.description);
+    setDeliverables(preset.deliverables);
+    setCategory(preset.category);
+    setStartingPrice(preset.suggestedPrice);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const handleSubmit = async (publish: boolean = false) => {
     if (!title.trim()) {
@@ -215,6 +300,32 @@ export default function NewBidPage() {
 
       {/* Form */}
       <div className="space-y-6">
+
+        {/* Quick Start Presets */}
+        <div className="rounded-2xl border border-pink-500/20 bg-gradient-to-br from-pink-500/5 to-transparent overflow-hidden">
+          <div className="flex items-center gap-3 px-6 py-4 border-b border-pink-500/10">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-pink-400" />
+              <span className="font-semibold">Quick Start</span>
+            </div>
+            <span className="text-xs text-muted-foreground ml-1">Tap any to auto-fill your bid</span>
+          </div>
+          <div className="p-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {QUICK_PRESETS.map((preset) => (
+              <button
+                key={preset.label}
+                type="button"
+                onClick={() => applyPreset(preset)}
+                className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-pink-500/15 hover:border-pink-500/40 bg-pink-500/5 hover:bg-pink-500/10 transition-all text-center group"
+              >
+                <span className="text-2xl">{preset.emoji}</span>
+                <span className="text-xs font-medium text-foreground/80 group-hover:text-foreground leading-tight">
+                  {preset.label}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
 
         {/* Step 1: Details */}
         <div className="rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/5 to-transparent overflow-hidden">
