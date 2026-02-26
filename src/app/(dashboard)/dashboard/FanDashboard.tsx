@@ -9,6 +9,7 @@ import {
   Users,
   Search,
   Heart,
+  Gift,
   MessageCircle,
   Coins,
 } from "lucide-react";
@@ -128,7 +129,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
             <div className="p-4 rounded-xl bg-white/50 dark:bg-muted/30 border border-pink-500/20 hover:border-pink-500/40 transition-colors">
               <div className="flex items-center gap-3 mb-3">
                 <div className="p-2.5 rounded-full bg-pink-500/10">
-                  <Heart className="h-5 w-5 text-pink-500" />
+                  <Gift className="h-5 w-5 text-pink-500" />
                 </div>
                 <h3 className="font-semibold">Send Tips</h3>
               </div>
