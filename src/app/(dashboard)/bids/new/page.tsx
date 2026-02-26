@@ -64,7 +64,7 @@ const QUICK_PRESETS = [
     suggestedPrice: "150",
   },
   {
-    emoji: "🌙",
+    emoji: "🍣",
     label: "Dinner Date",
     title: "Dinner Date Night in Miami with Me",
     description: "Bid for an unforgettable dinner date night in Miami. Winner takes me out to a restaurant of your choice — food, drinks, and great company.",
