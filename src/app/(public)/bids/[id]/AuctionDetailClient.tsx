@@ -40,7 +40,7 @@ export function AuctionDetailClient({
   const router = useRouter();
   const [localEnded, setLocalEnded] = useState(false);
 
-  const { auction, bids, isConnected } = useAuctionRealtime({
+  const { auction, bids, isConnected, refreshBids } = useAuctionRealtime({
     auctionId: initialAuction.id,
     initialAuction,
     initialBids,
@@ -211,6 +211,8 @@ export function AuctionDetailClient({
                   auction={auction}
                   disabled={hasEnded}
                   isOwner={isOwner}
+                  onBidPlaced={() => refreshBids()}
+                  onBuyNow={() => refreshBids()}
                 />
               </div>
             ) : (
