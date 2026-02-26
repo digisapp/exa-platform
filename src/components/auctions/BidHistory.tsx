@@ -2,7 +2,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { formatCoins, coinsToUsd, formatUsd } from "@/lib/coin-config";
+import { formatCoins, coinsToFanUsd, formatUsd } from "@/lib/coin-config";
 import { formatDistanceToNow } from "date-fns";
 import { Coins, Crown, Zap } from "lucide-react";
 import type { BidWithBidder } from "@/types/auctions";
@@ -79,7 +79,7 @@ export function BidHistory({ bids, currentUserId, showLeader = true }: BidHistor
                   </span>
                 </div>
                 <p className="text-xs text-zinc-500">
-                  {formatUsd(coinsToUsd(bid.amount))}
+                  {formatUsd(coinsToFanUsd(bid.amount))}
                 </p>
               </div>
             </div>

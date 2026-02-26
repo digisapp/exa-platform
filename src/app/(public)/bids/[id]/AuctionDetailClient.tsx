@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { CountdownTimer, BidForm, BidHistory, WatchlistButton } from "@/components/auctions";
 import { useAuctionRealtime } from "@/hooks/useAuctionRealtime";
-import { coinsToUsd, formatUsd, formatCoins } from "@/lib/coin-config";
+import { coinsToFanUsd, formatUsd, formatCoins } from "@/lib/coin-config";
 import {
   Gavel,
   ArrowLeft,
@@ -179,7 +179,7 @@ export function AuctionDetailClient({
                 <Coins className="h-8 w-8 text-amber-400" />
                 <div>
                   <p className="text-3xl font-bold">{formatCoins(currentPrice)}</p>
-                  <p className="text-sm text-zinc-500">{formatUsd(coinsToUsd(currentPrice))}</p>
+                  <p className="text-sm text-zinc-500">{formatUsd(coinsToFanUsd(currentPrice))}</p>
                 </div>
               </div>
 
@@ -188,7 +188,7 @@ export function AuctionDetailClient({
                   <Zap className="h-4 w-4 text-amber-400" />
                   <span className="text-sm text-zinc-400">Buy Now:</span>
                   <span className="font-semibold">{formatCoins(auction.buy_now_price)} coins</span>
-                  <span className="text-zinc-500 text-sm">({formatUsd(coinsToUsd(auction.buy_now_price))})</span>
+                  <span className="text-zinc-500 text-sm">({formatUsd(coinsToFanUsd(auction.buy_now_price))})</span>
                 </div>
               )}
 

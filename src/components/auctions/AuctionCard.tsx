@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CountdownTimer } from "./CountdownTimer";
 import { Gavel, Eye, Coins, Zap, Video, Pen, Users, Megaphone, Star, MoreHorizontal } from "lucide-react";
-import { coinsToUsd, formatUsd, formatCoins } from "@/lib/coin-config";
+import { coinsToFanUsd, formatUsd, formatCoins } from "@/lib/coin-config";
 import type { AuctionWithModel, AuctionCategory } from "@/types/auctions";
 
 const CATEGORY_CONFIG: Record<AuctionCategory, { label: string; icon: typeof Video; color: string }> = {
@@ -26,7 +26,7 @@ interface AuctionCardProps {
 
 export function AuctionCard({ auction, isWatching, onAuctionEnd }: AuctionCardProps) {
   const currentPrice = auction.current_bid || auction.starting_price;
-  const usdPrice = coinsToUsd(currentPrice);
+  const usdPrice = coinsToFanUsd(currentPrice);
   const hasEnded = new Date(auction.ends_at) <= new Date() || auction.status !== "active";
 
   return (

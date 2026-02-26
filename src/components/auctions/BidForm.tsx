@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useCoinBalanceOptional } from "@/contexts/CoinBalanceContext";
-import { coinsToUsd, formatUsd, formatCoins } from "@/lib/coin-config";
+import { coinsToFanUsd, formatUsd, formatCoins } from "@/lib/coin-config";
 import { Coins, Zap, Loader2, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { AUCTION_DEFAULTS } from "@/types/auctions";
@@ -129,7 +129,7 @@ export function BidForm({
         <p className="text-zinc-400">This bid has ended</p>
         {auction.winner_id && (
           <p className="text-sm text-zinc-500 mt-2">
-            Final price: {formatCoins(auction.current_bid || 0)} coins ({formatUsd(coinsToUsd(auction.current_bid || 0))})
+            Final price: {formatCoins(auction.current_bid || 0)} coins ({formatUsd(coinsToFanUsd(auction.current_bid || 0))})
           </p>
         )}
       </div>
@@ -158,7 +158,7 @@ export function BidForm({
           </span>
         </div>
         <p className="text-sm text-zinc-500 mt-1">
-          {formatUsd(coinsToUsd(auction.current_bid || auction.starting_price))}
+          {formatUsd(coinsToFanUsd(auction.current_bid || auction.starting_price))}
         </p>
       </div>
 
@@ -166,7 +166,7 @@ export function BidForm({
       <div className="space-y-4">
         <div>
           <Label htmlFor="bid-amount" className="text-sm text-zinc-300">
-            Your Bid (min {formatCoins(minBid)} coins · {formatUsd(coinsToUsd(minBid))})
+            Your Bid (min {formatCoins(minBid)} coins · {formatUsd(coinsToFanUsd(minBid))})
           </Label>
           <div className="relative mt-1.5">
             <Coins className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-400" />
@@ -183,10 +183,10 @@ export function BidForm({
           </div>
           <div className="flex justify-between mt-1 text-xs">
             <span className="text-zinc-500">
-              = {formatUsd(coinsToUsd(parsedBid))}
+              = {formatUsd(coinsToFanUsd(parsedBid))}
             </span>
             <span className="text-zinc-500">
-              Balance: {formatCoins(balance)} ({formatUsd(coinsToUsd(balance))})
+              Balance: {formatCoins(balance)} ({formatUsd(coinsToFanUsd(balance))})
             </span>
           </div>
         </div>
@@ -227,7 +227,7 @@ export function BidForm({
                   </p>
                   {parsedMaxAutoBid > 0 && (
                     <p className="text-xs text-zinc-400 font-medium">
-                      = {formatUsd(coinsToUsd(parsedMaxAutoBid))}
+                      = {formatUsd(coinsToFanUsd(parsedMaxAutoBid))}
                     </p>
                   )}
                 </div>
@@ -251,7 +251,7 @@ export function BidForm({
             "Insufficient Balance"
           ) : (
             <>
-              Place Bid — {formatCoins(parsedBid)} coins ({formatUsd(coinsToUsd(parsedBid))})
+              Place Bid — {formatCoins(parsedBid)} coins ({formatUsd(coinsToFanUsd(parsedBid))})
             </>
           )}
         </Button>
@@ -284,7 +284,7 @@ export function BidForm({
                   <Zap className="h-4 w-4 mr-2" />
                   Buy Now - {formatCoins(auction.buy_now_price)} coins
                   <span className="ml-2 text-zinc-500">
-                    ({formatUsd(coinsToUsd(auction.buy_now_price))})
+                    ({formatUsd(coinsToFanUsd(auction.buy_now_price))})
                   </span>
                 </>
               )}

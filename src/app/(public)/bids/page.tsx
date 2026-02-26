@@ -101,7 +101,7 @@ export default async function BidsPage() {
     (a) => new Date(a.ends_at) <= oneHourFromNow
   );
   const totalUsd = Math.round(
-    formattedAuctions.reduce((sum, a) => sum + (a.current_bid || a.starting_price) * 0.10, 0)
+    formattedAuctions.reduce((sum, a) => sum + (a.current_bid || a.starting_price) * 0.15, 0)
   );
 
   const displayName =

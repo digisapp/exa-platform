@@ -12,7 +12,12 @@ import {
   Gift,
   MessageCircle,
   Coins,
+  Gavel,
+  Crown,
+  Clock,
 } from "lucide-react";
+import { CountdownTimer } from "@/components/auctions";
+import { formatCoins, coinsToFanUsd, formatUsd } from "@/lib/coin-config";
 import { ModelCard } from "@/components/models/model-card";
 
 function seededShuffle<T>(array: T[], seed: number): T[] {
@@ -29,8 +34,8 @@ function seededShuffle<T>(array: T[], seed: number): T[] {
 export async function FanDashboard({ actorId }: { actorId: string }) {
   const supabase = await createClient();
 
-  // Query favorites, featured models, and coin balance in parallel
-  const [{ data: follows }, { data: allFeaturedModels }, { data: fanData }] = await Promise.all([
+  // Query favorites, featured models, coin balance, and active bids in parallel
+  const [{ data: follows }, { data: allFeaturedModels }, { data: fanData }, { data: activeBids }] = await Promise.all([
     (supabase.from("follows") as any)
       .select(`
         created_at,
@@ -60,6 +65,17 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
       .select("coin_balance, display_name")
       .eq("id", actorId)
       .single(),
+    (supabase.from("auction_bids") as any)
+      .select(`
+        id, amount, status, created_at,
+        auction:auctions!auction_bids_auction_id_fkey (
+          id, title, ends_at, current_bid, status, leading_bidder_id
+        )
+      `)
+      .eq("bidder_id", actorId)
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(5),
   ]);
 
   const coinBalance = fanData?.coin_balance ?? 0;
@@ -152,6 +168,77 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
                 <Link href="/coins">
                   <Coins className="mr-2 h-4 w-4" />
                   Get Coins
+                </Link>
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Live Bids */}
+      <Card className="border-violet-500/20 bg-gradient-to-br from-violet-500/5 to-pink-500/5">
+        <CardHeader className="flex flex-row items-center justify-between pb-3">
+          <CardTitle className="flex items-center gap-2">
+            <Gavel className="h-5 w-5 text-violet-500" />
+            Live Bids
+          </CardTitle>
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/bids" className="text-violet-400 hover:text-violet-300">
+              Browse All
+              <ArrowRight className="ml-1 h-4 w-4" />
+            </Link>
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {activeBids && activeBids.length > 0 ? (
+            <div className="space-y-3">
+              {activeBids.map((bid: any) => {
+                const auction = bid.auction;
+                if (!auction || auction.status !== "active") return null;
+                const isWinning = auction.leading_bidder_id === actorId;
+                return (
+                  <Link
+                    key={bid.id}
+                    href={`/bids/${auction.id}`}
+                    className="flex items-center gap-3 p-3 rounded-xl bg-zinc-800/40 hover:bg-zinc-800/70 transition-colors group"
+                  >
+                    <div className={`p-2 rounded-lg shrink-0 ${isWinning ? "bg-amber-500/20" : "bg-zinc-700/50"}`}>
+                      {isWinning
+                        ? <Crown className="h-4 w-4 text-amber-400" />
+                        : <Gavel className="h-4 w-4 text-zinc-400" />
+                      }
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">{auction.title}</p>
+                      <div className="flex items-center gap-2 text-xs text-zinc-500 mt-0.5">
+                        <Coins className="h-3 w-3 text-amber-400" />
+                        <span>Your bid: {formatCoins(bid.amount)} ({formatUsd(coinsToFanUsd(bid.amount))})</span>
+                        {isWinning && <span className="text-amber-400 font-medium">· Winning</span>}
+                        {!isWinning && auction.current_bid > bid.amount && <span className="text-red-400 font-medium">· Outbid</span>}
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <CountdownTimer endsAt={auction.ends_at} compact className="text-xs" />
+                    </div>
+                  </Link>
+                );
+              })}
+              <div className="pt-1">
+                <Button asChild variant="outline" size="sm" className="w-full border-violet-500/30 text-violet-400 hover:bg-violet-500/10">
+                  <Link href="/bids">
+                    <Gavel className="h-3.5 w-3.5 mr-2" />
+                    Browse More Live Bids
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-6 space-y-3">
+              <p className="text-muted-foreground text-sm">You haven&apos;t placed any bids yet.</p>
+              <Button asChild className="bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600">
+                <Link href="/bids">
+                  <Gavel className="h-4 w-4 mr-2" />
+                  See Live Bids
                 </Link>
               </Button>
             </div>
