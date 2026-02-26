@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { notFound } from "next/navigation";
 import { Navbar } from "@/components/layout/navbar";
 import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
@@ -48,6 +49,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function AuctionDetailPage({ params }: PageProps) {
   const { id } = await params;
   const supabase = await createClient();
+  // Use admin client for public bid data — bypasses RLS so bids are visible to all users
+  // (including unauthenticated visitors), since actors RLS blocks fan actor reads for anon users
+  const adminClient = createServiceRoleClient();
 
   // Check if user is logged in
   const { data: { user } } = await supabase.auth.getUser();
@@ -126,8 +130,8 @@ export default async function AuctionDetailPage({ params }: PageProps) {
     isWatching = !!watchEntry;
   }
 
-  // Get bid history
-  const { data: bids } = await (supabase as any)
+  // Get bid history — use admin client to bypass actors RLS (fan actors are blocked for anon users)
+  const { data: bids } = await (adminClient as any)
     .from("auction_bids")
     .select(`
       *,
@@ -141,7 +145,7 @@ export default async function AuctionDetailPage({ params }: PageProps) {
     .limit(50);
 
   // Batch-enrich bids with bidder info (2 queries instead of N+1)
-  const enhancedBids = await enrichBidsWithBidderInfo(supabase, bids || []);
+  const enhancedBids = await enrichBidsWithBidderInfo(adminClient, bids || []);
 
   // Format auction with details
   const auctionWithDetails: AuctionWithDetails = {
