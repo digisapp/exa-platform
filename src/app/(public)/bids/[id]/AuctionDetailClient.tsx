@@ -2,10 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CountdownTimer, BidForm, BidHistory, WatchlistButton } from "@/components/auctions";
 import { useAuctionRealtime } from "@/hooks/useAuctionRealtime";
@@ -70,53 +68,38 @@ export function AuctionDetailClient({
       </Button>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column - Image & Details */}
+        {/* Left Column - Details */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Model Photo */}
-          <div className="relative aspect-[3/4] max-w-sm rounded-2xl overflow-hidden bg-gradient-to-br from-pink-500/20 to-violet-500/20">
-            {auction.model?.profile_image_url ? (
-              <Image
-                src={auction.model.profile_image_url}
-                alt={auction.model.display_name || auction.title}
-                fill
-                className="object-cover"
-                priority
-              />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Gavel className="h-24 w-24 text-muted-foreground/30" />
-              </div>
-            )}
-
-            {/* Status Badge */}
-            {hasEnded && (
-              <Badge className="absolute top-4 right-4 bg-zinc-800 text-white">
-                {auction.status === "sold" ? "Sold" : auction.status === "no_sale" ? "No Sale" : "Ended"}
-              </Badge>
-            )}
-          </div>
-
           {/* Title & Model */}
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold mb-4">{auction.title}</h1>
-
-            {auction.model && (
-              <Link
-                href={`/${auction.model.slug}`}
-                className="inline-flex items-center gap-3 p-3 bg-zinc-800/50 rounded-xl hover:bg-zinc-800 transition-colors"
-              >
-                <Avatar className="h-12 w-12 border-2 border-pink-500">
-                  <AvatarImage src={auction.model.profile_image_url || undefined} />
-                  <AvatarFallback className="bg-gradient-to-br from-pink-500 to-violet-500 text-white">
-                    {auction.model.display_name?.[0] || "?"}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-medium">{auction.model.display_name}</p>
-                  <p className="text-sm text-zinc-400">@{auction.model.slug}</p>
-                </div>
-              </Link>
-            )}
+            <div className="flex items-start gap-4 mb-4">
+              {auction.model && (
+                <Link href={`/${auction.model.slug}`} className="shrink-0 mt-1">
+                  <Avatar className="h-14 w-14 border-2 border-pink-500">
+                    <AvatarImage src={auction.model.profile_image_url || undefined} />
+                    <AvatarFallback className="bg-gradient-to-br from-pink-500 to-violet-500 text-white text-lg">
+                      {auction.model.display_name?.[0] || "?"}
+                    </AvatarFallback>
+                  </Avatar>
+                </Link>
+              )}
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold leading-tight">{auction.title}</h1>
+                {auction.model && (
+                  <Link
+                    href={`/${auction.model.slug}`}
+                    className="text-sm text-zinc-400 hover:text-zinc-200 transition-colors mt-1 inline-block"
+                  >
+                    @{auction.model.slug}
+                  </Link>
+                )}
+                {hasEnded && (
+                  <span className="ml-3 inline-block text-xs font-medium px-2 py-0.5 rounded-full bg-zinc-700 text-zinc-300">
+                    {auction.status === "sold" ? "Sold" : auction.status === "no_sale" ? "No Sale" : "Ended"}
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Description */}

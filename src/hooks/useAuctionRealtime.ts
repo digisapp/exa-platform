@@ -32,8 +32,16 @@ export function useAuctionRealtime<T extends Auction>({
   const [auction, setAuction] = useState<T>(initialAuction);
   const [bids, setBids] = useState<BidWithBidder[]>(initialBids);
   const [isConnected, setIsConnected] = useState(false);
-  const supabase = createClient();
+  // Stable ref so createClient() doesn't cause the effect to re-run
+  const supabaseRef = useRef(createClient());
+  const supabase = supabaseRef.current;
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+
+  // Keep callbacks in refs so they don't need to be in the effect dep array
+  const onOutbidRef = useRef(onOutbid);
+  const onAuctionUpdateRef = useRef(onAuctionUpdate);
+  useEffect(() => { onOutbidRef.current = onOutbid; });
+  useEffect(() => { onAuctionUpdateRef.current = onAuctionUpdate; });
 
   // Track if current user was winning to detect being outbid
   const wasWinningRef = useRef<boolean>(false);
@@ -79,7 +87,7 @@ export function useAuctionRealtime<T extends Auction>({
             ...prev,
             ...newData,
           }));
-          onAuctionUpdate?.(newData);
+          onAuctionUpdateRef.current?.(newData);
 
           // Detect auction ending
           if (newData.status && ["ended", "sold", "no_sale", "cancelled"].includes(newData.status)) {
@@ -128,7 +136,7 @@ export function useAuctionRealtime<T extends Auction>({
                 },
               },
             });
-            onOutbid?.(newBid);
+            onOutbidRef.current?.(newBid);
           }
         }
       )
@@ -153,7 +161,7 @@ export function useAuctionRealtime<T extends Auction>({
     return () => {
       channel.unsubscribe();
     };
-  }, [auctionId, currentUserId, onAuctionUpdate, onOutbid, refreshBids, supabase]);
+  }, [auctionId, currentUserId, refreshBids]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
     auction,
