@@ -575,28 +575,28 @@ export default async function EventPage({ params, searchParams }: Props) {
         </div>
         {/* Sponsor / Designer CTA */}
         <div className="mt-16 grid sm:grid-cols-2 gap-4">
-          <Link
-            href="/sponsors/miami-swim-week"
+          <a
+            href="mailto:nathan@examodels.com?subject=Sponsorship%20Inquiry%20%E2%80%94%20Miami%20Swim%20Week%202026"
             className="group relative overflow-hidden rounded-2xl border border-pink-500/20 bg-gradient-to-br from-pink-500/10 to-pink-500/5 p-6 hover:border-pink-500/50 transition-all hover:scale-[1.02]"
           >
             <p className="text-xs uppercase tracking-widest text-pink-400 font-semibold mb-2">Brands & Companies</p>
             <h3 className="text-xl font-bold mb-2">Become a Sponsor</h3>
             <p className="text-sm text-muted-foreground mb-4">Get your brand in front of 300+ guests, 100+ media, and a global live stream audience.</p>
             <div className="flex items-center gap-1 text-pink-400 text-sm font-medium group-hover:gap-2 transition-all">
-              View Packages <ArrowRight className="h-4 w-4" />
+              Get in Touch <ArrowRight className="h-4 w-4" />
             </div>
-          </Link>
-          <Link
-            href="/designers/miami-swim-week"
+          </a>
+          <a
+            href="mailto:nathan@examodels.com?subject=Designer%20Inquiry%20%E2%80%94%20Miami%20Swim%20Week%202026"
             className="group relative overflow-hidden rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/10 to-violet-500/5 p-6 hover:border-violet-500/50 transition-all hover:scale-[1.02]"
           >
             <p className="text-xs uppercase tracking-widest text-violet-400 font-semibold mb-2">Fashion Designers</p>
             <h3 className="text-xl font-bold mb-2">Show Your Collection</h3>
             <p className="text-sm text-muted-foreground mb-4">Book a runway slot and showcase your swimwear, resortwear, or lingerie collection.</p>
             <div className="flex items-center gap-1 text-violet-400 text-sm font-medium group-hover:gap-2 transition-all">
-              Apply Now <ArrowRight className="h-4 w-4" />
+              Get in Touch <ArrowRight className="h-4 w-4" />
             </div>
-          </Link>
+          </a>
         </div>
       </main>
 
