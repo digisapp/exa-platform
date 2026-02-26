@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,17 +16,14 @@ import {
   Gavel,
   ArrowLeft,
   Loader2,
-  Upload,
   Coins,
   Clock,
   Zap,
   Shield,
   Info,
-  ImagePlus,
   FileText,
   Tag,
   Timer,
-  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AUCTION_CATEGORIES } from "@/types/auctions";
@@ -39,13 +35,11 @@ export default function NewBidPage() {
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [uploading, setUploading] = useState(false);
 
   // Form state
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [deliverables, setDeliverables] = useState("");
-  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
   const [startingPrice, setStartingPrice] = useState("100");
   const [reservePrice, setReservePrice] = useState("");
   const [buyNowPrice, setBuyNowPrice] = useState("");
@@ -94,59 +88,6 @@ export default function NewBidPage() {
     checkAuth();
   }, [supabase, router]);
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please select an image file");
-      return;
-    }
-
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("Image must be less than 10MB");
-      return;
-    }
-
-    setUploading(true);
-    try {
-      // Get signed URL
-      const response = await fetch("/api/upload/signed-url", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fileName: file.name,
-          fileType: file.type,
-          folder: "auctions",
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to get upload URL");
-      }
-
-      const { uploadUrl, publicUrl } = await response.json();
-
-      // Upload file
-      const uploadResponse = await fetch(uploadUrl, {
-        method: "PUT",
-        body: file,
-        headers: { "Content-Type": file.type },
-      });
-
-      if (!uploadResponse.ok) {
-        throw new Error("Failed to upload image");
-      }
-
-      setCoverImageUrl(publicUrl);
-      toast.success("Image uploaded");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to upload image");
-    } finally {
-      setUploading(false);
-    }
-  };
-
   const handleSubmit = async (publish: boolean = false) => {
     if (!title.trim()) {
       toast.error("Title is required");
@@ -192,7 +133,6 @@ export default function NewBidPage() {
           title: title.trim(),
           description: description.trim() || undefined,
           deliverables: deliverables.trim() || undefined,
-          cover_image_url: coverImageUrl || undefined,
           category,
           starting_price: parsedStartingPrice,
           reserve_price: parsedReservePrice || undefined,
@@ -276,70 +216,11 @@ export default function NewBidPage() {
       {/* Form */}
       <div className="space-y-6">
 
-        {/* Step 1: Cover Image */}
+        {/* Step 1: Details */}
         <div className="rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/5 to-transparent overflow-hidden">
           <div className="flex items-center gap-3 px-6 py-4 border-b border-violet-500/10">
             <div className="flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-pink-500 to-violet-500 text-white text-xs font-bold">
               1
-            </div>
-            <div className="flex items-center gap-2">
-              <ImagePlus className="h-4 w-4 text-violet-400" />
-              <span className="font-semibold">Cover Image</span>
-            </div>
-            <Badge variant="outline" className="ml-auto border-violet-500/30 text-violet-400 text-xs">
-              Recommended
-            </Badge>
-          </div>
-          <div className="p-6">
-            {coverImageUrl ? (
-              <div className="relative aspect-[3/4] max-w-[240px] mx-auto rounded-xl overflow-hidden bg-zinc-800 ring-2 ring-violet-500/30 shadow-lg shadow-violet-500/10">
-                <Image
-                  src={coverImageUrl}
-                  alt="Cover"
-                  fill
-                  className="object-cover"
-                />
-                <button
-                  onClick={() => setCoverImageUrl(null)}
-                  className="absolute top-2 right-2 p-1.5 rounded-full bg-black/60 hover:bg-black/80 text-white transition-colors"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            ) : (
-              <label className="group flex flex-col items-center justify-center aspect-[3/4] max-w-[240px] mx-auto rounded-xl border-2 border-dashed border-violet-500/30 hover:border-violet-500/60 bg-violet-500/5 hover:bg-violet-500/10 cursor-pointer transition-all">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                  disabled={uploading}
-                />
-                {uploading ? (
-                  <Loader2 className="h-8 w-8 animate-spin text-violet-400" />
-                ) : (
-                  <>
-                    <div className="p-3 rounded-full bg-violet-500/10 group-hover:bg-violet-500/20 transition-colors mb-3">
-                      <Upload className="h-6 w-6 text-violet-400" />
-                    </div>
-                    <span className="text-sm font-medium text-violet-400">
-                      Upload cover photo
-                    </span>
-                    <span className="text-xs text-muted-foreground mt-1">
-                      Portrait format, max 10MB
-                    </span>
-                  </>
-                )}
-              </label>
-            )}
-          </div>
-        </div>
-
-        {/* Step 2: Details */}
-        <div className="rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/5 to-transparent overflow-hidden">
-          <div className="flex items-center gap-3 px-6 py-4 border-b border-violet-500/10">
-            <div className="flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-pink-500 to-violet-500 text-white text-xs font-bold">
-              2
             </div>
             <div className="flex items-center gap-2">
               <FileText className="h-4 w-4 text-violet-400" />
@@ -403,11 +284,11 @@ export default function NewBidPage() {
           </div>
         </div>
 
-        {/* Step 3: Pricing */}
+        {/* Step 2: Pricing */}
         <div className="rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-transparent overflow-hidden">
           <div className="flex items-center gap-3 px-6 py-4 border-b border-amber-500/10">
             <div className="flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-white text-xs font-bold">
-              3
+              2
             </div>
             <div className="flex items-center gap-2">
               <Coins className="h-4 w-4 text-amber-400" />
@@ -498,11 +379,11 @@ export default function NewBidPage() {
           </div>
         </div>
 
-        {/* Step 4: Duration & Settings */}
+        {/* Step 3: Duration & Settings */}
         <div className="rounded-2xl border border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-transparent overflow-hidden">
           <div className="flex items-center gap-3 px-6 py-4 border-b border-blue-500/10">
             <div className="flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-blue-400 to-violet-500 text-white text-xs font-bold">
-              4
+              3
             </div>
             <div className="flex items-center gap-2">
               <Timer className="h-4 w-4 text-blue-400" />

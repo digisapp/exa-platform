@@ -34,9 +34,9 @@ export function AuctionCard({ auction, isWatching, onAuctionEnd }: AuctionCardPr
       <div className="glass-card rounded-2xl overflow-hidden hover:scale-[1.02] transition-all h-full group">
         {/* Portrait Image with Overlay */}
         <div className="aspect-[3/4] relative bg-gradient-to-br from-pink-500/20 to-violet-500/20 overflow-hidden">
-          {auction.cover_image_url ? (
+          {auction.model?.profile_image_url ? (
             <Image
-              src={auction.cover_image_url}
+              src={auction.model.profile_image_url}
               alt={auction.title}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"

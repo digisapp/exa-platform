@@ -72,12 +72,12 @@ export function AuctionDetailClient({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column - Image & Details */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Cover Image */}
-          <div className="relative aspect-video rounded-2xl overflow-hidden bg-gradient-to-br from-pink-500/20 to-violet-500/20">
-            {auction.cover_image_url ? (
+          {/* Model Photo */}
+          <div className="relative aspect-[3/4] max-w-sm rounded-2xl overflow-hidden bg-gradient-to-br from-pink-500/20 to-violet-500/20">
+            {auction.model?.profile_image_url ? (
               <Image
-                src={auction.cover_image_url}
-                alt={auction.title}
+                src={auction.model.profile_image_url}
+                alt={auction.model.display_name || auction.title}
                 fill
                 className="object-cover"
                 priority
