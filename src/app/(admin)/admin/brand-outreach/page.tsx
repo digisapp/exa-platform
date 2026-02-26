@@ -40,6 +40,7 @@ import {
   MessageSquare,
   RefreshCw,
   Trash2,
+  Plane,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -101,6 +102,7 @@ export default function BrandOutreachPage() {
   const [emailFromName, setEmailFromName] = useState("EXA Models Partnerships");
   const [emailTemplate, setEmailTemplate] = useState<"standard" | "sponsor">("standard");
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"brands" | "travel">("brands");
   const [newContact, setNewContact] = useState({
     brand_name: "",
     contact_name: "",
@@ -137,6 +139,7 @@ export default function BrandOutreachPage() {
 
   // Filter contacts
   const filteredContacts = contacts.filter((contact) => {
+    const matchesTab = activeTab === "travel" ? contact.category === "travel" : contact.category !== "travel";
     const matchesSearch =
       contact.brand_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       contact.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -144,7 +147,7 @@ export default function BrandOutreachPage() {
     const matchesStatus = statusFilter === "all" || contact.status === statusFilter;
     const matchesCategory = categoryFilter === "all" || contact.category === categoryFilter;
     const matchesType = contactTypeFilter === "all" || contact.contact_type === contactTypeFilter;
-    return matchesSearch && matchesStatus && matchesCategory && matchesType;
+    return matchesTab && matchesSearch && matchesStatus && matchesCategory && matchesType;
   });
 
   // Stats
@@ -371,7 +374,29 @@ EXA Models`,
     template: "sponsor" as const,
   };
 
-  const loadTemplate = (type: "designer" | "sponsor") => {
+  const travelEmailTemplate = {
+    subject: "Hotel Partnership Opportunity — EXA Models Travel",
+    body: `Hi {{contact_name}},
+
+I hope this message finds you well! I'm reaching out from EXA Models about a potential travel partnership with {{brand_name}}.
+
+We're building the travel side of EXA Models — connecting our roster of professional models and content creators with unique hotels and travel experiences around the world. Our models are active on Instagram and TikTok and regularly share their travel content with engaged audiences.
+
+We'd love to explore a collaboration with {{brand_name}}, whether that's:
+- Hosted stays in exchange for content creation
+- Brand ambassador partnerships
+- Event-based collaborations tied to our model events (like Miami Swim Week 2026)
+
+Would you be open to a quick call to explore what a partnership could look like?
+
+Best regards,
+EXA Models Team
+www.examodels.com`,
+    ctaUrl: "https://www.examodels.com",
+    ctaText: "Explore EXA Models",
+  };
+
+  const loadTemplate = (type: "designer" | "sponsor" | "travel") => {
     if (type === "sponsor") {
       const t = sponsorEmailTemplate;
       setEmailSubject(t.subject);
@@ -381,6 +406,15 @@ EXA Models`,
       setEmailFromAddress(t.fromEmail);
       setEmailFromName(t.fromName);
       setEmailTemplate(t.template);
+    } else if (type === "travel") {
+      const t = travelEmailTemplate;
+      setEmailSubject(t.subject);
+      setEmailBody(t.body);
+      setEmailCtaUrl(t.ctaUrl);
+      setEmailCtaText(t.ctaText);
+      setEmailFromAddress("partnerships@examodels.com");
+      setEmailFromName("EXA Models Partnerships");
+      setEmailTemplate("standard");
     } else {
       const t = designerEmailTemplate;
       setEmailSubject(t.subject);
@@ -420,7 +454,7 @@ EXA Models`,
             <div>
               <h1 className="text-2xl font-bold">Brand Outreach</h1>
               <p className="text-muted-foreground">
-                Swimwear & Resort Wear Brands for Miami Swim Week 2026
+                {activeTab === "travel" ? "Hotel & Travel Partners" : "Swimwear & Resort Wear Brands for Miami Swim Week 2026"}
               </p>
             </div>
           </div>
@@ -538,6 +572,7 @@ EXA Models`,
                         <SelectItem value="activewear">Activewear</SelectItem>
                         <SelectItem value="beauty">Beauty</SelectItem>
                         <SelectItem value="accessories">Accessories</SelectItem>
+                        <SelectItem value="travel">Travel</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -558,6 +593,24 @@ EXA Models`,
               </DialogContent>
             </Dialog>
           </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-1 p-1 bg-muted rounded-lg w-fit">
+          <button
+            onClick={() => { setActiveTab("brands"); setCategoryFilter("all"); setSelectedContacts(new Set()); }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === "brands" ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            <Building2 className="h-4 w-4" />
+            Brands
+          </button>
+          <button
+            onClick={() => { setActiveTab("travel"); setCategoryFilter("all"); setSelectedContacts(new Set()); }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === "travel" ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            <Plane className="h-4 w-4" />
+            Travel
+          </button>
         </div>
 
         {/* Stats Cards */}
@@ -669,6 +722,7 @@ EXA Models`,
                 <SelectItem value="activewear">Activewear</SelectItem>
                 <SelectItem value="beauty">Beauty</SelectItem>
                 <SelectItem value="accessories">Accessories</SelectItem>
+                <SelectItem value="travel">Travel</SelectItem>
               </SelectContent>
             </Select>
             <Select value={contactTypeFilter} onValueChange={setContactTypeFilter}>
@@ -715,6 +769,10 @@ EXA Models`,
                         </Button>
                         <Button variant="outline" size="sm" onClick={() => loadTemplate("sponsor")} className="border-violet-500/50 text-violet-400 hover:bg-violet-500/10">
                           Sponsor Template
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => loadTemplate("travel")} className="border-blue-500/50 text-blue-400 hover:bg-blue-500/10">
+                          <Plane className="h-3.5 w-3.5 mr-1" />
+                          Travel Template
                         </Button>
                       </div>
                     </div>
