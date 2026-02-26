@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { TopModelsCarousel } from "@/components/home/TopModelsCarousel";
 import { UpcomingEventsCarousel } from "@/components/home/UpcomingEventsCarousel";
+import { CountdownTimer } from "@/components/auctions";
 import { formatCoins, coinsToFanUsd, formatUsd } from "@/lib/coin-config";
 import { format } from "date-fns";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -272,45 +273,64 @@ export default async function HomePage() {
         <section className="container px-8 md:px-16 py-8">
           <div className="grid md:grid-cols-2 gap-6">
             {/* EXA Bids */}
-            <Link href="/bids" className="block group">
-              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-pink-500 via-violet-500 to-indigo-600 p-[2px] h-full">
-                <div className="relative rounded-3xl bg-black/90 backdrop-blur-xl p-6 md:p-8 h-full">
-                  {/* Header */}
-                  <div className="flex items-center gap-4 mb-5">
-                    <div className="relative">
-                      <div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-violet-500 rounded-2xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity" />
-                      <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center">
-                        <Gavel className="h-7 w-7 text-white" />
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-xl md:text-2xl font-bold text-white">
-                        EXA Bids
-                      </h3>
-                      <p className="text-white/60 text-xs md:text-sm">
-                        Bid on services & content from top models
-                      </p>
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-pink-500 via-violet-500 to-indigo-600 p-[2px] h-full">
+              <div className="relative rounded-3xl bg-black/90 backdrop-blur-xl p-6 md:p-8 h-full flex flex-col">
+                {/* Header */}
+                <div className="flex items-center gap-4 mb-5">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-violet-500 rounded-2xl blur-xl opacity-50" />
+                    <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center">
+                      <Gavel className="h-7 w-7 text-white" />
                     </div>
                   </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <h3 className="text-xl md:text-2xl font-bold text-white">EXA Bids</h3>
+                      {(activeAuctions?.length ?? 0) > 0 && (
+                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-500/20 border border-red-500/30">
+                          <div className="h-1.5 w-1.5 rounded-full bg-red-400 animate-pulse" />
+                          <span className="text-[10px] text-red-400 font-bold tracking-wide">
+                            {activeAuctions!.length} LIVE
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-white/60 text-xs md:text-sm">
+                      Bid on services & content from top models
+                    </p>
+                  </div>
+                </div>
 
-                  {/* Active Auctions Preview */}
+                {/* Active Auctions Preview */}
+                <div className="flex-1 mb-5">
                   {(activeAuctions?.length ?? 0) > 0 ? (
-                    <div className="space-y-2 mb-5">
+                    <div className="space-y-2">
                       {(activeAuctions || []).map((auction: any) => (
-                        <div key={auction.id} className="flex items-center gap-3 p-2 rounded-xl bg-white/5">
-                          <Avatar className="h-8 w-8 border border-violet-500/30">
+                        <Link
+                          key={auction.id}
+                          href={`/bids/${auction.id}`}
+                          className="flex items-center gap-3 p-2.5 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group/row"
+                        >
+                          <Avatar className="h-9 w-9 border border-violet-500/30 shrink-0">
                             <AvatarImage src={auction.model?.profile_photo_url} />
                             <AvatarFallback className="bg-violet-500/20 text-violet-300 text-xs">
                               {auction.model?.first_name?.[0] || "?"}
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm text-white font-medium truncate">{auction.title}</p>
-                            <p className="text-xs text-white/40">{auction.model?.first_name}</p>
+                            <p className="text-sm text-white font-medium truncate group-hover/row:text-pink-300 transition-colors">
+                              {auction.title}
+                            </p>
+                            <div className="flex items-center gap-2 text-xs text-white/40">
+                              <span>@{auction.model?.username || auction.model?.first_name}</span>
+                              {auction.bid_count > 0 && (
+                                <span>· {auction.bid_count} bid{auction.bid_count !== 1 ? "s" : ""}</span>
+                              )}
+                            </div>
                           </div>
-                          <div className="text-right flex-shrink-0">
-                            <div className="flex items-center gap-1.5 text-amber-400">
-                              <Coins className="h-4 w-4" />
+                          <div className="text-right shrink-0 space-y-0.5">
+                            <div className="flex items-center gap-1 text-amber-400 justify-end">
+                              <Coins className="h-3.5 w-3.5" />
                               <span className="text-sm font-bold">
                                 {formatCoins(auction.current_bid || auction.starting_price)}
                               </span>
@@ -318,30 +338,33 @@ export default async function HomePage() {
                                 {formatUsd(coinsToFanUsd(auction.current_bid || auction.starting_price))}
                               </span>
                             </div>
+                            <CountdownTimer endsAt={auction.ends_at} compact className="text-[10px] text-white/40 justify-end" />
                           </div>
-                        </div>
+                        </Link>
                       ))}
                     </div>
                   ) : (
-                    <div className="flex items-center justify-center py-8 mb-5 rounded-xl bg-white/5">
+                    <div className="flex items-center justify-center py-8 rounded-xl bg-white/5">
                       <p className="text-sm text-white/40">No active bids right now</p>
                     </div>
                   )}
+                </div>
 
-                  {/* CTA */}
+                {/* CTA */}
+                <Link href="/bids" className="block">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 text-white/50">
                       <Clock className="h-4 w-4 text-violet-400" />
                       <span className="text-xs">Live Bids</span>
                     </div>
-                    <div className="px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 text-white text-sm font-semibold group-hover:scale-105 transition-transform flex items-center gap-2">
+                    <div className="px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 text-white text-sm font-semibold hover:scale-105 transition-transform flex items-center gap-2">
                       Place Bids
                       <ArrowRight className="h-4 w-4" />
                     </div>
                   </div>
-                </div>
+                </Link>
               </div>
-            </Link>
+            </div>
 
             {/* EXA Boost */}
             <Link href="/boost" className="block group">
