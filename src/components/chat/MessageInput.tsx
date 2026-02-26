@@ -359,20 +359,11 @@ export function MessageInput({
 
   return (
     <div className="border-t bg-background p-4">
-      {/* Coin cost indicator - only show for fans */}
-      {coinCost > 0 && (
-        <div
-          className={cn(
-            "flex items-center gap-2 text-sm mb-2 px-1",
-            hasEnoughCoins ? "text-muted-foreground" : "text-destructive"
-          )}
-        >
+      {/* Insufficient coins warning - only show when fan can't afford to send */}
+      {coinCost > 0 && !hasEnoughCoins && (
+        <div className="flex items-center gap-2 text-sm mb-2 px-1 text-destructive">
           <Coins className="h-4 w-4" />
-          <span>
-            {hasEnoughCoins
-              ? `${coinCost} coins per message`
-              : `Insufficient coins (need ${coinCost}, have ${coinBalance})`}
-          </span>
+          <span>Insufficient coins (need {coinCost}, have {coinBalance})</span>
         </div>
       )}
 

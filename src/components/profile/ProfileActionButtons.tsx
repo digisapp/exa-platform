@@ -435,9 +435,6 @@ export function ProfileActionButtons({
                 </button>
               </div>
             )}
-            {messageRate > 0 && !sentConversationId && (
-              <p className="text-[11px] text-white/25 text-center mt-1.5">{messageRate} coins per message</p>
-            )}
           </div>
         )}
 
