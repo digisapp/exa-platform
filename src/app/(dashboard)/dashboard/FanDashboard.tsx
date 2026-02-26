@@ -7,7 +7,6 @@ import {
   ArrowRight,
   Sparkles,
   Users,
-  Search,
   Heart,
   Gift,
   MessageCircle,
@@ -287,39 +286,16 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
         </div>
       )}
 
-      {/* Browse All Models CTA */}
-      <Card className="border-cyan-500/20 bg-gradient-to-r from-cyan-500/5 to-blue-500/5">
-        <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row items-center gap-4">
-            <div className="p-3 rounded-full bg-cyan-500/10">
-              <Users className="h-7 w-7 text-cyan-500" />
-            </div>
-            <div className="flex-1 text-center sm:text-left">
-              <h3 className="font-semibold text-lg">Discover Thousands of Models</h3>
-              <p className="text-sm text-muted-foreground">
-                Browse our full directory with advanced filters. Find models by location, style, measurements, and more.
-              </p>
-            </div>
-            <Button asChild size="lg" className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700">
-              <Link href="/models">
-                <Search className="mr-2 h-4 w-4" />
-                Browse All Models
-              </Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Featured Models */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-pink-500" />
-            Featured Models
+            <Users className="h-5 w-5 text-cyan-500" />
+            Discover Models
           </CardTitle>
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/models" className="text-pink-500">
-              View All
+          <Button asChild size="sm" className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700">
+            <Link href="/models">
+              Browse All Models
               <ArrowRight className="ml-1 h-4 w-4" />
             </Link>
           </Button>
