@@ -205,6 +205,7 @@ export function AuctionDetailClient({
                   <Zap className="h-4 w-4 text-amber-400" />
                   <span className="text-sm text-zinc-400">Buy Now:</span>
                   <span className="font-semibold">{formatCoins(auction.buy_now_price)} coins</span>
+                  <span className="text-zinc-500 text-sm">({formatUsd(coinsToUsd(auction.buy_now_price))})</span>
                 </div>
               )}
 

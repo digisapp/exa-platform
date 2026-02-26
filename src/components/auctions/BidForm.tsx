@@ -129,7 +129,7 @@ export function BidForm({
         <p className="text-zinc-400">This bid has ended</p>
         {auction.winner_id && (
           <p className="text-sm text-zinc-500 mt-2">
-            Final price: {formatCoins(auction.current_bid || 0)} coins
+            Final price: {formatCoins(auction.current_bid || 0)} coins ({formatUsd(coinsToUsd(auction.current_bid || 0))})
           </p>
         )}
       </div>
@@ -166,7 +166,7 @@ export function BidForm({
       <div className="space-y-4">
         <div>
           <Label htmlFor="bid-amount" className="text-sm text-zinc-300">
-            Your Bid (min {formatCoins(minBid)} coins)
+            Your Bid (min {formatCoins(minBid)} coins · {formatUsd(coinsToUsd(minBid))})
           </Label>
           <div className="relative mt-1.5">
             <Coins className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-400" />
@@ -186,7 +186,7 @@ export function BidForm({
               = {formatUsd(coinsToUsd(parsedBid))}
             </span>
             <span className="text-zinc-500">
-              Balance: {formatCoins(balance)} coins
+              Balance: {formatCoins(balance)} ({formatUsd(coinsToUsd(balance))})
             </span>
           </div>
         </div>
@@ -221,9 +221,16 @@ export function BidForm({
                   className="mt-1 bg-zinc-900 border-zinc-700 focus:border-violet-500"
                   placeholder="Enter max coins"
                 />
-                <p className="text-xs text-zinc-500 mt-1">
-                  We&apos;ll automatically bid for you up to this amount
-                </p>
+                <div className="flex items-center justify-between mt-1">
+                  <p className="text-xs text-zinc-500">
+                    We&apos;ll automatically bid for you up to this amount
+                  </p>
+                  {parsedMaxAutoBid > 0 && (
+                    <p className="text-xs text-zinc-400 font-medium">
+                      = {formatUsd(coinsToUsd(parsedMaxAutoBid))}
+                    </p>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -244,7 +251,7 @@ export function BidForm({
             "Insufficient Balance"
           ) : (
             <>
-              Place Bid - {formatCoins(parsedBid)} coins
+              Place Bid — {formatCoins(parsedBid)} coins ({formatUsd(coinsToUsd(parsedBid))})
             </>
           )}
         </Button>
