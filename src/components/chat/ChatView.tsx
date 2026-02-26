@@ -771,6 +771,12 @@ export function ChatView({
             <p className="text-sm text-muted-foreground">
               Start your conversation
             </p>
+            {coinCost > 0 && (
+              <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                <Coins className="h-3 w-3 text-yellow-500" />
+                {coinCost} coins per message
+              </p>
+            )}
           </div>
         ) : (() => {
           // Find the last own message that was read by the other participant
