@@ -12,6 +12,10 @@ import {
   Twitch,
   ExternalLink,
   Mail,
+  Gavel,
+  Clock,
+  Zap,
+  ArrowRight,
 } from "lucide-react";
 import { TikTokIcon } from "@/components/ui/tiktok-icon";
 import { SnapchatIcon } from "@/components/ui/snapchat-icon";
@@ -210,6 +214,15 @@ export default async function ModelProfilePage({ params }: Props) {
   // Filter out hidden videos
   const videos = (allVideos || []).filter((v: any) => v.is_visible !== false);
 
+  // Get model's active auctions (for live bids banner on profile)
+  const { data: liveAuctions } = await (supabase as any)
+    .from("auctions")
+    .select("id, title, current_bid, starting_price, bid_count, ends_at, buy_now_price, category")
+    .eq("model_id", model.id)
+    .eq("status", "active")
+    .order("ends_at", { ascending: true })
+    .limit(6);
+
   // Get PPV content count (only paid content)
   const { count: premiumContentCount } = await supabase
     .from("premium_content")
@@ -278,6 +291,21 @@ export default async function ModelProfilePage({ params }: Props) {
     { platform: "youtube", username: model.youtube_username, followers: model.youtube_subscribers as number | null, url: `https://youtube.com/@${model.youtube_username?.replace(/^@/, '')}` },
     { platform: "twitch", username: model.twitch_username, followers: null as number | null, url: `https://twitch.tv/${model.twitch_username?.replace(/^@/, '')}` },
   ].filter(link => link.username);
+
+  // Live bid helpers
+  const AUCTION_EMOJI: Record<string, string> = {
+    video_call: "📞", custom_content: "🎬", meet_greet: "🤝",
+    shoutout: "📲", experience: "✨", other: "💫",
+  };
+  function timeLeft(endsAt: string): string {
+    const ms = new Date(endsAt).getTime() - Date.now();
+    if (ms <= 0) return "Ending";
+    const mins = Math.floor(ms / 60000);
+    if (mins < 60) return `${mins}m`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h`;
+    return `${Math.floor(hrs / 24)}d`;
+  }
 
   // JSON-LD structured data for SEO
   const jsonLd = {
@@ -353,6 +381,75 @@ export default async function ModelProfilePage({ params }: Props) {
               <ShareButton title={displayName} />
             </div>
           </div>
+
+          {/* Live Bids Strip — shown above profile photo when model has active bids */}
+          {liveAuctions && liveAuctions.length > 0 && (
+            <div className="mb-5">
+              {/* Label */}
+              <div className="flex items-center justify-center gap-2 mb-3">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+                </span>
+                <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-white/50">
+                  Live Bids
+                </span>
+              </div>
+              {/* Horizontal scroll row */}
+              <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory -mx-2 px-2">
+                {liveAuctions.map((auction: any) => {
+                  const coins = auction.current_bid ?? auction.starting_price;
+                  const usd = Math.round(coins * 0.10);
+                  const left = timeLeft(auction.ends_at);
+                  const emoji = AUCTION_EMOJI[auction.category] || "💫";
+                  return (
+                    <Link
+                      key={auction.id}
+                      href={`/bids/${auction.id}`}
+                      className="flex-none snap-start w-44 rounded-2xl bg-white/6 border border-white/10 hover:border-pink-500/50 hover:bg-white/10 transition-all duration-200 p-3.5 group"
+                    >
+                      {/* Top row: emoji + time */}
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xl leading-none">{emoji}</span>
+                        <span className="flex items-center gap-0.5 text-[10px] text-white/40 font-medium">
+                          <Clock className="h-2.5 w-2.5" />
+                          {left}
+                        </span>
+                      </div>
+                      {/* Title */}
+                      <p className="text-[11px] font-medium text-white/75 line-clamp-2 leading-snug text-left mb-2.5">
+                        {auction.title}
+                      </p>
+                      {/* Bottom row: price + CTA */}
+                      <div className="flex items-center justify-between">
+                        <div className="text-left">
+                          <span className="text-xs font-bold text-white">${usd}</span>
+                          {auction.bid_count > 0 && (
+                            <span className="text-[9px] text-white/35 ml-1">
+                              {auction.bid_count} bid{auction.bid_count !== 1 ? "s" : ""}
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 text-white shadow-sm shadow-pink-500/30 group-hover:shadow-pink-500/50 transition-all">
+                          BID
+                        </span>
+                      </div>
+                    </Link>
+                  );
+                })}
+                {/* "See all" chip if more bids exist */}
+                <Link
+                  href="/bids"
+                  className="flex-none snap-start w-16 rounded-2xl bg-white/4 border border-white/8 hover:border-white/20 hover:bg-white/8 transition-all flex flex-col items-center justify-center gap-1.5 text-white/40 hover:text-white/60"
+                >
+                  <Gavel className="h-4 w-4" />
+                  <span className="text-[9px] font-medium text-center leading-tight">
+                    All<br />Bids
+                  </span>
+                </Link>
+              </div>
+            </div>
+          )}
 
           {/* Profile Image */}
           <div className="flex justify-center mb-4">
