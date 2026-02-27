@@ -18,7 +18,7 @@ export function CoachingProgramSection() {
           </div>
           <h2 className="text-xl font-bold">3-Month Runway Coaching Program</h2>
           <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
-            Personal 1-on-1 coaching from our professional team — get runway-ready for Miami Swim Week 2026 from anywhere in the world. Select the <strong className="text-foreground">3-Month Coaching</strong> tab in the checkout to enroll.
+            The complete package — your <strong className="text-foreground">in-person workshop seat included</strong>, plus 3 months of personal 1-on-1 coaching to get you stage-ready for Miami Swim Week 2026. Select the <strong className="text-foreground">3-Month Coaching</strong> tab in the checkout to enroll.
           </p>
         </div>
 
@@ -55,7 +55,7 @@ export function CoachingProgramSection() {
         </div>
 
         <p className="text-xs text-muted-foreground">
-          $125/mo × 3 months ($375 total) or pay in full for $350 — select the tab in the checkout card.
+          $175/mo × 3 months ($525 total) or pay in full for $499 — select the <strong className="text-foreground">3-Month Coaching</strong> tab in the checkout card.
         </p>
       </CardContent>
     </Card>
