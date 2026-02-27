@@ -378,49 +378,30 @@ EXA Models`,
     subject: "Influencer Partnership – EXA Travel",
     body: `Hi {{contact_name}},
 
-I'm Nathan, COO of EXA Models.
+I'm Nathan, COO of EXA Models. We're launching a new editorial travel series called EXA Travel, partnering with one boutique property per destination for a 4-night content residency.
 
-We're launching a new editorial travel series called EXA Travel — a curated content residency partnering with one boutique property per destination.
+We bring a curated team (5 influencer models + our in-house photographer and creative team) and spend four days capturing the full guest experience — rooms, dining, pool, cocktails, and day-to-night atmosphere — in a cinematic, elevated way.
 
-We would love to partner with your property.
-
-The Concept
-We bring a hand-selected creative team for a 4-night luxury content residency and produce a full editorial campaign centered around your property — not just rooms, but the entire experience.
-
-What We Create On Property
-Over 4 days, we produce:
-• High-fashion resort editorials
-• Restaurant & cocktail features
-• Pool, spa, and experiential moments
-• Day-to-night cinematic storytelling
-• Lifestyle content showcasing the full guest journey
-
-This is not influencer snapshots — it's structured, conversion-focused visual production.
-
-Our Team (8 Total)
-• 5 curated influencer models (combined reach 1M+)
-• 1 photographer / videographer
-• 1 creative director
-• 1 producer
-
-Guaranteed Deliverables
-• 12–16 Instagram feed posts
-• 16–20 Reels / TikToks
-• 30+ story frames
+What You Receive
+• 5 dedicated Instagram feed posts (one per model)
+• 15–25 Instagram story frames per model throughout the stay
+• 10+ Reels/TikToks across the team
 • 1 cinematic hero reel (60–90 seconds)
-• 20 professionally edited images licensed for your marketing use
-• All posts tagged with direct booking links
+• 20 professionally edited high-resolution images licensed for your marketing use
+• All content tagged to your property with direct booking links
 
-Our goal is to leave you with a premium content library that can be used across social, website, paid ads, and email campaigns — while driving measurable direct bookings.
+Our goal is to leave you with a premium visual library that drives measurable direct bookings while positioning your property through fashion-forward storytelling.
 
-Here's a sample reel showcasing our production level: https://youtu.be/LP5uPoIgGOA
+Here's a sample of our production level:
+https://youtu.be/LP5uPoIgGOA
 
-In Exchange
-We're requesting a fully hosted 4-night stay for our team.
+In exchange, we're requesting a fully hosted 4-night stay for the team.
 
-We only partner with one property per location, so if this aligns, I'd love to schedule a quick call to explore dates and availability.
+We only collaborate with one property per location to keep the partnership intentional and exclusive.
 
-Best regards,
+If this aligns, I'd love to connect briefly to explore dates and availability.
+
+Warm regards,
 Nathan`,
     ctaUrl: "https://www.examodels.com",
     ctaText: "View EXA Models",
