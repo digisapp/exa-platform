@@ -4266,9 +4266,9 @@ export async function sendBrandOutreachEmail({
       <td align="center">
         <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px;">
 
-          <!-- Gold accent bar -->
+          <!-- Teal accent bar -->
           <tr>
-            <td style="background: linear-gradient(90deg, #d4a843 0%, #b45309 100%); height: 4px; border-radius: 4px 4px 0 0;"></td>
+            <td style="background: linear-gradient(90deg, #14b8a6 0%, #0d9488 100%); height: 4px; border-radius: 4px 4px 0 0;"></td>
           </tr>
 
           <!-- Main card -->
@@ -4276,14 +4276,13 @@ export async function sendBrandOutreachEmail({
             <td style="background-color: #111111; border-radius: 0 0 16px 16px; padding: 40px 36px;">
 
               <!-- Pre-header label -->
-              <p style="margin: 0 0 8px; color: #d4a843; font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;">EXA Travel · Content Residency Proposal</p>
+              <p style="margin: 0 0 8px; color: #14b8a6; font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;">EXA Travel · Influencer Partnership</p>
 
               <!-- Title -->
-              <h1 style="margin: 0 0 6px; color: #ffffff; font-size: 28px; font-weight: 800; line-height: 1.2;">4-Night Editorial<br>Content Residency</h1>
-              <p style="margin: 0 0 28px; color: #71717a; font-size: 15px;">One property per destination &nbsp;·&nbsp; Fully hosted</p>
+              <h1 style="margin: 0 0 28px; color: #ffffff; font-size: 28px; font-weight: 800; line-height: 1.2;">4-Night Influencer<br>Content Partnership</h1>
 
               <!-- Divider -->
-              <div style="height: 1px; background: linear-gradient(90deg, #d4a843, #b45309, transparent); margin-bottom: 28px;"></div>
+              <div style="height: 1px; background: linear-gradient(90deg, #14b8a6, #0d9488, transparent); margin-bottom: 28px;"></div>
 
               <!-- Greeting -->
               <p style="margin: 0 0 14px; color: #d4d4d4; font-size: 15px; line-height: 1.7;">Hi ${resolvedContactName},</p>
@@ -4294,41 +4293,37 @@ export async function sendBrandOutreachEmail({
               <p style="margin: 0 0 14px; color: #ffffff; font-size: 14px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;">Our Team — 8 People</p>
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
                 <tr>
-                  <td style="text-align: center; padding: 14px 6px; background-color: #1a1a1a; border-radius: 8px;">
-                    <p style="margin: 0 0 4px; font-size: 22px;">💃</p>
-                    <p style="margin: 0 0 2px; color: #d4a843; font-size: 18px; font-weight: 800;">5</p>
+                  <td style="text-align: center; padding: 16px 6px; background-color: #1a1a1a; border-radius: 8px;">
+                    <p style="margin: 0 0 2px; color: #14b8a6; font-size: 20px; font-weight: 800;">5</p>
                     <p style="margin: 0; color: #71717a; font-size: 11px;">Influencer<br>Models</p>
                   </td>
                   <td style="width: 6px;"></td>
-                  <td style="text-align: center; padding: 14px 6px; background-color: #1a1a1a; border-radius: 8px;">
-                    <p style="margin: 0 0 4px; font-size: 22px;">📸</p>
-                    <p style="margin: 0 0 2px; color: #d4a843; font-size: 18px; font-weight: 800;">1</p>
-                    <p style="margin: 0; color: #71717a; font-size: 11px;">Photo &amp;<br>Video</p>
+                  <td style="text-align: center; padding: 16px 6px; background-color: #1a1a1a; border-radius: 8px;">
+                    <p style="margin: 0 0 2px; color: #14b8a6; font-size: 20px; font-weight: 800;">1</p>
+                    <p style="margin: 0; color: #71717a; font-size: 11px;">Photo &amp;<br>Videographer</p>
                   </td>
                   <td style="width: 6px;"></td>
-                  <td style="text-align: center; padding: 14px 6px; background-color: #1a1a1a; border-radius: 8px;">
-                    <p style="margin: 0 0 4px; font-size: 22px;">🎨</p>
-                    <p style="margin: 0 0 2px; color: #d4a843; font-size: 18px; font-weight: 800;">1</p>
+                  <td style="text-align: center; padding: 16px 6px; background-color: #1a1a1a; border-radius: 8px;">
+                    <p style="margin: 0 0 2px; color: #14b8a6; font-size: 20px; font-weight: 800;">1</p>
                     <p style="margin: 0; color: #71717a; font-size: 11px;">Creative<br>Director</p>
                   </td>
                   <td style="width: 6px;"></td>
-                  <td style="text-align: center; padding: 14px 6px; background-color: #1a1a1a; border-radius: 8px;">
-                    <p style="margin: 0 0 4px; font-size: 22px;">🎬</p>
-                    <p style="margin: 0 0 2px; color: #d4a843; font-size: 18px; font-weight: 800;">1</p>
+                  <td style="text-align: center; padding: 16px 6px; background-color: #1a1a1a; border-radius: 8px;">
+                    <p style="margin: 0 0 2px; color: #14b8a6; font-size: 20px; font-weight: 800;">1</p>
                     <p style="margin: 0; color: #71717a; font-size: 11px;">Producer</p>
                   </td>
                 </tr>
               </table>
 
-              <!-- What we produce -->
-              <p style="margin: 0 0 14px; color: #ffffff; font-size: 14px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;">What We Create On Property</p>
+              <!-- Content we produce -->
+              <p style="margin: 0 0 14px; color: #ffffff; font-size: 14px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;">Content We Produce</p>
 
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 8px;">
                 <tr>
-                  <td style="padding: 12px 16px; background-color: #1a1a1a; border-radius: 10px; border-left: 3px solid #d4a843;">
+                  <td style="padding: 12px 16px; background-color: #1a1a1a; border-radius: 10px; border-left: 3px solid #14b8a6;">
                     <table cellpadding="0" cellspacing="0"><tr>
-                      <td style="vertical-align: middle; padding-right: 14px; font-size: 20px; width: 32px;">👗</td>
-                      <td><p style="margin: 0; color: #ffffff; font-size: 14px; font-weight: 600;">Fashion Editorials</p></td>
+                      <td style="vertical-align: middle; padding-right: 14px; color: #14b8a6; font-size: 13px; width: 16px;">◆</td>
+                      <td><p style="margin: 0; color: #ffffff; font-size: 14px; font-weight: 600;">Fashion &amp; Resort Editorials</p></td>
                     </tr></table>
                   </td>
                 </tr>
@@ -4336,10 +4331,10 @@ export async function sendBrandOutreachEmail({
 
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 8px;">
                 <tr>
-                  <td style="padding: 12px 16px; background-color: #1a1a1a; border-radius: 10px; border-left: 3px solid #b45309;">
+                  <td style="padding: 12px 16px; background-color: #1a1a1a; border-radius: 10px; border-left: 3px solid #14b8a6;">
                     <table cellpadding="0" cellspacing="0"><tr>
-                      <td style="vertical-align: middle; padding-right: 14px; font-size: 20px; width: 32px;">🍽️</td>
-                      <td><p style="margin: 0; color: #ffffff; font-size: 14px; font-weight: 600;">Restaurant &amp; Lifestyle Activations</p></td>
+                      <td style="vertical-align: middle; padding-right: 14px; color: #14b8a6; font-size: 13px; width: 16px;">◆</td>
+                      <td><p style="margin: 0; color: #ffffff; font-size: 14px; font-weight: 600;">Dining &amp; Culinary Features</p></td>
                     </tr></table>
                   </td>
                 </tr>
@@ -4347,10 +4342,10 @@ export async function sendBrandOutreachEmail({
 
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 8px;">
                 <tr>
-                  <td style="padding: 12px 16px; background-color: #1a1a1a; border-radius: 10px; border-left: 3px solid #0d9488;">
+                  <td style="padding: 12px 16px; background-color: #1a1a1a; border-radius: 10px; border-left: 3px solid #14b8a6;">
                     <table cellpadding="0" cellspacing="0"><tr>
-                      <td style="vertical-align: middle; padding-right: 14px; font-size: 20px; width: 32px;">✨</td>
-                      <td><p style="margin: 0; color: #ffffff; font-size: 14px; font-weight: 600;">Experience Highlights</p></td>
+                      <td style="vertical-align: middle; padding-right: 14px; color: #14b8a6; font-size: 13px; width: 16px;">◆</td>
+                      <td><p style="margin: 0; color: #ffffff; font-size: 14px; font-weight: 600;">Property &amp; Experience Showcases</p></td>
                     </tr></table>
                   </td>
                 </tr>
@@ -4358,10 +4353,10 @@ export async function sendBrandOutreachEmail({
 
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
                 <tr>
-                  <td style="padding: 12px 16px; background-color: #1a1a1a; border-radius: 10px; border-left: 3px solid #7c3aed;">
+                  <td style="padding: 12px 16px; background-color: #1a1a1a; border-radius: 10px; border-left: 3px solid #14b8a6;">
                     <table cellpadding="0" cellspacing="0"><tr>
-                      <td style="vertical-align: middle; padding-right: 14px; font-size: 20px; width: 32px;">🎥</td>
-                      <td><p style="margin: 0; color: #ffffff; font-size: 14px; font-weight: 600;">Day-to-Night Cinematic Content</p></td>
+                      <td style="vertical-align: middle; padding-right: 14px; color: #14b8a6; font-size: 13px; width: 16px;">◆</td>
+                      <td><p style="margin: 0; color: #ffffff; font-size: 14px; font-weight: 600;">Cinematic Day-to-Night Coverage</p></td>
                     </tr></table>
                   </td>
                 </tr>
@@ -4376,13 +4371,13 @@ export async function sendBrandOutreachEmail({
                     <tr>
                       <td style="padding-bottom: 12px; vertical-align: top; width: 50%;">
                         <table cellpadding="0" cellspacing="0"><tr>
-                          <td style="font-size: 16px; padding-right: 10px; vertical-align: middle;">📱</td>
+                          <td style="color: #14b8a6; font-size: 11px; padding-right: 10px; vertical-align: middle;">◆</td>
                           <td><p style="margin: 0; color: #d4d4d4; font-size: 13px; line-height: 1.4;"><strong style="color: #ffffff;">12–16</strong> Instagram feed posts</p></td>
                         </tr></table>
                       </td>
                       <td style="padding-bottom: 12px; vertical-align: top; width: 50%;">
                         <table cellpadding="0" cellspacing="0"><tr>
-                          <td style="font-size: 16px; padding-right: 10px; vertical-align: middle;">🎬</td>
+                          <td style="color: #14b8a6; font-size: 11px; padding-right: 10px; vertical-align: middle;">◆</td>
                           <td><p style="margin: 0; color: #d4d4d4; font-size: 13px; line-height: 1.4;"><strong style="color: #ffffff;">16–20</strong> Reels / TikToks</p></td>
                         </tr></table>
                       </td>
@@ -4390,13 +4385,13 @@ export async function sendBrandOutreachEmail({
                     <tr>
                       <td style="padding-bottom: 12px; vertical-align: top;">
                         <table cellpadding="0" cellspacing="0"><tr>
-                          <td style="font-size: 16px; padding-right: 10px; vertical-align: middle;">📖</td>
+                          <td style="color: #14b8a6; font-size: 11px; padding-right: 10px; vertical-align: middle;">◆</td>
                           <td><p style="margin: 0; color: #d4d4d4; font-size: 13px; line-height: 1.4;"><strong style="color: #ffffff;">30+</strong> story frames</p></td>
                         </tr></table>
                       </td>
                       <td style="padding-bottom: 12px; vertical-align: top;">
                         <table cellpadding="0" cellspacing="0"><tr>
-                          <td style="font-size: 16px; padding-right: 10px; vertical-align: middle;">🎞️</td>
+                          <td style="color: #14b8a6; font-size: 11px; padding-right: 10px; vertical-align: middle;">◆</td>
                           <td><p style="margin: 0; color: #d4d4d4; font-size: 13px; line-height: 1.4;"><strong style="color: #ffffff;">1 hero reel</strong> (60–90 sec)</p></td>
                         </tr></table>
                       </td>
@@ -4404,7 +4399,7 @@ export async function sendBrandOutreachEmail({
                     <tr>
                       <td style="padding-bottom: 16px; vertical-align: top;" colspan="2">
                         <table cellpadding="0" cellspacing="0"><tr>
-                          <td style="font-size: 16px; padding-right: 10px; vertical-align: middle;">🖼️</td>
+                          <td style="color: #14b8a6; font-size: 11px; padding-right: 10px; vertical-align: middle;">◆</td>
                           <td><p style="margin: 0; color: #d4d4d4; font-size: 13px; line-height: 1.4;"><strong style="color: #ffffff;">20 professionally edited images</strong> for your marketing use · All content tagged with direct booking links</p></td>
                         </tr></table>
                       </td>
@@ -4416,9 +4411,9 @@ export async function sendBrandOutreachEmail({
               <!-- Sample reel -->
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
                 <tr>
-                  <td style="padding: 16px 20px; background-color: #1a1a1a; border-radius: 10px; border: 1px solid #d4a84330;">
-                    <p style="margin: 0 0 6px; color: #d4a843; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;">Sample Production Reel</p>
-                    <a href="https://youtu.be/LP5uPoIgGOA" style="color: #ffffff; font-size: 14px; text-decoration: none; font-weight: 600;">▶ &nbsp;https://youtu.be/LP5uPoIgGOA</a>
+                  <td style="padding: 16px 20px; background-color: #1a1a1a; border-radius: 10px; border: 1px solid #14b8a630;">
+                    <p style="margin: 0 0 6px; color: #14b8a6; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;">Sample Production Reel</p>
+                    <a href="https://youtu.be/LP5uPoIgGOA" style="color: #ffffff; font-size: 14px; text-decoration: none; font-weight: 600;">&#9654; &nbsp;https://youtu.be/LP5uPoIgGOA</a>
                   </td>
                 </tr>
               </table>
@@ -4431,7 +4426,7 @@ export async function sendBrandOutreachEmail({
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 36px;">
                 <tr>
                   <td align="center">
-                    <a href="${resolvedCtaUrl}" style="display: inline-block; background: linear-gradient(135deg, #d4a843 0%, #b45309 100%); color: white; text-decoration: none; padding: 16px 44px; border-radius: 10px; font-weight: 700; font-size: 16px; letter-spacing: 0.3px;">
+                    <a href="${resolvedCtaUrl}" style="display: inline-block; background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); color: white; text-decoration: none; padding: 16px 44px; border-radius: 10px; font-weight: 700; font-size: 16px; letter-spacing: 0.3px;">
                       ${resolvedCtaText}
                     </a>
                   </td>
@@ -4445,9 +4440,9 @@ export async function sendBrandOutreachEmail({
                     <p style="margin: 0 0 2px; color: #ffffff; font-weight: 600; font-size: 14px;">EXA Models</p>
                     <p style="margin: 0 0 10px; color: #71717a; font-size: 13px;">Reply to this email to connect directly</p>
                     <p style="margin: 0; color: #71717a; font-size: 12px;">
-                      <a href="${BASE_URL}" style="color: #d4a843; text-decoration: none;">examodels.com</a>
+                      <a href="${BASE_URL}" style="color: #14b8a6; text-decoration: none;">examodels.com</a>
                       &nbsp;&middot;&nbsp;
-                      <a href="https://instagram.com/examodels" style="color: #d4a843; text-decoration: none;">@examodels</a>
+                      <a href="https://instagram.com/examodels" style="color: #14b8a6; text-decoration: none;">@examodels</a>
                     </p>
                   </td>
                 </tr>
