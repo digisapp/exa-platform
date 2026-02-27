@@ -185,14 +185,14 @@ export default async function HomePage() {
 
         {/* Split Hero Section */}
         <section id="signup" className="container px-8 md:px-16 py-6 md:py-10 scroll-mt-20">
-          <div className="grid md:grid-cols-3 gap-6 md:gap-8">
-            {/* Models Side */}
-            <div className="relative p-6 md:p-8 rounded-3xl bg-gradient-to-br from-pink-500/10 via-violet-500/5 to-transparent border border-pink-500/20 hover:border-pink-500/40 transition-all group">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8">
+            {/* Models Side — full width on mobile */}
+            <div className="col-span-2 md:col-span-1 relative p-6 md:p-8 rounded-3xl bg-gradient-to-br from-pink-500/10 via-violet-500/5 to-transparent border border-pink-500/20 hover:border-pink-500/40 transition-all group">
               {/* Decorative glow */}
               <div className="absolute -top-20 -left-20 w-40 h-40 bg-pink-500/20 rounded-full blur-3xl opacity-50 group-hover:opacity-70 transition-opacity" />
 
               <div className="relative z-10">
-                <span className="inline-block px-4 py-1.5 rounded-full text-sm font-semibold bg-gradient-to-r from-pink-500 to-violet-500 text-white mb-6">
+                <span className="inline-block px-3 py-1 md:px-4 md:py-1.5 rounded-full text-xs md:text-sm font-semibold bg-gradient-to-r from-pink-500 to-violet-500 text-white mb-4 md:mb-6">
                   For Models
                 </span>
 
@@ -216,50 +216,50 @@ export default async function HomePage() {
             </div>
 
             {/* Fans Side */}
-            <div className="relative p-6 md:p-8 rounded-3xl bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border border-amber-500/20 hover:border-amber-500/40 transition-all group">
+            <div className="relative p-4 md:p-8 rounded-3xl bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border border-amber-500/20 hover:border-amber-500/40 transition-all group">
               {/* Decorative glow */}
               <div className="absolute -top-20 -left-10 w-40 h-40 bg-amber-500/20 rounded-full blur-3xl opacity-50 group-hover:opacity-70 transition-opacity" />
 
               <div className="relative z-10">
-                <span className="inline-block px-4 py-1.5 rounded-full text-sm font-semibold bg-gradient-to-r from-amber-500 to-orange-500 text-white mb-6">
+                <span className="inline-block px-3 py-1 md:px-4 md:py-1.5 rounded-full text-xs md:text-sm font-semibold bg-gradient-to-r from-amber-500 to-orange-500 text-white mb-3 md:mb-6">
                   For Fans
                 </span>
 
-                <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-4">
+                <h2 className="text-lg md:text-3xl lg:text-4xl font-bold tracking-tight mb-3 md:mb-4">
                   Follow Models.
                   <br />
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Get Exclusive.</span>
                 </h2>
 
                 <FanSignupDialog>
-                  <Button size="lg" className="text-base px-8 h-12 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white">
+                  <Button className="w-full md:w-auto text-sm md:text-base px-4 md:px-8 h-9 md:h-12 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white">
                     Fan Sign Up
-                    <ArrowRight className="ml-2 h-4 w-4" />
+                    <ArrowRight className="ml-1.5 h-3.5 w-3.5 md:ml-2 md:h-4 md:w-4" />
                   </Button>
                 </FanSignupDialog>
               </div>
             </div>
 
             {/* Brands Side */}
-            <div className="relative p-6 md:p-8 rounded-3xl bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-transparent border border-cyan-500/20 hover:border-cyan-500/40 transition-all group">
+            <div className="relative p-4 md:p-8 rounded-3xl bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-transparent border border-cyan-500/20 hover:border-cyan-500/40 transition-all group">
               {/* Decorative glow */}
               <div className="absolute -top-20 -right-20 w-40 h-40 bg-cyan-500/20 rounded-full blur-3xl opacity-50 group-hover:opacity-70 transition-opacity" />
 
               <div className="relative z-10">
-                <span className="inline-block px-4 py-1.5 rounded-full text-sm font-semibold bg-gradient-to-r from-cyan-500 to-blue-500 text-white mb-6">
+                <span className="inline-block px-3 py-1 md:px-4 md:py-1.5 rounded-full text-xs md:text-sm font-semibold bg-gradient-to-r from-cyan-500 to-blue-500 text-white mb-3 md:mb-6">
                   For Brands
                 </span>
 
-                <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-4">
+                <h2 className="text-lg md:text-3xl lg:text-4xl font-bold tracking-tight mb-3 md:mb-4">
                   Book Models.
                   <br />
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Campaigns + more</span>
                 </h2>
 
                 <BrandInquiryDialog>
-                  <Button size="lg" className="text-base px-8 h-12 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white">
+                  <Button className="w-full md:w-auto text-sm md:text-base px-4 md:px-8 h-9 md:h-12 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white">
                     Brand Sign Up
-                    <ArrowRight className="ml-2 h-4 w-4" />
+                    <ArrowRight className="ml-1.5 h-3.5 w-3.5 md:ml-2 md:h-4 md:w-4" />
                   </Button>
                 </BrandInquiryDialog>
               </div>
