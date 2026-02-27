@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
       ctaText?: string;
       fromEmail?: string;
       fromName?: string;
-      template?: "standard" | "sponsor";
+      template?: "standard" | "sponsor" | "travel";
     };
 
     if (!contacts || contacts.length === 0) {

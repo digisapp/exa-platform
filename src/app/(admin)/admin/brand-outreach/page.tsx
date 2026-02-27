@@ -375,41 +375,12 @@ EXA Models`,
   };
 
   const travelEmailTemplate = {
-    subject: "Hotel Partnership – EXA Travel Series",
+    subject: "Influencer Partnership – EXA Travel",
     body: `Hi {{contact_name}},
 
 I hope you're well. I'm the COO of EXA Models. We're launching a new editorial travel series called EXA Travel.
 
-We partner with one boutique property per destination and bring a curated team for a 4-night content residency.
-
-Our Team (8 people)
-• 5 influencer models
-• 1 photographer / videographer
-• 1 creative director + 1 producer
-
-What We Produce On Property
-Over 4 days, we create a full luxury resort editorial campaign featuring:
-• Fashion editorials
-• Restaurant & lifestyle activations
-• Experience highlights
-• Day-to-night cinematic content
-
-Guaranteed Deliverables
-• 12–16 Instagram feed posts
-• 16–20 Reels/TikToks
-• 30+ story frames
-• 1 cinematic hero reel (60–90 sec)
-• 20 professionally edited images for your marketing use
-• All content tagged with direct booking links
-
-We focus on elevated, conversion-driven content. The goal is to create a premium visual library that drives measurable direct bookings.
-
-Here is a sample reel to reference our production level:
-https://youtu.be/LP5uPoIgGOA
-
-In exchange, we're requesting a fully hosted 4-night stay for our team.
-
-We only partner with one property per location, so if this aligns, I'd love to schedule a quick call to explore dates and availability.
+We partner with one boutique property per destination and bring a curated team for a 4-night content residency. We only partner with one property per location, so if this aligns, I'd love to schedule a quick call to explore dates and availability.
 
 Best regards,
 Nathan
@@ -417,6 +388,7 @@ EXA Models
 www.examodels.com`,
     ctaUrl: "https://www.examodels.com",
     ctaText: "View EXA Models",
+    template: "travel" as const,
   };
 
   const loadTemplate = (type: "designer" | "sponsor" | "travel") => {
@@ -436,8 +408,8 @@ www.examodels.com`,
       setEmailCtaUrl(t.ctaUrl);
       setEmailCtaText(t.ctaText);
       setEmailFromAddress("partnerships@examodels.com");
-      setEmailFromName("EXA Models Partnerships");
-      setEmailTemplate("standard");
+      setEmailFromName("EXA Models");
+      setEmailTemplate(t.template);
     } else {
       const t = designerEmailTemplate;
       setEmailSubject(t.subject);

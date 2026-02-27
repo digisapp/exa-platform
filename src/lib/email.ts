@@ -3961,7 +3961,7 @@ export async function sendBrandOutreachEmail({
   ctaText?: string;
   fromEmail?: string;
   fromName?: string;
-  template?: "standard" | "sponsor";
+  template?: "standard" | "sponsor" | "travel";
 }) {
   try {
     const resend = getResendClient();
@@ -4251,12 +4251,224 @@ export async function sendBrandOutreachEmail({
 </body>
 </html>`;
 
+    const resolvedContactName = contactName || "there";
+
+    const travelHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #050505; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #050505; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px;">
+
+          <!-- Gold accent bar -->
+          <tr>
+            <td style="background: linear-gradient(90deg, #d4a843 0%, #b45309 100%); height: 4px; border-radius: 4px 4px 0 0;"></td>
+          </tr>
+
+          <!-- Main card -->
+          <tr>
+            <td style="background-color: #111111; border-radius: 0 0 16px 16px; padding: 40px 36px;">
+
+              <!-- Pre-header label -->
+              <p style="margin: 0 0 8px; color: #d4a843; font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;">EXA Travel · Content Residency Proposal</p>
+
+              <!-- Title -->
+              <h1 style="margin: 0 0 6px; color: #ffffff; font-size: 28px; font-weight: 800; line-height: 1.2;">4-Night Editorial<br>Content Residency</h1>
+              <p style="margin: 0 0 28px; color: #71717a; font-size: 15px;">One property per destination &nbsp;·&nbsp; Fully hosted</p>
+
+              <!-- Divider -->
+              <div style="height: 1px; background: linear-gradient(90deg, #d4a843, #b45309, transparent); margin-bottom: 28px;"></div>
+
+              <!-- Greeting -->
+              <p style="margin: 0 0 14px; color: #d4d4d4; font-size: 15px; line-height: 1.7;">Hi ${resolvedContactName},</p>
+              <p style="margin: 0 0 14px; color: #d4d4d4; font-size: 15px; line-height: 1.7;">I hope you're well. I'm the COO of EXA Models. We're launching a new editorial travel series called <strong style="color: #ffffff;">EXA Travel</strong>.</p>
+              <p style="margin: 0 0 28px; color: #d4d4d4; font-size: 15px; line-height: 1.7;">We partner with one boutique property per destination and bring a curated team for a 4-night content residency.</p>
+
+              <!-- Team stat grid -->
+              <p style="margin: 0 0 14px; color: #ffffff; font-size: 14px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;">Our Team — 8 People</p>
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
+                <tr>
+                  <td style="text-align: center; padding: 14px 6px; background-color: #1a1a1a; border-radius: 8px;">
+                    <p style="margin: 0 0 4px; font-size: 22px;">💃</p>
+                    <p style="margin: 0 0 2px; color: #d4a843; font-size: 18px; font-weight: 800;">5</p>
+                    <p style="margin: 0; color: #71717a; font-size: 11px;">Influencer<br>Models</p>
+                  </td>
+                  <td style="width: 6px;"></td>
+                  <td style="text-align: center; padding: 14px 6px; background-color: #1a1a1a; border-radius: 8px;">
+                    <p style="margin: 0 0 4px; font-size: 22px;">📸</p>
+                    <p style="margin: 0 0 2px; color: #d4a843; font-size: 18px; font-weight: 800;">1</p>
+                    <p style="margin: 0; color: #71717a; font-size: 11px;">Photo &amp;<br>Video</p>
+                  </td>
+                  <td style="width: 6px;"></td>
+                  <td style="text-align: center; padding: 14px 6px; background-color: #1a1a1a; border-radius: 8px;">
+                    <p style="margin: 0 0 4px; font-size: 22px;">🎨</p>
+                    <p style="margin: 0 0 2px; color: #d4a843; font-size: 18px; font-weight: 800;">1</p>
+                    <p style="margin: 0; color: #71717a; font-size: 11px;">Creative<br>Director</p>
+                  </td>
+                  <td style="width: 6px;"></td>
+                  <td style="text-align: center; padding: 14px 6px; background-color: #1a1a1a; border-radius: 8px;">
+                    <p style="margin: 0 0 4px; font-size: 22px;">🎬</p>
+                    <p style="margin: 0 0 2px; color: #d4a843; font-size: 18px; font-weight: 800;">1</p>
+                    <p style="margin: 0; color: #71717a; font-size: 11px;">Producer</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- What we produce -->
+              <p style="margin: 0 0 14px; color: #ffffff; font-size: 14px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;">What We Create On Property</p>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 8px;">
+                <tr>
+                  <td style="padding: 12px 16px; background-color: #1a1a1a; border-radius: 10px; border-left: 3px solid #d4a843;">
+                    <table cellpadding="0" cellspacing="0"><tr>
+                      <td style="vertical-align: middle; padding-right: 14px; font-size: 20px; width: 32px;">👗</td>
+                      <td><p style="margin: 0; color: #ffffff; font-size: 14px; font-weight: 600;">Fashion Editorials</p></td>
+                    </tr></table>
+                  </td>
+                </tr>
+              </table>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 8px;">
+                <tr>
+                  <td style="padding: 12px 16px; background-color: #1a1a1a; border-radius: 10px; border-left: 3px solid #b45309;">
+                    <table cellpadding="0" cellspacing="0"><tr>
+                      <td style="vertical-align: middle; padding-right: 14px; font-size: 20px; width: 32px;">🍽️</td>
+                      <td><p style="margin: 0; color: #ffffff; font-size: 14px; font-weight: 600;">Restaurant &amp; Lifestyle Activations</p></td>
+                    </tr></table>
+                  </td>
+                </tr>
+              </table>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 8px;">
+                <tr>
+                  <td style="padding: 12px 16px; background-color: #1a1a1a; border-radius: 10px; border-left: 3px solid #0d9488;">
+                    <table cellpadding="0" cellspacing="0"><tr>
+                      <td style="vertical-align: middle; padding-right: 14px; font-size: 20px; width: 32px;">✨</td>
+                      <td><p style="margin: 0; color: #ffffff; font-size: 14px; font-weight: 600;">Experience Highlights</p></td>
+                    </tr></table>
+                  </td>
+                </tr>
+              </table>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
+                <tr>
+                  <td style="padding: 12px 16px; background-color: #1a1a1a; border-radius: 10px; border-left: 3px solid #7c3aed;">
+                    <table cellpadding="0" cellspacing="0"><tr>
+                      <td style="vertical-align: middle; padding-right: 14px; font-size: 20px; width: 32px;">🎥</td>
+                      <td><p style="margin: 0; color: #ffffff; font-size: 14px; font-weight: 600;">Day-to-Night Cinematic Content</p></td>
+                    </tr></table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Guaranteed Deliverables -->
+              <p style="margin: 0 0 14px; color: #ffffff; font-size: 14px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;">Guaranteed Deliverables</p>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px; background-color: #0d0d0d; border-radius: 12px; border: 1px solid #262626;">
+                <tr><td style="padding: 20px 20px 4px;">
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="padding-bottom: 12px; vertical-align: top; width: 50%;">
+                        <table cellpadding="0" cellspacing="0"><tr>
+                          <td style="font-size: 16px; padding-right: 10px; vertical-align: middle;">📱</td>
+                          <td><p style="margin: 0; color: #d4d4d4; font-size: 13px; line-height: 1.4;"><strong style="color: #ffffff;">12–16</strong> Instagram feed posts</p></td>
+                        </tr></table>
+                      </td>
+                      <td style="padding-bottom: 12px; vertical-align: top; width: 50%;">
+                        <table cellpadding="0" cellspacing="0"><tr>
+                          <td style="font-size: 16px; padding-right: 10px; vertical-align: middle;">🎬</td>
+                          <td><p style="margin: 0; color: #d4d4d4; font-size: 13px; line-height: 1.4;"><strong style="color: #ffffff;">16–20</strong> Reels / TikToks</p></td>
+                        </tr></table>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding-bottom: 12px; vertical-align: top;">
+                        <table cellpadding="0" cellspacing="0"><tr>
+                          <td style="font-size: 16px; padding-right: 10px; vertical-align: middle;">📖</td>
+                          <td><p style="margin: 0; color: #d4d4d4; font-size: 13px; line-height: 1.4;"><strong style="color: #ffffff;">30+</strong> story frames</p></td>
+                        </tr></table>
+                      </td>
+                      <td style="padding-bottom: 12px; vertical-align: top;">
+                        <table cellpadding="0" cellspacing="0"><tr>
+                          <td style="font-size: 16px; padding-right: 10px; vertical-align: middle;">🎞️</td>
+                          <td><p style="margin: 0; color: #d4d4d4; font-size: 13px; line-height: 1.4;"><strong style="color: #ffffff;">1 hero reel</strong> (60–90 sec)</p></td>
+                        </tr></table>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding-bottom: 16px; vertical-align: top;" colspan="2">
+                        <table cellpadding="0" cellspacing="0"><tr>
+                          <td style="font-size: 16px; padding-right: 10px; vertical-align: middle;">🖼️</td>
+                          <td><p style="margin: 0; color: #d4d4d4; font-size: 13px; line-height: 1.4;"><strong style="color: #ffffff;">20 professionally edited images</strong> for your marketing use · All content tagged with direct booking links</p></td>
+                        </tr></table>
+                      </td>
+                    </tr>
+                  </table>
+                </td></tr>
+              </table>
+
+              <!-- Sample reel -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
+                <tr>
+                  <td style="padding: 16px 20px; background-color: #1a1a1a; border-radius: 10px; border: 1px solid #d4a84330;">
+                    <p style="margin: 0 0 6px; color: #d4a843; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;">Sample Production Reel</p>
+                    <a href="https://youtu.be/LP5uPoIgGOA" style="color: #ffffff; font-size: 14px; text-decoration: none; font-weight: 600;">▶ &nbsp;https://youtu.be/LP5uPoIgGOA</a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- The ask -->
+              <p style="margin: 0 0 14px; color: #d4d4d4; font-size: 15px; line-height: 1.7;">In exchange, we're requesting a <strong style="color: #ffffff;">fully hosted 4-night stay</strong> for our team.</p>
+              <p style="margin: 0 0 28px; color: #d4d4d4; font-size: 15px; line-height: 1.7;">We only partner with <strong style="color: #ffffff;">one property per location</strong>, so if this aligns, I'd love to schedule a quick call to explore dates and availability.</p>
+
+              <!-- CTA -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 36px;">
+                <tr>
+                  <td align="center">
+                    <a href="${resolvedCtaUrl}" style="display: inline-block; background: linear-gradient(135deg, #d4a843 0%, #b45309 100%); color: white; text-decoration: none; padding: 16px 44px; border-radius: 10px; font-weight: 700; font-size: 16px; letter-spacing: 0.3px;">
+                      ${resolvedCtaText}
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Footer -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="border-top: 1px solid #262626; padding-top: 24px;">
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 2px; color: #ffffff; font-weight: 600; font-size: 14px;">EXA Models</p>
+                    <p style="margin: 0 0 10px; color: #71717a; font-size: 13px;">Reply to this email to connect directly</p>
+                    <p style="margin: 0; color: #71717a; font-size: 12px;">
+                      <a href="${BASE_URL}" style="color: #d4a843; text-decoration: none;">examodels.com</a>
+                      &nbsp;&middot;&nbsp;
+                      <a href="https://instagram.com/examodels" style="color: #d4a843; text-decoration: none;">@examodels</a>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
     const { data, error } = await resend.emails.send({
       from: `${resolvedFromName} <${resolvedFrom}>`,
       to: [to],
       subject: subject,
       replyTo: resolvedFrom,
-      html: template === "sponsor" ? sponsorHtml : standardHtml,
+      html: template === "sponsor" ? sponsorHtml : template === "travel" ? travelHtml : standardHtml,
     });
 
     if (error) {
