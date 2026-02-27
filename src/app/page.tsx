@@ -14,7 +14,6 @@ import {
   Trophy,
   Gavel,
   Coins,
-  Clock,
   Tv,
   Play,
   Calendar,
@@ -22,7 +21,6 @@ import {
 } from "lucide-react";
 import { TopModelsCarousel } from "@/components/home/TopModelsCarousel";
 import { UpcomingEventsCarousel } from "@/components/home/UpcomingEventsCarousel";
-import { CountdownTimer } from "@/components/auctions";
 import { formatCoins, coinsToFanUsd, formatUsd } from "@/lib/coin-config";
 import { format } from "date-fns";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -338,7 +336,6 @@ export default async function HomePage() {
                                 {formatUsd(coinsToFanUsd(auction.current_bid || auction.starting_price))}
                               </span>
                             </div>
-                            <CountdownTimer endsAt={auction.ends_at} compact className="text-[10px] text-white/40 justify-end" />
                           </div>
                         </Link>
                       ))}
@@ -352,11 +349,7 @@ export default async function HomePage() {
 
                 {/* CTA */}
                 <Link href="/bids" className="block">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-white/50">
-                      <Clock className="h-4 w-4 text-violet-400" />
-                      <span className="text-xs">Live Bids</span>
-                    </div>
+                  <div className="flex justify-end">
                     <div className="px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 text-white text-sm font-semibold hover:scale-105 transition-transform flex items-center gap-2">
                       Place Bids
                       <ArrowRight className="h-4 w-4" />
