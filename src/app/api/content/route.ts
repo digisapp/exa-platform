@@ -27,9 +27,9 @@ async function toSignedUrl(rawUrl: string | null | undefined): Promise<string | 
 const createContentSchema = z.object({
   title: z.string().max(200, "Title is too long").optional().nullable(),
   description: z.string().max(1000, "Description is too long").optional().nullable(),
-  mediaUrl: z.string().url("Invalid media URL"),
+  mediaUrl: z.string().min(1, "Media URL is required"), // accepts both full URLs and storage paths
   mediaType: z.enum(["image", "video"], { message: "Media type must be image or video" }),
-  previewUrl: z.string().url("Invalid preview URL").optional().nullable(),
+  previewUrl: z.string().min(1).optional().nullable(), // accepts both full URLs and storage paths
   coinPrice: z.number().int("Price must be a whole number").min(0, "Price cannot be negative").max(10000, "Price is too high"),
 });
 
