@@ -375,7 +375,7 @@ EXA Models`,
   };
 
   const travelEmailTemplate = {
-    subject: "EXA Travel × {{brand_name}} — Content Partnership Proposal",
+    subject: "Hotel Partnership – EXA Travel Series",
     body: `Hi {{contact_name}},
 
 I hope you're well. I'm the COO of EXA Models. We're launching a new editorial travel series called EXA Travel.
