@@ -24,6 +24,7 @@ import {
   FolderOpen,
   Printer,
   ShoppingBag,
+  Plane,
 } from "lucide-react";
 
 export default async function AdminPage() {
@@ -207,6 +208,13 @@ export default async function AdminPage() {
                 {pendingCalls} pending
               </span>
             )}
+          </Link>
+        </Button>
+
+        <Button variant="outline" asChild className="h-auto py-4 flex-col gap-2 border-violet-500/30 hover:border-violet-500/50">
+          <Link href="/admin/travel">
+            <Plane className="h-6 w-6 text-violet-400" />
+            <span className="bg-gradient-to-r from-violet-400 to-blue-400 text-transparent bg-clip-text">EXA Travel</span>
           </Link>
         </Button>
 
