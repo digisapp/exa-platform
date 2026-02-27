@@ -181,9 +181,10 @@ export async function GET(
 ) {
   try {
     const { id: auctionId } = await params;
-    const supabase = await createClient();
 
-    const { data: bids, error } = await supabase
+    // Use admin client to bypass actors RLS — fan actor rows are blocked for unauthenticated
+    // users, but bid history on active auctions is intentionally public
+    const { data: bids, error } = await (adminClient as any)
       .from("auction_bids")
       .select(`
         id,
@@ -209,7 +210,7 @@ export async function GET(
 
     // Batch-enrich bids with bidder info (2 queries instead of N+1)
     try {
-      const enhancedBids = await enrichBidsWithBidderInfo(supabase, bids || []);
+      const enhancedBids = await enrichBidsWithBidderInfo(adminClient, bids || []);
       return NextResponse.json({ bids: enhancedBids });
     } catch (enrichErr) {
       console.error("Bid enrichment error:", enrichErr);
