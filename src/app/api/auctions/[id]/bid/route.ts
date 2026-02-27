@@ -173,10 +173,10 @@ export async function POST(
               await sendAuctionOutbidEmail({
                 to: email,
                 bidderName,
-                auctionTitle: auctionBefore.title,
+                auctionTitle: auctionBefore?.title ?? "Auction",
                 auctionId,
                 currentBid: amount,
-                yourBid: auctionBefore.current_bid,
+                yourBid: auctionBefore?.current_bid ?? 0,
               });
             }
           }

@@ -30,6 +30,7 @@ import {
   Flame,
   Camera,
   FileText,
+  Gavel,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/auth/logout-button";
@@ -59,6 +60,7 @@ const fanLinks = [
   { href: "/dashboard", label: "Home", icon: Home },
   { href: "/models", label: "Explore", icon: Users },
   { href: "/chats", label: "Chats", icon: MessageCircle },
+  { href: "/my-bids", label: "My Bids", icon: Gavel },
 ];
 
 const brandLinks = [
@@ -250,12 +252,20 @@ export function Navbar({ user, actorType, unreadCount = 0 }: NavbarProps) {
                     </DropdownMenuItem>
                   )}
                   {actorType === "fan" && (
-                    <DropdownMenuItem asChild>
-                      <Link href="/my-content" className="cursor-pointer">
-                        <FolderHeart className="mr-2 h-4 w-4" />
-                        My Content
-                      </Link>
-                    </DropdownMenuItem>
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link href="/my-bids" className="cursor-pointer">
+                          <Gavel className="mr-2 h-4 w-4" />
+                          My Bids
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/my-content" className="cursor-pointer">
+                          <FolderHeart className="mr-2 h-4 w-4" />
+                          My Content
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
                   )}
                   {actorType === "brand" && (
                     <>
