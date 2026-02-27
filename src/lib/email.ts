@@ -4279,85 +4279,95 @@ export async function sendBrandOutreachEmail({
               <p style="margin: 0 0 8px; color: #14b8a6; font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;">EXA Travel · Influencer Partnership</p>
 
               <!-- Title -->
-              <h1 style="margin: 0 0 28px; color: #ffffff; font-size: 28px; font-weight: 800; line-height: 1.2;">4-Night Influencer<br>Content Partnership</h1>
+              <h1 style="margin: 0 0 28px; color: #ffffff; font-size: 28px; font-weight: 800; line-height: 1.2;">4-Night Luxury<br>Content Residency</h1>
 
               <!-- Divider -->
               <div style="height: 1px; background: linear-gradient(90deg, #14b8a6, #0d9488, transparent); margin-bottom: 28px;"></div>
 
               <!-- Greeting -->
-              <p style="margin: 0 0 14px; color: #d4d4d4; font-size: 15px; line-height: 1.7;">Hi ${resolvedContactName},</p>
-              <p style="margin: 0 0 14px; color: #d4d4d4; font-size: 15px; line-height: 1.7;">I hope you're well. I'm the COO of EXA Models. We're launching a new editorial travel series called <strong style="color: #ffffff;">EXA Travel</strong>.</p>
-              <p style="margin: 0 0 28px; color: #d4d4d4; font-size: 15px; line-height: 1.7;">We partner with one boutique property per destination and bring a curated team for a 4-night content residency.</p>
+              <p style="margin: 0 0 6px; color: #d4d4d4; font-size: 15px; line-height: 1.7;">Hi ${resolvedContactName},</p>
+              <p style="margin: 0 0 24px; color: #d4d4d4; font-size: 15px; line-height: 1.7;">I'm Nathan, COO of EXA Models.</p>
+              <p style="margin: 0 0 14px; color: #d4d4d4; font-size: 15px; line-height: 1.7;">We're launching a new editorial travel series called <strong style="color: #ffffff;">EXA Travel</strong> — a curated content residency partnering with one boutique property per destination.</p>
+              <p style="margin: 0 0 28px; color: #d4d4d4; font-size: 15px; line-height: 1.7;">We would love to partner with your property.</p>
 
-              <!-- Team stat grid -->
-              <p style="margin: 0 0 14px; color: #ffffff; font-size: 14px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;">Our Team — 8 People</p>
+              <!-- The Concept -->
+              <p style="margin: 0 0 12px; color: #ffffff; font-size: 14px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;">The Concept</p>
+              <p style="margin: 0 0 28px; color: #d4d4d4; font-size: 15px; line-height: 1.7;">We bring a hand-selected creative team for a 4-night luxury content residency and produce a full editorial campaign centered around your property — not just rooms, but the entire experience.</p>
+
+              <!-- What We Create On Property -->
+              <p style="margin: 0 0 12px; color: #ffffff; font-size: 14px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;">What We Create On Property</p>
+              <p style="margin: 0 0 14px; color: #71717a; font-size: 13px; line-height: 1.6;">Over 4 days, we produce:</p>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 8px;">
+                <tr><td style="padding: 12px 16px; background-color: #1a1a1a; border-radius: 10px; border-left: 3px solid #14b8a6;">
+                  <table cellpadding="0" cellspacing="0"><tr>
+                    <td style="vertical-align: middle; padding-right: 14px; color: #14b8a6; font-size: 12px; width: 16px;">◆</td>
+                    <td><p style="margin: 0; color: #ffffff; font-size: 14px; font-weight: 600;">High-fashion resort editorials</p></td>
+                  </tr></table>
+                </td></tr>
+              </table>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 8px;">
+                <tr><td style="padding: 12px 16px; background-color: #1a1a1a; border-radius: 10px; border-left: 3px solid #14b8a6;">
+                  <table cellpadding="0" cellspacing="0"><tr>
+                    <td style="vertical-align: middle; padding-right: 14px; color: #14b8a6; font-size: 12px; width: 16px;">◆</td>
+                    <td><p style="margin: 0; color: #ffffff; font-size: 14px; font-weight: 600;">Restaurant &amp; cocktail features</p></td>
+                  </tr></table>
+                </td></tr>
+              </table>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 8px;">
+                <tr><td style="padding: 12px 16px; background-color: #1a1a1a; border-radius: 10px; border-left: 3px solid #14b8a6;">
+                  <table cellpadding="0" cellspacing="0"><tr>
+                    <td style="vertical-align: middle; padding-right: 14px; color: #14b8a6; font-size: 12px; width: 16px;">◆</td>
+                    <td><p style="margin: 0; color: #ffffff; font-size: 14px; font-weight: 600;">Pool, spa, and experiential moments</p></td>
+                  </tr></table>
+                </td></tr>
+              </table>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 8px;">
+                <tr><td style="padding: 12px 16px; background-color: #1a1a1a; border-radius: 10px; border-left: 3px solid #14b8a6;">
+                  <table cellpadding="0" cellspacing="0"><tr>
+                    <td style="vertical-align: middle; padding-right: 14px; color: #14b8a6; font-size: 12px; width: 16px;">◆</td>
+                    <td><p style="margin: 0; color: #ffffff; font-size: 14px; font-weight: 600;">Day-to-night cinematic storytelling</p></td>
+                  </tr></table>
+                </td></tr>
+              </table>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 16px;">
+                <tr><td style="padding: 12px 16px; background-color: #1a1a1a; border-radius: 10px; border-left: 3px solid #14b8a6;">
+                  <table cellpadding="0" cellspacing="0"><tr>
+                    <td style="vertical-align: middle; padding-right: 14px; color: #14b8a6; font-size: 12px; width: 16px;">◆</td>
+                    <td><p style="margin: 0; color: #ffffff; font-size: 14px; font-weight: 600;">Lifestyle content showcasing the full guest journey</p></td>
+                  </tr></table>
+                </td></tr>
+              </table>
+
+              <p style="margin: 0 0 28px; color: #71717a; font-size: 13px; line-height: 1.6; font-style: italic;">This is not influencer snapshots — it's structured, conversion-focused visual production.</p>
+
+              <!-- Our Team -->
+              <p style="margin: 0 0 14px; color: #ffffff; font-size: 14px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;">Our Team (8 Total)</p>
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
                 <tr>
                   <td style="text-align: center; padding: 16px 6px; background-color: #1a1a1a; border-radius: 8px;">
                     <p style="margin: 0 0 2px; color: #14b8a6; font-size: 20px; font-weight: 800;">5</p>
-                    <p style="margin: 0; color: #71717a; font-size: 11px;">Influencer<br>Models</p>
+                    <p style="margin: 0 0 4px; color: #a1a1aa; font-size: 11px;">Influencer<br>Models</p>
+                    <p style="margin: 0; color: #14b8a6; font-size: 10px; font-weight: 700;">1M+ reach</p>
                   </td>
                   <td style="width: 6px;"></td>
                   <td style="text-align: center; padding: 16px 6px; background-color: #1a1a1a; border-radius: 8px;">
                     <p style="margin: 0 0 2px; color: #14b8a6; font-size: 20px; font-weight: 800;">1</p>
-                    <p style="margin: 0; color: #71717a; font-size: 11px;">Photo &amp;<br>Videographer</p>
+                    <p style="margin: 0; color: #a1a1aa; font-size: 11px;">Photo &amp;<br>Videographer</p>
                   </td>
                   <td style="width: 6px;"></td>
                   <td style="text-align: center; padding: 16px 6px; background-color: #1a1a1a; border-radius: 8px;">
                     <p style="margin: 0 0 2px; color: #14b8a6; font-size: 20px; font-weight: 800;">1</p>
-                    <p style="margin: 0; color: #71717a; font-size: 11px;">Creative<br>Director</p>
+                    <p style="margin: 0; color: #a1a1aa; font-size: 11px;">Creative<br>Director</p>
                   </td>
                   <td style="width: 6px;"></td>
                   <td style="text-align: center; padding: 16px 6px; background-color: #1a1a1a; border-radius: 8px;">
                     <p style="margin: 0 0 2px; color: #14b8a6; font-size: 20px; font-weight: 800;">1</p>
-                    <p style="margin: 0; color: #71717a; font-size: 11px;">Producer</p>
-                  </td>
-                </tr>
-              </table>
-
-              <!-- Content we produce -->
-              <p style="margin: 0 0 14px; color: #ffffff; font-size: 14px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;">Content We Produce</p>
-
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 8px;">
-                <tr>
-                  <td style="padding: 12px 16px; background-color: #1a1a1a; border-radius: 10px; border-left: 3px solid #14b8a6;">
-                    <table cellpadding="0" cellspacing="0"><tr>
-                      <td style="vertical-align: middle; padding-right: 14px; color: #14b8a6; font-size: 13px; width: 16px;">◆</td>
-                      <td><p style="margin: 0; color: #ffffff; font-size: 14px; font-weight: 600;">Fashion &amp; Resort Editorials</p></td>
-                    </tr></table>
-                  </td>
-                </tr>
-              </table>
-
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 8px;">
-                <tr>
-                  <td style="padding: 12px 16px; background-color: #1a1a1a; border-radius: 10px; border-left: 3px solid #14b8a6;">
-                    <table cellpadding="0" cellspacing="0"><tr>
-                      <td style="vertical-align: middle; padding-right: 14px; color: #14b8a6; font-size: 13px; width: 16px;">◆</td>
-                      <td><p style="margin: 0; color: #ffffff; font-size: 14px; font-weight: 600;">Dining &amp; Culinary Features</p></td>
-                    </tr></table>
-                  </td>
-                </tr>
-              </table>
-
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 8px;">
-                <tr>
-                  <td style="padding: 12px 16px; background-color: #1a1a1a; border-radius: 10px; border-left: 3px solid #14b8a6;">
-                    <table cellpadding="0" cellspacing="0"><tr>
-                      <td style="vertical-align: middle; padding-right: 14px; color: #14b8a6; font-size: 13px; width: 16px;">◆</td>
-                      <td><p style="margin: 0; color: #ffffff; font-size: 14px; font-weight: 600;">Property &amp; Experience Showcases</p></td>
-                    </tr></table>
-                  </td>
-                </tr>
-              </table>
-
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
-                <tr>
-                  <td style="padding: 12px 16px; background-color: #1a1a1a; border-radius: 10px; border-left: 3px solid #14b8a6;">
-                    <table cellpadding="0" cellspacing="0"><tr>
-                      <td style="vertical-align: middle; padding-right: 14px; color: #14b8a6; font-size: 13px; width: 16px;">◆</td>
-                      <td><p style="margin: 0; color: #ffffff; font-size: 14px; font-weight: 600;">Cinematic Day-to-Night Coverage</p></td>
-                    </tr></table>
+                    <p style="margin: 0; color: #a1a1aa; font-size: 11px;">Producer</p>
                   </td>
                 </tr>
               </table>
@@ -4399,14 +4409,17 @@ export async function sendBrandOutreachEmail({
                     <tr>
                       <td style="padding-bottom: 16px; vertical-align: top;" colspan="2">
                         <table cellpadding="0" cellspacing="0"><tr>
-                          <td style="color: #14b8a6; font-size: 11px; padding-right: 10px; vertical-align: middle;">◆</td>
-                          <td><p style="margin: 0; color: #d4d4d4; font-size: 13px; line-height: 1.4;"><strong style="color: #ffffff;">20 professionally edited images</strong> for your marketing use · All content tagged with direct booking links</p></td>
+                          <td style="color: #14b8a6; font-size: 11px; padding-right: 10px; vertical-align: middle; white-space: nowrap;">◆</td>
+                          <td><p style="margin: 0; color: #d4d4d4; font-size: 13px; line-height: 1.4;"><strong style="color: #ffffff;">20 professionally edited images</strong> licensed for your marketing use &middot; All posts tagged with direct booking links</p></td>
                         </tr></table>
                       </td>
                     </tr>
                   </table>
                 </td></tr>
               </table>
+
+              <!-- Goal statement -->
+              <p style="margin: 0 0 28px; color: #d4d4d4; font-size: 15px; line-height: 1.7;">Our goal is to leave you with a <strong style="color: #ffffff;">premium content library</strong> that can be used across social, website, paid ads, and email campaigns — while driving measurable direct bookings.</p>
 
               <!-- Sample reel -->
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
@@ -4418,8 +4431,9 @@ export async function sendBrandOutreachEmail({
                 </tr>
               </table>
 
-              <!-- The ask -->
-              <p style="margin: 0 0 14px; color: #d4d4d4; font-size: 15px; line-height: 1.7;">In exchange, we're requesting a <strong style="color: #ffffff;">fully hosted 4-night stay</strong> for our team.</p>
+              <!-- In Exchange -->
+              <p style="margin: 0 0 12px; color: #ffffff; font-size: 14px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;">In Exchange</p>
+              <p style="margin: 0 0 14px; color: #d4d4d4; font-size: 15px; line-height: 1.7;">We're requesting a <strong style="color: #ffffff;">fully hosted 4-night stay</strong> for our team.</p>
               <p style="margin: 0 0 28px; color: #d4d4d4; font-size: 15px; line-height: 1.7;">We only partner with <strong style="color: #ffffff;">one property per location</strong>, so if this aligns, I'd love to schedule a quick call to explore dates and availability.</p>
 
               <!-- CTA -->
@@ -4437,7 +4451,7 @@ export async function sendBrandOutreachEmail({
               <table width="100%" cellpadding="0" cellspacing="0" style="border-top: 1px solid #262626; padding-top: 24px;">
                 <tr>
                   <td>
-                    <p style="margin: 0 0 2px; color: #ffffff; font-weight: 600; font-size: 14px;">EXA Models</p>
+                    <p style="margin: 0 0 2px; color: #ffffff; font-weight: 600; font-size: 14px;">Nathan &nbsp;&middot;&nbsp; COO, EXA Models</p>
                     <p style="margin: 0 0 10px; color: #71717a; font-size: 13px;">Reply to this email to connect directly</p>
                     <p style="margin: 0; color: #71717a; font-size: 12px;">
                       <a href="${BASE_URL}" style="color: #14b8a6; text-decoration: none;">examodels.com</a>
