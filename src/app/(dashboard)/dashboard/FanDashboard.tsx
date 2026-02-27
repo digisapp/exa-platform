@@ -12,9 +12,8 @@ import {
   MessageCircle,
   Coins,
   Gavel,
-  Crown,
 } from "lucide-react";
-import { CountdownTimer } from "@/components/auctions";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatCoins, coinsToFanUsd, formatUsd } from "@/lib/coin-config";
 import { ModelCard } from "@/components/models/model-card";
 
@@ -63,9 +62,9 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
       .select("coin_balance, display_name")
       .eq("id", actorId)
       .single(),
-    // All currently live auctions
+    // All currently live auctions with model info
     (supabase.from("auctions") as any)
-      .select("id, title, ends_at, current_bid, starting_price, status")
+      .select("id, title, category, current_bid, starting_price, status, model:models!auctions_model_id_fkey(first_name, last_name, username, profile_photo_url)")
       .eq("status", "active")
       .gt("ends_at", new Date().toISOString())
       .order("ends_at", { ascending: true })
@@ -200,33 +199,38 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
               <div className="space-y-3">
                 {liveAuctions.map((auction: any) => {
                   const myBid = myBidMap.get(auction.id);
-                  const hasBid = !!myBid;
                   const isWinning = myBid?.status === "winning";
-                  const isOutbid = hasBid && !isWinning;
+                  const isOutbid = !!myBid && !isWinning;
                   const price = auction.current_bid || auction.starting_price;
+                  const modelName = auction.model
+                    ? `${auction.model.first_name || ""} ${auction.model.last_name || ""}`.trim() || auction.model.username
+                    : "Model";
+                  const category = auction.category
+                    ? auction.category.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())
+                    : "Auction";
                   return (
                     <Link
                       key={auction.id}
                       href={`/bids/${auction.id}`}
-                      className="flex items-center gap-3 p-3 rounded-xl bg-zinc-800/40 hover:bg-zinc-800/70 transition-colors group"
+                      className="flex items-center gap-3 p-3 rounded-xl bg-zinc-800/40 hover:bg-zinc-800/70 transition-colors"
                     >
-                      <div className={`p-2 rounded-lg shrink-0 ${isWinning ? "bg-amber-500/20" : isOutbid ? "bg-red-500/20" : "bg-zinc-700/50"}`}>
-                        {isWinning
-                          ? <Crown className="h-4 w-4 text-amber-400" />
-                          : <Gavel className={`h-4 w-4 ${isOutbid ? "text-red-400" : "text-zinc-400"}`} />
-                        }
-                      </div>
+                      <Avatar className={`h-10 w-10 shrink-0 border-2 ${isWinning ? "border-amber-400" : isOutbid ? "border-red-400/60" : "border-zinc-600"}`}>
+                        <AvatarImage src={auction.model?.profile_photo_url || undefined} />
+                        <AvatarFallback className="bg-zinc-700 text-zinc-300 text-sm">
+                          {modelName[0] || "?"}
+                        </AvatarFallback>
+                      </Avatar>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{auction.title}</p>
-                        <div className="flex items-center gap-2 text-xs text-zinc-500 mt-0.5">
-                          <Coins className="h-3 w-3 text-amber-400" />
-                          <span>{formatCoins(price)} ({formatUsd(coinsToFanUsd(price))})</span>
-                          {isWinning && <span className="text-amber-400 font-medium">· Winning</span>}
-                          {isOutbid && <span className="text-red-400 font-medium">· Outbid</span>}
-                        </div>
+                        <p className="font-medium text-sm truncate">{modelName}</p>
+                        <p className="text-xs text-zinc-500 truncate">{category}</p>
                       </div>
                       <div className="text-right shrink-0">
-                        <CountdownTimer endsAt={auction.ends_at} compact className="text-xs" />
+                        <div className="flex items-center gap-1 justify-end text-amber-400">
+                          <Coins className="h-3 w-3" />
+                          <span className="text-sm font-semibold">{formatCoins(price)}</span>
+                        </div>
+                        {isWinning && <p className="text-xs text-amber-400 font-medium">Winning</p>}
+                        {isOutbid && <p className="text-xs text-red-400 font-medium">Outbid</p>}
                       </div>
                     </Link>
                   );
