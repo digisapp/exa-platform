@@ -12,8 +12,6 @@ import {
   Twitch,
   ExternalLink,
   Mail,
-  Gavel,
-  Clock,
   Zap,
   ArrowRight,
 } from "lucide-react";
@@ -297,16 +295,6 @@ export default async function ModelProfilePage({ params }: Props) {
     video_call: "📞", custom_content: "🎬", meet_greet: "🤝",
     shoutout: "📲", experience: "✨", other: "💫",
   };
-  function timeLeft(endsAt: string): string {
-    const ms = new Date(endsAt).getTime() - Date.now();
-    if (ms <= 0) return "Ending";
-    const mins = Math.floor(ms / 60000);
-    if (mins < 60) return `${mins}m`;
-    const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `${hrs}h`;
-    return `${Math.floor(hrs / 24)}d`;
-  }
-
   // JSON-LD structured data for SEO
   const jsonLd = {
     "@context": "https://schema.org",
@@ -382,11 +370,11 @@ export default async function ModelProfilePage({ params }: Props) {
             </div>
           </div>
 
-          {/* Live Bids Strip — shown above profile photo when model has active bids */}
+          {/* Live Bids Strip — compact rows matching homepage EXA Bids style */}
           {liveAuctions && liveAuctions.length > 0 && (
             <div className="mb-5">
               {/* Label */}
-              <div className="flex items-center justify-center gap-2 mb-3">
+              <div className="flex items-center justify-center gap-2 mb-2">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
@@ -395,58 +383,37 @@ export default async function ModelProfilePage({ params }: Props) {
                   Live Bids
                 </span>
               </div>
-              {/* Horizontal scroll row */}
-              <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory -mx-2 px-2">
+              {/* Full-width compact rows */}
+              <div className="space-y-1.5">
                 {liveAuctions.map((auction: any) => {
                   const coins = auction.current_bid ?? auction.starting_price;
-                  const usd = Math.round(coins * 0.10);
-                  const left = timeLeft(auction.ends_at);
                   const emoji = AUCTION_EMOJI[auction.category] || "💫";
                   return (
                     <Link
                       key={auction.id}
                       href={`/bids/${auction.id}`}
-                      className="flex-none snap-start w-44 rounded-2xl bg-white/6 border border-white/10 hover:border-pink-500/50 hover:bg-white/10 transition-all duration-200 p-3.5 group"
+                      className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group"
                     >
-                      {/* Top row: emoji + time */}
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xl leading-none">{emoji}</span>
-                        <span className="flex items-center gap-0.5 text-[10px] text-white/40 font-medium">
-                          <Clock className="h-2.5 w-2.5" />
-                          {left}
-                        </span>
-                      </div>
-                      {/* Title */}
-                      <p className="text-[11px] font-medium text-white/75 line-clamp-2 leading-snug text-left mb-2.5">
+                      <span className="text-base leading-none shrink-0">{emoji}</span>
+                      <p className="flex-1 text-sm font-medium text-white/80 truncate group-hover:text-white transition-colors">
                         {auction.title}
                       </p>
-                      {/* Bottom row: price + CTA */}
-                      <div className="flex items-center justify-between">
-                        <div className="text-left">
-                          <span className="text-xs font-bold text-white">${usd}</span>
-                          {auction.bid_count > 0 && (
-                            <span className="text-[9px] text-white/35 ml-1">
-                              {auction.bid_count} bid{auction.bid_count !== 1 ? "s" : ""}
-                            </span>
-                          )}
-                        </div>
-                        <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 text-white shadow-sm shadow-pink-500/30 group-hover:shadow-pink-500/50 transition-all">
-                          BID
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="text-sm font-bold text-amber-400">
+                          ${Math.round(coins * 0.10).toLocaleString()}
                         </span>
+                        {auction.bid_count > 0 && (
+                          <span className="text-[10px] text-white/30">
+                            · {auction.bid_count}
+                          </span>
+                        )}
                       </div>
+                      <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 text-white shrink-0">
+                        BID
+                      </span>
                     </Link>
                   );
                 })}
-                {/* "See all" chip if more bids exist */}
-                <Link
-                  href="/bids"
-                  className="flex-none snap-start w-16 rounded-2xl bg-white/4 border border-white/8 hover:border-white/20 hover:bg-white/8 transition-all flex flex-col items-center justify-center gap-1.5 text-white/40 hover:text-white/60"
-                >
-                  <Gavel className="h-4 w-4" />
-                  <span className="text-[9px] font-medium text-center leading-tight">
-                    All<br />Bids
-                  </span>
-                </Link>
               </div>
             </div>
           )}
