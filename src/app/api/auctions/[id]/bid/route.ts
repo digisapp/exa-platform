@@ -106,6 +106,35 @@ export async function POST(
       );
     }
 
+    // The RPC catches its own exceptions internally and returns { success: false, error: '...' }
+    // instead of raising them to PostgREST. Check the returned payload explicitly.
+    const bidResult = result as Record<string, any>;
+    if (!bidResult || bidResult.success === false) {
+      const errMsg: string = bidResult?.error || "Failed to place bid";
+      console.error("Place bid RPC error:", errMsg);
+
+      if (errMsg.includes("Insufficient coin balance")) {
+        return NextResponse.json({ error: "Insufficient coin balance" }, { status: 400 });
+      }
+      if (errMsg.includes("Auction not found")) {
+        return NextResponse.json({ error: "Auction not found" }, { status: 404 });
+      }
+      if (errMsg.includes("not active")) {
+        return NextResponse.json({ error: "This auction is not active" }, { status: 400 });
+      }
+      if (errMsg.includes("Cannot bid on your own")) {
+        return NextResponse.json({ error: "Cannot bid on your own auction" }, { status: 400 });
+      }
+      if (errMsg.includes("higher than current")) {
+        return NextResponse.json({ error: "Bid must be higher than current bid" }, { status: 400 });
+      }
+      if (errMsg.includes("meet the minimum")) {
+        return NextResponse.json({ error: "Bid must be at least the starting price" }, { status: 400 });
+      }
+
+      return NextResponse.json({ error: errMsg }, { status: 400 });
+    }
+
     // Notify the outbid user if they were previously leading and have notify_outbid enabled
     if (auctionBefore?.leading_bidder_id && auctionBefore.leading_bidder_id !== actor.id) {
       try {
@@ -152,7 +181,6 @@ export async function POST(
     });
 
     // Map RPC field names to API response format
-    const bidResult = result as Record<string, any>;
     const response: PlaceBidResponse = {
       success: true,
       bid_id: bidResult.bid_id,
