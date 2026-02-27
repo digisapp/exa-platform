@@ -383,16 +383,13 @@ I'm Nathan, COO of EXA Models. We're launching a new editorial travel series cal
 We bring a curated team (5 influencer models + our in-house photographer and creative team) and spend four days capturing the full experience — the property, the culture, and the destination itself — in a cinematic, elevated way.
 
 What You Receive
-• 5 Instagram feed posts + 15–25 story frames per model
-• 10+ Reels / TikToks across the team
-• 1 cinematic hero reel (60–90 seconds)
-• 20 edited high-resolution images licensed for your use
-• All content tagged to your property with direct booking links
+• Instagram posts & stories from each of our 5 models
+• 10+ short videos posted across Reels & TikTok
+• One full cinematic video (60–90 sec) — usable for your ads
+• 20 professional photos you can use anywhere — website, ads, social
+• Every post tags your property and links directly to your booking page
 
 You'll leave with a full content library ready for social, ads, and your website.
-
-Here's a sample of our production level:
-https://youtu.be/LP5uPoIgGOA
 
 In exchange, we're requesting a fully hosted 4-night stay for the team.
 
