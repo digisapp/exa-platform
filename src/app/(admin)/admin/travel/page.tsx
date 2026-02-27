@@ -590,6 +590,37 @@ function TripsTab({ supabase }: { supabase: any }) {
 // PARTNERS TAB
 // ═══════════════════════════════════════════════════════════════════════════════
 
+const DEFAULT_TRAVEL_SUBJECT = "EXA Travel × {{brand_name}} — Content Partnership Proposal";
+
+const DEFAULT_TRAVEL_BODY = `Hi {{contact_name}},
+
+My name is Lara and I'm reaching out from EXA Models to propose an exciting content partnership with {{brand_name}}.
+
+EXA Travel connects premium properties with our curated roster of professional models, photographers, and creative directors for fully produced content stays.
+
+THE TEAM
+We bring 10 content professionals: 8 of our top-performing models, a professional photographer, and a creative director — all experienced in delivering high-quality, brand-focused content.
+
+THE STAY
+We're seeking hosted accommodations for 10 people for a 4-night, 5-day stay at {{brand_name}}. There are no fees — your investment is the stay, and your return is a full professional content campaign.
+
+WHAT {{brand_name}} RECEIVES
+- 8 Instagram Feed Posts — one per model, high-quality editorial photography
+- 8 TikTok Videos — authentic short-form content from every model
+- 8 Instagram Stories — with swipe-up links directly to your booking page
+- 1 Cinematic Video Reel — a professional 4–5 min film of the full experience
+- Live Streaming — real-time content throughout the entire stay
+- Trackable Booking Links — so you can measure direct ROI from our audience
+
+Every meal, excursion, amenity, and experience during the stay will be featured and tagged across all channels, with swipe-up links driving direct bookings from our combined audience.
+
+Would you be open to a quick call this week? I'd love to share our production reel and walk you through exactly how EXA Travel works.
+
+Warm regards,
+Lara
+EXA Models | EXA Travel
+partnerships@examodels.com`;
+
 function PartnersTab({ supabase }: { supabase: any }) {
   const [partners, setPartners] = useState<TravelPartner[]>([]);
   const [loading, setLoading] = useState(true);
@@ -598,6 +629,14 @@ function PartnersTab({ supabase }: { supabase: any }) {
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  // Send pitch state
+  const [showSendDialog, setShowSendDialog] = useState(false);
+  const [sendSubject, setSendSubject] = useState(DEFAULT_TRAVEL_SUBJECT);
+  const [sendBody, setSendBody] = useState(DEFAULT_TRAVEL_BODY);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [sending, setSending] = useState(false);
+  const [sendProgress, setSendProgress] = useState<{ sent: number; failed: number; total: number } | null>(null);
 
   const [form, setForm] = useState({
     brand_name: "", contact_name: "", email: "",
@@ -639,6 +678,54 @@ function PartnersTab({ supabase }: { supabase: any }) {
     await (supabase.from("brand_outreach_contacts") as any).delete().eq("id", id);
     toast.success("Deleted");
     loadPartners();
+  }
+
+  function openSendDialog() {
+    // Pre-select all partners
+    setSelectedIds(new Set(partners.map((p) => p.id)));
+    setSendSubject(DEFAULT_TRAVEL_SUBJECT);
+    setSendBody(DEFAULT_TRAVEL_BODY);
+    setSendProgress(null);
+    setShowSendDialog(true);
+  }
+
+  function toggleAll(list: TravelPartner[]) {
+    if (list.every((p) => selectedIds.has(p.id))) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(list.map((p) => p.id)));
+    }
+  }
+
+  async function sendPitch() {
+    const contacts = partners
+      .filter((p) => selectedIds.has(p.id))
+      .map((p) => ({ id: p.id, email: p.email, brand_name: p.brand_name, contact_name: p.contact_name }));
+
+    if (contacts.length === 0) { toast.error("Select at least one partner"); return; }
+    setSending(true);
+    setSendProgress({ sent: 0, failed: 0, total: contacts.length });
+
+    try {
+      const res = await fetch("/api/admin/travel/send-outreach", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contacts, subject: sendSubject, body: sendBody }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Send failed");
+      setSendProgress({ sent: data.sent, failed: data.failed, total: data.total });
+      toast.success(`Sent ${data.sent} / ${data.total} emails`);
+      if (data.failed === 0) {
+        setTimeout(() => { setShowSendDialog(false); loadPartners(); }, 1800);
+      } else {
+        loadPartners();
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to send");
+    } finally {
+      setSending(false);
+    }
   }
 
   const filtered = partners.filter((p) => {
@@ -684,6 +771,9 @@ function PartnersTab({ supabase }: { supabase: any }) {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input className="pl-9" placeholder="Search partners..." value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
+        <Button onClick={openSendDialog} size="sm" variant="outline" className="border-sky-500/40 text-sky-400 hover:bg-sky-500/10">
+          <Mail className="h-4 w-4 mr-1.5" /> Send Pitch
+        </Button>
         <Button onClick={() => setShowForm(true)} size="sm" className="bg-violet-500 hover:bg-violet-600">
           <Plus className="h-4 w-4 mr-1.5" /> Add Partner
         </Button>
@@ -762,6 +852,109 @@ function PartnersTab({ supabase }: { supabase: any }) {
           ))}
         </div>
       )}
+
+      {/* Send Pitch dialog */}
+      <Dialog open={showSendDialog} onOpenChange={setShowSendDialog}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5 text-sky-400" />
+              Send Travel Partnership Pitch
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Recipient selector */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <Label>Recipients ({selectedIds.size} selected)</Label>
+                <button
+                  onClick={() => toggleAll(partners)}
+                  className="text-xs text-sky-400 hover:text-sky-300"
+                >
+                  {partners.every((p) => selectedIds.has(p.id)) ? "Deselect All" : "Select All"}
+                </button>
+              </div>
+              <div className="max-h-36 overflow-y-auto space-y-1 border border-zinc-800 rounded-lg p-2 bg-zinc-950">
+                {partners.map((p) => (
+                  <label key={p.id} className="flex items-center gap-2 px-2 py-1 rounded hover:bg-zinc-900 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(p.id)}
+                      onChange={() => {
+                        const next = new Set(selectedIds);
+                        if (next.has(p.id)) next.delete(p.id); else next.add(p.id);
+                        setSelectedIds(next);
+                      }}
+                      className="accent-sky-500"
+                    />
+                    <span className="text-sm font-medium flex-1">{p.brand_name}</span>
+                    <span className="text-xs text-zinc-500 truncate max-w-[180px]">{p.email}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Subject */}
+            <div>
+              <Label>Subject</Label>
+              <Input
+                value={sendSubject}
+                onChange={(e) => setSendSubject(e.target.value)}
+                className="mt-1"
+              />
+            </div>
+
+            {/* Body */}
+            <div>
+              <Label>
+                Email Body{" "}
+                <span className="text-xs text-zinc-500 font-normal ml-1">
+                  Use &#123;&#123;contact_name&#125;&#125; and &#123;&#123;brand_name&#125;&#125; for personalization
+                </span>
+              </Label>
+              <Textarea
+                value={sendBody}
+                onChange={(e) => setSendBody(e.target.value)}
+                rows={14}
+                className="mt-1 font-mono text-xs"
+              />
+            </div>
+
+            {/* Progress */}
+            {sendProgress && (
+              <div className="flex items-center gap-4 px-4 py-3 rounded-lg bg-zinc-900 border border-zinc-800">
+                <div className="text-center">
+                  <p className="text-lg font-bold text-green-400">{sendProgress.sent}</p>
+                  <p className="text-xs text-zinc-500">Sent</p>
+                </div>
+                {sendProgress.failed > 0 && (
+                  <div className="text-center">
+                    <p className="text-lg font-bold text-red-400">{sendProgress.failed}</p>
+                    <p className="text-xs text-zinc-500">Failed</p>
+                  </div>
+                )}
+                <div className="text-center">
+                  <p className="text-lg font-bold text-zinc-300">{sendProgress.total}</p>
+                  <p className="text-xs text-zinc-500">Total</p>
+                </div>
+              </div>
+            )}
+
+            <Button
+              onClick={sendPitch}
+              disabled={sending || selectedIds.size === 0}
+              className="w-full bg-sky-600 hover:bg-sky-700 text-white"
+            >
+              {sending ? (
+                <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Sending...</>
+              ) : (
+                <><Mail className="h-4 w-4 mr-2" /> Send to {selectedIds.size} Partner{selectedIds.size !== 1 ? "s" : ""}</>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Add partner dialog */}
       <Dialog open={showForm} onOpenChange={setShowForm}>

@@ -4855,3 +4855,75 @@ export async function sendAuctionOutbidEmail({
     return { success: false, error: err };
   }
 }
+
+/**
+ * Send EXA Travel partnership pitch email to hotels / resorts
+ */
+export async function sendTravelPartnershipEmail({
+  to,
+  brandName,
+  contactName,
+  subject,
+  bodyText,
+}: {
+  to: string;
+  brandName: string;
+  contactName: string | null;
+  subject: string;
+  bodyText: string;
+}) {
+  try {
+    const resend = getResendClient();
+
+    const greeting = contactName ? contactName.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : "there";
+    const brand = brandName.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+    const personalized = bodyText
+      .replace(/\{\{contact_name\}\}/g, greeting)
+      .replace(/\{\{brand_name\}\}/g, brand);
+
+    const htmlBody = personalized
+      .split("\n")
+      .map((line: string) => {
+        const t = line.trim();
+        if (t === "") return '<tr><td style="height:14px;"></td></tr>';
+        const escaped = t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        if (t.startsWith("•") || t.startsWith("-")) {
+          return `<tr><td style="padding:4px 0 4px 20px;color:#94a3b8;font-size:14px;line-height:1.6;"><span style="color:#38bdf8;margin-right:8px;">&#10022;</span>${escaped.replace(/^[•\-]\s*/, "")}</td></tr>`;
+        }
+        if (t === t.toUpperCase() && t.length > 3 && !t.includes(".")) {
+          return `<tr><td style="padding:22px 0 8px;color:#38bdf8;font-size:11px;font-weight:700;letter-spacing:3px;">${escaped}</td></tr>`;
+        }
+        return `<tr><td style="padding:3px 0;color:#cbd5e1;font-size:15px;line-height:1.75;">${escaped}</td></tr>`;
+      })
+      .join("\n");
+
+    const deliverables: Array<[string, string, string]> = [
+      ["📸", "8 Instagram Feed Posts", "One per model — high-quality editorial photography"],
+      ["🎬", "8 TikTok Videos", "Authentic short-form content from every model"],
+      ["📲", "8 Instagram Stories", "With swipe-up links directly to your booking page"],
+      ["🎥", "1 Cinematic Video Reel", "Professional 4–5 min film of the full experience"],
+      ["📡", "Live Streaming", "Real-time content throughout the entire stay"],
+      ["🔗", "Trackable Booking Links", "Attribution links so you can measure direct ROI"],
+    ];
+
+    const deliverablesHtml = deliverables.map(([icon, title, desc]) =>
+      `<tr><td style="padding:10px 0;border-bottom:1px solid #1e293b;"><table cellpadding="0" cellspacing="0"><tr><td style="font-size:20px;width:36px;vertical-align:top;padding-top:1px;">${icon}</td><td><p style="margin:0 0 2px;color:#f1f5f9;font-size:14px;font-weight:600;">${title}</p><p style="margin:0;color:#64748b;font-size:13px;">${desc}</p></td></tr></table></td></tr>`
+    ).join("");
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;padding:0;background-color:#020817;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="background-color:#020817;padding:40px 20px;"><tr><td align="center"><table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;"><tr><td style="background:linear-gradient(90deg,#0ea5e9 0%,#6366f1 50%,#0ea5e9 100%);height:4px;border-radius:4px 4px 0 0;"></td></tr><tr><td style="background:linear-gradient(145deg,#0c1a2e 0%,#0f172a 60%,#0c1a2e 100%);padding:44px 40px 36px;"><p style="margin:0 0 10px;color:#38bdf8;font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;">EXA Travel &nbsp;&middot;&nbsp; Content Partnership</p><h1 style="margin:0 0 14px;color:#f8fafc;font-size:30px;font-weight:800;line-height:1.2;">10 Creators. 5 Days.<br>Unlimited Content.</h1><p style="margin:0;color:#64748b;font-size:15px;line-height:1.6;">A hosted stay in exchange for professional content that drives real bookings for ${brand}.</p></td></tr><tr><td style="background:#0b1628;padding:0 40px;"><table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #1e293b;border-bottom:1px solid #1e293b;"><tr><td style="text-align:center;padding:16px 4px;"><p style="margin:0 0 3px;color:#38bdf8;font-size:22px;font-weight:800;">8</p><p style="margin:0;color:#475569;font-size:10px;letter-spacing:1px;text-transform:uppercase;">Models</p></td><td style="width:1px;background:#1e293b;"></td><td style="text-align:center;padding:16px 4px;"><p style="margin:0 0 3px;color:#38bdf8;font-size:22px;font-weight:800;">1</p><p style="margin:0;color:#475569;font-size:10px;letter-spacing:1px;text-transform:uppercase;">Photographer</p></td><td style="width:1px;background:#1e293b;"></td><td style="text-align:center;padding:16px 4px;"><p style="margin:0 0 3px;color:#38bdf8;font-size:22px;font-weight:800;">1</p><p style="margin:0;color:#475569;font-size:10px;letter-spacing:1px;text-transform:uppercase;">Director</p></td><td style="width:1px;background:#1e293b;"></td><td style="text-align:center;padding:16px 4px;"><p style="margin:0 0 3px;color:#38bdf8;font-size:22px;font-weight:800;">5</p><p style="margin:0;color:#475569;font-size:10px;letter-spacing:1px;text-transform:uppercase;">Days</p></td></tr></table></td></tr><tr><td style="background:#0f172a;padding:36px 40px 4px;"><table width="100%" cellpadding="0" cellspacing="0">${htmlBody}</table></td></tr><tr><td style="background:#0f172a;padding:24px 40px 36px;"><p style="margin:0 0 16px;color:#f8fafc;font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;">What ${brand} Receives</p><table width="100%" cellpadding="0" cellspacing="0">${deliverablesHtml}</table></td></tr><tr><td style="background:#0f172a;padding:4px 40px 48px;text-align:center;"><a href="https://youtu.be/LP5uPoIgGOA" style="display:inline-block;padding:15px 40px;background:linear-gradient(90deg,#0ea5e9,#6366f1);color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;border-radius:50px;letter-spacing:0.5px;">Watch Our Production Reel &rarr;</a><p style="margin:14px 0 0;color:#475569;font-size:13px;">Or visit <a href="https://www.examodels.com/travel" style="color:#38bdf8;text-decoration:none;">examodels.com/travel</a></p><p style="margin:16px 0 0;color:#334155;font-size:13px;">Simply reply to this email to start the conversation.</p></td></tr><tr><td style="background:#030d1a;padding:22px 40px;border-top:1px solid #0f1f33;border-radius:0 0 16px 16px;text-align:center;"><p style="margin:0 0 3px;color:#1e3a5f;font-size:12px;">EXA Models &nbsp;&middot;&nbsp; partnerships@examodels.com</p><p style="margin:0;color:#1e3a5f;font-size:12px;">www.examodels.com/travel</p></td></tr></table></td></tr></table></body></html>`;
+
+    const { data, error } = await resend.emails.send({
+      from: "EXA Travel <partnerships@examodels.com>",
+      to,
+      subject,
+      html,
+    });
+
+    if (error) return { success: false, error };
+    return { success: true, messageId: (data as any)?.id };
+  } catch (err) {
+    console.error("Travel partnership email error:", err);
+    return { success: false, error: err };
+  }
+}
