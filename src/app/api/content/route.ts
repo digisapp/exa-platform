@@ -1,8 +1,27 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { getActorId, getActorInfo, getModelId } from "@/lib/ids";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+
+// Extract storage path from either a raw path or an expired signed URL
+// Handles: "premium/modelId/timestamp.jpg" and "https://.../sign/portfolio/premium/...?token=..."
+function extractStoragePath(url: string): string | null {
+  if (!url) return null;
+  if (!url.startsWith("http")) return url; // already a storage path
+  const match = url.match(/\/object\/(?:sign|public)\/[^/]+\/(.+?)(?:\?|$)/);
+  return match ? match[1] : null;
+}
+
+async function toSignedUrl(rawUrl: string | null | undefined): Promise<string | null> {
+  if (!rawUrl) return null;
+  const path = extractStoragePath(rawUrl);
+  if (!path) return null;
+  const service = createServiceRoleClient();
+  const { data } = await service.storage.from("portfolio").createSignedUrl(path, 3600);
+  return data?.signedUrl ?? null;
+}
 
 // Zod schema for content creation validation
 const createContentSchema = z.object({
@@ -98,8 +117,8 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Add unlocked status and media_url from the batch lookup
-    const contentWithStatus = (content || []).map((item: {
+    // Generate fresh signed URLs for preview_url and media_url in parallel
+    const contentItems = (content || []) as {
       id: string;
       title: string | null;
       description: string | null;
@@ -108,16 +127,24 @@ export async function GET(request: NextRequest) {
       coin_price: number;
       unlock_count: number | null;
       created_at: string | null;
-    }) => {
+    }[];
+
+    const contentWithStatus = await Promise.all(contentItems.map(async (item) => {
       const isFree = item.coin_price === 0;
       const isUnlocked = isFree || unlockedIds.includes(item.id) || isOwner;
 
+      const [freshPreviewUrl, freshMediaUrl] = await Promise.all([
+        toSignedUrl(item.preview_url),
+        isUnlocked ? toSignedUrl(mediaUrlMap.get(item.id) ?? null) : Promise.resolve(null),
+      ]);
+
       return {
         ...item,
+        preview_url: freshPreviewUrl ?? item.preview_url,
         isUnlocked,
-        mediaUrl: isUnlocked ? mediaUrlMap.get(item.id) || null : null,
+        mediaUrl: freshMediaUrl,
       };
-    });
+    }));
 
     return NextResponse.json({ content: contentWithStatus });
   } catch (error) {

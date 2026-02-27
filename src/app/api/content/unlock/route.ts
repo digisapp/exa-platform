@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendContentPurchaseEmail } from "@/lib/email";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
@@ -126,9 +127,22 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Generate a fresh signed URL from the stored path (handles both old expired URLs and new storage paths)
+    let mediaUrl: string | null = result.media_url ?? null;
+    if (mediaUrl) {
+      const rawPath = mediaUrl.startsWith("http")
+        ? mediaUrl.match(/\/object\/(?:sign|public)\/[^/]+\/(.+?)(?:\?|$)/)?.[1] ?? null
+        : mediaUrl;
+      if (rawPath) {
+        const service = createServiceRoleClient();
+        const { data } = await service.storage.from("portfolio").createSignedUrl(rawPath, 3600);
+        if (data?.signedUrl) mediaUrl = data.signedUrl;
+      }
+    }
+
     return NextResponse.json({
       success: true,
-      mediaUrl: result.media_url,
+      mediaUrl,
       amountPaid: result.amount_paid,
       newBalance: result.new_balance,
       alreadyUnlocked: result.already_unlocked || false,

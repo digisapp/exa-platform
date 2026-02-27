@@ -100,7 +100,7 @@ export default function BrandOutreachPage() {
   const [emailCtaText, setEmailCtaText] = useState("View Miami Swim Week 2026");
   const [emailFromAddress, setEmailFromAddress] = useState("partnerships@examodels.com");
   const [emailFromName, setEmailFromName] = useState("EXA Models Partnerships");
-  const [emailTemplate, setEmailTemplate] = useState<"standard" | "sponsor">("standard");
+  const [emailTemplate, setEmailTemplate] = useState<"standard" | "sponsor" | "travel">("standard");
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"brands" | "travel">("brands");
   const [newContact, setNewContact] = useState({

@@ -280,10 +280,10 @@ export default function ContentPage() {
 
     try {
       if (isPaid) {
-        // Premium content - use signed URL for large files
+        // Premium content - store storagePath in DB (not the expiring signed URL)
         if (mediaFile.size > VERCEL_LIMIT) {
           const data = await uploadViaSigned(mediaFile);
-          await createPaidContent(data.url);
+          await createPaidContent(data.storagePath || data.url);
         } else {
           const formData = new FormData();
           formData.append("file", mediaFile);
@@ -296,7 +296,7 @@ export default function ContentPage() {
           const uploadData = await safeJsonParse(uploadResponse);
           if (!uploadResponse.ok) throw new Error(uploadData.error || "Failed to upload file");
 
-          await createPaidContent(uploadData.url);
+          await createPaidContent(uploadData.storagePath || uploadData.url);
         }
       } else {
         // Free portfolio content - use signed URL for large files
