@@ -62,12 +62,23 @@ export async function POST(
       );
     }
 
-    // Capture current leading bid + auction info before placing (for outbid notification)
-    const { data: auctionBefore } = await adminClient
-      .from("auctions")
-      .select("title, current_bid, leading_bidder_id")
-      .eq("id", auctionId)
-      .single() as { data: { title: string; current_bid: number; leading_bidder_id: string | null } | null };
+    // Capture current auction info + leading bidder before placing (for outbid notification)
+    // Note: auctions table has no leading_bidder_id column — get it from auction_bids instead
+    const [auctionBeforeResult, leadingBidResult] = await Promise.all([
+      adminClient
+        .from("auctions")
+        .select("title, current_bid")
+        .eq("id", auctionId)
+        .single(),
+      adminClient
+        .from("auction_bids")
+        .select("bidder_id")
+        .eq("auction_id", auctionId)
+        .eq("status", "winning")
+        .maybeSingle(),
+    ]);
+    const auctionBefore = auctionBeforeResult.data as { title: string; current_bid: number } | null;
+    const leadingBidderId = (leadingBidResult.data as { bidder_id: string } | null)?.bidder_id ?? null;
 
     // Call the RPC function to place the bid
     const { data: result, error } = await supabase.rpc("place_auction_bid", {
@@ -136,20 +147,20 @@ export async function POST(
     }
 
     // Notify the outbid user if they were previously leading and have notify_outbid enabled
-    if (auctionBefore?.leading_bidder_id && auctionBefore.leading_bidder_id !== actor.id) {
+    if (leadingBidderId && leadingBidderId !== actor.id) {
       try {
         const { data: watchlistEntry } = await adminClient
           .from("auction_watchlist")
           .select("notify_outbid")
           .eq("auction_id", auctionId)
-          .eq("actor_id", auctionBefore.leading_bidder_id)
+          .eq("actor_id", leadingBidderId)
           .single() as { data: { notify_outbid: boolean } | null };
 
         if (watchlistEntry?.notify_outbid !== false) {
           const { data: outbidActor } = await adminClient
             .from("actors")
             .select("user_id, fans(display_name), models(first_name, last_name)")
-            .eq("id", auctionBefore.leading_bidder_id)
+            .eq("id", leadingBidderId)
             .single() as { data: any };
 
           if (outbidActor?.user_id) {

@@ -18,6 +18,7 @@ import {
   Shield,
   CheckCircle,
   Package,
+  Trophy,
 } from "lucide-react";
 import type { AuctionWithDetails, BidWithBidder } from "@/types/auctions";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
@@ -54,6 +55,7 @@ export function AuctionDetailClient({
 
   const hasEnded = localEnded || new Date(auction.ends_at) <= new Date() || auction.status !== "active";
   const currentPrice = auction.current_bid || auction.starting_price;
+  const isWinner = hasEnded && auction.status === "sold" && auction.winner_id && currentUserId && auction.winner_id === currentUserId;
 
   // Find the current user's existing bid escrow so BidForm can show the true additional cost
   const myCurrentBid = currentUserId
@@ -72,6 +74,21 @@ export function AuctionDetailClient({
         <ArrowLeft className="h-4 w-4 mr-2" />
         Back to Bids
       </Button>
+
+      {/* Winner Banner */}
+      {isWinner && (
+        <div className="mb-6 rounded-2xl bg-gradient-to-r from-amber-500/20 via-yellow-500/10 to-amber-500/20 border border-amber-500/40 p-5 flex items-center gap-4">
+          <div className="p-3 rounded-full bg-amber-500/20 shrink-0">
+            <Trophy className="h-7 w-7 text-amber-400" />
+          </div>
+          <div>
+            <p className="font-bold text-amber-300 text-lg">You won this auction!</p>
+            <p className="text-sm text-amber-400/80">
+              Final price: {formatCoins(currentPrice)} coins ({formatUsd(coinsToFanUsd(currentPrice))}) — the model will be in touch to arrange delivery.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column - Details */}

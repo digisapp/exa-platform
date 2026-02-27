@@ -47,6 +47,7 @@ export default function EditBidPage({ params }: { params: Promise<{ id: string }
   const [duration, setDuration] = useState("7");
   const [category, setCategory] = useState<AuctionCategory>("other");
   const [allowAutoBid, setAllowAutoBid] = useState(true);
+  const [antiSnipeMinutes, setAntiSnipeMinutes] = useState(2);
 
   useEffect(() => {
     const loadAuction = async () => {
@@ -103,16 +104,8 @@ export default function EditBidPage({ params }: { params: Promise<{ id: string }
       setReservePrice(auction.reserve_price?.toString() || "");
       setBuyNowPrice(auction.buy_now_price?.toString() || "");
       setAllowAutoBid(auction.allow_auto_bid ?? true);
-
-      // Infer duration from remaining time — snap to closest preset
-      if (auction.ends_at) {
-        const msLeft = new Date(auction.ends_at).getTime() - Date.now();
-        const daysLeft = Math.round(msLeft / (1000 * 60 * 60 * 24));
-        if (daysLeft <= 1) setDuration("1");
-        else if (daysLeft <= 3) setDuration("3");
-        else if (daysLeft <= 7) setDuration("7");
-        else setDuration("14");
-      }
+      setAntiSnipeMinutes(auction.anti_snipe_minutes ?? 2);
+      // Duration is always counted from publish time — default to 7 days
 
       setLoading(false);
     };
@@ -165,7 +158,7 @@ export default function EditBidPage({ params }: { params: Promise<{ id: string }
           buy_now_price: parsedBuyNowPrice,
           ends_at: endsAt.toISOString(),
           allow_auto_bid: allowAutoBid,
-          anti_snipe_minutes: 2,
+          anti_snipe_minutes: antiSnipeMinutes,
         }),
       });
 
@@ -472,6 +465,37 @@ export default function EditBidPage({ params }: { params: Promise<{ id: string }
                 checked={allowAutoBid}
                 onCheckedChange={setAllowAutoBid}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <Timer className="h-3.5 w-3.5 text-blue-400" />
+                Anti-Snipe Extension
+              </Label>
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  { mins: 0, label: "Off" },
+                  { mins: 2, label: "2 min" },
+                  { mins: 5, label: "5 min" },
+                  { mins: 10, label: "10 min" },
+                ].map(({ mins, label }) => (
+                  <button
+                    key={mins}
+                    type="button"
+                    onClick={() => setAntiSnipeMinutes(mins)}
+                    className={`py-2 px-2 rounded-xl border text-sm transition-all ${
+                      antiSnipeMinutes === mins
+                        ? "border-blue-500/60 bg-blue-500/15 text-blue-300"
+                        : "border-blue-500/15 bg-blue-500/5 text-muted-foreground hover:border-blue-500/40 hover:text-foreground"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Late bids extend the timer to prevent sniping
+              </p>
             </div>
           </div>
         </div>
