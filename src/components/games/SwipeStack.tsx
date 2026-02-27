@@ -31,6 +31,7 @@ interface SwipeStackProps {
 export function SwipeStack({ models, onSwipe, onBoost, onEmpty }: SwipeStackProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [exitDirection, setExitDirection] = useState<"left" | "right" | null>(null);
+  const [showHint, setShowHint] = useState(true);
 
   const currentModel = models[currentIndex];
   const nextModels = models.slice(currentIndex + 1, currentIndex + 3);
@@ -39,6 +40,7 @@ export function SwipeStack({ models, onSwipe, onBoost, onEmpty }: SwipeStackProp
     (direction: "left" | "right") => {
       if (!currentModel || exitDirection) return; // Prevent double swipes
 
+      setShowHint(false);
       setExitDirection(direction);
 
       // Sync with exit animation duration (250ms)
@@ -135,6 +137,38 @@ export function SwipeStack({ models, onSwipe, onBoost, onEmpty }: SwipeStackProp
               isTop={true}
             />
           </motion.div>
+        </AnimatePresence>
+
+        {/* Swipe hint — fades out after first swipe */}
+        <AnimatePresence>
+          {showHint && (
+            <motion.div
+              className="absolute inset-x-0 bottom-20 flex items-center justify-center gap-6 pointer-events-none"
+              style={{ zIndex: 20 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ delay: 1.2, duration: 0.4 }}
+            >
+              <motion.div
+                animate={{ x: [-6, 0, -6] }}
+                transition={{ repeat: Infinity, duration: 1.2, ease: "easeInOut" }}
+                className="flex items-center gap-1.5 text-white/70 text-sm font-medium drop-shadow-lg"
+              >
+                <span className="text-lg">←</span>
+                <span>Pass</span>
+              </motion.div>
+              <div className="h-4 w-px bg-white/30" />
+              <motion.div
+                animate={{ x: [6, 0, 6] }}
+                transition={{ repeat: Infinity, duration: 1.2, ease: "easeInOut" }}
+                className="flex items-center gap-1.5 text-white/70 text-sm font-medium drop-shadow-lg"
+              >
+                <span>Like</span>
+                <span className="text-lg">→</span>
+              </motion.div>
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
 

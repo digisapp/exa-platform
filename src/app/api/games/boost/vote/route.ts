@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    const rateLimitResponse = await checkEndpointRateLimit(request, "financial", user?.id);
+    const rateLimitResponse = await checkEndpointRateLimit(request, "game", user?.id);
     if (rateLimitResponse) return rateLimitResponse;
 
     const body = await request.json();

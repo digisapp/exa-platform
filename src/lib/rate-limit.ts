@@ -225,6 +225,9 @@ export const EndpointLimits = {
   // Financial operations (checkout, purchases) - 10 per minute (stricter)
   financial: { limit: 10, windowSeconds: 60 },
 
+  // Game actions (swipe votes) - 120 per minute (2/sec, prevents abuse without blocking normal play)
+  game: { limit: 120, windowSeconds: 60 },
+
   // General API - 200 per minute (fallback)
   general: { limit: 200, windowSeconds: 60 },
 
