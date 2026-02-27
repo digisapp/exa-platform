@@ -65,23 +65,23 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
       .single(),
     // All currently live auctions
     (supabase.from("auctions") as any)
-      .select("id, title, ends_at, current_bid, starting_price, status, leading_bidder_id")
+      .select("id, title, ends_at, current_bid, starting_price, status")
       .eq("status", "active")
       .gt("ends_at", new Date().toISOString())
       .order("ends_at", { ascending: true })
       .limit(10),
     // Fan's own active bids so we can mark winning/outbid
     (supabase.from("auction_bids") as any)
-      .select("auction_id, amount")
+      .select("auction_id, amount, status")
       .eq("bidder_id", actorId)
-      .eq("status", "active"),
+      .in("status", ["winning", "active", "outbid"]),
   ]);
 
   const coinBalance = fanData?.coin_balance ?? 0;
 
-  // Map auction_id → fan's bid amount for quick lookup
-  const myBidMap = new Map<string, number>(
-    (myBids || []).map((b: any) => [b.auction_id, b.amount])
+  // Map auction_id → fan's bid info for quick lookup
+  const myBidMap = new Map<string, { amount: number; status: string }>(
+    (myBids || []).map((b: any) => [b.auction_id, { amount: b.amount, status: b.status }])
   );
 
   const followedUserIds = follows?.map((f: any) => f.actors?.user_id).filter(Boolean) || [];
@@ -199,9 +199,9 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
             {liveAuctions && liveAuctions.length > 0 ? (
               <div className="space-y-3">
                 {liveAuctions.map((auction: any) => {
-                  const myBidAmount = myBidMap.get(auction.id);
-                  const hasBid = myBidAmount !== undefined;
-                  const isWinning = hasBid && auction.leading_bidder_id === actorId;
+                  const myBid = myBidMap.get(auction.id);
+                  const hasBid = !!myBid;
+                  const isWinning = myBid?.status === "winning";
                   const isOutbid = hasBid && !isWinning;
                   const price = auction.current_bid || auction.starting_price;
                   return (
