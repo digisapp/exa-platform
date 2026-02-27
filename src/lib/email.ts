@@ -4290,62 +4290,18 @@ export async function sendBrandOutreachEmail({
               <p style="margin: 0 0 32px; color: #cbd5e1; font-size: 15px; line-height: 1.75;">We bring a curated team (5 influencer models + our in-house photographer and creative team) and spend four days capturing the full experience — the property, the culture, and the destination itself — in a cinematic, elevated way.</p>
 
               <!-- What You Receive -->
-              <p style="margin: 0 0 16px; color: #ffffff; font-size: 13px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">What You Receive</p>
-
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 32px; background-color: #0a0f1a; border-radius: 12px; border: 1px solid #1e2d45;">
-                <tr><td style="padding: 22px 24px 6px;">
-                  <table width="100%" cellpadding="0" cellspacing="0">
-
-                    <tr><td style="padding-bottom: 14px; vertical-align: top;">
-                      <table cellpadding="0" cellspacing="0"><tr>
-                        <td style="color: #3b82f6; font-size: 10px; padding-right: 12px; vertical-align: top; padding-top: 3px; white-space: nowrap;">◆</td>
-                        <td><p style="margin: 0; color: #cbd5e1; font-size: 14px; line-height: 1.5;"><strong style="color: #ffffff;">5 Instagram feed posts + 15–25 story frames</strong> per model</p></td>
-                      </tr></table>
-                    </td></tr>
-
-                    <tr><td style="padding-bottom: 14px; vertical-align: top;">
-                      <table cellpadding="0" cellspacing="0"><tr>
-                        <td style="color: #3b82f6; font-size: 10px; padding-right: 12px; vertical-align: top; padding-top: 3px; white-space: nowrap;">◆</td>
-                        <td><p style="margin: 0; color: #cbd5e1; font-size: 14px; line-height: 1.5;"><strong style="color: #ffffff;">10+ Reels / TikToks</strong> across the team</p></td>
-                      </tr></table>
-                    </td></tr>
-
-                    <tr><td style="padding-bottom: 14px; vertical-align: top;">
-                      <table cellpadding="0" cellspacing="0"><tr>
-                        <td style="color: #3b82f6; font-size: 10px; padding-right: 12px; vertical-align: top; padding-top: 3px; white-space: nowrap;">◆</td>
-                        <td><p style="margin: 0; color: #cbd5e1; font-size: 14px; line-height: 1.5;"><strong style="color: #ffffff;">1 cinematic hero reel</strong> (60–90 seconds)</p></td>
-                      </tr></table>
-                    </td></tr>
-
-                    <tr><td style="padding-bottom: 14px; vertical-align: top;">
-                      <table cellpadding="0" cellspacing="0"><tr>
-                        <td style="color: #3b82f6; font-size: 10px; padding-right: 12px; vertical-align: top; padding-top: 3px; white-space: nowrap;">◆</td>
-                        <td><p style="margin: 0; color: #cbd5e1; font-size: 14px; line-height: 1.5;"><strong style="color: #ffffff;">20 edited images</strong> licensed for your use</p></td>
-                      </tr></table>
-                    </td></tr>
-
-                    <tr><td style="padding-bottom: 20px; vertical-align: top;">
-                      <table cellpadding="0" cellspacing="0"><tr>
-                        <td style="color: #3b82f6; font-size: 10px; padding-right: 12px; vertical-align: top; padding-top: 3px; white-space: nowrap;">◆</td>
-                        <td><p style="margin: 0; color: #cbd5e1; font-size: 14px; line-height: 1.5;">All content <strong style="color: #ffffff;">tagged to your property</strong> with direct booking links</p></td>
-                      </tr></table>
-                    </td></tr>
-
-                  </table>
-                </td></tr>
+              <p style="margin: 0 0 14px; color: #ffffff; font-size: 13px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">What You Receive</p>
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 32px;">
+                <tr><td style="padding-bottom: 10px; vertical-align: top;"><table cellpadding="0" cellspacing="0"><tr><td style="color: #3b82f6; padding-right: 10px; vertical-align: top; padding-top: 2px;">◆</td><td><p style="margin: 0; color: #cbd5e1; font-size: 15px; line-height: 1.6;"><strong style="color: #ffffff;">5 Instagram feed posts + 15–25 story frames</strong> per model</p></td></tr></table></td></tr>
+                <tr><td style="padding-bottom: 10px; vertical-align: top;"><table cellpadding="0" cellspacing="0"><tr><td style="color: #3b82f6; padding-right: 10px; vertical-align: top; padding-top: 2px;">◆</td><td><p style="margin: 0; color: #cbd5e1; font-size: 15px; line-height: 1.6;"><strong style="color: #ffffff;">10+ Reels / TikToks</strong> across the team</p></td></tr></table></td></tr>
+                <tr><td style="padding-bottom: 10px; vertical-align: top;"><table cellpadding="0" cellspacing="0"><tr><td style="color: #3b82f6; padding-right: 10px; vertical-align: top; padding-top: 2px;">◆</td><td><p style="margin: 0; color: #cbd5e1; font-size: 15px; line-height: 1.6;"><strong style="color: #ffffff;">1 cinematic hero reel</strong> (60–90 seconds)</p></td></tr></table></td></tr>
+                <tr><td style="padding-bottom: 10px; vertical-align: top;"><table cellpadding="0" cellspacing="0"><tr><td style="color: #3b82f6; padding-right: 10px; vertical-align: top; padding-top: 2px;">◆</td><td><p style="margin: 0; color: #cbd5e1; font-size: 15px; line-height: 1.6;"><strong style="color: #ffffff;">20 edited images</strong> licensed for your use</p></td></tr></table></td></tr>
+                <tr><td style="padding-bottom: 10px; vertical-align: top;"><table cellpadding="0" cellspacing="0"><tr><td style="color: #3b82f6; padding-right: 10px; vertical-align: top; padding-top: 2px;">◆</td><td><p style="margin: 0; color: #cbd5e1; font-size: 15px; line-height: 1.6;">All content <strong style="color: #ffffff;">tagged to your property</strong> with direct booking links</p></td></tr></table></td></tr>
               </table>
 
               <!-- Goal + Reel -->
               <p style="margin: 0 0 20px; color: #cbd5e1; font-size: 15px; line-height: 1.75;">You'll leave with a full content library ready for social, ads, and your website.</p>
-              <p style="margin: 0 0 10px; color: #94a3b8; font-size: 14px; line-height: 1.6;">Here's a sample of our production level:</p>
-
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 32px;">
-                <tr>
-                  <td style="padding: 14px 20px; background-color: #0a0f1a; border-radius: 10px; border: 1px solid #1e2d45;">
-                    <a href="https://youtu.be/LP5uPoIgGOA" style="color: #3b82f6; font-size: 14px; text-decoration: none; font-weight: 600;">&#9654; &nbsp;https://youtu.be/LP5uPoIgGOA</a>
-                  </td>
-                </tr>
-              </table>
+              <p style="margin: 0 0 8px; color: #cbd5e1; font-size: 15px; line-height: 1.75;">Here's a sample of our production level: <a href="https://youtu.be/LP5uPoIgGOA" style="color: #3b82f6; text-decoration: none; font-weight: 600;">youtu.be/LP5uPoIgGOA</a></p>
 
               <!-- Exchange + Close -->
               <p style="margin: 0 0 20px; color: #cbd5e1; font-size: 15px; line-height: 1.75;">In exchange, we're requesting a <strong style="color: #ffffff;">fully hosted 4-night stay</strong> for the team.</p>
