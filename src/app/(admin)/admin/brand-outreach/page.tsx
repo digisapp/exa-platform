@@ -389,7 +389,7 @@ What You Receive
 • 20 edited high-resolution images licensed for your use
 • All content tagged to your property with direct booking links
 
-Our goal is to leave you with a premium visual library that drives measurable direct bookings while positioning your property through fashion-forward storytelling.
+You'll leave with a full content library ready for social, ads, and your website.
 
 Here's a sample of our production level:
 https://youtu.be/LP5uPoIgGOA

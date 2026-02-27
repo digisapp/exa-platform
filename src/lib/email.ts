@@ -4336,7 +4336,7 @@ export async function sendBrandOutreachEmail({
               </table>
 
               <!-- Goal + Reel -->
-              <p style="margin: 0 0 20px; color: #cbd5e1; font-size: 15px; line-height: 1.75;">Our goal is to leave you with a premium visual library that drives measurable direct bookings while positioning your property through fashion-forward storytelling.</p>
+              <p style="margin: 0 0 20px; color: #cbd5e1; font-size: 15px; line-height: 1.75;">You'll leave with a full content library ready for social, ads, and your website.</p>
               <p style="margin: 0 0 10px; color: #94a3b8; font-size: 14px; line-height: 1.6;">Here's a sample of our production level:</p>
 
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 32px;">
@@ -4364,9 +4364,9 @@ export async function sendBrandOutreachEmail({
               </table>
 
               <!-- Footer -->
-              <table width="100%" cellpadding="0" cellspacing="0" style="border-top: 1px solid #1e2d45; padding-top: 24px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td>
+                  <td style="padding-top: 24px; border-top: 1px solid #1e2d45;">
                     <p style="margin: 0 0 2px; color: #cbd5e1; font-size: 15px; line-height: 1.6;">Warm regards,<br><strong style="color: #ffffff;">Nathan</strong></p>
                     <p style="margin: 8px 0 10px; color: #64748b; font-size: 13px;">COO, EXA Models</p>
                     <p style="margin: 0; color: #64748b; font-size: 12px;">
