@@ -378,16 +378,15 @@ EXA Models`,
     subject: "Influencer Partnership – EXA Travel",
     body: `Hi {{contact_name}},
 
-I'm Nathan, COO of EXA Models. We're launching a new editorial travel series called EXA Travel, partnering with one boutique property per destination for a 4-night content residency.
+I'm Nathan, COO of EXA Models. We're launching a new editorial travel series called EXA Travel, partnering with one boutique property per destination.
 
-We bring a curated team (5 influencer models + our in-house photographer and creative team) and spend four days capturing the full guest experience — rooms, dining, pool, cocktails, and day-to-night atmosphere — in a cinematic, elevated way.
+We bring a curated team (5 influencer models + our in-house photographer and creative team) and spend four days capturing the full experience — the property, the culture, and the destination itself — in a cinematic, elevated way.
 
 What You Receive
-• 5 dedicated Instagram feed posts (one per model)
-• 15–25 Instagram story frames per model throughout the stay
-• 10+ Reels/TikToks across the team
+• 5 Instagram feed posts + 15–25 story frames per model
+• 10+ Reels / TikToks across the team
 • 1 cinematic hero reel (60–90 seconds)
-• 20 professionally edited high-resolution images licensed for your marketing use
+• 20 edited high-resolution images licensed for your use
 • All content tagged to your property with direct booking links
 
 Our goal is to leave you with a premium visual library that drives measurable direct bookings while positioning your property through fashion-forward storytelling.

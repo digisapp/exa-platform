@@ -4279,15 +4279,15 @@ export async function sendBrandOutreachEmail({
               <p style="margin: 0 0 8px; color: #3b82f6; font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;">EXA Travel &nbsp;&middot;&nbsp; Influencer Partnership</p>
 
               <!-- Title -->
-              <h1 style="margin: 0 0 28px; color: #ffffff; font-size: 26px; font-weight: 800; line-height: 1.2;">4-Night Content Residency</h1>
+              <h1 style="margin: 0 0 28px; color: #ffffff; font-size: 26px; font-weight: 800; line-height: 1.2;">Influencer Partnership</h1>
 
               <!-- Divider -->
               <div style="height: 1px; background: linear-gradient(90deg, #3b82f6, #1d4ed8, transparent); margin-bottom: 28px;"></div>
 
               <!-- Body -->
               <p style="margin: 0 0 20px; color: #cbd5e1; font-size: 15px; line-height: 1.75;">Hi ${resolvedContactName},</p>
-              <p style="margin: 0 0 20px; color: #cbd5e1; font-size: 15px; line-height: 1.75;">I'm Nathan, COO of EXA Models. We're launching a new editorial travel series called <strong style="color: #ffffff;">EXA Travel</strong>, partnering with one boutique property per destination for a 4-night content residency.</p>
-              <p style="margin: 0 0 32px; color: #cbd5e1; font-size: 15px; line-height: 1.75;">We bring a curated team (5 influencer models + our in-house photographer and creative team) and spend four days capturing the full guest experience — rooms, dining, pool, cocktails, and day-to-night atmosphere — in a cinematic, elevated way.</p>
+              <p style="margin: 0 0 20px; color: #cbd5e1; font-size: 15px; line-height: 1.75;">I'm Nathan, COO of EXA Models. We're launching a new editorial travel series called <strong style="color: #ffffff;">EXA Travel</strong>, partnering with one boutique property per destination.</p>
+              <p style="margin: 0 0 32px; color: #cbd5e1; font-size: 15px; line-height: 1.75;">We bring a curated team (5 influencer models + our in-house photographer and creative team) and spend four days capturing the full experience — the property, the culture, and the destination itself — in a cinematic, elevated way.</p>
 
               <!-- What You Receive -->
               <p style="margin: 0 0 16px; color: #ffffff; font-size: 13px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">What You Receive</p>
@@ -4299,14 +4299,7 @@ export async function sendBrandOutreachEmail({
                     <tr><td style="padding-bottom: 14px; vertical-align: top;">
                       <table cellpadding="0" cellspacing="0"><tr>
                         <td style="color: #3b82f6; font-size: 10px; padding-right: 12px; vertical-align: top; padding-top: 3px; white-space: nowrap;">◆</td>
-                        <td><p style="margin: 0; color: #cbd5e1; font-size: 14px; line-height: 1.5;"><strong style="color: #ffffff;">5 dedicated Instagram feed posts</strong> (one per model)</p></td>
-                      </tr></table>
-                    </td></tr>
-
-                    <tr><td style="padding-bottom: 14px; vertical-align: top;">
-                      <table cellpadding="0" cellspacing="0"><tr>
-                        <td style="color: #3b82f6; font-size: 10px; padding-right: 12px; vertical-align: top; padding-top: 3px; white-space: nowrap;">◆</td>
-                        <td><p style="margin: 0; color: #cbd5e1; font-size: 14px; line-height: 1.5;"><strong style="color: #ffffff;">15–25 Instagram story frames</strong> per model throughout the stay</p></td>
+                        <td><p style="margin: 0; color: #cbd5e1; font-size: 14px; line-height: 1.5;"><strong style="color: #ffffff;">5 Instagram feed posts + 15–25 story frames</strong> per model</p></td>
                       </tr></table>
                     </td></tr>
 
@@ -4327,7 +4320,7 @@ export async function sendBrandOutreachEmail({
                     <tr><td style="padding-bottom: 14px; vertical-align: top;">
                       <table cellpadding="0" cellspacing="0"><tr>
                         <td style="color: #3b82f6; font-size: 10px; padding-right: 12px; vertical-align: top; padding-top: 3px; white-space: nowrap;">◆</td>
-                        <td><p style="margin: 0; color: #cbd5e1; font-size: 14px; line-height: 1.5;"><strong style="color: #ffffff;">20 professionally edited high-resolution images</strong> licensed for your marketing use</p></td>
+                        <td><p style="margin: 0; color: #cbd5e1; font-size: 14px; line-height: 1.5;"><strong style="color: #ffffff;">20 edited images</strong> licensed for your use</p></td>
                       </tr></table>
                     </td></tr>
 
