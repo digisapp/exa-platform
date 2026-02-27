@@ -146,22 +146,6 @@ export function BidForm({
 
   return (
     <div className="glass-card p-6 rounded-xl space-y-6">
-      {/* Current Price */}
-      <div className="text-center pb-4 border-b border-zinc-700">
-        <p className="text-sm text-zinc-400 mb-1">
-          {auction.current_bid ? "Current Bid" : "Starting Price"}
-        </p>
-        <div className="flex items-center justify-center gap-2">
-          <Coins className="h-6 w-6 text-amber-400" />
-          <span className="text-3xl font-bold text-white">
-            {formatCoins(auction.current_bid || auction.starting_price)}
-          </span>
-        </div>
-        <p className="text-sm text-zinc-500 mt-1">
-          {formatUsd(coinsToFanUsd(auction.current_bid || auction.starting_price))}
-        </p>
-      </div>
-
       {/* Bid Input */}
       <div className="space-y-4">
         <div>
