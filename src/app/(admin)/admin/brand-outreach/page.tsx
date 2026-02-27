@@ -375,25 +375,48 @@ EXA Models`,
   };
 
   const travelEmailTemplate = {
-    subject: "Hotel Partnership Opportunity — EXA Models Travel",
+    subject: "EXA Travel × {{brand_name}} — Content Partnership Proposal",
     body: `Hi {{contact_name}},
 
-I hope this message finds you well! I'm reaching out from EXA Models about a potential travel partnership with {{brand_name}}.
+I hope you're well. I'm the COO of EXA Models. We're launching a new editorial travel series called EXA Travel.
 
-We're building the travel side of EXA Models — connecting our roster of professional models and content creators with unique hotels and travel experiences around the world. Our models are active on Instagram and TikTok and regularly share their travel content with engaged audiences.
+We partner with one boutique property per destination and bring a curated team for a 4-night content residency.
 
-We'd love to explore a collaboration with {{brand_name}}, whether that's:
-- Hosted stays in exchange for content creation
-- Brand ambassador partnerships
-- Event-based collaborations tied to our model events (like Miami Swim Week 2026)
+Our Team (8 people)
+• 5 influencer models
+• 1 photographer / videographer
+• 1 creative director + 1 producer
 
-Would you be open to a quick call to explore what a partnership could look like?
+What We Produce On Property
+Over 4 days, we create a full luxury resort editorial campaign featuring:
+• Fashion editorials
+• Restaurant & lifestyle activations
+• Experience highlights
+• Day-to-night cinematic content
+
+Guaranteed Deliverables
+• 12–16 Instagram feed posts
+• 16–20 Reels/TikToks
+• 30+ story frames
+• 1 cinematic hero reel (60–90 sec)
+• 20 professionally edited images for your marketing use
+• All content tagged with direct booking links
+
+We focus on elevated, conversion-driven content. The goal is to create a premium visual library that drives measurable direct bookings.
+
+Here is a sample reel to reference our production level:
+https://youtu.be/LP5uPoIgGOA
+
+In exchange, we're requesting a fully hosted 4-night stay for our team.
+
+We only partner with one property per location, so if this aligns, I'd love to schedule a quick call to explore dates and availability.
 
 Best regards,
-EXA Models Team
+Nathan
+EXA Models
 www.examodels.com`,
     ctaUrl: "https://www.examodels.com",
-    ctaText: "Explore EXA Models",
+    ctaText: "View EXA Models",
   };
 
   const loadTemplate = (type: "designer" | "sponsor" | "travel") => {
