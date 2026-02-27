@@ -55,6 +55,12 @@ export function AuctionDetailClient({
   const hasEnded = localEnded || new Date(auction.ends_at) <= new Date() || auction.status !== "active";
   const currentPrice = auction.current_bid || auction.starting_price;
 
+  // Find the current user's existing bid escrow so BidForm can show the true additional cost
+  const myCurrentBid = currentUserId
+    ? bids.find((b) => b.bidder?.id === currentUserId && ["winning", "active", "outbid"].includes(b.status))
+    : undefined;
+  const myEscrowAmount = myCurrentBid?.escrow_amount ?? 0;
+
   return (
     <main className="container px-4 md:px-8 lg:px-16 py-8">
       {/* Back Button */}
@@ -211,6 +217,7 @@ export function AuctionDetailClient({
                   auction={auction}
                   disabled={hasEnded}
                   isOwner={isOwner}
+                  myEscrowAmount={myEscrowAmount}
                   onBidPlaced={() => refreshBids()}
                   onBuyNow={() => refreshBids()}
                 />

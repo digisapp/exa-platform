@@ -18,6 +18,7 @@ interface BidFormProps {
   onBuyNow?: (response: BuyNowResponse) => void;
   disabled?: boolean;
   isOwner?: boolean;
+  myEscrowAmount?: number;
 }
 
 export function BidForm({
@@ -26,6 +27,7 @@ export function BidForm({
   onBuyNow,
   disabled = false,
   isOwner = false,
+  myEscrowAmount = 0,
 }: BidFormProps) {
   const coinBalance = useCoinBalanceOptional();
   const balance = coinBalance?.balance ?? 0;
@@ -44,7 +46,9 @@ export function BidForm({
   const parsedMaxAutoBid = parseInt(maxAutoBid) || 0;
   const hasEnded = new Date(auction.ends_at) <= new Date() || auction.status !== "active";
 
-  const canBid = !disabled && !isOwner && !hasEnded && parsedBid >= minBid && parsedBid <= balance;
+  // Effective cost = bid amount minus coins already held in escrow for this auction
+  const additionalCost = Math.max(0, parsedBid - myEscrowAmount);
+  const canBid = !disabled && !isOwner && !hasEnded && parsedBid >= minBid && additionalCost <= balance;
   const canBuyNow = !disabled && !isOwner && !hasEnded && auction.buy_now_price && balance >= auction.buy_now_price;
 
   const handlePlaceBid = async () => {
@@ -167,7 +171,9 @@ export function BidForm({
           </div>
           <div className="flex justify-between mt-1 text-xs">
             <span className="text-zinc-500">
-              = {formatUsd(coinsToFanUsd(parsedBid))}
+              {myEscrowAmount > 0
+                ? `+${formatCoins(additionalCost)} more (${formatUsd(coinsToFanUsd(additionalCost))})`
+                : `= ${formatUsd(coinsToFanUsd(parsedBid))}`}
             </span>
             <span className="text-zinc-500">
               Balance: {formatCoins(balance)} ({formatUsd(coinsToFanUsd(balance))})
@@ -231,11 +237,14 @@ export function BidForm({
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               Placing Bid...
             </>
-          ) : parsedBid > balance ? (
+          ) : additionalCost > balance ? (
             "Insufficient Balance"
           ) : (
             <>
-              Place Bid — {formatCoins(parsedBid)} coins ({formatUsd(coinsToFanUsd(parsedBid))})
+              Place Bid — {formatCoins(parsedBid)} coins
+              {myEscrowAmount > 0 && additionalCost > 0 && (
+                <span className="ml-1 opacity-70">(+{formatCoins(additionalCost)} more)</span>
+              )}
             </>
           )}
         </Button>
