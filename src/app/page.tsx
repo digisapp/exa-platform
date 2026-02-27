@@ -326,14 +326,14 @@ export default async function HomePage() {
                               )}
                             </div>
                           </div>
-                          <div className="text-right shrink-0 space-y-0.5">
-                            <div className="flex items-center gap-1 text-amber-400 justify-end">
-                              <Coins className="h-3.5 w-3.5" />
-                              <span className="text-sm font-bold">
+                          <div className="text-right shrink-0">
+                            <div className="flex items-center gap-1.5 text-amber-400 justify-end">
+                              <Coins className="h-4 w-4" />
+                              <span className="text-base font-bold">
                                 {formatCoins(auction.current_bid || auction.starting_price)}
                               </span>
-                              <span className="text-[11px] text-white/40">
-                                {formatUsd(coinsToFanUsd(auction.current_bid || auction.starting_price))}
+                              <span className="text-sm text-white/50 font-medium">
+                                ({formatUsd(coinsToFanUsd(auction.current_bid || auction.starting_price))})
                               </span>
                             </div>
                           </div>
