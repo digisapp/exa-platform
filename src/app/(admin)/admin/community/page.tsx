@@ -1478,11 +1478,11 @@ export default function AdminCommunityPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="w-[200px]">Name</TableHead>
-                        <TableHead>Company</TableHead>
-                        <TableHead>Instagram</TableHead>
+                        <TableHead className="w-[180px]">Name</TableHead>
                         <TableHead>Email</TableHead>
                         <TableHead>Phone</TableHead>
+                        <TableHead>Instagram</TableHead>
+                        <TableHead>Company</TableHead>
                         <TableHead>Category</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
@@ -1501,16 +1501,20 @@ export default function AdminCommunityPage() {
                               </div>
                             </TableCell>
                             <TableCell>
-                              <div className="flex items-center gap-1.5">
-                                {contact.website_url ? (
-                                  <a href={contact.website_url} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline flex items-center gap-1 text-sm">
-                                    {contact.media_company || "—"}
-                                    <ExternalLink className="h-3 w-3" />
-                                  </a>
-                                ) : (
-                                  <span className="text-sm text-muted-foreground">{contact.media_company || "—"}</span>
-                                )}
-                              </div>
+                              {contact.email ? (
+                                <a href={`mailto:${contact.email}`} className="text-sm text-cyan-400 hover:underline flex items-center gap-1">
+                                  <Mail className="h-3.5 w-3.5" />
+                                  {contact.email}
+                                </a>
+                              ) : <span className="text-muted-foreground text-sm">—</span>}
+                            </TableCell>
+                            <TableCell>
+                              {contact.phone ? (
+                                <span className="flex items-center gap-1 text-sm">
+                                  <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                                  {contact.phone}
+                                </span>
+                              ) : <span className="text-muted-foreground text-sm">—</span>}
                             </TableCell>
                             <TableCell>
                               {contact.instagram_handle ? (
@@ -1526,20 +1530,16 @@ export default function AdminCommunityPage() {
                               ) : <span className="text-muted-foreground text-sm">—</span>}
                             </TableCell>
                             <TableCell>
-                              {contact.email ? (
-                                <a href={`mailto:${contact.email}`} className="text-sm text-cyan-400 hover:underline flex items-center gap-1">
-                                  <Mail className="h-3.5 w-3.5" />
-                                  {contact.email}
-                                </a>
-                              ) : <span className="text-muted-foreground text-sm">—</span>}
-                            </TableCell>
-                            <TableCell>
-                              {contact.phone ? (
-                                <span className="flex items-center gap-1 text-sm">
-                                  <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                                  {contact.phone}
-                                </span>
-                              ) : <span className="text-muted-foreground text-sm">—</span>}
+                              <div className="flex items-center gap-1.5">
+                                {contact.website_url ? (
+                                  <a href={contact.website_url} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline flex items-center gap-1 text-sm">
+                                    {contact.media_company || "—"}
+                                    <ExternalLink className="h-3 w-3" />
+                                  </a>
+                                ) : (
+                                  <span className="text-sm text-muted-foreground">{contact.media_company || "—"}</span>
+                                )}
+                              </div>
                             </TableCell>
                             <TableCell>
                               {categoryLabel ? (
