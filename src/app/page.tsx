@@ -175,6 +175,11 @@ export default async function HomePage() {
                 className="h-10 w-auto"
               />
             </Link>
+            <Link href="/shows/miami-swim-week-2026">
+              <Button variant="outline" className="border-amber-400/50 hover:border-amber-400 hover:bg-amber-400/10 text-amber-400">
+                Miami Swim Week
+              </Button>
+            </Link>
             <Link href="/signin">
               <Button variant="outline" className="border-[#FF69B4]/50 hover:border-[#FF69B4] hover:bg-[#FF69B4]/10">
                 Sign In
