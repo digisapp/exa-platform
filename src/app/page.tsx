@@ -202,10 +202,6 @@ export default async function HomePage() {
                   <span className="exa-gradient-text">Get Discovered.</span>
                 </h2>
 
-                <p className="text-sm text-zinc-400 mb-4">
-                  Join experiences, get discovered, and start earning.
-                </p>
-
                 <ModelSignupDialog>
                   <Button size="lg" className="exa-gradient-button text-base px-8 h-12 rounded-full">
                     Models Sign Up
