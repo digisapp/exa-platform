@@ -479,6 +479,25 @@ export default async function EventPage({ params, searchParams }: Props) {
               )}
 
 
+              {/* Sign Up Buttons */}
+              <div className="grid grid-cols-3 gap-2">
+                <Link href="/">
+                  <Button variant="outline" className="w-full border-pink-500/50 hover:border-pink-500 hover:bg-pink-500/10 text-pink-400 text-sm">
+                    Models Sign Up
+                  </Button>
+                </Link>
+                <a href="mailto:nathan@examodels.com">
+                  <Button variant="outline" className="w-full border-violet-500/50 hover:border-violet-500 hover:bg-violet-500/10 text-violet-400 text-sm">
+                    Designers Sign Up
+                  </Button>
+                </a>
+                <a href="mailto:nathan@examodels.com">
+                  <Button variant="outline" className="w-full border-amber-500/50 hover:border-amber-500 hover:bg-amber-500/10 text-amber-400 text-sm">
+                    Media Sign Up
+                  </Button>
+                </a>
+              </div>
+
               {/* Sponsor Card */}
               <Card>
                 <CardContent className="p-6">
