@@ -224,11 +224,27 @@ export default function FreeCompCardPage() {
     }
 
     if (!emailCaptured) {
-      // Silently capture email in the background — don't block the download
+      // Silently capture all model info in the background — don't block the download
       fetch("/api/free-comp-card/capture-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: contactEmail.trim(), first_name: firstName || "Model" }),
+        body: JSON.stringify({
+          email: contactEmail.trim(),
+          first_name: firstName || "Model",
+          last_name: lastName || undefined,
+          phone: phoneNumber || undefined,
+          instagram: instagramName || undefined,
+          website: website || undefined,
+          height: height || undefined,
+          bust: bust || undefined,
+          waist: waist || undefined,
+          hips: hips || undefined,
+          eye_color: eyeColor || undefined,
+          hair_color: hairColor || undefined,
+          dress_size: dressSize || undefined,
+          shoe_size: shoeSize || undefined,
+          export_type: type,
+        }),
       }).catch(() => {});
       setEmailCaptured(true);
     }

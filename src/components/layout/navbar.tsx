@@ -75,6 +75,8 @@ const brandLinks = [
 const adminLinks = [
   { href: "/admin", label: "Home", icon: Home },
   { href: "/chats", label: "Chats", icon: MessageCircle },
+  { href: "/admin/print-queue", label: "Print Queue", icon: FileText },
+  { href: "/admin/comp-card-leads", label: "Card Leads", icon: Users },
 ];
 
 export function Navbar({ user, actorType, unreadCount = 0 }: NavbarProps) {
