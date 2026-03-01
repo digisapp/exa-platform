@@ -25,7 +25,6 @@ export function BidHistory({ bids, currentUserId, showLeader = true }: BidHistor
   return (
     <div className="glass-card rounded-xl overflow-hidden">
       <div className="p-4 border-b border-zinc-700">
-        <h3 className="font-semibold text-white">Bid History</h3>
         <p className="text-sm text-zinc-500">{bids.length} bid{bids.length !== 1 && "s"}</p>
       </div>
 

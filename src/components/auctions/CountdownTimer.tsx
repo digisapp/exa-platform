@@ -155,14 +155,14 @@ function TimeBox({ value, label, isUrgent, isVerySoon }: TimeBoxProps) {
     <div className="flex flex-col items-center">
       <div
         className={cn(
-          "bg-zinc-800 rounded-lg px-2 sm:px-3 py-1 sm:py-2 min-w-[36px] sm:min-w-[48px] text-center",
+          "bg-zinc-800 rounded-lg px-2 py-1 min-w-[32px] sm:min-w-[40px] text-center",
           isVerySoon && "bg-red-900/50",
           isUrgent && !isVerySoon && "bg-orange-900/30"
         )}
       >
         <span
           className={cn(
-            "font-mono text-lg sm:text-2xl font-bold tabular-nums",
+            "font-mono text-sm sm:text-base font-bold tabular-nums",
             isVerySoon && "text-red-400",
             isUrgent && !isVerySoon && "text-orange-400",
             !isUrgent && "text-white"
@@ -171,7 +171,7 @@ function TimeBox({ value, label, isUrgent, isVerySoon }: TimeBoxProps) {
           {value.toString().padStart(2, "0")}
         </span>
       </div>
-      <span className="text-[10px] sm:text-xs text-zinc-500 mt-0.5">{label}</span>
+      <span className="text-[9px] sm:text-[10px] text-zinc-500 mt-0.5">{label}</span>
     </div>
   );
 }

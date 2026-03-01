@@ -81,12 +81,18 @@ export function AuctionDetailClient({
           <div className="p-3 rounded-full bg-amber-500/20 shrink-0">
             <Trophy className="h-7 w-7 text-amber-400" />
           </div>
-          <div>
+          <div className="flex-1">
             <p className="font-bold text-amber-300 text-lg">You won this auction!</p>
             <p className="text-sm text-amber-400/80">
               Final price: {formatCoins(currentPrice)} coins ({formatUsd(coinsToFanUsd(currentPrice))}) — the model will be in touch to arrange delivery.
             </p>
           </div>
+          <Link
+            href="/dashboard/messages"
+            className="shrink-0 text-xs font-medium px-4 py-2 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 transition-colors"
+          >
+            View Messages
+          </Link>
         </div>
       )}
 
@@ -107,18 +113,24 @@ export function AuctionDetailClient({
                 </Link>
               )}
               <div>
-                <h1 className="text-2xl md:text-3xl font-bold leading-tight">{auction.title}</h1>
                 {auction.model && (
                   <Link
                     href={`/${auction.model.slug}`}
-                    className="text-sm text-zinc-400 hover:text-zinc-200 transition-colors mt-1 inline-block"
+                    className="text-sm text-zinc-400 hover:text-zinc-200 transition-colors mb-1 inline-block"
                   >
                     @{auction.model.slug}
                   </Link>
                 )}
+                <h1 className="text-2xl md:text-3xl font-bold leading-tight">{auction.title}</h1>
                 {hasEnded && (
-                  <span className="ml-3 inline-block text-xs font-medium px-2 py-0.5 rounded-full bg-zinc-700 text-zinc-300">
-                    {auction.status === "sold" ? "Sold" : auction.status === "no_sale" ? "No Sale" : "Ended"}
+                  <span className={`mt-2 inline-block text-xs font-semibold px-2.5 py-1 rounded-full ${
+                    auction.status === "sold"
+                      ? "bg-green-500/15 text-green-400 border border-green-500/30"
+                      : auction.status === "cancelled"
+                      ? "bg-red-500/15 text-red-400 border border-red-500/30"
+                      : "bg-zinc-700/60 text-zinc-300 border border-zinc-600/40"
+                  }`}>
+                    {auction.status === "sold" ? "Sold" : auction.status === "no_sale" ? "No Sale" : auction.status === "cancelled" ? "Cancelled" : "Ended"}
                   </span>
                 )}
               </div>
@@ -130,7 +142,7 @@ export function AuctionDetailClient({
             <div className="glass-card p-6 rounded-xl">
               <h2 className="font-semibold mb-3 flex items-center gap-2">
                 <Package className="h-5 w-5 text-pink-400" />
-                About This Listing
+                About
               </h2>
               <p className="text-zinc-300 whitespace-pre-wrap">{auction.description}</p>
             </div>
@@ -141,7 +153,7 @@ export function AuctionDetailClient({
             <div className="glass-card p-6 rounded-xl">
               <h2 className="font-semibold mb-3 flex items-center gap-2">
                 <CheckCircle className="h-5 w-5 text-green-400" />
-                What You&apos;ll Get
+                Deliverables
               </h2>
               <p className="text-zinc-300 whitespace-pre-wrap">{auction.deliverables}</p>
             </div>
@@ -187,15 +199,24 @@ export function AuctionDetailClient({
             {/* Price Display */}
             <div className="glass-card p-6 rounded-xl" aria-live="polite" aria-atomic="true">
               <div className="flex items-center justify-between mb-4">
-                <span className="text-sm text-zinc-400">
-                  {auction.current_bid ? "Current Bid" : "Starting Price"}
-                </span>
                 <div className="flex items-center gap-2">
-                  <Eye className="h-4 w-4 text-zinc-500" />
-                  <span className="text-sm text-zinc-500">
-                    {auction.watchlist_count || 0} watching
+                  <span className="text-sm text-zinc-400">
+                    {auction.current_bid ? "Current Bid" : "Starting Price"}
                   </span>
+                  {bids.length > 0 && (
+                    <span className="text-xs text-zinc-500">
+                      · {bids.length} {bids.length === 1 ? "bid" : "bids"}
+                    </span>
+                  )}
                 </div>
+                {(auction.watchlist_count || 0) > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Eye className="h-4 w-4 text-zinc-500" />
+                    <span className="text-sm text-zinc-500">
+                      {auction.watchlist_count} watching
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center gap-3">
@@ -225,20 +246,33 @@ export function AuctionDetailClient({
                   </span>
                 </div>
               )}
+
+              {!hasEnded && auction.anti_snipe_minutes > 0 && (
+                <p className="text-xs text-zinc-500 mt-2">
+                  Bids in the final {auction.anti_snipe_minutes} minutes will extend the timer
+                </p>
+              )}
             </div>
 
             {/* Bid Form or Login Prompt */}
             {isLoggedIn ? (
-              <div id="bid-form">
-                <BidForm
-                  auction={auction}
-                  disabled={hasEnded}
-                  isOwner={isOwner}
-                  myEscrowAmount={myEscrowAmount}
-                  onBidPlaced={() => refreshBids()}
-                  onBuyNow={() => refreshBids()}
-                />
-              </div>
+              isOwner ? (
+                <div className="glass-card p-5 rounded-xl text-center space-y-1">
+                  <p className="text-sm font-medium text-zinc-300">This is your auction</p>
+                  <p className="text-xs text-zinc-500">You cannot bid on your own listing</p>
+                </div>
+              ) : (
+                <div id="bid-form">
+                  <BidForm
+                    auction={auction}
+                    disabled={hasEnded}
+                    isOwner={isOwner}
+                    myEscrowAmount={myEscrowAmount}
+                    onBidPlaced={() => refreshBids()}
+                    onBuyNow={() => refreshBids()}
+                  />
+                </div>
+              )
             ) : (
               <div className="glass-card p-6 rounded-xl text-center space-y-4">
                 <p className="text-zinc-400">Sign in to place a bid</p>
@@ -260,12 +294,6 @@ export function AuctionDetailClient({
               />
             )}
 
-            {/* Anti-sniping Notice */}
-            {!hasEnded && auction.anti_snipe_minutes > 0 && (
-              <p className="text-xs text-zinc-500 text-center">
-                Bids in the final {auction.anti_snipe_minutes} minutes will extend the timer
-              </p>
-            )}
           </div>
           </ErrorBoundary>
         </div>
