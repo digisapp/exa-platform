@@ -380,22 +380,20 @@ EXA Models`,
 
 I'm Nathan, COO of EXA Models. We're launching a new editorial travel series called EXA Travel, partnering with one boutique property per destination.
 
-We bring a curated team (5 influencer models + our in-house photographer and creative team) and spend four days capturing the full experience — the property, the culture, and the destination itself — in a cinematic, elevated way.
+We only collaborate with one property per location to keep the partnership intentional and exclusive.
+
+We bring our team of 7 people (5 influencer models + photographer and director) and spend four days capturing the full experience — the property, the culture, and the destination itself — in a cinematic, elevated way.
+
+If this aligns, I'd love to connect briefly to explore dates and availability.
 
 What You Receive
 • Instagram posts & stories from each of our 5 models
 • 10+ short videos posted across Reels & TikTok
-• One full cinematic video (60–90 sec) — usable for your ads
+• One full cinematic video (30–60 sec) — usable for your ads
 • 20 professional photos you can use anywhere — website, ads, social
-• Every post tags your property and links directly to your booking page
+• Every post tags your property
 
-You'll leave with a full content library ready for social, ads, and your website.
-
-In exchange, we're requesting a fully hosted 4-night stay for the team.
-
-We only collaborate with one property per location to keep the partnership intentional and exclusive.
-
-If this aligns, I'd love to connect briefly to explore dates and availability.
+In exchange, we're requesting a fully hosted 4-night stay for the team. You'll leave with a full content library ready for social, ads, and your website.
 
 Warm regards,
 Nathan`,

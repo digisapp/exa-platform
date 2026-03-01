@@ -4287,23 +4287,22 @@ export async function sendBrandOutreachEmail({
               <!-- Body -->
               <p style="margin: 0 0 20px; color: #cbd5e1; font-size: 15px; line-height: 1.75;">Hi ${resolvedContactName},</p>
               <p style="margin: 0 0 20px; color: #cbd5e1; font-size: 15px; line-height: 1.75;">I'm Nathan, COO of EXA Models. We're launching a new editorial travel series called <strong style="color: #ffffff;">EXA Travel</strong>, partnering with one boutique property per destination.</p>
-              <p style="margin: 0 0 32px; color: #cbd5e1; font-size: 15px; line-height: 1.75;">We bring a curated team (5 influencer models + our in-house photographer and creative team) and spend four days capturing the full experience — the property, the culture, and the destination itself — in a cinematic, elevated way.</p>
+              <p style="margin: 0 0 20px; color: #cbd5e1; font-size: 15px; line-height: 1.75;">We only collaborate with <strong style="color: #ffffff;">one property per location</strong> to keep the partnership intentional and exclusive.</p>
+              <p style="margin: 0 0 20px; color: #cbd5e1; font-size: 15px; line-height: 1.75;">We bring our team of 7 people (5 influencer models + photographer and director) and spend four days capturing the full experience — the property, the culture, and the destination itself — in a cinematic, elevated way.</p>
+              <p style="margin: 0 0 32px; color: #cbd5e1; font-size: 15px; line-height: 1.75;">If this aligns, I'd love to connect briefly to explore dates and availability.</p>
 
               <!-- What You Receive -->
               <p style="margin: 0 0 14px; color: #ffffff; font-size: 13px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">What You Receive</p>
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 32px;">
                 <tr><td style="padding-bottom: 10px; vertical-align: top;"><table cellpadding="0" cellspacing="0"><tr><td style="color: #3b82f6; padding-right: 10px; vertical-align: top; padding-top: 2px;">◆</td><td><p style="margin: 0; color: #cbd5e1; font-size: 15px; line-height: 1.6;"><strong style="color: #ffffff;">Instagram posts &amp; stories</strong> from each of our 5 models</p></td></tr></table></td></tr>
                 <tr><td style="padding-bottom: 10px; vertical-align: top;"><table cellpadding="0" cellspacing="0"><tr><td style="color: #3b82f6; padding-right: 10px; vertical-align: top; padding-top: 2px;">◆</td><td><p style="margin: 0; color: #cbd5e1; font-size: 15px; line-height: 1.6;"><strong style="color: #ffffff;">10+ short videos</strong> posted across Reels &amp; TikTok</p></td></tr></table></td></tr>
-                <tr><td style="padding-bottom: 10px; vertical-align: top;"><table cellpadding="0" cellspacing="0"><tr><td style="color: #3b82f6; padding-right: 10px; vertical-align: top; padding-top: 2px;">◆</td><td><p style="margin: 0; color: #cbd5e1; font-size: 15px; line-height: 1.6;"><strong style="color: #ffffff;">One full cinematic video</strong> (60–90 sec) — usable for your ads</p></td></tr></table></td></tr>
+                <tr><td style="padding-bottom: 10px; vertical-align: top;"><table cellpadding="0" cellspacing="0"><tr><td style="color: #3b82f6; padding-right: 10px; vertical-align: top; padding-top: 2px;">◆</td><td><p style="margin: 0; color: #cbd5e1; font-size: 15px; line-height: 1.6;"><strong style="color: #ffffff;">One full cinematic video</strong> (30–60 sec) — usable for your ads</p></td></tr></table></td></tr>
                 <tr><td style="padding-bottom: 10px; vertical-align: top;"><table cellpadding="0" cellspacing="0"><tr><td style="color: #3b82f6; padding-right: 10px; vertical-align: top; padding-top: 2px;">◆</td><td><p style="margin: 0; color: #cbd5e1; font-size: 15px; line-height: 1.6;"><strong style="color: #ffffff;">20 professional photos</strong> you can use anywhere — website, ads, social</p></td></tr></table></td></tr>
-                <tr><td style="padding-bottom: 10px; vertical-align: top;"><table cellpadding="0" cellspacing="0"><tr><td style="color: #3b82f6; padding-right: 10px; vertical-align: top; padding-top: 2px;">◆</td><td><p style="margin: 0; color: #cbd5e1; font-size: 15px; line-height: 1.6;">Every post <strong style="color: #ffffff;">tags your property</strong> and links directly to your booking page</p></td></tr></table></td></tr>
+                <tr><td style="padding-bottom: 10px; vertical-align: top;"><table cellpadding="0" cellspacing="0"><tr><td style="color: #3b82f6; padding-right: 10px; vertical-align: top; padding-top: 2px;">◆</td><td><p style="margin: 0; color: #cbd5e1; font-size: 15px; line-height: 1.6;">Every post <strong style="color: #ffffff;">tags your property</strong></p></td></tr></table></td></tr>
               </table>
 
-              <!-- Goal + Exchange + Close -->
-              <p style="margin: 0 0 20px; color: #cbd5e1; font-size: 15px; line-height: 1.75;">You'll leave with a full content library ready for social, ads, and your website.</p>
-              <p style="margin: 0 0 20px; color: #cbd5e1; font-size: 15px; line-height: 1.75;">In exchange, we're requesting a <strong style="color: #ffffff;">fully hosted 4-night stay</strong> for the team.</p>
-              <p style="margin: 0 0 20px; color: #cbd5e1; font-size: 15px; line-height: 1.75;">We only collaborate with <strong style="color: #ffffff;">one property per location</strong> to keep the partnership intentional and exclusive.</p>
-              <p style="margin: 0 0 32px; color: #cbd5e1; font-size: 15px; line-height: 1.75;">If this aligns, I'd love to connect briefly to explore dates and availability.</p>
+              <!-- Exchange -->
+              <p style="margin: 0 0 32px; color: #cbd5e1; font-size: 15px; line-height: 1.75;">In exchange, we're requesting a <strong style="color: #ffffff;">fully hosted 4-night stay</strong> for the team. You'll leave with a full content library ready for social, ads, and your website.</p>
 
               <!-- CTA -->
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 36px;">
