@@ -215,10 +215,9 @@ export default async function TravelPage() {
 
             {/* No Trips */}
             {(!travelGigs || travelGigs.length === 0) && (
-              <div className="max-w-2xl mx-auto py-12">
+              <div className="max-w-2xl mx-auto">
                 {/* Description bio */}
                 <div className="text-center mb-10">
-                  <Globe className="h-14 w-14 mx-auto text-muted-foreground/30 mb-5" />
                   <h3 className="text-2xl font-semibold mb-4">
                     Next destination coming soon
                   </h3>
