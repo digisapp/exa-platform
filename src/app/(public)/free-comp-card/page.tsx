@@ -25,7 +25,6 @@ import {
   fileToBase64,
   isAcceptedImage,
 } from "@/lib/comp-card-utils";
-import EmailCaptureDialog from "@/components/comp-card/EmailCaptureDialog";
 import PrintOrderDialog from "@/components/comp-card/PrintOrderDialog";
 
 interface UploadedPhoto {
@@ -76,9 +75,7 @@ export default function FreeCompCardPage() {
   const [exporting, setExporting] = useState(false);
   const [exportingJpeg, setExportingJpeg] = useState(false);
 
-  // Email capture state
-  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
-  const [pendingExportType, setPendingExportType] = useState<"pdf" | "jpeg" | null>(null);
+  // Track whether we've already silently captured the email this session
   const [emailCaptured, setEmailCaptured] = useState(false);
 
   // Print order state
@@ -209,7 +206,7 @@ export default function FreeCompCardPage() {
     setSelectedIds((prev) => prev.filter((p) => p !== id));
   };
 
-  // Start export flow (email capture first, then actual export)
+  // Start export — silently capture email from contact field, then export
   const startExport = (type: "pdf" | "jpeg") => {
     if (selectedIds.length === 0) {
       toast.error("Upload and select at least one photo");
@@ -219,22 +216,23 @@ export default function FreeCompCardPage() {
       toast.error("Please enter your first name");
       return;
     }
-
-    if (emailCaptured) {
-      // Already captured email in this session — skip dialog
-      if (type === "pdf") doExportPDF();
-      else doExportJPEG();
-    } else {
-      setPendingExportType(type);
-      setEmailDialogOpen(true);
+    if (!contactEmail.trim()) {
+      toast.error("Please enter your email in the Contact section");
+      return;
     }
-  };
 
-  const handleEmailSuccess = () => {
-    setEmailCaptured(true);
-    if (pendingExportType === "pdf") doExportPDF();
-    else if (pendingExportType === "jpeg") doExportJPEG();
-    setPendingExportType(null);
+    if (!emailCaptured) {
+      // Silently capture email in the background — don't block the download
+      fetch("/api/free-comp-card/capture-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: contactEmail.trim(), first_name: firstName || "Model" }),
+      }).catch(() => {});
+      setEmailCaptured(true);
+    }
+
+    if (type === "pdf") doExportPDF();
+    else doExportJPEG();
   };
 
   // Build photo base64 array from selected uploaded photos
@@ -553,7 +551,7 @@ export default function FreeCompCardPage() {
         <div className="hidden sm:flex gap-2">
           <Button
             onClick={() => startExport("jpeg")}
-            disabled={exportingJpeg || selectedIds.length === 0 || !firstName.trim()}
+            disabled={exportingJpeg || selectedIds.length === 0 || !firstName.trim() || !contactEmail.trim()}
             variant="outline"
           >
             {exportingJpeg ? (
@@ -564,7 +562,7 @@ export default function FreeCompCardPage() {
           </Button>
           <Button
             onClick={() => startExport("pdf")}
-            disabled={exporting || selectedIds.length === 0 || !firstName.trim()}
+            disabled={exporting || selectedIds.length === 0 || !firstName.trim() || !contactEmail.trim()}
             className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
           >
             {exporting ? (
@@ -575,7 +573,7 @@ export default function FreeCompCardPage() {
           </Button>
           <Button
             onClick={startPrintOrder}
-            disabled={selectedIds.length === 0 || !firstName.trim()}
+            disabled={selectedIds.length === 0 || !firstName.trim() || !contactEmail.trim()}
             variant="outline"
             className="border-violet-500/40 hover:border-violet-500/70 text-violet-300"
           >
@@ -708,7 +706,7 @@ export default function FreeCompCardPage() {
             <CardContent className="p-4 space-y-4">
               <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Contact (shown on card)</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1"><Label htmlFor="contactEmail">Email</Label><Input id="contactEmail" type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="you@example.com" /></div>
+                <div className="space-y-1"><Label htmlFor="contactEmail">Email *</Label><Input id="contactEmail" type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="you@example.com" /></div>
                 <div className="space-y-1"><Label htmlFor="phone">Phone</Label><Input id="phone" type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="+1 (555) 123-4567" /></div>
                 <div className="space-y-1"><Label htmlFor="instagram">Instagram</Label><Input id="instagram" value={instagramName} onChange={(e) => setInstagramName(e.target.value.replace(/^@/, ""))} placeholder="yourhandle" /></div>
                 <div className="space-y-1"><Label htmlFor="website">Website</Label><Input id="website" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="yoursite.com" /></div>
@@ -844,10 +842,10 @@ export default function FreeCompCardPage() {
 
           {/* Mobile buttons */}
           <div className="mt-4 sm:hidden flex flex-col gap-2">
-            <Button onClick={() => startExport("jpeg")} disabled={exportingJpeg || selectedIds.length === 0 || !firstName.trim()} variant="outline" className="w-full">
+            <Button onClick={() => startExport("jpeg")} disabled={exportingJpeg || selectedIds.length === 0 || !firstName.trim() || !contactEmail.trim()} variant="outline" className="w-full">
               {exportingJpeg ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Generating...</> : <><ImageDown className="mr-2 h-4 w-4" />Download JPEG</>}
             </Button>
-            <Button onClick={() => startExport("pdf")} disabled={exporting || selectedIds.length === 0 || !firstName.trim()} className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600">
+            <Button onClick={() => startExport("pdf")} disabled={exporting || selectedIds.length === 0 || !firstName.trim() || !contactEmail.trim()} className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600">
               {exporting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Generating...</> : <><Download className="mr-2 h-4 w-4" />Download PDF</>}
             </Button>
             <div className="rounded-xl bg-gradient-to-r from-violet-500/10 to-pink-500/10 border border-violet-500/20 p-4">
@@ -856,7 +854,7 @@ export default function FreeCompCardPage() {
                 Print &amp; Pick Up — Miami Swim Week
               </p>
               <p className="text-xs text-zinc-400 mb-3">Professional cardstock · Pick up at EXA HQ · $3/card</p>
-              <Button onClick={startPrintOrder} disabled={selectedIds.length === 0 || !firstName.trim()} className="w-full bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600">
+              <Button onClick={startPrintOrder} disabled={selectedIds.length === 0 || !firstName.trim() || !contactEmail.trim()} className="w-full bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600">
                 Order Printed Cards
               </Button>
             </div>
@@ -884,14 +882,6 @@ export default function FreeCompCardPage() {
           </div>
         </div>
       </div>
-
-      {/* Email capture dialog */}
-      <EmailCaptureDialog
-        open={emailDialogOpen}
-        onOpenChange={setEmailDialogOpen}
-        onSuccess={handleEmailSuccess}
-        firstName={firstName}
-      />
 
       {/* Print order dialog */}
       <PrintOrderDialog
