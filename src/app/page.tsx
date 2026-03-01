@@ -74,8 +74,6 @@ export default async function HomePage() {
     .gte("admin_rating", 4)
     .limit(50);
 
-  console.log("[Homepage] Models query - count:", topModelsData?.length ?? 0, "error:", modelsError?.message ?? "none");
-
   // Randomize the order
   const topModels = shuffleArray(topModelsData || []) as any[];
 
@@ -88,8 +86,6 @@ export default async function HomePage() {
     .neq("title", "EXA Models Creator House - Trip 3")
     .order("start_at", { ascending: true })
     .limit(20);
-
-  console.log("[Homepage] Events query - count:", upcomingEvents?.length ?? 0, "error:", eventsError?.message ?? "none");
 
   // Fetch active auctions for EXA Bids preview
   const { data: activeAuctions } = await (supabase as any)

@@ -15,76 +15,81 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-  const supabase = await createClient();
+  try {
+    const { id } = await params;
+    const supabase = await createClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Rate limit check
+    const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+
+    // Get actor and verify it's a brand
+    const { data: actor } = await supabase
+      .from("actors")
+      .select("id, type")
+      .eq("user_id", user.id)
+      .single() as { data: { id: string; type: string } | null };
+
+    if (!actor || actor.type !== "brand") {
+      return NextResponse.json({ error: "Only brands can access campaigns" }, { status: 403 });
+    }
+
+    // Get campaign with models
+    const { data: campaign, error } = await supabase
+      .from("campaigns")
+      .select(`
+        *,
+        campaign_models (
+          id,
+          model_id,
+          notes,
+          added_at
+        )
+      `)
+      .eq("id", id)
+      .eq("brand_id", actor.id)
+      .single();
+
+    if (error || !campaign) {
+      return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
+    }
+
+    // Get model details
+    const modelIds = campaign.campaign_models?.map((item: any) => item.model_id) || [];
+    let models: any[] = [];
+
+    if (modelIds.length > 0) {
+      const { data: modelData } = await supabase
+        .from("models")
+        .select("id, username, first_name, last_name, profile_photo_url, state, city")
+        .in("id", modelIds);
+      models = modelData || [];
+    }
+
+    // Merge model data with campaign models
+    const modelsWithData = campaign.campaign_models?.map((item: any) => ({
+      ...item,
+      model: models.find(m => m.id === item.model_id),
+    })) || [];
+
+    return NextResponse.json({
+      campaign: {
+        ...campaign,
+        campaign_models: modelsWithData,
+        model_count: modelsWithData.length,
+      },
+    });
+  } catch (error) {
+    console.error("Campaign GET error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-
-  // Rate limit check
-  const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
-  if (rateLimitResponse) {
-    return rateLimitResponse;
-  }
-
-  // Get actor and verify it's a brand
-  const { data: actor } = await supabase
-    .from("actors")
-    .select("id, type")
-    .eq("user_id", user.id)
-    .single() as { data: { id: string; type: string } | null };
-
-  if (!actor || actor.type !== "brand") {
-    return NextResponse.json({ error: "Only brands can access campaigns" }, { status: 403 });
-  }
-
-  // Get campaign with models
-  const { data: campaign, error } = await supabase
-    .from("campaigns")
-    .select(`
-      *,
-      campaign_models (
-        id,
-        model_id,
-        notes,
-        added_at
-      )
-    `)
-    .eq("id", id)
-    .eq("brand_id", actor.id)
-    .single();
-
-  if (error || !campaign) {
-    return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
-  }
-
-  // Get model details
-  const modelIds = campaign.campaign_models?.map((item: any) => item.model_id) || [];
-  let models: any[] = [];
-
-  if (modelIds.length > 0) {
-    const { data: modelData } = await supabase
-      .from("models")
-      .select("id, username, first_name, last_name, profile_photo_url, state, city")
-      .in("id", modelIds);
-    models = modelData || [];
-  }
-
-  // Merge model data with campaign models
-  const modelsWithData = campaign.campaign_models?.map((item: any) => ({
-    ...item,
-    model: models.find(m => m.id === item.model_id),
-  })) || [];
-
-  return NextResponse.json({
-    campaign: {
-      ...campaign,
-      campaign_models: modelsWithData,
-      model_count: modelsWithData.length,
-    },
-  });
 }
 
 // PUT /api/campaigns/[id] - Update campaign
@@ -92,69 +97,74 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-  const supabase = await createClient();
+  try {
+    const { id } = await params;
+    const supabase = await createClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  // Rate limit check
-  const putRateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
-  if (putRateLimitResponse) {
-    return putRateLimitResponse;
-  }
-
-  // Get actor and verify it's a brand
-  const { data: actor } = await supabase
-    .from("actors")
-    .select("id, type")
-    .eq("user_id", user.id)
-    .single() as { data: { id: string; type: string } | null };
-
-  if (!actor || actor.type !== "brand") {
-    return NextResponse.json({ error: "Only brands can update campaigns" }, { status: 403 });
-  }
-
-  const body = await request.json();
-  const parsed = campaignUpdateSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
-      { status: 400 }
-    );
-  }
-  const { name, description, color } = parsed.data;
-
-  const updates: any = { updated_at: new Date().toISOString() };
-  if (name !== undefined) updates.name = name.trim();
-  if (description !== undefined) updates.description = description?.trim() || null;
-  if (color !== undefined) updates.color = color;
-
-  // Use service role client to bypass RLS for update
-  const adminClient = createServiceRoleClient();
-
-  const { data: campaign, error } = await adminClient
-    .from("campaigns")
-    .update(updates)
-    .eq("id", id)
-    .eq("brand_id", actor.id)
-    .select()
-    .single();
-
-  if (error) {
-    if (error.code === "23505") {
-      return NextResponse.json({ error: "A campaign with this name already exists" }, { status: 400 });
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
 
-  if (!campaign) {
-    return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
-  }
+    // Rate limit check
+    const putRateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (putRateLimitResponse) {
+      return putRateLimitResponse;
+    }
 
-  return NextResponse.json({ campaign });
+    // Get actor and verify it's a brand
+    const { data: actor } = await supabase
+      .from("actors")
+      .select("id, type")
+      .eq("user_id", user.id)
+      .single() as { data: { id: string; type: string } | null };
+
+    if (!actor || actor.type !== "brand") {
+      return NextResponse.json({ error: "Only brands can update campaigns" }, { status: 403 });
+    }
+
+    const body = await request.json();
+    const parsed = campaignUpdateSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+    const { name, description, color } = parsed.data;
+
+    const updates: any = { updated_at: new Date().toISOString() };
+    if (name !== undefined) updates.name = name.trim();
+    if (description !== undefined) updates.description = description?.trim() || null;
+    if (color !== undefined) updates.color = color;
+
+    // Use service role client to bypass RLS for update
+    const adminClient = createServiceRoleClient();
+
+    const { data: campaign, error } = await adminClient
+      .from("campaigns")
+      .update(updates)
+      .eq("id", id)
+      .eq("brand_id", actor.id)
+      .select()
+      .single();
+
+    if (error) {
+      if (error.code === "23505") {
+        return NextResponse.json({ error: "A campaign with this name already exists" }, { status: 400 });
+      }
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    if (!campaign) {
+      return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ campaign });
+  } catch (error) {
+    console.error("Campaign PUT error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }
 
 // DELETE /api/campaigns/[id] - Delete campaign
@@ -162,43 +172,48 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-  const supabase = await createClient();
+  try {
+    const { id } = await params;
+    const supabase = await createClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Rate limit check
+    const deleteRateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
+    if (deleteRateLimitResponse) {
+      return deleteRateLimitResponse;
+    }
+
+    // Get actor and verify it's a brand
+    const { data: actor } = await supabase
+      .from("actors")
+      .select("id, type")
+      .eq("user_id", user.id)
+      .single() as { data: { id: string; type: string } | null };
+
+    if (!actor || actor.type !== "brand") {
+      return NextResponse.json({ error: "Only brands can delete campaigns" }, { status: 403 });
+    }
+
+    // Use service role client to bypass RLS for delete
+    const adminClient = createServiceRoleClient();
+
+    const { error } = await adminClient
+      .from("campaigns")
+      .delete()
+      .eq("id", id)
+      .eq("brand_id", actor.id);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Campaign DELETE error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-
-  // Rate limit check
-  const deleteRateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
-  if (deleteRateLimitResponse) {
-    return deleteRateLimitResponse;
-  }
-
-  // Get actor and verify it's a brand
-  const { data: actor } = await supabase
-    .from("actors")
-    .select("id, type")
-    .eq("user_id", user.id)
-    .single() as { data: { id: string; type: string } | null };
-
-  if (!actor || actor.type !== "brand") {
-    return NextResponse.json({ error: "Only brands can delete campaigns" }, { status: 403 });
-  }
-
-  // Use service role client to bypass RLS for delete
-  const adminClient = createServiceRoleClient();
-
-  const { error } = await adminClient
-    .from("campaigns")
-    .delete()
-    .eq("id", id)
-    .eq("brand_id", actor.id);
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  return NextResponse.json({ success: true });
 }

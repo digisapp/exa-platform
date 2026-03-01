@@ -221,6 +221,34 @@ export async function POST(request: NextRequest) {
         break;
       }
 
+      case "charge.refunded": {
+        const charge = event.data.object as Stripe.Charge;
+        await handleChargeRefunded(charge);
+        break;
+      }
+
+      case "charge.dispute.created": {
+        const dispute = event.data.object as Stripe.Dispute;
+        console.error("Stripe dispute created - manual review required:", {
+          dispute_id: dispute.id,
+          charge_id: dispute.charge,
+          amount: dispute.amount,
+          reason: dispute.reason,
+          status: dispute.status,
+        });
+        break;
+      }
+
+      case "charge.dispute.closed": {
+        const dispute = event.data.object as Stripe.Dispute;
+        console.log("Stripe dispute closed:", {
+          dispute_id: dispute.id,
+          charge_id: dispute.charge,
+          status: dispute.status,
+        });
+        break;
+      }
+
       default:
         // Unhandled event type
         break;
@@ -444,20 +472,11 @@ async function handleTripPayment(session: Stripe.Checkout.Session) {
     return;
   }
 
-  // Update spots_filled count on the gig
-  const { data: gig } = await supabaseAdmin
-    .from("gigs")
-    .select("spots_filled")
-    .eq("id", gigId)
-    .single();
-
-  if (gig) {
-    await supabaseAdmin
-      .from("gigs")
-      .update({ spots_filled: (gig.spots_filled || 0) + 1 })
-      .eq("id", gigId);
+  // Atomically increment spots_filled using RPC (prevents race conditions)
+  const { error: rpcError } = await supabaseAdmin.rpc("increment_gig_spots_filled", { gig_id: gigId });
+  if (rpcError) {
+    console.error("Error incrementing gig spots_filled:", rpcError);
   }
-
 }
 
 async function handleCreatorHousePayment(session: Stripe.Checkout.Session) {
@@ -593,7 +612,8 @@ async function processAffiliateCommission(
   // models.id references actors.id, so modelId IS the actor ID
   const actorId = modelId;
 
-  // Create commission record
+  // Create commission record with 14-day hold (matches shop affiliate behavior)
+  const availableAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
   const { data: commission, error: commissionError } = await supabaseAdmin
     .from("affiliate_commissions")
     .insert({
@@ -604,7 +624,8 @@ async function processAffiliateCommission(
       sale_amount_cents: saleCents,
       commission_rate: commissionRate,
       commission_amount_cents: commissionCents,
-      status: "confirmed", // Instant - no pending state
+      status: "pending",
+      available_at: availableAt,
     })
     .select("id")
     .single();
@@ -1133,5 +1154,69 @@ async function handleWorkshopInstallmentFailure(paymentIntent: Stripe.PaymentInt
       })
       .eq("id", installmentId);
   }
+}
+
+async function handleChargeRefunded(charge: Stripe.Charge) {
+  const paymentIntentId = typeof charge.payment_intent === "string"
+    ? charge.payment_intent
+    : (charge.payment_intent as any)?.id;
+
+  if (!paymentIntentId) {
+    console.error("No payment intent on refunded charge:", charge.id);
+    return;
+  }
+
+  // Find coin purchase transaction linked to this payment intent
+  const { data: transaction } = await supabaseAdmin
+    .from("coin_transactions")
+    .select("id, actor_id, amount, action")
+    .eq("action", "purchase")
+    .contains("metadata", { stripe_payment_intent: paymentIntentId })
+    .maybeSingle();
+
+  if (!transaction) {
+    // Not a coin purchase (ticket, shop, subscription, etc.) — log for awareness
+    console.log("Refund received for non-coin payment:", paymentIntentId, "charge:", charge.id);
+    return;
+  }
+
+  // IDEMPOTENCY: check if refund was already processed
+  const { data: existingRefund } = await supabaseAdmin
+    .from("coin_transactions")
+    .select("id")
+    .eq("actor_id", transaction.actor_id)
+    .eq("action", "refund")
+    .contains("metadata", { stripe_charge_id: charge.id })
+    .maybeSingle();
+
+  if (existingRefund) {
+    console.log("Duplicate refund webhook ignored for charge:", charge.id);
+    return;
+  }
+
+  // Deduct coins — DB CHECK constraint prevents balance going below 0
+  const { error } = await supabaseAdmin.rpc("add_coins", {
+    p_actor_id: transaction.actor_id,
+    p_amount: -transaction.amount,
+    p_action: "refund",
+    p_metadata: {
+      original_transaction_id: transaction.id,
+      stripe_charge_id: charge.id,
+      stripe_payment_intent: paymentIntentId,
+      refund_reason: (charge as any).refunds?.data?.[0]?.reason || "requested_by_customer",
+    },
+  });
+
+  if (error) {
+    console.error("Failed to deduct coins for refund (balance may be insufficient):", {
+      error,
+      actor_id: transaction.actor_id,
+      amount: transaction.amount,
+      charge_id: charge.id,
+    });
+    return;
+  }
+
+  console.log("Coins deducted for refund:", transaction.amount, "actor:", transaction.actor_id, "charge:", charge.id);
 }
 
