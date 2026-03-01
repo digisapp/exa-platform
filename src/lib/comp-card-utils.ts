@@ -91,35 +91,19 @@ export function photoToBase64(url: string): Promise<string> {
 }
 
 /**
- * Returns true for any image type we accept, including HEIC/HEIF.
+ * Returns true for standard image types we accept (JPEG, PNG, WebP, GIF).
+ * HEIC/HEIF are not supported — users should convert to JPEG first.
  */
 export function isAcceptedImage(file: File): boolean {
-  if (file.type.startsWith("image/")) return true;
-  // HEIC/HEIF files sometimes report empty or non-standard MIME types
-  const ext = file.name.split(".").pop()?.toLowerCase();
-  return ext === "heic" || ext === "heif";
+  const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+  return allowedTypes.includes(file.type);
 }
 
 /**
- * For uploaded files — handles HEIC conversion, loads via <img> + object URL to normalize EXIF.
+ * For uploaded files — loads via <img> + object URL to normalize EXIF.
  */
 export async function fileToBase64(file: File): Promise<string> {
-  let processedFile: File | Blob = file;
-
-  // Convert HEIC/HEIF to JPEG in the browser
-  const isHeic =
-    file.type === "image/heic" ||
-    file.type === "image/heif" ||
-    file.name.toLowerCase().endsWith(".heic") ||
-    file.name.toLowerCase().endsWith(".heif");
-
-  if (isHeic) {
-    const heic2any = (await import("heic2any")).default;
-    const converted = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.92 });
-    processedFile = Array.isArray(converted) ? converted[0] : converted;
-  }
-
-  const objectUrl = URL.createObjectURL(processedFile);
+  const objectUrl = URL.createObjectURL(file);
   return new Promise((resolve, reject) => {
     const img = new window.Image();
     img.onload = () => {

@@ -704,7 +704,7 @@ export default function FreeCompCardPage() {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/*,.heic,.heif"
+                  accept="image/*"
                   multiple
                   className="hidden"
                   onChange={handleFileUpload}

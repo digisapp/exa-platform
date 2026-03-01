@@ -892,7 +892,7 @@ export default function CompCardPage() {
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
+            accept="image/jpeg,image/png,image/webp"
             multiple
             onChange={handleFileUpload}
             className="hidden"
