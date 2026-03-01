@@ -27,16 +27,15 @@ import {
   Wifi,
   Sun,
   Heart,
-  Sparkles,
   CheckCircle,
   XCircle,
 } from "lucide-react";
 import { format } from "date-fns";
 
 export const metadata: Metadata = {
-  title: "EXA Travel | A New Country Every Month — Model Travel Community",
+  title: "EXA Travel | Travel Series",
   description:
-    "Join the EXA Travel community. A new country every month. 8 models per trip. Share a luxury villa Thursday–Monday, create content, and connect with models worldwide. 5 days / 4 nights including villa and meals.",
+    "EXA Travel is an ongoing travel series — a team of 7 traveling the world's best destinations, creating cinematic content. Join as a model and be part of the series.",
   robots: { index: true, follow: true },
 };
 
@@ -150,33 +149,38 @@ export default async function TravelPage() {
             </div>
 
             <div className="absolute bottom-0 left-0 right-0 p-4 md:p-10 pointer-events-none">
-              <Badge className="mb-2 md:mb-4 bg-gradient-to-r from-pink-500 to-violet-500 text-white border-0 px-3 md:px-4 py-1 md:py-1.5 text-xs md:text-sm font-semibold">
+              <Badge className="mb-2 md:mb-4 bg-gradient-to-r from-blue-500 to-violet-500 text-white border-0 px-3 md:px-4 py-1 md:py-1.5 text-xs md:text-sm font-semibold">
                 <Plane className="h-3 w-3 md:h-4 md:w-4 mr-1.5 md:mr-2" />
-                EXA Travel
+                EXA Travel · Travel Series
               </Badge>
               <h1 className="text-2xl md:text-5xl lg:text-6xl font-bold text-white mb-1 md:mb-3 drop-shadow-lg">
-                A New Country Every Month
+                We Travel. We Create. We Document.
               </h1>
               <p className="text-sm md:text-xl text-white/80 mb-4 md:mb-6 max-w-2xl">
-                8 models. 1 villa. Thursday to Monday. Unlimited content.
+                A team of 7 — 5 influencer models, a photographer, and a director — traveling the world&apos;s most iconic destinations and turning every trip into cinematic content.
               </p>
-              <div className="hidden md:flex flex-wrap gap-4 text-white/90">
-                <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
-                  <Globe className="h-5 w-5 text-cyan-400" />
-                  <span className="font-medium">New Destination Monthly</span>
-                </div>
-                <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
-                  <Home className="h-5 w-5 text-pink-400" />
-                  <span className="font-medium">Luxury Villa Included</span>
-                </div>
-                <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
-                  <Users className="h-5 w-5 text-violet-400" />
-                  <span className="font-medium">8 Models Per Trip</span>
-                </div>
-                <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
-                  <Camera className="h-5 w-5 text-amber-400" />
-                  <span className="font-medium">Create Content Together</span>
-                </div>
+              <div className="flex flex-wrap gap-3 pointer-events-auto">
+                <Button
+                  size="lg"
+                  className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white border-0"
+                  asChild
+                >
+                  <a href="#trips">
+                    Join the Series
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </a>
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-white/30 text-white hover:bg-white/10"
+                  asChild
+                >
+                  <a href="#how-it-works">
+                    How It Works
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </a>
+                </Button>
               </div>
             </div>
           </div>
@@ -185,13 +189,9 @@ export default async function TravelPage() {
         {/* ═══════════════════════════════════════════ */}
         {/* HOW IT WORKS */}
         {/* ═══════════════════════════════════════════ */}
-        <section className="py-12 md:py-20">
+        <section id="how-it-works" className="py-12 md:py-20">
           <div className="container px-6 md:px-16">
             <div className="text-center mb-10 md:mb-14">
-              <Badge className="mb-3 bg-violet-500/10 text-violet-400 border-violet-500/20">
-                <Sparkles className="h-3 w-3 mr-1.5" />
-                The Program
-              </Badge>
               <h2 className="text-3xl md:text-4xl font-bold mb-3">
                 How EXA Travel Works
               </h2>
@@ -248,7 +248,7 @@ export default async function TravelPage() {
                   <div className="h-11 w-11 rounded-xl bg-amber-500/10 flex items-center justify-center mb-4">
                     <Camera className="h-5 w-5 text-amber-500" />
                   </div>
-                  <h3 className="font-semibold text-lg mb-2">Create & Connect</h3>
+                  <h3 className="font-semibold text-lg mb-2">Create &amp; Connect</h3>
                   <p className="text-muted-foreground text-sm leading-relaxed">
                     Shoot content, explore the city, build real friendships, and grow your portfolio and network.
                   </p>
@@ -429,7 +429,7 @@ export default async function TravelPage() {
                   <span className="text-[10px] font-bold text-pink-400 leading-tight text-center">THU</span>
                 </div>
                 <div>
-                  <h3 className="font-semibold mb-1">Arrival & Welcome</h3>
+                  <h3 className="font-semibold mb-1">Arrival &amp; Welcome</h3>
                   <p className="text-muted-foreground text-sm leading-relaxed">
                     Fly in and arrive at the villa. Meet your 7 housemates, settle in, and kick off the trip with a welcome dinner together.
                   </p>
@@ -453,7 +453,7 @@ export default async function TravelPage() {
                   <span className="text-[10px] font-bold text-cyan-400 leading-tight text-center">SAT</span>
                 </div>
                 <div>
-                  <h3 className="font-semibold mb-1">Beach & Adventure</h3>
+                  <h3 className="font-semibold mb-1">Beach &amp; Adventure</h3>
                   <p className="text-muted-foreground text-sm leading-relaxed">
                     Beach shoots, water activities, and adventure content. Explore the area and create content at the best local spots.
                   </p>
@@ -465,7 +465,7 @@ export default async function TravelPage() {
                   <span className="text-[10px] font-bold text-amber-400 leading-tight text-center">SUN</span>
                 </div>
                 <div>
-                  <h3 className="font-semibold mb-1">Explore & Create</h3>
+                  <h3 className="font-semibold mb-1">Explore &amp; Create</h3>
                   <p className="text-muted-foreground text-sm leading-relaxed">
                     Explore local culture, restaurants, and hidden gems. Free time to shoot, relax, or collaborate on group content.
                   </p>
@@ -477,7 +477,7 @@ export default async function TravelPage() {
                   <span className="text-[10px] font-bold text-green-400 leading-tight text-center">MON</span>
                 </div>
                 <div>
-                  <h3 className="font-semibold mb-1">Final Shoots & Departure</h3>
+                  <h3 className="font-semibold mb-1">Final Shoots &amp; Departure</h3>
                   <p className="text-muted-foreground text-sm leading-relaxed">
                     Last content sessions in the morning, swap socials, exchange edits, and head to the airport. New friends, new content.
                   </p>
@@ -779,44 +779,35 @@ export default async function TravelPage() {
         {/* CTA */}
         {/* ═══════════════════════════════════════════ */}
         <section className="py-16 md:py-24 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-pink-500/10 via-violet-500/10 to-cyan-500/10" />
-          <div className="container relative px-6 md:px-16 text-center">
-            <Palmtree className="h-12 w-12 mx-auto text-pink-400 mb-4" />
-            <h2 className="text-3xl md:text-4xl font-bold mb-3">
-              Ready to Travel the World?
-            </h2>
-            <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
-              Join the EXA Travel community. New destinations every month, real
-              connections, and content that sets you apart.
-            </p>
-            {!user ? (
-              <div className="flex flex-wrap justify-center gap-4">
-                <Button
-                  size="lg"
-                  className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
-                  asChild
-                >
-                  <Link href="/apply">
-                    Apply as a Model
+          <div className="absolute inset-0 bg-gradient-to-r from-pink-500/5 via-violet-500/10 to-pink-500/5" />
+          <div className="container relative px-6 md:px-16">
+            <div className="max-w-xl mx-auto rounded-2xl border border-pink-500/30 bg-gradient-to-br from-pink-500/5 to-violet-500/5 p-8 md:p-12 text-center">
+              <Palmtree className="h-12 w-12 mx-auto text-pink-400 mb-5" />
+              <h2 className="text-2xl md:text-3xl font-bold mb-3">Ready to Join the Series?</h2>
+              <p className="text-muted-foreground mb-8">
+                New destinations every month. 8 models per trip. Real connections, stunning content, and a community that travels together.
+              </p>
+              {!user ? (
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Button className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600" asChild>
+                    <Link href="/apply">
+                      Apply as a Model
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link href="/signin?redirect=/travel">Sign In</Link>
+                  </Button>
+                </div>
+              ) : (
+                <Button className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600" asChild>
+                  <Link href="#trips">
+                    View Available Trips
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Link>
                 </Button>
-                <Button size="lg" variant="outline" asChild>
-                  <Link href="/signin?redirect=/travel">Sign In</Link>
-                </Button>
-              </div>
-            ) : (
-              <Button
-                size="lg"
-                className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
-                asChild
-              >
-                <Link href="#trips">
-                  View Available Trips
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Link>
-              </Button>
-            )}
+              )}
+            </div>
           </div>
         </section>
       </div>

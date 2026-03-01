@@ -395,8 +395,8 @@ If this aligns, I'd love to connect briefly to explore dates and availability.
 
 Warm regards,
 Nathan`,
-    ctaUrl: "https://www.examodels.com",
-    ctaText: "View EXA Models",
+    ctaUrl: "https://www.examodels.com/travel",
+    ctaText: "View EXA Travel",
     template: "travel" as const,
   };
 
