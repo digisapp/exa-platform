@@ -180,7 +180,13 @@ export default function FreeCompCardPage() {
         continue;
       }
 
-      const dataUrl = await fileToBase64(file);
+      let dataUrl: string;
+      try {
+        dataUrl = await fileToBase64(file);
+      } catch {
+        toast.error(`Failed to load ${file.name}. Try exporting as JPEG first.`);
+        continue;
+      }
       const id = `upload-${Date.now()}-${i}`;
       setUploadedPhotos((prev) => [...prev, { id, dataUrl }]);
       setSelectedIds((prev) => {
