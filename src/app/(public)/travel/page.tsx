@@ -25,7 +25,6 @@ import {
   Home,
   UtensilsCrossed,
   Wifi,
-  Sun,
   Heart,
   CheckCircle,
   XCircle,
@@ -149,77 +148,12 @@ export default async function TravelPage() {
             </div>
 
             <div className="absolute bottom-0 left-0 right-0 p-4 md:p-10 pointer-events-none">
-              <Badge className="mb-2 md:mb-4 bg-gradient-to-r from-blue-500 to-violet-500 text-white border-0 px-3 md:px-4 py-1 md:py-1.5 text-xs md:text-sm font-semibold">
-                <Plane className="h-3 w-3 md:h-4 md:w-4 mr-1.5 md:mr-2" />
-                EXA Travel
-              </Badge>
               <h1 className="text-2xl md:text-5xl lg:text-6xl font-bold text-white mb-1 md:mb-3 drop-shadow-lg">
                 EXA Travel
               </h1>
             </div>
           </div>
         </main>
-
-        {/* ═══════════════════════════════════════════ */}
-        {/* HOW IT WORKS */}
-        {/* ═══════════════════════════════════════════ */}
-        <section id="how-it-works" className="py-12 md:py-20">
-          <div className="container px-6 md:px-16">
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="relative group">
-                <div className="glass-card rounded-2xl p-6 h-full border-border/50 hover:border-border transition-colors">
-                  <span className="text-5xl font-black text-cyan-500/10 absolute top-4 right-5">01</span>
-                  <div className="h-11 w-11 rounded-xl bg-cyan-500/10 flex items-center justify-center mb-4">
-                    <Globe className="h-5 w-5 text-cyan-500" />
-                  </div>
-                  <h3 className="font-semibold text-lg mb-2">We Pick the Destination</h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed">
-                    A new country each month — from Bali to Tulum to Lisbon. We find the best locations with stunning backdrops.
-                  </p>
-                </div>
-              </div>
-
-              <div className="relative group">
-                <div className="glass-card rounded-2xl p-6 h-full border-border/50 hover:border-border transition-colors">
-                  <span className="text-5xl font-black text-pink-500/10 absolute top-4 right-5">02</span>
-                  <div className="h-11 w-11 rounded-xl bg-pink-500/10 flex items-center justify-center mb-4">
-                    <Calendar className="h-5 w-5 text-pink-500" />
-                  </div>
-                  <h3 className="font-semibold text-lg mb-2">You Pick Your Trip</h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed">
-                    4 trips per month, each Thursday to Monday. Pick the dates that work for you and lock in your spot.
-                  </p>
-                </div>
-              </div>
-
-              <div className="relative group">
-                <div className="glass-card rounded-2xl p-6 h-full border-border/50 hover:border-border transition-colors">
-                  <span className="text-5xl font-black text-violet-500/10 absolute top-4 right-5">03</span>
-                  <div className="h-11 w-11 rounded-xl bg-violet-500/10 flex items-center justify-center mb-4">
-                    <Home className="h-5 w-5 text-violet-500" />
-                  </div>
-                  <h3 className="font-semibold text-lg mb-2">Share a Luxury Villa</h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed">
-                    5 models per trip share a beautiful villa for 4 nights. Meals included, content spaces ready, everything handled.
-                  </p>
-                </div>
-              </div>
-
-              <div className="relative group">
-                <div className="glass-card rounded-2xl p-6 h-full border-border/50 hover:border-border transition-colors">
-                  <span className="text-5xl font-black text-amber-500/10 absolute top-4 right-5">04</span>
-                  <div className="h-11 w-11 rounded-xl bg-amber-500/10 flex items-center justify-center mb-4">
-                    <Camera className="h-5 w-5 text-amber-500" />
-                  </div>
-                  <h3 className="font-semibold text-lg mb-2">Create &amp; Connect</h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed">
-                    Shoot content, explore the city, build real friendships, and grow your portfolio and network.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
 
         {/* ═══════════════════════════════════════════ */}
         {/* UPCOMING TRIPS FROM DB */}
@@ -236,7 +170,7 @@ export default async function TravelPage() {
                   <div>
                     <h2 className="text-2xl font-bold">Now Booking</h2>
                     <p className="text-muted-foreground text-sm">
-                      Secure your spot — 5 models per trip, Thursday to Monday
+                      Secure your spot — 5 models per trip
                     </p>
                   </div>
                 </div>
@@ -299,97 +233,6 @@ export default async function TravelPage() {
         </section>
 
         {/* ═══════════════════════════════════════════ */}
-        {/* THURSDAY TO MONDAY EXPERIENCE */}
-        {/* ═══════════════════════════════════════════ */}
-        <section className="py-12 md:py-20">
-          <div className="container px-6 md:px-16">
-            <div className="text-center mb-10 md:mb-14">
-              <Badge className="mb-3 bg-pink-500/10 text-pink-400 border-pink-500/20">
-                <Sun className="h-3 w-3 mr-1.5" />
-                The Experience
-              </Badge>
-              <h2 className="text-3xl md:text-4xl font-bold mb-3">
-                The Experience
-              </h2>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-4 max-w-4xl mx-auto">
-              <div className="flex gap-4 p-4 rounded-xl border border-pink-500/10 bg-pink-500/5">
-                <div className="shrink-0 h-12 w-12 rounded-xl bg-pink-500/10 flex items-center justify-center">
-                  <span className="text-[10px] font-bold text-pink-400 leading-tight text-center">THU</span>
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-1">Arrival &amp; Welcome</h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed">
-                    Fly in and arrive at the villa. Meet your 4 housemates, settle in, and kick off the trip with a welcome dinner together.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-4 p-4 rounded-xl border border-violet-500/10 bg-violet-500/5">
-                <div className="shrink-0 h-12 w-12 rounded-xl bg-violet-500/10 flex items-center justify-center">
-                  <span className="text-[10px] font-bold text-violet-400 leading-tight text-center">FRI</span>
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-1">Content Day</h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed">
-                    Full day of shoots at the villa and nearby locations. Group content, solo shoots, and behind-the-scenes footage.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-4 p-4 rounded-xl border border-cyan-500/10 bg-cyan-500/5">
-                <div className="shrink-0 h-12 w-12 rounded-xl bg-cyan-500/10 flex items-center justify-center">
-                  <span className="text-[10px] font-bold text-cyan-400 leading-tight text-center">SAT</span>
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-1">Beach &amp; Adventure</h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed">
-                    Beach shoots, water activities, and adventure content. Explore the area and create content at the best local spots.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-4 p-4 rounded-xl border border-amber-500/10 bg-amber-500/5">
-                <div className="shrink-0 h-12 w-12 rounded-xl bg-amber-500/10 flex items-center justify-center">
-                  <span className="text-[10px] font-bold text-amber-400 leading-tight text-center">SUN</span>
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-1">Explore &amp; Create</h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed">
-                    Explore local culture, restaurants, and hidden gems. Free time to shoot, relax, or collaborate on group content.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-4 p-4 rounded-xl border border-green-500/10 bg-green-500/5">
-                <div className="shrink-0 h-12 w-12 rounded-xl bg-green-500/10 flex items-center justify-center">
-                  <span className="text-[10px] font-bold text-green-400 leading-tight text-center">MON</span>
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-1">Final Shoots &amp; Departure</h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed">
-                    Last content sessions in the morning, swap socials, exchange edits, and head to the airport. New friends, new content.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-4 p-4 rounded-xl border border-pink-500/10 bg-pink-500/5">
-                <div className="shrink-0 h-12 w-12 rounded-xl bg-pink-500/10 flex items-center justify-center">
-                  <span className="text-xs font-bold text-pink-400">After</span>
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-1">Stay Connected</h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed">
-                    Join the EXA Travel community group, share your edits, plan your next trip, and stay in touch with the models you met.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ═══════════════════════════════════════════ */}
         {/* WHAT'S INCLUDED / WHAT YOU'LL NEED */}
         {/* ═══════════════════════════════════════════ */}
         <section className="py-12 md:py-20 bg-muted/30">
@@ -399,8 +242,7 @@ export default async function TravelPage() {
                 What&apos;s Included
               </h2>
               <p className="text-muted-foreground max-w-xl mx-auto">
-                5 days / 4 nights — here&apos;s what&apos;s
-                covered and what you&apos;ll need to bring
+                Here&apos;s what&apos;s covered and what you&apos;ll need to bring
               </p>
             </div>
 
@@ -416,12 +258,12 @@ export default async function TravelPage() {
                     {
                       icon: Home,
                       title: "Luxury Villa",
-                      desc: "4 nights in a shared villa with pool, content areas, and stunning views",
+                      desc: "Shared villa with pool, content areas, and stunning views",
                     },
                     {
                       icon: UtensilsCrossed,
                       title: "All Meals",
-                      desc: "Breakfast, lunch, and dinner for 5 days — local cuisine and group dining",
+                      desc: "Breakfast, lunch, and dinner — local cuisine and group dining",
                     },
                     {
                       icon: Wifi,
@@ -503,22 +345,6 @@ export default async function TravelPage() {
                   ))}
                 </div>
 
-                {/* CTA */}
-                <div className="mt-6 p-5 rounded-xl bg-gradient-to-br from-pink-500/10 to-violet-500/10 border border-pink-500/20">
-                  <p className="text-muted-foreground text-sm mb-4">
-                    Villa + all meals + coordination. The most affordable way to
-                    travel the world and create content as a model.
-                  </p>
-                  <Button
-                    className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
-                    asChild
-                  >
-                    <Link href="#trips">
-                      View Available Trips
-                      <ArrowRight className="h-4 w-4 ml-2" />
-                    </Link>
-                  </Button>
-                </div>
               </div>
             </div>
           </div>
@@ -547,9 +373,8 @@ export default async function TravelPage() {
                   How does booking a trip work?
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">
-                  Browse our upcoming destinations and pick the trip dates that
-                  work for you. Each trip runs Thursday to Monday (5 days / 4
-                  nights). Apply through the trip page, and once accepted
+                  Browse our upcoming destinations and pick the trip that works
+                  for you. Apply through the trip page, and once accepted
                   you&apos;ll receive payment details. The trip fee covers
                   the villa and all meals. You book your own flight.
                 </AccordionContent>
@@ -571,21 +396,6 @@ export default async function TravelPage() {
               </AccordionItem>
 
               <AccordionItem
-                value="how-many"
-                className="glass-card rounded-xl border px-5"
-              >
-                <AccordionTrigger className="text-left font-medium hover:no-underline">
-                  How many models per trip?
-                </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground">
-                  Each trip is limited to 5 models. This keeps the villa
-                  comfortable, the group tight-knit, and ensures everyone gets
-                  quality content. There are 4 trips per month at the same
-                  destination, each running Thursday to Monday.
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem
                 value="whats-included"
                 className="glass-card rounded-xl border px-5"
               >
@@ -593,27 +403,10 @@ export default async function TravelPage() {
                   What does the trip fee cover?
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">
-                  The trip fee covers 4 nights (Thursday through Monday) at a
-                  luxury shared villa and all meals (breakfast, lunch, dinner).
-                  It also includes trip coordination, local guides, and organized
-                  activities. You are responsible for booking your own flight and
-                  any personal expenses.
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem
-                value="content"
-                className="glass-card rounded-xl border px-5"
-              >
-                <AccordionTrigger className="text-left font-medium hover:no-underline">
-                  Is there a photographer or do we shoot ourselves?
-                </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground">
-                  It&apos;s a mix. We organize group content sessions and set up
-                  shoot-ready spaces at the villa and local spots. Models
-                  collaborate and shoot each other — this is about building real
-                  connections and content, not a traditional agency shoot.
-                  Some trips may include a professional photographer.
+                  The trip fee covers your stay at a luxury shared villa and
+                  all meals (breakfast, lunch, dinner). It also includes trip
+                  coordination, local guides, and organized activities. You are
+                  responsible for booking your own flight and any personal expenses.
                 </AccordionContent>
               </AccordionItem>
 
@@ -647,20 +440,6 @@ export default async function TravelPage() {
                 </AccordionContent>
               </AccordionItem>
 
-              <AccordionItem
-                value="community"
-                className="glass-card rounded-xl border px-5"
-              >
-                <AccordionTrigger className="text-left font-medium hover:no-underline">
-                  Is there a community between trips?
-                </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground">
-                  Yes! All EXA Travel models are part of our community group
-                  where we share upcoming destinations, travel tips, and content
-                  from past trips. It&apos;s also where models plan to meet up
-                  outside of official trips.
-                </AccordionContent>
-              </AccordionItem>
             </Accordion>
           </div>
         </section>
