@@ -10,12 +10,12 @@ import {
   Download,
   Loader2,
   Image as ImageIcon,
+  FileText,
   Upload,
   X,
   Move,
   ZoomIn,
   ImageDown,
-  Sparkles,
   Printer,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -542,96 +542,163 @@ export default function FreeCompCardPage() {
 
   return (
     <div className="container max-w-6xl mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-10 text-center">
-        <div className="inline-flex items-center gap-2 bg-pink-500/10 border border-pink-500/20 rounded-full px-4 py-1.5 mb-4">
-          <Sparkles className="h-3.5 w-3.5 text-pink-400" />
-          <span className="text-xs font-semibold text-pink-400 uppercase tracking-wider">100% Free — No Account Required</span>
+      {/* Header — matches dashboard layout */}
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-2xl font-bold">Free Comp Card</h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            Select {MAX_PHOTOS} photos — first is the front cover, next 4 go on the back
+          </p>
         </div>
-        <h1 className="text-4xl md:text-5xl font-bold mb-3 bg-gradient-to-r from-white to-zinc-400 bg-clip-text text-transparent">
-          Free Comp Card Maker
-        </h1>
-        <p className="text-muted-foreground text-lg max-w-xl mx-auto">
-          Build a print-ready comp card in minutes. Upload your photos, fill in your stats, and download a professional PDF or JPEG — free.
-        </p>
-        <div className="flex items-center justify-center gap-6 mt-5 text-sm text-zinc-400">
-          <div className="flex items-center gap-1.5"><Download className="h-4 w-4 text-pink-400" /> PDF &amp; JPEG download</div>
-          <div className="flex items-center gap-1.5"><Printer className="h-4 w-4 text-violet-400" /> Print &amp; pick up in Miami</div>
-          <div className="flex items-center gap-1.5"><Sparkles className="h-4 w-4 text-amber-400" /> Used by 5,000+ models</div>
+        <div className="hidden sm:flex gap-2">
+          <Button
+            onClick={() => startExport("jpeg")}
+            disabled={exportingJpeg || selectedIds.length === 0 || !firstName.trim()}
+            variant="outline"
+          >
+            {exportingJpeg ? (
+              <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Generating...</>
+            ) : (
+              <><ImageDown className="mr-2 h-4 w-4" />Download JPEG</>
+            )}
+          </Button>
+          <Button
+            onClick={() => startExport("pdf")}
+            disabled={exporting || selectedIds.length === 0 || !firstName.trim()}
+            className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
+          >
+            {exporting ? (
+              <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Generating...</>
+            ) : (
+              <><Download className="mr-2 h-4 w-4" />Download PDF</>
+            )}
+          </Button>
+          <Button
+            onClick={startPrintOrder}
+            disabled={selectedIds.length === 0 || !firstName.trim()}
+            variant="outline"
+            className="border-violet-500/40 hover:border-violet-500/70 text-violet-300"
+          >
+            <Printer className="mr-2 h-4 w-4" />
+            Print &amp; Pick Up
+          </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-8">
-        {/* ── LEFT: Form + Photos ── */}
-        <div className="space-y-6">
-          {/* Name */}
-          <Card>
+      <div className="grid lg:grid-cols-2 gap-8">
+        {/* ── LEFT: Photos + Form ── */}
+        <div>
+          {/* Photos — first, matching dashboard */}
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <ImageIcon className="h-5 w-5" />
+            Photos
+            <span className="text-sm font-normal text-muted-foreground">
+              ({selectedIds.length}/{MAX_PHOTOS})
+            </span>
+          </h2>
+
+          {uploadedPhotos.length > 0 && (
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-4">
+              {uploadedPhotos.map((photo) => {
+                const idx = getSelectionIndex(photo.id);
+                const isSelected = idx !== -1;
+                return (
+                  <div key={photo.id} className="relative">
+                    <button
+                      onClick={() => togglePhoto(photo.id)}
+                      className={cn(
+                        "relative aspect-[3/4] rounded-lg overflow-hidden border-2 transition-all group w-full",
+                        isSelected
+                          ? "border-pink-500 ring-2 ring-pink-500/30"
+                          : "border-transparent hover:border-white/20"
+                      )}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={photo.dataUrl}
+                        alt="Uploaded"
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                      <div className={cn(
+                        "absolute inset-0 transition-opacity",
+                        isSelected ? "bg-black/30" : "bg-black/0 group-hover:bg-black/20"
+                      )} />
+                      {isSelected && (
+                        <div className="absolute top-2 left-2 bg-pink-500 rounded-full px-2 py-0.5 flex items-center justify-center">
+                          <span className="text-white text-[9px] font-bold whitespace-nowrap">
+                            {PHOTO_LABELS[idx]}
+                          </span>
+                        </div>
+                      )}
+                      {!isSelected && (
+                        <div className="absolute top-2 left-2 h-6 w-6 rounded-full border-2 border-white/60 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      )}
+                    </button>
+                    <button
+                      onClick={() => removeUploadedPhoto(photo.id)}
+                      className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-red-500 flex items-center justify-center hover:bg-red-600 transition-colors z-10"
+                    >
+                      <X className="h-3 w-3 text-white" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleFileUpload}
+            className="hidden"
+          />
+          {selectedIds.length < MAX_PHOTOS && (
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full border-2 border-dashed border-border hover:border-pink-500/50 rounded-lg p-6 flex flex-col items-center gap-2 transition-colors group mb-6"
+            >
+              <Upload className="h-6 w-6 text-muted-foreground group-hover:text-pink-500 transition-colors" />
+              <span className="text-sm text-muted-foreground group-hover:text-pink-500 transition-colors">
+                Upload from device
+              </span>
+              <span className="text-xs text-muted-foreground">
+                JPG, PNG, or WebP — {MAX_PHOTOS - selectedIds.length} slot{MAX_PHOTOS - selectedIds.length === 1 ? "" : "s"} remaining
+              </span>
+            </button>
+          )}
+
+          {/* Your Info */}
+          <Card className="mb-4">
             <CardContent className="p-4 space-y-4">
-              <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">
-                Your Info
-              </h3>
+              <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Your Info</h3>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label htmlFor="firstName">First Name *</Label>
-                  <Input
-                    id="firstName"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="Jane"
-                  />
+                  <Input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Jane" />
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="lastName">Last Name</Label>
-                  <Input
-                    id="lastName"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    placeholder="Doe"
-                  />
+                  <Input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Doe" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Measurements */}
-          <Card>
+          <Card className="mb-4">
             <CardContent className="p-4 space-y-4">
-              <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">
-                Measurements
-              </h3>
+              <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Measurements</h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="space-y-1">
-                  <Label htmlFor="height">Height</Label>
-                  <Input id="height" value={height} onChange={(e) => setHeight(e.target.value)} placeholder={`5'9"`} />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="bust">Bust</Label>
-                  <Input id="bust" value={bust} onChange={(e) => setBust(e.target.value)} placeholder={`34"`} />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="waist">Waist</Label>
-                  <Input id="waist" value={waist} onChange={(e) => setWaist(e.target.value)} placeholder={`24"`} />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="hips">Hips</Label>
-                  <Input id="hips" value={hips} onChange={(e) => setHips(e.target.value)} placeholder={`35"`} />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="eyeColor">Eye Color</Label>
-                  <Input id="eyeColor" value={eyeColor} onChange={(e) => setEyeColor(e.target.value)} placeholder="Brown" />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="hairColor">Hair Color</Label>
-                  <Input id="hairColor" value={hairColor} onChange={(e) => setHairColor(e.target.value)} placeholder="Black" />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="dressSize">Dress Size</Label>
-                  <Input id="dressSize" value={dressSize} onChange={(e) => setDressSize(e.target.value)} placeholder="4" />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="shoeSize">Shoe Size</Label>
-                  <Input id="shoeSize" value={shoeSize} onChange={(e) => setShoeSize(e.target.value)} placeholder="8" />
-                </div>
+                <div className="space-y-1"><Label htmlFor="height">Height</Label><Input id="height" value={height} onChange={(e) => setHeight(e.target.value)} placeholder={`5'9"`} /></div>
+                <div className="space-y-1"><Label htmlFor="bust">Bust</Label><Input id="bust" value={bust} onChange={(e) => setBust(e.target.value)} placeholder={`34"`} /></div>
+                <div className="space-y-1"><Label htmlFor="waist">Waist</Label><Input id="waist" value={waist} onChange={(e) => setWaist(e.target.value)} placeholder={`24"`} /></div>
+                <div className="space-y-1"><Label htmlFor="hips">Hips</Label><Input id="hips" value={hips} onChange={(e) => setHips(e.target.value)} placeholder={`35"`} /></div>
+                <div className="space-y-1"><Label htmlFor="eyeColor">Eye Color</Label><Input id="eyeColor" value={eyeColor} onChange={(e) => setEyeColor(e.target.value)} placeholder="Brown" /></div>
+                <div className="space-y-1"><Label htmlFor="hairColor">Hair Color</Label><Input id="hairColor" value={hairColor} onChange={(e) => setHairColor(e.target.value)} placeholder="Black" /></div>
+                <div className="space-y-1"><Label htmlFor="dressSize">Dress Size</Label><Input id="dressSize" value={dressSize} onChange={(e) => setDressSize(e.target.value)} placeholder="4" /></div>
+                <div className="space-y-1"><Label htmlFor="shoeSize">Shoe Size</Label><Input id="shoeSize" value={shoeSize} onChange={(e) => setShoeSize(e.target.value)} placeholder="8" /></div>
               </div>
             </CardContent>
           </Card>
@@ -639,305 +706,92 @@ export default function FreeCompCardPage() {
           {/* Contact */}
           <Card>
             <CardContent className="p-4 space-y-4">
-              <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">
-                Contact (shown on card)
-              </h3>
+              <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Contact (shown on card)</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label htmlFor="contactEmail">Email</Label>
-                  <Input
-                    id="contactEmail"
-                    type="email"
-                    value={contactEmail}
-                    onChange={(e) => setContactEmail(e.target.value)}
-                    placeholder="you@example.com"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="phone">Phone</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    placeholder="+1 (555) 123-4567"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="instagram">Instagram</Label>
-                  <Input
-                    id="instagram"
-                    value={instagramName}
-                    onChange={(e) => setInstagramName(e.target.value.replace(/^@/, ""))}
-                    placeholder="yourhandle"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="website">Website</Label>
-                  <Input
-                    id="website"
-                    value={website}
-                    onChange={(e) => setWebsite(e.target.value)}
-                    placeholder="yoursite.com"
-                  />
-                </div>
+                <div className="space-y-1"><Label htmlFor="contactEmail">Email</Label><Input id="contactEmail" type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="you@example.com" /></div>
+                <div className="space-y-1"><Label htmlFor="phone">Phone</Label><Input id="phone" type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="+1 (555) 123-4567" /></div>
+                <div className="space-y-1"><Label htmlFor="instagram">Instagram</Label><Input id="instagram" value={instagramName} onChange={(e) => setInstagramName(e.target.value.replace(/^@/, ""))} placeholder="yourhandle" /></div>
+                <div className="space-y-1"><Label htmlFor="website">Website</Label><Input id="website" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="yoursite.com" /></div>
               </div>
             </CardContent>
           </Card>
-
-          {/* Photos */}
-          <Card>
-            <CardContent className="p-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">
-                  Photos ({selectedIds.length}/{MAX_PHOTOS})
-                </h3>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={selectedIds.length >= MAX_PHOTOS}
-                >
-                  <Upload className="mr-2 h-4 w-4" />
-                  Upload Photos
-                </Button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  onChange={handleFileUpload}
-                />
-              </div>
-
-              {uploadedPhotos.length === 0 ? (
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full border-2 border-dashed border-muted-foreground/25 rounded-lg p-12 text-center hover:border-pink-500/50 transition-colors cursor-pointer"
-                >
-                  <ImageIcon className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-sm text-muted-foreground">
-                    Click to upload photos (up to 5)
-                  </p>
-                  <p className="text-xs text-muted-foreground/70 mt-1">
-                    First photo = front cover, next 4 = back grid
-                  </p>
-                </button>
-              ) : (
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                  {uploadedPhotos.map((photo) => {
-                    const selIdx = getSelectionIndex(photo.id);
-                    const isSelected = selIdx >= 0;
-                    return (
-                      <div
-                        key={photo.id}
-                        className={cn(
-                          "relative aspect-[3/4] rounded-lg overflow-hidden cursor-pointer border-2 transition-all",
-                          isSelected
-                            ? "border-pink-500 ring-2 ring-pink-500/30"
-                            : "border-transparent hover:border-muted-foreground/30"
-                        )}
-                        onClick={() => togglePhoto(photo.id)}
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={photo.dataUrl}
-                          alt="Uploaded"
-                          className="w-full h-full object-cover"
-                        />
-                        {isSelected && (
-                          <div className="absolute top-1 left-1 bg-pink-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                            {selIdx + 1}
-                          </div>
-                        )}
-                        {isSelected && selIdx < PHOTO_LABELS.length && (
-                          <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] text-center py-0.5">
-                            {PHOTO_LABELS[selIdx]}
-                          </div>
-                        )}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeUploadedPhoto(photo.id);
-                          }}
-                          className="absolute top-1 right-1 bg-red-500/80 hover:bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
-                    );
-                  })}
-                  {uploadedPhotos.length < MAX_PHOTOS && (
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="aspect-[3/4] rounded-lg border-2 border-dashed border-muted-foreground/25 flex items-center justify-center hover:border-pink-500/50 transition-colors cursor-pointer"
-                    >
-                      <Upload className="h-5 w-5 text-muted-foreground" />
-                    </button>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Hero reposition (if first photo selected) */}
-          {selectedIds.length > 0 && (
-            <Card>
-              <CardContent className="p-4 space-y-3">
-                <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                  <Move className="h-4 w-4" />
-                  Position Front Photo
-                </h3>
-                <div
-                  ref={heroRef}
-                  className="relative aspect-[5.5/8.5] rounded-lg overflow-hidden cursor-grab active:cursor-grabbing border border-muted-foreground/20"
-                  onPointerDown={handlePointerDown}
-                  onPointerMove={handlePointerMove}
-                  onPointerUp={handlePointerUp}
-                  onPointerCancel={handlePointerUp}
-                >
-                  {previewUrls[0]?.url && (
-                    <>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={previewUrls[0].url}
-                        alt="Hero preview"
-                        className="w-full h-full pointer-events-none select-none"
-                        style={{
-                          objectFit: "cover",
-                          objectPosition: `${heroPos.x}% ${heroPos.y}%`,
-                          transform: `scale(${heroZoom})`,
-                          transformOrigin: `${heroPos.x}% ${heroPos.y}%`,
-                        }}
-                        draggable={false}
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <span className="bg-black/50 text-white text-xs px-2 py-1 rounded opacity-60">
-                          Drag to reposition
-                        </span>
-                      </div>
-                    </>
-                  )}
-                </div>
-                <div className="flex items-center gap-3">
-                  <ZoomIn className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <input
-                    type="range"
-                    min={100}
-                    max={200}
-                    value={heroZoom * 100}
-                    onChange={(e) => setHeroZoom(Number(e.target.value) / 100)}
-                    className="w-full accent-pink-500"
-                  />
-                  <span className="text-xs text-muted-foreground w-10 text-right">
-                    {Math.round(heroZoom * 100)}%
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Download buttons (desktop) */}
-          <div className="hidden lg:flex flex-col gap-2">
-            <div className="flex gap-2">
-              <Button
-                onClick={() => startExport("jpeg")}
-                disabled={exportingJpeg || selectedIds.length === 0 || !firstName.trim()}
-                variant="outline"
-                className="flex-1"
-              >
-                {exportingJpeg ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <ImageDown className="mr-2 h-4 w-4" />
-                    Download JPEG
-                  </>
-                )}
-              </Button>
-              <Button
-                onClick={() => startExport("pdf")}
-                disabled={exporting || selectedIds.length === 0 || !firstName.trim()}
-                className="flex-1 bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
-              >
-                {exporting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Download className="mr-2 h-4 w-4" />
-                    Download PDF
-                  </>
-                )}
-              </Button>
-            </div>
-            <div className="rounded-xl bg-gradient-to-r from-violet-500/10 to-pink-500/10 border border-violet-500/20 p-4">
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <p className="font-semibold text-sm text-white flex items-center gap-1.5">
-                    <Printer className="h-4 w-4 text-violet-400" />
-                    Print &amp; Pick Up — Miami Swim Week
-                  </p>
-                  <p className="text-xs text-zinc-400 mt-0.5">Professional cardstock · Pick up at EXA HQ · $3/card</p>
-                </div>
-              </div>
-              <Button
-                onClick={startPrintOrder}
-                disabled={selectedIds.length === 0 || !firstName.trim()}
-                className="w-full bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600"
-              >
-                Order Printed Cards
-              </Button>
-            </div>
-          </div>
         </div>
 
         {/* ── RIGHT: Live Preview ── */}
-        <div className="w-full lg:w-[360px]">
-          <p className="text-xs text-muted-foreground mb-2 hidden lg:block">
+        <div>
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <FileText className="h-5 w-5" />
             Preview
-          </p>
-          <div className="grid grid-cols-2 lg:grid-cols-1 gap-4">
-            {/* Front Preview */}
+          </h2>
+
+          <div className="space-y-4">
+            {/* Front Preview — draggable */}
             <div>
               <p className="text-xs text-muted-foreground mb-2">Front</p>
               <Card className="overflow-hidden">
                 <CardContent className="p-0">
-                  <div className="bg-black aspect-[5.5/8.5] relative flex flex-col justify-between">
-                    {previewUrls[0]?.url && (
-                      <div className="absolute inset-0 overflow-hidden">
+                  <div
+                    ref={heroRef}
+                    className="bg-black aspect-[5.5/8.5] relative select-none touch-none overflow-hidden"
+                    style={{ cursor: previewUrls.length > 0 ? "grab" : undefined }}
+                    onPointerDown={handlePointerDown}
+                    onPointerMove={handlePointerMove}
+                    onPointerUp={handlePointerUp}
+                    onPointerCancel={handlePointerUp}
+                  >
+                    {previewUrls.length > 0 ? (
+                      <>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={previewUrls[0].url}
-                          alt="Front"
-                          className="w-full h-full object-cover"
+                          alt="Hero"
+                          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
                           style={{
                             objectPosition: `${heroPos.x}% ${heroPos.y}%`,
-                            transform: `scale(${heroZoom})`,
+                            transform: heroZoom > 1 ? `scale(${heroZoom})` : undefined,
                             transformOrigin: `${heroPos.x}% ${heroPos.y}%`,
                           }}
+                          draggable={false}
                         />
+                        {/* Reposition hint */}
+                        <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-black/50 backdrop-blur-sm rounded-full px-2 py-1 pointer-events-none">
+                          <Move className="h-3 w-3 text-white/80" />
+                          <span className="text-[10px] text-white/80">Drag to reposition</span>
+                        </div>
+                        {/* Name at bottom */}
+                        {firstName && (
+                          <div className="absolute bottom-0 left-0 right-0 px-3 pb-6 text-center pointer-events-none">
+                            <p className="text-white text-6xl sm:text-7xl font-black uppercase tracking-[0.03em] leading-tight">
+                              {firstName}
+                            </p>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <p className="text-gray-500 text-xs">Select a photo for the front</p>
                       </div>
                     )}
-                    <div className="relative z-10 flex flex-col justify-end h-full p-4">
-                      {firstName && (
-                        <p className="text-white font-bold text-2xl uppercase tracking-wider text-center drop-shadow-lg">
-                          {firstName}
-                        </p>
-                      )}
-                    </div>
                   </div>
                 </CardContent>
               </Card>
+              {/* Zoom slider */}
+              {previewUrls.length > 0 && (
+                <div className="flex items-center gap-2 mt-2">
+                  <ZoomIn className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  <input
+                    type="range"
+                    min={100}
+                    max={200}
+                    value={Math.round(heroZoom * 100)}
+                    onChange={(e) => setHeroZoom(Number(e.target.value) / 100)}
+                    className="w-full h-1.5 accent-pink-500 cursor-pointer"
+                  />
+                  <span className="text-[10px] text-muted-foreground tabular-nums w-8 text-right shrink-0">
+                    {Math.round(heroZoom * 100)}%
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Back Preview */}
@@ -950,57 +804,37 @@ export default function FreeCompCardPage() {
                       <p className="text-lg font-bold text-black uppercase tracking-[0.15em] text-center mb-2">
                         {fullName}
                       </p>
-
                       {measurements.length > 0 && (
                         <div className="flex flex-wrap justify-center gap-x-5 gap-y-1 mb-2">
                           {measurements.map((m) => (
                             <div key={m.label} className="text-center">
-                              <p className="text-[7px] text-gray-400 uppercase">
-                                {m.label}
-                              </p>
-                              <p className="text-[10px] font-bold text-gray-900">
-                                {m.value}
-                              </p>
+                              <p className="text-[6px] text-gray-400 uppercase tracking-wider">{m.label}</p>
+                              <p className="text-[9px] font-bold text-black">{m.value}</p>
                             </div>
                           ))}
                         </div>
                       )}
-
-                      {previewUrls.length > 1 && (
-                        <div className="grid grid-cols-2 gap-1">
+                      {previewUrls.length > 1 ? (
+                        <div className="grid grid-cols-2 gap-1 flex-1 min-h-0">
                           {previewUrls.slice(1, 5).map((p) => (
-                            <div
-                              key={p.id}
-                              className="aspect-[3/4] rounded-sm overflow-hidden"
-                            >
+                            <div key={p.id} className="relative aspect-[3/4] rounded overflow-hidden bg-gray-100">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                src={p.url}
-                                alt="Back"
-                                className="w-full h-full object-cover"
-                              />
+                              <img src={p.url} alt="Back" className="absolute inset-0 w-full h-full object-cover" />
                             </div>
                           ))}
+                        </div>
+                      ) : (
+                        <div className="aspect-[4/3] rounded bg-gray-100 flex items-center justify-center">
+                          <p className="text-gray-400 text-xs">Select photos</p>
                         </div>
                       )}
                     </div>
-
                     {/* Footer */}
-                    <div className="pt-1">
-                      {contactEmail && (
-                        <p className="text-[9px] text-black">{contactEmail}</p>
-                      )}
-                      {phoneNumber && (
-                        <p className="text-[9px] text-black">{phoneNumber}</p>
-                      )}
-                      {instagramName && (
-                        <p className="text-[9px] text-black">
-                          @{instagramName}
-                        </p>
-                      )}
-                      {website && (
-                        <p className="text-[9px] text-black">{website}</p>
-                      )}
+                    <div className="pt-3 mt-2">
+                      {contactEmail && <p className="text-[9px] text-black mb-0.5">{contactEmail}</p>}
+                      {phoneNumber && <p className="text-[9px] text-black mb-0.5">{phoneNumber}</p>}
+                      {instagramName && <p className="text-[9px] text-black mb-0.5">@{instagramName}</p>}
+                      {website && <p className="text-[9px] text-black">{website}</p>}
                     </div>
                   </div>
                 </CardContent>
@@ -1008,42 +842,13 @@ export default function FreeCompCardPage() {
             </div>
           </div>
 
-          {/* Download buttons (mobile) */}
-          <div className="mt-4 lg:hidden flex flex-col gap-2">
-            <Button
-              onClick={() => startExport("jpeg")}
-              disabled={exportingJpeg || selectedIds.length === 0 || !firstName.trim()}
-              variant="outline"
-              className="w-full"
-            >
-              {exportingJpeg ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <ImageDown className="mr-2 h-4 w-4" />
-                  Download JPEG
-                </>
-              )}
+          {/* Mobile buttons */}
+          <div className="mt-4 sm:hidden flex flex-col gap-2">
+            <Button onClick={() => startExport("jpeg")} disabled={exportingJpeg || selectedIds.length === 0 || !firstName.trim()} variant="outline" className="w-full">
+              {exportingJpeg ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Generating...</> : <><ImageDown className="mr-2 h-4 w-4" />Download JPEG</>}
             </Button>
-            <Button
-              onClick={() => startExport("pdf")}
-              disabled={exporting || selectedIds.length === 0 || !firstName.trim()}
-              className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
-            >
-              {exporting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Download className="mr-2 h-4 w-4" />
-                  Download PDF
-                </>
-              )}
+            <Button onClick={() => startExport("pdf")} disabled={exporting || selectedIds.length === 0 || !firstName.trim()} className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600">
+              {exporting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Generating...</> : <><Download className="mr-2 h-4 w-4" />Download PDF</>}
             </Button>
             <div className="rounded-xl bg-gradient-to-r from-violet-500/10 to-pink-500/10 border border-violet-500/20 p-4">
               <p className="font-semibold text-sm text-white flex items-center gap-1.5 mb-1">
@@ -1051,11 +856,7 @@ export default function FreeCompCardPage() {
                 Print &amp; Pick Up — Miami Swim Week
               </p>
               <p className="text-xs text-zinc-400 mb-3">Professional cardstock · Pick up at EXA HQ · $3/card</p>
-              <Button
-                onClick={startPrintOrder}
-                disabled={selectedIds.length === 0 || !firstName.trim()}
-                className="w-full bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600"
-              >
+              <Button onClick={startPrintOrder} disabled={selectedIds.length === 0 || !firstName.trim()} className="w-full bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600">
                 Order Printed Cards
               </Button>
             </div>
