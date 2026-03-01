@@ -156,29 +156,6 @@ export default async function TravelPage() {
               <h1 className="text-2xl md:text-5xl lg:text-6xl font-bold text-white mb-1 md:mb-3 drop-shadow-lg">
                 EXA Travel
               </h1>
-              <div className="flex flex-wrap gap-3 pointer-events-auto mt-4 md:mt-6">
-                <Button
-                  size="lg"
-                  className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white border-0"
-                  asChild
-                >
-                  <a href="#trips">
-                    Join the Series
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </a>
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-white/30 text-white hover:bg-white/10"
-                  asChild
-                >
-                  <a href="#how-it-works">
-                    How It Works
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </a>
-                </Button>
-              </div>
             </div>
           </div>
         </main>
