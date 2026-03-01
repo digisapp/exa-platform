@@ -728,17 +728,15 @@ export default function CompCardPage() {
             </>
           )}
         </Button>
-          {process.env.NEXT_PUBLIC_PRINT_PICKUP_ENABLED === "true" && (
-            <Button
-              onClick={() => setPrintDialogOpen(true)}
-              disabled={selectedIds.length === 0}
-              variant="outline"
-              className="border-violet-500/40 hover:border-violet-500/70 text-violet-300"
-            >
-              <Printer className="mr-2 h-4 w-4" />
-              Print &amp; Pick Up
-            </Button>
-          )}
+          <Button
+            onClick={() => setPrintDialogOpen(true)}
+            disabled={selectedIds.length === 0}
+            variant="outline"
+            className="border-violet-500/40 hover:border-violet-500/70 text-violet-300"
+          >
+            <Printer className="mr-2 h-4 w-4" />
+            Print &amp; Pick Up
+          </Button>
         </div>
       </div>
 
@@ -1143,37 +1141,33 @@ export default function CompCardPage() {
                 </>
               )}
             </Button>
-            {process.env.NEXT_PUBLIC_PRINT_PICKUP_ENABLED === "true" && (
-              <div className="rounded-xl bg-gradient-to-r from-violet-500/10 to-pink-500/10 border border-violet-500/20 p-4">
-                <p className="font-semibold text-sm text-white flex items-center gap-1.5 mb-1">
-                  <Printer className="h-4 w-4 text-violet-400" />
-                  Print &amp; Pick Up — Miami Swim Week
-                </p>
-                <p className="text-xs text-zinc-400 mb-3">Professional cardstock · Pick up at EXA HQ Miami · $3/card</p>
-                <Button
-                  onClick={() => setPrintDialogOpen(true)}
-                  disabled={selectedIds.length === 0}
-                  className="w-full bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600"
-                >
-                  Order Printed Cards
-                </Button>
-              </div>
-            )}
+            <div className="rounded-xl bg-gradient-to-r from-violet-500/10 to-pink-500/10 border border-violet-500/20 p-4">
+              <p className="font-semibold text-sm text-white flex items-center gap-1.5 mb-1">
+                <Printer className="h-4 w-4 text-violet-400" />
+                Print &amp; Pick Up — Miami Swim Week
+              </p>
+              <p className="text-xs text-zinc-400 mb-3">Professional cardstock · Pick up at EXA HQ Miami · $3/card</p>
+              <Button
+                onClick={() => setPrintDialogOpen(true)}
+                disabled={selectedIds.length === 0}
+                className="w-full bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600"
+              >
+                Order Printed Cards
+              </Button>
+            </div>
           </div>
         </div>
       </div>
 
-      {process.env.NEXT_PUBLIC_PRINT_PICKUP_ENABLED === "true" && (
-        <PrintOrderDialog
-          open={printDialogOpen}
-          onOpenChange={setPrintDialogOpen}
-          email={userEmail}
-          firstName={model?.first_name || ""}
-          lastName={model?.last_name || ""}
-          phone=""
-          onGeneratePdf={generatePdfBase64}
-        />
-      )}
+      <PrintOrderDialog
+        open={printDialogOpen}
+        onOpenChange={setPrintDialogOpen}
+        email={userEmail}
+        firstName={model?.first_name || ""}
+        lastName={model?.last_name || ""}
+        phone=""
+        onGeneratePdf={generatePdfBase64}
+      />
     </div>
   );
 }
