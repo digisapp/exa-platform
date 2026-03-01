@@ -134,8 +134,8 @@ export default async function TravelPage() {
         {/* ═══════════════════════════════════════════ */}
         {/* HERO */}
         {/* ═══════════════════════════════════════════ */}
-        <main className="container px-4 md:px-16 py-4 md:py-8">
-          <div className="relative rounded-2xl md:rounded-3xl overflow-hidden mb-4 md:mb-8">
+        <main className="container px-4 md:px-16 pt-4 md:pt-8">
+          <div className="relative rounded-2xl md:rounded-3xl overflow-hidden">
             <div className="aspect-video relative">
               <iframe
                 src="https://www.youtube.com/embed/LP5uPoIgGOA?autoplay=1&mute=1&loop=1&playlist=LP5uPoIgGOA&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1"
@@ -158,7 +158,7 @@ export default async function TravelPage() {
         {/* ═══════════════════════════════════════════ */}
         {/* UPCOMING TRIPS FROM DB */}
         {/* ═══════════════════════════════════════════ */}
-        <section id="trips" className="py-10 md:py-16 bg-muted/30">
+        <section id="trips" className="pt-6 pb-10 md:pt-8 md:pb-16 bg-muted/30">
           <div className="container px-6 md:px-16">
             {/* Open Trips */}
             {openTrips.length > 0 && (
@@ -219,13 +219,13 @@ export default async function TravelPage() {
                 {/* Description bio */}
                 <div className="text-center mb-10">
                   <h3 className="text-2xl font-semibold mb-4">
-                    Next destination coming soon
+                    Travel the World
                   </h3>
                   <p className="text-muted-foreground leading-relaxed mb-3">
-                    EXA Travel is our ongoing travel series — hotels, resorts, villas, and destinations around the world. Each trip brings together a small group of models to travel, create content, and experience it all together.
+                    EXA Travel is producing content and live streams at different hotels, resorts, villas, and destinations around the world. Each trip brings together a small group of models to travel, create content, and experience it all together.
                   </p>
                   <p className="text-muted-foreground leading-relaxed">
-                    From beach resorts in the Caribbean to luxury hotels in Bali, Mykonos, Dubai, and beyond — every trip is a new destination, a new experience, and a new set of content opportunities. You book your own flight. We handle everything else.
+                    From beach resorts in the Caribbean to luxury hotels in Bali, Mykonos, and beyond — every trip is a new destination, a new experience, and a new set of content opportunities. You book your own flight. We handle everything else.
                   </p>
                 </div>
 
