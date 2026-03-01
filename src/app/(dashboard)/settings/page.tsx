@@ -1335,6 +1335,17 @@ export default function ProfilePage() {
                   { value: "promo", label: "Promo/Event" },
                   { value: "luxury", label: "Luxury" },
                   { value: "lifestyle", label: "Lifestyle" },
+                  { value: "runway", label: "Runway" },
+                  { value: "lingerie", label: "Lingerie" },
+                  { value: "brand_ambassador", label: "Brand Ambassador" },
+                  { value: "influencer", label: "Influencer" },
+                  { value: "fit_model", label: "Fit Model" },
+                  { value: "print", label: "Print" },
+                  { value: "streamer", label: "Streamer" },
+                  { value: "ugc", label: "UGC" },
+                  { value: "music_video", label: "Music Video" },
+                  { value: "acting", label: "Acting" },
+                  { value: "cosplay", label: "Cosplay" },
                 ].map((focus) => {
                   const isSelected = (model.focus_tags || []).includes(focus.value);
                   const canSelect = (model.focus_tags || []).length < 3 || isSelected;
