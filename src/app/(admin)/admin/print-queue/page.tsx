@@ -231,9 +231,11 @@ export default function PrintQueuePage() {
                         {order.first_name}{" "}
                         {order.last_name || ""}
                       </p>
+                      <span className="text-xs font-semibold text-violet-400">
+                        {order.quantity} cards
+                      </span>
                       <span className="text-xs text-muted-foreground">
-                        {order.package_name} — $
-                        {(order.amount_cents / 100).toFixed(0)}
+                        ${(order.amount_cents / 100).toFixed(0)}
                       </span>
                     </div>
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
@@ -257,16 +259,31 @@ export default function PrintQueuePage() {
 
                   <div className="flex items-center gap-2 shrink-0">
                     {order.pdf_url && (
-                      <Button variant="outline" size="sm" asChild>
-                        <a
-                          href={order.pdf_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                      <>
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => {
+                            const win = window.open(order.pdf_url!, "_blank");
+                            if (win) {
+                              win.addEventListener("load", () => win.print());
+                            }
+                          }}
                         >
-                          <Download className="h-4 w-4 mr-1" />
-                          PDF
-                        </a>
-                      </Button>
+                          <Printer className="h-4 w-4 mr-1" />
+                          Print
+                        </Button>
+                        <Button variant="outline" size="sm" asChild>
+                          <a
+                            href={order.pdf_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Download className="h-4 w-4 mr-1" />
+                            PDF
+                          </a>
+                        </Button>
+                      </>
                     )}
                     <Select
                       value={order.status}

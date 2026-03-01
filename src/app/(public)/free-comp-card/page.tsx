@@ -697,12 +697,15 @@ export default function FreeCompCardPage() {
           {/* Measurements */}
           <Card className="mb-4">
             <CardContent className="p-4 space-y-4">
-              <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Measurements</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Measurements</h3>
+                <span className="text-xs text-muted-foreground">e.g. 5&apos;9&quot; · 34&quot; · 26&quot; · 36&quot;</span>
+              </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="space-y-1"><Label htmlFor="height">Height</Label><Input id="height" value={height} onChange={(e) => setHeight(e.target.value)} placeholder={`5'9"`} /></div>
-                <div className="space-y-1"><Label htmlFor="bust">Bust</Label><Input id="bust" value={bust} onChange={(e) => setBust(e.target.value)} placeholder={`34"`} /></div>
-                <div className="space-y-1"><Label htmlFor="waist">Waist</Label><Input id="waist" value={waist} onChange={(e) => setWaist(e.target.value)} placeholder={`24"`} /></div>
-                <div className="space-y-1"><Label htmlFor="hips">Hips</Label><Input id="hips" value={hips} onChange={(e) => setHips(e.target.value)} placeholder={`35"`} /></div>
+                <div className="space-y-1"><Label htmlFor="bust">Bust</Label><Input id="bust" inputMode="numeric" value={bust} onChange={(e) => setBust(e.target.value)} placeholder={`34"`} /></div>
+                <div className="space-y-1"><Label htmlFor="waist">Waist</Label><Input id="waist" inputMode="numeric" value={waist} onChange={(e) => setWaist(e.target.value)} placeholder={`26"`} /></div>
+                <div className="space-y-1"><Label htmlFor="hips">Hips</Label><Input id="hips" inputMode="numeric" value={hips} onChange={(e) => setHips(e.target.value)} placeholder={`36"`} /></div>
                 <div className="space-y-1"><Label htmlFor="eyeColor">Eye Color</Label><Input id="eyeColor" value={eyeColor} onChange={(e) => setEyeColor(e.target.value)} placeholder="Brown" /></div>
                 <div className="space-y-1"><Label htmlFor="hairColor">Hair Color</Label><Input id="hairColor" value={hairColor} onChange={(e) => setHairColor(e.target.value)} placeholder="Black" /></div>
                 <div className="space-y-1"><Label htmlFor="dressSize">Dress Size</Label><Input id="dressSize" value={dressSize} onChange={(e) => setDressSize(e.target.value)} placeholder="4" /></div>

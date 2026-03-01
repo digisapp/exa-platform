@@ -19,14 +19,6 @@ export async function POST(request: NextRequest) {
     const rateLimitResponse = await checkEndpointRateLimit(request, "general");
     if (rateLimitResponse) return rateLimitResponse;
 
-    // Feature toggle check
-    if (process.env.NEXT_PUBLIC_PRINT_PICKUP_ENABLED !== "true") {
-      return NextResponse.json(
-        { error: "Print pickup is not currently available" },
-        { status: 403 }
-      );
-    }
-
     const body = await request.json();
     const parsed = schema.safeParse(body);
     if (!parsed.success) {
