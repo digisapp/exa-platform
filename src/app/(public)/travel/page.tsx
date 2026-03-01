@@ -33,9 +33,9 @@ import {
 import { format } from "date-fns";
 
 export const metadata: Metadata = {
-  title: "EXA Travel | Travel Series",
+  title: "EXA Travel",
   description:
-    "EXA Travel is an ongoing travel series — a team of 7 traveling the world's best destinations, creating cinematic content. Join as a model and be part of the series.",
+    "EXA Travel is an ongoing travel series — 5 influencer models traveling the world's best destinations, creating cinematic content. Join as a model and be part of the series.",
   robots: { index: true, follow: true },
 };
 
@@ -151,15 +151,12 @@ export default async function TravelPage() {
             <div className="absolute bottom-0 left-0 right-0 p-4 md:p-10 pointer-events-none">
               <Badge className="mb-2 md:mb-4 bg-gradient-to-r from-blue-500 to-violet-500 text-white border-0 px-3 md:px-4 py-1 md:py-1.5 text-xs md:text-sm font-semibold">
                 <Plane className="h-3 w-3 md:h-4 md:w-4 mr-1.5 md:mr-2" />
-                EXA Travel · Travel Series
+                EXA Travel
               </Badge>
               <h1 className="text-2xl md:text-5xl lg:text-6xl font-bold text-white mb-1 md:mb-3 drop-shadow-lg">
-                We Travel. We Create. We Document.
+                EXA Travel
               </h1>
-              <p className="text-sm md:text-xl text-white/80 mb-4 md:mb-6 max-w-2xl">
-                A team of 7 — 5 influencer models, a photographer, and a director — traveling the world&apos;s most iconic destinations and turning every trip into cinematic content.
-              </p>
-              <div className="flex flex-wrap gap-3 pointer-events-auto">
+              <div className="flex flex-wrap gap-3 pointer-events-auto mt-4 md:mt-6">
                 <Button
                   size="lg"
                   className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white border-0"
@@ -195,11 +192,6 @@ export default async function TravelPage() {
               <h2 className="text-3xl md:text-4xl font-bold mb-3">
                 How EXA Travel Works
               </h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
-                Every month we pick a new destination and rent a beautiful villa.
-                4 trips per month, each running Thursday to Monday — 8 models
-                per trip, 5 days of content creation, networking, and adventure.
-              </p>
             </div>
 
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -237,7 +229,7 @@ export default async function TravelPage() {
                   </div>
                   <h3 className="font-semibold text-lg mb-2">Share a Luxury Villa</h3>
                   <p className="text-muted-foreground text-sm leading-relaxed">
-                    8 models per trip share a beautiful villa for 4 nights. Meals included, content spaces ready, everything handled.
+                    5 models per trip share a beautiful villa for 4 nights. Meals included, content spaces ready, everything handled.
                   </p>
                 </div>
               </div>
@@ -273,7 +265,7 @@ export default async function TravelPage() {
                   <div>
                     <h2 className="text-2xl font-bold">Now Booking</h2>
                     <p className="text-muted-foreground text-sm">
-                      Secure your spot — 8 models per trip, Thursday to Monday
+                      Secure your spot — 5 models per trip, Thursday to Monday
                     </p>
                   </div>
                 </div>
@@ -415,12 +407,8 @@ export default async function TravelPage() {
                 The Experience
               </Badge>
               <h2 className="text-3xl md:text-4xl font-bold mb-3">
-                Thursday to Monday
+                The Experience
               </h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
-                5 days and 4 nights of creating, connecting, and exploring a new
-                country with 7 other models
-              </p>
             </div>
 
             <div className="grid md:grid-cols-2 gap-4 max-w-4xl mx-auto">
@@ -431,7 +419,7 @@ export default async function TravelPage() {
                 <div>
                   <h3 className="font-semibold mb-1">Arrival &amp; Welcome</h3>
                   <p className="text-muted-foreground text-sm leading-relaxed">
-                    Fly in and arrive at the villa. Meet your 7 housemates, settle in, and kick off the trip with a welcome dinner together.
+                    Fly in and arrive at the villa. Meet your 4 housemates, settle in, and kick off the trip with a welcome dinner together.
                   </p>
                 </div>
               </div>
@@ -546,7 +534,7 @@ export default async function TravelPage() {
                     {
                       icon: Users,
                       title: "Community & Networking",
-                      desc: "Connect with 7 other models, share audiences, and build lasting friendships",
+                      desc: "Connect with 4 other models, share audiences, and build lasting friendships",
                     },
                     {
                       icon: Heart,
@@ -688,7 +676,7 @@ export default async function TravelPage() {
                   How many models per trip?
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">
-                  Each trip is limited to 8 models. This keeps the villa
+                  Each trip is limited to 5 models. This keeps the villa
                   comfortable, the group tight-knit, and ensures everyone gets
                   quality content. There are 4 trips per month at the same
                   destination, each running Thursday to Monday.
@@ -751,7 +739,7 @@ export default async function TravelPage() {
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">
                   Most models come solo — that&apos;s the whole point! You&apos;ll
-                  meet 7 other models and leave with new friends. We add you to
+                  meet 4 other models and leave with new friends. We add you to
                   the trip group chat before departure so you can connect with
                   your housemates beforehand.
                 </AccordionContent>
@@ -783,22 +771,11 @@ export default async function TravelPage() {
           <div className="container relative px-6 md:px-16">
             <div className="max-w-xl mx-auto rounded-2xl border border-pink-500/30 bg-gradient-to-br from-pink-500/5 to-violet-500/5 p-8 md:p-12 text-center">
               <Palmtree className="h-12 w-12 mx-auto text-pink-400 mb-5" />
-              <h2 className="text-2xl md:text-3xl font-bold mb-3">Ready to Join the Series?</h2>
-              <p className="text-muted-foreground mb-8">
-                New destinations every month. 8 models per trip. Real connections, stunning content, and a community that travels together.
-              </p>
+              <h2 className="text-2xl md:text-3xl font-bold mb-3">Ready to EXA Travel?</h2>
               {!user ? (
-                <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                  <Button className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600" asChild>
-                    <Link href="/apply">
-                      Apply as a Model
-                      <ArrowRight className="h-4 w-4 ml-2" />
-                    </Link>
-                  </Button>
-                  <Button variant="outline" asChild>
-                    <Link href="/signin?redirect=/travel">Sign In</Link>
-                  </Button>
-                </div>
+                <Button variant="outline" asChild>
+                  <Link href="/signin?redirect=/travel">Sign In</Link>
+                </Button>
               ) : (
                 <Button className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600" asChild>
                   <Link href="#trips">
