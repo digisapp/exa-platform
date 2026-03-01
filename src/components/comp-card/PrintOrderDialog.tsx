@@ -94,8 +94,11 @@ export default function PrintOrderDialog({
             <Printer className="h-5 w-5 text-pink-500" />
             Print & Pick Up
           </DialogTitle>
-          <DialogDescription>
-            Professional comp cards on premium cardstock. Pick up at EXA Models HQ in Miami.
+          <DialogDescription asChild>
+            <div className="space-y-1">
+              <p>Professional comp cards on premium cardstock. Be prepared for Miami Swim Week — order in advance and pick up at EXA Models HQ in Miami any day from <strong>May 24–28</strong>.</p>
+              <p>Questions? Email <a href="mailto:team@examodels.com" className="underline">team@examodels.com</a></p>
+            </div>
           </DialogDescription>
         </DialogHeader>
 
