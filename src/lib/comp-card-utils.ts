@@ -91,10 +91,35 @@ export function photoToBase64(url: string): Promise<string> {
 }
 
 /**
- * For uploaded files — loads via <img> + object URL to normalize EXIF.
+ * Returns true for any image type we accept, including HEIC/HEIF.
+ */
+export function isAcceptedImage(file: File): boolean {
+  if (file.type.startsWith("image/")) return true;
+  // HEIC/HEIF files sometimes report empty or non-standard MIME types
+  const ext = file.name.split(".").pop()?.toLowerCase();
+  return ext === "heic" || ext === "heif";
+}
+
+/**
+ * For uploaded files — handles HEIC conversion, loads via <img> + object URL to normalize EXIF.
  */
 export async function fileToBase64(file: File): Promise<string> {
-  const objectUrl = URL.createObjectURL(file);
+  let processedFile: File | Blob = file;
+
+  // Convert HEIC/HEIF to JPEG in the browser
+  const isHeic =
+    file.type === "image/heic" ||
+    file.type === "image/heif" ||
+    file.name.toLowerCase().endsWith(".heic") ||
+    file.name.toLowerCase().endsWith(".heif");
+
+  if (isHeic) {
+    const heic2any = (await import("heic2any")).default;
+    const converted = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.92 });
+    processedFile = Array.isArray(converted) ? converted[0] : converted;
+  }
+
+  const objectUrl = URL.createObjectURL(processedFile);
   return new Promise((resolve, reject) => {
     const img = new window.Image();
     img.onload = () => {

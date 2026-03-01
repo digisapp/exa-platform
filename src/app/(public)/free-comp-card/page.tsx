@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import {
   cropToPosition,
   fileToBase64,
+  isAcceptedImage,
 } from "@/lib/comp-card-utils";
 import EmailCaptureDialog from "@/components/comp-card/EmailCaptureDialog";
 import PrintOrderDialog from "@/components/comp-card/PrintOrderDialog";
@@ -170,8 +171,8 @@ export default function FreeCompCardPage() {
 
     for (let i = 0; i < filesToProcess; i++) {
       const file = files[i];
-      if (!file.type.startsWith("image/")) {
-        toast.error(`${file.name} is not an image`);
+      if (!isAcceptedImage(file)) {
+        toast.error(`${file.name} is not a supported image`);
         continue;
       }
       if (file.size > 20 * 1024 * 1024) {
@@ -697,7 +698,7 @@ export default function FreeCompCardPage() {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/*,.heic,.heif"
                   multiple
                   className="hidden"
                   onChange={handleFileUpload}

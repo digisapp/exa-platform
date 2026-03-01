@@ -27,6 +27,7 @@ import {
   toBase64,
   photoToBase64,
   fileToBase64,
+  isAcceptedImage,
 } from "@/lib/comp-card-utils";
 
 interface ModelData {
@@ -234,8 +235,8 @@ export default function CompCardPage() {
     for (let i = 0; i < filesToProcess; i++) {
       const file = files[i];
 
-      if (!file.type.startsWith("image/")) {
-        toast.error(`${file.name} is not an image`);
+      if (!isAcceptedImage(file)) {
+        toast.error(`${file.name} is not a supported image`);
         continue;
       }
 
@@ -885,7 +886,7 @@ export default function CompCardPage() {
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/jpeg,image/png,image/webp"
+            accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
             multiple
             onChange={handleFileUpload}
             className="hidden"

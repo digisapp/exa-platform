@@ -41,6 +41,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.25.0",
+    "heic2any": "^0.0.4",
     "isomorphic-dompurify": "^2.36.0",
     "livekit-client": "^2.17.0",
     "livekit-server-sdk": "^2.15.0",
