@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -24,6 +25,7 @@ import {
   cropToPosition,
   fileToBase64,
   isAcceptedImage,
+  toBase64,
 } from "@/lib/comp-card-utils";
 import PrintOrderDialog from "@/components/comp-card/PrintOrderDialog";
 
@@ -260,6 +262,7 @@ export default function FreeCompCardPage() {
     const { default: CompCardPDF } = await import(
       "@/components/comp-card/CompCardPDF"
     );
+    const frontLogoBase64 = await toBase64("/exa-models-logo-white.png");
     const contactInfo = {
       email: contactEmail || undefined,
       phone: phoneNumber || undefined,
@@ -267,7 +270,7 @@ export default function FreeCompCardPage() {
       website: website || undefined,
     };
     const blob = await pdf(
-      CompCardPDF({ model, photos: photoBase64, contactInfo })
+      CompCardPDF({ model, photos: photoBase64, frontLogoUrl: frontLogoBase64, contactInfo })
     ).toBlob();
     return new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
@@ -302,6 +305,7 @@ export default function FreeCompCardPage() {
         "@/components/comp-card/CompCardPDF"
       );
 
+      const frontLogoBase64 = await toBase64("/exa-models-logo-white.png");
       const contactInfo = {
         email: contactEmail || undefined,
         phone: phoneNumber || undefined,
@@ -310,7 +314,7 @@ export default function FreeCompCardPage() {
       };
 
       const blob = await pdf(
-        CompCardPDF({ model, photos: photoBase64, contactInfo })
+        CompCardPDF({ model, photos: photoBase64, frontLogoUrl: frontLogoBase64, contactInfo })
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
@@ -387,7 +391,13 @@ export default function FreeCompCardPage() {
         fCtx.drawImage(heroImg, drawX, drawY, drawW, drawH);
       }
 
-      // No logo on public version — just the name
+      // Logo at top center
+      const frontLogoImg = await loadImg("/exa-models-logo-white.png");
+      const logoW = 470;
+      const logoH = Math.round(logoW * (frontLogoImg.naturalHeight / frontLogoImg.naturalWidth));
+      fCtx.drawImage(frontLogoImg, (FW - logoW) / 2, 110, logoW, logoH);
+
+      // First name at bottom
       if (firstName) {
         fCtx.font = "bold 220px Helvetica, Arial, sans-serif";
         fCtx.fillStyle = "#ffffff";
@@ -751,6 +761,16 @@ export default function FreeCompCardPage() {
                           }}
                           draggable={false}
                         />
+                        {/* Logo at top center */}
+                        <div className="absolute top-0 left-0 right-0 flex justify-center pt-7 z-10 pointer-events-none">
+                          <Image
+                            src="/exa-models-logo-white.png"
+                            alt="EXA Models"
+                            width={120}
+                            height={40}
+                            className="h-8 w-auto"
+                          />
+                        </div>
                         {/* Reposition hint */}
                         <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-black/50 backdrop-blur-sm rounded-full px-2 py-1 pointer-events-none">
                           <Move className="h-3 w-3 text-white/80" />
