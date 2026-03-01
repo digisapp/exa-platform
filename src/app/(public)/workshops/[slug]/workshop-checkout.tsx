@@ -15,6 +15,7 @@ import {
   AlertCircle,
   CalendarClock,
   Video,
+  MapPin,
 } from "lucide-react";
 
 interface WorkshopCheckoutProps {
@@ -135,10 +136,10 @@ export function WorkshopCheckout({ workshop, coachingWorkshopId }: WorkshopCheck
   }
 
   return (
-    <Card className={isCoaching ? "border-violet-500/30" : "border-pink-500/30"}>
-      <CardHeader>
+    <Card className={isCoaching ? "border-violet-500/50" : "border-pink-500/50"}>
+      <CardHeader className={`rounded-t-xl pb-3 ${isCoaching ? "bg-violet-500/5" : "bg-pink-500/5"}`}>
         <CardTitle className="flex items-center justify-between">
-          <span>{isCoaching ? "Enroll" : "Register"}</span>
+          <span className={isCoaching ? "text-violet-400" : "text-pink-500"}>{isCoaching ? "Enroll" : "Register"}</span>
           {!isCoaching && workshop.spotsLeft !== null && (
             <span className="text-sm font-normal text-muted-foreground flex items-center gap-1">
               <Users className="h-4 w-4" />
@@ -149,31 +150,55 @@ export function WorkshopCheckout({ workshop, coachingWorkshopId }: WorkshopCheck
       </CardHeader>
       <CardContent className="space-y-4">
 
-        {/* Product selector tabs (only when coaching option exists) */}
+        {/* Product selector (only when coaching option exists) */}
         {showCoachingTab && (
-          <div className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-muted/50 mb-2">
+          <div className="grid grid-cols-2 gap-2 mb-1">
+            {/* In-Person Workshop option */}
             <button
               type="button"
               onClick={() => handleProductChange("workshop")}
-              className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${
+              className={`relative p-3 rounded-xl border-2 text-left transition-all ${
                 !isCoaching
-                  ? "bg-background shadow text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "border-pink-500 bg-pink-500/10 shadow-sm shadow-pink-500/10"
+                  : "border-border hover:border-pink-500/40 bg-transparent"
               }`}
             >
-              In-Person Workshop
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <MapPin className="h-3.5 w-3.5 text-pink-500 flex-shrink-0" />
+                <span className="text-[10px] font-bold uppercase tracking-widest text-pink-500">In Person</span>
+              </div>
+              <p className="text-sm font-bold leading-tight">Workshop</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">1-day live event</p>
+              <p className="text-base font-bold text-pink-500 mt-1.5">
+                ${(workshop.priceCents / 100).toFixed(0)}
+              </p>
             </button>
+
+            {/* 3-Month Coaching option */}
             <button
               type="button"
               onClick={() => handleProductChange("coaching")}
-              className={`py-2 px-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-1.5 ${
+              className={`relative p-3 rounded-xl border-2 text-left transition-all ${
                 isCoaching
-                  ? "bg-background shadow text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "border-violet-500 bg-violet-500/10 shadow-sm shadow-violet-500/10"
+                  : "border-border hover:border-violet-500/40 bg-transparent"
               }`}
             >
-              <Video className="h-3.5 w-3.5" />
-              3-Month Coaching
+              {/* Best Value badge */}
+              <div className="absolute -top-2.5 right-2">
+                <span className="inline-block bg-violet-500 text-white text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full">
+                  Best Value
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 mb-1.5 mt-0.5">
+                <Video className="h-3.5 w-3.5 text-violet-400 flex-shrink-0" />
+                <span className="text-[10px] font-bold uppercase tracking-widest text-violet-400">Virtual + Live</span>
+              </div>
+              <p className="text-sm font-bold leading-tight">3-Mo Coaching</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">Workshop included</p>
+              <p className="text-base font-bold text-violet-400 mt-1.5">
+                $175<span className="text-xs font-normal text-muted-foreground">/mo</span>
+              </p>
             </button>
           </div>
         )}
