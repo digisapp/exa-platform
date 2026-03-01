@@ -17,7 +17,9 @@ import {
   Move,
   ZoomIn,
   ImageDown,
+  Printer,
 } from "lucide-react";
+import PrintOrderDialog from "@/components/comp-card/PrintOrderDialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
@@ -74,6 +76,8 @@ export default function CompCardPage() {
   const [exporting, setExporting] = useState(false);
   const [exportingJpeg, setExportingJpeg] = useState(false);
   const [qrCodePreview, setQrCodePreview] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState("");
+  const [printDialogOpen, setPrintDialogOpen] = useState(false);
 
   // Hero photo repositioning (object-position %) and zoom
   const [heroPos, setHeroPos] = useState({ x: 50, y: 50 });
@@ -144,6 +148,7 @@ export default function CompCardPage() {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) return;
+    setUserEmail(user.email || "");
 
     const { data: modelData } = await supabase
       .from("models")
@@ -333,6 +338,41 @@ export default function CompCardPage() {
     } finally {
       setExporting(false);
     }
+  };
+
+  const generatePdfBase64 = async (): Promise<string> => {
+    if (!model || selectedIds.length === 0) throw new Error("No photos selected");
+    const photoBase64: string[] = [];
+    for (let idx = 0; idx < selectedIds.length; idx++) {
+      const id = selectedIds[idx];
+      let b64: string;
+      if (id.startsWith(UPLOAD_PREFIX)) {
+        const uploaded = uploadedPhotos.find((p) => p.id === id);
+        b64 = uploaded?.dataUrl || "";
+      } else {
+        const photo = photos.find((p) => p.id === id);
+        b64 = await photoToBase64(photo?.photo_url || photo?.url || "");
+      }
+      if (idx === 0 && b64) b64 = await cropToPosition(b64, heroPos.x, heroPos.y, heroZoom);
+      if (b64) photoBase64.push(b64);
+    }
+    const QRCode = (await import("qrcode")).default;
+    const profileUrl = `https://www.examodels.com/${model.username || ""}`;
+    const [frontLogoBase64, qrCodeBase64] = await Promise.all([
+      toBase64("/exa-models-logo-white.png"),
+      QRCode.toDataURL(profileUrl, { width: 200, margin: 1 }),
+    ]);
+    const { pdf } = await import("@react-pdf/renderer");
+    const { default: CompCardPDF } = await import("@/components/comp-card/CompCardPDF");
+    const blob = await pdf(
+      CompCardPDF({ model, photos: photoBase64, frontLogoUrl: frontLogoBase64, qrCodeUrl: qrCodeBase64 })
+    ).toBlob();
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve((reader.result as string).split(",")[1]);
+      reader.onerror = () => reject(new Error("Failed to read PDF"));
+      reader.readAsDataURL(blob);
+    });
   };
 
   const handleExportJPEG = async () => {
@@ -681,6 +721,17 @@ export default function CompCardPage() {
             </>
           )}
         </Button>
+          {process.env.NEXT_PUBLIC_PRINT_PICKUP_ENABLED === "true" && (
+            <Button
+              onClick={() => setPrintDialogOpen(true)}
+              disabled={selectedIds.length === 0}
+              variant="outline"
+              className="border-violet-500/40 hover:border-violet-500/70 text-violet-300"
+            >
+              <Printer className="mr-2 h-4 w-4" />
+              Print &amp; Pick Up
+            </Button>
+          )}
         </div>
       </div>
 
@@ -1085,9 +1136,37 @@ export default function CompCardPage() {
                 </>
               )}
             </Button>
+            {process.env.NEXT_PUBLIC_PRINT_PICKUP_ENABLED === "true" && (
+              <div className="rounded-xl bg-gradient-to-r from-violet-500/10 to-pink-500/10 border border-violet-500/20 p-4">
+                <p className="font-semibold text-sm text-white flex items-center gap-1.5 mb-1">
+                  <Printer className="h-4 w-4 text-violet-400" />
+                  Print &amp; Pick Up — Miami Swim Week
+                </p>
+                <p className="text-xs text-zinc-400 mb-3">Professional cardstock · Pick up at EXA HQ Miami · $3/card</p>
+                <Button
+                  onClick={() => setPrintDialogOpen(true)}
+                  disabled={selectedIds.length === 0}
+                  className="w-full bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600"
+                >
+                  Order Printed Cards
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      {process.env.NEXT_PUBLIC_PRINT_PICKUP_ENABLED === "true" && (
+        <PrintOrderDialog
+          open={printDialogOpen}
+          onOpenChange={setPrintDialogOpen}
+          email={userEmail}
+          firstName={model?.first_name || ""}
+          lastName={model?.last_name || ""}
+          phone=""
+          onGeneratePdf={generatePdfBase64}
+        />
+      )}
     </div>
   );
 }

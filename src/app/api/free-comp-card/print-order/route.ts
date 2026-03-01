@@ -1,12 +1,12 @@
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { stripe } from "@/lib/stripe";
-import { PRINT_PACKAGES } from "@/lib/stripe-config";
+import { PRINT_PRICE_PER_CARD, PRINT_MIN_QUANTITY } from "@/lib/stripe-config";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 
 const schema = z.object({
-  packageId: z.string(),
+  quantity: z.number().int().min(PRINT_MIN_QUANTITY).max(500),
   email: z.string().email().max(254),
   firstName: z.string().min(1).max(100),
   lastName: z.string().max(100).optional(),
@@ -36,14 +36,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate package
-    const pkg = PRINT_PACKAGES.find((p) => p.id === parsed.data.packageId);
-    if (!pkg) {
-      return NextResponse.json(
-        { error: "Invalid package" },
-        { status: 400 }
-      );
-    }
+    const { quantity } = parsed.data;
+    const totalCents = quantity * PRINT_PRICE_PER_CARD;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const supabase: any = createServiceRoleClient();
@@ -83,9 +77,9 @@ export async function POST(request: NextRequest) {
         phone: parsed.data.phone?.trim() || null,
         pdf_url: publicUrl,
         storage_path: storagePath,
-        quantity: pkg.quantity,
-        package_name: pkg.name,
-        amount_cents: pkg.price,
+        quantity,
+        package_name: `${quantity} Cards`,
+        amount_cents: totalCents,
         status: "pending_payment",
       });
 
@@ -108,10 +102,10 @@ export async function POST(request: NextRequest) {
           price_data: {
             currency: "usd",
             product_data: {
-              name: `Comp Card Print - ${pkg.name}`,
-              description: `${pkg.quantity} professional comp cards on premium cardstock, ready for pickup`,
+              name: `Comp Card Print — ${quantity} Cards`,
+              description: `${quantity} professional comp cards on premium cardstock, ready for pickup at EXA Models HQ Miami`,
             },
-            unit_amount: pkg.price,
+            unit_amount: totalCents,
           },
           quantity: 1,
         },
@@ -123,8 +117,8 @@ export async function POST(request: NextRequest) {
       metadata: {
         type: "comp_card_print",
         order_id: orderId,
-        quantity: pkg.quantity.toString(),
-        package_name: pkg.name,
+        quantity: quantity.toString(),
+        package_name: `${quantity} Cards`,
       },
     });
 

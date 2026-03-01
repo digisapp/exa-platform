@@ -11,10 +11,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Printer, Check } from "lucide-react";
+import { Loader2, Printer, Minus, Plus } from "lucide-react";
 import { toast } from "sonner";
-import { PRINT_PACKAGES } from "@/lib/stripe-config";
+import { PRINT_PRICE_PER_CARD, PRINT_MIN_QUANTITY } from "@/lib/stripe-config";
 
 interface PrintOrderDialogProps {
   open: boolean;
@@ -35,17 +34,20 @@ export default function PrintOrderDialog({
   phone: initialPhone,
   onGeneratePdf,
 }: PrintOrderDialogProps) {
-  const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
+  const [quantity, setQuantity] = useState(PRINT_MIN_QUANTITY);
   const [email, setEmail] = useState(initialEmail);
   const [phone, setPhone] = useState(initialPhone);
   const [submitting, setSubmitting] = useState(false);
   const [step, setStep] = useState<"select" | "details">("select");
 
+  const totalCents = quantity * PRINT_PRICE_PER_CARD;
+  const totalDisplay = `$${(totalCents / 100).toFixed(2)}`;
+
+  const adjust = (delta: number) => {
+    setQuantity((q) => Math.max(PRINT_MIN_QUANTITY, q + delta));
+  };
+
   async function handleSubmit() {
-    if (!selectedPackage) {
-      toast.error("Please select a package");
-      return;
-    }
     if (!email || !email.includes("@")) {
       toast.error("Please enter a valid email");
       return;
@@ -60,7 +62,7 @@ export default function PrintOrderDialog({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          packageId: selectedPackage,
+          quantity,
           email: email.trim(),
           firstName,
           lastName: lastName || undefined,
@@ -86,62 +88,78 @@ export default function PrintOrderDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Printer className="h-5 w-5 text-pink-500" />
             Print & Pick Up
           </DialogTitle>
           <DialogDescription>
-            Get professional comp cards printed on premium cardstock and pick
-            them up at EXA Studio.
+            Professional comp cards on premium cardstock. Pick up at EXA Models HQ in Miami.
           </DialogDescription>
         </DialogHeader>
 
         {step === "select" && (
-          <div className="space-y-4">
-            <div className="grid gap-3">
-              {PRINT_PACKAGES.map((pkg) => (
-                <Card
-                  key={pkg.id}
-                  className={`cursor-pointer transition-all ${
-                    selectedPackage === pkg.id
-                      ? "border-pink-500 ring-2 ring-pink-500/30"
-                      : "hover:border-muted-foreground/30"
-                  }`}
-                  onClick={() => setSelectedPackage(pkg.id)}
+          <div className="space-y-6">
+            {/* Quantity selector */}
+            <div className="space-y-2">
+              <Label>How many cards?</Label>
+              <div className="flex items-center gap-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => adjust(-10)}
+                  disabled={quantity <= PRINT_MIN_QUANTITY}
                 >
-                  <CardContent className="p-4 flex items-center justify-between">
-                    <div>
-                      <p className="font-semibold">{pkg.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {pkg.quantity} printed comp cards on premium cardstock
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-lg font-bold">
-                        {pkg.priceDisplay}
-                      </span>
-                      {selectedPackage === pkg.id && (
-                        <Check className="h-5 w-5 text-pink-500" />
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                  <Minus className="h-4 w-4" />
+                </Button>
+                <Input
+                  type="number"
+                  min={PRINT_MIN_QUANTITY}
+                  step={1}
+                  value={quantity}
+                  onChange={(e) => {
+                    const v = parseInt(e.target.value);
+                    if (!isNaN(v)) setQuantity(Math.max(PRINT_MIN_QUANTITY, v));
+                  }}
+                  className="text-center text-lg font-bold w-24"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => adjust(10)}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">Minimum {PRINT_MIN_QUANTITY} cards</p>
             </div>
+
+            {/* Price summary */}
+            <div className="rounded-lg bg-muted/50 p-4 flex items-center justify-between">
+              <div className="text-sm text-muted-foreground">
+                {quantity} cards × $3.00 each
+              </div>
+              <div className="text-xl font-bold">{totalDisplay}</div>
+            </div>
+
             <Button
               className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
-              disabled={!selectedPackage}
               onClick={() => setStep("details")}
             >
-              Continue
+              Continue — {totalDisplay}
             </Button>
           </div>
         )}
 
         {step === "details" && (
           <div className="space-y-4">
+            <div className="rounded-lg bg-muted/50 p-3 flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">{quantity} cards</span>
+              <span className="font-bold">{totalDisplay}</span>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="print-email">Email *</Label>
               <Input
@@ -155,9 +173,7 @@ export default function PrintOrderDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="print-phone">
-                Phone (for pickup notification)
-              </Label>
+              <Label htmlFor="print-phone">Phone (for pickup notification)</Label>
               <Input
                 id="print-phone"
                 type="tel"
@@ -168,7 +184,7 @@ export default function PrintOrderDialog({
               />
             </div>
             <p className="text-sm text-muted-foreground">
-              Pickup at: <strong>EXA Studio, Miami</strong>
+              Pickup at: <strong>EXA Models HQ, Miami</strong>
             </p>
             <div className="flex gap-2">
               <Button
@@ -191,7 +207,7 @@ export default function PrintOrderDialog({
                 ) : (
                   <>
                     <Printer className="mr-2 h-4 w-4" />
-                    Pay & Order Print
+                    Pay {totalDisplay} & Order
                   </>
                 )}
               </Button>

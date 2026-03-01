@@ -536,12 +536,22 @@ export default function FreeCompCardPage() {
   return (
     <div className="container max-w-6xl mx-auto px-4 py-8">
       {/* Header */}
-      <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold mb-2">Free Comp Card Maker</h1>
-        <p className="text-muted-foreground">
-          Create a professional model comp card in minutes. Upload your photos,
-          enter your details, and download a print-ready PDF or JPEG.
+      <div className="mb-10 text-center">
+        <div className="inline-flex items-center gap-2 bg-pink-500/10 border border-pink-500/20 rounded-full px-4 py-1.5 mb-4">
+          <Sparkles className="h-3.5 w-3.5 text-pink-400" />
+          <span className="text-xs font-semibold text-pink-400 uppercase tracking-wider">100% Free — No Account Required</span>
+        </div>
+        <h1 className="text-4xl md:text-5xl font-bold mb-3 bg-gradient-to-r from-white to-zinc-400 bg-clip-text text-transparent">
+          Free Comp Card Maker
+        </h1>
+        <p className="text-muted-foreground text-lg max-w-xl mx-auto">
+          Build a print-ready comp card in minutes. Upload your photos, fill in your stats, and download a professional PDF or JPEG — free.
         </p>
+        <div className="flex items-center justify-center gap-6 mt-5 text-sm text-zinc-400">
+          <div className="flex items-center gap-1.5"><Download className="h-4 w-4 text-pink-400" /> PDF &amp; JPEG download</div>
+          <div className="flex items-center gap-1.5"><Printer className="h-4 w-4 text-violet-400" /> Print &amp; pick up in Miami</div>
+          <div className="flex items-center gap-1.5"><Sparkles className="h-4 w-4 text-amber-400" /> Used by 5,000+ models</div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-8">
@@ -864,21 +874,30 @@ export default function FreeCompCardPage() {
               </Button>
             </div>
             {process.env.NEXT_PUBLIC_PRINT_PICKUP_ENABLED === "true" && (
-              <Button
-                onClick={startPrintOrder}
-                disabled={selectedIds.length === 0 || !firstName.trim()}
-                variant="outline"
-                className="w-full border-pink-500/30 hover:border-pink-500/50"
-              >
-                <Printer className="mr-2 h-4 w-4" />
-                Print & Pick Up — From $29
-              </Button>
+              <div className="rounded-xl bg-gradient-to-r from-violet-500/10 to-pink-500/10 border border-violet-500/20 p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <p className="font-semibold text-sm text-white flex items-center gap-1.5">
+                      <Printer className="h-4 w-4 text-violet-400" />
+                      Print &amp; Pick Up — Miami Swim Week
+                    </p>
+                    <p className="text-xs text-zinc-400 mt-0.5">Professional cardstock · Pick up at EXA HQ · $3/card</p>
+                  </div>
+                </div>
+                <Button
+                  onClick={startPrintOrder}
+                  disabled={selectedIds.length === 0 || !firstName.trim()}
+                  className="w-full bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600"
+                >
+                  Order Printed Cards
+                </Button>
+              </div>
             )}
           </div>
         </div>
 
         {/* ── RIGHT: Live Preview ── */}
-        <div className="w-full lg:w-[320px]">
+        <div className="w-full lg:w-[360px]">
           <p className="text-xs text-muted-foreground mb-2 hidden lg:block">
             Preview
           </p>
@@ -1022,35 +1041,44 @@ export default function FreeCompCardPage() {
               )}
             </Button>
             {process.env.NEXT_PUBLIC_PRINT_PICKUP_ENABLED === "true" && (
-              <Button
-                onClick={startPrintOrder}
-                disabled={selectedIds.length === 0 || !firstName.trim()}
-                variant="outline"
-                className="w-full border-pink-500/30 hover:border-pink-500/50"
-              >
-                <Printer className="mr-2 h-4 w-4" />
-                Print & Pick Up — From $29
-              </Button>
+              <div className="rounded-xl bg-gradient-to-r from-violet-500/10 to-pink-500/10 border border-violet-500/20 p-4">
+                <p className="font-semibold text-sm text-white flex items-center gap-1.5 mb-1">
+                  <Printer className="h-4 w-4 text-violet-400" />
+                  Print &amp; Pick Up — Miami Swim Week
+                </p>
+                <p className="text-xs text-zinc-400 mb-3">Professional cardstock · Pick up at EXA HQ · $3/card</p>
+                <Button
+                  onClick={startPrintOrder}
+                  disabled={selectedIds.length === 0 || !firstName.trim()}
+                  className="w-full bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600"
+                >
+                  Order Printed Cards
+                </Button>
+              </div>
             )}
           </div>
         </div>
       </div>
 
       {/* Join EXA CTA */}
-      <div className="mt-12 text-center">
-        <Card className="inline-block max-w-lg mx-auto">
-          <CardContent className="p-6">
-            <Sparkles className="h-8 w-8 text-pink-500 mx-auto mb-3" />
-            <h3 className="text-lg font-bold mb-2">Want more visibility?</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Join EXA Models to get discovered by brands, apply for runway
-              shows, travel trips, and campaigns.
-            </p>
-            <Button asChild className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600">
+      <div className="mt-12">
+        <div className="rounded-2xl bg-gradient-to-r from-pink-500/10 via-violet-500/10 to-pink-500/10 border border-pink-500/20 p-8 text-center max-w-2xl mx-auto">
+          <div className="inline-flex items-center gap-2 bg-pink-500/15 border border-pink-500/25 rounded-full px-3 py-1 mb-4">
+            <span className="text-xs font-semibold text-pink-400 uppercase tracking-wider">Miami Swim Week 2026</span>
+          </div>
+          <h3 className="text-2xl font-bold mb-2">Ready to walk the runway?</h3>
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+            Join EXA Models to apply for Miami Swim Week 2026, get discovered by brands, and access runway shows, travel trips, and campaigns worldwide.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button asChild className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 px-8">
               <Link href="/signup">Join EXA Models — Free</Link>
             </Button>
-          </CardContent>
-        </Card>
+            <Button asChild variant="outline" className="border-pink-500/30 hover:border-pink-500/50">
+              <Link href="/swimweek">View Miami Swim Week 2026</Link>
+            </Button>
+          </div>
+        </div>
       </div>
 
       {/* Email capture dialog */}
