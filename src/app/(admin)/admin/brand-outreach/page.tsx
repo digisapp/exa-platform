@@ -375,7 +375,7 @@ EXA Models`,
   };
 
   const travelEmailTemplate = {
-    subject: "Influencer Partnership – EXA Travel",
+    subject: "Social Media Influencer Partnership",
     body: `Hi {{contact_name}},
 
 I'm Nathan, COO of EXA Models. We're launching a new editorial travel series called EXA Travel, partnering with one boutique property per destination.
