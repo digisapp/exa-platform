@@ -234,12 +234,20 @@ export function PhotoUploader({
     }
   };
 
-  // Handle file selection (validates and optionally shows cropper)
+  // Handle file selection (validates, converts HEIC, and optionally shows cropper)
   const handleFileSelect = async (file: File) => {
+    // Detect HEIC/HEIF by MIME type or extension
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    const isHeic =
+      file.type === "image/heic" ||
+      file.type === "image/heif" ||
+      ext === "heic" ||
+      ext === "heif";
+
     // Validate file type
     const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-    if (!allowedTypes.includes(file.type)) {
-      const error = "Please select a valid image (JPEG, PNG, WebP, or GIF)";
+    if (!isHeic && !allowedTypes.includes(file.type)) {
+      const error = "Please select a valid image (JPEG, PNG, WebP, GIF, or HEIC)";
       onError?.(error);
       toast.error(error);
       return;
@@ -253,16 +261,31 @@ export function PhotoUploader({
       return;
     }
 
+    // Convert HEIC/HEIF to JPEG before uploading
+    let processedFile: File = file;
+    if (isHeic) {
+      try {
+        toast.info("Converting HEIC photo...");
+        const heic2any = (await import("heic2any")).default;
+        const converted = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.92 });
+        const blob = Array.isArray(converted) ? converted[0] : converted;
+        processedFile = new File([blob], file.name.replace(/\.heic$/i, ".jpg").replace(/\.heif$/i, ".jpg"), { type: "image/jpeg" });
+      } catch {
+        toast.error("Failed to convert HEIC photo. Try exporting as JPEG first.");
+        return;
+      }
+    }
+
     // For avatar uploads, show the cropper
     if (type === "avatar") {
-      const imageUrl = URL.createObjectURL(file);
+      const imageUrl = URL.createObjectURL(processedFile);
       setImageToCrop(imageUrl);
       setCropperOpen(true);
       return;
     }
 
     // For other types, upload directly
-    await uploadFile(file);
+    await uploadFile(processedFile);
   };
 
   // Handle cropped image from the cropper
@@ -330,7 +353,7 @@ export function PhotoUploader({
         <input
           ref={inputRef}
           type="file"
-          accept="image/*"
+          accept="image/*,.heic,.heif"
           onChange={handleInputChange}
           className="hidden"
           disabled={uploading}
@@ -358,7 +381,7 @@ export function PhotoUploader({
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
+        accept="image/*,.heic,.heif"
         onChange={handleInputChange}
         className="hidden"
         disabled={uploading}
@@ -417,7 +440,7 @@ export function PhotoUploader({
                 Drag and drop a photo here, or click to browse
               </p>
               <p className="text-xs text-muted-foreground">
-                JPEG, PNG, WebP, or GIF (max 50MB)
+                JPEG, PNG, WebP, GIF, or HEIC (max 50MB)
               </p>
             </div>
             <Button type="button" variant="outline" disabled={uploading}>

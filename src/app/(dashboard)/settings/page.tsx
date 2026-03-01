@@ -138,13 +138,15 @@ export default function ProfilePage() {
     }, 400);
   };
 
-  const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    const isHeic = file.type === "image/heic" || file.type === "image/heif" || ext === "heic" || ext === "heif";
     const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-    if (!allowedTypes.includes(file.type)) {
-      toast.error("Please select a valid image (JPEG, PNG, or WebP)");
+    if (!isHeic && !allowedTypes.includes(file.type)) {
+      toast.error("Please select a valid image (JPEG, PNG, WebP, or HEIC)");
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
@@ -152,8 +154,21 @@ export default function ProfilePage() {
       return;
     }
 
+    let processedFile: File | Blob = file;
+    if (isHeic) {
+      try {
+        toast.info("Converting HEIC photo...");
+        const heic2any = (await import("heic2any")).default;
+        const converted = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.92 });
+        processedFile = Array.isArray(converted) ? converted[0] : converted;
+      } catch {
+        toast.error("Failed to convert HEIC photo. Try exporting as JPEG first.");
+        return;
+      }
+    }
+
     // Open cropper instead of uploading directly
-    const imageUrl = URL.createObjectURL(file);
+    const imageUrl = URL.createObjectURL(processedFile);
     setImageToCrop(imageUrl);
     setCropperOpen(true);
   };
@@ -1189,7 +1204,7 @@ export default function ProfilePage() {
             <input
               ref={avatarInputRef}
               type="file"
-              accept="image/jpeg,image/png,image/webp"
+              accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
               onChange={handleAvatarSelect}
               className="hidden"
             />
