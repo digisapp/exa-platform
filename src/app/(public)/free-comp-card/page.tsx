@@ -880,26 +880,24 @@ export default function FreeCompCardPage() {
                 )}
               </Button>
             </div>
-            {process.env.NEXT_PUBLIC_PRINT_PICKUP_ENABLED === "true" && (
-              <div className="rounded-xl bg-gradient-to-r from-violet-500/10 to-pink-500/10 border border-violet-500/20 p-4">
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <p className="font-semibold text-sm text-white flex items-center gap-1.5">
-                      <Printer className="h-4 w-4 text-violet-400" />
-                      Print &amp; Pick Up — Miami Swim Week
-                    </p>
-                    <p className="text-xs text-zinc-400 mt-0.5">Professional cardstock · Pick up at EXA HQ · $3/card</p>
-                  </div>
+            <div className="rounded-xl bg-gradient-to-r from-violet-500/10 to-pink-500/10 border border-violet-500/20 p-4">
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <p className="font-semibold text-sm text-white flex items-center gap-1.5">
+                    <Printer className="h-4 w-4 text-violet-400" />
+                    Print &amp; Pick Up — Miami Swim Week
+                  </p>
+                  <p className="text-xs text-zinc-400 mt-0.5">Professional cardstock · Pick up at EXA HQ · $3/card</p>
                 </div>
-                <Button
-                  onClick={startPrintOrder}
-                  disabled={selectedIds.length === 0 || !firstName.trim()}
-                  className="w-full bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600"
-                >
-                  Order Printed Cards
-                </Button>
               </div>
-            )}
+              <Button
+                onClick={startPrintOrder}
+                disabled={selectedIds.length === 0 || !firstName.trim()}
+                className="w-full bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600"
+              >
+                Order Printed Cards
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -1047,22 +1045,20 @@ export default function FreeCompCardPage() {
                 </>
               )}
             </Button>
-            {process.env.NEXT_PUBLIC_PRINT_PICKUP_ENABLED === "true" && (
-              <div className="rounded-xl bg-gradient-to-r from-violet-500/10 to-pink-500/10 border border-violet-500/20 p-4">
-                <p className="font-semibold text-sm text-white flex items-center gap-1.5 mb-1">
-                  <Printer className="h-4 w-4 text-violet-400" />
-                  Print &amp; Pick Up — Miami Swim Week
-                </p>
-                <p className="text-xs text-zinc-400 mb-3">Professional cardstock · Pick up at EXA HQ · $3/card</p>
-                <Button
-                  onClick={startPrintOrder}
-                  disabled={selectedIds.length === 0 || !firstName.trim()}
-                  className="w-full bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600"
-                >
-                  Order Printed Cards
-                </Button>
-              </div>
-            )}
+            <div className="rounded-xl bg-gradient-to-r from-violet-500/10 to-pink-500/10 border border-violet-500/20 p-4">
+              <p className="font-semibold text-sm text-white flex items-center gap-1.5 mb-1">
+                <Printer className="h-4 w-4 text-violet-400" />
+                Print &amp; Pick Up — Miami Swim Week
+              </p>
+              <p className="text-xs text-zinc-400 mb-3">Professional cardstock · Pick up at EXA HQ · $3/card</p>
+              <Button
+                onClick={startPrintOrder}
+                disabled={selectedIds.length === 0 || !firstName.trim()}
+                className="w-full bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600"
+              >
+                Order Printed Cards
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -1097,17 +1093,15 @@ export default function FreeCompCardPage() {
       />
 
       {/* Print order dialog */}
-      {process.env.NEXT_PUBLIC_PRINT_PICKUP_ENABLED === "true" && (
-        <PrintOrderDialog
-          open={printDialogOpen}
-          onOpenChange={setPrintDialogOpen}
-          email={contactEmail}
-          firstName={firstName}
-          lastName={lastName}
-          phone={phoneNumber}
-          onGeneratePdf={generatePdfBase64}
-        />
-      )}
+      <PrintOrderDialog
+        open={printDialogOpen}
+        onOpenChange={setPrintDialogOpen}
+        email={contactEmail}
+        firstName={firstName}
+        lastName={lastName}
+        phone={phoneNumber}
+        onGeneratePdf={generatePdfBase64}
+      />
     </div>
   );
 }
