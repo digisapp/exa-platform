@@ -4288,6 +4288,7 @@ export async function sendBrandOutreachEmail({
               <p style="margin: 0 0 20px; color: #cbd5e1; font-size: 15px; line-height: 1.75;">Hi ${resolvedContactName},</p>
               <p style="margin: 0 0 20px; color: #cbd5e1; font-size: 15px; line-height: 1.75;">I'm Nathan, COO of EXA Models. We're launching a new editorial travel series called <strong style="color: #ffffff;">EXA Travel</strong>, partnering with one boutique property per destination.</p>
               <p style="margin: 0 0 20px; color: #cbd5e1; font-size: 15px; line-height: 1.75;">We bring our team of 7 people (5 influencer models + photographer and director) and spend four days capturing the full experience — the property, the culture, and the destination itself — in a cinematic, elevated way.</p>
+              <p style="margin: 0 0 20px; color: #cbd5e1; font-size: 15px; line-height: 1.75;">In exchange, we're requesting a <strong style="color: #ffffff;">fully hosted 4-night stay</strong> for the team. You'll leave with a full content library ready for social, ads, and your website.</p>
               <p style="margin: 0 0 32px; color: #cbd5e1; font-size: 15px; line-height: 1.75;">If this aligns, I'd love to connect briefly to explore dates and availability.</p>
 
               <!-- What You Receive -->
@@ -4299,9 +4300,6 @@ export async function sendBrandOutreachEmail({
                 <tr><td style="padding-bottom: 10px; vertical-align: top;"><table cellpadding="0" cellspacing="0"><tr><td style="color: #3b82f6; padding-right: 10px; vertical-align: top; padding-top: 2px;">◆</td><td><p style="margin: 0; color: #cbd5e1; font-size: 15px; line-height: 1.6;"><strong style="color: #ffffff;">20 professional photos</strong> you can use anywhere — website, ads, social</p></td></tr></table></td></tr>
                 <tr><td style="padding-bottom: 10px; vertical-align: top;"><table cellpadding="0" cellspacing="0"><tr><td style="color: #3b82f6; padding-right: 10px; vertical-align: top; padding-top: 2px;">◆</td><td><p style="margin: 0; color: #cbd5e1; font-size: 15px; line-height: 1.6;">Every post <strong style="color: #ffffff;">tags your property</strong></p></td></tr></table></td></tr>
               </table>
-
-              <!-- Exchange -->
-              <p style="margin: 0 0 32px; color: #cbd5e1; font-size: 15px; line-height: 1.75;">In exchange, we're requesting a <strong style="color: #ffffff;">fully hosted 4-night stay</strong> for the team. You'll leave with a full content library ready for social, ads, and your website.</p>
 
               <!-- CTA -->
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 36px;">
