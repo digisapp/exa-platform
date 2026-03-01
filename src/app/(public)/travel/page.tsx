@@ -215,18 +215,45 @@ export default async function TravelPage() {
 
             {/* No Trips */}
             {(!travelGigs || travelGigs.length === 0) && (
-              <div className="text-center py-16">
-                <Globe className="h-20 w-20 mx-auto text-muted-foreground/30 mb-6" />
-                <h3 className="text-2xl font-semibold mb-2">
-                  Next destination coming soon
-                </h3>
-                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                  We&apos;re scouting the next location. Apply as a model to get
-                  notified when bookings open.
-                </p>
-                <Button variant="outline" asChild>
-                  <Link href="/apply">Apply as a Model</Link>
-                </Button>
+              <div className="max-w-2xl mx-auto py-12">
+                {/* Description bio */}
+                <div className="text-center mb-10">
+                  <Globe className="h-14 w-14 mx-auto text-muted-foreground/30 mb-5" />
+                  <h3 className="text-2xl font-semibold mb-4">
+                    Next destination coming soon
+                  </h3>
+                  <p className="text-muted-foreground leading-relaxed mb-3">
+                    EXA Travel is our ongoing travel series — hotels, resorts, villas, and destinations around the world. Each trip brings together a small group of models to travel, create content, and experience it all together.
+                  </p>
+                  <p className="text-muted-foreground leading-relaxed">
+                    From beach resorts in the Caribbean to luxury hotels in Bali, Mykonos, Dubai, and beyond — every trip is a new destination, a new experience, and a new set of content opportunities. You book your own flight. We handle everything else.
+                  </p>
+                </div>
+
+                {/* Key details */}
+                <div className="grid grid-cols-3 gap-4 mb-10 text-center">
+                  <div className="glass-card rounded-xl p-4">
+                    <p className="text-2xl font-bold text-pink-400">Global</p>
+                    <p className="text-xs text-muted-foreground mt-1">Hotels &amp; resorts worldwide</p>
+                  </div>
+                  <div className="glass-card rounded-xl p-4">
+                    <p className="text-2xl font-bold text-violet-400">5</p>
+                    <p className="text-xs text-muted-foreground mt-1">Models per trip</p>
+                  </div>
+                  <div className="glass-card rounded-xl p-4">
+                    <p className="text-2xl font-bold text-cyan-400">New</p>
+                    <p className="text-xs text-muted-foreground mt-1">Destinations every month</p>
+                  </div>
+                </div>
+
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground mb-4">
+                    We&apos;re scouting the next location. Apply as a model to get notified when bookings open.
+                  </p>
+                  <Button className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600" asChild>
+                    <Link href="/apply">Apply as a Model</Link>
+                  </Button>
+                </div>
               </div>
             )}
           </div>
