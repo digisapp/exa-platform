@@ -576,12 +576,12 @@ export default function FreeCompCardPage() {
         />
       </div>
 
-      {/* Header — matches dashboard layout */}
+      {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold">Free Comp Card</h1>
+          <h1 className="text-2xl font-bold">Comp Card Creator</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Select {MAX_PHOTOS} photos — first is the front cover, next 4 go on the back
+            Free to download · Print &amp; pick up in Miami
           </p>
         </div>
         <div className="hidden sm:flex gap-2">
@@ -623,13 +623,16 @@ export default function FreeCompCardPage() {
         {/* ── LEFT: Photos + Form ── */}
         <div>
           {/* Photos — first, matching dashboard */}
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
             <ImageIcon className="h-5 w-5" />
             Photos
             <span className="text-sm font-normal text-muted-foreground">
               ({selectedIds.length}/{MAX_PHOTOS})
             </span>
           </h2>
+          <p className="text-xs text-muted-foreground mt-1 mb-4">
+            First is the front cover, next 4 go on the back
+          </p>
 
           {uploadedPhotos.length > 0 && (
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-4">
