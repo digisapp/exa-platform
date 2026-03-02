@@ -12,10 +12,11 @@ import {
   Rect,
 } from "@react-pdf/renderer";
 
-Font.register({
-  family: "PoppinsBlack",
-  src: `${typeof window !== "undefined" ? window.location.origin : "https://www.examodels.com"}/fonts/Poppins-Black.ttf`,
-});
+const ORIGIN = typeof window !== "undefined" ? window.location.origin : "https://www.examodels.com";
+
+Font.register({ family: "PoppinsBlack",    src: `${ORIGIN}/fonts/Poppins-Black.ttf` });
+Font.register({ family: "PoppinsSemiBold", src: `${ORIGIN}/fonts/Poppins-SemiBold.ttf` });
+Font.register({ family: "PoppinsRegular",  src: `${ORIGIN}/fonts/Poppins-Regular.ttf` });
 
 // Disable hyphenation so names never get split with a dash across lines
 Font.registerHyphenationCallback((word) => [word]);
@@ -105,12 +106,12 @@ const styles = StyleSheet.create({
   backPage: {
     backgroundColor: "#ffffff",
     padding: 20,
-    fontFamily: "Helvetica",
+    fontFamily: "PoppinsRegular",
   },
   // Name header
   backName: {
     fontSize: 14,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "PoppinsSemiBold",
     color: "#111111",
     textTransform: "uppercase",
     letterSpacing: 2,
@@ -138,10 +139,11 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0,
     marginBottom: 1,
+    fontFamily: "PoppinsRegular",
   },
   measurementValue: {
     fontSize: 9,
-    fontFamily: "Helvetica-Bold",
+    fontFamily: "PoppinsSemiBold",
     color: "#111111",
   },
   // Divider
@@ -175,6 +177,7 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 10,
+    fontFamily: "PoppinsRegular",
     color: "#000000",
     marginBottom: 2,
   },
