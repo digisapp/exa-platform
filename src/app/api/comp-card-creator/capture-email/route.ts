@@ -18,6 +18,8 @@ const schema = z.object({
   hair_color: z.string().max(50).optional(),
   dress_size: z.string().max(20).optional(),
   shoe_size: z.string().max(20).optional(),
+  city: z.string().max(100).optional(),
+  state: z.string().max(100).optional(),
   export_type: z.enum(["pdf", "jpeg"]).optional(),
 });
 
@@ -54,6 +56,8 @@ export async function POST(request: NextRequest) {
       hair_color: parsed.data.hair_color?.trim() || null,
       dress_size: parsed.data.dress_size?.trim() || null,
       shoe_size: parsed.data.shoe_size?.trim() || null,
+      city: parsed.data.city?.trim() || null,
+      state: parsed.data.state?.trim() || null,
       export_type: parsed.data.export_type || null,
     };
 

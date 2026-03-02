@@ -120,6 +120,16 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 3,
   },
+  // City / State sub-line
+  backCity: {
+    fontSize: 8,
+    fontFamily: "PoppinsRegular",
+    color: "#888888",
+    textTransform: "uppercase",
+    letterSpacing: 1.5,
+    textAlign: "center",
+    marginBottom: 4,
+  },
   // Measurements
   measurementsContainer: {
     alignItems: "center",
@@ -283,6 +293,12 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, nameColor = "
         {/* Top section: Name + Measurements + Photos */}
         <View>
           <Text style={styles.backName}>{fullName}</Text>
+
+          {(model.city || model.state) && (
+            <Text style={styles.backCity}>
+              {[model.city, model.state].filter(Boolean).join(", ")}
+            </Text>
+          )}
 
           {measurements.length > 0 && (
             <View style={styles.measurementsContainer}>

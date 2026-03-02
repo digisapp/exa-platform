@@ -59,6 +59,8 @@ export default function FreeCompCardPage() {
   const [hairColor, setHairColor] = useState("");
   const [dressSize, setDressSize] = useState("");
   const [shoeSize, setShoeSize] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
   const [instagramName, setInstagramName] = useState("");
   const [website, setWebsite] = useState("");
   const [contactEmail, setContactEmail] = useState("");
@@ -113,8 +115,8 @@ export default function FreeCompCardPage() {
     dress_size: dressSize || null,
     shoe_size: shoeSize || null,
     instagram_name: instagramName || null,
-    city: null,
-    state: null,
+    city: city || null,
+    state: state || null,
   };
 
   const fullName =
@@ -259,6 +261,8 @@ export default function FreeCompCardPage() {
           hair_color: hairColor || undefined,
           dress_size: dressSize || undefined,
           shoe_size: shoeSize || undefined,
+          city: city || undefined,
+          state: state || undefined,
           export_type: type,
         }),
       }).catch(() => {});
@@ -477,6 +481,16 @@ export default function FreeCompCardPage() {
       bCtx.letterSpacing = "5px";
       bCtx.fillText(fullNameStr.toUpperCase(), BW / 2, curY);
       curY += 48;
+
+      // City / State sub-line
+      const cityStateStr = [city, state].filter(Boolean).join(", ");
+      if (cityStateStr) {
+        bCtx.font = "22px Helvetica, Arial, sans-serif";
+        bCtx.fillStyle = "#888888";
+        bCtx.letterSpacing = "2px";
+        bCtx.fillText(cityStateStr.toUpperCase(), BW / 2, curY);
+        curY += 36;
+      }
 
       // Measurements
       const meas: { label: string; value: string }[] = [];
@@ -749,6 +763,14 @@ export default function FreeCompCardPage() {
                   <Label htmlFor="lastName">Last Name</Label>
                   <Input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Doe" />
                 </div>
+                <div className="space-y-1">
+                  <Label htmlFor="city">City</Label>
+                  <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Miami" />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="state">State</Label>
+                  <Input id="state" value={state} onChange={(e) => setState(e.target.value)} placeholder="FL" />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -929,9 +951,14 @@ export default function FreeCompCardPage() {
                 <CardContent className="p-0">
                   <div className="bg-white p-5 aspect-[5.5/8.5] flex flex-col justify-between">
                     <div>
-                      <p className="text-lg font-bold text-black uppercase tracking-[0.15em] text-center mb-2">
+                      <p className="text-lg font-bold text-black uppercase tracking-[0.15em] text-center mb-1">
                         {fullName}
                       </p>
+                      {(city || state) && (
+                        <p className="text-[7px] text-gray-400 uppercase tracking-widest text-center mb-2">
+                          {[city, state].filter(Boolean).join(", ")}
+                        </p>
+                      )}
                       {measurements.length > 0 && (
                         <div className="flex flex-wrap justify-center gap-x-5 gap-y-1 mb-2">
                           {measurements.map((m) => (
