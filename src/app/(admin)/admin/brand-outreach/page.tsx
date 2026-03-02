@@ -378,7 +378,7 @@ EXA Models`,
     subject: "Social Media Influencer Partnership",
     body: `Hi {{contact_name}},
 
-I'm Nathan, COO of EXA Models. We're launching a new travel series called EXA Travel, partnering with boutique properties around the world.
+I'm Nathan, COO of EXA Models. We're launching a new travel series called EXA Travel, partnering with hotels & resorts around the world.
 
 We bring our team of 7 people (5 influencer models + photographer and director) and capture the full experience - the property, the culture, and the destination itself - in a cinematic, elevated way.
 
