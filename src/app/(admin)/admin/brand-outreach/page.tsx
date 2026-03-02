@@ -380,7 +380,7 @@ EXA Models`,
 
 I'm Nathan, COO of EXA Models. We're launching a new travel series called EXA Travel, partnering with boutique properties around the world.
 
-We bring our team of 7 people (5 influencer models + photographer and director) and spend four days capturing the full experience — the property, the culture, and the destination itself — in a cinematic, elevated way.
+We bring our team of 7 people (5 influencer models + photographer and director) and capture the full experience - the property, the culture, and the destination itself - in a cinematic, elevated way.
 
 What You Receive
 • Instagram posts & stories from each of our 5 models
