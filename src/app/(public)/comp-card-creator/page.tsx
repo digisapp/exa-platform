@@ -2,9 +2,9 @@
 
 import { useState, useRef } from "react";
 import Image from "next/image";
-import { Bebas_Neue } from "next/font/google";
+import { Poppins } from "next/font/google";
 
-const bebasNeue = Bebas_Neue({ weight: "400", subsets: ["latin"], display: "swap" });
+const poppinsBlack = Poppins({ weight: "900", subsets: ["latin"], display: "swap" });
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -417,10 +417,10 @@ export default function FreeCompCardPage() {
 
       // First name at bottom
       if (firstName) {
-        const bebasFont = new FontFace("BebasNeue", "url(https://cdn.jsdelivr.net/fontsource/fonts/bebas-neue@latest/latin-400-normal.ttf)");
-        await bebasFont.load();
-        document.fonts.add(bebasFont);
-        fCtx.font = "240px 'BebasNeue', sans-serif";
+        const poppinsFont = new FontFace("PoppinsBlack", "url(/fonts/Poppins-Black.ttf)");
+        await poppinsFont.load();
+        document.fonts.add(poppinsFont);
+        fCtx.font = "900 230px 'PoppinsBlack', sans-serif";
         fCtx.fillStyle = "#ffffff";
         fCtx.textAlign = "center";
         fCtx.textBaseline = "bottom";
@@ -817,7 +817,7 @@ export default function FreeCompCardPage() {
                         {/* Name at bottom */}
                         {firstName && (
                           <div className="absolute bottom-0 left-0 right-0 px-3 pb-6 text-center pointer-events-none">
-                            <p className={`${bebasNeue.className} text-white text-7xl sm:text-8xl uppercase tracking-[0.05em] leading-none`}>
+                            <p className={`${poppinsBlack.className} text-white text-6xl sm:text-7xl uppercase tracking-[0.04em] leading-none`}>
                               {firstName}
                             </p>
                           </div>

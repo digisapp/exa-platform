@@ -13,8 +13,8 @@ import {
 } from "@react-pdf/renderer";
 
 Font.register({
-  family: "BebasNeue",
-  src: "https://cdn.jsdelivr.net/fontsource/fonts/bebas-neue@latest/latin-400-normal.ttf",
+  family: "PoppinsBlack",
+  src: `${typeof window !== "undefined" ? window.location.origin : "https://www.examodels.com"}/fonts/Poppins-Black.ttf`,
 });
 
 interface CompCardModel {
@@ -89,11 +89,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   frontFirstName: {
-    fontSize: 90,
-    fontFamily: "BebasNeue",
+    fontSize: 85,
+    fontFamily: "PoppinsBlack",
     color: "#ffffff",
     textTransform: "uppercase",
-    letterSpacing: 3,
+    letterSpacing: 4,
     lineHeight: 1.0,
     textAlign: "center",
   },
