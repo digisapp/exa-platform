@@ -600,17 +600,14 @@ export default function FreeCompCardPage() {
   return (
     <div className="container max-w-6xl mx-auto px-4 py-8">
       {/* Page logo */}
-      <div className="mb-6 flex items-center gap-3">
+      <div className="mb-6">
         <Image
           src="/exa-models-logo-white.png"
           alt="EXA Models"
           width={140}
           height={44}
           className="h-10 w-auto"
-          style={{ filter: "drop-shadow(0 0 10px rgba(255,255,255,0.45)) drop-shadow(0 1px 3px rgba(0,0,0,0.6))" }}
         />
-        <div className="h-6 w-px bg-white/20" />
-        <span className="text-xs text-white/40 uppercase tracking-widest">Comp Card Creator</span>
       </div>
 
       {/* Header */}
