@@ -378,9 +378,9 @@ EXA Models`,
     subject: "Social Media Influencer Partnership",
     body: `Hi {{contact_name}},
 
-I'm Nathan, COO of EXA Models. We're launching a new editorial travel series called EXA Travel, partnering with one boutique property per destination.
+I'm Nathan, COO of EXA Models. We run a travel content series called EXA Travel — we partner with properties around the world to create high-quality social media content in exchange for a hosted stay.
 
-We bring our team of 7 people (5 influencer models + photographer and director) and spend four days capturing the full experience — the property, the culture, and the destination itself — in a cinematic, elevated way.
+Our team is 7 people: 5 influencer models, a photographer, and a director. We spend four days on-property capturing everything — rooms, pool, dining, atmosphere — in a way that's cinematic and built for social.
 
 What You Receive
 • Instagram posts & stories from each of our 5 models
@@ -391,10 +391,11 @@ What You Receive
 
 In exchange, we're requesting a fully hosted 4-night stay for the team. You'll leave with a full content library ready for social, ads, and your website.
 
-If this aligns, I'd love to connect briefly to explore dates and availability.
+If this sounds like something {{brand_name}} would be open to, I'd love to connect briefly to discuss dates and availability.
 
 Warm regards,
-Nathan`,
+Nathan
+COO, EXA Models`,
     ctaUrl: "https://www.examodels.com/travel",
     ctaText: "View EXA Travel",
     template: "travel" as const,
