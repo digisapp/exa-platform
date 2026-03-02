@@ -41,7 +41,8 @@ interface CompCardModel {
 interface CompCardPDFProps {
   model: CompCardModel;
   photos: string[]; // base64 data URLs
-  frontLogoUrl?: string; // base64 data URL (white logo for dark background)
+  frontLogoUrl?: string; // base64 data URL
+  nameColor?: string; // "#ffffff" (default) or "#000000"
   qrCodeUrl?: string; // base64 data URL of QR code
   contactInfo?: {
     email?: string;
@@ -90,14 +91,14 @@ const styles = StyleSheet.create({
   frontNameContainer: {
     alignItems: "center",
     paddingBottom: 30,
-    paddingHorizontal: 16,
+    paddingHorizontal: 6,
   },
   frontFirstName: {
     fontSize: 85,
     fontFamily: "PoppinsBlack",
     color: "#ffffff",
     textTransform: "uppercase",
-    letterSpacing: 4,
+    letterSpacing: 3,
     lineHeight: 1.0,
     textAlign: "center",
   },
@@ -198,17 +199,25 @@ const styles = StyleSheet.create({
 function getNameFontSize(name: string): number {
   const len = name.length;
   if (len <= 4) return 85;
-  if (len <= 5) return 80;
-  if (len <= 6) return 72;
-  if (len <= 7) return 64;
-  if (len <= 8) return 57;
-  if (len <= 9) return 52;  // e.g. CHRISTINA
-  if (len <= 10) return 47;
-  if (len <= 11) return 43;
-  return 38;
+  if (len <= 5) return 76;
+  if (len <= 6) return 68;
+  if (len <= 7) return 60;
+  if (len <= 8) return 53;
+  if (len <= 9) return 47;
+  if (len <= 10) return 42;
+  if (len <= 11) return 37;
+  if (len <= 12) return 33;
+  return 29;
 }
 
-export default function CompCardPDF({ model, photos, frontLogoUrl, qrCodeUrl, contactInfo }: CompCardPDFProps) {
+function getNameLetterSpacing(name: string): number {
+  const len = name.length;
+  if (len <= 6) return 3;
+  if (len <= 9) return 2;
+  return 1;
+}
+
+export default function CompCardPDF({ model, photos, frontLogoUrl, nameColor = "#ffffff", qrCodeUrl, contactInfo }: CompCardPDFProps) {
   const firstName = model.first_name || "";
   const lastName = model.last_name || "";
   const fullName = [firstName, lastName].filter(Boolean).join(" ") || "Model";
@@ -255,7 +264,12 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, qrCodeUrl, co
           <View />
           {firstName && (
             <View style={styles.frontNameContainer}>
-              <Text style={{ ...styles.frontFirstName, fontSize: getNameFontSize(firstName.toUpperCase()) }}>
+              <Text style={{
+                ...styles.frontFirstName,
+                fontSize: getNameFontSize(firstName.toUpperCase()),
+                letterSpacing: getNameLetterSpacing(firstName.toUpperCase()),
+                color: nameColor,
+              }}>
                 {firstName}
               </Text>
             </View>

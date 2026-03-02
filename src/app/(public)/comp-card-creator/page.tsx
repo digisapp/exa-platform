@@ -89,6 +89,7 @@ export default function FreeCompCardPage() {
   const [printDialogOpen, setPrintDialogOpen] = useState(false);
 
   const logoSrc = logoVariant === "black" ? "/exa-models-logo-black.png" : logoVariant === "white" ? "/exa-models-logo-white.png" : null;
+  const nameColor = logoVariant === "black" ? "#000000" : "#ffffff";
 
   // Build model data object from form
   const model = {
@@ -293,7 +294,7 @@ export default function FreeCompCardPage() {
       website: website || undefined,
     };
     const blob = await pdf(
-      CompCardPDF({ model, photos: photoBase64, frontLogoUrl: frontLogoBase64, contactInfo })
+      CompCardPDF({ model, photos: photoBase64, frontLogoUrl: frontLogoBase64, nameColor, contactInfo })
     ).toBlob();
     return new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
@@ -337,7 +338,7 @@ export default function FreeCompCardPage() {
       };
 
       const blob = await pdf(
-        CompCardPDF({ model, photos: photoBase64, frontLogoUrl: frontLogoBase64, contactInfo })
+        CompCardPDF({ model, photos: photoBase64, frontLogoUrl: frontLogoBase64, nameColor, contactInfo })
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
@@ -432,12 +433,13 @@ export default function FreeCompCardPage() {
           ]);
         }
         const nameLen = firstName.length;
-        const canvasFontSize = nameLen <= 5 ? 230 : nameLen <= 7 ? 200 : nameLen <= 9 ? 170 : nameLen <= 11 ? 145 : 120;
+        const canvasFontSize = nameLen <= 4 ? 230 : nameLen <= 5 ? 205 : nameLen <= 6 ? 184 : nameLen <= 7 ? 162 : nameLen <= 8 ? 143 : nameLen <= 9 ? 127 : nameLen <= 10 ? 113 : nameLen <= 11 ? 100 : nameLen <= 12 ? 89 : 78;
+        const canvasLetterSpacing = nameLen <= 6 ? 6 : nameLen <= 9 ? 4 : 2;
         fCtx.font = `900 ${canvasFontSize}px 'PoppinsBlack', sans-serif`;
-        fCtx.fillStyle = "#ffffff";
+        fCtx.fillStyle = nameColor;
         fCtx.textAlign = "center";
         fCtx.textBaseline = "bottom";
-        fCtx.letterSpacing = "6px";
+        fCtx.letterSpacing = `${canvasLetterSpacing}px`;
         fCtx.fillText(firstName.toUpperCase(), FW / 2, FH - 80);
       }
 
@@ -851,7 +853,7 @@ export default function FreeCompCardPage() {
                         {/* Name at bottom */}
                         {firstName && (
                           <div className="absolute bottom-0 left-0 right-0 px-3 pb-6 text-center pointer-events-none">
-                            <p className={`${poppinsBlack.className} text-white text-6xl sm:text-7xl uppercase tracking-[0.04em] leading-none`}>
+                            <p className={`${poppinsBlack.className} text-6xl sm:text-7xl uppercase tracking-[0.04em] leading-none`} style={{ color: nameColor }}>
                               {firstName}
                             </p>
                           </div>
