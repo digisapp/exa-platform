@@ -17,6 +17,9 @@ Font.register({
   src: `${typeof window !== "undefined" ? window.location.origin : "https://www.examodels.com"}/fonts/Poppins-Black.ttf`,
 });
 
+// Disable hyphenation so names never get split with a dash across lines
+Font.registerHyphenationCallback((word) => [word]);
+
 interface CompCardModel {
   first_name: string | null;
   last_name: string | null;
@@ -191,11 +194,15 @@ const styles = StyleSheet.create({
 
 function getNameFontSize(name: string): number {
   const len = name.length;
-  if (len <= 5) return 85;
-  if (len <= 7) return 72;
-  if (len <= 9) return 60;
-  if (len <= 11) return 50;
-  return 42;
+  if (len <= 4) return 85;
+  if (len <= 5) return 80;
+  if (len <= 6) return 72;
+  if (len <= 7) return 64;
+  if (len <= 8) return 57;
+  if (len <= 9) return 52;  // e.g. CHRISTINA
+  if (len <= 10) return 47;
+  if (len <= 11) return 43;
+  return 38;
 }
 
 export default function CompCardPDF({ model, photos, frontLogoUrl, qrCodeUrl, contactInfo }: CompCardPDFProps) {
