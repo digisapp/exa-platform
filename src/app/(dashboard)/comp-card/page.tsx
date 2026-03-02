@@ -467,7 +467,7 @@ export default function CompCardPage() {
 
       // Logo at top center
       const frontLogoImg = await loadImg("/exa-models-logo-white.png");
-      const logoW = 570;
+      const logoW = 510;
       const logoH = Math.round(logoW * (frontLogoImg.naturalHeight / frontLogoImg.naturalWidth));
       fCtx.drawImage(frontLogoImg, (FW - logoW) / 2, 155, logoW, logoH);
 
@@ -967,9 +967,9 @@ export default function CompCardPage() {
                           <Image
                             src="/exa-models-logo-white.png"
                             alt="EXA Models"
-                            width={150}
-                            height={50}
-                            className="h-11 w-auto"
+                            width={130}
+                            height={42}
+                            className="h-9 w-auto"
                           />
                         </div>
                         {/* Name at bottom */}

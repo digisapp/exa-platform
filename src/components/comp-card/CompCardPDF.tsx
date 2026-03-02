@@ -73,8 +73,8 @@ const styles = StyleSheet.create({
     paddingTop: 55,
   },
   frontLogo: {
-    width: 210,
-    height: 68,
+    width: 185,
+    height: 60,
     objectFit: "contain",
   },
   frontNameContainer: {

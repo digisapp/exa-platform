@@ -408,7 +408,7 @@ export default function FreeCompCardPage() {
 
       // Logo at top center
       const frontLogoImg = await loadImg("/exa-models-logo-white.png");
-      const logoW = 570;
+      const logoW = 510;
       const logoH = Math.round(logoW * (frontLogoImg.naturalHeight / frontLogoImg.naturalWidth));
       fCtx.drawImage(frontLogoImg, (FW - logoW) / 2, 155, logoW, logoH);
 
@@ -565,6 +565,17 @@ export default function FreeCompCardPage() {
 
   return (
     <div className="container max-w-6xl mx-auto px-4 py-8">
+      {/* Page logo */}
+      <div className="mb-6">
+        <Image
+          src="/exa-models-logo-white.png"
+          alt="EXA Models"
+          width={120}
+          height={38}
+          className="h-8 w-auto"
+        />
+      </div>
+
       {/* Header — matches dashboard layout */}
       <div className="flex items-center justify-between mb-8">
         <div>
@@ -784,9 +795,9 @@ export default function FreeCompCardPage() {
                           <Image
                             src="/exa-models-logo-white.png"
                             alt="EXA Models"
-                            width={150}
-                            height={50}
-                            className="h-11 w-auto"
+                            width={130}
+                            height={42}
+                            className="h-9 w-auto"
                           />
                         </div>
                         {/* Reposition hint */}
