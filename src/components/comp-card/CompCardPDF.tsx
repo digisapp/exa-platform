@@ -294,12 +294,6 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, nameColor = "
         <View>
           <Text style={styles.backName}>{fullName}</Text>
 
-          {(model.city || model.state) && (
-            <Text style={styles.backCity}>
-              {[model.city, model.state].filter(Boolean).join(", ")}
-            </Text>
-          )}
-
           {measurements.length > 0 && (
             <View style={styles.measurementsContainer}>
               <View style={styles.measurementsGrid}>

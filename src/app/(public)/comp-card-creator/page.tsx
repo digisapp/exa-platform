@@ -482,16 +482,6 @@ export default function FreeCompCardPage() {
       bCtx.fillText(fullNameStr.toUpperCase(), BW / 2, curY);
       curY += 48;
 
-      // City / State sub-line
-      const cityStateStr = [city, state].filter(Boolean).join(", ");
-      if (cityStateStr) {
-        bCtx.font = "22px Helvetica, Arial, sans-serif";
-        bCtx.fillStyle = "#888888";
-        bCtx.letterSpacing = "2px";
-        bCtx.fillText(cityStateStr.toUpperCase(), BW / 2, curY);
-        curY += 36;
-      }
-
       // Measurements
       const meas: { label: string; value: string }[] = [];
       if (height) meas.push({ label: "HEIGHT", value: height });
@@ -951,14 +941,9 @@ export default function FreeCompCardPage() {
                 <CardContent className="p-0">
                   <div className="bg-white p-5 aspect-[5.5/8.5] flex flex-col justify-between">
                     <div>
-                      <p className="text-lg font-bold text-black uppercase tracking-[0.15em] text-center mb-1">
+                      <p className="text-lg font-bold text-black uppercase tracking-[0.15em] text-center mb-2">
                         {fullName}
                       </p>
-                      {(city || state) && (
-                        <p className="text-[7px] text-gray-400 uppercase tracking-widest text-center mb-2">
-                          {[city, state].filter(Boolean).join(", ")}
-                        </p>
-                      )}
                       {measurements.length > 0 && (
                         <div className="flex flex-wrap justify-center gap-x-5 gap-y-1 mb-2">
                           {measurements.map((m) => (
