@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, useLayoutEffect } from "react";
+import { Bebas_Neue } from "next/font/google";
+
+const bebasNeue = Bebas_Neue({ weight: "400", subsets: ["latin"], display: "swap" });
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 import Link from "next/link";
@@ -469,15 +472,18 @@ export default function CompCardPage() {
       const frontLogoImg = await loadImg("/exa-models-logo-white.png");
       const logoW = 510;
       const logoH = Math.round(logoW * (frontLogoImg.naturalHeight / frontLogoImg.naturalWidth));
-      fCtx.drawImage(frontLogoImg, (FW - logoW) / 2, 155, logoW, logoH);
+      fCtx.drawImage(frontLogoImg, (FW - logoW) / 2, 80, logoW, logoH);
 
       // First name at bottom
       if (model.first_name) {
-        fCtx.font = "bold 220px Helvetica, Arial, sans-serif";
+        const bebasFont = new FontFace("BebasNeue", "url(https://cdn.jsdelivr.net/fontsource/fonts/bebas-neue@latest/latin-400-normal.ttf)");
+        await bebasFont.load();
+        document.fonts.add(bebasFont);
+        fCtx.font = "240px 'BebasNeue', sans-serif";
         fCtx.fillStyle = "#ffffff";
         fCtx.textAlign = "center";
         fCtx.textBaseline = "bottom";
-        fCtx.letterSpacing = "4px";
+        fCtx.letterSpacing = "6px";
         fCtx.fillText(model.first_name.toUpperCase(), FW / 2, FH - 80);
       }
 
@@ -963,7 +969,7 @@ export default function CompCardPage() {
                           <span className="text-[10px] text-white/80">Drag to reposition</span>
                         </div>
                         {/* Logo at top center */}
-                        <div className="absolute top-0 left-0 right-0 flex justify-center pt-10 z-10 pointer-events-none">
+                        <div className="absolute top-0 left-0 right-0 flex justify-center pt-6 z-10 pointer-events-none">
                           <Image
                             src="/exa-models-logo-white.png"
                             alt="EXA Models"
@@ -975,7 +981,7 @@ export default function CompCardPage() {
                         {/* Name at bottom */}
                         {model.first_name && (
                           <div className="absolute bottom-0 left-0 right-0 px-3 pb-6 text-center pointer-events-none">
-                            <p className="text-white text-6xl sm:text-7xl font-black uppercase tracking-[0.03em] leading-tight">
+                            <p className={`${bebasNeue.className} text-white text-7xl sm:text-8xl uppercase tracking-[0.05em] leading-none`}>
                               {model.first_name}
                             </p>
                           </div>

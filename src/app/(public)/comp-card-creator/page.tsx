@@ -2,6 +2,9 @@
 
 import { useState, useRef } from "react";
 import Image from "next/image";
+import { Bebas_Neue } from "next/font/google";
+
+const bebasNeue = Bebas_Neue({ weight: "400", subsets: ["latin"], display: "swap" });
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -410,15 +413,18 @@ export default function FreeCompCardPage() {
       const frontLogoImg = await loadImg("/exa-models-logo-white.png");
       const logoW = 510;
       const logoH = Math.round(logoW * (frontLogoImg.naturalHeight / frontLogoImg.naturalWidth));
-      fCtx.drawImage(frontLogoImg, (FW - logoW) / 2, 155, logoW, logoH);
+      fCtx.drawImage(frontLogoImg, (FW - logoW) / 2, 80, logoW, logoH);
 
       // First name at bottom
       if (firstName) {
-        fCtx.font = "bold 220px Helvetica, Arial, sans-serif";
+        const bebasFont = new FontFace("BebasNeue", "url(https://cdn.jsdelivr.net/fontsource/fonts/bebas-neue@latest/latin-400-normal.ttf)");
+        await bebasFont.load();
+        document.fonts.add(bebasFont);
+        fCtx.font = "240px 'BebasNeue', sans-serif";
         fCtx.fillStyle = "#ffffff";
         fCtx.textAlign = "center";
         fCtx.textBaseline = "bottom";
-        fCtx.letterSpacing = "4px";
+        fCtx.letterSpacing = "6px";
         fCtx.fillText(firstName.toUpperCase(), FW / 2, FH - 80);
       }
 
@@ -614,7 +620,7 @@ export default function FreeCompCardPage() {
             className="border-violet-500/40 hover:border-violet-500/70 text-violet-300"
           >
             <Printer className="mr-2 h-4 w-4" />
-            Print &amp; Pick Up
+            Print Cards
           </Button>
         </div>
       </div>
@@ -794,7 +800,7 @@ export default function FreeCompCardPage() {
                           draggable={false}
                         />
                         {/* Logo at top center */}
-                        <div className="absolute top-0 left-0 right-0 flex justify-center pt-10 z-10 pointer-events-none">
+                        <div className="absolute top-0 left-0 right-0 flex justify-center pt-6 z-10 pointer-events-none">
                           <Image
                             src="/exa-models-logo-white.png"
                             alt="EXA Models"
@@ -811,7 +817,7 @@ export default function FreeCompCardPage() {
                         {/* Name at bottom */}
                         {firstName && (
                           <div className="absolute bottom-0 left-0 right-0 px-3 pb-6 text-center pointer-events-none">
-                            <p className="text-white text-6xl sm:text-7xl font-black uppercase tracking-[0.03em] leading-tight">
+                            <p className={`${bebasNeue.className} text-white text-7xl sm:text-8xl uppercase tracking-[0.05em] leading-none`}>
                               {firstName}
                             </p>
                           </div>
@@ -906,8 +912,9 @@ export default function FreeCompCardPage() {
                 Print &amp; Pick Up — Miami Swim Week
               </p>
               <p className="text-xs text-zinc-400 mb-3">Professional cardstock · Pick up at EXA HQ · $3/card</p>
-              <Button onClick={startPrintOrder} disabled={selectedIds.length === 0 || !firstName.trim() || !contactEmail.trim()} className="w-full bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600">
-                Order Printed Cards
+              <Button onClick={startPrintOrder} disabled={selectedIds.length === 0 || !firstName.trim() || !contactEmail.trim()} size="lg" className="w-full text-base font-bold bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600">
+                <Printer className="mr-2 h-5 w-5" />
+                Print Cards
               </Button>
             </div>
           </div>

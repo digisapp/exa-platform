@@ -5,11 +5,17 @@ import {
   Text,
   Image,
   StyleSheet,
+  Font,
   Svg,
   Path,
   Circle,
   Rect,
 } from "@react-pdf/renderer";
+
+Font.register({
+  family: "BebasNeue",
+  src: "https://cdn.jsdelivr.net/fontsource/fonts/bebas-neue@latest/latin-400-normal.ttf",
+});
 
 interface CompCardModel {
   first_name: string | null;
@@ -70,7 +76,7 @@ const styles = StyleSheet.create({
   },
   frontLogoContainer: {
     alignItems: "center",
-    paddingTop: 55,
+    paddingTop: 30,
   },
   frontLogo: {
     width: 185,
@@ -83,12 +89,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   frontFirstName: {
-    fontSize: 80,
-    fontFamily: "Helvetica-Bold",
+    fontSize: 90,
+    fontFamily: "BebasNeue",
     color: "#ffffff",
     textTransform: "uppercase",
-    letterSpacing: 2,
-    lineHeight: 1.1,
+    letterSpacing: 3,
+    lineHeight: 1.0,
     textAlign: "center",
   },
 
