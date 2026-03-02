@@ -182,10 +182,15 @@ const styles = StyleSheet.create({
     paddingTop: 4,
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
   },
   footerContactLeft: {
     alignItems: "flex-start",
+    flex: 1,
+  },
+  footerContactRight: {
+    alignItems: "flex-start",
+    flex: 1,
   },
   footerText: {
     fontSize: 10,
@@ -317,9 +322,10 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, nameColor = "
           )}
         </View>
 
-        {/* Footer: contact (left) | QR (right) */}
+        {/* Footer: email+phone (left) | instagram+website (center) | QR (right) */}
         {hasFooter && (
           <View style={styles.footerContainer}>
+            {/* Left: email + phone */}
             <View style={styles.footerContactLeft}>
               {footerEmail && (
                 <Text style={styles.footerText}>{footerEmail}</Text>
@@ -327,20 +333,25 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, nameColor = "
               {footerPhone && (
                 <Text style={styles.footerText}>{footerPhone}</Text>
               )}
-              {footerInstagram && (
-                <View style={styles.footerRow}>
-                  <Svg width={10} height={10} viewBox="0 0 24 24" style={styles.instagramIcon}>
-                    <Rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke="#000000" strokeWidth="2" fill="none" />
-                    <Circle cx="12" cy="12" r="5" stroke="#000000" strokeWidth="2" fill="none" />
-                    <Circle cx="17.5" cy="6.5" r="1.5" fill="#000000" />
-                  </Svg>
-                  <Text style={styles.footerText}>{footerInstagram}</Text>
-                </View>
-              )}
-              {footerWebsite && (
-                <Text style={styles.footerText}>{footerWebsite}</Text>
-              )}
             </View>
+            {/* Center: instagram + website */}
+            {(footerInstagram || footerWebsite) && (
+              <View style={styles.footerContactRight}>
+                {footerInstagram && (
+                  <View style={styles.footerRow}>
+                    <Svg width={10} height={10} viewBox="0 0 24 24" style={styles.instagramIcon}>
+                      <Rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke="#000000" strokeWidth="2" fill="none" />
+                      <Circle cx="12" cy="12" r="5" stroke="#000000" strokeWidth="2" fill="none" />
+                      <Circle cx="17.5" cy="6.5" r="1.5" fill="#000000" />
+                    </Svg>
+                    <Text style={styles.footerText}>{footerInstagram}</Text>
+                  </View>
+                )}
+                {footerWebsite && (
+                  <Text style={styles.footerText}>{footerWebsite}</Text>
+                )}
+              </View>
+            )}
             {qrCodeUrl && (
               <Image src={qrCodeUrl} style={styles.footerQr} />
             )}

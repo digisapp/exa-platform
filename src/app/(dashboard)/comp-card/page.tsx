@@ -1137,35 +1137,36 @@ export default function CompCardPage() {
                       )}
                     </div>
 
-                    {/* Footer: contact (left) | QR (right) */}
-                    <div className="pt-3 mt-2 flex items-center justify-between">
-                      <div>
-                        <p className="text-[9px] text-black mb-0.5">
-                          team@examodels.com
-                        </p>
-                        {model.instagram_name && (
-                          <div className="flex items-center gap-1 mb-0.5">
-                            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5">
-                              <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-                              <circle cx="12" cy="12" r="5" />
-                              <circle cx="17.5" cy="6.5" r="1.5" fill="black" stroke="none" />
-                            </svg>
-                            <p className="text-[9px] text-black">
-                              {model.instagram_name}
-                            </p>
-                          </div>
-                        )}
-                        {model.username && (
-                          <p className="text-[9px] text-black">
-                            examodels.com/{model.username}
-                          </p>
-                        )}
+                    {/* Footer: email (left) | instagram+website (center) | QR (right) */}
+                    <div className="pt-2 mt-1 flex items-start gap-1">
+                      {/* Left: email */}
+                      <div className="flex-1">
+                        <p className="text-[8px] text-black truncate">team@examodels.com</p>
                       </div>
+                      {/* Center: instagram + website */}
+                      {(model.instagram_name || model.username) && (
+                        <div className="flex-1">
+                          {model.instagram_name && (
+                            <div className="flex items-center gap-0.5 mb-0.5">
+                              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5">
+                                <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                                <circle cx="12" cy="12" r="5" />
+                                <circle cx="17.5" cy="6.5" r="1.5" fill="black" stroke="none" />
+                              </svg>
+                              <p className="text-[8px] text-black truncate">{model.instagram_name}</p>
+                            </div>
+                          )}
+                          {model.username && (
+                            <p className="text-[8px] text-black truncate">examodels.com/{model.username}</p>
+                          )}
+                        </div>
+                      )}
+                      {/* QR */}
                       {qrCodePreview ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={qrCodePreview} alt="QR" className="w-14 h-14 rounded" />
+                        <img src={qrCodePreview} alt="QR" className="w-12 h-12 rounded shrink-0" />
                       ) : (
-                        <div className="w-14 h-14 bg-gray-100 border border-gray-200 rounded flex items-center justify-center">
+                        <div className="w-12 h-12 bg-gray-100 border border-gray-200 rounded flex items-center justify-center shrink-0">
                           <span className="text-[5px] text-gray-400">QR</span>
                         </div>
                       )}

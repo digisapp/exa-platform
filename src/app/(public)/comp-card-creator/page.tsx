@@ -600,14 +600,17 @@ export default function FreeCompCardPage() {
   return (
     <div className="container max-w-6xl mx-auto px-4 py-8">
       {/* Page logo */}
-      <div className="mb-6">
+      <div className="mb-6 flex items-center gap-3">
         <Image
           src="/exa-models-logo-white.png"
           alt="EXA Models"
-          width={120}
-          height={38}
-          className="h-8 w-auto"
+          width={140}
+          height={44}
+          className="h-10 w-auto"
+          style={{ filter: "drop-shadow(0 0 10px rgba(255,255,255,0.45)) drop-shadow(0 1px 3px rgba(0,0,0,0.6))" }}
         />
+        <div className="h-6 w-px bg-white/20" />
+        <span className="text-xs text-white/40 uppercase tracking-widest">Comp Card Creator</span>
       </div>
 
       {/* Header */}
@@ -969,12 +972,18 @@ export default function FreeCompCardPage() {
                         </div>
                       )}
                     </div>
-                    {/* Footer */}
-                    <div className="pt-3 mt-2">
-                      {contactEmail && <p className="text-[9px] text-black mb-0.5">{contactEmail}</p>}
-                      {phoneNumber && <p className="text-[9px] text-black mb-0.5">{phoneNumber}</p>}
-                      {instagramName && <p className="text-[9px] text-black mb-0.5">@{instagramName}</p>}
-                      {website && <p className="text-[9px] text-black">{website}</p>}
+                    {/* Footer: 2-column */}
+                    <div className="pt-2 mt-1 flex gap-2">
+                      <div className="flex-1">
+                        {contactEmail && <p className="text-[8px] text-black mb-0.5 truncate">{contactEmail}</p>}
+                        {phoneNumber && <p className="text-[8px] text-black truncate">{phoneNumber}</p>}
+                      </div>
+                      {(instagramName || website) && (
+                        <div className="flex-1">
+                          {instagramName && <p className="text-[8px] text-black mb-0.5 truncate">@{instagramName}</p>}
+                          {website && <p className="text-[8px] text-black truncate">{website}</p>}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </CardContent>
