@@ -5012,3 +5012,211 @@ export async function sendTravelPartnershipEmail({
     return { success: false, error: err };
   }
 }
+
+/**
+ * Send EXA Bids feature announcement email to a model
+ */
+export async function sendEXABidsAnnouncementEmail({
+  to,
+  modelName,
+}: {
+  to: string;
+  modelName: string;
+}) {
+  try {
+    if (await isEmailUnsubscribed(to, "marketing")) {
+      return { success: true, skipped: true };
+    }
+
+    const resend = getResendClient();
+    const bidsUrl = `${BASE_URL}/bids/new`;
+    const dashboardUrl = `${BASE_URL}/dashboard`;
+    const unsubscribeToken = await getUnsubscribeToken(to);
+
+    const greeting = modelName ? `Hey ${escapeHtml(modelName)}!` : "Hey!";
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      subject: "New Feature: EXA Bids — Let Brands & Fans Bid for Your Services 🔥",
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 50px 30px; text-align: center;">
+              <p style="margin: 0 0 12px; font-size: 44px;">🔥💜</p>
+              <h1 style="margin: 0; color: white; font-size: 30px; font-weight: bold; letter-spacing: -0.5px;">
+                Introducing EXA Bids
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 20px; font-weight: 500;">
+                ${greeting}
+              </p>
+              <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 16px; line-height: 1.7;">
+                We just launched EXA <strong style="color: #ec4899; font-size: 18px; letter-spacing: 2px;">BIDS</strong> — a brand new way to earn on EXA by auctioning deliverables, content, services, and experiences. Create a listing, set your price, and watch people compete to win time with you.
+              </p>
+              <!-- What you can auction -->
+              <!-- Quick Start grid -->
+              <p style="margin: 0 0 12px; color: #c084fc; font-size: 14px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;">Quick Start — Popular Bid Ideas</p>
+              <p style="margin: 0 0 18px; color: #71717a; font-size: 14px; line-height: 1.6;">When you create a bid, just pick one of these templates and your listing is ready in seconds:</p>
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+                <tr>
+                  <td width="33%" style="padding: 0 4px 8px 0; vertical-align: top;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #111111; border-radius: 10px; border: 1px solid #2a2a2a;">
+                      <tr><td style="padding: 14px 12px; text-align: center;">
+                        <p style="margin: 0 0 6px; font-size: 26px;">📸</p>
+                        <p style="margin: 0; color: #ffffff; font-size: 13px; font-weight: 600;">Photo Set</p>
+                      </td></tr>
+                    </table>
+                  </td>
+                  <td width="33%" style="padding: 0 4px 8px; vertical-align: top;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #111111; border-radius: 10px; border: 1px solid #2a2a2a;">
+                      <tr><td style="padding: 14px 12px; text-align: center;">
+                        <p style="margin: 0 0 6px; font-size: 26px;">🎬</p>
+                        <p style="margin: 0; color: #ffffff; font-size: 13px; font-weight: 600;">Brand Reel</p>
+                      </td></tr>
+                    </table>
+                  </td>
+                  <td width="33%" style="padding: 0 0 8px 4px; vertical-align: top;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #111111; border-radius: 10px; border: 1px solid #2a2a2a;">
+                      <tr><td style="padding: 14px 12px; text-align: center;">
+                        <p style="margin: 0 0 6px; font-size: 26px;">💄</p>
+                        <p style="margin: 0; color: #ffffff; font-size: 13px; font-weight: 600;">GRWM Video</p>
+                      </td></tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td width="33%" style="padding: 0 4px 8px 0; vertical-align: top;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #111111; border-radius: 10px; border: 1px solid #2a2a2a;">
+                      <tr><td style="padding: 14px 12px; text-align: center;">
+                        <p style="margin: 0 0 6px; font-size: 26px;">🎉</p>
+                        <p style="margin: 0; color: #ffffff; font-size: 13px; font-weight: 600;">Attend Your Event</p>
+                      </td></tr>
+                    </table>
+                  </td>
+                  <td width="33%" style="padding: 0 4px 8px; vertical-align: top;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #111111; border-radius: 10px; border: 1px solid #2a2a2a;">
+                      <tr><td style="padding: 14px 12px; text-align: center;">
+                        <p style="margin: 0 0 6px; font-size: 26px;">🏋️‍♀️</p>
+                        <p style="margin: 0; color: #ffffff; font-size: 13px; font-weight: 600;">Gym Session</p>
+                      </td></tr>
+                    </table>
+                  </td>
+                  <td width="33%" style="padding: 0 0 8px 4px; vertical-align: top;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #111111; border-radius: 10px; border: 1px solid #2a2a2a;">
+                      <tr><td style="padding: 14px 12px; text-align: center;">
+                        <p style="margin: 0 0 6px; font-size: 26px;">📲</p>
+                        <p style="margin: 0; color: #ffffff; font-size: 13px; font-weight: 600;">Story Shoutout</p>
+                      </td></tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- How it works -->
+              <p style="margin: 0 0 16px; color: #ffffff; font-size: 18px; font-weight: 600;">How It Works</p>
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+                <tr>
+                  <td style="padding: 12px 0; border-bottom: 1px solid #262626;">
+                    <table cellpadding="0" cellspacing="0"><tr>
+                      <td style="width: 36px; height: 36px; background: linear-gradient(135deg, #ec4899, #8b5cf6); border-radius: 50%; text-align: center; vertical-align: middle; color: white; font-weight: bold; font-size: 15px;">1</td>
+                      <td style="padding-left: 14px; color: #a1a1aa; font-size: 15px; line-height: 1.5;"><strong style="color: #ffffff;">Create your auction</strong> — choose a type, set a starting bid, and pick a duration from 1 to 14 days.</td>
+                    </tr></table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 12px 0; border-bottom: 1px solid #262626;">
+                    <table cellpadding="0" cellspacing="0"><tr>
+                      <td style="width: 36px; height: 36px; background: linear-gradient(135deg, #ec4899, #8b5cf6); border-radius: 50%; text-align: center; vertical-align: middle; color: white; font-weight: bold; font-size: 15px;">2</td>
+                      <td style="padding-left: 14px; color: #a1a1aa; font-size: 15px; line-height: 1.5;"><strong style="color: #ffffff;">People bid with coins</strong> — Fans, followers, and brands can all bid.</td>
+                    </tr></table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 12px 0;">
+                    <table cellpadding="0" cellspacing="0"><tr>
+                      <td style="width: 36px; height: 36px; background: linear-gradient(135deg, #ec4899, #8b5cf6); border-radius: 50%; text-align: center; vertical-align: middle; color: white; font-weight: bold; font-size: 15px;">3</td>
+                      <td style="padding-left: 14px; color: #a1a1aa; font-size: 15px; line-height: 1.5;"><strong style="color: #ffffff;">Winner pays, you earn</strong> — coins go directly to your EXA balance. Cash out anytime through your dashboard.</td>
+                    </tr></table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Tip box -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px; background-color: #111111; border-radius: 10px; border-left: 3px solid #ec4899;">
+                <tr>
+                  <td style="padding: 18px 20px;">
+                    <p style="margin: 0 0 6px; color: #ec4899; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Pro Tip</p>
+                    <p style="margin: 0; color: #a1a1aa; font-size: 14px; line-height: 1.6;">
+                      You can also set a <strong style="color: #ffffff;">Buy Now price</strong> — fans who don't want to wait can instantly win the auction at that price. Great for driving quick sales!
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Instagram Story callout -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px; background: linear-gradient(135deg, rgba(236, 72, 153, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%); border-radius: 10px; border: 1px solid rgba(236, 72, 153, 0.25);">
+                <tr><td style="padding: 16px 20px;">
+                  <p style="margin: 0 0 8px; color: #f9a8d4; font-size: 14px; font-weight: 700;">📣 Share your live auction to your Instagram Story!</p>
+                  <p style="margin: 0; color: #a1a1aa; font-size: 14px; line-height: 1.6;">After creating a bid, share the link to your story. Any follower can bid. <strong style="color: #ffffff;">Brands can bid too</strong> — it's a great way to get discovered for collabs, brand deals, and content partnerships.</p>
+                </td></tr>
+              </table>
+
+              <!-- CTA -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
+                <tr>
+                  <td align="center">
+                    <a href="${bidsUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 16px 44px; border-radius: 30px; font-weight: 700; font-size: 17px; box-shadow: 0 4px 20px rgba(236, 72, 153, 0.4); letter-spacing: 0.3px;">
+                      Create My First Bid →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="${dashboardUrl}" style="color: #71717a; font-size: 14px; text-decoration: underline;">Go to my dashboard</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          ${generateEmailFooter(unsubscribeToken)}
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      console.error("Resend error:", error);
+      return { success: false, error };
+    }
+    return { success: true, skipped: false, messageId: (data as any)?.id };
+  } catch (err) {
+    console.error("EXA Bids announcement email error:", err);
+    return { success: false, error: err };
+  }
+}

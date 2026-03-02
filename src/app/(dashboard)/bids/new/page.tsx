@@ -38,7 +38,7 @@ const QUICK_PRESETS = [
     label: "Swimwear Try-On",
     title: "Exclusive Swimwear Try-On Haul for You",
     description: "Bid for a custom swimwear try-on haul — I'll model a curated selection of bikinis and swimwear, exclusively for the winner. Perfect for swim week season.",
-    deliverables: "• 10–15 photos in multiple swimwear looks\n• Delivered privately to winner within 7 days\n• Winner's choice of style direction",
+    deliverables: "• 10–15 photos in multiple swimwear looks\n• Delivered privately to winner within 7 days",
     category: "custom_content" as AuctionCategory,
     suggestedPrice: "500",
   },

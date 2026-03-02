@@ -312,6 +312,12 @@ export function Navbar({ user, actorType, unreadCount = 0 }: NavbarProps) {
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
+                        <Link href="/bids/new" className="cursor-pointer">
+                          <Gavel className="mr-2 h-4 w-4" />
+                          Bids
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
                         <Link href="/comp-card" className="cursor-pointer">
                           <FileText className="mr-2 h-4 w-4" />
                           Comp Card
