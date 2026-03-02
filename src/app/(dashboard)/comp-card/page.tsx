@@ -82,6 +82,7 @@ export default function CompCardPage() {
   const [qrCodePreview, setQrCodePreview] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState("");
   const [printDialogOpen, setPrintDialogOpen] = useState(false);
+  const [logoVariant, setLogoVariant] = useState<"white" | "black" | "none">("white");
 
   // Hero photo repositioning (object-position %) and zoom
   const [heroPos, setHeroPos] = useState({ x: 50, y: 50 });
@@ -281,6 +282,8 @@ export default function CompCardPage() {
     setSelectedIds((prev) => prev.filter((p) => p !== id));
   };
 
+  const logoSrc = logoVariant === "black" ? "/exa-models-logo-black.png" : logoVariant === "white" ? "/exa-models-logo-white.png" : null;
+
   const handleExportPDF = async () => {
     if (!model || selectedIds.length === 0) {
       toast.error("Select at least one photo");
@@ -316,7 +319,7 @@ export default function CompCardPage() {
       const QRCode = (await import("qrcode")).default;
       const profileUrl = `https://www.examodels.com/${model.username || ""}`;
       const [frontLogoBase64, qrCodeBase64] = await Promise.all([
-        toBase64("/exa-models-logo-white.png"),
+        logoSrc ? toBase64(logoSrc) : Promise.resolve(undefined),
         QRCode.toDataURL(profileUrl, { width: 200, margin: 1 }),
       ]);
 
@@ -369,7 +372,7 @@ export default function CompCardPage() {
     const QRCode = (await import("qrcode")).default;
     const profileUrl = `https://www.examodels.com/${model.username || ""}`;
     const [frontLogoBase64, qrCodeBase64] = await Promise.all([
-      toBase64("/exa-models-logo-white.png"),
+      logoSrc ? toBase64(logoSrc) : Promise.resolve(undefined),
       QRCode.toDataURL(profileUrl, { width: 200, margin: 1 }),
     ]);
     const { pdf } = await import("@react-pdf/renderer");
@@ -469,10 +472,12 @@ export default function CompCardPage() {
       }
 
       // Logo at top center
-      const frontLogoImg = await loadImg("/exa-models-logo-white.png");
-      const logoW = 510;
-      const logoH = Math.round(logoW * (frontLogoImg.naturalHeight / frontLogoImg.naturalWidth));
-      fCtx.drawImage(frontLogoImg, (FW - logoW) / 2, 80, logoW, logoH);
+      if (logoSrc) {
+        const frontLogoImg = await loadImg(logoSrc);
+        const logoW = 510;
+        const logoH = Math.round(logoW * (frontLogoImg.naturalHeight / frontLogoImg.naturalWidth));
+        fCtx.drawImage(frontLogoImg, (FW - logoW) / 2, 80, logoW, logoH);
+      }
 
       // First name at bottom
       if (model.first_name) {
@@ -938,10 +943,29 @@ export default function CompCardPage() {
 
         {/* Right: Live Preview */}
         <div>
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Preview
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Preview
+            </h2>
+            {/* Logo variant toggle */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-muted-foreground mr-1">Logo</span>
+              {(["white", "black", "none"] as const).map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setLogoVariant(v)}
+                  className={`px-2.5 py-1 rounded text-xs font-medium border transition-colors ${
+                    logoVariant === v
+                      ? "bg-white text-black border-white"
+                      : "bg-transparent text-zinc-400 border-zinc-600 hover:border-zinc-400"
+                  }`}
+                >
+                  {v === "none" ? "Off" : v.charAt(0).toUpperCase() + v.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
 
           <div className="space-y-4">
             {/* ── FRONT PREVIEW ── */}
@@ -975,15 +999,17 @@ export default function CompCardPage() {
                           <span className="text-[10px] text-white/80">Drag to reposition</span>
                         </div>
                         {/* Logo at top center */}
-                        <div className="absolute top-0 left-0 right-0 flex justify-center pt-6 z-10 pointer-events-none">
-                          <Image
-                            src="/exa-models-logo-white.png"
-                            alt="EXA Models"
-                            width={130}
-                            height={42}
-                            className="h-9 w-auto"
-                          />
-                        </div>
+                        {logoSrc && (
+                          <div className="absolute top-0 left-0 right-0 flex justify-center pt-6 z-10 pointer-events-none">
+                            <Image
+                              src={logoSrc}
+                              alt="EXA Models"
+                              width={130}
+                              height={42}
+                              className="h-9 w-auto"
+                            />
+                          </div>
+                        )}
                         {/* Name at bottom */}
                         {model.first_name && (
                           <div className="absolute bottom-0 left-0 right-0 px-3 pb-6 text-center pointer-events-none">

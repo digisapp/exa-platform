@@ -82,8 +82,13 @@ export default function FreeCompCardPage() {
   // Track whether we've already silently captured the email this session
   const [emailCaptured, setEmailCaptured] = useState(false);
 
+  // Logo variant: white, black, or none
+  const [logoVariant, setLogoVariant] = useState<"white" | "black" | "none">("white");
+
   // Print order state
   const [printDialogOpen, setPrintDialogOpen] = useState(false);
+
+  const logoSrc = logoVariant === "black" ? "/exa-models-logo-black.png" : logoVariant === "white" ? "/exa-models-logo-white.png" : null;
 
   // Build model data object from form
   const model = {
@@ -280,7 +285,7 @@ export default function FreeCompCardPage() {
     const { default: CompCardPDF } = await import(
       "@/components/comp-card/CompCardPDF"
     );
-    const frontLogoBase64 = await toBase64("/exa-models-logo-white.png");
+    const frontLogoBase64 = logoSrc ? await toBase64(logoSrc) : undefined;
     const contactInfo = {
       email: contactEmail || undefined,
       phone: phoneNumber || undefined,
@@ -323,7 +328,7 @@ export default function FreeCompCardPage() {
         "@/components/comp-card/CompCardPDF"
       );
 
-      const frontLogoBase64 = await toBase64("/exa-models-logo-white.png");
+      const frontLogoBase64 = logoSrc ? await toBase64(logoSrc) : undefined;
       const contactInfo = {
         email: contactEmail || undefined,
         phone: phoneNumber || undefined,
@@ -410,10 +415,12 @@ export default function FreeCompCardPage() {
       }
 
       // Logo at top center
-      const frontLogoImg = await loadImg("/exa-models-logo-white.png");
-      const logoW = 510;
-      const logoH = Math.round(logoW * (frontLogoImg.naturalHeight / frontLogoImg.naturalWidth));
-      fCtx.drawImage(frontLogoImg, (FW - logoW) / 2, 80, logoW, logoH);
+      if (logoSrc) {
+        const frontLogoImg = await loadImg(logoSrc);
+        const logoW = 510;
+        const logoH = Math.round(logoW * (frontLogoImg.naturalHeight / frontLogoImg.naturalWidth));
+        fCtx.drawImage(frontLogoImg, (FW - logoW) / 2, 80, logoW, logoH);
+      }
 
       // First name at bottom
       if (firstName) {
@@ -771,10 +778,29 @@ export default function FreeCompCardPage() {
 
         {/* ── RIGHT: Live Preview ── */}
         <div>
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Preview
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Preview
+            </h2>
+            {/* Logo variant toggle */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-muted-foreground mr-1">Logo</span>
+              {(["white", "black", "none"] as const).map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setLogoVariant(v)}
+                  className={`px-2.5 py-1 rounded text-xs font-medium border transition-colors ${
+                    logoVariant === v
+                      ? "bg-white text-black border-white"
+                      : "bg-transparent text-zinc-400 border-zinc-600 hover:border-zinc-400"
+                  }`}
+                >
+                  {v === "none" ? "Off" : v.charAt(0).toUpperCase() + v.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
 
           <div className="space-y-4">
             {/* Front Preview — draggable */}
@@ -806,15 +832,17 @@ export default function FreeCompCardPage() {
                           draggable={false}
                         />
                         {/* Logo at top center */}
-                        <div className="absolute top-0 left-0 right-0 flex justify-center pt-6 z-10 pointer-events-none">
-                          <Image
-                            src="/exa-models-logo-white.png"
-                            alt="EXA Models"
-                            width={130}
-                            height={42}
-                            className="h-9 w-auto"
-                          />
-                        </div>
+                        {logoSrc && (
+                          <div className="absolute top-0 left-0 right-0 flex justify-center pt-6 z-10 pointer-events-none">
+                            <Image
+                              src={logoSrc}
+                              alt="EXA Models"
+                              width={130}
+                              height={42}
+                              className="h-9 w-auto"
+                            />
+                          </div>
+                        )}
                         {/* Reposition hint */}
                         <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-black/50 backdrop-blur-sm rounded-full px-2 py-1 pointer-events-none">
                           <Move className="h-3 w-3 text-white/80" />
