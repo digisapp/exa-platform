@@ -189,6 +189,15 @@ const styles = StyleSheet.create({
   },
 });
 
+function getNameFontSize(name: string): number {
+  const len = name.length;
+  if (len <= 5) return 85;
+  if (len <= 7) return 72;
+  if (len <= 9) return 60;
+  if (len <= 11) return 50;
+  return 42;
+}
+
 export default function CompCardPDF({ model, photos, frontLogoUrl, qrCodeUrl, contactInfo }: CompCardPDFProps) {
   const firstName = model.first_name || "";
   const lastName = model.last_name || "";
@@ -236,7 +245,9 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, qrCodeUrl, co
           <View />
           {firstName && (
             <View style={styles.frontNameContainer}>
-              <Text style={styles.frontFirstName}>{firstName}</Text>
+              <Text style={{ ...styles.frontFirstName, fontSize: getNameFontSize(firstName.toUpperCase()) }}>
+                {firstName}
+              </Text>
             </View>
           )}
         </View>

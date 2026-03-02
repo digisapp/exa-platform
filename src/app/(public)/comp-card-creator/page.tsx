@@ -417,10 +417,16 @@ export default function FreeCompCardPage() {
 
       // First name at bottom
       if (firstName) {
-        const poppinsFont = new FontFace("PoppinsBlack", "url(/fonts/Poppins-Black.ttf)");
-        await poppinsFont.load();
-        document.fonts.add(poppinsFont);
-        fCtx.font = "900 230px 'PoppinsBlack', sans-serif";
+        if (!document.fonts.check("900 1em PoppinsBlack")) {
+          const poppinsFont = new FontFace("PoppinsBlack", `url(${window.location.origin}/fonts/Poppins-Black.ttf)`);
+          await Promise.race([
+            poppinsFont.load().then((f) => document.fonts.add(f)),
+            new Promise<void>((_, reject) => setTimeout(() => reject(new Error("Font load timeout")), 8000)),
+          ]);
+        }
+        const nameLen = firstName.length;
+        const canvasFontSize = nameLen <= 5 ? 230 : nameLen <= 7 ? 200 : nameLen <= 9 ? 170 : nameLen <= 11 ? 145 : 120;
+        fCtx.font = `900 ${canvasFontSize}px 'PoppinsBlack', sans-serif`;
         fCtx.fillStyle = "#ffffff";
         fCtx.textAlign = "center";
         fCtx.textBaseline = "bottom";
