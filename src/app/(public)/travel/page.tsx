@@ -164,33 +164,37 @@ export default async function TravelPage() {
               <h2 className="text-2xl md:text-3xl font-bold mb-2">EXA Travel in Action</h2>
               <p className="text-muted-foreground">Behind-the-scenes from our recent partnership shoots</p>
             </div>
-            <div className="grid md:grid-cols-2 gap-4 md:gap-6">
+            <div className="grid md:grid-cols-2 gap-4 md:gap-6 max-w-2xl mx-auto">
               <div className="rounded-2xl overflow-hidden bg-black relative group">
-                <video
-                  src="https://nanftzomzluetblqgrvo.supabase.co/storage/v1/object/public/examodels/travel/exa-aqua-newyork.mp4"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  className="w-full h-full object-cover max-h-[480px]"
-                />
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-                  <p className="text-white font-semibold text-sm">Aqua Restaurant · New York</p>
-                  <p className="text-white/70 text-xs">Dining &amp; lifestyle content</p>
+                <div className="aspect-[9/16]">
+                  <video
+                    src="https://nanftzomzluetblqgrvo.supabase.co/storage/v1/object/public/examodels/travel/exa-aqua-newyork.mp4"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                    <p className="text-white font-semibold text-sm">Aqua Restaurant · New York</p>
+                    <p className="text-white/70 text-xs">Dining &amp; lifestyle content</p>
+                  </div>
                 </div>
               </div>
               <div className="rounded-2xl overflow-hidden bg-black relative group">
-                <video
-                  src="https://nanftzomzluetblqgrvo.supabase.co/storage/v1/object/public/examodels/travel/exa-hair-spa.mp4"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  className="w-full h-full object-cover max-h-[480px]"
-                />
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-                  <p className="text-white font-semibold text-sm">Luxury Hair Spa</p>
-                  <p className="text-white/70 text-xs">Beauty &amp; wellness content</p>
+                <div className="aspect-[9/16]">
+                  <video
+                    src="https://nanftzomzluetblqgrvo.supabase.co/storage/v1/object/public/examodels/travel/exa-hair-spa.mp4"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                    <p className="text-white font-semibold text-sm">Luxury Hair Spa</p>
+                    <p className="text-white/70 text-xs">Beauty &amp; wellness content</p>
+                  </div>
                 </div>
               </div>
             </div>
