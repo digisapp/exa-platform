@@ -41,7 +41,7 @@ export default function EmailCaptureDialog({
     setSubmitting(true);
 
     try {
-      const res = await fetch("/api/free-comp-card/capture-email", {
+      const res = await fetch("/api/comp-card-creator/capture-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

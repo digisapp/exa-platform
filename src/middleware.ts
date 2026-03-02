@@ -2,10 +2,10 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 
 export async function middleware(request: NextRequest) {
-  // Redirect compcards.co to free comp card page
+  // Redirect compcards.co to comp card creator
   const hostname = request.headers.get('host') || ''
   if (hostname.replace('www.', '') === 'compcards.co') {
-    return NextResponse.redirect('https://www.examodels.com/free-comp-card', 301)
+    return NextResponse.redirect('https://www.examodels.com/comp-card-creator', 301)
   }
 
   // Vanity URLs for Miami Swim Week 2026

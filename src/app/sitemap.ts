@@ -72,7 +72,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.4,
     },
     {
-      url: `${baseUrl}/free-comp-card`,
+      url: `${baseUrl}/comp-card-creator`,
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.7,

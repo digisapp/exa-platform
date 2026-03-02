@@ -224,7 +224,7 @@ export default function FreeCompCardPage() {
 
     if (!emailCaptured) {
       // Silently capture all model info in the background — don't block the download
-      fetch("/api/free-comp-card/capture-email", {
+      fetch("/api/comp-card-creator/capture-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

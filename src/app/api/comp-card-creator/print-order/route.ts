@@ -103,8 +103,8 @@ export async function POST(request: NextRequest) {
         },
       ],
       mode: "payment",
-      success_url: `${baseUrl}/free-comp-card/print-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/free-comp-card?cancelled=true`,
+      success_url: `${baseUrl}/comp-card-creator/print-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/comp-card-creator?cancelled=true`,
       customer_email: parsed.data.email,
       metadata: {
         type: "comp_card_print",

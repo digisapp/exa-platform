@@ -58,7 +58,7 @@ export default function PrintOrderDialog({
       toast.info("Generating your comp card PDF...");
       const pdfBase64 = await onGeneratePdf();
 
-      const res = await fetch("/api/free-comp-card/print-order", {
+      const res = await fetch("/api/comp-card-creator/print-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -64,7 +64,7 @@ function SuccessContent() {
             asChild
             className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
           >
-            <Link href="/free-comp-card">
+            <Link href="/comp-card-creator">
               Make Another Comp Card
               <ArrowRight className="h-4 w-4 ml-2" />
             </Link>
