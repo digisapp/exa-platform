@@ -70,11 +70,11 @@ const styles = StyleSheet.create({
   },
   frontLogoContainer: {
     alignItems: "center",
-    paddingTop: 40,
+    paddingTop: 55,
   },
   frontLogo: {
-    width: 170,
-    height: 55,
+    width: 210,
+    height: 68,
     objectFit: "contain",
   },
   frontNameContainer: {

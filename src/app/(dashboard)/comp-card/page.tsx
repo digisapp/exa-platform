@@ -467,9 +467,9 @@ export default function CompCardPage() {
 
       // Logo at top center
       const frontLogoImg = await loadImg("/exa-models-logo-white.png");
-      const logoW = 470;
+      const logoW = 570;
       const logoH = Math.round(logoW * (frontLogoImg.naturalHeight / frontLogoImg.naturalWidth));
-      fCtx.drawImage(frontLogoImg, (FW - logoW) / 2, 110, logoW, logoH);
+      fCtx.drawImage(frontLogoImg, (FW - logoW) / 2, 155, logoW, logoH);
 
       // First name at bottom
       if (model.first_name) {
@@ -963,13 +963,13 @@ export default function CompCardPage() {
                           <span className="text-[10px] text-white/80">Drag to reposition</span>
                         </div>
                         {/* Logo at top center */}
-                        <div className="absolute top-0 left-0 right-0 flex justify-center pt-7 z-10 pointer-events-none">
+                        <div className="absolute top-0 left-0 right-0 flex justify-center pt-10 z-10 pointer-events-none">
                           <Image
                             src="/exa-models-logo-white.png"
                             alt="EXA Models"
-                            width={120}
-                            height={40}
-                            className="h-8 w-auto"
+                            width={150}
+                            height={50}
+                            className="h-11 w-auto"
                           />
                         </div>
                         {/* Name at bottom */}
