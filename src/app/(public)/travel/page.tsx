@@ -275,23 +275,7 @@ export default async function TravelPage() {
                   </p>
                 </div>
 
-                {/* Key details */}
-                <div className="grid grid-cols-3 gap-4 mb-10 text-center">
-                  <div className="glass-card rounded-xl p-4">
-                    <p className="text-2xl font-bold text-pink-400">Global</p>
-                    <p className="text-xs text-muted-foreground mt-1">Hotels &amp; resorts worldwide</p>
-                  </div>
-                  <div className="glass-card rounded-xl p-4">
-                    <p className="text-2xl font-bold text-violet-400">5</p>
-                    <p className="text-xs text-muted-foreground mt-1">Models per trip</p>
-                  </div>
-                  <div className="glass-card rounded-xl p-4">
-                    <p className="text-2xl font-bold text-cyan-400">New</p>
-                    <p className="text-xs text-muted-foreground mt-1">Destinations every month</p>
-                  </div>
-                </div>
-
-                <div className="text-center">
+<div className="text-center">
                   <p className="text-sm text-muted-foreground mb-4">
                     We&apos;re scouting the next location. Apply as a model to get notified when bookings open.
                   </p>
