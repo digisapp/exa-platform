@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 2,
     textAlign: "center",
-    marginBottom: 3,
+    marginBottom: 1,
   },
   // City / State sub-line
   backCity: {
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
   // Measurements
   measurementsContainer: {
     alignItems: "center",
-    marginBottom: 4,
+    marginBottom: 2,
   },
   measurementsGrid: {
     flexDirection: "row",
@@ -172,14 +172,14 @@ const styles = StyleSheet.create({
   },
   gridPhoto: {
     width: "49%",
-    height: 222,
+    height: 216,
     objectFit: "cover",
     borderRadius: 3,
-    marginBottom: 4,
+    marginBottom: 3,
   },
   // Footer
   footerContainer: {
-    paddingTop: 8,
+    paddingTop: 4,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
