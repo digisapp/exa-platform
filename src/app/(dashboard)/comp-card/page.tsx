@@ -532,6 +532,16 @@ export default function CompCardPage() {
       bCtx.fillText(fullNameStr.toUpperCase(), BW / 2, curY);
       curY += 48;
 
+      // City / State sub-line
+      const cityStateStr = [model.city, model.state].filter(Boolean).join(", ");
+      if (cityStateStr) {
+        bCtx.font = "22px Helvetica, Arial, sans-serif";
+        bCtx.fillStyle = "#888888";
+        bCtx.letterSpacing = "2px";
+        bCtx.fillText(cityStateStr.toUpperCase(), BW / 2, curY);
+        curY += 36;
+      }
+
       // Measurements
       const meas: { label: string; value: string }[] = [];
       if (model.height) meas.push({ label: "HEIGHT", value: model.height });
@@ -1091,9 +1101,14 @@ export default function CompCardPage() {
                     {/* Top section: Logo + Name + Measurements + Photos */}
                     <div>
                       {/* Model Name */}
-                      <p className="text-lg font-bold text-black uppercase tracking-[0.15em] text-center mb-2">
+                      <p className="text-lg font-bold text-black uppercase tracking-[0.15em] text-center mb-1">
                         {fullName}
                       </p>
+                      {location && (
+                        <p className="text-[7px] text-gray-400 uppercase tracking-widest text-center mb-2">
+                          {location}
+                        </p>
+                      )}
 
                       {/* Measurements */}
                       {measurements.length > 0 && (
