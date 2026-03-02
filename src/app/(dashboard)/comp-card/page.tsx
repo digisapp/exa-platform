@@ -1014,8 +1014,15 @@ export default function CompCardPage() {
                         )}
                         {/* Name at bottom */}
                         {model.first_name && (
-                          <div className="absolute bottom-0 left-0 right-0 px-3 pb-6 text-center pointer-events-none">
-                            <p className={`${poppinsBlack.className} text-6xl sm:text-7xl uppercase tracking-[0.04em] leading-none`} style={{ color: nameColor }}>
+                          <div className="absolute bottom-0 left-0 right-0 px-2 pb-6 text-center pointer-events-none">
+                            <p
+                              className={`${poppinsBlack.className} uppercase leading-none whitespace-nowrap`}
+                              style={{
+                                color: nameColor,
+                                fontSize: `clamp(1.5rem, ${Math.min(9, 60 / Math.max(model.first_name.length, 1))}vw, 4.5rem)`,
+                                letterSpacing: model.first_name.length > 9 ? "0.02em" : "0.04em",
+                              }}
+                            >
                               {model.first_name}
                             </p>
                           </div>
