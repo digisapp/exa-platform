@@ -416,8 +416,8 @@ Nathan`,
       setEmailBody(t.body);
       setEmailCtaUrl(t.ctaUrl);
       setEmailCtaText(t.ctaText);
-      setEmailFromAddress("partnerships@examodels.com");
-      setEmailFromName("EXA Models");
+      setEmailFromAddress("nathan@examodels.com");
+      setEmailFromName("EXA Travel");
       setEmailTemplate(t.template);
     } else {
       const t = designerEmailTemplate;
