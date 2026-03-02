@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef } from "react";
-import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -901,26 +900,6 @@ export default function FreeCompCardPage() {
         </div>
       </div>
 
-      {/* Join EXA CTA */}
-      <div className="mt-12">
-        <div className="rounded-2xl bg-gradient-to-r from-pink-500/10 via-violet-500/10 to-pink-500/10 border border-pink-500/20 p-8 text-center max-w-2xl mx-auto">
-          <div className="inline-flex items-center gap-2 bg-pink-500/15 border border-pink-500/25 rounded-full px-3 py-1 mb-4">
-            <span className="text-xs font-semibold text-pink-400 uppercase tracking-wider">Miami Swim Week 2026</span>
-          </div>
-          <h3 className="text-2xl font-bold mb-2">Ready to walk the runway?</h3>
-          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-            Join EXA Models to apply for Miami Swim Week 2026, get discovered by brands, and access runway shows, travel trips, and campaigns worldwide.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button asChild className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 px-8">
-              <Link href="/signup">Join EXA Models — Free</Link>
-            </Button>
-            <Button asChild variant="outline" className="border-pink-500/30 hover:border-pink-500/50">
-              <Link href="/swimweek">View Miami Swim Week 2026</Link>
-            </Button>
-          </div>
-        </div>
-      </div>
 
       {/* Print order dialog */}
       <PrintOrderDialog
