@@ -43,6 +43,7 @@ interface CompCardPDFProps {
   photos: string[]; // base64 data URLs
   frontLogoUrl?: string; // base64 data URL
   nameColor?: string; // "#ffffff" (default) or "#000000"
+  nameFontScale?: number; // 0.5–1.5, default 1.0
   qrCodeUrl?: string; // base64 data URL of QR code
   contactInfo?: {
     email?: string;
@@ -217,7 +218,7 @@ function getNameLetterSpacing(name: string): number {
   return 1;
 }
 
-export default function CompCardPDF({ model, photos, frontLogoUrl, nameColor = "#ffffff", qrCodeUrl, contactInfo }: CompCardPDFProps) {
+export default function CompCardPDF({ model, photos, frontLogoUrl, nameColor = "#ffffff", nameFontScale = 1.0, qrCodeUrl, contactInfo }: CompCardPDFProps) {
   const firstName = model.first_name || "";
   const lastName = model.last_name || "";
   const fullName = [firstName, lastName].filter(Boolean).join(" ") || "Model";
@@ -266,7 +267,7 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, nameColor = "
             <View style={styles.frontNameContainer}>
               <Text style={{
                 ...styles.frontFirstName,
-                fontSize: getNameFontSize(firstName.toUpperCase()),
+                fontSize: Math.round(getNameFontSize(firstName.toUpperCase()) * nameFontScale),
                 letterSpacing: getNameLetterSpacing(firstName.toUpperCase()),
                 color: nameColor,
               }}>

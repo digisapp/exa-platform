@@ -85,11 +85,19 @@ export default function FreeCompCardPage() {
   // Logo variant: white, black, or none
   const [logoVariant, setLogoVariant] = useState<"white" | "black" | "none">("white");
 
+  // Name font scale (0.6–1.5, default 1.0)
+  const [nameFontScale, setNameFontScale] = useState(1.0);
+
   // Print order state
   const [printDialogOpen, setPrintDialogOpen] = useState(false);
 
   const logoSrc = logoVariant === "black" ? "/exa-models-logo-black.png" : logoVariant === "white" ? "/exa-models-logo-white.png" : null;
   const nameColor = logoVariant === "black" ? "#000000" : "#ffffff";
+
+  // Preview font size: fills the card, scales with name length + user slider
+  const previewNameFontPx = Math.round(
+    Math.min(68, Math.round(360 / Math.max(firstName.length, 1) / 0.62)) * nameFontScale
+  );
 
   // Build model data object from form
   const model = {
@@ -294,7 +302,7 @@ export default function FreeCompCardPage() {
       website: website || undefined,
     };
     const blob = await pdf(
-      CompCardPDF({ model, photos: photoBase64, frontLogoUrl: frontLogoBase64, nameColor, contactInfo })
+      CompCardPDF({ model, photos: photoBase64, frontLogoUrl: frontLogoBase64, nameColor, nameFontScale, contactInfo })
     ).toBlob();
     return new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
@@ -338,7 +346,7 @@ export default function FreeCompCardPage() {
       };
 
       const blob = await pdf(
-        CompCardPDF({ model, photos: photoBase64, frontLogoUrl: frontLogoBase64, nameColor, contactInfo })
+        CompCardPDF({ model, photos: photoBase64, frontLogoUrl: frontLogoBase64, nameColor, nameFontScale, contactInfo })
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
@@ -433,7 +441,8 @@ export default function FreeCompCardPage() {
           ]);
         }
         const nameLen = firstName.length;
-        const canvasFontSize = nameLen <= 4 ? 230 : nameLen <= 5 ? 205 : nameLen <= 6 ? 184 : nameLen <= 7 ? 162 : nameLen <= 8 ? 143 : nameLen <= 9 ? 127 : nameLen <= 10 ? 113 : nameLen <= 11 ? 100 : nameLen <= 12 ? 89 : 78;
+        const baseCanvasFontSize = nameLen <= 4 ? 230 : nameLen <= 5 ? 205 : nameLen <= 6 ? 184 : nameLen <= 7 ? 162 : nameLen <= 8 ? 143 : nameLen <= 9 ? 127 : nameLen <= 10 ? 113 : nameLen <= 11 ? 100 : nameLen <= 12 ? 89 : 78;
+        const canvasFontSize = Math.round(baseCanvasFontSize * nameFontScale);
         const canvasLetterSpacing = nameLen <= 6 ? 6 : nameLen <= 9 ? 4 : 2;
         fCtx.font = `900 ${canvasFontSize}px 'PoppinsBlack', sans-serif`;
         fCtx.fillStyle = nameColor;
@@ -804,6 +813,26 @@ export default function FreeCompCardPage() {
             </div>
           </div>
 
+          {/* Name size slider */}
+          <div className="flex items-center gap-3 mb-4">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">Name Size</span>
+            <input
+              type="range"
+              min="0.5"
+              max="1.5"
+              step="0.05"
+              value={nameFontScale}
+              onChange={(e) => setNameFontScale(Number(e.target.value))}
+              className="flex-1 accent-pink-500"
+            />
+            <button
+              onClick={() => setNameFontScale(1.0)}
+              className="text-xs text-zinc-500 hover:text-zinc-300 whitespace-nowrap"
+            >
+              Reset
+            </button>
+          </div>
+
           <div className="space-y-4">
             {/* Front Preview — draggable */}
             <div>
@@ -857,7 +886,7 @@ export default function FreeCompCardPage() {
                               className={`${poppinsBlack.className} uppercase leading-none whitespace-nowrap`}
                               style={{
                                 color: nameColor,
-                                fontSize: `clamp(1.5rem, ${Math.min(9, 60 / Math.max(firstName.length, 1))}vw, 4.5rem)`,
+                                fontSize: `${previewNameFontPx}px`,
                                 letterSpacing: firstName.length > 9 ? "0.02em" : "0.04em",
                               }}
                             >

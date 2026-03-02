@@ -83,6 +83,7 @@ export default function CompCardPage() {
   const [userEmail, setUserEmail] = useState("");
   const [printDialogOpen, setPrintDialogOpen] = useState(false);
   const [logoVariant, setLogoVariant] = useState<"white" | "black" | "none">("white");
+  const [nameFontScale, setNameFontScale] = useState(1.0);
 
   // Hero photo repositioning (object-position %) and zoom
   const [heroPos, setHeroPos] = useState({ x: 50, y: 50 });
@@ -284,6 +285,9 @@ export default function CompCardPage() {
 
   const logoSrc = logoVariant === "black" ? "/exa-models-logo-black.png" : logoVariant === "white" ? "/exa-models-logo-white.png" : null;
   const nameColor = logoVariant === "black" ? "#000000" : "#ffffff";
+  const previewNameFontPx = model?.first_name
+    ? Math.round(Math.min(68, Math.round(360 / Math.max(model.first_name.length, 1) / 0.62)) * nameFontScale)
+    : 68;
 
   const handleExportPDF = async () => {
     if (!model || selectedIds.length === 0) {
@@ -331,7 +335,7 @@ export default function CompCardPage() {
       );
 
       const blob = await pdf(
-        CompCardPDF({ model, photos: photoBase64, frontLogoUrl: frontLogoBase64, nameColor, qrCodeUrl: qrCodeBase64 })
+        CompCardPDF({ model, photos: photoBase64, frontLogoUrl: frontLogoBase64, nameColor, nameFontScale, qrCodeUrl: qrCodeBase64 })
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
@@ -490,7 +494,8 @@ export default function CompCardPage() {
           ]);
         }
         const nameLen = model.first_name.length;
-        const canvasFontSize = nameLen <= 4 ? 230 : nameLen <= 5 ? 205 : nameLen <= 6 ? 184 : nameLen <= 7 ? 162 : nameLen <= 8 ? 143 : nameLen <= 9 ? 127 : nameLen <= 10 ? 113 : nameLen <= 11 ? 100 : nameLen <= 12 ? 89 : 78;
+        const baseCanvasFontSize = nameLen <= 4 ? 230 : nameLen <= 5 ? 205 : nameLen <= 6 ? 184 : nameLen <= 7 ? 162 : nameLen <= 8 ? 143 : nameLen <= 9 ? 127 : nameLen <= 10 ? 113 : nameLen <= 11 ? 100 : nameLen <= 12 ? 89 : 78;
+        const canvasFontSize = Math.round(baseCanvasFontSize * nameFontScale);
         const canvasLetterSpacing = nameLen <= 6 ? 6 : nameLen <= 9 ? 4 : 2;
         fCtx.font = `900 ${canvasFontSize}px 'PoppinsBlack', sans-serif`;
         fCtx.fillStyle = nameColor;
@@ -969,6 +974,26 @@ export default function CompCardPage() {
             </div>
           </div>
 
+          {/* Name size slider */}
+          <div className="flex items-center gap-3 mb-4">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">Name Size</span>
+            <input
+              type="range"
+              min="0.5"
+              max="1.5"
+              step="0.05"
+              value={nameFontScale}
+              onChange={(e) => setNameFontScale(Number(e.target.value))}
+              className="flex-1 accent-pink-500"
+            />
+            <button
+              onClick={() => setNameFontScale(1.0)}
+              className="text-xs text-zinc-500 hover:text-zinc-300 whitespace-nowrap"
+            >
+              Reset
+            </button>
+          </div>
+
           <div className="space-y-4">
             {/* ── FRONT PREVIEW ── */}
             <div>
@@ -1019,7 +1044,7 @@ export default function CompCardPage() {
                               className={`${poppinsBlack.className} uppercase leading-none whitespace-nowrap`}
                               style={{
                                 color: nameColor,
-                                fontSize: `clamp(1.5rem, ${Math.min(9, 60 / Math.max(model.first_name.length, 1))}vw, 4.5rem)`,
+                                fontSize: `${previewNameFontPx}px`,
                                 letterSpacing: model.first_name.length > 9 ? "0.02em" : "0.04em",
                               }}
                             >
