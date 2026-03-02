@@ -160,9 +160,14 @@ export default async function TravelPage() {
         {/* ═══════════════════════════════════════════ */}
         <section className="py-10 md:py-14">
           <div className="container px-4 md:px-16">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl md:text-3xl font-bold mb-2">EXA Travel in Action</h2>
-              <p className="text-muted-foreground">Behind-the-scenes from our recent partnership shoots</p>
+            <div className="text-center mb-10 max-w-2xl mx-auto">
+              <h2 className="text-2xl md:text-3xl font-bold mb-4">Travel the World</h2>
+              <p className="text-muted-foreground leading-relaxed mb-3">
+                EXA Travel is producing content and live streams at different hotels, resorts, villas, and destinations around the world. Each trip brings together a small group of models to travel, create content, and experience it all together.
+              </p>
+              <p className="text-muted-foreground leading-relaxed">
+                From beach resorts in the Caribbean to luxury hotels in Bali, Mykonos, and beyond — every trip is a new destination, a new experience, and a new set of content opportunities. You book your own flight. We handle everything else.
+              </p>
             </div>
             <div className="grid md:grid-cols-2 gap-4 md:gap-6 max-w-2xl mx-auto">
               <div className="rounded-2xl overflow-hidden bg-black relative group">
@@ -262,18 +267,6 @@ export default async function TravelPage() {
             {/* No Trips */}
             {(!travelGigs || travelGigs.length === 0) && (
               <div className="max-w-2xl mx-auto">
-                {/* Description bio */}
-                <div className="text-center mb-10">
-                  <h3 className="text-2xl font-semibold mb-4">
-                    Travel the World
-                  </h3>
-                  <p className="text-muted-foreground leading-relaxed mb-3">
-                    EXA Travel is producing content and live streams at different hotels, resorts, villas, and destinations around the world. Each trip brings together a small group of models to travel, create content, and experience it all together.
-                  </p>
-                  <p className="text-muted-foreground leading-relaxed">
-                    From beach resorts in the Caribbean to luxury hotels in Bali, Mykonos, and beyond — every trip is a new destination, a new experience, and a new set of content opportunities. You book your own flight. We handle everything else.
-                  </p>
-                </div>
 
 <div className="text-center">
                   <p className="text-sm text-muted-foreground mb-4">
