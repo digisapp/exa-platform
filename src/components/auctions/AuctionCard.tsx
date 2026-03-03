@@ -115,57 +115,16 @@ export function AuctionCard({ auction, isWatching, onAuctionEnd }: AuctionCardPr
             </div>
           </div>
 
-          {/* Hover Overlay with Full Details */}
-          <div className="absolute inset-0 bg-black/85 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-4">
-            <div className="space-y-3">
-              <h3 className="font-bold text-white text-xl">{auction.title}</h3>
-
-              {auction.description && (
-                <p className="text-sm text-white/80 line-clamp-3">
-                  {auction.description}
-                </p>
-              )}
-
-              <div className="space-y-2 text-sm">
-                {/* Current Bid */}
-                <div className="flex items-center gap-2 text-white/90">
-                  <Coins className="h-4 w-4 text-amber-400" />
-                  <span className="font-semibold">{auction.current_bid ? "Current Bid:" : "Starting Price:"}</span>
-                  <span>{formatCoins(currentPrice)} coins ({formatUsd(usdPrice)})</span>
-                </div>
-
-                {/* Bid Count */}
-                <div className="flex items-center gap-2 text-white/90">
-                  <Gavel className="h-4 w-4 text-pink-400" />
-                  {auction.bid_count === 0
-                    ? "No bids yet"
-                    : `${auction.bid_count} bid${auction.bid_count === 1 ? "" : "s"}`}
-                </div>
-
-                {/* Buy Now Price */}
-                {auction.buy_now_price && !hasEnded && (
-                  <div className="flex items-center gap-2 text-white/90">
-                    <Zap className="h-4 w-4 text-amber-400" />
-                    <span>Buy Now: {formatCoins(auction.buy_now_price)} coins</span>
-                  </div>
-                )}
-
-                {/* Time Left */}
-                {!hasEnded && (
-                  <div className="pt-2">
-                    <CountdownTimer endsAt={auction.ends_at} onEnd={onAuctionEnd} />
-                  </div>
-                )}
-              </div>
-
-              {/* Deliverables Preview */}
-              {auction.deliverables && (
-                <div className="pt-2 border-t border-white/20">
-                  <p className="text-xs text-white/60 mb-1">What you&apos;ll get:</p>
-                  <p className="text-sm text-white/90 line-clamp-2">{auction.deliverables}</p>
-                </div>
-              )}
-            </div>
+          {/* Hover Overlay */}
+          <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-4">
+            {auction.description && (
+              <p className="text-sm text-white/90 line-clamp-2 mb-3">
+                {auction.description}
+              </p>
+            )}
+            <span className="text-xs font-semibold text-white/60 tracking-wide uppercase">
+              Tap to view →
+            </span>
           </div>
         </div>
       </div>
