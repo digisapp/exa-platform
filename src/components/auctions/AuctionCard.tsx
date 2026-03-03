@@ -116,13 +116,13 @@ export function AuctionCard({ auction, isWatching, onAuctionEnd }: AuctionCardPr
           </div>
 
           {/* Hover Overlay */}
-          <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-4">
+          <div className="absolute inset-0 bg-black/85 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-4">
             {auction.description && (
-              <p className="text-sm text-white/90 line-clamp-2 mb-3">
+              <p className="text-sm text-white line-clamp-2 mb-3">
                 {auction.description}
               </p>
             )}
-            <span className="text-xs font-semibold text-white/60 tracking-wide uppercase">
+            <span className="text-xs font-semibold text-white/80 tracking-wide uppercase">
               Tap to view →
             </span>
           </div>

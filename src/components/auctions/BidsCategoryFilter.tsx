@@ -49,17 +49,17 @@ export function BidsCategoryFilter({ auctions, watchedIds }: BidsCategoryFilterP
                 <Link
                   key={auction.id}
                   href={`/bids/${auction.id}`}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-zinc-800/60 hover:bg-zinc-800 transition-colors"
+                  className="flex items-center gap-4 p-4 rounded-2xl bg-zinc-800/60 hover:bg-zinc-800 transition-colors"
                 >
-                  <Avatar className="h-10 w-10 shrink-0 border border-zinc-700">
+                  <Avatar className="h-16 w-16 shrink-0 border border-zinc-700">
                     <AvatarImage src={auction.model?.profile_image_url || undefined} />
-                    <AvatarFallback className="bg-gradient-to-br from-pink-500 to-violet-500 text-white text-sm">
+                    <AvatarFallback className="bg-gradient-to-br from-pink-500 to-violet-500 text-white text-base">
                       {auction.model?.display_name?.[0] || "?"}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white truncate">{auction.title}</p>
-                    <p className="text-xs text-zinc-400 truncate">
+                    <p className="text-base font-semibold text-white truncate">{auction.title}</p>
+                    <p className="text-sm text-zinc-400 truncate mt-0.5">
                       @{auction.model?.slug || auction.model?.display_name}
                       {auction.bid_count > 0 && (
                         <span className="text-zinc-600"> · {auction.bid_count} bid{auction.bid_count !== 1 ? "s" : ""}</span>
@@ -68,10 +68,10 @@ export function BidsCategoryFilter({ auctions, watchedIds }: BidsCategoryFilterP
                   </div>
                   <div className="text-right shrink-0">
                     <div className="flex items-center gap-1 text-amber-400 justify-end">
-                      <Coins className="h-3.5 w-3.5" />
-                      <span className="text-sm font-bold">{formatCoins(price)}</span>
+                      <Coins className="h-4 w-4" />
+                      <span className="text-base font-bold">{formatCoins(price)}</span>
                     </div>
-                    <p className="text-xs text-zinc-500">({formatUsd(coinsToFanUsd(price))})</p>
+                    <p className="text-xs text-zinc-500 mt-0.5">({formatUsd(coinsToFanUsd(price))})</p>
                   </div>
                 </Link>
               );
