@@ -18,9 +18,18 @@ export function BidsCategoryFilter({ auctions, watchedIds }: BidsCategoryFilterP
 
   if (auctions.length === 0) {
     return (
-      <div className="text-center py-20 space-y-4">
-        <p className="text-muted-foreground text-lg">No active bids right now.</p>
-        <p className="text-zinc-600 text-sm">Check back soon — new listings go live daily.</p>
+      <div className="text-center py-24 space-y-4">
+        <p className="text-5xl">🔨</p>
+        <p className="text-white font-semibold text-lg">No active listings yet</p>
+        <p className="text-zinc-500 text-sm max-w-xs mx-auto leading-relaxed">
+          Be the first — models can create an auction for custom content, video calls, and more.
+        </p>
+        <Link
+          href="/dashboard/bids/new"
+          className="inline-block mt-2 text-sm font-semibold bg-gradient-to-r from-pink-500 to-violet-500 text-white px-5 py-2.5 rounded-xl hover:opacity-90 transition-opacity"
+        >
+          Create First Auction →
+        </Link>
       </div>
     );
   }
