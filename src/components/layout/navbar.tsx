@@ -352,7 +352,7 @@ export function Navbar({ user, actorType, unreadCount = 0 }: NavbarProps) {
                 <Link href="/signin">Sign In</Link>
               </Button>
               <Button asChild className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600">
-                <Link href="/signup">Join EXA</Link>
+                <Link href="/signup">Sign Up</Link>
               </Button>
             </div>
           )}
