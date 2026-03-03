@@ -177,7 +177,7 @@ export default function NewBidPage() {
     const checkAuth = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        router.push("/auth/login");
+        router.push("/signin?redirect=/dashboard/bids/new");
         return;
       }
 

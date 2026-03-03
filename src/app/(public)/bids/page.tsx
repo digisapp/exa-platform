@@ -4,8 +4,9 @@ import { Navbar } from "@/components/layout/navbar";
 import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 import { BidsCategoryFilter } from "@/components/auctions/BidsCategoryFilter";
 import { HowItWorksModal } from "@/components/auctions/HowItWorksModal";
-import Link from "next/link";
+import { CreateListingButton } from "@/components/auctions/CreateListingButton";
 import { Gavel, Zap } from "lucide-react";
+
 import type { AuctionWithModel } from "@/types/auctions";
 
 export const metadata: Metadata = {
@@ -176,12 +177,10 @@ export default async function BidsPage() {
           {/* How it works + Create a Listing */}
           <div className="flex items-center gap-4 mb-8">
             <HowItWorksModal isModel={isModel} />
-            <Link
-              href="/dashboard/bids/new"
+            <CreateListingButton
+              isLoggedIn={!!user}
               className="text-sm font-semibold bg-gradient-to-r from-pink-500 to-violet-500 text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity"
-            >
-              + Create a Listing
-            </Link>
+            />
           </div>
 
           {/* All listings */}
