@@ -28,7 +28,7 @@ export function BidsCategoryFilter({ auctions, watchedIds }: BidsCategoryFilterP
           href="/dashboard/bids/new"
           className="inline-block mt-2 text-sm font-semibold bg-gradient-to-r from-pink-500 to-violet-500 text-white px-5 py-2.5 rounded-xl hover:opacity-90 transition-opacity"
         >
-          Create First Auction →
+          Create a Listing →
         </Link>
       </div>
     );

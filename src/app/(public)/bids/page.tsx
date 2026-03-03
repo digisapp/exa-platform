@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Navbar } from "@/components/layout/navbar";
 import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 import { BidsCategoryFilter } from "@/components/auctions/BidsCategoryFilter";
+import { HowItWorksModal } from "@/components/auctions/HowItWorksModal";
 import Link from "next/link";
 import { Gavel, Zap } from "lucide-react";
 import type { AuctionWithModel } from "@/types/auctions";
@@ -125,43 +126,6 @@ export default async function BidsPage() {
           actorType={actorType}
         />
 
-        {/* Stats Bar */}
-        {formattedAuctions.length > 0 && (
-          <div className="sticky top-16 z-10 border-b border-zinc-800/60 bg-zinc-950/90 backdrop-blur-sm">
-            <div className="container px-8 md:px-16 py-2.5 flex items-center gap-3 flex-wrap text-sm">
-              <div className="flex items-center gap-1.5">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
-                </span>
-                <span className="font-bold text-white tracking-wide">LIVE</span>
-              </div>
-              <span className="text-zinc-600">·</span>
-              <span className="text-zinc-400">
-                <span className="text-white font-semibold">{formattedAuctions.length}</span> active {formattedAuctions.length === 1 ? "listing" : "listings"}
-              </span>
-              {endingThisHour.length > 0 && (
-                <>
-                  <span className="text-zinc-600">·</span>
-                  <span className="flex items-center gap-1 text-amber-400">
-                    <Zap className="h-3.5 w-3.5" />
-                    <span className="font-semibold">{endingThisHour.length}</span>
-                    <span>ending this hour</span>
-                  </span>
-                </>
-              )}
-              {totalUsd > 0 && (
-                <>
-                  <span className="text-zinc-600">·</span>
-                  <span className="text-zinc-400">
-                    <span className="text-white font-semibold">${totalUsd.toLocaleString()}</span> in play
-                  </span>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
         <main className="container px-8 md:px-16 py-8">
           {/* Header */}
           <div className="mb-8">
@@ -171,60 +135,53 @@ export default async function BidsPage() {
               </div>
               <h1 className="text-3xl font-bold">Bids</h1>
             </div>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground mb-3">
               Bid on exclusive experiences — or list yours as a model
             </p>
+            {formattedAuctions.length > 0 && (
+              <div className="flex items-center gap-3 flex-wrap text-sm">
+                <div className="flex items-center gap-1.5">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+                  </span>
+                  <span className="font-bold text-white tracking-wide">LIVE</span>
+                </div>
+                <span className="text-zinc-600">·</span>
+                <span className="text-zinc-400">
+                  <span className="text-white font-semibold">{formattedAuctions.length}</span> active {formattedAuctions.length === 1 ? "listing" : "listings"}
+                </span>
+                {endingThisHour.length > 0 && (
+                  <>
+                    <span className="text-zinc-600">·</span>
+                    <span className="flex items-center gap-1 text-amber-400">
+                      <Zap className="h-3.5 w-3.5" />
+                      <span className="font-semibold">{endingThisHour.length}</span>
+                      <span>ending this hour</span>
+                    </span>
+                  </>
+                )}
+                {totalUsd > 0 && (
+                  <>
+                    <span className="text-zinc-600">·</span>
+                    <span className="text-zinc-400">
+                      <span className="text-white font-semibold">${totalUsd.toLocaleString()}</span> in play
+                    </span>
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* Audience panels */}
-          <div className="grid sm:grid-cols-2 gap-3 mb-8">
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4">
-              <p className="text-sm font-semibold text-white mb-1">For Fans</p>
-              <p className="text-xs text-zinc-400 leading-relaxed">
-                Browse live listings, place a bid, or buy now instantly. Win and connect directly with the model for custom content, video calls, and exclusive experiences.
-              </p>
-            </div>
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 flex items-center justify-between gap-4">
-              {isModel ? (
-                <>
-                  <div>
-                    <p className="text-sm font-semibold text-white mb-1">Your auctions</p>
-                    <p className="text-xs text-zinc-400 leading-relaxed">
-                      Create listings for custom content, video calls, meet &amp; greets, and more.
-                    </p>
-                  </div>
-                  <div className="flex flex-col gap-2 shrink-0">
-                    <Link
-                      href="/dashboard/bids/new"
-                      className="text-xs font-semibold bg-gradient-to-r from-pink-500 to-violet-500 text-white px-3 py-2 rounded-lg whitespace-nowrap hover:opacity-90 transition-opacity text-center"
-                    >
-                      + New Auction
-                    </Link>
-                    <Link
-                      href="/dashboard/bids/manage"
-                      className="text-xs font-semibold bg-zinc-700 text-zinc-200 px-3 py-2 rounded-lg whitespace-nowrap hover:bg-zinc-600 transition-colors text-center"
-                    >
-                      Manage →
-                    </Link>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div>
-                    <p className="text-sm font-semibold text-white mb-1">Are you a model?</p>
-                    <p className="text-xs text-zinc-400 leading-relaxed">
-                      List your services — custom content, video calls, meet &amp; greets — and let fans bid or buy now.
-                    </p>
-                  </div>
-                  <Link
-                    href="/dashboard/bids/new"
-                    className="shrink-0 text-xs font-semibold bg-gradient-to-r from-pink-500 to-violet-500 text-white px-3 py-2 rounded-lg whitespace-nowrap hover:opacity-90 transition-opacity"
-                  >
-                    Create Auction →
-                  </Link>
-                </>
-              )}
-            </div>
+          {/* How it works + Create a Listing */}
+          <div className="flex items-center gap-4 mb-8">
+            <HowItWorksModal isModel={isModel} />
+            <Link
+              href="/dashboard/bids/new"
+              className="text-sm font-semibold bg-gradient-to-r from-pink-500 to-violet-500 text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity"
+            >
+              + Create a Listing
+            </Link>
           </div>
 
           {/* All listings */}
