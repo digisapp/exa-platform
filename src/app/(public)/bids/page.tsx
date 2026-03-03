@@ -4,6 +4,7 @@ import { Navbar } from "@/components/layout/navbar";
 import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 import { AuctionCard } from "@/components/auctions/AuctionCard";
 import { BidsCategoryFilter } from "@/components/auctions/BidsCategoryFilter";
+import Link from "next/link";
 import { Gavel, Zap } from "lucide-react";
 import type { AuctionWithModel } from "@/types/auctions";
 
@@ -170,6 +171,30 @@ export default async function BidsPage() {
             <p className="text-muted-foreground">
               Bid on content, deliverables, services &amp; experiences from your favorite models
             </p>
+          </div>
+
+          {/* How it works */}
+          <div className="grid sm:grid-cols-2 gap-3 mb-8">
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4">
+              <p className="text-sm font-semibold text-white mb-1">For Fans</p>
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                Browse live listings, place a bid, or buy now instantly. Win and connect directly with the model for custom content, video calls, and exclusive experiences.
+              </p>
+            </div>
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold text-white mb-1">Are you a model?</p>
+                <p className="text-xs text-zinc-400 leading-relaxed">
+                  List your services — custom content, video calls, meet &amp; greets — and let fans bid or buy now.
+                </p>
+              </div>
+              <Link
+                href="/dashboard/bids/new"
+                className="shrink-0 text-xs font-semibold bg-gradient-to-r from-pink-500 to-violet-500 text-white px-3 py-2 rounded-lg whitespace-nowrap hover:opacity-90 transition-opacity"
+              >
+                Create Auction →
+              </Link>
+            </div>
           </div>
 
           {/* Ending This Hour Strip */}
