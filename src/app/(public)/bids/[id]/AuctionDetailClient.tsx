@@ -245,7 +245,7 @@ export function AuctionDetailClient({
 
             </div>
 
-            {/* Bid Form */}
+            {/* Bid Form / CTA */}
             {isLoggedIn ? (
               isOwner ? (
                 <p className="text-center text-sm text-zinc-500 py-2">This is your listing</p>
@@ -261,6 +261,15 @@ export function AuctionDetailClient({
                   />
                 </div>
               )
+            ) : !hasEnded ? (
+              <div id="bid-section">
+                <button
+                  onClick={() => setSignInOpen(true)}
+                  className="w-full py-4 rounded-xl font-semibold text-white bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 transition-all shadow-lg shadow-pink-500/20 text-base"
+                >
+                  Place a Bid
+                </button>
+              </div>
             ) : null}
 
             {/* Watchlist */}
