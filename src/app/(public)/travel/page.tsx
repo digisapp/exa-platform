@@ -166,7 +166,7 @@ export default async function TravelPage() {
                 EXA Travel is producing content and live streams at different hotels, resorts, villas, and destinations around the world. Each trip brings together a small group of models to travel, create content, and experience it all together.
               </p>
               <p className="text-muted-foreground leading-relaxed">
-                From beach resorts in the Caribbean to luxury hotels in Bali, Mykonos, and beyond — every trip is a new destination, a new experience, and a new set of content opportunities. You book your own flight. We handle everything else.
+                From beach resorts in the Caribbean to luxury hotels in Bali, Mykonos, and beyond — every trip is a new destination, a new experience, and a new set of content opportunities.
               </p>
             </div>
             <div className="grid md:grid-cols-2 gap-4 md:gap-6 max-w-2xl mx-auto">
@@ -425,7 +425,7 @@ export default async function TravelPage() {
                   Browse our upcoming destinations and pick the trip that works
                   for you. Apply through the trip page, and once accepted
                   you&apos;ll receive payment details. The trip fee covers
-                  the villa and all meals. You book your own flight.
+                  the villa and all meals.
                 </AccordionContent>
               </AccordionItem>
 
