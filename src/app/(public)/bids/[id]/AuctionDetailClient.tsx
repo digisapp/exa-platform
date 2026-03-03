@@ -126,45 +126,46 @@ export function AuctionDetailClient({
         </div>
       )}
 
+      {/* Model + Title — always at top on all screen sizes */}
+      <div className="flex items-start gap-4 mb-6">
+        {auction.model && (
+          <Link href={`/${auction.model.slug}`} className="shrink-0 mt-1">
+            <Avatar className="h-12 w-12 border-2 border-pink-500">
+              <AvatarImage src={auction.model.profile_image_url || undefined} />
+              <AvatarFallback className="bg-gradient-to-br from-pink-500 to-violet-500 text-white">
+                {auction.model.display_name?.[0] || "?"}
+              </AvatarFallback>
+            </Avatar>
+          </Link>
+        )}
+        <div className="flex-1 min-w-0">
+          {auction.model && (
+            <Link
+              href={`/${auction.model.slug}`}
+              className="text-sm text-zinc-400 hover:text-zinc-200 transition-colors mb-0.5 inline-block"
+            >
+              @{auction.model.slug}
+            </Link>
+          )}
+          <h1 className="text-2xl md:text-3xl font-bold leading-tight">{auction.title}</h1>
+          {hasEnded && (
+            <span className={`mt-2 inline-block text-xs font-semibold px-2.5 py-1 rounded-full ${
+              auction.status === "sold"
+                ? "bg-green-500/15 text-green-400 border border-green-500/30"
+                : auction.status === "cancelled"
+                ? "bg-red-500/15 text-red-400 border border-red-500/30"
+                : "bg-zinc-700/60 text-zinc-300 border border-zinc-600/40"
+            }`}>
+              {auction.status === "sold" ? "Sold" : auction.status === "no_sale" ? "No Sale" : auction.status === "cancelled" ? "Cancelled" : "Ended"}
+            </span>
+          )}
+        </div>
+        <ShareButton title={auction.title} className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-pink-500 to-violet-500 hover:opacity-90 transition-opacity" />
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column — shown 2nd on mobile, 1st on desktop */}
         <div className="lg:col-span-2 space-y-6 order-2 lg:order-1">
-          {/* Model + Title */}
-          <div className="flex items-start gap-4">
-            {auction.model && (
-              <Link href={`/${auction.model.slug}`} className="shrink-0 mt-1">
-                <Avatar className="h-12 w-12 border-2 border-pink-500">
-                  <AvatarImage src={auction.model.profile_image_url || undefined} />
-                  <AvatarFallback className="bg-gradient-to-br from-pink-500 to-violet-500 text-white">
-                    {auction.model.display_name?.[0] || "?"}
-                  </AvatarFallback>
-                </Avatar>
-              </Link>
-            )}
-            <div className="flex-1 min-w-0">
-              {auction.model && (
-                <Link
-                  href={`/${auction.model.slug}`}
-                  className="text-sm text-zinc-400 hover:text-zinc-200 transition-colors mb-0.5 inline-block"
-                >
-                  @{auction.model.slug}
-                </Link>
-              )}
-              <h1 className="text-2xl md:text-3xl font-bold leading-tight">{auction.title}</h1>
-              {hasEnded && (
-                <span className={`mt-2 inline-block text-xs font-semibold px-2.5 py-1 rounded-full ${
-                  auction.status === "sold"
-                    ? "bg-green-500/15 text-green-400 border border-green-500/30"
-                    : auction.status === "cancelled"
-                    ? "bg-red-500/15 text-red-400 border border-red-500/30"
-                    : "bg-zinc-700/60 text-zinc-300 border border-zinc-600/40"
-                }`}>
-                  {auction.status === "sold" ? "Sold" : auction.status === "no_sale" ? "No Sale" : auction.status === "cancelled" ? "Cancelled" : "Ended"}
-                </span>
-              )}
-            </div>
-            <ShareButton title={auction.title} className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-pink-500 to-violet-500 hover:opacity-90 transition-opacity" />
-          </div>
 
           {/* About */}
           {auction.description && (
@@ -194,9 +195,10 @@ export function AuctionDetailClient({
           <ErrorBoundary>
           <div className="lg:sticky lg:top-24 space-y-4">
 
-            {/* Combined price + countdown card */}
-            <div className="glass-card p-5 rounded-2xl space-y-4" aria-live="polite" aria-atomic="true">
-              {/* Meta row */}
+            {/* Single merged card: price + countdown + bid input + button */}
+            <div className="glass-card p-5 rounded-2xl space-y-5" aria-live="polite" aria-atomic="true">
+
+              {/* Top row: Live + watching */}
               <div className="flex items-center justify-between text-xs">
                 {!hasEnded ? (
                   <div className="flex items-center gap-1.5 text-green-400">
@@ -215,62 +217,61 @@ export function AuctionDetailClient({
                 )}
               </div>
 
-              {/* Countdown */}
-              {!hasEnded && (
-                <div className="text-center pb-1">
-                  <p className="text-xs text-zinc-500 mb-1.5 flex items-center justify-center gap-1.5">
-                    <Clock className="h-3.5 w-3.5" />
-                    Ends in
+              {/* Current price + countdown side by side */}
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-xs text-zinc-500 mb-1">
+                    {auction.current_bid ? "Current Bid" : "Starting Price"}
+                    {bids.length > 0 && <span className="ml-1">· {bids.length} {bids.length === 1 ? "bid" : "bids"}</span>}
                   </p>
-                  <CountdownTimer endsAt={auction.ends_at} onEnd={() => setLocalEnded(true)} />
-                </div>
-              )}
-
-              {/* Price */}
-              <div className="pt-1 border-t border-zinc-700/50">
-                <p className="text-xs text-zinc-500 mb-1.5">
-                  {auction.current_bid ? "Current Bid" : "Starting Price"}
-                  {bids.length > 0 && (
-                    <span className="ml-1.5">· {bids.length} {bids.length === 1 ? "bid" : "bids"}</span>
-                  )}
-                </p>
-                <div className="flex items-center gap-2.5">
-                  <Coins className="h-7 w-7 text-amber-400 shrink-0" />
-                  <div>
-                    <p className="text-3xl font-bold leading-none">{formatCoins(currentPrice)}</p>
-                    <p className="text-sm text-zinc-500 mt-0.5">{formatUsd(coinsToFanUsd(currentPrice))}</p>
+                  <div className="flex items-center gap-2">
+                    <Coins className="h-5 w-5 text-amber-400 shrink-0" />
+                    <span className="text-2xl font-bold leading-none">{formatCoins(currentPrice)}</span>
                   </div>
+                  <p className="text-sm text-zinc-500 mt-0.5">{formatUsd(coinsToFanUsd(currentPrice))}</p>
                 </div>
+                {!hasEnded && (
+                  <div className="text-right shrink-0">
+                    <p className="text-xs text-zinc-500 mb-1 flex items-center justify-end gap-1">
+                      <Clock className="h-3 w-3" />
+                      Ends in
+                    </p>
+                    <CountdownTimer endsAt={auction.ends_at} onEnd={() => setLocalEnded(true)} compact />
+                  </div>
+                )}
               </div>
+
+              {/* Divider */}
+              <div className="border-t border-zinc-700/60" />
+
+              {/* Bid input + button */}
+              {isLoggedIn ? (
+                isOwner ? (
+                  <p className="text-center text-sm text-zinc-500 py-1">This is your listing</p>
+                ) : (
+                  <div id="bid-form">
+                    <BidForm
+                      auction={auction}
+                      disabled={hasEnded}
+                      isOwner={isOwner}
+                      myEscrowAmount={myEscrowAmount}
+                      onBidPlaced={() => refreshBids()}
+                      onBuyNow={() => refreshBids()}
+                    />
+                  </div>
+                )
+              ) : !hasEnded ? (
+                <div id="bid-section">
+                  <button
+                    onClick={() => setSignInOpen(true)}
+                    className="w-full py-4 rounded-xl font-semibold text-white bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 transition-all text-base"
+                  >
+                    Place a Bid
+                  </button>
+                </div>
+              ) : null}
 
             </div>
-
-            {/* Bid Form / CTA */}
-            {isLoggedIn ? (
-              isOwner ? (
-                <p className="text-center text-sm text-zinc-500 py-2">This is your listing</p>
-              ) : (
-                <div id="bid-form">
-                  <BidForm
-                    auction={auction}
-                    disabled={hasEnded}
-                    isOwner={isOwner}
-                    myEscrowAmount={myEscrowAmount}
-                    onBidPlaced={() => refreshBids()}
-                    onBuyNow={() => refreshBids()}
-                  />
-                </div>
-              )
-            ) : !hasEnded ? (
-              <div id="bid-section">
-                <button
-                  onClick={() => setSignInOpen(true)}
-                  className="w-full py-4 rounded-xl font-semibold text-white bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 transition-all shadow-lg shadow-pink-500/20 text-base"
-                >
-                  Place a Bid
-                </button>
-              </div>
-            ) : null}
 
             {/* Watchlist */}
             {isLoggedIn && !isOwner && (

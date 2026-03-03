@@ -129,11 +129,11 @@ export function BidForm({
 
   if (hasEnded) {
     return (
-      <div className="glass-card p-6 rounded-xl text-center">
-        <p className="text-zinc-400">This bid has ended</p>
+      <div className="text-center py-2">
+        <p className="text-zinc-400">This listing has ended</p>
         {auction.winner_id && (
-          <p className="text-sm text-zinc-500 mt-2">
-            Final price: {formatCoins(auction.current_bid || 0)} coins ({formatUsd(coinsToFanUsd(auction.current_bid || 0))})
+          <p className="text-sm text-zinc-500 mt-1">
+            Final price: {formatUsd(coinsToFanUsd(auction.current_bid || 0))}
           </p>
         )}
       </div>
@@ -141,15 +141,11 @@ export function BidForm({
   }
 
   if (isOwner) {
-    return (
-      <div className="glass-card p-6 rounded-xl text-center">
-        <p className="text-zinc-400">This is your listing</p>
-      </div>
-    );
+    return null;
   }
 
   return (
-    <div className="glass-card p-6 rounded-xl space-y-6">
+    <div className="space-y-6">
       {/* Bid Input */}
       <div className="space-y-4">
         <div>
