@@ -7,27 +7,12 @@ import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import {
   MapPin,
   Calendar,
   Users,
   DollarSign,
   Plane,
-  Globe,
-  Palmtree,
-  Camera,
   ArrowRight,
-  Home,
-  UtensilsCrossed,
-  Wifi,
-  Heart,
-  CheckCircle,
-  XCircle,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -264,259 +249,34 @@ export default async function TravelPage() {
               </div>
             )}
 
-            {/* No Trips */}
-            {(!travelGigs || travelGigs.length === 0) && (
-              <div className="max-w-2xl mx-auto">
-
-<div className="text-center">
-                  <p className="text-sm text-muted-foreground mb-4">
-                    We&apos;re scouting the next location. Apply as a model to get notified when bookings open.
-                  </p>
-                  <Button className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600" asChild>
-                    <Link href="/apply">Apply as a Model</Link>
-                  </Button>
-                </div>
-              </div>
-            )}
           </div>
         </section>
 
         {/* ═══════════════════════════════════════════ */}
-        {/* WHAT'S INCLUDED / WHAT YOU'LL NEED */}
+        {/* BOTTOM CTA */}
         {/* ═══════════════════════════════════════════ */}
-        <section className="py-12 md:py-20 bg-muted/30">
+        <section className="py-16 md:py-24">
           <div className="container px-6 md:px-16">
-            <div className="text-center mb-10 md:mb-14">
-              <h2 className="text-3xl md:text-4xl font-bold mb-3">
-                What&apos;s Included
-              </h2>
-              <p className="text-muted-foreground max-w-xl mx-auto">
-                Here&apos;s what&apos;s covered and what you&apos;ll need to bring
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-              {/* Included */}
-              <div>
-                <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  Included
-                </h3>
-                <div className="space-y-3">
-                  {[
-                    {
-                      icon: Home,
-                      title: "Luxury Villa",
-                      desc: "Shared villa with pool, content areas, and stunning views",
-                    },
-                    {
-                      icon: UtensilsCrossed,
-                      title: "All Meals",
-                      desc: "Breakfast, lunch, and dinner — local cuisine and group dining",
-                    },
-                    {
-                      icon: Wifi,
-                      title: "WiFi & Workspace",
-                      desc: "High-speed internet so you can edit and post content in real-time",
-                    },
-                    {
-                      icon: Camera,
-                      title: "Content Opportunities",
-                      desc: "Group and solo shoot setups at the villa and curated local spots",
-                    },
-                    {
-                      icon: Users,
-                      title: "Community & Networking",
-                      desc: "Connect with 4 other models, share audiences, and build lasting friendships",
-                    },
-                    {
-                      icon: Heart,
-                      title: "Trip Coordination",
-                      desc: "Everything organized — villa, meals, activities, and local guides",
-                    },
-                  ].map((item) => (
-                    <div
-                      key={item.title}
-                      className="flex gap-3 p-3 rounded-lg bg-green-500/5 border border-green-500/10"
-                    >
-                      <div className="h-9 w-9 shrink-0 rounded-lg bg-green-500/10 flex items-center justify-center">
-                        <item.icon className="h-4 w-4 text-green-500" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm">{item.title}</p>
-                        <p className="text-muted-foreground text-xs">
-                          {item.desc}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Not Included */}
-              <div>
-                <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                  <XCircle className="h-5 w-5 text-muted-foreground" />
-                  What You&apos;ll Need
-                </h3>
-                <div className="space-y-3">
-                  {[
-                    {
-                      icon: Plane,
-                      title: "Your Flight",
-                      desc: "Book your own airline ticket to the destination. We'll share the best flight options and airport details.",
-                    },
-                    {
-                      icon: Globe,
-                      title: "Travel Documents",
-                      desc: "Valid passport and any visas required for the destination country.",
-                    },
-                    {
-                      icon: Camera,
-                      title: "Your Camera/Phone",
-                      desc: "Bring your content creation gear — phone, camera, tripod, whatever you shoot with.",
-                    },
-                  ].map((item) => (
-                    <div
-                      key={item.title}
-                      className="flex gap-3 p-3 rounded-lg bg-muted/50 border border-border"
-                    >
-                      <div className="h-9 w-9 shrink-0 rounded-lg bg-muted flex items-center justify-center">
-                        <item.icon className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm">{item.title}</p>
-                        <p className="text-muted-foreground text-xs">
-                          {item.desc}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-              </div>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-lg mx-auto">
+              <Button
+                size="lg"
+                className="flex-1 h-14 text-base font-semibold bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
+                asChild
+              >
+                <Link href="/apply">Apply as a Model</Link>
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="flex-1 h-14 text-base font-semibold border-zinc-700 hover:bg-zinc-800"
+                asChild
+              >
+                <Link href="/signup">Apply as a Brand</Link>
+              </Button>
             </div>
           </div>
         </section>
 
-        {/* ═══════════════════════════════════════════ */}
-        {/* FAQ */}
-        {/* ═══════════════════════════════════════════ */}
-        <section className="py-12 md:py-20">
-          <div className="container px-6 md:px-16 max-w-3xl mx-auto">
-            <div className="text-center mb-10">
-              <h2 className="text-3xl md:text-4xl font-bold mb-3">
-                Frequently Asked Questions
-              </h2>
-              <p className="text-muted-foreground">
-                Everything you need to know about EXA Travel
-              </p>
-            </div>
-
-            <Accordion type="single" collapsible className="space-y-3">
-              <AccordionItem
-                value="how-it-works"
-                className="glass-card rounded-xl border px-5"
-              >
-                <AccordionTrigger className="text-left font-medium hover:no-underline">
-                  How does booking a trip work?
-                </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground">
-                  Browse our upcoming destinations and pick the trip that works
-                  for you. Apply through the trip page, and once accepted
-                  you&apos;ll receive payment details. The trip fee covers
-                  the villa and all meals.
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem
-                value="who-can-join"
-                className="glass-card rounded-xl border px-5"
-              >
-                <AccordionTrigger className="text-left font-medium hover:no-underline">
-                  Who can join EXA Travel trips?
-                </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground">
-                  EXA Travel is open to approved EXA models. If you&apos;re not
-                  yet on the platform, apply as a model first. We review
-                  applications to ensure a great group dynamic and experience
-                  for everyone.
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem
-                value="whats-included"
-                className="glass-card rounded-xl border px-5"
-              >
-                <AccordionTrigger className="text-left font-medium hover:no-underline">
-                  What does the trip fee cover?
-                </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground">
-                  The trip fee covers your stay at a luxury shared villa and
-                  all meals (breakfast, lunch, dinner). It also includes trip
-                  coordination, local guides, and organized activities. You are
-                  responsible for booking your own flight and any personal expenses.
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem
-                value="cancellation"
-                className="glass-card rounded-xl border px-5"
-              >
-                <AccordionTrigger className="text-left font-medium hover:no-underline">
-                  What&apos;s the cancellation policy?
-                </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground">
-                  Full refund if you cancel 30+ days before the trip. 50% refund
-                  for 15-29 days. No refund within 14 days of the trip start
-                  date, as the villa and meals are already committed. If we
-                  cancel a trip, you get a full refund.
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem
-                value="solo"
-                className="glass-card rounded-xl border px-5"
-              >
-                <AccordionTrigger className="text-left font-medium hover:no-underline">
-                  Can I come alone or do I need to bring a friend?
-                </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground">
-                  Most models come solo — that&apos;s the whole point! You&apos;ll
-                  meet 4 other models and leave with new friends. We add you to
-                  the trip group chat before departure so you can connect with
-                  your housemates beforehand.
-                </AccordionContent>
-              </AccordionItem>
-
-            </Accordion>
-          </div>
-        </section>
-
-        {/* ═══════════════════════════════════════════ */}
-        {/* CTA */}
-        {/* ═══════════════════════════════════════════ */}
-        <section className="py-16 md:py-24 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-pink-500/5 via-violet-500/10 to-pink-500/5" />
-          <div className="container relative px-6 md:px-16">
-            <div className="max-w-xl mx-auto rounded-2xl border border-pink-500/30 bg-gradient-to-br from-pink-500/5 to-violet-500/5 p-8 md:p-12 text-center">
-              <Palmtree className="h-12 w-12 mx-auto text-pink-400 mb-5" />
-              <h2 className="text-2xl md:text-3xl font-bold mb-3">Ready to EXA Travel?</h2>
-              {!user ? (
-                <Button variant="outline" asChild>
-                  <Link href="/signin?redirect=/travel">Sign In</Link>
-                </Button>
-              ) : (
-                <Button className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600" asChild>
-                  <Link href="#trips">
-                    View Available Trips
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </Link>
-                </Button>
-              )}
-            </div>
-          </div>
-        </section>
       </div>
     </CoinBalanceProvider>
   );
