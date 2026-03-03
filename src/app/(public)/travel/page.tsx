@@ -150,9 +150,20 @@ export default async function TravelPage() {
               <p className="text-muted-foreground leading-relaxed mb-3">
                 EXA Travel is producing content and live streams at different hotels, resorts, villas, and destinations around the world. Each trip brings together a small group of models to travel, create content, and experience it all together.
               </p>
-              <p className="text-muted-foreground leading-relaxed">
+              <p className="text-muted-foreground leading-relaxed mb-6">
                 From beach resorts in the Caribbean to luxury hotels in Bali, Mykonos, and beyond — every trip is a new destination, a new experience, and a new set of content opportunities.
               </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button
+                  className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 font-semibold"
+                  asChild
+                >
+                  <Link href="/apply">Apply as a Model</Link>
+                </Button>
+                <Button variant="outline" className="border-zinc-700 hover:bg-zinc-800 font-semibold" asChild>
+                  <Link href="/signup">Apply as a Brand</Link>
+                </Button>
+              </div>
             </div>
             <div className="grid md:grid-cols-2 gap-4 md:gap-6 max-w-2xl">
               <div className="rounded-2xl overflow-hidden bg-black relative group">
