@@ -137,7 +137,7 @@ export default async function BidsPage() {
               <h1 className="text-3xl font-bold">Bids</h1>
             </div>
             <p className="text-muted-foreground mb-3">
-              Bid on exclusive experiences — or list yours as a model
+              Bid on content, services, products &amp; experiences
             </p>
             {formattedAuctions.length > 0 && (
               <div className="flex items-center gap-3 flex-wrap text-sm">
