@@ -3,9 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { Navbar } from "@/components/layout/navbar";
 import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 import { BidsCategoryFilter } from "@/components/auctions/BidsCategoryFilter";
-import { HowItWorksModal } from "@/components/auctions/HowItWorksModal";
 import { CreateListingButton } from "@/components/auctions/CreateListingButton";
-import { Gavel, Zap } from "lucide-react";
+import { Zap } from "lucide-react";
 
 import type { AuctionWithModel } from "@/types/auctions";
 
@@ -102,16 +101,11 @@ export default async function BidsPage() {
   const endingThisHour = formattedAuctions.filter(
     (a) => new Date(a.ends_at) <= oneHourFromNow
   );
-  const totalUsd = Math.round(
-    formattedAuctions.reduce((sum, a) => sum + (a.current_bid || a.starting_price) * 0.15, 0)
-  );
 
   const displayName =
     profileData?.first_name
       ? `${profileData.first_name} ${profileData.last_name || ""}`.trim()
       : profileData?.display_name || profileData?.username || undefined;
-
-  const isModel = actorType === "model" || actorType === "admin";
 
   return (
     <CoinBalanceProvider initialBalance={coinBalance}>
@@ -129,59 +123,39 @@ export default async function BidsPage() {
 
         <main className="container px-8 md:px-16 py-8">
           {/* Header */}
-          <div className="mb-8">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-gradient-to-br from-pink-500 to-violet-500 rounded-xl">
-                <Gavel className="h-6 w-6 text-white" />
-              </div>
-              <h1 className="text-3xl font-bold">Bids</h1>
-            </div>
-            <p className="text-muted-foreground mb-3">
-              Bid on content, services, products &amp; experiences
-            </p>
-            {formattedAuctions.length > 0 && (
-              <div className="flex items-center gap-3 flex-wrap text-sm">
-                <div className="flex items-center gap-1.5">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
-                  </span>
-                  <span className="font-bold text-white tracking-wide">LIVE</span>
-                </div>
-                <span className="text-zinc-600">·</span>
-                <span className="text-zinc-400">
-                  <span className="text-white font-semibold">{formattedAuctions.length}</span> active {formattedAuctions.length === 1 ? "listing" : "listings"}
-                </span>
-                {endingThisHour.length > 0 && (
-                  <>
-                    <span className="text-zinc-600">·</span>
-                    <span className="flex items-center gap-1 text-amber-400">
-                      <Zap className="h-3.5 w-3.5" />
-                      <span className="font-semibold">{endingThisHour.length}</span>
-                      <span>ending this hour</span>
-                    </span>
-                  </>
-                )}
-                {totalUsd > 0 && (
-                  <>
-                    <span className="text-zinc-600">·</span>
-                    <span className="text-zinc-400">
-                      <span className="text-white font-semibold">${totalUsd.toLocaleString()}</span> in play
-                    </span>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* How it works + Create a Listing */}
-          <div className="flex items-center gap-4 mb-8">
-            <HowItWorksModal isModel={isModel} />
+          <div className="flex items-center justify-between gap-4 mb-3">
+            <h1 className="text-3xl font-bold">Bids</h1>
             <CreateListingButton
               isLoggedIn={!!user}
-              className="text-sm font-semibold bg-gradient-to-r from-pink-500 to-violet-500 text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity"
+              className="text-sm font-semibold bg-gradient-to-r from-pink-500 to-violet-500 text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity shrink-0"
             />
           </div>
+
+          {formattedAuctions.length > 0 && (
+            <div className="flex items-center gap-2.5 text-sm mb-8 flex-wrap">
+              <div className="flex items-center gap-1.5 text-green-400">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-green-400" />
+                </span>
+                <span className="font-semibold text-white">LIVE</span>
+              </div>
+              <span className="text-zinc-600">·</span>
+              <span className="text-zinc-400">
+                <span className="text-white font-semibold">{formattedAuctions.length}</span> active
+              </span>
+              {endingThisHour.length > 0 && (
+                <>
+                  <span className="text-zinc-600">·</span>
+                  <span className="flex items-center gap-1 text-amber-400">
+                    <Zap className="h-3 w-3" />
+                    <span className="font-semibold">{endingThisHour.length}</span>
+                    <span className="text-zinc-400">ending soon</span>
+                  </span>
+                </>
+              )}
+            </div>
+          )}{formattedAuctions.length === 0 && <div className="mb-8" />}
 
           {/* All listings */}
           <BidsCategoryFilter

@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { AuctionCard } from "./AuctionCard";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Coins } from "lucide-react";
-import { formatCoins, coinsToFanUsd, formatUsd } from "@/lib/coin-config";
+import { coinsToFanUsd, formatUsd } from "@/lib/coin-config";
 import type { AuctionWithModel } from "@/types/auctions";
 
 interface BidsCategoryFilterProps {
@@ -61,17 +60,13 @@ export function BidsCategoryFilter({ auctions, watchedIds }: BidsCategoryFilterP
                     <p className="text-base font-semibold text-white truncate">{auction.title}</p>
                     <p className="text-sm text-zinc-400 truncate mt-0.5">
                       @{auction.model?.slug || auction.model?.display_name}
-                      {auction.bid_count > 0 && (
-                        <span className="text-zinc-600"> · {auction.bid_count} bid{auction.bid_count !== 1 ? "s" : ""}</span>
-                      )}
                     </p>
                   </div>
                   <div className="text-right shrink-0">
-                    <div className="flex items-center gap-1 text-amber-400 justify-end">
-                      <Coins className="h-4 w-4" />
-                      <span className="text-base font-bold">{formatCoins(price)}</span>
-                    </div>
-                    <p className="text-xs text-zinc-500 mt-0.5">({formatUsd(coinsToFanUsd(price))})</p>
+                    <p className="text-base font-bold text-white">{formatUsd(coinsToFanUsd(price))}</p>
+                    {auction.bid_count > 0 && (
+                      <p className="text-xs text-zinc-500 mt-0.5">{auction.bid_count} {auction.bid_count === 1 ? "bid" : "bids"}</p>
+                    )}
                   </div>
                 </Link>
               );
