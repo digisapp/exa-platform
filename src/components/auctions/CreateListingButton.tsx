@@ -13,11 +13,12 @@ import Link from "next/link";
 
 interface CreateListingButtonProps {
   isLoggedIn: boolean;
+  actorType?: "model" | "fan" | "brand" | "admin" | null;
   className?: string;
   children?: React.ReactNode;
 }
 
-export function CreateListingButton({ isLoggedIn, className, children }: CreateListingButtonProps) {
+export function CreateListingButton({ isLoggedIn, actorType, className, children }: CreateListingButtonProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
@@ -28,7 +29,11 @@ export function CreateListingButton({ isLoggedIn, className, children }: CreateL
 
   const handleClick = () => {
     if (isLoggedIn) {
-      router.push("/dashboard/bids/new");
+      if (actorType === "model" || actorType === "admin") {
+        router.push("/dashboard/bids/new");
+      } else {
+        toast.error("Only models can create listings. Sign up as a model to get started!");
+      }
     } else {
       setOpen(true);
     }

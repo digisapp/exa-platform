@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AuctionCard } from "./AuctionCard";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { coinsToFanUsd, formatUsd } from "@/lib/coin-config";
+import { coinsToFanUsd, formatUsd, formatCoins } from "@/lib/coin-config";
 import type { AuctionWithModel } from "@/types/auctions";
 
 interface BidsCategoryFilterProps {
@@ -63,10 +63,8 @@ export function BidsCategoryFilter({ auctions, watchedIds }: BidsCategoryFilterP
                     </p>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-base font-bold text-white">{formatUsd(coinsToFanUsd(price))}</p>
-                    {auction.bid_count > 0 && (
-                      <p className="text-xs text-zinc-500 mt-0.5">{auction.bid_count} {auction.bid_count === 1 ? "bid" : "bids"}</p>
-                    )}
+                    <p className="text-base font-bold text-white">{formatCoins(price)} coins</p>
+                    <p className="text-xs text-zinc-500 mt-0.5">{formatUsd(coinsToFanUsd(price))}{auction.bid_count > 0 ? ` · ${auction.bid_count} ${auction.bid_count === 1 ? "bid" : "bids"}` : ""}</p>
                   </div>
                 </Link>
               );

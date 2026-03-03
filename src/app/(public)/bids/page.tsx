@@ -124,9 +124,10 @@ export default async function BidsPage() {
         <main className="container px-8 md:px-16 py-8">
           {/* Header */}
           <div className="flex items-center justify-between gap-4 mb-3">
-            <h1 className="text-3xl font-bold">Bids</h1>
+            <h1 className="text-4xl md:text-3xl font-extrabold bg-gradient-to-r from-pink-400 to-violet-400 bg-clip-text text-transparent">Bids</h1>
             <CreateListingButton
               isLoggedIn={!!user}
+              actorType={actorType}
               className="text-sm font-semibold bg-gradient-to-r from-pink-500 to-violet-500 text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity shrink-0"
             />
           </div>
