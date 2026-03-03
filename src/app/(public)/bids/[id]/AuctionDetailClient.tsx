@@ -14,15 +14,10 @@ import { coinsToFanUsd, formatUsd, formatCoins } from "@/lib/coin-config";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import {
-  Gavel,
   ArrowLeft,
   Coins,
   Eye,
   Clock,
-  Zap,
-  Shield,
-  CheckCircle,
-  Package,
   Trophy,
   Loader2,
 } from "lucide-react";
@@ -173,32 +168,23 @@ export function AuctionDetailClient({
 
           {/* About */}
           {auction.description && (
-            <div className="glass-card p-5 rounded-xl">
-              <h2 className="font-semibold mb-2 flex items-center gap-2 text-sm text-zinc-400 uppercase tracking-wide">
-                <Package className="h-4 w-4 text-pink-400" />
-                About
-              </h2>
+            <div className="border-t border-zinc-800 pt-5">
+              <p className="text-xs text-zinc-500 uppercase tracking-widest mb-3">Description</p>
               <p className="text-zinc-200 whitespace-pre-wrap leading-relaxed">{auction.description}</p>
             </div>
           )}
 
           {/* Deliverables */}
           {auction.deliverables && (
-            <div className="glass-card p-5 rounded-xl">
-              <h2 className="font-semibold mb-2 flex items-center gap-2 text-sm text-zinc-400 uppercase tracking-wide">
-                <CheckCircle className="h-4 w-4 text-green-400" />
-                What&apos;s Included
-              </h2>
+            <div className="border-t border-zinc-800 pt-5">
+              <p className="text-xs text-zinc-500 uppercase tracking-widest mb-3">What&apos;s Included</p>
               <p className="text-zinc-200 whitespace-pre-wrap leading-relaxed">{auction.deliverables}</p>
             </div>
           )}
 
           {/* Bid History */}
-          <div>
-            <h2 className="font-semibold mb-3 flex items-center gap-2 text-sm text-zinc-400 uppercase tracking-wide">
-              <Gavel className="h-4 w-4 text-violet-400" />
-              Bid History
-            </h2>
+          <div className="border-t border-zinc-800 pt-5">
+            <p className="text-xs text-zinc-500 uppercase tracking-widest mb-3">Bid History</p>
             <BidHistory bids={bids} currentUserId={currentUserId} />
           </div>
         </div>
@@ -257,25 +243,6 @@ export function AuctionDetailClient({
                 </div>
               </div>
 
-              {/* Buy Now */}
-              {auction.buy_now_price && !hasEnded && (
-                <div className="pt-3 border-t border-zinc-700/50 flex items-center gap-2 text-sm">
-                  <Zap className="h-4 w-4 text-amber-400 shrink-0" />
-                  <span className="text-zinc-400">Buy Now:</span>
-                  <span className="font-semibold">{formatCoins(auction.buy_now_price)}</span>
-                  <span className="text-zinc-500">({formatUsd(coinsToFanUsd(auction.buy_now_price))})</span>
-                </div>
-              )}
-
-              {/* Reserve */}
-              {auction.reserve_price && !hasEnded && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Shield className="h-4 w-4 text-violet-400 shrink-0" />
-                  <span className="text-zinc-400">
-                    {currentPrice >= auction.reserve_price ? "Reserve met" : "Reserve not met"}
-                  </span>
-                </div>
-              )}
             </div>
 
             {/* Bid Form */}
