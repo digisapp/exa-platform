@@ -153,11 +153,16 @@ export function BidForm({
       {/* Bid Input */}
       <div className="space-y-4">
         <div>
-          <Label htmlFor="bid-amount" className="text-sm text-zinc-300">
-            Your Bid (min {formatCoins(minBid)} coins · {formatUsd(coinsToFanUsd(minBid))})
-          </Label>
-          <div className="relative mt-1.5">
-            <Coins className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-400" />
+          <div className="flex items-center justify-between mb-2">
+            <Label htmlFor="bid-amount" className="text-xs text-zinc-500 uppercase tracking-widest">
+              Your Bid
+            </Label>
+            <span className="text-xs text-zinc-500">
+              min {formatUsd(coinsToFanUsd(minBid))}
+            </span>
+          </div>
+          <div className="relative">
+            <Coins className="absolute left-4 top-1/2 -translate-y-1/2 h-6 w-6 text-amber-400" />
             <Input
               id="bid-amount"
               type="number"
@@ -165,19 +170,17 @@ export function BidForm({
               step={AUCTION_DEFAULTS.minBidIncrement}
               value={bidAmount}
               onChange={(e) => setBidAmount(e.target.value)}
-              className="pl-10 bg-zinc-800 border-zinc-700 focus:border-pink-500"
+              className="pl-14 h-16 text-2xl font-bold bg-zinc-800 border-zinc-600 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 rounded-xl"
               placeholder={minBid.toString()}
             />
           </div>
-          <div className="flex justify-between mt-1 text-xs">
-            <span className="text-zinc-500">
+          <div className="flex items-center justify-between mt-2 text-xs text-zinc-500">
+            <span>
               {myEscrowAmount > 0
-                ? `+${formatCoins(additionalCost)} more (${formatUsd(coinsToFanUsd(additionalCost))})`
-                : `= ${formatUsd(coinsToFanUsd(parsedBid))}`}
+                ? `+${formatUsd(coinsToFanUsd(additionalCost))} more`
+                : `≈ ${formatUsd(coinsToFanUsd(parsedBid))}`}
             </span>
-            <span className="text-zinc-500">
-              Balance: {formatCoins(balance)} ({formatUsd(coinsToFanUsd(balance))})
-            </span>
+            <span>Balance: {formatUsd(coinsToFanUsd(balance))}</span>
           </div>
         </div>
 
