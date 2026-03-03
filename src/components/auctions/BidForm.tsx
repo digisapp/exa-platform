@@ -158,7 +158,7 @@ export function BidForm({
             </span>
           </div>
           <div className="relative">
-            <Coins className="absolute left-4 top-1/2 -translate-y-1/2 h-6 w-6 text-amber-400" />
+            <Coins className="absolute left-4 top-1/2 -translate-y-1/2 h-7 w-7 text-amber-400" />
             <Input
               id="bid-amount"
               type="number"
@@ -166,7 +166,7 @@ export function BidForm({
               step={AUCTION_DEFAULTS.minBidIncrement}
               value={bidAmount}
               onChange={(e) => setBidAmount(e.target.value)}
-              className="pl-14 h-16 text-2xl font-bold bg-zinc-800 border-zinc-600 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 rounded-xl"
+              className="pl-14 h-16 md:h-20 !text-2xl md:!text-4xl !font-bold bg-zinc-800 border-zinc-600 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 rounded-xl"
               placeholder={minBid.toString()}
             />
           </div>
