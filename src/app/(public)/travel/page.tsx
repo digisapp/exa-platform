@@ -145,7 +145,7 @@ export default async function TravelPage() {
         {/* ═══════════════════════════════════════════ */}
         <section className="py-10 md:py-14">
           <div className="container px-4 md:px-16">
-            <div className="text-center mb-10 max-w-2xl mx-auto">
+            <div className="mb-10 max-w-2xl">
               <h2 className="text-2xl md:text-3xl font-bold mb-4">Creating Content Around the World</h2>
               <p className="text-muted-foreground leading-relaxed mb-3">
                 EXA Travel is producing content and live streams at different hotels, resorts, villas, and destinations around the world. Each trip brings together a small group of models to travel, create content, and experience it all together.
@@ -154,7 +154,7 @@ export default async function TravelPage() {
                 From beach resorts in the Caribbean to luxury hotels in Bali, Mykonos, and beyond — every trip is a new destination, a new experience, and a new set of content opportunities.
               </p>
             </div>
-            <div className="grid md:grid-cols-2 gap-4 md:gap-6 max-w-2xl mx-auto">
+            <div className="grid md:grid-cols-2 gap-4 md:gap-6 max-w-2xl">
               <div className="rounded-2xl overflow-hidden bg-black relative group">
                 <div className="aspect-[9/16]">
                   <video
@@ -257,7 +257,7 @@ export default async function TravelPage() {
         {/* ═══════════════════════════════════════════ */}
         <section className="py-16 md:py-24">
           <div className="container px-6 md:px-16">
-            <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-lg mx-auto">
+            <div className="flex flex-col sm:flex-row gap-4 max-w-lg">
               <Button
                 size="lg"
                 className="flex-1 h-14 text-base font-semibold bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
