@@ -480,21 +480,28 @@ export default async function EventPage({ params, searchParams }: Props) {
 
 
               {/* Sign Up Buttons */}
-              <div className="grid grid-cols-3 gap-2">
-                <Link href="/">
-                  <Button variant="outline" className="w-full border-pink-500/50 hover:border-pink-500 hover:bg-pink-500/10 text-pink-400 text-sm">
-                    Models Sign Up
-                  </Button>
+              <div className="space-y-2">
+                <p className="text-xs uppercase tracking-widest text-zinc-500 font-semibold px-1">Join the Show</p>
+                <Link href="/signup" className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-semibold transition-all shadow-lg shadow-pink-500/25">
+                  <span className="flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    Models — Apply Now
+                  </span>
+                  <ArrowRight className="h-4 w-4 opacity-70" />
                 </Link>
-                <a href="mailto:nathan@examodels.com">
-                  <Button variant="outline" className="w-full border-violet-500/50 hover:border-violet-500 hover:bg-violet-500/10 text-violet-400 text-sm">
-                    Designers Sign Up
-                  </Button>
+                <a href="mailto:nathan@examodels.com?subject=Designer%20Inquiry%20%E2%80%94%20Miami%20Swim%20Week%202026" className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-violet-600/20 hover:bg-violet-600/30 border border-violet-500/40 hover:border-violet-500/70 text-violet-300 font-semibold transition-all">
+                  <span className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4" />
+                    Designers — Show Your Collection
+                  </span>
+                  <ArrowRight className="h-4 w-4 opacity-70" />
                 </a>
-                <a href="mailto:nathan@examodels.com">
-                  <Button variant="outline" className="w-full border-amber-500/50 hover:border-amber-500 hover:bg-amber-500/10 text-amber-400 text-sm">
-                    Media Sign Up
-                  </Button>
+                <a href="mailto:nathan@examodels.com?subject=Media%20Inquiry%20%E2%80%94%20Miami%20Swim%20Week%202026" className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 hover:border-amber-500/70 text-amber-300 font-semibold transition-all">
+                  <span className="flex items-center gap-2">
+                    <Instagram className="h-4 w-4" />
+                    Media — Request Credentials
+                  </span>
+                  <ArrowRight className="h-4 w-4 opacity-70" />
                 </a>
               </div>
 
