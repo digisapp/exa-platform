@@ -103,20 +103,19 @@ export function XLeadsClient({ initialLeads }: Props) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to run search");
 
+      const debugInfo = data.debugSamples?.length
+        ? `\nDebug: ${data.debugSamples[0]?.slice(0, 200)}`
+        : "";
       toast.success(
-        `Found ${data.inserted} new leads (${data.skipped} duplicates skipped)`
+        `Found ${data.inserted} new leads (${data.skipped} duplicates skipped)${debugInfo}`,
+        { duration: 10000 }
       );
-
-      // Reload leads
-      const fresh = await fetch("/api/admin/x-leads/collect", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category: "all" }),
-      });
-      if (fresh.ok) {
-        // Refresh page data by re-fetching
-        window.location.reload();
+      if (data.errors?.length) {
+        toast.error(`Errors: ${data.errors.slice(0, 3).join("; ")}`, { duration: 8000 });
       }
+
+      // Reload page to show new leads
+      window.location.reload();
     } catch (err: any) {
       toast.error(err.message || "Search failed");
     } finally {
