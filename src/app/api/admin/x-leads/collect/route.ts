@@ -41,7 +41,7 @@ async function searchXForQuery(query: string): Promise<{ results: XResult[]; raw
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "grok-3",
+      model: "grok-4",
       input: `Search X for recent posts about: "${query}". Find up to 8 brand or business accounts posting about this topic. Return ONLY a valid JSON array with no other text. Each item: { tweet_id, handle, name, tweet_text, tweet_url, followers_count }. Brand/business accounts only. If nothing found, return [].`,
       tools: [{ type: "x_search" }],
     }),
