@@ -33,46 +33,41 @@ async function searchXForQuery(query: string): Promise<{ results: XResult[]; raw
   const apiKey = process.env.XAI_API_KEY;
   if (!apiKey) throw new Error("XAI_API_KEY not configured");
 
-  const response = await fetch("https://api.x.ai/v1/chat/completions", {
+  // Use Responses API (/v1/responses) with x_search tool
+  const response = await fetch("https://api.x.ai/v1/responses", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "grok-3-mini",
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are a lead research assistant. Search X (Twitter) for the given query and return results as a JSON array ONLY — no explanation, no markdown, just the raw JSON array. Each item: { tweet_id, handle, name, tweet_text, tweet_url, followers_count }. Brand/business accounts only. If nothing found, return [].",
-        },
-        {
-          role: "user",
-          content: `Search X for: "${query}". Return up to 8 brand/business accounts posting about this topic as a JSON array.`,
-        },
-      ],
-      tools: [{ type: "live_search" }],
-      tool_choice: "required",
+      model: "grok-3",
+      input: `Search X for recent posts about: "${query}". Find up to 8 brand or business accounts posting about this topic. Return ONLY a valid JSON array with no other text. Each item: { tweet_id, handle, name, tweet_text, tweet_url, followers_count }. Brand/business accounts only. If nothing found, return [].`,
+      tools: [{ type: "x_search" }],
     }),
   });
 
   if (!response.ok) {
     const text = await response.text();
     console.error(`xAI API error for query "${query}":`, text);
-    return { results: [], rawContent: text };
+    return { results: [], rawContent: text.slice(0, 300) };
   }
 
   const data = await response.json();
-  const message = data?.choices?.[0]?.message;
-  const content = message?.content ?? "";
-  const toolCalls = message?.tool_calls ?? [];
 
-  // Full debug dump for first call
-  const debugDump = JSON.stringify({ content: content.slice(0, 800), toolCalls: toolCalls.slice(0, 2) });
-  console.log(`xAI full response for "${query}":`, debugDump);
+  // Responses API: output is an array of items; find the message text
+  const outputItems: any[] = data?.output ?? [];
+  let content = "";
+  for (const item of outputItems) {
+    if (item.type === "message" && Array.isArray(item.content)) {
+      for (const block of item.content) {
+        if (block.type === "output_text") content += block.text;
+      }
+    }
+  }
 
-  const rawContent = debugDump.slice(0, 600);
+  const rawContent = content.slice(0, 600);
+  console.log(`xAI response for "${query}":`, rawContent);
 
   // Extract JSON array from the response content
   try {

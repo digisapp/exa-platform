@@ -32,27 +32,17 @@ async function searchXForQuery(query: string): Promise<XResult[]> {
   const apiKey = process.env.XAI_API_KEY;
   if (!apiKey) throw new Error("XAI_API_KEY not configured");
 
-  const response = await fetch("https://api.x.ai/v1/chat/completions", {
+  // Use Responses API (/v1/responses) with x_search tool
+  const response = await fetch("https://api.x.ai/v1/responses", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "grok-3-mini",
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are a lead research assistant. When searching X, return ONLY a valid JSON array with no other text. Each item must have: { tweet_id, handle, name, tweet_text, tweet_url, followers_count }. Include only brand/business accounts, not personal accounts. If no results found, return an empty array [].",
-        },
-        {
-          role: "user",
-          content: `Search X for recent posts about: "${query}". Return up to 8 results as a JSON array.`,
-        },
-      ],
-      tools: [{ type: "live_search" }],
-      tool_choice: "required",
+      model: "grok-3",
+      input: `Search X for recent posts about: "${query}". Find up to 8 brand or business accounts posting about this topic. Return ONLY a valid JSON array with no other text. Each item: { tweet_id, handle, name, tweet_text, tweet_url, followers_count }. Brand/business accounts only. If nothing found, return [].`,
+      tools: [{ type: "x_search" }],
     }),
   });
 
@@ -62,7 +52,17 @@ async function searchXForQuery(query: string): Promise<XResult[]> {
   }
 
   const data = await response.json();
-  const content = data?.choices?.[0]?.message?.content ?? "";
+
+  // Responses API: output is an array of items; find the message text
+  const outputItems: any[] = data?.output ?? [];
+  let content = "";
+  for (const item of outputItems) {
+    if (item.type === "message" && Array.isArray(item.content)) {
+      for (const block of item.content) {
+        if (block.type === "output_text") content += block.text;
+      }
+    }
+  }
 
   try {
     const jsonMatch = content.match(/\[[\s\S]*\]/);
