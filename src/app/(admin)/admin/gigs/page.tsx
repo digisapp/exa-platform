@@ -837,7 +837,7 @@ export default function AdminGigsPage() {
     }
   }
 
-  async function handleApplicationAction(appId: string, action: "accepted" | "rejected" | "cancelled") {
+  async function handleApplicationAction(appId: string, action: "accepted" | "rejected" | "cancelled" | "pending") {
     setProcessingApp(appId);
     try {
       const app = applications.find(a => a.id === appId);
