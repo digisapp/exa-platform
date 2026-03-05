@@ -903,6 +903,8 @@ export default function AdminGigsPage() {
         ? "Model accepted and notified!"
         : action === "cancelled"
         ? "Model cancelled"
+        : action === "pending"
+        ? "Application moved back to pending"
         : "Application declined";
       toast.success(toastMessage);
       loadApplications(app.gig_id);
