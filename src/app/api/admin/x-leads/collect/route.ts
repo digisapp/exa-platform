@@ -29,7 +29,7 @@ interface XResult {
   followers_count?: number;
 }
 
-async function searchXForQuery(query: string): Promise<XResult[]> {
+async function searchXForQuery(query: string): Promise<{ results: XResult[]; rawContent: string }> {
   const apiKey = process.env.XAI_API_KEY;
   if (!apiKey) throw new Error("XAI_API_KEY not configured");
 
@@ -45,36 +45,44 @@ async function searchXForQuery(query: string): Promise<XResult[]> {
         {
           role: "system",
           content:
-            "You are a lead research assistant. When searching X, return ONLY a valid JSON array with no other text. Each item must have: { tweet_id, handle, name, tweet_text, tweet_url, followers_count }. Include only brand/business accounts, not personal accounts. If no results found, return an empty array [].",
+            "You are a lead research assistant. Search X (Twitter) for the given query and return results as a JSON array ONLY — no explanation, no markdown, just the raw JSON array. Each item: { tweet_id, handle, name, tweet_text, tweet_url, followers_count }. Brand/business accounts only. If nothing found, return [].",
         },
         {
           role: "user",
-          content: `Search X for recent posts about: "${query}". Return up to 8 results as a JSON array.`,
+          content: `Search X for: "${query}". Return up to 8 brand/business accounts posting about this topic as a JSON array.`,
         },
       ],
       tools: [{ type: "x_search" }],
-      tool_choice: "auto",
+      tool_choice: "required",
     }),
   });
 
   if (!response.ok) {
     const text = await response.text();
     console.error(`xAI API error for query "${query}":`, text);
-    return [];
+    return { results: [], rawContent: text };
   }
 
   const data = await response.json();
-  const content = data?.choices?.[0]?.message?.content ?? "";
+  const message = data?.choices?.[0]?.message;
+  const content = message?.content ?? "";
+  const toolCalls = message?.tool_calls ?? [];
+
+  // Full debug dump for first call
+  const debugDump = JSON.stringify({ content: content.slice(0, 800), toolCalls: toolCalls.slice(0, 2) });
+  console.log(`xAI full response for "${query}":`, debugDump);
+
+  const rawContent = debugDump.slice(0, 600);
 
   // Extract JSON array from the response content
   try {
     const jsonMatch = content.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) return [];
+    if (!jsonMatch) return { results: [], rawContent };
     const parsed = JSON.parse(jsonMatch[0]);
-    return Array.isArray(parsed) ? parsed : [];
+    return { results: Array.isArray(parsed) ? parsed : [], rawContent };
   } catch {
     console.error(`Failed to parse xAI response for query "${query}":`, content);
-    return [];
+    return { results: [], rawContent };
   }
 }
 
@@ -104,11 +112,18 @@ export async function POST(request: NextRequest) {
   let inserted = 0;
   let skipped = 0;
   const errors: string[] = [];
+  const debugSamples: string[] = [];
 
   const runCategory = async (cat: "swimwear_brand" | "hotel_resort", queries: string[]) => {
     for (const query of queries) {
       try {
-        const results = await searchXForQuery(query);
+        const { results, rawContent } = await searchXForQuery(query);
+
+        // Capture first raw response for debugging
+        if (debugSamples.length === 0 && rawContent) {
+          debugSamples.push(`Query: "${query}" → ${rawContent}`);
+        }
+
         for (const r of results) {
           if (!r.tweet_text) continue;
 
@@ -123,14 +138,10 @@ export async function POST(request: NextRequest) {
             search_query: query,
           };
 
-          const { error } = await db
-            .from("x_leads")
-            .insert(row)
-            .throwOnError();
+          const { error } = await db.from("x_leads").insert(row);
 
           if (error) {
             if (error.code === "23505") {
-              // Unique violation — duplicate tweet_id
               skipped++;
             } else {
               errors.push(`Insert error for ${r.handle}: ${error.message}`);
@@ -143,7 +154,6 @@ export async function POST(request: NextRequest) {
         errors.push(`Query "${query}" failed: ${err.message}`);
       }
 
-      // Small delay between queries to avoid rate limiting
       await new Promise((res) => setTimeout(res, 500));
     }
   };
@@ -155,5 +165,5 @@ export async function POST(request: NextRequest) {
     await runCategory("hotel_resort", HOTEL_QUERIES);
   }
 
-  return NextResponse.json({ inserted, skipped, errors });
+  return NextResponse.json({ inserted, skipped, errors, debugSamples });
 }
