@@ -47,13 +47,20 @@ async function searchXForQuery(query: string): Promise<{ results: XResult[]; raw
     }),
   });
 
+  const rawText = await response.text();
+
   if (!response.ok) {
-    const text = await response.text();
-    console.error(`xAI API error for query "${query}":`, text);
-    return { results: [], rawContent: text.slice(0, 300) };
+    console.error(`xAI API error for query "${query}" [${response.status}]:`, rawText);
+    return { results: [], rawContent: `HTTP ${response.status}: ${rawText.slice(0, 300)}` };
   }
 
-  const data = await response.json();
+  let data: any;
+  try {
+    data = JSON.parse(rawText);
+  } catch {
+    console.error(`xAI non-JSON response for "${query}":`, rawText.slice(0, 300));
+    return { results: [], rawContent: `Non-JSON: ${rawText.slice(0, 300)}` };
+  }
 
   // Responses API: output is an array of items; find the message text
   const outputItems: any[] = data?.output ?? [];
