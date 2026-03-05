@@ -2124,13 +2124,29 @@ export default function AdminGigsPage() {
                         </Button>
                       </div>
                     ) : (
-                      <Badge
-                        variant="secondary"
-                        className={app.status === "cancelled" ? "bg-red-500/10 text-red-500" : ""}
-                      >
-                        <XCircle className="h-3 w-3 mr-1" />
-                        {app.status === "cancelled" ? "Cancelled" : app.status}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant="secondary"
+                          className={app.status === "cancelled" ? "bg-red-500/10 text-red-500" : ""}
+                        >
+                          <XCircle className="h-3 w-3 mr-1" />
+                          {app.status === "cancelled" ? "Cancelled" : app.status}
+                        </Badge>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-yellow-500 hover:text-yellow-600 hover:bg-yellow-500/10 h-7 px-2"
+                          onClick={() => handleApplicationAction(app.id, "pending")}
+                          disabled={processingApp === app.id}
+                          title="Send back to Pending"
+                        >
+                          {processingApp === app.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <RefreshCw className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </div>
