@@ -51,8 +51,8 @@ async function searchXForQuery(query: string): Promise<XResult[]> {
           content: `Search X for recent posts about: "${query}". Return up to 8 results as a JSON array.`,
         },
       ],
-      tools: [{ type: "x_search" }],
-      tool_choice: "auto",
+      tools: [{ type: "live_search" }],
+      tool_choice: "required",
     }),
   });
 

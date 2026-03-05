@@ -52,7 +52,7 @@ async function searchXForQuery(query: string): Promise<{ results: XResult[]; raw
           content: `Search X for: "${query}". Return up to 8 brand/business accounts posting about this topic as a JSON array.`,
         },
       ],
-      tools: [{ type: "x_search" }],
+      tools: [{ type: "live_search" }],
       tool_choice: "required",
     }),
   });
