@@ -40,7 +40,6 @@ import {
   MessageSquare,
   RefreshCw,
   Trash2,
-  Plane,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -100,9 +99,8 @@ export default function BrandOutreachPage() {
   const [emailCtaText, setEmailCtaText] = useState("View Miami Swim Week 2026");
   const [emailFromAddress, setEmailFromAddress] = useState("partnerships@examodels.com");
   const [emailFromName, setEmailFromName] = useState("EXA Models Partnerships");
-  const [emailTemplate, setEmailTemplate] = useState<"standard" | "sponsor" | "travel" | "tourism">("standard");
+  const [emailTemplate, setEmailTemplate] = useState<"standard" | "sponsor">("standard");
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"brands" | "travel" | "tourism">("brands");
   const [newContact, setNewContact] = useState({
     brand_name: "",
     contact_name: "",
@@ -139,11 +137,7 @@ export default function BrandOutreachPage() {
 
   // Filter contacts
   const filteredContacts = contacts.filter((contact) => {
-    const matchesTab = activeTab === "tourism"
-      ? contact.category === "tourism_board"
-      : activeTab === "travel"
-      ? contact.category === "travel"
-      : contact.category !== "travel" && contact.category !== "tourism_board";
+    const matchesTab = contact.category !== "travel" && contact.category !== "tourism_board";
     const matchesSearch =
       contact.brand_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       contact.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -378,60 +372,7 @@ EXA Models`,
     template: "sponsor" as const,
   };
 
-  const travelEmailTemplate = {
-    subject: "Social Media Influencer Partnership",
-    body: `Hi {{contact_name}},
-
-I'm Nathan, COO of EXA Models. We're launching a new travel series called EXA Travel, partnering with hotels & resorts around the world.
-
-We bring our team of 7 people (5 influencer models + photographer and director) and capture the full experience - the property, the culture, and the destination itself - in a cinematic, elevated way.
-
-What You Receive
-• Instagram posts & stories from each of our 5 models
-• 10+ short videos posted across Reels & TikTok
-• One full cinematic video (30–60 sec) — usable for your ads
-• 20 professional photos — website, ads, social
-• Every post tags your property
-
-In exchange, we're requesting a fully hosted 4-night stay for the team. You'll leave with a full content library ready for social, ads, and your website.
-
-If this aligns, I'd love to connect briefly to explore dates and availability.
-
-Warm regards,
-Nathan`,
-    ctaUrl: "https://www.examodels.com/travel",
-    ctaText: "View EXA Travel",
-    template: "travel" as const,
-  };
-
-  const tourismEmailTemplate = {
-    subject: "Creator Partnership Opportunity - EXA Travel x {{brand_name}}",
-    body: `Hi {{contact_name}},
-
-I'm Nathan, COO of EXA Models. We manage a community of 1,000+ content creators and are launching EXA Travel — a program that pairs destinations with our creators for authentic, high-impact travel content.
-
-Our creators produce stunning photo and video content across Instagram, TikTok, and YouTube, reaching millions of engaged followers who are actively planning travel.
-
-What We Offer
-• A curated group of 5-10 creators visiting your destination
-• Professional photo & video content (Reels, TikToks, Stories)
-• Authentic storytelling showcasing local culture, attractions, and experiences
-• Full content rights for your destination marketing campaigns
-• Detailed performance analytics and reporting
-
-We'd love to explore a partnership where our creators experience and showcase everything {{brand_name}} has to offer. Many tourism boards we work with see immediate ROI through increased social engagement and booking inquiries.
-
-Would you be open to a brief call this week to discuss how we can collaborate?
-
-Best regards,
-Nathan
-EXA Travel`,
-    ctaUrl: "https://www.examodels.com/travel",
-    ctaText: "Learn About EXA Travel",
-    template: "tourism" as const,
-  };
-
-  const loadTemplate = (type: "designer" | "sponsor" | "travel" | "tourism") => {
+  const loadTemplate = (type: "designer" | "sponsor") => {
     if (type === "sponsor") {
       const t = sponsorEmailTemplate;
       setEmailSubject(t.subject);
@@ -440,24 +381,6 @@ EXA Travel`,
       setEmailCtaText(t.ctaText);
       setEmailFromAddress(t.fromEmail);
       setEmailFromName(t.fromName);
-      setEmailTemplate(t.template);
-    } else if (type === "tourism") {
-      const t = tourismEmailTemplate;
-      setEmailSubject(t.subject);
-      setEmailBody(t.body);
-      setEmailCtaUrl(t.ctaUrl);
-      setEmailCtaText(t.ctaText);
-      setEmailFromAddress("nathan@examodels.com");
-      setEmailFromName("EXA Travel");
-      setEmailTemplate(t.template);
-    } else if (type === "travel") {
-      const t = travelEmailTemplate;
-      setEmailSubject(t.subject);
-      setEmailBody(t.body);
-      setEmailCtaUrl(t.ctaUrl);
-      setEmailCtaText(t.ctaText);
-      setEmailFromAddress("nathan@examodels.com");
-      setEmailFromName("EXA Travel");
       setEmailTemplate(t.template);
     } else {
       const t = designerEmailTemplate;
@@ -498,7 +421,7 @@ EXA Travel`,
             <div>
               <h1 className="text-2xl font-bold">Brand Outreach</h1>
               <p className="text-muted-foreground">
-                {activeTab === "tourism" ? "Tourism Boards & Destination Marketing" : activeTab === "travel" ? "Hotel & Travel Partners" : "Swimwear & Resort Wear Brands for Miami Swim Week 2026"}
+                Swimwear & Resort Wear Brands for Miami Swim Week 2026
               </p>
             </div>
           </div>
@@ -616,8 +539,6 @@ EXA Travel`,
                         <SelectItem value="activewear">Activewear</SelectItem>
                         <SelectItem value="beauty">Beauty</SelectItem>
                         <SelectItem value="accessories">Accessories</SelectItem>
-                        <SelectItem value="travel">Travel</SelectItem>
-                        <SelectItem value="tourism_board">Tourism Board</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -638,31 +559,6 @@ EXA Travel`,
               </DialogContent>
             </Dialog>
           </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex gap-1 p-1 bg-muted rounded-lg w-fit">
-          <button
-            onClick={() => { setActiveTab("brands"); setCategoryFilter("all"); setSelectedContacts(new Set()); }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === "brands" ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-          >
-            <Building2 className="h-4 w-4" />
-            Brands
-          </button>
-          <button
-            onClick={() => { setActiveTab("travel"); setCategoryFilter("all"); setSelectedContacts(new Set()); }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === "travel" ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-          >
-            <Plane className="h-4 w-4" />
-            Travel
-          </button>
-          <button
-            onClick={() => { setActiveTab("tourism"); setCategoryFilter("all"); setSelectedContacts(new Set()); }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === "tourism" ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-          >
-            <Globe className="h-4 w-4" />
-            Tourism
-          </button>
         </div>
 
         {/* Stats Cards */}
@@ -774,8 +670,6 @@ EXA Travel`,
                 <SelectItem value="activewear">Activewear</SelectItem>
                 <SelectItem value="beauty">Beauty</SelectItem>
                 <SelectItem value="accessories">Accessories</SelectItem>
-                <SelectItem value="travel">Travel</SelectItem>
-                <SelectItem value="tourism_board">Tourism Board</SelectItem>
               </SelectContent>
             </Select>
             <Select value={contactTypeFilter} onValueChange={setContactTypeFilter}>
@@ -822,14 +716,6 @@ EXA Travel`,
                         </Button>
                         <Button variant="outline" size="sm" onClick={() => loadTemplate("sponsor")} className="border-violet-500/50 text-violet-400 hover:bg-violet-500/10">
                           Sponsor Template
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => loadTemplate("travel")} className="border-blue-500/50 text-blue-400 hover:bg-blue-500/10">
-                          <Plane className="h-3.5 w-3.5 mr-1" />
-                          Travel Template
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => loadTemplate("tourism")} className="border-teal-500/50 text-teal-400 hover:bg-teal-500/10">
-                          <Globe className="h-3.5 w-3.5 mr-1" />
-                          Tourism Template
                         </Button>
                       </div>
                     </div>

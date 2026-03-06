@@ -25,6 +25,7 @@ import {
   Printer,
   ShoppingBag,
   Plane,
+  Megaphone,
 } from "lucide-react";
 
 export default async function AdminPage() {
@@ -175,6 +176,13 @@ export default async function AdminPage() {
             {(pendingBrands || 0) > 0 && (
               <span className="text-xs text-muted-foreground">{pendingBrands} unverified</span>
             )}
+          </Link>
+        </Button>
+
+        <Button variant="outline" asChild className="h-auto py-4 flex-col gap-2">
+          <Link href="/admin/brand-outreach">
+            <Megaphone className="h-6 w-6 text-pink-500" />
+            <span>Brand Outreach</span>
           </Link>
         </Button>
 
