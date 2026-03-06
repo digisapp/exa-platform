@@ -30,7 +30,7 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="fixed inset-0 bg-background overflow-y-auto">
       <Navbar
         user={{
           id: user.id,
