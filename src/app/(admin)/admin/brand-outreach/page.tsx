@@ -100,9 +100,9 @@ export default function BrandOutreachPage() {
   const [emailCtaText, setEmailCtaText] = useState("View Miami Swim Week 2026");
   const [emailFromAddress, setEmailFromAddress] = useState("partnerships@examodels.com");
   const [emailFromName, setEmailFromName] = useState("EXA Models Partnerships");
-  const [emailTemplate, setEmailTemplate] = useState<"standard" | "sponsor" | "travel">("standard");
+  const [emailTemplate, setEmailTemplate] = useState<"standard" | "sponsor" | "travel" | "tourism">("standard");
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"brands" | "travel">("brands");
+  const [activeTab, setActiveTab] = useState<"brands" | "travel" | "tourism">("brands");
   const [newContact, setNewContact] = useState({
     brand_name: "",
     contact_name: "",
@@ -139,7 +139,11 @@ export default function BrandOutreachPage() {
 
   // Filter contacts
   const filteredContacts = contacts.filter((contact) => {
-    const matchesTab = activeTab === "travel" ? contact.category === "travel" : contact.category !== "travel";
+    const matchesTab = activeTab === "tourism"
+      ? contact.category === "tourism_board"
+      : activeTab === "travel"
+      ? contact.category === "travel"
+      : contact.category !== "travel" && contact.category !== "tourism_board";
     const matchesSearch =
       contact.brand_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       contact.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -400,7 +404,34 @@ Nathan`,
     template: "travel" as const,
   };
 
-  const loadTemplate = (type: "designer" | "sponsor" | "travel") => {
+  const tourismEmailTemplate = {
+    subject: "Creator Partnership Opportunity - EXA Travel x {{brand_name}}",
+    body: `Hi {{contact_name}},
+
+I'm Nathan, COO of EXA Models. We manage a community of 1,000+ content creators and are launching EXA Travel — a program that pairs destinations with our creators for authentic, high-impact travel content.
+
+Our creators produce stunning photo and video content across Instagram, TikTok, and YouTube, reaching millions of engaged followers who are actively planning travel.
+
+What We Offer
+• A curated group of 5-10 creators visiting your destination
+• Professional photo & video content (Reels, TikToks, Stories)
+• Authentic storytelling showcasing local culture, attractions, and experiences
+• Full content rights for your destination marketing campaigns
+• Detailed performance analytics and reporting
+
+We'd love to explore a partnership where our creators experience and showcase everything {{brand_name}} has to offer. Many tourism boards we work with see immediate ROI through increased social engagement and booking inquiries.
+
+Would you be open to a brief call this week to discuss how we can collaborate?
+
+Best regards,
+Nathan
+EXA Travel`,
+    ctaUrl: "https://www.examodels.com/travel",
+    ctaText: "Learn About EXA Travel",
+    template: "tourism" as const,
+  };
+
+  const loadTemplate = (type: "designer" | "sponsor" | "travel" | "tourism") => {
     if (type === "sponsor") {
       const t = sponsorEmailTemplate;
       setEmailSubject(t.subject);
@@ -409,6 +440,15 @@ Nathan`,
       setEmailCtaText(t.ctaText);
       setEmailFromAddress(t.fromEmail);
       setEmailFromName(t.fromName);
+      setEmailTemplate(t.template);
+    } else if (type === "tourism") {
+      const t = tourismEmailTemplate;
+      setEmailSubject(t.subject);
+      setEmailBody(t.body);
+      setEmailCtaUrl(t.ctaUrl);
+      setEmailCtaText(t.ctaText);
+      setEmailFromAddress("nathan@examodels.com");
+      setEmailFromName("EXA Travel");
       setEmailTemplate(t.template);
     } else if (type === "travel") {
       const t = travelEmailTemplate;
@@ -458,7 +498,7 @@ Nathan`,
             <div>
               <h1 className="text-2xl font-bold">Brand Outreach</h1>
               <p className="text-muted-foreground">
-                {activeTab === "travel" ? "Hotel & Travel Partners" : "Swimwear & Resort Wear Brands for Miami Swim Week 2026"}
+                {activeTab === "tourism" ? "Tourism Boards & Destination Marketing" : activeTab === "travel" ? "Hotel & Travel Partners" : "Swimwear & Resort Wear Brands for Miami Swim Week 2026"}
               </p>
             </div>
           </div>
@@ -577,6 +617,7 @@ Nathan`,
                         <SelectItem value="beauty">Beauty</SelectItem>
                         <SelectItem value="accessories">Accessories</SelectItem>
                         <SelectItem value="travel">Travel</SelectItem>
+                        <SelectItem value="tourism_board">Tourism Board</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -614,6 +655,13 @@ Nathan`,
           >
             <Plane className="h-4 w-4" />
             Travel
+          </button>
+          <button
+            onClick={() => { setActiveTab("tourism"); setCategoryFilter("all"); setSelectedContacts(new Set()); }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === "tourism" ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            <Globe className="h-4 w-4" />
+            Tourism
           </button>
         </div>
 
@@ -727,6 +775,7 @@ Nathan`,
                 <SelectItem value="beauty">Beauty</SelectItem>
                 <SelectItem value="accessories">Accessories</SelectItem>
                 <SelectItem value="travel">Travel</SelectItem>
+                <SelectItem value="tourism_board">Tourism Board</SelectItem>
               </SelectContent>
             </Select>
             <Select value={contactTypeFilter} onValueChange={setContactTypeFilter}>
@@ -777,6 +826,10 @@ Nathan`,
                         <Button variant="outline" size="sm" onClick={() => loadTemplate("travel")} className="border-blue-500/50 text-blue-400 hover:bg-blue-500/10">
                           <Plane className="h-3.5 w-3.5 mr-1" />
                           Travel Template
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => loadTemplate("tourism")} className="border-teal-500/50 text-teal-400 hover:bg-teal-500/10">
+                          <Globe className="h-3.5 w-3.5 mr-1" />
+                          Tourism Template
                         </Button>
                       </div>
                     </div>
