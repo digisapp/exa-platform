@@ -124,6 +124,7 @@ export default function BrandOutreachPage() {
     const { data, error } = await (supabase as any)
       .from("brand_outreach_contacts")
       .select("*")
+      .not("category", "in", "(travel,tourism_board)")
       .order("brand_name");
 
     if (error) {
@@ -137,7 +138,6 @@ export default function BrandOutreachPage() {
 
   // Filter contacts
   const filteredContacts = contacts.filter((contact) => {
-    const matchesTab = contact.category !== "travel" && contact.category !== "tourism_board";
     const matchesSearch =
       contact.brand_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       contact.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -145,7 +145,7 @@ export default function BrandOutreachPage() {
     const matchesStatus = statusFilter === "all" || contact.status === statusFilter;
     const matchesCategory = categoryFilter === "all" || contact.category === categoryFilter;
     const matchesType = contactTypeFilter === "all" || contact.contact_type === contactTypeFilter;
-    return matchesTab && matchesSearch && matchesStatus && matchesCategory && matchesType;
+    return matchesSearch && matchesStatus && matchesCategory && matchesType;
   });
 
   // Stats
