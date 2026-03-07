@@ -29,7 +29,12 @@ import {
   MessageCircle,
   Gavel,
   Plus,
+  Eye,
+  Heart,
+  TrendingUp,
+  Wallet,
 } from "lucide-react";
+import { formatCoins, coinsToUsd, formatUsd } from "@/lib/coin-config";
 import { FanDashboard } from "./FanDashboard";
 import { BrandDashboard } from "./BrandDashboard";
 
@@ -98,13 +103,28 @@ export default async function DashboardPage() {
 
   if (!model) redirect("/fan/signup");
 
-  // Get pending bookings for this model - use adminClient to bypass RLS
-  const { data: allBookings } = await (adminClient
-    .from("bookings") as any)
-    .select("*")
-    .eq("model_id", model.id)
-    .order("created_at", { ascending: false })
-    .limit(20);
+  // Stats queries: follower count + this month's earnings (parallel with bookings)
+  const oneMonthAgo = new Date();
+  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+  const [{ count: followerCount }, { data: monthlyTransactions }, { data: allBookings }] = await Promise.all([
+    (adminClient.from("follows") as any)
+      .select("*", { count: "exact", head: true })
+      .eq("following_id", actor.id),
+    (adminClient.from("coin_transactions") as any)
+      .select("amount")
+      .eq("actor_id", actor.id)
+      .gt("amount", 0)
+      .gte("created_at", oneMonthAgo.toISOString()),
+    // Get pending bookings for this model - use adminClient to bypass RLS
+    (adminClient.from("bookings") as any)
+      .select("*")
+      .eq("model_id", model.id)
+      .order("created_at", { ascending: false })
+      .limit(20),
+  ]);
+
+  const thisMonthEarnings = (monthlyTransactions || []).reduce((sum: number, t: any) => sum + t.amount, 0);
 
   // Filter for pending/counter bookings in JS
   const pendingBookings = (allBookings || []).filter(
@@ -384,6 +404,58 @@ export default async function DashboardPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
+      {/* Quick Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Link href="/wallet" className="group">
+          <Card className="border-amber-500/20 hover:border-amber-500/40 transition-colors">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                <Coins className="h-4 w-4 text-amber-500" />
+                <span className="text-xs font-medium">Balance</span>
+              </div>
+              <p className="text-2xl font-bold tracking-tight">{formatCoins(model.coin_balance || 0)}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{formatUsd(coinsToUsd(model.coin_balance || 0))}</p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/earnings" className="group">
+          <Card className="border-green-500/20 hover:border-green-500/40 transition-colors">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                <TrendingUp className="h-4 w-4 text-green-500" />
+                <span className="text-xs font-medium">This Month</span>
+              </div>
+              <p className="text-2xl font-bold tracking-tight">{formatCoins(thisMonthEarnings)}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{formatUsd(coinsToUsd(thisMonthEarnings))} earned</p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/analytics" className="group">
+          <Card className="border-blue-500/20 hover:border-blue-500/40 transition-colors">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                <Eye className="h-4 w-4 text-blue-500" />
+                <span className="text-xs font-medium">Profile Views</span>
+              </div>
+              <p className="text-2xl font-bold tracking-tight">{(model.profile_views || 0).toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">All time</p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/followers" className="group">
+          <Card className="border-pink-500/20 hover:border-pink-500/40 transition-colors">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                <Heart className="h-4 w-4 text-pink-500" />
+                <span className="text-xs font-medium">Followers</span>
+              </div>
+              <p className="text-2xl font-bold tracking-tight">{(followerCount || 0).toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Total</p>
+            </CardContent>
+          </Card>
+        </Link>
+      </div>
+
       {/* Offers */}
       {pendingOffers.length > 0 && (
         <Card className="border-blue-500/30 bg-gradient-to-br from-blue-500/5 to-cyan-500/5">
@@ -508,10 +580,12 @@ export default async function DashboardPage() {
                         {booking.client?.company_name || booking.client?.display_name || "Client"}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {new Date(booking.event_date).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                        })}
+                        {booking.event_date
+                          ? new Date(booking.event_date).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                            })
+                          : "No date set"}
                         {" • "}
                         {booking.total_amount?.toLocaleString()} coins
                       </p>
@@ -624,22 +698,24 @@ export default async function DashboardPage() {
       </Card>
 
       {/* Recent Activity Feed */}
-      {activityFeed.length > 0 && (
-        <Card className="border-pink-500/30 bg-gradient-to-br from-pink-500/5 to-violet-500/5">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5 text-pink-500" />
-              Recent Activity
+      <Card className="border-pink-500/30 bg-gradient-to-br from-pink-500/5 to-violet-500/5">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5 text-pink-500" />
+            Recent Activity
+            {activityFeed.length > 0 && (
               <Badge className="bg-pink-500 text-white ml-2">{activityFeed.length}</Badge>
-            </CardTitle>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/chats" className="text-pink-500">
-                View Chats
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
+            )}
+          </CardTitle>
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/chats" className="text-pink-500">
+              View Chats
+              <ArrowRight className="ml-1 h-4 w-4" />
+            </Link>
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {activityFeed.length > 0 ? (
             <div className="space-y-3">
               {activityFeed.map((item) => {
                 const timeAgo = getTimeAgo(item.createdAt);
@@ -715,9 +791,17 @@ export default async function DashboardPage() {
                 );
               })}
             </div>
-          </CardContent>
-        </Card>
-      )}
+          ) : (
+            <div className="text-center py-8">
+              <div className="p-4 rounded-full bg-pink-500/10 inline-block mb-4">
+                <Activity className="h-8 w-8 text-pink-500" />
+              </div>
+              <p className="text-muted-foreground">No activity this week</p>
+              <p className="text-sm text-muted-foreground mt-1">Tips, new followers, and messages will show up here</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
