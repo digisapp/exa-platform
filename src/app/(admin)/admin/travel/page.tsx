@@ -1225,28 +1225,39 @@ function ApplicantsTab({ supabase }: { supabase: any }) {
 // TOURISM TAB
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const DEFAULT_TOURISM_SUBJECT = "Creator Partnership Opportunity - EXA Travel x {{brand_name}}";
+const DEFAULT_TOURISM_SUBJECT = "Influencer Content Campaign for {{brand_name}} — EXA Travel";
 
 const DEFAULT_TOURISM_BODY = `Hi {{contact_name}},
 
-I'm Nathan, COO of EXA Models. We manage a community of 1,000+ content creators and are launching EXA Travel — a program that pairs destinations with our creators for authentic, high-impact travel content.
+I'm Nathan, COO of EXA Models — a platform with 1,000+ vetted content creators across Instagram, TikTok, and YouTube who collectively reach over 50 million followers.
 
-Our creators produce stunning photo and video content across Instagram, TikTok, and YouTube, reaching millions of engaged followers who are actively planning travel.
+We're launching EXA Travel, a program that sends curated groups of creators to destinations to produce authentic, high-performing travel content — the kind that inspires bookings.
 
-What We Offer
-• A curated group of 5-10 creators visiting your destination
-• Professional photo & video content (Reels, TikToks, Stories)
-• Authentic storytelling showcasing local culture, attractions, and experiences
-• Full content rights for your destination marketing campaigns
-• Detailed performance analytics and reporting
+HOW IT WORKS
 
-We'd love to explore a partnership where our creators experience and showcase everything {{brand_name}} has to offer. Many tourism boards we work with see immediate ROI through increased social engagement and booking inquiries.
+We select 5-10 creators matched to your destination's audience. They visit for 3-5 days, documenting the full experience — itineraries, attractions, hotels, dining, nightlife, hidden gems — and publish across their channels with tags and links back to your booking pages.
 
-Would you be open to a brief call this week to discuss how we can collaborate?
+WHAT YOUR DESTINATION GETS
+• 20-50+ pieces of original content (Reels, TikToks, YouTube vlogs, Stories)
+• Reach of 1-5M+ impressions per campaign across platforms
+• Authentic creator storytelling that drives real travel intent
+• Full content licensing rights for your own marketing channels
+• Detailed performance report with engagement metrics and click-throughs
 
-Best regards,
+WHAT WE NEED FROM YOU
+• Accommodation and local experiences for 5-10 creators (3-5 nights)
+• Airport transfers and ground transport
+• Access to key attractions and activities
+
+We handle everything else — creator selection, travel logistics, content briefs, quality review, and performance tracking. There's no management fee for our first campaign together.
+
+I'd love to set up a quick 15-minute call to discuss how EXA Travel can drive awareness and bookings for {{brand_name}}. Are you available this week or next?
+
+Best,
 Nathan
-EXA Travel`;
+COO, EXA Models
+nathan@examodels.com
+www.examodels.com/travel`;
 
 function TourismTab({ supabase }: { supabase: any }) {
   const [contacts, setContacts] = useState<TourismContact[]>([]);

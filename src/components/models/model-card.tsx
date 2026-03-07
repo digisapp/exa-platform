@@ -85,7 +85,7 @@ export const ModelCard = memo(function ModelCard({
 
   if (variant === "compact") {
     return (
-      <Link href={`/${model.username}`}>
+      <Link href={`/${model.username}`} target="_blank">
         <div className="glass-card rounded-xl p-4 hover:scale-105 transition-transform group">
           <div className="flex items-center gap-3">
             <div className="profile-image-container !p-[2px]">
@@ -121,7 +121,7 @@ export const ModelCard = memo(function ModelCard({
   };
 
   return (
-    <Link href={`/${model.username}`}>
+    <Link href={`/${model.username}`} target="_blank">
       <div className="glass-card rounded-2xl overflow-hidden hover:scale-[1.02] transition-all h-full group">
         {/* Image with Hover Overlay */}
         <div className="aspect-[3/4] relative bg-gradient-to-br from-[#FF69B4]/20 to-[#9400D3]/20 overflow-hidden">
