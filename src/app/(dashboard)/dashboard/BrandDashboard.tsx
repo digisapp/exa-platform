@@ -312,7 +312,7 @@ export async function BrandDashboard({ actorId }: { actorId: string }) {
                 </div>
               </Link>
               <Link
-                href="/campaigns"
+                href="/brands/offers"
                 className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
               >
                 {hasSentOffer ? (
