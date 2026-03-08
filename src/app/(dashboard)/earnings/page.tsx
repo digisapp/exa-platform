@@ -2,10 +2,10 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { Coins, TrendingUp, MessageCircle, Heart, ArrowUpRight, Calendar, Sparkles, Video, Phone, ShoppingBag, Gavel, Wallet } from "lucide-react";
+import { Coins, TrendingUp, MessageCircle, Heart, Calendar, Wallet } from "lucide-react";
 import Link from "next/link";
-// Card components no longer used - replaced with custom styled divs
 import type { Actor, Model } from "@/types/database";
+import { EarningsTransactionList } from "./EarningsTransactionList";
 
 interface CoinTransaction {
   id: string;
@@ -14,6 +14,12 @@ interface CoinTransaction {
   action: string;
   metadata: Record<string, unknown>;
   created_at: string;
+}
+
+interface EarningsSummaryRow {
+  action: string;
+  total_amount: number;
+  this_month_amount: number;
 }
 
 export default async function EarningsPage() {
@@ -48,112 +54,31 @@ export default async function EarningsPage() {
 
   if (!model) redirect("/fan/signup");
 
-  // Get recent transactions for display (limited to 50)
-  const { data: transactions } = (await supabase
-    .from("coin_transactions")
-    .select("*")
-    .eq("actor_id", actor.id)
-    .gt("amount", 0)
-    .order("created_at", { ascending: false })
-    .limit(50)) as { data: CoinTransaction[] | null };
+  // Fetch aggregated earnings summary via RPC (replaces loading ALL transactions)
+  const [{ data: earningsSummary }, { data: transactions }] = await Promise.all([
+    (supabase.rpc as any)("get_earnings_summary", { p_actor_id: actor.id }) as Promise<{ data: EarningsSummaryRow[] | null }>,
+    (supabase.from("coin_transactions") as any)
+      .select("*")
+      .eq("actor_id", actor.id)
+      .gt("amount", 0)
+      .order("created_at", { ascending: false })
+      .limit(20) as Promise<{ data: CoinTransaction[] | null }>,
+  ]);
 
-  // Get ALL transactions (no limit) for accurate totals
-  const { data: allTransactionsData } = (await supabase
-    .from("coin_transactions")
-    .select("amount, action, created_at")
-    .eq("actor_id", actor.id)
-    .gt("amount", 0)) as { data: Pick<CoinTransaction, "amount" | "action" | "created_at">[] | null };
+  const summary = earningsSummary || [];
+  const getTotal = (action: string) =>
+    summary.find((s) => s.action === action)?.total_amount || 0;
 
-  const allTransactions = allTransactionsData || [];
+  const tipEarnings = Number(getTotal("tip_received"));
+  const messageEarnings = Number(getTotal("message_received"));
+  const contentEarnings = Number(getTotal("content_unlock_received"));
+  const ppvEarnings = Number(getTotal("ppv_sale"));
+  const callEarnings = Number(getTotal("video_call_received")) + Number(getTotal("voice_call_received"));
+  const auctionEarnings = Number(getTotal("auction_sale"));
+  const totalEarnings = summary.reduce((sum, s) => sum + Number(s.total_amount), 0);
+  const thisMonthEarnings = summary.reduce((sum, s) => sum + Number(s.this_month_amount), 0);
 
-  // Calculate totals from the full dataset
-  const tipEarnings = allTransactions
-    .filter(t => t.action === "tip_received")
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  const messageEarnings = allTransactions
-    .filter(t => t.action === "message_received")
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  const contentEarnings = allTransactions
-    .filter(t => t.action === "content_unlock_received")
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  const ppvEarnings = allTransactions
-    .filter(t => t.action === "ppv_sale")
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  const callEarnings = allTransactions
-    .filter(t => t.action === "video_call_received" || t.action === "voice_call_received")
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  const auctionEarnings = allTransactions
-    .filter(t => t.action === "auction_sale")
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  const totalEarnings = tipEarnings + messageEarnings + contentEarnings + ppvEarnings + callEarnings + auctionEarnings;
-
-  // Get recent transactions for display from the limited query
-  const recentTransactions = (transactions || []).slice(0, 20);
-
-  // Calculate this month's earnings from the full dataset
-  const oneMonthAgo = new Date();
-  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-  const thisMonthEarnings = allTransactions
-    .filter(t => new Date(t.created_at) >= oneMonthAgo)
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    });
-  };
-
-  const getActionLabel = (action: string) => {
-    switch (action) {
-      case "tip_received":
-        return "Tip";
-      case "message_received":
-        return "Message";
-      case "content_unlock_received":
-        return "Content Sale";
-      case "ppv_sale":
-        return "PPV Unlock";
-      case "video_call_received":
-        return "Video Call";
-      case "voice_call_received":
-        return "Voice Call";
-      case "auction_sale":
-        return "Auction Sale";
-      default:
-        return action;
-    }
-  };
-
-  const getActionIcon = (action: string) => {
-    switch (action) {
-      case "tip_received":
-        return <Heart className="h-4 w-4 text-pink-500" />;
-      case "message_received":
-        return <MessageCircle className="h-4 w-4 text-blue-500" />;
-      case "content_unlock_received":
-        return <ShoppingBag className="h-4 w-4 text-green-500" />;
-      case "ppv_sale":
-        return <Coins className="h-4 w-4 text-orange-500" />;
-      case "video_call_received":
-        return <Video className="h-4 w-4 text-purple-500" />;
-      case "voice_call_received":
-        return <Phone className="h-4 w-4 text-indigo-500" />;
-      case "auction_sale":
-        return <Gavel className="h-4 w-4 text-amber-500" />;
-      default:
-        return <Coins className="h-4 w-4 text-yellow-500" />;
-    }
-  };
+  const recentTransactions = transactions || [];
 
   return (
     <div className="container max-w-4xl py-8 space-y-8">
@@ -247,71 +172,10 @@ export default async function EarningsPage() {
       </div>
 
       {/* Recent Transactions */}
-      <div className="rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/5 to-transparent overflow-hidden">
-        <div className="px-6 pt-6 pb-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-gradient-to-br from-violet-500/20 to-pink-500/20">
-              <Sparkles className="h-4 w-4 text-violet-400" />
-            </div>
-            <div>
-              <h2 className="font-semibold text-lg">Recent Earnings</h2>
-              <p className="text-sm text-muted-foreground">Your latest coin earnings</p>
-            </div>
-          </div>
-        </div>
-        <div className="px-6 pb-6">
-          {recentTransactions.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <div className="mx-auto mb-4 w-16 h-16 rounded-2xl bg-gradient-to-br from-pink-500/10 via-violet-500/10 to-transparent border border-pink-500/10 flex items-center justify-center">
-                <Coins className="h-8 w-8 text-pink-500/40" />
-              </div>
-              <p className="font-medium">No earnings yet</p>
-              <p className="text-sm mt-1">Start chatting to earn coins from fans!</p>
-            </div>
-          ) : (
-            <div className="space-y-1">
-              {recentTransactions.map((transaction) => (
-                <div
-                  key={transaction.id}
-                  className="flex items-center justify-between py-3 px-3 hover:bg-muted/50 rounded-lg transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-full ${
-                      transaction.action === "tip_received"
-                        ? "bg-pink-500/10"
-                        : transaction.action === "message_received"
-                        ? "bg-blue-500/10"
-                        : transaction.action === "content_unlock_received"
-                        ? "bg-green-500/10"
-                        : transaction.action === "ppv_sale"
-                        ? "bg-orange-500/10"
-                        : transaction.action === "video_call_received"
-                        ? "bg-purple-500/10"
-                        : transaction.action === "voice_call_received"
-                        ? "bg-indigo-500/10"
-                        : transaction.action === "auction_sale"
-                        ? "bg-amber-500/10"
-                        : "bg-muted"
-                    }`}>
-                      {getActionIcon(transaction.action)}
-                    </div>
-                    <div>
-                      <p className="font-medium">{getActionLabel(transaction.action)}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {formatDate(transaction.created_at)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1.5 bg-green-500/10 text-green-500 font-semibold px-3 py-1 rounded-full text-sm">
-                    <ArrowUpRight className="h-3.5 w-3.5" />
-                    +{transaction.amount}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+      <EarningsTransactionList
+        initialTransactions={recentTransactions}
+        actorId={actor.id}
+      />
     </div>
   );
 }

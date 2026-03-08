@@ -136,6 +136,9 @@ export default function WalletPage() {
   const [earningsByType, setEarningsByType] = useState<Record<string, number>>({});
   const [modelId, setModelId] = useState<string | null>(null);
   const [actorType, setActorType] = useState<string | null>(null);
+  const [actorId, setActorId] = useState<string | null>(null);
+  const [hasMoreTransactions, setHasMoreTransactions] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   // Brand state
   const [brandPayments, setBrandPayments] = useState<BrandPayment[]>([]);
@@ -186,6 +189,7 @@ export default function WalletPage() {
       if (!actor) return;
 
       setActorType(actor.type);
+      setActorId(actor.id);
 
       // Get coin balance based on actor type
       if (actor.type === "model" || actor.type === "admin") {
@@ -253,48 +257,54 @@ export default function WalletPage() {
         }
       }
 
-      // Get transactions - fetch more for models to show analytics
-      const txLimit = actor.type === "model" ? 500 : 20;
-      const { data: txs } = await supabase
+      // Fetch transactions (20 for display) + RPC aggregates for models (in parallel)
+      const txPromise = supabase
         .from("coin_transactions")
         .select("*")
         .eq("actor_id", actor.id)
         .order("created_at", { ascending: false })
-        .limit(txLimit) as { data: Transaction[] | null };
+        .limit(20) as unknown as Promise<{ data: Transaction[] | null }>;
 
-      // For display, only show recent 20
-      setTransactions((txs || []).slice(0, 20));
+      const summaryPromise = actor.type === "model"
+        ? (supabase.rpc as any)("get_earnings_summary", { p_actor_id: actor.id })
+        : Promise.resolve({ data: null });
 
-      // Calculate earnings (positive amounts)
-      const earnings = (txs || []).filter(t => t.amount > 0);
-      const total = earnings.reduce((sum, t) => sum + t.amount, 0);
-      setTotalEarnings(total);
+      const monthlyPromise = actor.type === "model"
+        ? (supabase.rpc as any)("get_earnings_by_month", { p_actor_id: actor.id, p_months: 6 })
+        : Promise.resolve({ data: null });
 
-      // This month
-      const oneMonthAgo = new Date();
-      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-      const thisMonth = earnings
-        .filter(t => new Date(t.created_at) >= oneMonthAgo)
-        .reduce((sum, t) => sum + t.amount, 0);
-      setThisMonthEarnings(thisMonth);
+      const [{ data: txs }, { data: summaryData }, { data: monthlyData }] = await Promise.all([
+        txPromise, summaryPromise, monthlyPromise
+      ]);
 
-      // For models: calculate earnings by month and type for analytics
-      if (actor.type === "model") {
-        // Group earnings by month
-        const byMonth: Record<string, number> = {};
-        earnings.forEach((t) => {
-          const month = new Date(t.created_at).toISOString().slice(0, 7); // YYYY-MM
-          byMonth[month] = (byMonth[month] || 0) + t.amount;
-        });
-        setEarningsByMonth(byMonth);
+      setTransactions(txs || []);
+      setHasMoreTransactions((txs || []).length >= 20);
 
-        // Group earnings by type
+      // Derive analytics from RPC results (replaces loading 500 rows)
+      if (summaryData && Array.isArray(summaryData)) {
+        const total = summaryData.reduce((sum: number, s: any) => sum + Number(s.total_amount), 0);
+        setTotalEarnings(total);
+        const monthly = summaryData.reduce((sum: number, s: any) => sum + Number(s.this_month_amount), 0);
+        setThisMonthEarnings(monthly);
+
         const byType: Record<string, number> = {};
-        earnings.forEach((t) => {
-          const type = t.action || "other";
-          byType[type] = (byType[type] || 0) + t.amount;
-        });
+        summaryData.forEach((s: any) => { byType[s.action] = Number(s.total_amount); });
         setEarningsByType(byType);
+      } else {
+        // For non-models, compute from the 20 displayed transactions
+        const earnings = (txs || []).filter(t => t.amount > 0);
+        setTotalEarnings(earnings.reduce((sum, t) => sum + t.amount, 0));
+        const oneMonthAgo = new Date();
+        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+        setThisMonthEarnings(
+          earnings.filter(t => new Date(t.created_at) >= oneMonthAgo).reduce((sum, t) => sum + t.amount, 0)
+        );
+      }
+
+      if (monthlyData && Array.isArray(monthlyData)) {
+        const byMonth: Record<string, number> = {};
+        monthlyData.forEach((m: any) => { byMonth[m.month] = Number(m.total_amount); });
+        setEarningsByMonth(byMonth);
       }
 
       setLoading(false);
@@ -302,6 +312,26 @@ export default function WalletPage() {
 
     loadWallet();
   }, [supabase]);
+
+  const loadMoreTransactions = async () => {
+    if (loadingMore || !hasMoreTransactions || transactions.length === 0 || !actorId) return;
+    setLoadingMore(true);
+    const lastTx = transactions[transactions.length - 1];
+    const { data: moreTxs } = await supabase
+      .from("coin_transactions")
+      .select("*")
+      .eq("actor_id", actorId)
+      .lt("created_at", lastTx.created_at)
+      .order("created_at", { ascending: false })
+      .limit(20) as { data: Transaction[] | null };
+    if (moreTxs && moreTxs.length > 0) {
+      setTransactions(prev => [...prev, ...moreTxs]);
+      setHasMoreTransactions(moreTxs.length >= 20);
+    } else {
+      setHasMoreTransactions(false);
+    }
+    setLoadingMore(false);
+  };
 
   const handlePurchase = async (coins: number) => {
     setPurchasing(coins);
@@ -704,6 +734,19 @@ export default function WalletPage() {
                   </span>
                 </div>
               ))}
+              {hasMoreTransactions && (
+                <div className="text-center pt-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={loadMoreTransactions}
+                    disabled={loadingMore}
+                  >
+                    {loadingMore ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                    Load More
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </CardContent>

@@ -9,31 +9,19 @@ import {
   ArrowLeft,
   Coins,
   TrendingUp,
-  ArrowUpRight,
-  ArrowDownRight,
   CreditCard,
   Heart,
-  MessageCircle,
   Lock,
-  Gift,
   Crown,
   DollarSign,
 } from "lucide-react";
 import { COIN_PACKAGES } from "@/lib/stripe-config";
+import { AdminTransactionList } from "./AdminTransactionList";
 
 // Get the USD price for a coin amount (returns cents)
 function getCoinPackagePrice(coins: number): number {
   const pkg = COIN_PACKAGES.find(p => p.coins === coins);
   return pkg?.price || 0;
-}
-
-interface Transaction {
-  id: string;
-  actor_id: string;
-  amount: number;
-  action: string;
-  metadata: Record<string, unknown>;
-  created_at: string;
 }
 
 interface TopPurchaser {
@@ -63,243 +51,217 @@ export default async function TransactionsPage() {
     redirect("/dashboard");
   }
 
-  // Get transaction stats
-  const { data: allTransactions } = await supabase
-    .from("coin_transactions")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(200) as { data: Transaction[] | null };
+  // Fetch all data in parallel using RPCs + balance queries
+  const [
+    { data: statsData },
+    { data: topPurchaserData },
+    { data: purchaseVolumeData },
+    { data: modelBalances },
+    { data: fanBalances },
+    { data: initialTransactionsRaw, count: txCount },
+    { data: recentPurchasesRaw },
+  ] = await Promise.all([
+    // Platform-wide stats via RPC (replaces 200-row fetch + JS filter/reduce)
+    (supabase.rpc as any)("get_admin_transaction_stats") as Promise<{ data: { stat_name: string; stat_value: number }[] | null }>,
+    // Top purchasers via RPC (replaces unlimited purchase fetch + JS aggregation)
+    (supabase.rpc as any)("get_top_purchasers", { p_limit: 20 }) as Promise<{ data: { actor_id: string; total_purchased: number; purchase_count: number }[] | null }>,
+    // Purchase volume by coin amount for revenue calc (replaces unlimited fetch)
+    (supabase.rpc as any)("get_purchase_volume") as Promise<{ data: { coin_amount: number; purchase_count: number }[] | null }>,
+    // Coin balances (these are already lightweight - just sums)
+    supabase.from("models").select("coin_balance") as unknown as Promise<{ data: { coin_balance: number }[] | null }>,
+    supabase.from("fans").select("coin_balance") as unknown as Promise<{ data: { coin_balance: number }[] | null }>,
+    // Initial 20 transactions for the All Transactions tab (with count for total)
+    (supabase.from("coin_transactions") as any)
+      .select("*", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .limit(20) as Promise<{ data: any[] | null; count: number | null }>,
+    // Recent purchases for the Purchases tab
+    (supabase.from("coin_transactions") as any)
+      .select("actor_id, amount, created_at, metadata")
+      .eq("action", "purchase")
+      .order("created_at", { ascending: false })
+      .limit(50) as Promise<{ data: any[] | null }>,
+  ]);
 
-  const transactions = allTransactions || [];
+  // Parse stats from RPC
+  const statsMap = new Map((statsData || []).map((s: any) => [s.stat_name, Number(s.stat_value)]));
+  const totalPurchased = statsMap.get("total_purchased") || 0;
+  const totalTipped = statsMap.get("total_tipped") || 0;
+  const totalContentSales = statsMap.get("total_content_sales") || 0;
 
-  // Calculate stats
-  const purchases = transactions.filter(t => t.action === "purchase");
-  const tips = transactions.filter(t => t.action === "tip_sent" || t.action === "tip_received");
-  const contentSales = transactions.filter(t => t.action === "content_sale" || t.action === "content_unlock");
-  // Message costs tracked for potential future analytics
-  const _messageCosts = transactions.filter(t => t.action === "message_sent" || t.action === "message_received");
-  void _messageCosts;
+  // Calculate total revenue from purchase volume RPC
+  const totalRevenueCents = (purchaseVolumeData || []).reduce(
+    (sum: number, v: any) => sum + getCoinPackagePrice(Number(v.coin_amount)) * Number(v.purchase_count), 0
+  );
+  const totalRevenue = totalRevenueCents / 100;
 
-  const totalPurchased = purchases.reduce((sum, t) => sum + t.amount, 0);
-  const totalTipped = tips.filter(t => t.action === "tip_sent").reduce((sum, t) => sum + Math.abs(t.amount), 0);
-  const totalContentSales = contentSales.filter(t => t.action === "content_sale").reduce((sum, t) => sum + t.amount, 0);
-
-  // Get coin balances
-  const { data: modelBalances } = await supabase
-    .from("models")
-    .select("coin_balance") as { data: { coin_balance: number }[] | null };
-
-  const { data: fanBalances } = await supabase
-    .from("fans")
-    .select("coin_balance") as { data: { coin_balance: number }[] | null };
-
+  // Coin balances
   const totalModelCoins = modelBalances?.reduce((sum, m) => sum + (m.coin_balance || 0), 0) || 0;
   const totalFanCoins = fanBalances?.reduce((sum, f) => sum + (f.coin_balance || 0), 0) || 0;
   const totalCoinsInCirculation = totalModelCoins + totalFanCoins;
 
-  // Get fan count (reserved for future use in stats display)
-  const { count: _totalFans } = await supabase
-    .from("fans")
-    .select("*", { count: "exact", head: true });
-  void _totalFans;
+  // Enrich top purchasers with user info
+  const topPurchaserActorIds = (topPurchaserData || []).map((p: any) => p.actor_id);
+  let topPurchasers: TopPurchaser[] = [];
 
-  // Get all purchase transactions with actor info for top purchasers
-  const { data: purchaseTransactions } = await supabase
-    .from("coin_transactions")
-    .select("actor_id, amount, created_at, metadata")
-    .eq("action", "purchase")
-    .order("created_at", { ascending: false }) as { data: { actor_id: string; amount: number; created_at: string; metadata: Record<string, unknown> }[] | null };
+  if (topPurchaserActorIds.length > 0) {
+    const { data: actors } = await supabase
+      .from("actors")
+      .select("id, user_id, type")
+      .in("id", topPurchaserActorIds) as { data: { id: string; user_id: string; type: string }[] | null };
 
-  // Get actor info for purchases
-  const actorIds = [...new Set(purchaseTransactions?.map(p => p.actor_id) || [])];
+    const actorMap = new Map((actors || []).map(a => [a.id, a]));
 
-  const { data: actors } = await supabase
-    .from("actors")
-    .select("id, user_id, type")
-    .in("id", actorIds.length > 0 ? actorIds : ["none"]) as { data: { id: string; user_id: string; type: string }[] | null };
+    const fanUserIds = (actors || []).filter(a => a.type === "fan").map(a => a.user_id);
+    const modelUserIds = (actors || []).filter(a => a.type === "model").map(a => a.user_id);
 
-  const actorMap = new Map(actors?.map(a => [a.id, a]) || []);
+    const [{ data: fans }, { data: models }] = await Promise.all([
+      fanUserIds.length > 0
+        ? supabase.from("fans").select("user_id, email, display_name").in("user_id", fanUserIds) as unknown as Promise<{ data: { user_id: string; email: string; display_name: string | null }[] | null }>
+        : Promise.resolve({ data: [] as any[] }),
+      modelUserIds.length > 0
+        ? supabase.from("models").select("user_id, email, first_name, last_name").in("user_id", modelUserIds) as unknown as Promise<{ data: { user_id: string; email: string; first_name: string | null; last_name: string | null }[] | null }>
+        : Promise.resolve({ data: [] as any[] }),
+    ]);
 
-  // Get fan info
-  const fanUserIds = actors?.filter(a => a.type === "fan").map(a => a.user_id) || [];
-  const { data: fans } = await supabase
-    .from("fans")
-    .select("user_id, email, display_name")
-    .in("user_id", fanUserIds.length > 0 ? fanUserIds : ["none"]) as { data: { user_id: string; email: string; display_name: string | null }[] | null };
+    const fanMap = new Map((fans || []).map((f: any) => [f.user_id, f]));
+    const modelMap = new Map((models || []).map((m: any) => [m.user_id, m]));
 
-  const fanMap = new Map(fans?.map(f => [f.user_id, f]) || []);
-
-  // Get model info
-  const modelUserIds = actors?.filter(a => a.type === "model").map(a => a.user_id) || [];
-  const { data: models } = await supabase
-    .from("models")
-    .select("user_id, email, first_name, last_name")
-    .in("user_id", modelUserIds.length > 0 ? modelUserIds : ["none"]) as { data: { user_id: string; email: string; first_name: string | null; last_name: string | null }[] | null };
-
-  const modelMap = new Map(models?.map(m => [m.user_id, m]) || []);
-
-  // Calculate top purchasers
-  const purchaserStats = new Map<string, { total: number; count: number; usdCents: number }>();
-  purchaseTransactions?.forEach(p => {
-    const current = purchaserStats.get(p.actor_id) || { total: 0, count: 0, usdCents: 0 };
-    const priceCents = getCoinPackagePrice(p.amount);
-    purchaserStats.set(p.actor_id, {
-      total: current.total + p.amount,
-      count: current.count + 1,
-      usdCents: current.usdCents + priceCents,
-    });
-  });
-
-  const topPurchasers: TopPurchaser[] = Array.from(purchaserStats.entries())
-    .map(([actorId, stats]) => {
-      const actor = actorMap.get(actorId);
+    topPurchasers = (topPurchaserData || []).map((p: any) => {
+      const a = actorMap.get(p.actor_id);
       let email = "";
       let name = "";
 
-      if (actor?.type === "fan") {
-        const fan = fanMap.get(actor.user_id);
+      if (a?.type === "fan") {
+        const fan = fanMap.get(a.user_id);
         email = fan?.email || "";
         name = fan?.display_name || "";
-      } else if (actor?.type === "model") {
-        const model = modelMap.get(actor.user_id);
+      } else if (a?.type === "model") {
+        const model = modelMap.get(a.user_id);
         email = model?.email || "";
         name = [model?.first_name, model?.last_name].filter(Boolean).join(" ");
       }
 
       return {
-        actor_id: actorId,
+        actor_id: p.actor_id,
         email,
         name: name || email.split("@")[0],
-        type: actor?.type || "unknown",
-        total_purchased: stats.total,
-        purchase_count: stats.count,
-        total_usd_cents: stats.usdCents,
+        type: a?.type || "unknown",
+        total_purchased: Number(p.total_purchased),
+        purchase_count: Number(p.purchase_count),
+        total_usd_cents: 0, // Will calculate below
       };
-    })
-    .sort((a, b) => b.total_purchased - a.total_purchased)
-    .slice(0, 20);
+    });
 
-  // Recent purchases with user info
-  const recentPurchases = (purchaseTransactions || []).slice(0, 50).map(p => {
-    const actor = actorMap.get(p.actor_id);
-    let email = "";
-    let name = "";
-
-    if (actor?.type === "fan") {
-      const fan = fanMap.get(actor.user_id);
-      email = fan?.email || "";
-      name = fan?.display_name || "";
-    } else if (actor?.type === "model") {
-      const model = modelMap.get(actor.user_id);
-      email = model?.email || "";
-      name = [model?.first_name, model?.last_name].filter(Boolean).join(" ");
-    }
-
-    return {
+    // Calculate USD for each top purchaser (approximation from their total coins)
+    // For more accuracy we'd need per-transaction data, but this gives a reasonable estimate
+    topPurchasers = topPurchasers.map(p => ({
       ...p,
-      email,
-      name: name || email.split("@")[0],
-      type: actor?.type || "unknown",
-    };
-  });
+      total_usd_cents: p.total_purchased * 10, // 1 coin ≈ $0.10
+    }));
+  }
 
-  // Calculate total revenue from actual package prices
-  const totalRevenueCents = (purchaseTransactions || []).reduce((sum, p) => sum + getCoinPackagePrice(p.amount), 0);
-  const totalRevenue = totalRevenueCents / 100;
+  // Enrich recent purchases with user info
+  const purchaseActorIds = [...new Set((recentPurchasesRaw || []).map((p: any) => p.actor_id))];
+  let recentPurchases: any[] = [];
 
-  // Get user info for ALL transactions (not just purchases)
-  const allActorIds = [...new Set(transactions.map(t => t.actor_id))];
+  if (purchaseActorIds.length > 0) {
+    const { data: pActors } = await supabase
+      .from("actors")
+      .select("id, user_id, type")
+      .in("id", purchaseActorIds) as { data: { id: string; user_id: string; type: string }[] | null };
 
-  const { data: allActors } = await supabase
-    .from("actors")
-    .select("id, user_id, type")
-    .in("id", allActorIds.length > 0 ? allActorIds : ["none"]) as { data: { id: string; user_id: string; type: string }[] | null };
+    const pActorMap = new Map((pActors || []).map(a => [a.id, a]));
 
-  const allActorMap = new Map(allActors?.map(a => [a.id, a]) || []);
+    const pFanUserIds = (pActors || []).filter(a => a.type === "fan").map(a => a.user_id);
+    const pModelUserIds = (pActors || []).filter(a => a.type === "model").map(a => a.user_id);
 
-  // Get fan info for all transaction actors
-  const allFanUserIds = allActors?.filter(a => a.type === "fan").map(a => a.user_id) || [];
-  const { data: allFans } = await supabase
-    .from("fans")
-    .select("user_id, email, display_name")
-    .in("user_id", allFanUserIds.length > 0 ? allFanUserIds : ["none"]) as { data: { user_id: string; email: string; display_name: string | null }[] | null };
+    const [{ data: pFans }, { data: pModels }] = await Promise.all([
+      pFanUserIds.length > 0
+        ? supabase.from("fans").select("user_id, email, display_name").in("user_id", pFanUserIds) as unknown as Promise<{ data: any[] | null }>
+        : Promise.resolve({ data: [] as any[] }),
+      pModelUserIds.length > 0
+        ? supabase.from("models").select("user_id, email, first_name, last_name").in("user_id", pModelUserIds) as unknown as Promise<{ data: any[] | null }>
+        : Promise.resolve({ data: [] as any[] }),
+    ]);
 
-  const allFanMap = new Map(allFans?.map(f => [f.user_id, f]) || []);
+    const pFanMap = new Map((pFans || []).map((f: any) => [f.user_id, f]));
+    const pModelMap = new Map((pModels || []).map((m: any) => [m.user_id, m]));
 
-  // Get model info for all transaction actors
-  const allModelUserIds = allActors?.filter(a => a.type === "model" || a.type === "admin").map(a => a.user_id) || [];
-  const { data: allModels } = await supabase
-    .from("models")
-    .select("user_id, email, first_name, last_name, username")
-    .in("user_id", allModelUserIds.length > 0 ? allModelUserIds : ["none"]) as { data: { user_id: string; email: string; first_name: string | null; last_name: string | null; username: string | null }[] | null };
+    recentPurchases = (recentPurchasesRaw || []).map((p: any) => {
+      const a = pActorMap.get(p.actor_id);
+      let email = "";
+      let name = "";
 
-  const allModelMap = new Map(allModels?.map(m => [m.user_id, m]) || []);
+      if (a?.type === "fan") {
+        const fan = pFanMap.get(a.user_id);
+        email = fan?.email || "";
+        name = fan?.display_name || "";
+      } else if (a?.type === "model") {
+        const model = pModelMap.get(a.user_id);
+        email = model?.email || "";
+        name = [model?.first_name, model?.last_name].filter(Boolean).join(" ");
+      }
 
-  // Helper to get user info for a transaction
-  const getUserInfoForTransaction = (actorId: string) => {
-    const actor = allActorMap.get(actorId);
-    let name = "";
-    let email = "";
-    let username = "";
+      return {
+        ...p,
+        email,
+        name: name || email.split("@")[0],
+        type: a?.type || "unknown",
+      };
+    });
+  }
 
-    if (actor?.type === "fan") {
-      const fan = allFanMap.get(actor.user_id);
-      email = fan?.email || "";
-      name = fan?.display_name || email.split("@")[0];
-    } else if (actor?.type === "model" || actor?.type === "admin") {
-      const model = allModelMap.get(actor.user_id);
-      email = model?.email || "";
-      name = [model?.first_name, model?.last_name].filter(Boolean).join(" ") || model?.username || email.split("@")[0];
-      username = model?.username || "";
-    }
+  // Enrich initial transactions for the All Transactions client component
+  const initialTxActorIds = [...new Set((initialTransactionsRaw || []).map((t: any) => t.actor_id))];
+  let initialTransactions: any[] = [];
 
-    return { name, email, username, type: actor?.type || "unknown" };
-  };
+  if (initialTxActorIds.length > 0) {
+    const { data: tActors } = await supabase
+      .from("actors")
+      .select("id, user_id, type")
+      .in("id", initialTxActorIds) as { data: { id: string; user_id: string; type: string }[] | null };
 
-  const getActionIcon = (action: string) => {
-    switch (action) {
-      case "purchase":
-        return <CreditCard className="h-4 w-4 text-green-500" />;
-      case "tip_sent":
-      case "tip_received":
-        return <Heart className="h-4 w-4 text-pink-500" />;
-      case "content_sale":
-      case "content_unlock":
-        return <Lock className="h-4 w-4 text-purple-500" />;
-      case "message_sent":
-      case "message_received":
-        return <MessageCircle className="h-4 w-4 text-blue-500" />;
-      case "bonus":
-      case "signup_bonus":
-        return <Gift className="h-4 w-4 text-yellow-500" />;
-      default:
-        return <Coins className="h-4 w-4 text-gray-500" />;
-    }
-  };
+    const tActorMap = new Map((tActors || []).map(a => [a.id, a]));
 
-  const getActionLabel = (action: string) => {
-    switch (action) {
-      case "purchase":
-        return "Coin Purchase";
-      case "tip_sent":
-        return "Tip Sent";
-      case "tip_received":
-        return "Tip Received";
-      case "content_sale":
-        return "Content Sale";
-      case "content_unlock":
-        return "Content Unlock";
-      case "message_sent":
-        return "Message Sent";
-      case "message_received":
-        return "Message Payment";
-      case "bonus":
-      case "signup_bonus":
-        return "Bonus";
-      default:
-        return action.replace(/_/g, " ");
-    }
-  };
+    const tFanUserIds = (tActors || []).filter(a => a.type === "fan").map(a => a.user_id);
+    const tModelUserIds = (tActors || []).filter(a => a.type === "model" || a.type === "admin").map(a => a.user_id);
+
+    const [{ data: tFans }, { data: tModels }] = await Promise.all([
+      tFanUserIds.length > 0
+        ? supabase.from("fans").select("user_id, email, display_name").in("user_id", tFanUserIds) as unknown as Promise<{ data: any[] | null }>
+        : Promise.resolve({ data: [] as any[] }),
+      tModelUserIds.length > 0
+        ? supabase.from("models").select("user_id, email, first_name, last_name, username").in("user_id", tModelUserIds) as unknown as Promise<{ data: any[] | null }>
+        : Promise.resolve({ data: [] as any[] }),
+    ]);
+
+    const tFanMap = new Map((tFans || []).map((f: any) => [f.user_id, f]));
+    const tModelMap = new Map((tModels || []).map((m: any) => [m.user_id, m]));
+
+    initialTransactions = (initialTransactionsRaw || []).map((tx: any) => {
+      const a = tActorMap.get(tx.actor_id);
+      let name = "";
+      let email = "";
+
+      if (a?.type === "fan") {
+        const fan = tFanMap.get(a.user_id);
+        email = fan?.email || "";
+        name = fan?.display_name || email.split("@")[0];
+      } else if (a?.type === "model" || a?.type === "admin") {
+        const model = tModelMap.get(a.user_id);
+        email = model?.email || "";
+        name = [model?.first_name, model?.last_name].filter(Boolean).join(" ") || model?.username || email.split("@")[0];
+      }
+
+      return {
+        ...tx,
+        user_name: name,
+        user_email: email,
+        user_type: a?.type || "unknown",
+      };
+    });
+  }
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString("en-US", {
@@ -375,7 +337,7 @@ export default async function TransactionsPage() {
         </Card>
       </div>
 
-      {/* Stats - Second Row: Activity metrics */}
+      {/* Stats - Second Row: Activity metrics (now from full dataset via RPC) */}
       <div className="grid grid-cols-3 gap-4">
         <Card>
           <CardContent className="pt-6">
@@ -383,7 +345,7 @@ export default async function TransactionsPage() {
               <CreditCard className="h-6 w-6 text-green-500" />
               <div>
                 <p className="text-2xl font-bold">{totalPurchased.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Coins Purchased (Last 200 txns)</p>
+                <p className="text-xs text-muted-foreground">Total Coins Purchased</p>
               </div>
             </div>
           </CardContent>
@@ -395,7 +357,7 @@ export default async function TransactionsPage() {
               <Heart className="h-6 w-6 text-pink-500" />
               <div>
                 <p className="text-2xl font-bold">{totalTipped.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Tips Sent (Last 200 txns)</p>
+                <p className="text-xs text-muted-foreground">Total Tips Sent</p>
               </div>
             </div>
           </CardContent>
@@ -407,7 +369,7 @@ export default async function TransactionsPage() {
               <Lock className="h-6 w-6 text-purple-500" />
               <div>
                 <p className="text-2xl font-bold">{totalContentSales.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Content Sales (Last 200 txns)</p>
+                <p className="text-xs text-muted-foreground">Total Content Sales</p>
               </div>
             </div>
           </CardContent>
@@ -472,7 +434,7 @@ export default async function TransactionsPage() {
                           {purchaser.total_purchased.toLocaleString()} coins
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {purchaser.purchase_count} purchase{purchaser.purchase_count !== 1 ? "s" : ""} · ${(purchaser.total_usd_cents / 100).toFixed(2)}
+                          {purchaser.purchase_count} purchase{purchaser.purchase_count !== 1 ? "s" : ""}
                         </p>
                       </div>
                     </div>
@@ -497,7 +459,7 @@ export default async function TransactionsPage() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {recentPurchases.map((purchase, index) => (
+                  {recentPurchases.map((purchase: any, index: number) => (
                     <div
                       key={`${purchase.actor_id}-${purchase.created_at}-${index}`}
                       className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted/70 transition-colors"
@@ -527,62 +489,10 @@ export default async function TransactionsPage() {
         </TabsContent>
 
         <TabsContent value="all">
-          <Card>
-            <CardHeader>
-              <CardTitle>All Transactions</CardTitle>
-              <CardDescription>Last 200 coin transactions</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {transactions.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Coins className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No transactions yet</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {transactions.map((tx) => {
-                    const userInfo = getUserInfoForTransaction(tx.actor_id);
-                    return (
-                      <div
-                        key={tx.id}
-                        className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted/70 transition-colors"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 rounded-full bg-background">
-                            {getActionIcon(tx.action)}
-                          </div>
-                          <div>
-                            <p className="font-medium text-sm">{getActionLabel(tx.action)}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {formatDate(tx.created_at)}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <div className="text-right">
-                            <p className="text-sm font-medium">{userInfo.name}</p>
-                            <div className="flex items-center gap-1">
-                              <Badge variant="outline" className="text-xs">
-                                {userInfo.type}
-                              </Badge>
-                            </div>
-                          </div>
-                          <span className={`flex items-center gap-1 font-semibold min-w-[80px] justify-end ${tx.amount >= 0 ? "text-green-500" : "text-red-500"}`}>
-                            {tx.amount >= 0 ? (
-                              <ArrowUpRight className="h-4 w-4" />
-                            ) : (
-                              <ArrowDownRight className="h-4 w-4" />
-                            )}
-                            {tx.amount >= 0 ? "+" : ""}{tx.amount}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <AdminTransactionList
+            initialTransactions={initialTransactions}
+            totalCount={txCount || 0}
+          />
         </TabsContent>
       </Tabs>
     </div>
