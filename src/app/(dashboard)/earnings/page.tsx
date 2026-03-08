@@ -2,7 +2,8 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { Coins, TrendingUp, MessageCircle, Heart, ArrowUpRight, Calendar, Sparkles, Video, Phone, ShoppingBag, Gavel } from "lucide-react";
+import { Coins, TrendingUp, MessageCircle, Heart, ArrowUpRight, Calendar, Sparkles, Video, Phone, ShoppingBag, Gavel, Wallet } from "lucide-react";
+import Link from "next/link";
 // Card components no longer used - replaced with custom styled divs
 import type { Actor, Model } from "@/types/database";
 
@@ -179,16 +180,25 @@ export default async function EarningsPage() {
         <div className="absolute -bottom-8 -left-8 w-28 h-28 bg-violet-500/10 rounded-full blur-3xl" />
         <div className="relative z-10">
           <p className="text-sm text-muted-foreground mb-2">Current Balance</p>
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-yellow-400 to-orange-500 shadow-lg shadow-yellow-500/25">
-              <Coins className="h-7 w-7 text-white" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-gradient-to-br from-yellow-400 to-orange-500 shadow-lg shadow-yellow-500/25">
+                <Coins className="h-7 w-7 text-white" />
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-4xl md:text-5xl font-bold tracking-tight">
+                  {model.coin_balance?.toLocaleString() || 0}
+                </span>
+                <span className="text-lg font-normal text-muted-foreground">coins</span>
+              </div>
             </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-4xl md:text-5xl font-bold tracking-tight">
-                {model.coin_balance?.toLocaleString() || 0}
-              </span>
-              <span className="text-lg font-normal text-muted-foreground">coins</span>
-            </div>
+            <Link
+              href="/wallet"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-semibold text-sm transition-all shadow-lg shadow-green-500/25"
+            >
+              <Wallet className="h-4 w-4" />
+              Withdraw
+            </Link>
           </div>
         </div>
       </div>
