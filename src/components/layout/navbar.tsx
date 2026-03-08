@@ -31,6 +31,8 @@ import {
   Camera,
   FileText,
   Gavel,
+  TrendingUp,
+  Calendar,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/auth/logout-button";
@@ -242,7 +244,15 @@ export function Navbar({ user, actorType, unreadCount = 0 }: NavbarProps) {
                     </DropdownMenuLabel>
                   )}
                   <DropdownMenuSeparator />
-                  {actorType !== "fan" && (
+                  {actorType === "model" && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/earnings" className="cursor-pointer">
+                        <TrendingUp className="mr-2 h-4 w-4" />
+                        Earnings
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  {(actorType === "brand" || actorType === "admin") && (
                     <DropdownMenuItem asChild>
                       <Link href="/wallet" className="cursor-pointer">
                         <Coins className="mr-2 h-4 w-4" />
@@ -300,9 +310,21 @@ export function Navbar({ user, actorType, unreadCount = 0 }: NavbarProps) {
                   {actorType === "model" && (
                     <>
                       <DropdownMenuItem asChild>
+                        <Link href="/bookings" className="cursor-pointer">
+                          <Calendar className="mr-2 h-4 w-4" />
+                          Bookings
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
                         <Link href="/analytics" className="cursor-pointer">
                           <BarChart3 className="mr-2 h-4 w-4" />
                           Analytics
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/bids/manage" className="cursor-pointer">
+                          <Gavel className="mr-2 h-4 w-4" />
+                          Bids
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
@@ -312,14 +334,8 @@ export function Navbar({ user, actorType, unreadCount = 0 }: NavbarProps) {
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link href="/bids/new" className="cursor-pointer">
-                          <Gavel className="mr-2 h-4 w-4" />
-                          Bids
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
                         <Link href="/comp-card" className="cursor-pointer">
-                          <FileText className="mr-2 h-4 w-4" />
+                          <Camera className="mr-2 h-4 w-4" />
                           Comp Card
                         </Link>
                       </DropdownMenuItem>
