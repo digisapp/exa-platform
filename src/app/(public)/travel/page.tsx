@@ -147,15 +147,15 @@ export default async function TravelPage() {
         {/* ═══════════════════════════════════════════ */}
         {/* INTRO */}
         {/* ═══════════════════════════════════════════ */}
-        <section className="py-10 md:py-16">
-          <div className="container px-4 md:px-16">
+        <section className="py-12 md:py-20">
+          <div className="container px-6 md:px-16">
             <div className="max-w-3xl">
               <p className="text-sky-400 font-semibold text-sm tracking-widest uppercase mb-3">EXA Travel</p>
               <h2 className="text-2xl md:text-4xl font-bold mb-5">Influencer Content for Your Destination</h2>
-              <p className="text-lg text-muted-foreground leading-relaxed mb-4">
+              <p className="text-lg text-zinc-300 leading-relaxed mb-4">
                 500+ vetted U.S.-based content creators producing high-engagement content across Instagram, TikTok, and YouTube — ready to fly to your destination.
               </p>
-              <p className="text-lg text-muted-foreground leading-relaxed">
+              <p className="text-lg text-zinc-400 leading-relaxed">
                 Our creators specialize in destination storytelling that drives real results — bookings, traffic, and brand exposure.
               </p>
             </div>
@@ -165,11 +165,11 @@ export default async function TravelPage() {
         {/* ═══════════════════════════════════════════ */}
         {/* WHAT WE OFFER */}
         {/* ═══════════════════════════════════════════ */}
-        <section className="py-10 md:py-16 bg-muted/20">
-          <div className="container px-4 md:px-16">
+        <section className="py-12 md:py-20 border-t border-white/5">
+          <div className="container px-6 md:px-16">
             <div className="max-w-3xl mb-10">
               <h2 className="text-2xl md:text-3xl font-bold mb-4">What We Offer</h2>
-              <p className="text-muted-foreground leading-relaxed text-lg">
+              <p className="text-zinc-400 leading-relaxed text-lg">
                 We bring creators directly to your destination to produce high-quality content tailored to your marketing goals. Whether you need one creator for a focused campaign or a full group for a large-scale push, we match the right talent to your audience.
               </p>
             </div>
@@ -179,32 +179,32 @@ export default async function TravelPage() {
                 <div className="h-10 w-10 rounded-xl bg-sky-500/10 flex items-center justify-center mb-4">
                   <Camera className="h-5 w-5 text-sky-400" />
                 </div>
-                <h3 className="font-semibold mb-2">Reels, TikToks & YouTube</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">Instagram Reels, TikToks, Stories, and YouTube features showcasing your destination.</p>
+                <h3 className="font-semibold mb-2 text-zinc-100">Reels, TikToks &amp; YouTube</h3>
+                <p className="text-sm text-zinc-400 leading-relaxed">Instagram Reels, TikToks, Stories, and YouTube features showcasing your destination.</p>
               </div>
 
               <div className="rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/5 to-transparent p-6">
                 <div className="h-10 w-10 rounded-xl bg-violet-500/10 flex items-center justify-center mb-4">
                   <Globe className="h-5 w-5 text-violet-400" />
                 </div>
-                <h3 className="font-semibold mb-2">Destination Itineraries</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">Curated itineraries highlighting your hotels, restaurants, and experiences that drive traffic.</p>
+                <h3 className="font-semibold mb-2 text-zinc-100">Destination Itineraries</h3>
+                <p className="text-sm text-zinc-400 leading-relaxed">Curated itineraries highlighting your hotels, restaurants, and experiences that drive traffic.</p>
               </div>
 
               <div className="rounded-2xl border border-pink-500/20 bg-gradient-to-br from-pink-500/5 to-transparent p-6">
                 <div className="h-10 w-10 rounded-xl bg-pink-500/10 flex items-center justify-center mb-4">
                   <CheckCircle2 className="h-5 w-5 text-pink-400" />
                 </div>
-                <h3 className="font-semibold mb-2">Licensed Content</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">High-quality content you can license and repurpose across your own marketing channels.</p>
+                <h3 className="font-semibold mb-2 text-zinc-100">Licensed Content</h3>
+                <p className="text-sm text-zinc-400 leading-relaxed">High-quality content you can license and repurpose across your own marketing channels.</p>
               </div>
 
               <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 to-transparent p-6">
                 <div className="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-4">
                   <BarChart3 className="h-5 w-5 text-emerald-400" />
                 </div>
-                <h3 className="font-semibold mb-2">Performance Reporting</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">Detailed reporting on reach, engagement, and measurable results from every campaign.</p>
+                <h3 className="font-semibold mb-2 text-zinc-100">Performance Reporting</h3>
+                <p className="text-sm text-zinc-400 leading-relaxed">Detailed reporting on reach, engagement, and measurable results from every campaign.</p>
               </div>
             </div>
           </div>
@@ -213,8 +213,8 @@ export default async function TravelPage() {
         {/* ═══════════════════════════════════════════ */}
         {/* HOW IT WORKS */}
         {/* ═══════════════════════════════════════════ */}
-        <section className="py-10 md:py-16">
-          <div className="container px-4 md:px-16">
+        <section className="py-12 md:py-20 border-t border-white/5">
+          <div className="container px-6 md:px-16">
             <h2 className="text-2xl md:text-3xl font-bold mb-10">How It Works</h2>
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl">
               {[
@@ -224,10 +224,10 @@ export default async function TravelPage() {
                 { step: "04", title: "You Get Results", desc: "Receive premium content, measurable exposure, and a full performance report." },
               ].map((item) => (
                 <div key={item.step} className="relative">
-                  <span className="text-5xl font-black text-sky-500/10 absolute -top-2 -left-1">{item.step}</span>
+                  <span className="text-5xl font-black text-sky-500/20 absolute -top-2 -left-1">{item.step}</span>
                   <div className="pt-10">
-                    <h3 className="font-semibold text-lg mb-2">{item.title}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
+                    <h3 className="font-semibold text-lg mb-2 text-zinc-100">{item.title}</h3>
+                    <p className="text-sm text-zinc-400 leading-relaxed">{item.desc}</p>
                   </div>
                 </div>
               ))}
@@ -238,10 +238,10 @@ export default async function TravelPage() {
         {/* ═══════════════════════════════════════════ */}
         {/* CONTENT SHOWCASE */}
         {/* ═══════════════════════════════════════════ */}
-        <section className="py-10 md:py-16 bg-muted/20">
-          <div className="container px-4 md:px-16">
+        <section className="py-12 md:py-20 border-t border-white/5">
+          <div className="container px-6 md:px-16">
             <h2 className="text-2xl md:text-3xl font-bold mb-3">Creator Content</h2>
-            <p className="text-muted-foreground mb-8 max-w-2xl">Examples of the kind of content our creators produce for destinations and brands.</p>
+            <p className="text-zinc-400 mb-8 max-w-2xl">Examples of the kind of content our creators produce for destinations and brands.</p>
             <div className="grid md:grid-cols-2 gap-4 md:gap-6 max-w-2xl">
               <div className="rounded-2xl overflow-hidden bg-black relative group">
                 <div className="aspect-[9/16]">
@@ -282,72 +282,74 @@ export default async function TravelPage() {
         {/* ═══════════════════════════════════════════ */}
         {/* UPCOMING TRIPS FROM DB */}
         {/* ═══════════════════════════════════════════ */}
-        <section id="trips" className="pt-6 pb-10 md:pt-8 md:pb-16 bg-muted/30">
-          <div className="container px-6 md:px-16">
-            {/* Open Trips */}
-            {openTrips.length > 0 && (
-              <div className="mb-16">
-                <div className="flex items-center gap-3 mb-8">
-                  <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center">
-                    <Plane className="h-5 w-5 text-green-500" />
+        {(openTrips.length > 0 || upcomingTrips.length > 0) && (
+          <section id="trips" className="py-12 md:py-20 border-t border-white/5">
+            <div className="container px-6 md:px-16">
+              {/* Open Trips */}
+              {openTrips.length > 0 && (
+                <div className={upcomingTrips.length > 0 ? "mb-16" : ""}>
+                  <div className="flex items-center gap-3 mb-8">
+                    <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center">
+                      <Plane className="h-5 w-5 text-green-500" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold">Now Booking</h2>
+                      <p className="text-zinc-400 text-sm">
+                        Active campaigns accepting creator applications
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-2xl font-bold">Now Booking</h2>
-                    <p className="text-muted-foreground text-sm">
-                      Active campaigns accepting creator applications
-                    </p>
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {openTrips.map((trip) => (
+                      <TravelCard
+                        key={trip.id}
+                        trip={trip}
+                        hasApplied={myApplications.some(
+                          (a) => a.gig_id === trip.id
+                        )}
+                        applicationStatus={
+                          myApplications.find((a) => a.gig_id === trip.id)?.status
+                        }
+                      />
+                    ))}
                   </div>
                 </div>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {openTrips.map((trip) => (
-                    <TravelCard
-                      key={trip.id}
-                      trip={trip}
-                      hasApplied={myApplications.some(
-                        (a) => a.gig_id === trip.id
-                      )}
-                      applicationStatus={
-                        myApplications.find((a) => a.gig_id === trip.id)?.status
-                      }
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
+              )}
 
-            {/* Upcoming Trips */}
-            {upcomingTrips.length > 0 && (
-              <div>
-                <div className="flex items-center gap-3 mb-8">
-                  <div className="h-10 w-10 rounded-full bg-violet-500/10 flex items-center justify-center">
-                    <Calendar className="h-5 w-5 text-violet-500" />
+              {/* Upcoming Trips */}
+              {upcomingTrips.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-3 mb-8">
+                    <div className="h-10 w-10 rounded-full bg-violet-500/10 flex items-center justify-center">
+                      <Calendar className="h-5 w-5 text-violet-500" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold">Coming Soon</h2>
+                      <p className="text-zinc-400 text-sm">
+                        Stay tuned — bookings open soon
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-2xl font-bold">Coming Soon</h2>
-                    <p className="text-muted-foreground text-sm">
-                      Stay tuned — bookings open soon
-                    </p>
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {upcomingTrips.map((trip) => (
+                      <TravelCard key={trip.id} trip={trip} isUpcoming />
+                    ))}
                   </div>
                 </div>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {upcomingTrips.map((trip) => (
-                    <TravelCard key={trip.id} trip={trip} isUpcoming />
-                  ))}
-                </div>
-              </div>
-            )}
+              )}
 
-          </div>
-        </section>
+            </div>
+          </section>
+        )}
 
         {/* ═══════════════════════════════════════════ */}
         {/* BOTTOM CTA */}
         {/* ═══════════════════════════════════════════ */}
-        <section className="py-16 md:py-24">
+        <section className="py-16 md:py-24 border-t border-white/5">
           <div className="container px-6 md:px-16">
             <div className="max-w-2xl">
               <h2 className="text-2xl md:text-3xl font-bold mb-3">Ready to Get Started?</h2>
-              <p className="text-muted-foreground mb-6 text-lg">
+              <p className="text-zinc-400 mb-6 text-lg">
                 Whether you represent a tourism board, hotel, resort, or destination — we&apos;d love to learn about your goals and see if this is a fit.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
