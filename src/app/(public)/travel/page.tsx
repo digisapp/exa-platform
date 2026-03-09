@@ -392,14 +392,6 @@ export default async function TravelPage() {
                 >
                   <a href="mailto:nathan@examodels.com">Partner With Us</a>
                 </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="h-14 px-8 text-base font-semibold border-zinc-700 hover:bg-zinc-800"
-                  asChild
-                >
-                  <Link href="/apply">Apply as a Creator</Link>
-                </Button>
               </div>
             </div>
           </div>

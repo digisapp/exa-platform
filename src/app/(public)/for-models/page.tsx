@@ -204,7 +204,7 @@ export default async function ForModelsPage() {
             <CarouselSlide gradient="from-pink-500 to-violet-500">
               <p className="text-white/70 mb-2">Likes don&apos;t pay rent</p>
               <p className="text-2xl font-bold mb-4">YOU do 💅</p>
-              <Link href="/apply" className="inline-block mt-2 px-6 py-2 bg-white text-pink-500 rounded-full font-bold text-sm hover:bg-white/90 transition">
+              <Link href="/signin" className="inline-block mt-2 px-6 py-2 bg-white text-pink-500 rounded-full font-bold text-sm hover:bg-white/90 transition">
                 Join EXA
               </Link>
             </CarouselSlide>
@@ -663,7 +663,7 @@ export default async function ForModelsPage() {
         <div className="text-center">
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild size="lg" className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-lg px-8">
-              <Link href="/apply">
+              <Link href="/signin">
                 Apply Now ✨
               </Link>
             </Button>

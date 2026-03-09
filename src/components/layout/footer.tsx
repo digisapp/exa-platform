@@ -44,8 +44,8 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/apply" className="text-muted-foreground hover:text-primary transition-colors">
-                  Apply Now
+                <Link href="/signin" className="text-muted-foreground hover:text-primary transition-colors">
+                  Sign Up
                 </Link>
               </li>
               <li>
