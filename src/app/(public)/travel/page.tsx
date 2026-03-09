@@ -13,13 +13,17 @@ import {
   DollarSign,
   Plane,
   ArrowRight,
+  Camera,
+  BarChart3,
+  Globe,
+  CheckCircle2,
 } from "lucide-react";
 import { format } from "date-fns";
 
 export const metadata: Metadata = {
-  title: "EXA Travel",
+  title: "EXA Travel — Influencer Content for Destinations",
   description:
-    "EXA Travel is an ongoing travel series — 5 influencer models traveling the world's best destinations, creating cinematic content. Join as a model and be part of the series.",
+    "500+ vetted U.S.-based content creators ready to fly to your destination and produce high-engagement content that drives bookings, traffic, and brand exposure.",
   robots: { index: true, follow: true },
 };
 
@@ -141,30 +145,103 @@ export default async function TravelPage() {
         </main>
 
         {/* ═══════════════════════════════════════════ */}
-        {/* VIDEO GALLERY */}
+        {/* INTRO */}
         {/* ═══════════════════════════════════════════ */}
-        <section className="py-10 md:py-14">
+        <section className="py-10 md:py-16">
           <div className="container px-4 md:px-16">
-            <div className="mb-10 max-w-2xl">
-              <h2 className="text-2xl md:text-3xl font-bold mb-4">Creating Content Around the World</h2>
-              <p className="text-muted-foreground leading-relaxed mb-3">
-                EXA Travel is producing content and live streams at different hotels, resorts, villas, and destinations around the world. Each trip brings together a small group of models to travel, create content, and experience it all together.
+            <div className="max-w-3xl">
+              <p className="text-sky-400 font-semibold text-sm tracking-widest uppercase mb-3">EXA Travel</p>
+              <h2 className="text-2xl md:text-4xl font-bold mb-5">Influencer Content for Your Destination</h2>
+              <p className="text-lg text-muted-foreground leading-relaxed mb-4">
+                500+ vetted U.S.-based content creators producing high-engagement content across Instagram, TikTok, and YouTube — ready to fly to your destination.
               </p>
-              <p className="text-muted-foreground leading-relaxed mb-6">
-                From beach resorts in the Caribbean to luxury hotels in Bali, Mykonos, and beyond — every trip is a new destination, a new experience, and a new set of content opportunities.
+              <p className="text-lg text-muted-foreground leading-relaxed">
+                Our creators specialize in destination storytelling that drives real results — bookings, traffic, and brand exposure.
               </p>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Button
-                  className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 font-semibold"
-                  asChild
-                >
-                  <Link href="/apply">Apply as a Model</Link>
-                </Button>
-                <Button variant="outline" className="border-zinc-700 hover:bg-zinc-800 font-semibold" asChild>
-                  <Link href="/signup">Apply as a Brand</Link>
-                </Button>
+            </div>
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════ */}
+        {/* WHAT WE OFFER */}
+        {/* ═══════════════════════════════════════════ */}
+        <section className="py-10 md:py-16 bg-muted/20">
+          <div className="container px-4 md:px-16">
+            <div className="max-w-3xl mb-10">
+              <h2 className="text-2xl md:text-3xl font-bold mb-4">What We Offer</h2>
+              <p className="text-muted-foreground leading-relaxed text-lg">
+                We bring creators directly to your destination to produce high-quality content tailored to your marketing goals. Whether you need one creator for a focused campaign or a full group for a large-scale push, we match the right talent to your audience.
+              </p>
+            </div>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              <div className="rounded-2xl border border-sky-500/20 bg-gradient-to-br from-sky-500/5 to-transparent p-6">
+                <div className="h-10 w-10 rounded-xl bg-sky-500/10 flex items-center justify-center mb-4">
+                  <Camera className="h-5 w-5 text-sky-400" />
+                </div>
+                <h3 className="font-semibold mb-2">Reels, TikToks & YouTube</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">Instagram Reels, TikToks, Stories, and YouTube features showcasing your destination.</p>
+              </div>
+
+              <div className="rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/5 to-transparent p-6">
+                <div className="h-10 w-10 rounded-xl bg-violet-500/10 flex items-center justify-center mb-4">
+                  <Globe className="h-5 w-5 text-violet-400" />
+                </div>
+                <h3 className="font-semibold mb-2">Destination Itineraries</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">Curated itineraries highlighting your hotels, restaurants, and experiences that drive traffic.</p>
+              </div>
+
+              <div className="rounded-2xl border border-pink-500/20 bg-gradient-to-br from-pink-500/5 to-transparent p-6">
+                <div className="h-10 w-10 rounded-xl bg-pink-500/10 flex items-center justify-center mb-4">
+                  <CheckCircle2 className="h-5 w-5 text-pink-400" />
+                </div>
+                <h3 className="font-semibold mb-2">Licensed Content</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">High-quality content you can license and repurpose across your own marketing channels.</p>
+              </div>
+
+              <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 to-transparent p-6">
+                <div className="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-4">
+                  <BarChart3 className="h-5 w-5 text-emerald-400" />
+                </div>
+                <h3 className="font-semibold mb-2">Performance Reporting</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">Detailed reporting on reach, engagement, and measurable results from every campaign.</p>
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════ */}
+        {/* HOW IT WORKS */}
+        {/* ═══════════════════════════════════════════ */}
+        <section className="py-10 md:py-16">
+          <div className="container px-4 md:px-16">
+            <h2 className="text-2xl md:text-3xl font-bold mb-10">How It Works</h2>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl">
+              {[
+                { step: "01", title: "Share Your Goals", desc: "Tell us what you're looking to achieve — awareness, bookings, content library, or a seasonal push." },
+                { step: "02", title: "We Match Creators", desc: "We hand-pick creators aligned with your destination and audience from our vetted network." },
+                { step: "03", title: "We Handle Everything", desc: "Our team coordinates travel, content direction, and publishing — you focus on your destination." },
+                { step: "04", title: "You Get Results", desc: "Receive premium content, measurable exposure, and a full performance report." },
+              ].map((item) => (
+                <div key={item.step} className="relative">
+                  <span className="text-5xl font-black text-sky-500/10 absolute -top-2 -left-1">{item.step}</span>
+                  <div className="pt-10">
+                    <h3 className="font-semibold text-lg mb-2">{item.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════ */}
+        {/* CONTENT SHOWCASE */}
+        {/* ═══════════════════════════════════════════ */}
+        <section className="py-10 md:py-16 bg-muted/20">
+          <div className="container px-4 md:px-16">
+            <h2 className="text-2xl md:text-3xl font-bold mb-3">Creator Content</h2>
+            <p className="text-muted-foreground mb-8 max-w-2xl">Examples of the kind of content our creators produce for destinations and brands.</p>
             <div className="grid md:grid-cols-2 gap-4 md:gap-6 max-w-2xl">
               <div className="rounded-2xl overflow-hidden bg-black relative group">
                 <div className="aspect-[9/16]">
@@ -217,7 +294,7 @@ export default async function TravelPage() {
                   <div>
                     <h2 className="text-2xl font-bold">Now Booking</h2>
                     <p className="text-muted-foreground text-sm">
-                      Secure your spot — 5 models per trip
+                      Active campaigns accepting creator applications
                     </p>
                   </div>
                 </div>
@@ -268,22 +345,28 @@ export default async function TravelPage() {
         {/* ═══════════════════════════════════════════ */}
         <section className="py-16 md:py-24">
           <div className="container px-6 md:px-16">
-            <div className="flex flex-col sm:flex-row gap-4 max-w-lg">
-              <Button
-                size="lg"
-                className="flex-1 h-14 text-base font-semibold bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
-                asChild
-              >
-                <Link href="/apply">Apply as a Model</Link>
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="flex-1 h-14 text-base font-semibold border-zinc-700 hover:bg-zinc-800"
-                asChild
-              >
-                <Link href="/signup">Apply as a Brand</Link>
-              </Button>
+            <div className="max-w-2xl">
+              <h2 className="text-2xl md:text-3xl font-bold mb-3">Ready to Get Started?</h2>
+              <p className="text-muted-foreground mb-6 text-lg">
+                Whether you represent a tourism board, hotel, resort, or destination — we&apos;d love to learn about your goals and see if this is a fit.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button
+                  size="lg"
+                  className="h-14 px-8 text-base font-semibold bg-gradient-to-r from-sky-500 to-indigo-500 hover:from-sky-600 hover:to-indigo-600"
+                  asChild
+                >
+                  <a href="mailto:nathan@examodels.com">Partner With Us</a>
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="h-14 px-8 text-base font-semibold border-zinc-700 hover:bg-zinc-800"
+                  asChild
+                >
+                  <Link href="/apply">Apply as a Creator</Link>
+                </Button>
+              </div>
             </div>
           </div>
         </section>
