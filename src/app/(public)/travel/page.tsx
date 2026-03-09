@@ -300,7 +300,7 @@ export default async function TravelPage() {
                 { step: "04", title: "You Get Results", desc: "Receive premium content, measurable exposure, and a full performance report." },
               ].map((item) => (
                 <div key={item.step} className="relative">
-                  <span className="text-5xl font-black text-sky-500/20 absolute -top-2 -left-1">{item.step}</span>
+                  <span className="text-5xl font-black text-sky-400/40 absolute -top-2 -left-1">{item.step}</span>
                   <div className="pt-10">
                     <h3 className="font-semibold text-lg mb-2 text-zinc-100">{item.title}</h3>
                     <p className="text-sm text-zinc-400 leading-relaxed">{item.desc}</p>
