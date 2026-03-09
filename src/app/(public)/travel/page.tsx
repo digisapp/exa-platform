@@ -242,7 +242,7 @@ export default async function TravelPage() {
           <div className="container px-6 md:px-16">
             <h2 className="text-2xl md:text-3xl font-bold mb-3">Creator Content</h2>
             <p className="text-zinc-400 mb-8 max-w-2xl">Examples of the kind of content our creators produce for destinations and brands.</p>
-            <div className="grid md:grid-cols-2 gap-4 md:gap-6 max-w-2xl">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
               <div className="rounded-2xl overflow-hidden bg-black relative group">
                 <div className="aspect-[9/16]">
                   <video
@@ -272,6 +272,38 @@ export default async function TravelPage() {
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
                     <p className="text-white font-semibold text-sm">Luxury Hair Spa</p>
                     <p className="text-white/70 text-xs">Beauty &amp; wellness content</p>
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-2xl overflow-hidden bg-black relative group">
+                <div className="aspect-[9/16]">
+                  <video
+                    src="https://nanftzomzluetblqgrvo.supabase.co/storage/v1/object/public/examodels/travel/exa-hutong-miami.mp4"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                    <p className="text-white font-semibold text-sm">Hutong · Miami</p>
+                    <p className="text-white/70 text-xs">Dining &amp; destination content</p>
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-2xl overflow-hidden bg-black relative group">
+                <div className="aspect-[9/16]">
+                  <video
+                    src="https://nanftzomzluetblqgrvo.supabase.co/storage/v1/object/public/examodels/travel/exa-pilates.mp4"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                    <p className="text-white font-semibold text-sm">Pilates Studio</p>
+                    <p className="text-white/70 text-xs">Fitness &amp; wellness content</p>
                   </div>
                 </div>
               </div>
