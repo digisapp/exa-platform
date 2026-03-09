@@ -211,31 +211,6 @@ export default async function TravelPage() {
         </section>
 
         {/* ═══════════════════════════════════════════ */}
-        {/* HOW IT WORKS */}
-        {/* ═══════════════════════════════════════════ */}
-        <section className="py-12 md:py-20 border-t border-white/5">
-          <div className="container px-6 md:px-16">
-            <h2 className="text-2xl md:text-3xl font-bold mb-10">How It Works</h2>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl">
-              {[
-                { step: "01", title: "Share Your Goals", desc: "Tell us what you're looking to achieve — awareness, bookings, content library, or a seasonal push." },
-                { step: "02", title: "We Match Creators", desc: "We hand-pick creators aligned with your destination and audience from our vetted network." },
-                { step: "03", title: "We Handle Everything", desc: "Our team coordinates travel, content direction, and publishing — you focus on your destination." },
-                { step: "04", title: "You Get Results", desc: "Receive premium content, measurable exposure, and a full performance report." },
-              ].map((item) => (
-                <div key={item.step} className="relative">
-                  <span className="text-5xl font-black text-sky-500/20 absolute -top-2 -left-1">{item.step}</span>
-                  <div className="pt-10">
-                    <h3 className="font-semibold text-lg mb-2 text-zinc-100">{item.title}</h3>
-                    <p className="text-sm text-zinc-400 leading-relaxed">{item.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ═══════════════════════════════════════════ */}
         {/* CONTENT SHOWCASE */}
         {/* ═══════════════════════════════════════════ */}
         <section className="py-12 md:py-20 border-t border-white/5">
@@ -307,6 +282,31 @@ export default async function TravelPage() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════ */}
+        {/* HOW IT WORKS */}
+        {/* ═══════════════════════════════════════════ */}
+        <section className="py-12 md:py-20 border-t border-white/5">
+          <div className="container px-6 md:px-16">
+            <h2 className="text-2xl md:text-3xl font-bold mb-10">How It Works</h2>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl">
+              {[
+                { step: "01", title: "Share Your Goals", desc: "Tell us what you're looking to achieve — awareness, bookings, content library, or a seasonal push." },
+                { step: "02", title: "We Match Creators", desc: "We hand-pick creators aligned with your destination and audience from our vetted network." },
+                { step: "03", title: "We Handle Everything", desc: "Our team coordinates travel, content direction, and publishing — you focus on your destination." },
+                { step: "04", title: "You Get Results", desc: "Receive premium content, measurable exposure, and a full performance report." },
+              ].map((item) => (
+                <div key={item.step} className="relative">
+                  <span className="text-5xl font-black text-sky-500/20 absolute -top-2 -left-1">{item.step}</span>
+                  <div className="pt-10">
+                    <h3 className="font-semibold text-lg mb-2 text-zinc-100">{item.title}</h3>
+                    <p className="text-sm text-zinc-400 leading-relaxed">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </section>
