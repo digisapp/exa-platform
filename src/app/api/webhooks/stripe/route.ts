@@ -4,6 +4,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import Stripe from "stripe";
 import { BRAND_SUBSCRIPTION_TIERS, BrandTier } from "@/lib/stripe-config";
 import { TICKET_CONFIG } from "@/lib/ticket-config";
+import { sendTicketPurchaseConfirmationEmail, sendWorkshopRegistrationConfirmationEmail } from "@/lib/email";
 
 // Create admin client for webhook (no auth context)
 const supabaseAdmin = createServiceRoleClient();
@@ -582,6 +583,26 @@ async function handleTicketPurchase(session: Stripe.Checkout.Session) {
     );
   }
 
+  // Send purchase confirmation email (non-blocking)
+  if (buyerEmail) {
+    const buyerName = session.metadata?.buyer_name || "there";
+    // Fetch event and tier names for the email
+    const { data: tierInfo } = await supabaseAdmin
+      .from("ticket_tiers")
+      .select("name, events(name)")
+      .eq("id", tierId)
+      .single() as { data: { name: string; events: { name: string } | null } | null };
+
+    sendTicketPurchaseConfirmationEmail({
+      to: buyerEmail,
+      buyerName,
+      eventName: (tierInfo?.events as any)?.name || "EXA Event",
+      tierName: tierInfo?.name || "General Admission",
+      quantity,
+      totalPriceCents,
+    }).catch((err) => console.error("Failed to send ticket confirmation email:", err));
+  }
+
 }
 
 async function processAffiliateCommission(
@@ -755,6 +776,50 @@ async function handleWorkshopRegistration(session: Stripe.Checkout.Session) {
   // Create installment records for existing registration
   if (isInstallment && registration?.id) {
     await createInstallmentRecords(registration.id, paymentIntentId ?? null);
+  }
+
+  // Send workshop confirmation email (non-blocking)
+  if (buyerEmail) {
+    const { data: workshop } = await supabaseAdmin
+      .from("workshops")
+      .select("title, date, start_time, end_time, location_city, location_state, location_address, what_to_bring")
+      .eq("id", workshopId)
+      .single() as { data: any };
+
+    if (workshop) {
+      const workshopDateObj = new Date(workshop.date);
+      const dateFormatted = workshopDateObj.toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+      });
+
+      const timeFormatted = workshop.start_time && workshop.end_time
+        ? `${workshop.start_time} - ${workshop.end_time}`
+        : workshop.start_time || "TBA";
+
+      const locationParts = [
+        workshop.location_address,
+        workshop.location_city && workshop.location_state
+          ? `${workshop.location_city}, ${workshop.location_state}`
+          : workshop.location_city || workshop.location_state,
+      ].filter(Boolean);
+      const locationFormatted = locationParts.length > 0 ? locationParts.join(", ") : "TBA";
+
+      const totalCents = isInstallment ? 37500 : (session.amount_total || 0);
+
+      sendWorkshopRegistrationConfirmationEmail({
+        to: buyerEmail,
+        buyerName: buyerName || "there",
+        workshopTitle: workshop.title,
+        workshopDate: dateFormatted,
+        workshopTime: timeFormatted,
+        workshopLocation: locationFormatted,
+        paymentType: isInstallment ? "installment" : "full",
+        totalPriceCents: totalCents,
+        whatToBring: workshop.what_to_bring || undefined,
+      }).catch((err) => console.error("Failed to send workshop confirmation email:", err));
+    }
   }
 }
 
