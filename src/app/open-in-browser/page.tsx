@@ -1,15 +1,46 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import Image from "next/image";
 
 function OpenInBrowserContent() {
   const searchParams = useSearchParams();
   const destination = searchParams.get("to") || "/";
   const appName = searchParams.get("app") || "this app";
+  const [copied, setCopied] = useState(false);
 
   const fullUrl = `https://www.examodels.com${destination}`;
+
+  const handleOpenInBrowser = async () => {
+    // Method 1: navigator.share() — opens native share sheet
+    // User can tap "Open in Safari" / "Open in Chrome" from there
+    if (navigator.share) {
+      try {
+        await navigator.share({ url: fullUrl });
+        return;
+      } catch {
+        // User cancelled or share failed, fall through to copy
+      }
+    }
+
+    // Method 2: Copy to clipboard as fallback
+    try {
+      await navigator.clipboard.writeText(fullUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 3000);
+    } catch {
+      // Last resort fallback
+      const input = document.createElement("input");
+      input.value = fullUrl;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand("copy");
+      document.body.removeChild(input);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 3000);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-6">
@@ -30,15 +61,13 @@ function OpenInBrowserContent() {
           Open in Web Browser for Full Experience
         </p>
 
-        {/* Open in browser button — plain <a> with target=_blank, no JS override */}
-        <a
-          href={fullUrl}
-          target="_blank"
-          rel="noopener noreferrer"
+        {/* Open in browser button */}
+        <button
+          onClick={handleOpenInBrowser}
           className="flex items-center justify-center gap-2 w-full py-4 px-6 rounded-xl bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white font-semibold text-lg transition-all active:scale-[0.97] shadow-lg shadow-pink-500/25"
         >
-          Open in Web
-        </a>
+          {copied ? "Link Copied! Paste in Browser" : "Open in Web"}
+        </button>
 
         {/* Continue anyway */}
         <a
