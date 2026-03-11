@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.vsco.co)",
+      "WebFetch(domain:stackoverflow.com)",
+      "WebFetch(domain:www.bannerbear.com)",
+      "WebFetch(domain:nicklafferty.com)",
+      "WebFetch(domain:www.reddit.com)",
+      "WebFetch(domain:gist.github.com)",
+      "WebFetch(domain:www.blackhatworld.com)",
+      "WebFetch(domain:medium.com)",
+      "WebFetch(domain:christiantietze.de)",
+      "WebFetch(domain:www.tonyherman.com)",
+      "WebFetch(domain:developer.chrome.com)",
+      "WebFetch(domain:copyprogramming.com)"
+    ]
+  }
+}
