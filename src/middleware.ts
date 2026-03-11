@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
+import { isInAppBrowser, getInAppBrowserName } from '@/lib/in-app-browser'
 
 export async function middleware(request: NextRequest) {
   // Redirect compcards.co to comp card creator
@@ -14,6 +15,25 @@ export async function middleware(request: NextRequest) {
   }
   if (request.nextUrl.pathname === '/swimweek-sponsors' || request.nextUrl.pathname === '/sponsor') {
     return NextResponse.redirect(new URL('/sponsors/miami-swim-week', request.url), 301)
+  }
+
+  // In-app browser detection — redirect to interstitial page
+  // Skip for the interstitial page itself, API routes, static assets, and auth callbacks
+  const pathname = request.nextUrl.pathname
+  if (
+    !pathname.startsWith('/open-in-browser') &&
+    !pathname.startsWith('/api/') &&
+    !pathname.startsWith('/auth/') &&
+    !pathname.startsWith('/_next/')
+  ) {
+    const userAgent = request.headers.get('user-agent') || ''
+    if (isInAppBrowser(userAgent)) {
+      const appName = getInAppBrowserName(userAgent)
+      const redirectUrl = new URL('/open-in-browser', request.url)
+      redirectUrl.searchParams.set('to', pathname + (request.nextUrl.search || ''))
+      redirectUrl.searchParams.set('app', appName)
+      return NextResponse.redirect(redirectUrl)
+    }
   }
 
   return await updateSession(request)
