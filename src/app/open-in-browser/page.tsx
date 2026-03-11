@@ -1,8 +1,17 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect, useMemo } from "react";
 import Image from "next/image";
+
+function getDeviceInfo() {
+  if (typeof navigator === "undefined") return { isIOS: false, isAndroid: false };
+  const ua = navigator.userAgent;
+  return {
+    isIOS: /iPhone|iPad|iPod/.test(ua),
+    isAndroid: /Android/.test(ua),
+  };
+}
 
 function OpenInBrowserContent() {
   const searchParams = useSearchParams();
@@ -11,10 +20,28 @@ function OpenInBrowserContent() {
   const [copied, setCopied] = useState(false);
 
   const fullUrl = `https://www.examodels.com${destination}`;
+  const device = useMemo(() => getDeviceInfo(), []);
+
+  // Android: automatically try the fake-PDF trick on mount
+  // Instagram's WebView can't handle PDF content-type and hands off to Chrome
+  useEffect(() => {
+    if (device.isAndroid) {
+      window.location.href = `/api/escape-webview?redirect=${encodeURIComponent(fullUrl)}`;
+    }
+  }, [device.isAndroid, fullUrl]);
 
   const handleOpenInBrowser = async () => {
-    // Method 1: navigator.share() — opens native share sheet
-    // User can tap "Open in Safari" / "Open in Chrome" from there
+    // iOS Method 1: x-safari-https:// scheme
+    // Works on iOS 15, 17, 18+ — forces Safari to open the URL
+    if (device.isIOS) {
+      const safariUrl = fullUrl.replace("https://", "x-safari-https://");
+      window.location.href = safariUrl;
+
+      // Give it a moment to work, then fall through to share/copy
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+
+    // Method 2: navigator.share() — opens native share sheet
     if (navigator.share) {
       try {
         await navigator.share({ url: fullUrl });
@@ -24,22 +51,19 @@ function OpenInBrowserContent() {
       }
     }
 
-    // Method 2: Copy to clipboard as fallback
+    // Method 3: Copy to clipboard as final fallback
     try {
       await navigator.clipboard.writeText(fullUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 3000);
     } catch {
-      // Last resort fallback
       const input = document.createElement("input");
       input.value = fullUrl;
       document.body.appendChild(input);
       input.select();
       document.execCommand("copy");
       document.body.removeChild(input);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 3000);
     }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 3000);
   };
 
   return (
