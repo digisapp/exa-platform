@@ -5,6 +5,20 @@ import Image from "next/image";
 import { Play, X } from "lucide-react";
 import { type Video, TV_CATEGORIES, CATEGORY_LABELS } from "@/lib/tv-videos";
 
+function VideoThumbnail({ youtubeId, title }: { youtubeId: string; title: string }) {
+  const [src, setSrc] = useState(`https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`);
+  return (
+    <Image
+      src={src}
+      alt={title}
+      fill
+      className="object-cover transition-transform group-hover:scale-105"
+      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+      onError={() => setSrc(`https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`)}
+    />
+  );
+}
+
 export function TVGrid({ videos }: { videos: Video[] }) {
   const [activeFilter, setActiveFilter] = useState<string>("All");
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
@@ -63,13 +77,7 @@ export function TVGrid({ videos }: { videos: Video[] }) {
             onClick={() => setSelectedVideo(video)}
             className="group relative aspect-video rounded-xl overflow-hidden bg-white/5 border border-white/10 hover:border-pink-500/40 transition-all hover:shadow-xl hover:shadow-pink-500/10 hover:scale-[1.02] text-left"
           >
-            <Image
-              src={`https://img.youtube.com/vi/${video.youtubeId}/maxresdefault.jpg`}
-              alt={video.title}
-              fill
-              className="object-cover transition-transform group-hover:scale-105"
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            />
+            <VideoThumbnail youtubeId={video.youtubeId} title={video.title} />
             {/* Play Icon Overlay */}
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
               <div className="w-16 h-16 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center border border-white/20">

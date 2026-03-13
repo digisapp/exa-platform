@@ -432,10 +432,6 @@ export default async function AcademyPage() {
                     a: "The 8-week training is delivered virtually through live weekly classes and recorded modules. The backstage graduation experience is in-person at the fashion event.",
                   },
                   {
-                    q: "Is this a cosmetology school?",
-                    a: "No. EXA Beauty Academy is a fashion industry training program focused on runway and editorial makeup. This program does not provide cosmetology licensing.",
-                  },
-                  {
                     q: "Can I pay in installments?",
                     a: "Yes. We offer a 4-payment plan of $499 per installment, or you can pay in full at $1,995.",
                   },
@@ -453,15 +449,6 @@ export default async function AcademyPage() {
             </div>
           </section>
 
-          {/* Legal Disclaimer */}
-          <section className="py-8 border-t border-border">
-            <p className="text-xs text-center text-muted-foreground max-w-2xl mx-auto">
-              EXA Beauty Academy is a fashion industry training program operated by EXA Models.
-              This program does not provide cosmetology licensing and is not a substitute for a
-              state cosmetology license. Certification indicates completion of the EXA runway
-              makeup training program.
-            </p>
-          </section>
 
         </main>
       </div>
