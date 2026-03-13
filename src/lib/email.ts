@@ -5441,3 +5441,135 @@ export async function sendWorkshopRegistrationConfirmationEmail({
     return { success: false, error };
   }
 }
+
+export async function sendAcademyEnrollmentConfirmationEmail({
+  to,
+  studentName,
+  cohortName,
+  cohortDates,
+  paymentType,
+  totalPriceCents,
+}: {
+  to: string;
+  studentName: string;
+  cohortName: string;
+  cohortDates: string;
+  paymentType: "full" | "installment";
+  totalPriceCents: number;
+}) {
+  try {
+    const resend = getResendClient();
+    const totalFormatted = `$${(totalPriceCents / 100).toFixed(2)}`;
+    const paymentNote = paymentType === "installment"
+      ? `Payment Plan: 4 x $499/month (${totalFormatted} total)`
+      : `Total Paid: ${totalFormatted}`;
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      subject: `Welcome to EXA Beauty Academy — ${cohortName} Cohort!`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 30px; text-align: center;">
+              <h1 style="margin: 0; color: white; font-size: 24px; font-weight: bold;">
+                Welcome to EXA Beauty Academy!
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
+                Hey ${escapeHtml(studentName)}!
+              </p>
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                You are officially enrolled in the <strong style="color: #ffffff;">EXA Beauty Academy — ${escapeHtml(cohortName)} Cohort</strong>. We are thrilled to have you!
+              </p>
+
+              <!-- Program Details -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px; background-color: #262626; border-radius: 12px; overflow: hidden;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 8px; color: #71717a; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Program</p>
+                    <p style="margin: 0 0 16px; color: #ffffff; font-size: 16px; font-weight: 500;">8-Week Runway Makeup Certification</p>
+                    <p style="margin: 0 0 8px; color: #71717a; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Cohort</p>
+                    <p style="margin: 0 0 16px; color: #ffffff; font-size: 16px; font-weight: 500;">${escapeHtml(cohortName)} (${escapeHtml(cohortDates)})</p>
+                    <p style="margin: 0 0 8px; color: #71717a; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Graduation</p>
+                    <p style="margin: 0 0 0; color: #ffffff; font-size: 16px; font-weight: 500;">Backstage at ${escapeHtml(cohortName)}</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Payment -->
+              <p style="margin: 0 0 24px; color: #a1a1aa; font-size: 14px;">
+                ${escapeHtml(paymentNote)}
+              </p>
+
+              <!-- What's Next -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px; background-color: #262626; border-radius: 12px; overflow: hidden;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 12px; color: #ec4899; font-size: 14px; font-weight: 600;">What happens next:</p>
+                    <p style="margin: 0 0 8px; color: #ffffff; font-size: 14px;">1. You'll receive an orientation email with class schedule details</p>
+                    <p style="margin: 0 0 8px; color: #ffffff; font-size: 14px;">2. Join the student community group</p>
+                    <p style="margin: 0 0 8px; color: #ffffff; font-size: 14px;">3. Review the recommended makeup kit list</p>
+                    <p style="margin: 0 0 0; color: #ffffff; font-size: 14px;">4. Get ready for Week 1!</p>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0 0 24px; color: #ffffff; font-size: 16px; line-height: 1.6;">
+                We are so excited to have you join us. This is going to be an incredible experience!
+              </p>
+
+              <p style="margin: 0; color: #a1a1aa; font-size: 14px; line-height: 1.6;">
+                If you have any questions, email <a href="mailto:team@examodels.com" style="color: #ec4899; text-decoration: none;">team@examodels.com</a>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 30px; border-top: 1px solid #262626; text-align: center;">
+              <p style="margin: 0 0 8px; color: #71717a; font-size: 12px;">
+                EXA Beauty Academy — A Fashion Industry Training Program by EXA Models
+              </p>
+              <p style="margin: 0; color: #52525b; font-size: 11px;">
+                This program does not provide cosmetology licensing.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      console.error("Resend error:", error);
+      return { success: false, error };
+    }
+    return { success: true, data };
+  } catch (error) {
+    console.error("Academy confirmation email error:", error);
+    return { success: false, error };
+  }
+}
