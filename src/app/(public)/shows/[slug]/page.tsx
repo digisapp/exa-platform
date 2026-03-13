@@ -316,9 +316,6 @@ export default async function EventPage({ params, searchParams }: Props) {
 
           {/* Event Info Overlay — desktop only */}
           <div className="hidden md:block absolute bottom-0 left-0 right-0 p-6 md:p-10 pointer-events-none">
-            <Badge className="mb-4 bg-gradient-to-r from-pink-500 to-violet-500 text-white border-0 px-4 py-1.5 text-sm font-semibold">
-              {event.short_name || event.name} {event.year || ""}
-            </Badge>
             <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 drop-shadow-lg">
               {event.name}
             </h1>
@@ -349,9 +346,6 @@ export default async function EventPage({ params, searchParams }: Props) {
 
         {/* Mobile event info — shown only on mobile since overlay is desktop-only */}
         <div className="md:hidden mb-6">
-          <Badge className="mb-3 bg-gradient-to-r from-pink-500 to-violet-500 text-white border-0 px-3 py-1 text-xs font-semibold">
-            {event.short_name || event.name} {event.year || ""}
-          </Badge>
           <h1 className="text-2xl font-bold text-white mb-2">{event.name}</h1>
           <div className="flex flex-wrap gap-2 text-sm">
             <div className="flex items-center gap-1.5 text-muted-foreground">
