@@ -391,8 +391,8 @@ export default async function EventPage({ params, searchParams }: Props) {
           {/* Description - always first */}
           <div className="lg:col-span-2 order-1">
             <div className="glass-card rounded-2xl p-6 md:p-8">
-              <h2 className="text-2xl font-bold mb-1">{event.name}</h2>
-              <p className="text-pink-500 font-medium mb-4 text-sm">
+              <h2 className="hidden md:block text-2xl font-bold mb-1">{event.name}</h2>
+              <p className="hidden md:block text-pink-500 font-medium mb-4 text-sm">
                 {dateDisplay}
                 {(event.location_city || event.location_state) && (
                   <span className="text-muted-foreground">
