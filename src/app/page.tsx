@@ -97,6 +97,7 @@ export default async function HomePage() {
       )
     `)
     .eq("status", "active")
+    .gt("ends_at", new Date().toISOString())
     .order("ends_at", { ascending: true })
     .limit(4);
 

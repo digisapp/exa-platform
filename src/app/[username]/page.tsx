@@ -218,6 +218,7 @@ export default async function ModelProfilePage({ params }: Props) {
     .select("id, title, current_bid, starting_price, bid_count, ends_at, buy_now_price, category")
     .eq("model_id", model.id)
     .eq("status", "active")
+    .gt("ends_at", new Date().toISOString())
     .order("ends_at", { ascending: true })
     .limit(6);
 
