@@ -135,10 +135,57 @@ export async function GET(request: NextRequest) {
 
     console.log(`End auctions cron: ${succeeded} ended, ${failed} failed out of ${results.length}`);
 
+    // Auto-restart auctions that ended with no bids (no_sale with bid_count = 0)
+    const { data: noSaleAuctions, error: noSaleError } = await supabase
+      .from("auctions")
+      .select("id, title, model_id, created_at, original_end_at, starting_price, reserve_price, buy_now_price, category, description, deliverables, cover_image_url, allow_auto_bid, anti_snipe_minutes")
+      .eq("status", "no_sale")
+      .eq("bid_count", 0);
+
+    let restarted = 0;
+
+    if (!noSaleError && noSaleAuctions?.length) {
+      for (const auction of noSaleAuctions) {
+        try {
+          // Calculate original duration and set new end time
+          const originalDuration = new Date(auction.original_end_at).getTime() - new Date(auction.created_at).getTime();
+          // Use original duration or default to 24 hours, cap at 7 days
+          const duration = Math.min(
+            Math.max(originalDuration, 60 * 60 * 1000), // min 1 hour
+            7 * 24 * 60 * 60 * 1000 // max 7 days
+          );
+          const newEndsAt = new Date(Date.now() + duration).toISOString();
+
+          const { error: restartError } = await supabase
+            .from("auctions")
+            .update({
+              status: "active",
+              ends_at: newEndsAt,
+              original_end_at: newEndsAt,
+              current_bid: null,
+              bid_count: 0,
+              winner_id: null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", auction.id);
+
+          if (restartError) {
+            console.error(`Failed to restart auction ${auction.id}:`, restartError);
+          } else {
+            restarted++;
+            console.log(`Auto-restarted auction ${auction.id} (${auction.title}) - new end: ${newEndsAt}`);
+          }
+        } catch (err) {
+          console.error(`Exception restarting auction ${auction.id}:`, err);
+        }
+      }
+    }
+
     return NextResponse.json({
       message: `Processed ${results.length} expired auctions`,
       ended: succeeded,
       failed,
+      restarted,
     });
   } catch (error) {
     console.error("End auctions cron error:", error);

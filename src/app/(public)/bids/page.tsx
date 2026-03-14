@@ -65,7 +65,7 @@ export default async function BidsPage() {
     }
   }
 
-  // Get all active auctions with model info
+  // Get all active auctions with model info (only those not yet expired)
   const { data: auctions } = await (supabase as any)
     .from("auctions")
     .select(`
@@ -80,6 +80,7 @@ export default async function BidsPage() {
       )
     `)
     .eq("status", "active")
+    .gt("ends_at", new Date().toISOString())
     .order("ends_at", { ascending: true });
 
   const formattedAuctions: AuctionWithModel[] = (auctions || []).map((auction: any) => ({

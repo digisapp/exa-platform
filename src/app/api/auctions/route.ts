@@ -44,17 +44,20 @@ export async function GET(request: NextRequest) {
       `, { count: "exact" });
 
     // Filter by status
+    const now = new Date().toISOString();
     if (status === "all") {
       query = query.neq("status", "draft");
     } else if (status === "active") {
-      query = query.eq("status", "active");
+      query = query.eq("status", "active").gt("ends_at", now);
     } else if (status === "ending_soon") {
       query = query
         .eq("status", "active")
+        .gt("ends_at", now)
         .lt("ends_at", new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString());
     } else if (status === "new") {
       query = query
         .eq("status", "active")
+        .gt("ends_at", now)
         .gt("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
     }
 
