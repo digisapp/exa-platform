@@ -68,6 +68,11 @@ const nextConfig: NextConfig = {
         destination: '/workshops/runway-workshop',
         permanent: false,
       },
+      {
+        source: '/miami-digitals',
+        destination: '/fresh-digitals',
+        permanent: true,
+      },
     ];
   },
   // Security headers
