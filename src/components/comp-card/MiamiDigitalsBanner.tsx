@@ -46,8 +46,8 @@ export function MiamiDigitalsBanner() {
               <ArrowRight className="ml-1.5 h-3 w-3" />
             </Link>
           </Button>
-          <p className="hidden sm:block text-[10px] text-emerald-400/70 font-medium">
-            FREE with Digis.cc account
+          <p className="text-[10px] text-emerald-400/70 font-medium">
+            FREE with <a href="https://digis.cc" target="_blank" rel="noopener noreferrer" className="underline hover:text-emerald-300">Digis.cc</a> account
           </p>
         </div>
       </div>
