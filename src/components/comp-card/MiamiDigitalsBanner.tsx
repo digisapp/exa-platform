@@ -41,7 +41,7 @@ export function MiamiDigitalsBanner() {
             size="sm"
             className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white font-semibold text-xs h-8 px-4"
           >
-            <Link href="/miami-digitals">
+            <Link href="/fresh-digitals">
               Reserve Spot
               <ArrowRight className="ml-1.5 h-3 w-3" />
             </Link>

@@ -51,7 +51,7 @@ export default function AdminDigitalsPage() {
   const loadBookings = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/miami-digitals");
+      const res = await fetch("/api/admin/fresh-digitals");
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
       setBookings(data.bookings || []);

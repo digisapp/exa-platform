@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
       });
 
       return NextResponse.json({
-        checkoutUrl: `${BASE_URL}/miami-digitals?success=true`,
+        checkoutUrl: `${BASE_URL}/fresh-digitals?success=true`,
         sessionId: null,
       });
     }
@@ -89,8 +89,8 @@ export async function POST(request: NextRequest) {
         },
       ],
       mode: "payment",
-      success_url: `${BASE_URL}/miami-digitals?success=true`,
-      cancel_url: `${BASE_URL}/miami-digitals?cancelled=true`,
+      success_url: `${BASE_URL}/fresh-digitals?success=true`,
+      cancel_url: `${BASE_URL}/fresh-digitals?cancelled=true`,
       customer: customer.id,
       customer_update: { name: "auto" },
       metadata: {

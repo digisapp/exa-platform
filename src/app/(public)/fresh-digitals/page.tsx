@@ -63,7 +63,7 @@ function MiamiDigitalsContent() {
 
     setLoading(true);
     try {
-      const res = await fetch("/api/miami-digitals/checkout", {
+      const res = await fetch("/api/fresh-digitals/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
