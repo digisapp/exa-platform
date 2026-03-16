@@ -718,102 +718,12 @@ export default function CompCardPage() {
     <div className="container max-w-6xl mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-8">
-        <div className="mb-4">
-          <h1 className="text-2xl font-bold">Comp Card</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Select {MAX_PHOTOS} photos — first is the front cover, next 4 go on
-            the back
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            onClick={handleExportJPEG}
-            disabled={exportingJpeg || selectedIds.length === 0}
-            variant="outline"
-          >
-            {exportingJpeg ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Generating...
-              </>
-            ) : (
-              <>
-                <ImageDown className="mr-2 h-4 w-4" />
-                Download JPEG
-              </>
-            )}
-          </Button>
-          <Button
-            onClick={handleExportPDF}
-            disabled={exporting || selectedIds.length === 0}
-            className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
-          >
-            {exporting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Generating...
-              </>
-            ) : (
-              <>
-                <Download className="mr-2 h-4 w-4" />
-                Download PDF
-            </>
-          )}
-        </Button>
-          <Button
-            onClick={() => setPrintDialogOpen(true)}
-            disabled={selectedIds.length === 0}
-            variant="outline"
-            className="border-violet-500/40 hover:border-violet-500/70 text-violet-300"
-          >
-            <Printer className="mr-2 h-4 w-4" />
-            Print &amp; Pick Up
-          </Button>
-        </div>
+        <h1 className="text-2xl font-bold">Comp Card</h1>
+        <p className="text-muted-foreground text-sm mt-1">
+          Select {MAX_PHOTOS} photos — first is the front cover, next 4 go on
+          the back
+        </p>
       </div>
-
-      {/* Measurements section */}
-      {!hasMeasurements ? (
-        <div className="mb-6 rounded-lg border border-amber-500/20 bg-amber-500/5 p-4">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-medium text-amber-500">
-                Missing measurements
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Add your height, bust, waist, and hips so your comp card is complete.
-              </p>
-            </div>
-          </div>
-          <Link
-            href="/settings#measurements"
-            className="block mt-3 text-center text-sm font-semibold bg-gradient-to-r from-pink-500 to-violet-500 text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity"
-          >
-            Add Measurements
-          </Link>
-        </div>
-      ) : (
-        <div className="mb-6 rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-medium text-white">Measurements</p>
-            <Link
-              href="/settings#measurements"
-              className="shrink-0 text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-white px-3 py-1.5 rounded-lg transition-colors"
-            >
-              Edit Measurements
-            </Link>
-          </div>
-          <div className="flex flex-wrap gap-x-6 gap-y-2">
-            {measurements.map((m) => (
-              <div key={m.label} className="text-center">
-                <p className="text-[10px] text-zinc-500 uppercase tracking-wider">{m.label}</p>
-                <p className="text-sm font-semibold text-white">{m.value}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       <div className="grid lg:grid-cols-2 gap-8">
         {/* Left: Photo Selector */}
@@ -974,6 +884,49 @@ export default function CompCardPage() {
               </Link>{" "}
               to create your comp card.
             </p>
+          )}
+
+          {/* Measurements */}
+          {!hasMeasurements ? (
+            <div className="mt-6 rounded-lg border border-amber-500/20 bg-amber-500/5 p-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-amber-500">
+                    Missing measurements
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Add your height, bust, waist, and hips so your comp card is complete.
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/settings#measurements"
+                className="block mt-3 text-center text-sm font-semibold bg-gradient-to-r from-pink-500 to-violet-500 text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity"
+              >
+                Add Measurements
+              </Link>
+            </div>
+          ) : (
+            <div className="mt-6 rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-medium text-white">Measurements</p>
+                <Link
+                  href="/settings#measurements"
+                  className="shrink-0 text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-white px-3 py-1.5 rounded-lg transition-colors"
+                >
+                  Edit Measurements
+                </Link>
+              </div>
+              <div className="flex flex-wrap gap-x-6 gap-y-2">
+                {measurements.map((m) => (
+                  <div key={m.label} className="text-center">
+                    <p className="text-[10px] text-zinc-500 uppercase tracking-wider">{m.label}</p>
+                    <p className="text-sm font-semibold text-white">{m.value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </div>
 
@@ -1206,8 +1159,8 @@ export default function CompCardPage() {
             </div>
           </div>
 
-          {/* Export buttons (mobile) */}
-          <div className="mt-4 lg:hidden flex flex-col gap-2">
+          {/* Export buttons */}
+          <div className="mt-4 flex flex-col gap-2">
             <Button
               onClick={handleExportJPEG}
               disabled={exportingJpeg || selectedIds.length === 0}
