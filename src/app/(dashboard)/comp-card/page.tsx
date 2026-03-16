@@ -774,19 +774,21 @@ export default function CompCardPage() {
 
       {/* Measurements section */}
       {!hasMeasurements ? (
-        <div className="mb-6 flex items-start gap-3 rounded-lg border border-amber-500/20 bg-amber-500/5 p-4">
-          <AlertCircle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-          <div className="flex-1">
-            <p className="text-sm font-medium text-amber-500">
-              Missing measurements
-            </p>
-            <p className="text-sm text-muted-foreground mt-1">
-              Add your height, bust, waist, and hips so your comp card is complete.
-            </p>
+        <div className="mb-6 rounded-lg border border-amber-500/20 bg-amber-500/5 p-4">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-amber-500">
+                Missing measurements
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Add your height, bust, waist, and hips so your comp card is complete.
+              </p>
+            </div>
           </div>
           <Link
             href="/settings#measurements"
-            className="shrink-0 text-sm font-semibold bg-gradient-to-r from-pink-500 to-violet-500 text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity"
+            className="block mt-3 text-center text-sm font-semibold bg-gradient-to-r from-pink-500 to-violet-500 text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity"
           >
             Add Measurements
           </Link>
