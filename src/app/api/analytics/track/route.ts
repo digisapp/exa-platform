@@ -109,9 +109,12 @@ export async function POST(request: NextRequest) {
     const os = getOS(userAgent);
     const pageType = getPageType(path);
 
-    // Insert page view
-    const { error } = await supabase.from("page_views").insert({
-      page_path: path,
+    // Insert page view using service role to bypass RLS (anonymous visitors need tracking too)
+    const { createServiceRoleClient } = await import("@/lib/supabase/service");
+    const serviceClient = createServiceRoleClient();
+
+    const { error } = await (serviceClient as any).from("page_views").insert({
+      path: path,
       page_type: pageType,
       model_id: modelId || null,
       model_username: modelUsername || null,
@@ -119,9 +122,9 @@ export async function POST(request: NextRequest) {
       session_id: sessionId || null,
       user_id: user?.id || null,
       referrer: referrer || null,
-      user_agent: userAgent.slice(0, 500), // Limit length
+      user_agent: userAgent.slice(0, 500),
       ip_hash: ipHash,
-      device_type: deviceType,
+      device: deviceType,
       browser,
       os,
       screen_width: screenWidth || null,
