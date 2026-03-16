@@ -42,6 +42,7 @@ interface CompCardPDFProps {
   model: CompCardModel;
   photos: string[]; // base64 data URLs
   frontLogoUrl?: string; // base64 data URL
+  backLogoUrl?: string; // base64 data URL for back page center footer
   nameColor?: string; // "#ffffff" (default) or "#000000"
   nameFontScale?: number; // 0.5–1.5, default 1.0
   qrCodeUrl?: string; // base64 data URL of QR code
@@ -182,19 +183,24 @@ const styles = StyleSheet.create({
     paddingTop: 4,
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-start",
+    alignItems: "center",
   },
   footerContactLeft: {
     alignItems: "flex-start",
     flex: 1,
   },
-  footerContactRight: {
-    alignItems: "flex-start",
-    flex: 1,
-    paddingRight: 6,
+  footerCenter: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 8,
+  },
+  footerBackLogo: {
+    width: 80,
+    height: 26,
+    objectFit: "contain" as const,
   },
   footerText: {
-    fontSize: 10,
+    fontSize: 8,
     fontFamily: "PoppinsRegular",
     color: "#000000",
     marginBottom: 2,
@@ -235,7 +241,7 @@ function getNameLetterSpacing(name: string): number {
   return 1;
 }
 
-export default function CompCardPDF({ model, photos, frontLogoUrl, nameColor = "#ffffff", nameFontScale = 1.0, qrCodeUrl, contactInfo }: CompCardPDFProps) {
+export default function CompCardPDF({ model, photos, frontLogoUrl, backLogoUrl, nameColor = "#ffffff", nameFontScale = 1.0, qrCodeUrl, contactInfo }: CompCardPDFProps) {
   const firstName = model.first_name || "";
   const lastName = model.last_name || "";
   const fullName = [firstName, lastName].filter(Boolean).join(" ") || "Model";
@@ -324,36 +330,35 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, nameColor = "
           )}
         </View>
 
-        {/* Footer: email+phone (left) | instagram+website (center) | QR (right) */}
+        {/* Footer: contact (left) | EXA logo (center) | QR (right) */}
         {hasFooter && (
           <View style={styles.footerContainer}>
-            {/* Left: email + phone */}
+            {/* Left: website, instagram, email */}
             <View style={styles.footerContactLeft}>
+              {footerWebsite && (
+                <Text style={styles.footerText}>{footerWebsite}</Text>
+              )}
+              {footerInstagram && (
+                <View style={styles.footerRow}>
+                  <Svg width={8} height={8} viewBox="0 0 24 24" style={styles.instagramIcon}>
+                    <Rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke="#000000" strokeWidth="2" fill="none" />
+                    <Circle cx="12" cy="12" r="5" stroke="#000000" strokeWidth="2" fill="none" />
+                    <Circle cx="17.5" cy="6.5" r="1.5" fill="#000000" />
+                  </Svg>
+                  <Text style={styles.footerText}>{footerInstagram}</Text>
+                </View>
+              )}
               {footerEmail && (
                 <Text style={styles.footerText}>{footerEmail}</Text>
               )}
-              {footerPhone && (
-                <Text style={styles.footerText}>{footerPhone}</Text>
-              )}
             </View>
-            {/* Center: instagram + website */}
-            {(footerInstagram || footerWebsite) && (
-              <View style={styles.footerContactRight}>
-                {footerInstagram && (
-                  <View style={styles.footerRow}>
-                    <Svg width={10} height={10} viewBox="0 0 24 24" style={styles.instagramIcon}>
-                      <Rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke="#000000" strokeWidth="2" fill="none" />
-                      <Circle cx="12" cy="12" r="5" stroke="#000000" strokeWidth="2" fill="none" />
-                      <Circle cx="17.5" cy="6.5" r="1.5" fill="#000000" />
-                    </Svg>
-                    <Text style={styles.footerText}>{footerInstagram}</Text>
-                  </View>
-                )}
-                {footerWebsite && (
-                  <Text style={{ ...styles.footerText, fontSize: 8 }}>{footerWebsite}</Text>
-                )}
+            {/* Center: EXA Models logo */}
+            {backLogoUrl && (
+              <View style={styles.footerCenter}>
+                <Image src={backLogoUrl} style={styles.footerBackLogo} />
               </View>
             )}
+            {/* Right: QR code */}
             {qrCodeUrl && (
               <Image src={qrCodeUrl} style={styles.footerQr} />
             )}

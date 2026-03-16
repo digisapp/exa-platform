@@ -323,8 +323,9 @@ export default function CompCardPage() {
       // Load logos + generate QR code
       const QRCode = (await import("qrcode")).default;
       const profileUrl = `https://www.examodels.com/${model.username || ""}`;
-      const [frontLogoBase64, qrCodeBase64] = await Promise.all([
+      const [frontLogoBase64, backLogoBase64, qrCodeBase64] = await Promise.all([
         logoSrc ? toBase64(logoSrc) : Promise.resolve(undefined),
+        toBase64("/exa-models-logo-black.png"),
         QRCode.toDataURL(profileUrl, { width: 200, margin: 1 }),
       ]);
 
@@ -335,7 +336,7 @@ export default function CompCardPage() {
       );
 
       const blob = await pdf(
-        CompCardPDF({ model, photos: photoBase64, frontLogoUrl: frontLogoBase64, nameColor, nameFontScale, qrCodeUrl: qrCodeBase64 })
+        CompCardPDF({ model, photos: photoBase64, frontLogoUrl: frontLogoBase64, backLogoUrl: backLogoBase64, nameColor, nameFontScale, qrCodeUrl: qrCodeBase64 })
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
@@ -376,14 +377,15 @@ export default function CompCardPage() {
     }
     const QRCode = (await import("qrcode")).default;
     const profileUrl = `https://www.examodels.com/${model.username || ""}`;
-    const [frontLogoBase64, qrCodeBase64] = await Promise.all([
+    const [frontLogoBase64, backLogoBase64, qrCodeBase64] = await Promise.all([
       logoSrc ? toBase64(logoSrc) : Promise.resolve(undefined),
+      toBase64("/exa-models-logo-black.png"),
       QRCode.toDataURL(profileUrl, { width: 200, margin: 1 }),
     ]);
     const { pdf } = await import("@react-pdf/renderer");
     const { default: CompCardPDF } = await import("@/components/comp-card/CompCardPDF");
     const blob = await pdf(
-      CompCardPDF({ model, photos: photoBase64, frontLogoUrl: frontLogoBase64, qrCodeUrl: qrCodeBase64 })
+      CompCardPDF({ model, photos: photoBase64, frontLogoUrl: frontLogoBase64, backLogoUrl: backLogoBase64, qrCodeUrl: qrCodeBase64 })
     ).toBlob();
     return new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
@@ -604,25 +606,31 @@ export default function CompCardPage() {
         curY += rows * (photoH + gridGap);
       }
 
-      // Footer: contact left, QR right
+      // Footer: contact (left) | EXA logo (center) | QR (right)
       const footerY = BH - PAD - 150;
       bCtx.textAlign = "left";
       bCtx.textBaseline = "top";
-      bCtx.font = "28px Helvetica, Arial, sans-serif";
+      bCtx.font = "22px Helvetica, Arial, sans-serif";
       bCtx.fillStyle = "#000000";
       bCtx.letterSpacing = "0px";
       let fTextY = footerY;
-      bCtx.fillText("team@examodels.com", PAD, fTextY);
-      fTextY += 36;
-      if (model.instagram_name) {
-        bCtx.fillText(`@${model.instagram_name}`, PAD, fTextY);
-        fTextY += 36;
-      }
       if (model.username) {
         bCtx.fillText(`examodels.com/${model.username}`, PAD, fTextY);
+        fTextY += 32;
       }
+      if (model.instagram_name) {
+        bCtx.fillText(`@${model.instagram_name}`, PAD, fTextY);
+        fTextY += 32;
+      }
+      bCtx.fillText("team@examodels.com", PAD, fTextY);
 
-      // QR code
+      // Center: EXA Models logo
+      const backLogoImg = await loadImg("/exa-models-logo-black.png");
+      const backLogoW = 200;
+      const backLogoH = Math.round(backLogoW * (backLogoImg.naturalHeight / backLogoImg.naturalWidth));
+      bCtx.drawImage(backLogoImg, (BW - backLogoW) / 2, footerY + (150 - backLogoH) / 2, backLogoW, backLogoH);
+
+      // Right: QR code
       const QRCode = (await import("qrcode")).default;
       const profileUrl = `https://www.examodels.com/${model.username || ""}`;
       const qrDataUrl = await QRCode.toDataURL(profileUrl, { width: 300, margin: 1 });
@@ -1156,31 +1164,31 @@ export default function CompCardPage() {
                       )}
                     </div>
 
-                    {/* Footer: email (left) | instagram+website (center) | QR (right) */}
-                    <div className="pt-2 mt-1 flex items-start gap-1">
-                      {/* Left: email */}
-                      <div className="flex-1">
-                        <p className="text-[8px] text-black truncate">team@examodels.com</p>
+                    {/* Footer: contact (left) | EXA logo (center) | QR (right) */}
+                    <div className="pt-2 mt-1 flex items-center gap-1">
+                      {/* Left: url, instagram, email */}
+                      <div className="flex-1 min-w-0">
+                        {model.username && (
+                          <p className="text-[7px] text-black truncate mb-0.5">examodels.com/{model.username}</p>
+                        )}
+                        {model.instagram_name && (
+                          <div className="flex items-center gap-0.5 mb-0.5">
+                            <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5" className="shrink-0">
+                              <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                              <circle cx="12" cy="12" r="5" />
+                              <circle cx="17.5" cy="6.5" r="1.5" fill="black" stroke="none" />
+                            </svg>
+                            <p className="text-[7px] text-black truncate">{model.instagram_name}</p>
+                          </div>
+                        )}
+                        <p className="text-[7px] text-black truncate">team@examodels.com</p>
                       </div>
-                      {/* Center: instagram + website */}
-                      {(model.instagram_name || model.username) && (
-                        <div className="flex-1">
-                          {model.instagram_name && (
-                            <div className="flex items-center gap-0.5 mb-0.5">
-                              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5">
-                                <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-                                <circle cx="12" cy="12" r="5" />
-                                <circle cx="17.5" cy="6.5" r="1.5" fill="black" stroke="none" />
-                              </svg>
-                              <p className="text-[8px] text-black truncate">{model.instagram_name}</p>
-                            </div>
-                          )}
-                          {model.username && (
-                            <p className="text-[8px] text-black truncate">examodels.com/{model.username}</p>
-                          )}
-                        </div>
-                      )}
-                      {/* QR */}
+                      {/* Center: EXA logo */}
+                      <div className="shrink-0 px-1">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src="/exa-models-logo-black.png" alt="EXA Models" className="h-4 w-auto" />
+                      </div>
+                      {/* Right: QR */}
                       {qrCodePreview ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={qrCodePreview} alt="QR" className="w-12 h-12 rounded shrink-0" />
