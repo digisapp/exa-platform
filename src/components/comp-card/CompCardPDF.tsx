@@ -191,6 +191,7 @@ const styles = StyleSheet.create({
   footerContactRight: {
     alignItems: "flex-start",
     flex: 1,
+    paddingRight: 6,
   },
   footerText: {
     fontSize: 10,
@@ -209,6 +210,7 @@ const styles = StyleSheet.create({
   footerQr: {
     width: 55,
     height: 55,
+    flexShrink: 0,
   },
 });
 
@@ -348,7 +350,7 @@ export default function CompCardPDF({ model, photos, frontLogoUrl, nameColor = "
                   </View>
                 )}
                 {footerWebsite && (
-                  <Text style={styles.footerText}>{footerWebsite}</Text>
+                  <Text style={{ ...styles.footerText, fontSize: 8 }}>{footerWebsite}</Text>
                 )}
               </View>
             )}
