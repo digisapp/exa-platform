@@ -23,6 +23,7 @@ import {
   Printer,
 } from "lucide-react";
 import PrintOrderDialog from "@/components/comp-card/PrintOrderDialog";
+import { MiamiDigitalsBanner } from "@/components/comp-card/MiamiDigitalsBanner";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
@@ -716,6 +717,11 @@ export default function CompCardPage() {
 
   return (
     <div className="container max-w-6xl mx-auto px-4 py-8">
+      {/* Miami Digitals Promo */}
+      <div className="mb-6">
+        <MiamiDigitalsBanner variant="dashboard" />
+      </div>
+
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold">Comp Card</h1>

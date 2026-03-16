@@ -30,6 +30,7 @@ import {
   toBase64,
 } from "@/lib/comp-card-utils";
 import PrintOrderDialog from "@/components/comp-card/PrintOrderDialog";
+import { MiamiDigitalsBanner } from "@/components/comp-card/MiamiDigitalsBanner";
 
 interface UploadedPhoto {
   id: string;
@@ -610,6 +611,11 @@ export default function FreeCompCardPage() {
             className="h-10 w-auto"
           />
         </a>
+      </div>
+
+      {/* Miami Digitals Promo */}
+      <div className="mb-6">
+        <MiamiDigitalsBanner variant="public" />
       </div>
 
       {/* Header */}

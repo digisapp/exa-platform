@@ -98,6 +98,12 @@ export async function POST(request: NextRequest) {
           break;
         }
 
+        // Check if this is a Miami Digitals booking
+        if (session.metadata?.type === "miami_digitals") {
+          await handleMiamiDigitalsPayment(session);
+          break;
+        }
+
         // Check if this is a comp card print order
         if (session.metadata?.type === "comp_card_print") {
           await handleCompCardPrintPayment(session);
@@ -1237,6 +1243,29 @@ async function handleWorkshopInstallmentSuccess(paymentIntent: Stripe.PaymentInt
         updated_at: new Date().toISOString(),
       })
       .eq("id", registrationId);
+  }
+}
+
+async function handleMiamiDigitalsPayment(session: Stripe.Checkout.Session) {
+  const stripeSessionId = session.id;
+  const paymentIntentId =
+    typeof session.payment_intent === "string"
+      ? session.payment_intent
+      : session.payment_intent?.id;
+
+  // Update booking to paid (guard on status for idempotency)
+  const { error: updateError } = await (supabaseAdmin as any)
+    .from("miami_digitals_bookings")
+    .update({
+      status: "paid",
+      stripe_payment_intent_id: paymentIntentId || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("stripe_session_id", stripeSessionId)
+    .eq("status", "pending");
+
+  if (updateError) {
+    console.error("Error updating Miami Digitals booking:", updateError);
   }
 }
 
