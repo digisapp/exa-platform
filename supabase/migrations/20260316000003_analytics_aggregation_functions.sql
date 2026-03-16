@@ -49,12 +49,12 @@ RETURNS TABLE(
   views bigint
 ) AS $$
   SELECT
-    COALESCE(device, 'unknown') AS device,
+    COALESCE(device_type, 'unknown') AS device,
     COUNT(*)::bigint AS views
   FROM public.page_views
   WHERE model_id = p_model_id
     AND created_at >= (now() - interval '30 days')
-  GROUP BY device;
+  GROUP BY device_type;
 $$ LANGUAGE sql SECURITY DEFINER;
 
 -- 4. get_analytics_countries: Returns top 5 countries for last 30 days
