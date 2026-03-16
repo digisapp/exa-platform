@@ -14,11 +14,11 @@ export function MiamiDigitalsBanner() {
           <div className="flex items-center gap-2 mb-1">
             <Camera className="h-4 w-4 text-pink-400 shrink-0" />
             <h3 className="text-sm font-bold truncate">
-              EXA Digitals — Miami Beach
+              Need Fresh Digis?
             </h3>
           </div>
           <p className="text-xs text-muted-foreground line-clamp-2">
-            Fresh digitals by an EXA photographer for Swim Week + 20 printed comp cards.
+            New digitals shot by EXA Photographer + Printed Comp Cards
           </p>
           <div className="flex flex-wrap items-center gap-3 mt-1.5 text-[11px] text-muted-foreground/70">
             <span className="flex items-center gap-1">
