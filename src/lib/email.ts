@@ -5573,3 +5573,183 @@ export async function sendAcademyEnrollmentConfirmationEmail({
     return { success: false, error };
   }
 }
+
+/**
+ * Send comp card print order confirmation email
+ */
+export async function sendPrintOrderConfirmationEmail({
+  to,
+  firstName,
+  quantity,
+  amountCents,
+}: {
+  to: string;
+  firstName: string;
+  quantity: number;
+  amountCents: number;
+}) {
+  try {
+    const resend = getResendClient();
+    const total = `$${(amountCents / 100).toFixed(2)}`;
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      subject: "Comp Card Print Order Confirmed!",
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+          <tr>
+            <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 30px; text-align: center;">
+              <h1 style="margin: 0; color: white; font-size: 24px; font-weight: bold;">
+                Print Order Confirmed!
+              </h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
+                Hey ${escapeHtml(firstName)}!
+              </p>
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                Your comp card print order has been confirmed. We're preparing your cards now!
+              </p>
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px; background-color: #262626; border-radius: 12px; overflow: hidden;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 8px; color: #71717a; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Quantity</p>
+                    <p style="margin: 0 0 16px; color: #ffffff; font-size: 16px; font-weight: 500;">${quantity} cards</p>
+                    <p style="margin: 0 0 8px; color: #71717a; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Total</p>
+                    <p style="margin: 0 0 16px; color: #ffffff; font-size: 16px; font-weight: 500;">${escapeHtml(total)}</p>
+                    <p style="margin: 0 0 8px; color: #71717a; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Pickup Location</p>
+                    <p style="margin: 0; color: #ffffff; font-size: 16px; font-weight: 500;">EXA Studio — Miami</p>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin: 0 0 24px; color: #a1a1aa; font-size: 14px; line-height: 1.6;">
+                Cards are printed on premium 19pt cardstock and are typically ready within 24 hours. We'll email you as soon as they're ready for pickup!
+              </p>
+              <p style="margin: 0; color: #a1a1aa; font-size: 14px; line-height: 1.6;">
+                Questions? Email <a href="mailto:team@examodels.com" style="color: #ec4899; text-decoration: none;">team@examodels.com</a>
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 20px 30px; border-top: 1px solid #262626; text-align: center;">
+              <p style="margin: 0; color: #71717a; font-size: 12px;">EXA Models</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      console.error("Resend error:", error);
+      return { success: false, error };
+    }
+    return { success: true, data };
+  } catch (error) {
+    console.error("Print order confirmation email error:", error);
+    return { success: false, error };
+  }
+}
+
+/**
+ * Send comp card print ready for pickup email
+ */
+export async function sendPrintReadyForPickupEmail({
+  to,
+  firstName,
+  quantity,
+}: {
+  to: string;
+  firstName: string;
+  quantity: number;
+}) {
+  try {
+    const resend = getResendClient();
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      subject: "Your Comp Cards Are Ready for Pickup!",
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+          <tr>
+            <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 30px; text-align: center;">
+              <h1 style="margin: 0; color: white; font-size: 24px; font-weight: bold;">
+                Your Cards Are Ready!
+              </h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
+                Hey ${escapeHtml(firstName)}!
+              </p>
+              <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                Great news — your <strong style="color: #ffffff;">${quantity} comp cards</strong> have been printed and are ready for pickup!
+              </p>
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px; background-color: #262626; border-radius: 12px; overflow: hidden;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 8px; color: #71717a; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Pickup Location</p>
+                    <p style="margin: 0 0 16px; color: #ffffff; font-size: 16px; font-weight: 500;">EXA Studio — Miami</p>
+                    <p style="margin: 0 0 8px; color: #71717a; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Quantity</p>
+                    <p style="margin: 0; color: #ffffff; font-size: 16px; font-weight: 500;">${quantity} cards on premium 19pt cardstock</p>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin: 0; color: #a1a1aa; font-size: 14px; line-height: 1.6;">
+                Questions? Email <a href="mailto:team@examodels.com" style="color: #ec4899; text-decoration: none;">team@examodels.com</a>
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 20px 30px; border-top: 1px solid #262626; text-align: center;">
+              <p style="margin: 0; color: #71717a; font-size: 12px;">EXA Models</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      console.error("Resend error:", error);
+      return { success: false, error };
+    }
+    return { success: true, data };
+  } catch (error) {
+    console.error("Print ready for pickup email error:", error);
+    return { success: false, error };
+  }
+}

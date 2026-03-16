@@ -1603,7 +1603,7 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card id="measurements">
             <CardHeader>
               <CardTitle>Measurements</CardTitle>
             </CardHeader>

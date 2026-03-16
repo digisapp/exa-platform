@@ -601,13 +601,15 @@ export default function FreeCompCardPage() {
     <div className="container max-w-6xl mx-auto px-4 py-8">
       {/* Page logo */}
       <div className="mb-6">
-        <Image
-          src="/exa-models-logo-white.png"
-          alt="EXA Models"
-          width={140}
-          height={44}
-          className="h-10 w-auto"
-        />
+        <a href="https://www.examodels.com">
+          <Image
+            src="/exa-models-logo-white.png"
+            alt="EXA Models"
+            width={140}
+            height={44}
+            className="h-10 w-auto"
+          />
+        </a>
       </div>
 
       {/* Header */}

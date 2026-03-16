@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import { sendPrintReadyForPickupEmail } from "@/lib/email";
 
 export async function PATCH(
   request: NextRequest,
@@ -40,6 +41,18 @@ export async function PATCH(
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const adminClient: any = createServiceRoleClient();
+
+    // Fetch the order first so we can send emails
+    const { data: order } = await adminClient
+      .from("comp_card_print_orders")
+      .select("id, email, first_name, quantity, status")
+      .eq("id", id)
+      .single();
+
+    if (!order) {
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
+
     const updateData: Record<string, string> = {
       status,
       updated_at: new Date().toISOString(),
@@ -57,6 +70,20 @@ export async function PATCH(
         { error: "Failed to update order" },
         { status: 500 }
       );
+    }
+
+    // Send "ready for pickup" email when status changes to "ready"
+    if (status === "ready" && order.status !== "ready" && order.email) {
+      try {
+        await sendPrintReadyForPickupEmail({
+          to: order.email,
+          firstName: order.first_name || "there",
+          quantity: order.quantity,
+        });
+      } catch (emailError) {
+        console.error("Failed to send ready for pickup email:", emailError);
+        // Don't fail the status update if email fails
+      }
     }
 
     return NextResponse.json({ success: true });

@@ -764,24 +764,43 @@ export default function CompCardPage() {
         </div>
       </div>
 
-      {/* Missing measurements warning */}
-      {!hasMeasurements && (
+      {/* Measurements section */}
+      {!hasMeasurements ? (
         <div className="mb-6 flex items-start gap-3 rounded-lg border border-amber-500/20 bg-amber-500/5 p-4">
           <AlertCircle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-          <div>
+          <div className="flex-1">
             <p className="text-sm font-medium text-amber-500">
               Missing measurements
             </p>
             <p className="text-sm text-muted-foreground mt-1">
-              Add your height, bust, waist, and hips in{" "}
-              <Link
-                href="/settings"
-                className="text-pink-500 hover:text-pink-400 underline"
-              >
-                Settings
-              </Link>{" "}
-              for a complete comp card.
+              Add your height, bust, waist, and hips so your comp card is complete.
             </p>
+          </div>
+          <Link
+            href="/settings#measurements"
+            className="shrink-0 text-sm font-semibold bg-gradient-to-r from-pink-500 to-violet-500 text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity"
+          >
+            Add Measurements
+          </Link>
+        </div>
+      ) : (
+        <div className="mb-6 rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm font-medium text-white">Measurements</p>
+            <Link
+              href="/settings#measurements"
+              className="shrink-0 text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-white px-3 py-1.5 rounded-lg transition-colors"
+            >
+              Edit Measurements
+            </Link>
+          </div>
+          <div className="flex flex-wrap gap-x-6 gap-y-2">
+            {measurements.map((m) => (
+              <div key={m.label} className="text-center">
+                <p className="text-[10px] text-zinc-500 uppercase tracking-wider">{m.label}</p>
+                <p className="text-sm font-semibold text-white">{m.value}</p>
+              </div>
+            ))}
           </div>
         </div>
       )}

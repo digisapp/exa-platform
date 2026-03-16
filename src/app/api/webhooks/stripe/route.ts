@@ -1198,6 +1198,28 @@ async function handleCompCardPrintPayment(session: Stripe.Checkout.Session) {
 
   if (updateError) {
     console.error("Error updating comp card print order:", updateError);
+    return;
+  }
+
+  // Send order confirmation email
+  try {
+    const { data: order } = await (supabaseAdmin as any)
+      .from("comp_card_print_orders")
+      .select("email, first_name, quantity, amount_cents")
+      .eq("id", orderId)
+      .single();
+
+    if (order?.email) {
+      const { sendPrintOrderConfirmationEmail } = await import("@/lib/email");
+      await sendPrintOrderConfirmationEmail({
+        to: order.email,
+        firstName: order.first_name || "there",
+        quantity: order.quantity,
+        amountCents: order.amount_cents,
+      });
+    }
+  } catch (emailError) {
+    console.error("Failed to send print order confirmation email:", emailError);
   }
 }
 
