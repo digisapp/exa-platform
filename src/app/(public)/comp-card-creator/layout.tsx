@@ -42,16 +42,16 @@ export default function FreeCompCardLayout({
         <div className="overflow-hidden whitespace-nowrap">
           <div className="inline-block animate-marquee">
             <span className="mx-8 text-base font-semibold text-white inline-flex items-center gap-2">
-              ✨ Join our <Image src="/digis-logo-white.png" alt="Digis" width={72} height={20} className="h-5 w-auto inline-block" /> Community — Live Streams, Virtual Gifts, AI Twin & Chats ✨
+              ✨ Join our <Image src="/digis-logo-white.png" alt="Digis" width={72} height={20} className="h-5 w-auto inline-block" /> Community — Live Streams, Calls, Chats + Virtual Gifts ✨
             </span>
             <span className="mx-8 text-base font-semibold text-white inline-flex items-center gap-2">
-              🎁 Join our <Image src="/digis-logo-white.png" alt="Digis" width={72} height={20} className="h-5 w-auto inline-block" /> Community — Live Streams, Virtual Gifts, AI Twin & Chats 🎁
+              🎁 Join our <Image src="/digis-logo-white.png" alt="Digis" width={72} height={20} className="h-5 w-auto inline-block" /> Community — Live Streams, Calls, Chats + Virtual Gifts 🎁
             </span>
             <span className="mx-8 text-base font-semibold text-white inline-flex items-center gap-2">
-              ✨ Join our <Image src="/digis-logo-white.png" alt="Digis" width={72} height={20} className="h-5 w-auto inline-block" /> Community — Live Streams, Virtual Gifts, AI Twin & Chats ✨
+              ✨ Join our <Image src="/digis-logo-white.png" alt="Digis" width={72} height={20} className="h-5 w-auto inline-block" /> Community — Live Streams, Calls, Chats + Virtual Gifts ✨
             </span>
             <span className="mx-8 text-base font-semibold text-white inline-flex items-center gap-2">
-              🎁 Join our <Image src="/digis-logo-white.png" alt="Digis" width={72} height={20} className="h-5 w-auto inline-block" /> Community — Live Streams, Virtual Gifts, AI Twin & Chats 🎁
+              🎁 Join our <Image src="/digis-logo-white.png" alt="Digis" width={72} height={20} className="h-5 w-auto inline-block" /> Community — Live Streams, Calls, Chats + Virtual Gifts 🎁
             </span>
           </div>
         </div>
