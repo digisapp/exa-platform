@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,14 @@ import {
 import { useSearchParams } from "next/navigation";
 
 export default function MiamiDigitalsPage() {
+  return (
+    <Suspense>
+      <MiamiDigitalsContent />
+    </Suspense>
+  );
+}
+
+function MiamiDigitalsContent() {
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
