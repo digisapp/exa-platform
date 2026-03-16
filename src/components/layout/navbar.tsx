@@ -31,7 +31,6 @@ import {
   Camera,
   FileText,
   Gavel,
-  TrendingUp,
   Calendar,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -244,14 +243,6 @@ export function Navbar({ user, actorType, unreadCount = 0 }: NavbarProps) {
                     </DropdownMenuLabel>
                   )}
                   <DropdownMenuSeparator />
-                  {actorType === "model" && (
-                    <DropdownMenuItem asChild>
-                      <Link href="/earnings" className="cursor-pointer">
-                        <TrendingUp className="mr-2 h-4 w-4" />
-                        Earnings
-                      </Link>
-                    </DropdownMenuItem>
-                  )}
                   {(actorType === "brand" || actorType === "admin") && (
                     <DropdownMenuItem asChild>
                       <Link href="/wallet" className="cursor-pointer">
@@ -322,18 +313,6 @@ export function Navbar({ user, actorType, unreadCount = 0 }: NavbarProps) {
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link href="/bids/manage" className="cursor-pointer">
-                          <Gavel className="mr-2 h-4 w-4" />
-                          Bids
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href="/contracts" className="cursor-pointer">
-                          <FileText className="mr-2 h-4 w-4" />
-                          Contracts
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
                         <Link href="/comp-card" className="cursor-pointer">
                           <Camera className="mr-2 h-4 w-4" />
                           Comp Card
@@ -347,6 +326,14 @@ export function Navbar({ user, actorType, unreadCount = 0 }: NavbarProps) {
                       EXA Boost
                     </Link>
                   </DropdownMenuItem>
+                  {actorType === "model" && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/bids/manage" className="cursor-pointer">
+                        <Gavel className="mr-2 h-4 w-4" />
+                        Bids
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   {actorType !== "admin" && (
                     <DropdownMenuItem asChild>
                       <Link href="/settings" className="cursor-pointer">

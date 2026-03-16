@@ -195,7 +195,7 @@ export async function POST(request: NextRequest) {
         signupUrl,
       });
 
-      if (result.success) {
+      if (result?.success) {
         // Update invite_sent_at
         await supabase.from("models")
           .update({ invite_sent_at: new Date().toISOString() })
@@ -203,7 +203,7 @@ export async function POST(request: NextRequest) {
         sent++;
       } else {
         failed++;
-        errors.push(`${model.email}: ${result.error}`);
+        errors.push(`${model.email}: ${result?.error || "skipped (unsubscribed)"}`);
       }
 
       // 200ms delay between emails (5/sec max, well under Resend's 10/sec limit)

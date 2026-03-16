@@ -236,13 +236,47 @@ export async function POST(request: NextRequest) {
 
       case "charge.dispute.created": {
         const dispute = event.data.object as Stripe.Dispute;
-        console.error("Stripe dispute created - manual review required:", {
+        console.error("Stripe dispute created - flagging account:", {
           dispute_id: dispute.id,
           charge_id: dispute.charge,
           amount: dispute.amount,
           reason: dispute.reason,
           status: dispute.status,
         });
+
+        // Find the actor who made this payment and flag their account
+        const disputeChargeId = typeof dispute.charge === "string" ? dispute.charge : (dispute.charge as any)?.id;
+        if (disputeChargeId) {
+          // Look up the payment intent from the charge
+          try {
+            const disputeCharge = await stripe.charges.retrieve(disputeChargeId);
+            const disputePI = typeof disputeCharge.payment_intent === "string"
+              ? disputeCharge.payment_intent
+              : (disputeCharge.payment_intent as any)?.id;
+
+            if (disputePI) {
+              // Find coin transaction linked to this payment
+              const { data: disputeTx } = await supabaseAdmin
+                .from("coin_transactions")
+                .select("actor_id")
+                .eq("action", "purchase")
+                .contains("metadata", { stripe_payment_intent: disputePI })
+                .maybeSingle();
+
+              if (disputeTx?.actor_id) {
+                // Flag the fan account as disputed
+                await supabaseAdmin
+                  .from("fans")
+                  .update({ is_suspended: true })
+                  .eq("id", disputeTx.actor_id);
+
+                console.log("Account flagged/suspended due to dispute:", disputeTx.actor_id, "dispute:", dispute.id);
+              }
+            }
+          } catch (disputeErr) {
+            console.error("Error flagging account for dispute:", disputeErr);
+          }
+        }
         break;
       }
 
@@ -253,6 +287,40 @@ export async function POST(request: NextRequest) {
           charge_id: dispute.charge,
           status: dispute.status,
         });
+
+        // If dispute was lost or won, update account accordingly
+        if (dispute.status === "won") {
+          // Dispute resolved in our favor — unsuspend the account
+          const closedChargeId = typeof dispute.charge === "string" ? dispute.charge : (dispute.charge as any)?.id;
+          if (closedChargeId) {
+            try {
+              const closedCharge = await stripe.charges.retrieve(closedChargeId);
+              const closedPI = typeof closedCharge.payment_intent === "string"
+                ? closedCharge.payment_intent
+                : (closedCharge.payment_intent as any)?.id;
+
+              if (closedPI) {
+                const { data: closedTx } = await supabaseAdmin
+                  .from("coin_transactions")
+                  .select("actor_id")
+                  .eq("action", "purchase")
+                  .contains("metadata", { stripe_payment_intent: closedPI })
+                  .maybeSingle();
+
+                if (closedTx?.actor_id) {
+                  await supabaseAdmin
+                    .from("fans")
+                    .update({ is_suspended: false })
+                    .eq("id", closedTx.actor_id);
+
+                  console.log("Account unsuspended after dispute won:", closedTx.actor_id);
+                }
+              }
+            } catch (closedErr) {
+              console.error("Error unsuspending account after dispute:", closedErr);
+            }
+          }
+        }
         break;
       }
 

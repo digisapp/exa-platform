@@ -418,7 +418,7 @@ export default async function DashboardPage() {
             </CardContent>
           </Card>
         </Link>
-        <Link href="/earnings" className="group">
+        <Link href="/wallet" className="group">
           <Card className="border-green-500/20 hover:border-green-500/40 transition-colors">
             <CardContent className="p-4">
               <div className="flex items-center gap-2 text-muted-foreground mb-1">

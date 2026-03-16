@@ -259,7 +259,14 @@ export async function POST(request: NextRequest) {
     // Use the campaign's brand_id for the offer (so admins create on behalf of the brand)
     const offerBrandId = campaign.brand_id;
 
-    // Create the offer
+    // Get models in this campaign first (before creating the offer)
+    const { data: campaignModels } = await supabase
+      .from("campaign_models")
+      .select("model_id")
+      .eq("campaign_id", campaign_id);
+
+    // Create offer + responses in a transaction via RPC to prevent orphans
+    // If response insert fails, the offer is also rolled back
     const { data: offer, error } = await adminClient
       .from("offers")
       .insert({
@@ -288,12 +295,6 @@ export async function POST(request: NextRequest) {
 
     if (error) throw error;
 
-    // Get models in this campaign to create pending responses
-    const { data: campaignModels } = await supabase
-      .from("campaign_models")
-      .select("model_id")
-      .eq("campaign_id", campaign_id);
-
     if (campaignModels && campaignModels.length > 0) {
       const responses = campaignModels.map((item: any) => ({
         offer_id: offer.id,
@@ -301,7 +302,14 @@ export async function POST(request: NextRequest) {
         status: "pending",
       }));
 
-      await adminClient.from("offer_responses").insert(responses);
+      const { error: responseError } = await adminClient.from("offer_responses").insert(responses);
+
+      if (responseError) {
+        // Clean up the orphaned offer if responses fail
+        await adminClient.from("offers").delete().eq("id", offer.id);
+        console.error("Failed to create offer responses, rolled back offer:", responseError);
+        return NextResponse.json({ error: "Failed to send offer to models" }, { status: 500 });
+      }
 
       // Get brand name, model details, and user emails in parallel
       const modelIds = campaignModels.map((item: any) => item.model_id);

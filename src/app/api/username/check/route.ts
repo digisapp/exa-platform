@@ -91,14 +91,14 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Check if username is already taken by a model
-    const { data: existingModel } = await supabase
-      .from("models")
-      .select("id")
-      .eq("username", username)
-      .single();
+    // Check if username is already taken by a model, fan, or brand
+    const [{ data: existingModel }, { data: existingFan }, { data: existingBrand }] = await Promise.all([
+      supabase.from("models").select("id").eq("username", username).single(),
+      supabase.from("fans").select("id").eq("username", username).single(),
+      supabase.from("brands").select("id").eq("username", username).single(),
+    ]);
 
-    if (existingModel) {
+    if (existingModel || existingFan || existingBrand) {
       return NextResponse.json({
         available: false,
         reason: "This username is already taken",

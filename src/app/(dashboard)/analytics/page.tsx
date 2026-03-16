@@ -119,85 +119,48 @@ export default async function AnalyticsPage() {
 
   if (!model) redirect("/dashboard");
 
-  // Query page_views via service role (RLS blocks regular users from reading)
+  // Use RPC functions for database-level aggregation (instead of loading all rows)
   const serviceClient = createServiceRoleClient();
 
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const [
+    { data: statsData },
+    { data: dailyRaw },
+    { data: devicesRaw },
+    { data: countriesRaw },
+    { data: sourcesRaw },
+  ] = await Promise.all([
+    (serviceClient.rpc as any)("get_analytics_stats", { p_model_id: model.id }),
+    (serviceClient.rpc as any)("get_analytics_daily", { p_model_id: model.id }),
+    (serviceClient.rpc as any)("get_analytics_devices", { p_model_id: model.id }),
+    (serviceClient.rpc as any)("get_analytics_countries", { p_model_id: model.id }),
+    (serviceClient.rpc as any)("get_analytics_sources", { p_model_id: model.id }),
+  ]);
 
-  const { data: rawViews } = await (serviceClient as any)
-    .from("page_views")
-    .select("created_at, visitor_id, device, country, referrer, utm_source")
-    .eq("model_id", model.id)
-    .gte("created_at", thirtyDaysAgo.toISOString());
+  const stats = statsData?.[0] || { total_views_30d: 0, unique_visitors_30d: 0, today_views: 0 };
+  const totalViews30d = Number(stats.total_views_30d) || 0;
+  const uniqueVisitors = Number(stats.unique_visitors_30d) || 0;
+  const todayViews = Number(stats.today_views) || 0;
 
-  const views: {
-    created_at: string;
-    visitor_id: string;
-    device: string | null;
-    country: string | null;
-    referrer: string | null;
-    utm_source: string | null;
-  }[] = rawViews || [];
-
-  // Aggregations
-  const totalViews30d = views.length;
-  const uniqueVisitors = new Set(views.map((v) => v.visitor_id)).size;
-
-  const todayStr = new Date().toISOString().split("T")[0];
-  const todayViews = views.filter((v) => v.created_at.startsWith(todayStr)).length;
-
-  // Daily chart (last 30 days, fill missing days with 0)
-  const dailyMap: Record<string, number> = {};
-  views.forEach((v) => {
-    const date = v.created_at.split("T")[0];
-    dailyMap[date] = (dailyMap[date] || 0) + 1;
-  });
-
-  const dailyData: { date: string; views: number }[] = [];
-  for (let i = 29; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().split("T")[0];
-    dailyData.push({ date: dateStr, views: dailyMap[dateStr] || 0 });
-  }
+  // Daily chart data (already filled with 0s by the RPC)
+  const dailyData: { date: string; views: number }[] = (dailyRaw || []).map(
+    (d: { day: string; views: number }) => ({ date: d.day, views: Number(d.views) || 0 })
+  );
 
   // Device breakdown
   const deviceMap: Record<string, number> = {};
-  views.forEach((v) => {
-    const d = v.device || "unknown";
-    deviceMap[d] = (deviceMap[d] || 0) + 1;
+  (devicesRaw || []).forEach((d: { device: string; views: number }) => {
+    deviceMap[d.device] = Number(d.views) || 0;
   });
 
-  // Country breakdown
-  const countryMap: Record<string, number> = {};
-  views.forEach((v) => {
-    if (v.country) countryMap[v.country] = (countryMap[v.country] || 0) + 1;
-  });
-  const topCountries = Object.entries(countryMap)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5);
+  // Top countries (already sorted and limited by RPC)
+  const topCountries: [string, number][] = (countriesRaw || []).map(
+    (c: { country: string; views: number }) => [c.country, Number(c.views) || 0] as [string, number]
+  );
 
-  // Traffic source breakdown
-  const sourceMap: Record<string, number> = {};
-  views.forEach((v) => {
-    let source = "Direct";
-    if (v.utm_source) {
-      source = v.utm_source.charAt(0).toUpperCase() + v.utm_source.slice(1);
-    } else if (v.referrer) {
-      try {
-        const url = new URL(v.referrer);
-        const hostname = url.hostname.replace("www.", "");
-        source = hostname.charAt(0).toUpperCase() + hostname.slice(1);
-      } catch {
-        source = "Other";
-      }
-    }
-    sourceMap[source] = (sourceMap[source] || 0) + 1;
-  });
-  const topSources = Object.entries(sourceMap)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5);
+  // Top sources (already sorted and limited by RPC)
+  const topSources: [string, number][] = (sourcesRaw || []).map(
+    (s: { source: string; views: number }) => [s.source, Number(s.views) || 0] as [string, number]
+  );
 
   const hasData = totalViews30d > 0;
 

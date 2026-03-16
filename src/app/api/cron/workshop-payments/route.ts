@@ -1,6 +1,7 @@
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { stripe } from "@/lib/stripe";
 import { NextRequest, NextResponse } from "next/server";
+import { sendWorkshopPaymentFailedEmail } from "@/lib/email";
 
 // as any needed: nested join type instantiation is too deep for typed client
 const supabaseAdmin: any = createServiceRoleClient();
@@ -215,6 +216,22 @@ async function handleInstallmentRetryFailed(
           })
           .eq("id", registration.workshop_id);
       }
+    }
+
+    // Send cancellation email to the buyer
+    const { data: cancelledReg } = await supabaseAdmin
+      .from("workshop_registrations")
+      .select("buyer_email, buyer_name, workshops(title)")
+      .eq("id", registrationId)
+      .single();
+
+    if (cancelledReg?.buyer_email) {
+      const workshopTitle = (cancelledReg as any).workshops?.title || "Workshop";
+      sendWorkshopPaymentFailedEmail({
+        to: cancelledReg.buyer_email,
+        buyerName: cancelledReg.buyer_name || "there",
+        workshopTitle,
+      }).catch((err: any) => console.error("Failed to send workshop cancellation email:", err));
     }
 
     console.log("Workshop registration cancelled due to payment failure:", registrationId);

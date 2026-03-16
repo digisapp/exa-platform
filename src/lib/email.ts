@@ -435,6 +435,10 @@ export async function sendModelInviteEmail({
   signupUrl: string;
 }) {
   try {
+    if (await isEmailUnsubscribed(to, "marketing")) {
+      console.log(`Skipping model invite email - ${to} is unsubscribed`);
+      return;
+    }
     const resend = getResendClient();
 
     const { data, error } = await resend.emails.send({
@@ -669,8 +673,12 @@ export async function sendContentPurchaseEmail({
   coinsEarned: number;
 }) {
   try {
+    if (await isEmailUnsubscribed(to, "notification")) {
+      console.log(`Skipping content purchase email - ${to} is unsubscribed`);
+      return;
+    }
     const resend = getResendClient();
-    const dashboardUrl = `${BASE_URL}/earnings`;
+    const dashboardUrl = `${BASE_URL}/wallet`;
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
@@ -778,8 +786,12 @@ export async function sendTipReceivedEmail({
   message?: string;
 }) {
   try {
+    if (await isEmailUnsubscribed(to, "notification")) {
+      console.log(`Skipping tip received email - ${to} is unsubscribed`);
+      return;
+    }
     const resend = getResendClient();
-    const dashboardUrl = `${BASE_URL}/earnings`;
+    const dashboardUrl = `${BASE_URL}/wallet`;
 
     const messageHtml = message
       ? `
@@ -902,8 +914,12 @@ export async function sendPPVUnlockedEmail({
   amount: number;
 }) {
   try {
+    if (await isEmailUnsubscribed(to, "notification")) {
+      console.log(`Skipping PPV unlocked email - ${to} is unsubscribed`);
+      return;
+    }
     const resend = getResendClient();
-    const dashboardUrl = `${BASE_URL}/earnings`;
+    const dashboardUrl = `${BASE_URL}/wallet`;
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
@@ -1020,6 +1036,10 @@ export async function sendBookingRequestEmail({
   bookingNumber: string;
 }) {
   try {
+    if (await isEmailUnsubscribed(to, "notification")) {
+      console.log(`Skipping booking request email - ${to} is unsubscribed`);
+      return;
+    }
     const resend = getResendClient();
     const bookingsUrl = `${BASE_URL}/bookings`;
     const formattedDate = new Date(eventDate).toLocaleDateString("en-US", {
@@ -1174,6 +1194,10 @@ export async function sendBookingAcceptedEmail({
   bookingNumber: string;
 }) {
   try {
+    if (await isEmailUnsubscribed(to, "notification")) {
+      console.log(`Skipping booking accepted email - ${to} is unsubscribed`);
+      return;
+    }
     const resend = getResendClient();
     const bookingsUrl = `${BASE_URL}/bookings`;
     const modelProfileUrl = `${BASE_URL}/${modelUsername}`;
@@ -1341,6 +1365,10 @@ export async function sendBookingDeclinedEmail({
   reason?: string;
 }) {
   try {
+    if (await isEmailUnsubscribed(to, "notification")) {
+      console.log(`Skipping booking declined email - ${to} is unsubscribed`);
+      return;
+    }
     const resend = getResendClient();
     const modelsUrl = `${BASE_URL}/models`;
     const formattedDate = new Date(eventDate).toLocaleDateString("en-US", {
@@ -1502,6 +1530,10 @@ export async function sendVideoCallRequestEmail({
   callType?: "video" | "voice";
 }) {
   try {
+    if (await isEmailUnsubscribed(to, "notification")) {
+      console.log(`Skipping call request email - ${to} is unsubscribed`);
+      return;
+    }
     const resend = getResendClient();
     const dashboardUrl = `${BASE_URL}/chats`;
     const callTypeLabel = callType === "voice" ? "voice" : "video";
@@ -1631,6 +1663,10 @@ export async function sendOfferReceivedEmail({
   offerId: string;
 }) {
   try {
+    if (await isEmailUnsubscribed(to, "notification")) {
+      console.log(`Skipping offer received email - ${to} is unsubscribed`);
+      return;
+    }
     const resend = getResendClient();
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.examodels.com";
     const offerUrl = `${baseUrl}/models/offers/${offerId}`;
@@ -4383,7 +4419,7 @@ export async function sendAuctionSoldEmail({
     const resend = getResendClient();
     const unsubscribeToken = await getUnsubscribeToken(to);
     const auctionUrl = `${BASE_URL}/bids/${auctionId}`;
-    const earningsUrl = `${BASE_URL}/earnings`;
+    const earningsUrl = `${BASE_URL}/wallet`;
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
@@ -5750,6 +5786,104 @@ export async function sendPrintReadyForPickupEmail({
     return { success: true, data };
   } catch (error) {
     console.error("Print ready for pickup email error:", error);
+    return { success: false, error };
+  }
+}
+
+// ============================================
+// WORKSHOP PAYMENT FAILURE / CANCELLATION EMAIL
+// ============================================
+
+export async function sendWorkshopPaymentFailedEmail({
+  to,
+  buyerName,
+  workshopTitle,
+}: {
+  to: string;
+  buyerName: string;
+  workshopTitle: string;
+}) {
+  try {
+    const resend = getResendClient();
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      subject: `Your ${workshopTitle} registration has been cancelled`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="padding: 30px 30px 20px; text-align: center; background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);">
+              <h1 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: 700;">Registration Cancelled</h1>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 30px;">
+              <p style="margin: 0 0 15px; color: #ffffff; font-size: 16px;">Hi ${escapeHtml(buyerName)},</p>
+              <p style="margin: 0 0 15px; color: #a1a1aa; font-size: 14px; line-height: 1.6;">
+                Unfortunately, we were unable to process your installment payment for <strong style="color: #ffffff;">${escapeHtml(workshopTitle)}</strong> after multiple attempts.
+              </p>
+              <p style="margin: 0 0 15px; color: #a1a1aa; font-size: 14px; line-height: 1.6;">
+                As a result, your registration has been cancelled and your spot has been released.
+              </p>
+              <p style="margin: 0 0 15px; color: #a1a1aa; font-size: 14px; line-height: 1.6;">
+                If you'd like to re-register, please visit our workshops page. If you believe this was an error, please update your payment method and contact us.
+              </p>
+
+              <!-- CTA -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 25px 0;">
+                <tr>
+                  <td align="center">
+                    <a href="${BASE_URL}/workshops" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #ec4899, #8b5cf6); color: #ffffff; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 14px;">
+                      View Workshops
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0; color: #a1a1aa; font-size: 14px; line-height: 1.6;">
+                Questions? Email <a href="mailto:team@examodels.com" style="color: #ec4899; text-decoration: none;">team@examodels.com</a>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 30px; border-top: 1px solid #262626; text-align: center;">
+              <p style="margin: 0; color: #71717a; font-size: 12px;">EXA Models - Where Models Shine</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      console.error("Resend error:", error);
+      return { success: false, error };
+    }
+    return { success: true, data };
+  } catch (error) {
+    console.error("Workshop payment failed email error:", error);
     return { success: false, error };
   }
 }

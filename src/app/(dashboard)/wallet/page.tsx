@@ -432,7 +432,7 @@ export default function WalletPage() {
                             {withheldBalance.toLocaleString()} coins pending payout (${(withheldBalance * 0.10).toFixed(2)})
                           </p>
                         )}
-                        <Link href="/earnings" className="inline-flex items-center gap-1 text-xs text-pink-400 hover:text-pink-300 mt-2 transition-colors">
+                        <Link href="/wallet" className="inline-flex items-center gap-1 text-xs text-pink-400 hover:text-pink-300 mt-2 transition-colors">
                           <BarChart3 className="h-3 w-3" />
                           View Earnings Breakdown
                         </Link>

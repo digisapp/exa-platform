@@ -192,7 +192,21 @@ export function getClientIP(request: Request): string {
     return xRealIP;
   }
 
-  return "unknown";
+  // Fallback: generate a fingerprint from available headers to avoid
+  // all unknown-IP requests sharing a single rate limit bucket
+  const ua = request.headers.get("user-agent") || "";
+  const lang = request.headers.get("accept-language") || "";
+  const accept = request.headers.get("accept") || "";
+  const fingerprint = `${ua}|${lang}|${accept}`;
+
+  // Simple hash to create a consistent identifier
+  let hash = 0;
+  for (let i = 0; i < fingerprint.length; i++) {
+    const char = fingerprint.charCodeAt(i);
+    hash = ((hash << 5) - hash + char) | 0;
+  }
+
+  return `no-ip-${hash.toString(36)}`;
 }
 
 // ============================================
