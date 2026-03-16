@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { Camera, MapPin, Calendar, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -28,16 +27,6 @@ export function MiamiDigitalsBanner() {
             <span className="flex items-center gap-1">
               <MapPin className="h-3 w-3 text-pink-400" />
               Miami Beach
-            </span>
-            <span className="flex items-center gap-1">
-              Sponsored by
-              <Image
-                src="/digis-logo-white.png"
-                alt="Digis"
-                width={36}
-                height={12}
-                className="h-3 w-auto opacity-60"
-              />
             </span>
           </div>
         </div>
