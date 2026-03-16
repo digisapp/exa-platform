@@ -717,15 +717,15 @@ export default function CompCardPage() {
   return (
     <div className="container max-w-6xl mx-auto px-4 py-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
+      <div className="mb-8">
+        <div className="mb-4">
           <h1 className="text-2xl font-bold">Comp Card</h1>
           <p className="text-muted-foreground text-sm mt-1">
             Select {MAX_PHOTOS} photos — first is the front cover, next 4 go on
             the back
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button
             onClick={handleExportJPEG}
             disabled={exportingJpeg || selectedIds.length === 0}
