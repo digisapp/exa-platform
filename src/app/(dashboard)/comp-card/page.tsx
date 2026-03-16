@@ -717,11 +717,6 @@ export default function CompCardPage() {
 
   return (
     <div className="container max-w-6xl mx-auto px-4 py-8">
-      {/* Miami Digitals Promo */}
-      <div className="mb-6">
-        <MiamiDigitalsBanner variant="dashboard" />
-      </div>
-
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold">Comp Card</h1>
@@ -1218,6 +1213,11 @@ export default function CompCardPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Miami Digitals Promo */}
+      <div className="mt-8">
+        <MiamiDigitalsBanner />
       </div>
 
       <PrintOrderDialog

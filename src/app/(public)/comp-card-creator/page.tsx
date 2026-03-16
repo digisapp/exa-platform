@@ -613,11 +613,6 @@ export default function FreeCompCardPage() {
         </a>
       </div>
 
-      {/* Miami Digitals Promo */}
-      <div className="mb-6">
-        <MiamiDigitalsBanner variant="public" />
-      </div>
-
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
@@ -1019,6 +1014,11 @@ export default function FreeCompCardPage() {
         </div>
       </div>
 
+
+      {/* Miami Digitals Promo */}
+      <div className="mt-8">
+        <MiamiDigitalsBanner />
+      </div>
 
       {/* Print order dialog */}
       <PrintOrderDialog
