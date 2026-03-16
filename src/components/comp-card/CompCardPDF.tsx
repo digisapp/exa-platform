@@ -195,8 +195,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   footerBackLogo: {
-    width: 80,
-    height: 26,
+    width: 120,
+    height: 39,
     objectFit: "contain" as const,
   },
   footerText: {

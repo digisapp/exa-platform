@@ -627,7 +627,7 @@ export default function CompCardPage() {
 
       // Center: EXA Models logo
       const backLogoImg = await loadImg("/exa-models-logo-black.png");
-      const backLogoW = 200;
+      const backLogoW = 300;
       const backLogoH = Math.round(backLogoW * (backLogoImg.naturalHeight / backLogoImg.naturalWidth));
       bCtx.drawImage(backLogoImg, (BW - backLogoW) / 2, footerY + (150 - backLogoH) / 2, backLogoW, backLogoH);
 
