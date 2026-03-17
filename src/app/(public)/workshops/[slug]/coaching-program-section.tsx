@@ -55,7 +55,7 @@ export function CoachingProgramSection() {
         </div>
 
         <p className="text-xs text-muted-foreground">
-          $450/mo × 3 months ($1,350 total) or pay in full for $1,299 — select the <strong className="text-foreground">3-Month Coaching</strong> tab in the checkout card.
+          $450/mo × 3 months ($1,350 total) or pay in full for $1,199 — select the <strong className="text-foreground">3-Month Coaching</strong> tab in the checkout card.
         </p>
       </CardContent>
     </Card>

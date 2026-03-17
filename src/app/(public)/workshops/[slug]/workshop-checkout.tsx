@@ -50,7 +50,7 @@ export function WorkshopCheckout({ workshop, coachingWorkshopId }: WorkshopCheck
   // Coaching pricing — $450/mo × 3 months
   const coachingInstallmentAmount = 45000; // $450/mo
   const coachingInstallmentTotal = 135000; // $1,350 total
-  const coachingFullPrice = 129900;        // $1,299 pay in full
+  const coachingFullPrice = 119900;        // $1,199 pay in full
 
   const handleProductChange = (p: "workshop" | "coaching") => {
     setProduct(p);
@@ -152,55 +152,52 @@ export function WorkshopCheckout({ workshop, coachingWorkshopId }: WorkshopCheck
 
         {/* Product selector (only when coaching option exists) */}
         {showCoachingTab && (
-          <div className="grid grid-cols-2 gap-2 mb-1">
-            {/* In-Person Workshop option */}
-            <button
-              type="button"
-              onClick={() => handleProductChange("workshop")}
-              className={`relative p-3 rounded-xl border-2 text-left transition-all ${
-                !isCoaching
-                  ? "border-pink-500 bg-pink-500/10 shadow-sm shadow-pink-500/10"
-                  : "border-border hover:border-pink-500/40 bg-transparent"
-              }`}
-            >
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <MapPin className="h-3.5 w-3.5 text-pink-500 flex-shrink-0" />
-                <span className="text-[10px] font-bold uppercase tracking-widest text-pink-500">In Person</span>
-              </div>
-              <p className="text-sm font-bold leading-tight">Workshop</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">1-day live event</p>
-              <p className="text-base font-bold text-pink-500 mt-1.5">
-                ${(workshop.priceCents / 100).toFixed(0)}
-              </p>
-            </button>
+          <>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Choose your package</p>
+            <div className="grid grid-cols-2 gap-2">
+              {/* In-Person Workshop option */}
+              <button
+                type="button"
+                onClick={() => handleProductChange("workshop")}
+                className={`relative p-3 rounded-xl border-2 text-left transition-all ${
+                  !isCoaching
+                    ? "border-pink-500 bg-pink-500/10 shadow-sm shadow-pink-500/10"
+                    : "border-border hover:border-pink-500/40 bg-transparent"
+                }`}
+              >
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <MapPin className="h-3.5 w-3.5 text-pink-500 flex-shrink-0" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-pink-500">In Person</span>
+                </div>
+                <p className="text-sm font-bold leading-tight">Workshop Only</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">1-day live event</p>
+                <p className="text-base font-bold text-pink-500 mt-1.5">
+                  ${(workshop.priceCents / 100).toFixed(0)}
+                </p>
+              </button>
 
-            {/* 3-Month Coaching option */}
-            <button
-              type="button"
-              onClick={() => handleProductChange("coaching")}
-              className={`relative p-3 rounded-xl border-2 text-left transition-all ${
-                isCoaching
-                  ? "border-violet-500 bg-violet-500/10 shadow-sm shadow-violet-500/10"
-                  : "border-border hover:border-violet-500/40 bg-transparent"
-              }`}
-            >
-              {/* Best Value badge */}
-              <div className="absolute -top-2.5 right-2">
-                <span className="inline-block bg-violet-500 text-white text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full">
-                  Best Value
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5 mb-1.5 mt-0.5">
-                <Video className="h-3.5 w-3.5 text-violet-400 flex-shrink-0" />
-                <span className="text-[10px] font-bold uppercase tracking-widest text-violet-400">Virtual + Live</span>
-              </div>
-              <p className="text-sm font-bold leading-tight">3-Mo Coaching</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">Workshop included</p>
-              <p className="text-base font-bold text-violet-400 mt-1.5">
-                $450<span className="text-xs font-normal text-muted-foreground">/mo</span>
-              </p>
-            </button>
-          </div>
+              {/* 3-Month Coaching option */}
+              <button
+                type="button"
+                onClick={() => handleProductChange("coaching")}
+                className={`relative p-3 rounded-xl border-2 text-left transition-all ${
+                  isCoaching
+                    ? "border-violet-500 bg-violet-500/10 shadow-sm shadow-violet-500/10"
+                    : "border-border hover:border-violet-500/40 bg-transparent"
+                }`}
+              >
+                <div className="flex items-center gap-1.5 mb-1.5 mt-0.5">
+                  <Video className="h-3.5 w-3.5 text-violet-400 flex-shrink-0" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-violet-400">Virtual + Live</span>
+                </div>
+                <p className="text-sm font-bold leading-tight">3-Mo Coaching</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">Workshop + coaching</p>
+                <p className="text-base font-bold text-violet-400 mt-1.5">
+                  $450<span className="text-xs font-normal text-muted-foreground">/mo</span>
+                </p>
+              </button>
+            </div>
+          </>
         )}
 
         {/* ── COACHING MODE ── */}
@@ -251,8 +248,8 @@ export function WorkshopCheckout({ workshop, coachingWorkshopId }: WorkshopCheck
                   }`}
                 >
                   <div className="font-semibold text-sm">Pay in Full</div>
-                  <div className="text-lg font-bold text-violet-400">$1,299</div>
-                  <div className="text-xs text-green-400">Save $51</div>
+                  <div className="text-lg font-bold text-violet-400">$1,199</div>
+                  <div className="text-xs text-green-400">Save $151</div>
                 </button>
               </div>
             </div>
@@ -464,7 +461,7 @@ export function WorkshopCheckout({ workshop, coachingWorkshopId }: WorkshopCheck
                 {isCoaching
                   ? paymentType === "installment"
                     ? "Enroll — $450 First Month"
-                    : "Enroll — Pay in Full $1,299"
+                    : "Enroll — Pay in Full $1,199"
                   : paymentType === "installment"
                     ? "Pay $125 — First Installment"
                     : "Register Now"}
