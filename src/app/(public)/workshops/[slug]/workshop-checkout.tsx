@@ -47,10 +47,10 @@ export function WorkshopCheckout({ workshop, coachingWorkshopId }: WorkshopCheck
   const workshopInstallmentAmount = 12500; // $125
   const workshopInstallmentTotal = 37500;  // $375
 
-  // Coaching pricing
-  const coachingInstallmentAmount = 17500; // $175/mo
-  const coachingInstallmentTotal = 52500;  // $525 total
-  const coachingFullPrice = 49900;          // $499 pay in full
+  // Coaching pricing — $450/mo × 3 months
+  const coachingInstallmentAmount = 45000; // $450/mo
+  const coachingInstallmentTotal = 135000; // $1,350 total
+  const coachingFullPrice = 129900;        // $1,299 pay in full
 
   const handleProductChange = (p: "workshop" | "coaching") => {
     setProduct(p);
@@ -197,7 +197,7 @@ export function WorkshopCheckout({ workshop, coachingWorkshopId }: WorkshopCheck
               <p className="text-sm font-bold leading-tight">3-Mo Coaching</p>
               <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">Workshop included</p>
               <p className="text-base font-bold text-violet-400 mt-1.5">
-                $175<span className="text-xs font-normal text-muted-foreground">/mo</span>
+                $450<span className="text-xs font-normal text-muted-foreground">/mo</span>
               </p>
             </button>
           </div>
@@ -218,7 +218,7 @@ export function WorkshopCheckout({ workshop, coachingWorkshopId }: WorkshopCheck
             </div>
 
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Bi-weekly video submissions with personalized feedback each round. Get runway-ready from anywhere in the world.
+              1 one-on-one video call per week (8 sessions) with personalized coaching. Get runway-ready from anywhere in the world.
             </p>
 
             {/* Payment toggle */}
@@ -238,8 +238,8 @@ export function WorkshopCheckout({ workshop, coachingWorkshopId }: WorkshopCheck
                     <CalendarClock className="h-3.5 w-3.5" />
                     3-Month Plan
                   </div>
-                  <div className="text-lg font-bold text-violet-400">$175<span className="text-sm font-normal">/mo</span></div>
-                  <div className="text-xs text-muted-foreground">$525 total</div>
+                  <div className="text-lg font-bold text-violet-400">$450<span className="text-sm font-normal">/mo</span></div>
+                  <div className="text-xs text-muted-foreground">$1,350 total</div>
                 </button>
                 <button
                   type="button"
@@ -251,8 +251,8 @@ export function WorkshopCheckout({ workshop, coachingWorkshopId }: WorkshopCheck
                   }`}
                 >
                   <div className="font-semibold text-sm">Pay in Full</div>
-                  <div className="text-lg font-bold text-violet-400">$499</div>
-                  <div className="text-xs text-green-400">Save $26</div>
+                  <div className="text-lg font-bold text-violet-400">$1,299</div>
+                  <div className="text-xs text-green-400">Save $51</div>
                 </button>
               </div>
             </div>
@@ -260,9 +260,9 @@ export function WorkshopCheckout({ workshop, coachingWorkshopId }: WorkshopCheck
             {paymentType === "installment" && (
               <div className="text-xs text-muted-foreground bg-muted/50 rounded-lg p-3 space-y-1">
                 <p className="font-medium text-foreground">Payment schedule:</p>
-                <p>1st payment of $175 — due today</p>
-                <p>2nd payment of $175 — due in 30 days</p>
-                <p>3rd payment of $175 — due in 60 days</p>
+                <p>1st payment of $450 — due today</p>
+                <p>2nd payment of $450 — due in 30 days</p>
+                <p>3rd payment of $450 — due in 60 days</p>
               </div>
             )}
           </>
@@ -463,8 +463,8 @@ export function WorkshopCheckout({ workshop, coachingWorkshopId }: WorkshopCheck
                 <CreditCard className="h-4 w-4 mr-2" />
                 {isCoaching
                   ? paymentType === "installment"
-                    ? "Enroll — $175 First Month"
-                    : "Enroll — Pay in Full $499"
+                    ? "Enroll — $450 First Month"
+                    : "Enroll — Pay in Full $1,299"
                   : paymentType === "installment"
                     ? "Pay $125 — First Installment"
                     : "Register Now"}

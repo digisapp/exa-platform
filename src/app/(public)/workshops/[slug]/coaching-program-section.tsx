@@ -18,17 +18,17 @@ export function CoachingProgramSection() {
           </div>
           <h2 className="text-xl font-bold">3-Month Runway Coaching Program</h2>
           <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
-            The complete package — your <strong className="text-foreground">in-person workshop seat included</strong>, plus 3 months of personal 1-on-1 coaching to get you stage-ready for Miami Swim Week 2026. Select the <strong className="text-foreground">3-Month Coaching</strong> tab in the checkout to enroll.
+            The complete package — your <strong className="text-foreground">in-person workshop seat included ($350 value)</strong>, plus 3 months of personal 1-on-1 coaching with weekly video calls to get you stage-ready for Miami Swim Week 2026. Select the <strong className="text-foreground">3-Month Coaching</strong> tab in the checkout to enroll.
           </p>
         </div>
 
         {/* What's included */}
         <div className="grid sm:grid-cols-2 gap-3">
           {[
-            { icon: <Video className="h-4 w-4" />, text: "Bi-weekly runway video submissions" },
-            { icon: <MessageSquare className="h-4 w-4" />, text: "Personalized 1-on-1 feedback each round" },
-            { icon: <CheckCircle className="h-4 w-4" />, text: "Walk, posture, turns & expression coaching" },
-            { icon: <Sparkles className="h-4 w-4" />, text: "Direct line to our coaching team each month" },
+            { icon: <Video className="h-4 w-4" />, text: "1 one-on-one video call per week (8 sessions)" },
+            { icon: <MessageSquare className="h-4 w-4" />, text: "Personalized 1-on-1 feedback each session" },
+            { icon: <CheckCircle className="h-4 w-4" />, text: "In-person workshop seat included ($350 value)" },
+            { icon: <Sparkles className="h-4 w-4" />, text: "Walk, posture, turns & expression coaching" },
           ].map((item, i) => (
             <div key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
               <span className="text-violet-400 mt-0.5 flex-shrink-0">{item.icon}</span>
@@ -55,7 +55,7 @@ export function CoachingProgramSection() {
         </div>
 
         <p className="text-xs text-muted-foreground">
-          $175/mo × 3 months ($525 total) or pay in full for $499 — select the <strong className="text-foreground">3-Month Coaching</strong> tab in the checkout card.
+          $450/mo × 3 months ($1,350 total) or pay in full for $1,299 — select the <strong className="text-foreground">3-Month Coaching</strong> tab in the checkout card.
         </p>
       </CardContent>
     </Card>
