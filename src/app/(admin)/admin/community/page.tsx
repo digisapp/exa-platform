@@ -209,8 +209,8 @@ export default function AdminCommunityPage() {
       { count: pendingBrands },
       { count: pendingModelApps },
     ] = await Promise.all([
-      (supabase.from("models") as any).select("*", { count: "exact", head: true }),
-      (supabase.from("models") as any).select("*", { count: "exact", head: true }).eq("is_approved", true),
+      (supabase.from("models") as any).select("*", { count: "exact", head: true }).not("user_id", "is", null),
+      (supabase.from("models") as any).select("*", { count: "exact", head: true }).eq("is_approved", true).not("user_id", "is", null),
       (supabase.from("fans") as any).select("*", { count: "exact", head: true }),
       (supabase.from("fans") as any).select("*", { count: "exact", head: true }).eq("is_suspended", false),
       (supabase.from("brands") as any).select("*", { count: "exact", head: true }).eq("is_verified", false),
@@ -235,6 +235,7 @@ export default function AdminCommunityPage() {
       const params = new URLSearchParams({
         page: "1",
         pageSize: "10",
+        claim: "claimed",
         sortField: "joined_at",
         sortDirection: "desc",
       });

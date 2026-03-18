@@ -135,7 +135,7 @@ export default function FansTab() {
 
       // Get coins spent
       const { data: transactions } = await (supabase.from("coin_transactions") as any)
-        .select("actor_id, amount").in("actor_id", fanIds).lt("amount", 0);
+        .select("actor_id, amount").in("actor_id", actorIds).lt("amount", 0);
 
       const spentMap = new Map<string, number>();
       transactions?.forEach((tx: any) => {
@@ -144,7 +144,7 @@ export default function FansTab() {
 
       // Get following count
       const { data: follows } = await (supabase.from("follows") as any)
-        .select("follower_id").in("follower_id", fanIds);
+        .select("follower_id").in("follower_id", actorIds);
 
       const followMap = new Map<string, number>();
       follows?.forEach((f: any) => {
@@ -172,8 +172,8 @@ export default function FansTab() {
       }
 
       data.forEach((fan: any) => {
-        fan.coins_spent = spentMap.get(fan.id) || 0;
-        fan.following_count = followMap.get(fan.id) || 0;
+        fan.coins_spent = fan.actor_id ? (spentMap.get(fan.actor_id) || 0) : 0;
+        fan.following_count = fan.actor_id ? (followMap.get(fan.actor_id) || 0) : 0;
         fan.report_count = fan.actor_id ? (reportMap.get(fan.actor_id) || 0) : 0;
         fan.has_pending_model_app = pendingModelAppSet.has(fan.user_id);
       });
