@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import Image from "next/image";
 import QRCode from "qrcode";
 import {
   Search,
@@ -69,7 +70,7 @@ export default function BeachPOS() {
   const [qrOpen, setQrOpen] = useState(false);
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [, setSessionId] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [paymentDone, setPaymentDone] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -458,8 +459,8 @@ export default function BeachPOS() {
                 className="text-left rounded-2xl overflow-hidden border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 transition-all hover:scale-[1.02] active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {product.images?.[0] ? (
-                  <div className="aspect-square overflow-hidden">
-                    <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
+                  <div className="aspect-square overflow-hidden relative">
+                    <Image src={product.images[0]} alt={product.name} fill sizes="200px" className="object-cover" />
                   </div>
                 ) : (
                   <div className="aspect-square bg-white/5 flex items-center justify-center">
@@ -509,7 +510,7 @@ export default function BeachPOS() {
               ) : cart.map(item => (
                 <div key={item.uid} className="flex items-center gap-3 bg-white/5 rounded-2xl p-3">
                   {item.image ? (
-                    <img src={item.image} alt="" className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
+                    <Image src={item.image} alt="" width={48} height={48} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
                   ) : (
                     <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
                       {item.isCustom ? <span className="text-xl">✨</span> : <Package className="h-6 w-6 text-white/30" />}
@@ -635,7 +636,6 @@ export default function BeachPOS() {
 
                 {qrDataUrl ? (
                   <div className="bg-white rounded-2xl p-3 mx-auto inline-block mb-5">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={qrDataUrl}
                       alt="Scan to pay"

@@ -94,7 +94,6 @@ export default function BrandContentPage() {
       setLoading(false);
     };
     loadAll();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleDeliveryClick = (deliveryId: string) => {

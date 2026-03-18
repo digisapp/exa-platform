@@ -5,7 +5,6 @@ import Link from "next/link";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -31,6 +30,7 @@ interface TipDialogProps {
 
 export function TipDialog({
   recipientId,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   recipientName,
   conversationId,
   coinBalance,

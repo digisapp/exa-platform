@@ -31,7 +31,6 @@ export async function POST(request: NextRequest) {
     const { quantity } = parsed.data;
     const totalCents = quantity * PRINT_PRICE_PER_CARD;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const supabase: any = createServiceRoleClient();
     const orderId = crypto.randomUUID();
     const storagePath = `comp-card-prints/${orderId}.pdf`;

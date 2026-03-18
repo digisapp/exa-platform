@@ -2,11 +2,16 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { escapeIlike } from "@/lib/utils";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { z } from "zod";
 
 // Service role client for privileged operations (server-side only)
 const adminClient = createServiceRoleClient();
 
 export async function POST(request: NextRequest) {
+  const rateLimitResponse = await checkEndpointRateLimit(request, "general");
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const supabase = await createClient();
 
@@ -20,15 +25,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { modelUsername } = body;
-
-    if (!modelUsername) {
+    const conversationSchema = z.object({
+      modelUsername: z.string().min(1, "Model username required"),
+    });
+    const parsed = conversationSchema.safeParse(await request.json());
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Model username required" },
+        { error: parsed.error.issues[0]?.message || "Invalid input" },
         { status: 400 }
       );
     }
+    const { modelUsername } = parsed.data;
 
     // Get current user's actor
     const { data: actor } = await supabase

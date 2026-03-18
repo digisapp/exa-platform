@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,7 +14,6 @@ import {
   Clock,
   CheckCircle2,
   XCircle,
-  Search,
 } from "lucide-react";
 import { ContractSendDialog } from "@/components/contracts/ContractSendDialog";
 import { ContractViewDialog } from "@/components/contracts/ContractViewDialog";
@@ -63,11 +62,25 @@ export default function ContractsPage() {
     fetchUserRole();
   }, []);
 
+  const fetchContracts = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/contracts?role=${userRole}`);
+      if (!res.ok) throw new Error("Failed to fetch");
+      const data = await res.json();
+      setContracts(data.contracts || []);
+    } catch {
+      toast.error("Failed to load contracts");
+    } finally {
+      setLoading(false);
+    }
+  }, [userRole]);
+
   useEffect(() => {
     if (userRole) {
       fetchContracts();
     }
-  }, [userRole]);
+  }, [userRole, fetchContracts]);
 
   const fetchUserRole = async () => {
     try {
@@ -79,20 +92,6 @@ export default function ContractsPage() {
       }
     } catch {
       // ignore
-    }
-  };
-
-  const fetchContracts = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/contracts?role=${userRole}`);
-      if (!res.ok) throw new Error("Failed to fetch");
-      const data = await res.json();
-      setContracts(data.contracts || []);
-    } catch {
-      toast.error("Failed to load contracts");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -192,7 +191,6 @@ export default function ContractsPage() {
               {filteredContracts.map((contract) => {
                 const statusBadge = STATUS_BADGES[contract.status];
                 const StatusIcon = statusBadge?.icon || Clock;
-                const counterparty = userRole === "brand" ? contract.model : contract.brand;
                 const counterpartyName = userRole === "brand"
                   ? [contract.model?.first_name, contract.model?.last_name].filter(Boolean).join(" ") || "Model"
                   : contract.brand?.company_name || "Brand";

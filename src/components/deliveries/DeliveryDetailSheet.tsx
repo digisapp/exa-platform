@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -69,12 +69,6 @@ interface DeliveryDetailSheetProps {
   onStatusChange?: () => void;
 }
 
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
 export function DeliveryDetailSheet({
   open,
   onOpenChange,
@@ -89,17 +83,7 @@ export function DeliveryDetailSheet({
   const [showRevisionForm, setShowRevisionForm] = useState(false);
   const [downloading, setDownloading] = useState(false);
 
-  useEffect(() => {
-    if (open && deliveryId) {
-      loadDelivery();
-    } else {
-      setDelivery(null);
-      setShowRevisionForm(false);
-      setRevisionNotes("");
-    }
-  }, [open, deliveryId]);
-
-  const loadDelivery = async () => {
+  const loadDelivery = useCallback(async () => {
     if (!deliveryId) return;
     setLoading(true);
     try {
@@ -113,7 +97,17 @@ export function DeliveryDetailSheet({
     } finally {
       setLoading(false);
     }
-  };
+  }, [deliveryId]);
+
+  useEffect(() => {
+    if (open && deliveryId) {
+      loadDelivery();
+    } else {
+      setDelivery(null);
+      setShowRevisionForm(false);
+      setRevisionNotes("");
+    }
+  }, [open, deliveryId, loadDelivery]);
 
   const handleApprove = async () => {
     if (!deliveryId) return;
@@ -133,7 +127,7 @@ export function DeliveryDetailSheet({
         const err = await res.json();
         toast.error(err.error || "Failed to approve");
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to approve delivery");
     } finally {
       setActionLoading(null);
@@ -167,7 +161,7 @@ export function DeliveryDetailSheet({
         const err = await res.json();
         toast.error(err.error || "Failed to request revision");
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to request revision");
     } finally {
       setActionLoading(null);
@@ -205,7 +199,7 @@ export function DeliveryDetailSheet({
       }
 
       toast.success(`Downloading ${downloads.length} file${downloads.length !== 1 ? "s" : ""}`);
-    } catch (error) {
+    } catch {
       toast.error("Failed to download files");
     } finally {
       setDownloading(false);
@@ -232,7 +226,7 @@ export function DeliveryDetailSheet({
         a.click();
         document.body.removeChild(a);
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to download file");
     }
   };

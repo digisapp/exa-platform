@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
   };
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Model search error:", error.message); return NextResponse.json({ error: "Search failed" }, { status: 500 });
   }
 
   const results = models || [];

@@ -58,7 +58,6 @@ export async function POST(request: NextRequest) {
 
     const { conversationId: providedConversationId, targetModelUsername, content, mediaUrl, mediaType, mediaPrice } = validationResult.data;
     let conversationId = providedConversationId || null;
-    let conversationCreated = false;
 
     // Get sender's actor info
     const { data: sender } = await supabase
@@ -178,7 +177,6 @@ export async function POST(request: NextRequest) {
         }
 
         conversationId = newConv.id;
-        conversationCreated = true;
       }
     }
 

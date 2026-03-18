@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { z } from "zod";
 
 // GET - Fetch current cart
 export async function GET(request: Request) {
@@ -125,14 +126,19 @@ export async function POST(request: Request) {
     if (rateLimitResponse) return rateLimitResponse;
 
     const sessionId = request.headers.get("x-session-id");
-    const { variantId, quantity = 1, affiliateCode } = await request.json();
-
-    if (!variantId) {
+    const cartAddSchema = z.object({
+      variantId: z.string().uuid("Variant ID is required"),
+      quantity: z.number().int().positive().default(1),
+      affiliateCode: z.string().optional(),
+    });
+    const parsed = cartAddSchema.safeParse(await request.json());
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Variant ID is required" },
+        { error: parsed.error.issues[0]?.message || "Invalid input" },
         { status: 400 }
       );
     }
+    const { variantId, quantity, affiliateCode } = parsed.data;
 
     // Verify variant exists and has stock
     const { data: variant, error: variantError } = await supabase
@@ -291,14 +297,18 @@ export async function PATCH(request: Request) {
     const { data: { user } } = await supabase.auth.getUser();
 
     const sessionId = request.headers.get("x-session-id");
-    const { itemId, quantity } = await request.json();
-
-    if (!itemId || quantity === undefined) {
+    const cartUpdateSchema = z.object({
+      itemId: z.string().uuid("Item ID is required"),
+      quantity: z.number().int().min(0, "Quantity must be 0 or more"),
+    });
+    const parsedPatch = cartUpdateSchema.safeParse(await request.json());
+    if (!parsedPatch.success) {
       return NextResponse.json(
-        { error: "Item ID and quantity are required" },
+        { error: parsedPatch.error.issues[0]?.message || "Invalid input" },
         { status: 400 }
       );
     }
+    const { itemId, quantity } = parsedPatch.data;
 
     // Verify cart ownership
     const { data: item } = await supabase

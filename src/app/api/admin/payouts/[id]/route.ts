@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { logAdminAction, AdminActions } from "@/lib/admin-audit";
 import { sendPayoutProcessedEmail } from "@/lib/email";
 import { z } from "zod";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 const adminClient = createServiceRoleClient();
 
@@ -16,6 +17,9 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const rateLimitResponse = await checkEndpointRateLimit(request, "financial");
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const { id } = await params;
     const supabase = await createClient();
@@ -91,7 +95,7 @@ export async function PATCH(
 
       if (completeError) {
         console.error("Error completing withdrawal:", completeError);
-        return NextResponse.json({ error: completeError.message }, { status: 500 });
+        return NextResponse.json({ error: "Failed to complete withdrawal" }, { status: 500 });
       }
 
       // Add admin notes if provided
@@ -141,7 +145,7 @@ export async function PATCH(
 
       if (cancelError) {
         console.error("Error cancelling withdrawal:", cancelError);
-        return NextResponse.json({ error: cancelError.message }, { status: 500 });
+        return NextResponse.json({ error: "Failed to cancel withdrawal" }, { status: 500 });
       }
 
       // Update with failure reason
@@ -168,7 +172,7 @@ export async function PATCH(
 
       if (error) {
         console.error("Error updating withdrawal:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: "Failed to update withdrawal" }, { status: 500 });
       }
     }
 

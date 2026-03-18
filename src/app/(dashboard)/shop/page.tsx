@@ -20,7 +20,6 @@ import {
   Search,
   Loader2,
   Star,
-  ArrowRight,
   Tag,
 } from "lucide-react";
 import { toast } from "sonner";

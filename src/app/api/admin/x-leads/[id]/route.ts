@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 // PATCH /api/admin/x-leads/[id]
 // Body: { status?, notes?, contacted_at? }
@@ -23,17 +24,21 @@ export async function PATCH(
   }
 
   const { id } = await params;
-  const body = await request.json().catch(() => ({}));
-
-  const allowed = ["status", "notes", "contacted_at"];
-  const update: Record<string, any> = {};
-  for (const key of allowed) {
-    if (key in body) update[key] = body[key];
+  const xLeadSchema = z.object({
+    status: z.string().optional(),
+    notes: z.string().optional(),
+    contacted_at: z.string().datetime().optional(),
+  }).refine(data => Object.values(data).some(v => v !== undefined), {
+    message: "No valid fields to update",
+  });
+  const parsed = xLeadSchema.safeParse(await request.json().catch(() => ({})));
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid input" }, { status: 400 });
   }
-
-  if (Object.keys(update).length === 0) {
-    return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
-  }
+  const update: Record<string, string> = {};
+  if (parsed.data.status) update.status = parsed.data.status;
+  if (parsed.data.notes) update.notes = parsed.data.notes;
+  if (parsed.data.contacted_at) update.contacted_at = parsed.data.contacted_at;
 
   const db = createServiceRoleClient() as any;
   const { data, error } = await db
@@ -44,7 +49,8 @@ export async function PATCH(
     .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Failed to update x-lead:", error.message);
+    return NextResponse.json({ error: "Failed to update lead" }, { status: 500 });
   }
 
   return NextResponse.json(data);

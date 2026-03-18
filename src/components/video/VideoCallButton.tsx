@@ -37,6 +37,7 @@ export function VideoCallButton({
   recipientIsModel = false,
   recipientActorId,
   recipientName,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   recipientAvatar,
   videoCallRate = 5,
   callType = "video",

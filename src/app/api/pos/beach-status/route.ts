@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
   } catch (error: any) {
     console.error("Beach status error:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to retrieve session" },
+      { error: "Failed to retrieve session" },
       { status: 500 }
     );
   }

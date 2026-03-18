@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -66,6 +66,7 @@ export function ProfileActionButtons({
   modelActorId,
   modelName,
   coinBalance = 0,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   messageRate = 0,
   videoCallRate = 0,
   voiceCallRate = 0,
@@ -114,6 +115,18 @@ export function ProfileActionButtons({
   const router = useRouter();
   const firstName = modelName?.split(" ")[0] || modelUsername;
 
+  // ── Cancel outgoing call ───────────────────────────────────────────────────
+  const cancelCall = useCallback(async (reason: "missed" | "declined" = "declined") => {
+    if (!callingState) return;
+    try {
+      await fetch(`/api/calls/join?sessionId=${callingState.sessionId}&reason=${reason}`, {
+        method: "DELETE",
+      });
+    } catch { /* best-effort */ }
+    setCallingState(null);
+    setRingSeconds(RING_TIMEOUT);
+  }, [callingState]);
+
   // ── Ringing countdown ──────────────────────────────────────────────────────
   useEffect(() => {
     if (!callingState) return;
@@ -123,7 +136,7 @@ export function ProfileActionButtons({
     }
     const t = setTimeout(() => setRingSeconds(s => s - 1), 1000);
     return () => clearTimeout(t);
-  }, [callingState, ringSeconds]);
+  }, [callingState, ringSeconds, cancelCall]);
 
   // ── Supabase realtime: watch session for model accept/decline ──────────────
   useEffect(() => {
@@ -176,18 +189,6 @@ export function ProfileActionButtons({
     const t = setTimeout(() => setCallOutcome(null), 3000);
     return () => clearTimeout(t);
   }, [callOutcome]);
-
-  // ── Cancel outgoing call ───────────────────────────────────────────────────
-  const cancelCall = async (reason: "missed" | "declined" = "declined") => {
-    if (!callingState) return;
-    try {
-      await fetch(`/api/calls/join?sessionId=${callingState.sessionId}&reason=${reason}`, {
-        method: "DELETE",
-      });
-    } catch { /* best-effort */ }
-    setCallingState(null);
-    setRingSeconds(RING_TIMEOUT);
-  };
 
   // ── Start call ─────────────────────────────────────────────────────────────
   const startCall = async (callType: "video" | "voice") => {

@@ -1,6 +1,8 @@
 import { stripe } from "@/lib/stripe";
 import { NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { z } from "zod";
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.examodels.com";
 
@@ -99,24 +101,25 @@ const PACKAGES = {
 
 type PackageKey = keyof typeof PACKAGES;
 
+const mswCheckoutSchema = z.object({
+  package: z.enum(Object.keys(PACKAGES) as [string, ...string[]]),
+  paymentType: z.enum(["full", "installment"]),
+  addPhotoVideo: z.boolean().optional(),
+  addExtraModels: z.boolean().optional(),
+});
+
 export async function POST(request: NextRequest) {
+  const rateLimitResponse = await checkEndpointRateLimit(request, "financial");
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const body = await request.json();
-    const { package: pkg, paymentType, addPhotoVideo, addExtraModels } = body as {
-      package: PackageKey;
-      paymentType: "full" | "installment";
-      addPhotoVideo?: boolean;
-      addExtraModels?: boolean;
-    };
-
-    const packageConfig = PACKAGES[pkg];
-    if (!packageConfig) {
-      return NextResponse.json({ error: "Invalid package" }, { status: 400 });
+    const parsed = mswCheckoutSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid input" }, { status: 400 });
     }
-
-    if (paymentType !== "full" && paymentType !== "installment") {
-      return NextResponse.json({ error: "Invalid payment type" }, { status: 400 });
-    }
+    const { package: pkg, paymentType, addPhotoVideo, addExtraModels } = parsed.data;
+    const packageConfig = PACKAGES[pkg as PackageKey];
 
     const successUrl = `${BASE_URL}/designers/miami-swim-week/success?session_id={CHECKOUT_SESSION_ID}&pkg=${pkg}&type=${paymentType}&media=${addPhotoVideo ? "1" : "0"}&models=${addExtraModels ? "20" : "15"}`;
     const cancelUrl = `${BASE_URL}/designers/miami-swim-week`;

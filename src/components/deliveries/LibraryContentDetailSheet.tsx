@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -44,15 +44,7 @@ export function LibraryContentDetailSheet({
   const [item, setItem] = useState<LibraryItemDetail | null>(null);
   const [downloading, setDownloading] = useState(false);
 
-  useEffect(() => {
-    if (open && libraryItemId) {
-      loadItem();
-    } else {
-      setItem(null);
-    }
-  }, [open, libraryItemId]);
-
-  const loadItem = async () => {
+  const loadItem = useCallback(async () => {
     if (!libraryItemId) return;
     setLoading(true);
     try {
@@ -66,7 +58,15 @@ export function LibraryContentDetailSheet({
     } finally {
       setLoading(false);
     }
-  };
+  }, [libraryItemId]);
+
+  useEffect(() => {
+    if (open && libraryItemId) {
+      loadItem();
+    } else {
+      setItem(null);
+    }
+  }, [open, libraryItemId, loadItem]);
 
   const handleDownloadAll = async () => {
     if (!libraryItemId) return;

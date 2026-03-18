@@ -1,9 +1,9 @@
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { createClient } from "@/lib/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 // POST /api/admin/restart-auctions - Restart all ended auctions that received no bids
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     // Auth check - admin only
     const userSupabase = await createClient();

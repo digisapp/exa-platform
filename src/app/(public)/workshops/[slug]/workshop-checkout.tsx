@@ -49,7 +49,6 @@ export function WorkshopCheckout({ workshop, coachingWorkshopId }: WorkshopCheck
 
   // Coaching pricing — $450/mo × 3 months
   const coachingInstallmentAmount = 45000; // $450/mo
-  const coachingInstallmentTotal = 135000; // $1,350 total
   const coachingFullPrice = 119900;        // $1,199 pay in full
 
   const handleProductChange = (p: "workshop" | "coaching") => {

@@ -9,7 +9,6 @@ import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 import { ModelsGrid } from "@/components/models/models-grid";
 import { EventCountdown } from "./event-countdown";
 import { ShareButton } from "@/components/ui/share-button";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {

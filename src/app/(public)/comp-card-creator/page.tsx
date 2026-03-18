@@ -687,7 +687,6 @@ export default function FreeCompCardPage() {
                           : "border-transparent hover:border-white/20"
                       )}
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={photo.dataUrl}
                         alt="Uploaded"
@@ -865,7 +864,6 @@ export default function FreeCompCardPage() {
                   >
                     {previewUrls.length > 0 ? (
                       <>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={previewUrls[0].url}
                           alt="Hero"
@@ -961,7 +959,6 @@ export default function FreeCompCardPage() {
                         <div className="grid grid-cols-2 gap-1 flex-1 min-h-0">
                           {previewUrls.slice(1, 5).map((p) => (
                             <div key={p.id} className="relative aspect-[3/4] rounded overflow-hidden bg-gray-100">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img src={p.url} alt="Back" className="absolute inset-0 w-full h-full object-cover" />
                             </div>
                           ))}

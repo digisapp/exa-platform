@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import DOMPurify from "isomorphic-dompurify";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -76,17 +76,7 @@ export function ContractViewDialog({
   const [signing, setSigning] = useState(false);
   const [voiding, setVoiding] = useState(false);
 
-  useEffect(() => {
-    if (open && contractId) {
-      fetchContract();
-      setAgreed(false);
-    } else {
-      setContract(null);
-      setAgreed(false);
-    }
-  }, [open, contractId]);
-
-  const fetchContract = async () => {
+  const fetchContract = useCallback(async () => {
     if (!contractId) return;
     setLoading(true);
     try {
@@ -100,7 +90,17 @@ export function ContractViewDialog({
     } finally {
       setLoading(false);
     }
-  };
+  }, [contractId, onOpenChange]);
+
+  useEffect(() => {
+    if (open && contractId) {
+      fetchContract();
+      setAgreed(false);
+    } else {
+      setContract(null);
+      setAgreed(false);
+    }
+  }, [open, contractId, fetchContract]);
 
   const handleSign = async () => {
     if (!contractId || !agreed) return;

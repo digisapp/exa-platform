@@ -25,7 +25,6 @@ import {
   Phone,
   Search,
   Loader2,
-  User,
   Instagram,
   Mail,
   MessageSquare,

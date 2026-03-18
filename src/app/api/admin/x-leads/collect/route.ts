@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 const SWIMWEAR_QUERIES = [
   "swimwear collection 2026",
@@ -106,8 +107,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await request.json().catch(() => ({}));
-  const category: string = body.category ?? "all";
+  const collectSchema = z.object({ category: z.enum(["all", "swimwear_brand", "hotel_resort"]).default("all") });
+  const parsed = collectSchema.safeParse(await request.json().catch(() => ({})));
+  const category = parsed.success ? parsed.data.category : "all";
 
   const db = createServiceRoleClient() as any;
 

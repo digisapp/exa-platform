@@ -6,8 +6,6 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle2, Coins, MessageCircle, Loader2, ArrowRight } from "lucide-react";
-import confetti from "canvas-confetti";
-
 export default function CoinSuccessPage() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
@@ -17,6 +15,11 @@ export default function CoinSuccessPage() {
     // Trigger confetti on mount
     const duration = 2000;
     const end = Date.now() + duration;
+
+    let cancelled = false;
+    import("canvas-confetti").then(mod => {
+      if (cancelled) return;
+      const confetti = mod.default;
 
     const frame = () => {
       confetti({
@@ -40,13 +43,14 @@ export default function CoinSuccessPage() {
     };
 
     frame();
+    }); // end import("canvas-confetti")
 
     // Simulate verification delay (in production, you'd verify the session)
     const timer = setTimeout(() => {
       setLoading(false);
     }, 1500);
 
-    return () => clearTimeout(timer);
+    return () => { cancelled = true; clearTimeout(timer); };
   }, [sessionId]);
 
   return (

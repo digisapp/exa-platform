@@ -65,8 +65,7 @@ export default async function ModelsPage({
   }
 
   // Helper to apply all active filters to a query
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function applyFilters<T extends ReturnType<typeof supabase.from>>(q: any): any {
+  function applyFilters(q: any): any {
     if (params.q) {
       q = q.or(`username.ilike.%${escapeIlike(params.q)}%,first_name.ilike.%${escapeIlike(params.q)}%,last_name.ilike.%${escapeIlike(params.q)}%`);
     }

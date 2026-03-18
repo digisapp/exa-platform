@@ -28,7 +28,7 @@ const contactSchema = z.object({
   last_contacted_at: z.string().datetime().optional().nullable(),
 });
 
-async function getAdminClient(request: NextRequest) {
+async function getAdminClient() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Unauthorized", status: 401 };
@@ -46,7 +46,7 @@ async function getAdminClient(request: NextRequest) {
 
 // GET - list all media contacts with optional search/filter
 export async function GET(request: NextRequest) {
-  const auth = await getAdminClient(request);
+  const auth = await getAdminClient();
   if ("error" in auth) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
   const status = searchParams.get("status") || "all";
   const category = searchParams.get("category") || "all";
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   let query = (adminClient as any)
     .from("media_contacts")
     .select("*")
@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
 
 // POST - create a new media contact
 export async function POST(request: NextRequest) {
-  const auth = await getAdminClient(request);
+  const auth = await getAdminClient();
   if ("error" in auth) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const { data, error } = await (adminClient as any)
     .from("media_contacts")
     .insert({
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
 
 // PATCH - update a media contact
 export async function PATCH(request: NextRequest) {
-  const auth = await getAdminClient(request);
+  const auth = await getAdminClient();
   if ("error" in auth) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
@@ -139,7 +139,7 @@ export async function PATCH(request: NextRequest) {
     );
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const { data, error } = await (adminClient as any)
     .from("media_contacts")
     .update(parsed.data)
@@ -157,7 +157,7 @@ export async function PATCH(request: NextRequest) {
 
 // DELETE - delete a media contact
 export async function DELETE(request: NextRequest) {
-  const auth = await getAdminClient(request);
+  const auth = await getAdminClient();
   if ("error" in auth) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
@@ -167,7 +167,7 @@ export async function DELETE(request: NextRequest) {
   const id = searchParams.get("id");
   if (!id) return NextResponse.json({ error: "ID required" }, { status: 400 });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const { error } = await (adminClient as any)
     .from("media_contacts")
     .delete()

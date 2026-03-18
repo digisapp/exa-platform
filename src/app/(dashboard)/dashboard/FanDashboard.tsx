@@ -11,7 +11,7 @@ import {
   Gavel,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { formatCoins, coinsToFanUsd, formatUsd } from "@/lib/coin-config";
+import { formatCoins } from "@/lib/coin-config";
 import { ModelCard } from "@/components/models/model-card";
 
 function seededShuffle<T>(array: T[], seed: number): T[] {

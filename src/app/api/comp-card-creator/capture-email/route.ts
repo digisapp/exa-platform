@@ -37,7 +37,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const supabase: any = createServiceRoleClient();
     const email = parsed.data.email.toLowerCase().trim();
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;

@@ -48,7 +48,6 @@ export function AcademyApplicationForm() {
 
   const fullPrice = 199500; // $1,995
   const installmentAmount = 49900; // $499 per installment
-  const installmentTotal = 199600; // $499 x 4
 
   const handleApply = async (e: React.FormEvent) => {
     e.preventDefault();

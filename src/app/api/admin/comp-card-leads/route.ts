@@ -19,7 +19,6 @@ export async function GET() {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const service: any = createServiceRoleClient();
     const { data: leads, error } = await service
       .from("comp_card_leads")

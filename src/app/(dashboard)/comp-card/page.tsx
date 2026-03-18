@@ -674,6 +674,7 @@ export default function CompCardPage() {
       ? [model.first_name, model.last_name].filter(Boolean).join(" ")
       : "Model";
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const location =
     model && (model.city || model.state)
       ? [model.city, model.state].filter(Boolean).join(", ")
@@ -811,7 +812,6 @@ export default function CompCardPage() {
                             : "border-transparent hover:border-white/20"
                         )}
                       >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={photo.dataUrl}
                           alt="Uploaded"
@@ -991,7 +991,6 @@ export default function CompCardPage() {
                     {/* Hero photo full-bleed */}
                     {previewUrls.length > 0 ? (
                       <>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={previewUrls[0].url}
                           alt="Hero"
@@ -1102,7 +1101,6 @@ export default function CompCardPage() {
                               key={item.id}
                               className="relative aspect-[3/4] rounded overflow-hidden bg-gray-100"
                             >
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
                                 src={item.url}
                                 alt="Photo"
@@ -1141,12 +1139,10 @@ export default function CompCardPage() {
                       </div>
                       {/* Center: EXA logo */}
                       <div className="shrink-0 px-1">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src="/exa-models-logo-black.png" alt="EXA Models" className="h-4 w-auto" />
+                        <Image src="/exa-models-logo-black.png" alt="EXA Models" width={80} height={16} className="h-4 w-auto" />
                       </div>
                       {/* Right: QR */}
                       {qrCodePreview ? (
-                        // eslint-disable-next-line @next/next/no-img-element
                         <img src={qrCodePreview} alt="QR" className="w-12 h-12 rounded shrink-0" />
                       ) : (
                         <div className="w-12 h-12 bg-gray-100 border border-gray-200 rounded flex items-center justify-center shrink-0">

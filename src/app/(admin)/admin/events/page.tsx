@@ -149,13 +149,11 @@ export default function AdminEventsPage() {
   }, [supabase]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchEvents();
   }, [fetchEvents]);
 
   useEffect(() => {
     if (selectedEvent) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchTiers(selectedEvent.id);
       fetchStats(selectedEvent.id);
     }

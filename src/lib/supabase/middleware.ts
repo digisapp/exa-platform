@@ -149,15 +149,23 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(redirectUrl)
   }
 
-  // Check admin routes require admin actor type
-  if (user && request.nextUrl.pathname.startsWith('/admin')) {
+  // Fetch actor once for both admin and model approval checks
+  let cachedActor: { type: string; user_id?: string } | null = null
+  const needsActor = (user && request.nextUrl.pathname.startsWith('/admin')) ||
+    (user && MODEL_APPROVED_PATHS.some(path => request.nextUrl.pathname.startsWith(path)))
+
+  if (user && needsActor) {
     const { data: actor } = await supabase
       .from('actors')
       .select('type, user_id')
       .eq('user_id', user.id)
       .single()
+    cachedActor = actor
+  }
 
-    if (actor?.type !== 'admin' || actor?.user_id !== user.id) {
+  // Check admin routes require admin actor type
+  if (user && request.nextUrl.pathname.startsWith('/admin')) {
+    if (cachedActor?.type !== 'admin' || cachedActor?.user_id !== user.id) {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
   }
@@ -173,14 +181,8 @@ export async function updateSession(request: NextRequest) {
       return response
     }
 
-    const { data: actor } = await supabase
-      .from('actors')
-      .select('type')
-      .eq('user_id', user.id)
-      .single()
-
     // Only check for models (fans and brands have different flows)
-    if (actor?.type === 'model') {
+    if (cachedActor?.type === 'model') {
       const { data: model } = await supabase
         .from('models')
         .select('is_approved')

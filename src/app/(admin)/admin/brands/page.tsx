@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -239,7 +240,7 @@ function AccountsTab() {
                       <TableCell>
                         <div className="flex items-center gap-3">
                           {brand.logo_url ? (
-                            <img src={brand.logo_url} alt={brand.company_name} className="h-8 w-8 rounded object-cover border border-border" />
+                            <Image src={brand.logo_url} alt={brand.company_name} width={32} height={32} className="h-8 w-8 rounded object-cover border border-border" />
                           ) : (
                             <div className="h-8 w-8 rounded bg-violet-500/20 flex items-center justify-center flex-shrink-0">
                               <Building2 className="h-4 w-4 text-violet-400" />
@@ -454,7 +455,7 @@ function OutreachTab({ contactType = "outreach" }: { contactType?: "outreach" | 
     } finally {
       setLoading(false);
     }
-  }, [page, debouncedSearch, statusFilter, categoryFilter]);
+  }, [page, debouncedSearch, statusFilter, categoryFilter, contactType]);
 
   useEffect(() => { setPage(1); }, [debouncedSearch, statusFilter, categoryFilter]);
   useEffect(() => { fetchContacts(); }, [fetchContacts]);

@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { RatesFilters } from "@/components/rates/RatesFilters";
 
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   title: "Model Rates & Booking | EXA Models",
   description: "Browse model rates and book talent for photoshoots, events, promotions, and more.",

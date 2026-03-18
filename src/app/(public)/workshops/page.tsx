@@ -4,13 +4,11 @@ import Image from "next/image";
 import { Navbar } from "@/components/layout/navbar";
 import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   MapPin,
   Calendar,
-  Clock,
-  Users,
   ArrowRight,
   Sparkles,
 } from "lucide-react";

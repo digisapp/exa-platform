@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { enrichBidsWithBidderInfo } from "@/lib/auction-utils";
 import type { AuctionWithDetails } from "@/types/auctions";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 const updateAuctionSchema = z.object({
   title: z.string().min(1).max(200).optional(),
@@ -127,6 +128,9 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const rateLimitResponse = await checkEndpointRateLimit(request, "financial");
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const { id } = await params;
     const supabase: any = await createClient();

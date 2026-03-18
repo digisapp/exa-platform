@@ -2,13 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { sendTravelPartnershipEmail } from "@/lib/email";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
-
-interface TravelContact {
-  id: string;
-  email: string;
-  brand_name: string;
-  contact_name: string | null;
-}
+import { z } from "zod";
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,20 +30,21 @@ export async function POST(request: NextRequest) {
     const rateLimitResponse = await checkEndpointRateLimit(request, "general", user.id);
     if (rateLimitResponse) return rateLimitResponse;
 
-    const body = await request.json();
-    const { contacts, subject, body: emailBody } = body as {
-      contacts: TravelContact[];
-      subject: string;
-      body: string;
-    };
-
-    if (!contacts || contacts.length === 0) {
-      return NextResponse.json({ error: "No contacts provided" }, { status: 400 });
+    const travelOutreachSchema = z.object({
+      contacts: z.array(z.object({
+        id: z.string(),
+        email: z.string().email(),
+        brand_name: z.string(),
+        contact_name: z.string().nullable(),
+      })).min(1, "No contacts provided"),
+      subject: z.string().min(1, "Subject is required"),
+      body: z.string().min(1, "Body is required"),
+    });
+    const parsed = travelOutreachSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid input" }, { status: 400 });
     }
-
-    if (!subject || !emailBody) {
-      return NextResponse.json({ error: "Subject and body are required" }, { status: 400 });
-    }
+    const { contacts, subject, body: emailBody } = parsed.data;
 
     let sent = 0;
     let failed = 0;

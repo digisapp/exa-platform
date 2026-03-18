@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error("Signed URL error:", error);
-      return NextResponse.json({ error: `Failed to create upload URL: ${error.message}` }, { status: 500 });
+      return NextResponse.json({ error: "Failed to create upload URL" }, { status: 500 });
     }
 
     // Get the public URL for after upload

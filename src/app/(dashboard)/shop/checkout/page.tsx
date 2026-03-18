@@ -99,7 +99,7 @@ export default function CheckoutPage() {
   }, [fetchCart]);
 
   const clearFieldError = (field: string) => {
-    setFieldErrors((prev) => { const { [field]: _, ...rest } = prev; return rest; });
+    setFieldErrors((prev) => { const { [field]: _unused, ...rest } = prev; void _unused; return rest; });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

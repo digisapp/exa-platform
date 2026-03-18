@@ -94,7 +94,7 @@ export async function POST(
     if (error.code === "23505") {
       return NextResponse.json({ error: "Model is already in this campaign" }, { status: 400 });
     }
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Campaign models error:", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   return NextResponse.json({ item });
@@ -159,7 +159,7 @@ export async function DELETE(
     .eq("model_id", modelId);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Campaign models error:", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   return NextResponse.json({ success: true });

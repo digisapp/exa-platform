@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { stripe } from "@/lib/stripe";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { z } from "zod";
 
 const adminClient = createServiceRoleClient();
 
@@ -17,21 +18,19 @@ export async function POST(request: NextRequest) {
     const rateLimitResponse = await checkEndpointRateLimit(request, "financial");
     if (rateLimitResponse) return rateLimitResponse;
 
-    const { email, name, phone, cohort, paymentType } = await request.json();
-
-    // Validate
-    if (!email?.trim() || !email.includes("@")) {
-      return NextResponse.json({ error: "Valid email is required" }, { status: 400 });
+    const body = await request.json();
+    const academySchema = z.object({
+      email: z.string().email("Valid email is required"),
+      name: z.string().min(1, "Name is required"),
+      phone: z.string().optional(),
+      cohort: z.enum(["miami-swim-week", "nyfw", "art-basel"], { message: "Valid cohort is required" }),
+      paymentType: z.enum(["full", "installment"], { message: "Valid payment type is required" }),
+    });
+    const parsed = academySchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid input" }, { status: 400 });
     }
-    if (!name?.trim()) {
-      return NextResponse.json({ error: "Name is required" }, { status: 400 });
-    }
-    if (!cohort || !["miami-swim-week", "nyfw", "art-basel"].includes(cohort)) {
-      return NextResponse.json({ error: "Valid cohort is required" }, { status: 400 });
-    }
-    if (!paymentType || !["full", "installment"].includes(paymentType)) {
-      return NextResponse.json({ error: "Valid payment type is required" }, { status: 400 });
-    }
+    const { email, name, phone, cohort, paymentType } = parsed.data;
 
     // Find the application
     const currentYear = new Date().getFullYear();

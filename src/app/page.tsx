@@ -59,7 +59,7 @@ export default async function HomePage() {
 
   // Fetch top 50 models with 4-5 star admin rating (signed-in models with self-uploaded photos)
   // Requires: user_id (signed in) AND avatars bucket (self-uploaded, not Instagram imports)
-  const { data: topModelsData, error: modelsError } = await (supabase
+  const { data: topModelsData } = await (supabase
     .from("models") as any)
     .select(`
       id, username, first_name, profile_photo_url, state, profile_views, admin_rating,
@@ -78,7 +78,7 @@ export default async function HomePage() {
   const topModels = shuffleArray(topModelsData || []) as any[];
 
   // Fetch upcoming events/gigs
-  const { data: upcomingEvents, error: eventsError } = await (supabase
+  const { data: upcomingEvents } = await (supabase
     .from("gigs") as any)
     .select("id, slug, title, type, location_city, location_state, start_at, end_at, cover_image_url, spots, spots_filled")
     .eq("status", "open")

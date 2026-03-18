@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { z } from "zod";
 
 // Bot/crawler patterns to filter out
 const BOT_PATTERNS = /bot|crawler|spider|googlebot|bingbot|slurp|duckduckbot|baiduspider|yandexbot|facebookexternalhit|twitterbot|linkedinbot|embedly|quora|pinterest|redditbot|applebot|semrushbot|ahrefsbot|mj12bot|dotbot|petalbot|bytespider|gptbot|claudebot|anthropic|openai|ccbot|scrapy|wget|curl|python-requests|go-http-client|java|libwww|lwp|httpclient/i;
@@ -54,7 +55,22 @@ function getPageType(path: string): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const trackSchema = z.object({
+      path: z.string().min(1),
+      visitorId: z.string().min(1),
+      sessionId: z.string().optional(),
+      referrer: z.string().optional(),
+      screenWidth: z.number().optional(),
+      modelId: z.string().optional(),
+      modelUsername: z.string().optional(),
+      utmSource: z.string().optional(),
+      utmMedium: z.string().optional(),
+      utmCampaign: z.string().optional(),
+    });
+    const parsed = trackSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
     const {
       path,
       visitorId,
@@ -66,11 +82,7 @@ export async function POST(request: NextRequest) {
       utmSource,
       utmMedium,
       utmCampaign,
-    } = body;
-
-    if (!path || !visitorId) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
-    }
+    } = parsed.data;
 
     const supabase = await createClient();
 

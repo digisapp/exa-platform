@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import type { Metadata } from "next";
 
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   title: "For Models | EXA",
   description: "Turn your influence into income. EXA is where your content, your time, and your personality actually pay you.",

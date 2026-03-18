@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { ModelCard } from "./model-card";
 import { AuthRequiredDialog } from "@/components/auth/AuthRequiredDialog";
-import { cn } from "@/lib/utils";
 
 interface ModelsGridProps {
   models: any[];

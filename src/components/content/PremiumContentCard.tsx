@@ -105,8 +105,8 @@ export function PremiumContentCard({
         role="button"
         tabIndex={0}
         aria-label={isUnlocked ? (content.title || "View content") : `Unlock content for ${content.coin_price} coins`}
-        onClick={() => isUnlocked ? setShowFull(true) : setShowPreview(true)}
-        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); isUnlocked ? setShowFull(true) : setShowPreview(true); } }}
+        onClick={() => { if (isUnlocked) { setShowFull(true); } else { setShowPreview(true); } }}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (isUnlocked) { setShowFull(true); } else { setShowPreview(true); } } }}
       >
         {/* Preview or Full Image/Video */}
         {((isUnlocked && mediaUrl) || content.preview_url) && !imageError ? (

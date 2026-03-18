@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Coins, Sparkles, Gift, UserPlus } from "lucide-react";
-import confetti from "canvas-confetti";
+// canvas-confetti loaded dynamically to reduce bundle size
 import Link from "next/link";
 
 // Spin wheel segments with coin rewards
@@ -80,6 +80,7 @@ export function DailySpin({ isLoggedIn, onSpinComplete, hasSpunToday }: DailySpi
 
       // Trigger confetti for big wins
       if (wonCoins >= 5) {
+        const confetti = (await import("canvas-confetti")).default;
         confetti({
           particleCount: wonCoins >= 10 ? 150 : 80,
           spread: 70,

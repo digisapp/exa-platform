@@ -26,7 +26,6 @@ export default async function Image() {
             "linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #0a0a0a 100%)",
         }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={logoSrc} width={500} height={73} alt="" />
         <p
           style={{

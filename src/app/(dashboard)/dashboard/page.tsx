@@ -32,7 +32,6 @@ import {
   Eye,
   Heart,
   TrendingUp,
-  Wallet,
 } from "lucide-react";
 import { formatCoins, coinsToUsd, formatUsd } from "@/lib/coin-config";
 import { FanDashboard } from "./FanDashboard";

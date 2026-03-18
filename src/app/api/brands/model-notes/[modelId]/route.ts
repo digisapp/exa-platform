@@ -42,7 +42,7 @@ export async function GET(
     .single();
 
   if (error && error.code !== "PGRST116") { // PGRST116 = no rows returned
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Brand model notes error:", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   return NextResponse.json({
@@ -109,7 +109,7 @@ export async function POST(
     .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Brand model notes error:", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   return NextResponse.json({
@@ -153,7 +153,7 @@ export async function DELETE(
     .eq("model_id", modelId);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Brand model notes error:", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   return NextResponse.json({ success: true });

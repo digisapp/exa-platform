@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,6 @@ import {
   Loader2,
   Download,
   Share2,
-  Trash2,
   Pencil,
   Building2,
   User,
@@ -62,12 +61,6 @@ interface ContentLibraryDetailSheetProps {
   onUpdated?: () => void;
 }
 
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
 export function ContentLibraryDetailSheet({
   open,
   onOpenChange,
@@ -85,16 +78,7 @@ export function ContentLibraryDetailSheet({
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [revokingId, setRevokingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (open && itemId) {
-      loadItem();
-    } else {
-      setItem(null);
-      setEditing(false);
-    }
-  }, [open, itemId]);
-
-  const loadItem = async () => {
+  const loadItem = useCallback(async () => {
     if (!itemId) return;
     setLoading(true);
     try {
@@ -108,7 +92,16 @@ export function ContentLibraryDetailSheet({
     } finally {
       setLoading(false);
     }
-  };
+  }, [itemId]);
+
+  useEffect(() => {
+    if (open && itemId) {
+      loadItem();
+    } else {
+      setItem(null);
+      setEditing(false);
+    }
+  }, [open, itemId, loadItem]);
 
   const handleSaveEdit = async () => {
     if (!itemId || !editTitle.trim()) return;

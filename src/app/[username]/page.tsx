@@ -12,8 +12,6 @@ import {
   Twitch,
   ExternalLink,
   Mail,
-  Zap,
-  ArrowRight,
 } from "lucide-react";
 import { TikTokIcon } from "@/components/ui/tiktok-icon";
 import { SnapchatIcon } from "@/components/ui/snapchat-icon";

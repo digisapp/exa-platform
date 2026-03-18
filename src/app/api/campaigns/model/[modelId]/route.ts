@@ -46,7 +46,7 @@ export async function GET(
     .order("name", { ascending: true });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Campaign model error:", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   // Format campaigns with inCampaign boolean
@@ -121,7 +121,7 @@ export async function POST(
       }, { onConflict: "campaign_id,model_id" });
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error("Campaign model error:", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
   } else {
     // Remove model from campaign
@@ -132,7 +132,7 @@ export async function POST(
       .eq("model_id", modelId);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error("Campaign model error:", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
   }
 

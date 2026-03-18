@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendEXABidsAnnouncementEmail } from "@/lib/email";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { z } from "zod";
 
 const adminClient = createServiceRoleClient();
 
@@ -31,22 +32,15 @@ export async function POST(request: NextRequest) {
     if (rateLimitResponse) return rateLimitResponse;
 
     // Get optional parameters from body
-    let dryRun = false;
-    let limit = 1000;
-    let testEmail: string | null = null;
-    try {
-      const body = await request.json();
-      dryRun = body.dryRun === true;
-      if (body.limit && typeof body.limit === "number") {
-        limit = Math.min(body.limit, 1000);
-      }
-      // Allow sending to a single test email address
-      if (body.testEmail && typeof body.testEmail === "string") {
-        testEmail = body.testEmail;
-      }
-    } catch {
-      // No body or invalid JSON, use defaults
-    }
+    const announcementSchema = z.object({
+      dryRun: z.boolean().default(false),
+      limit: z.number().int().positive().max(1000).default(1000),
+      testEmail: z.string().email().nullable().optional(),
+    });
+    const parsed = announcementSchema.safeParse(await request.json().catch(() => ({})));
+    const { dryRun, limit, testEmail } = parsed.success
+      ? { ...parsed.data, testEmail: parsed.data.testEmail ?? null }
+      : { dryRun: false, limit: 1000, testEmail: null };
 
     // If testEmail specified, send only to that address
     if (testEmail) {

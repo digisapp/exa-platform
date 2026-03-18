@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,7 +46,7 @@ export default function AdminContentLibraryPage() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const loadItems = async () => {
+  const loadItems = useCallback(async () => {
     try {
       const params = new URLSearchParams();
       if (searchQuery) params.set("search", searchQuery);
@@ -61,18 +61,18 @@ export default function AdminContentLibraryPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchQuery]);
 
   useEffect(() => {
     loadItems();
-  }, []);
+  }, [loadItems]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       loadItems();
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchQuery]);
+  }, [searchQuery, loadItems]);
 
   const handleCardClick = (itemId: string) => {
     setSelectedItemId(itemId);

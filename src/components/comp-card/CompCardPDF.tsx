@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/alt-text */
 import {
   Document,
   Page,
@@ -7,7 +8,6 @@ import {
   StyleSheet,
   Font,
   Svg,
-  Path,
   Circle,
   Rect,
 } from "@react-pdf/renderer";

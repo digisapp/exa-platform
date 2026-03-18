@@ -2,13 +2,13 @@ export const revalidate = 60;
 
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
+import Image from "next/image";
 import { Navbar } from "@/components/layout/navbar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   MapPin,
   Calendar,
-  Users,
   Sparkles,
   Check,
   ArrowRight,
@@ -448,11 +448,12 @@ export default async function MswBrandPage() {
                   className="group block"
                 >
                   <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-muted">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                    <Image
                       src={model.profile_photo_url}
                       alt={model.first_name || model.username}
-                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      fill
+                      sizes="(max-width: 768px) 50vw, 20vw"
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                     <div className="absolute bottom-0 left-0 right-0 p-3">

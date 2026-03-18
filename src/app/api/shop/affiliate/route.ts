@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { z } from "zod";
 
 // GET - Get model's affiliate dashboard data
 export async function GET(request: NextRequest) {
@@ -187,7 +188,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { code, discountType, discountValue } = await request.json();
+    const affiliateSchema = z.object({
+      code: z.string().optional(),
+      discountType: z.enum(["percent", "fixed"]).nullable().optional(),
+      discountValue: z.number().positive().nullable().optional(),
+    });
+    const parsed = affiliateSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues[0]?.message || "Invalid input" },
+        { status: 400 }
+      );
+    }
+    const { code, discountType, discountValue } = parsed.data;
 
     // Validate code format
     const cleanCode = (code || model.username || "").toUpperCase().replace(/[^A-Z0-9]/g, "");

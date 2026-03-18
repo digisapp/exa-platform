@@ -245,7 +245,6 @@ export default async function AnalyticsPage() {
             </h2>
             {/* QR code image */}
             <div className="flex justify-center mb-3">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={qrDataUrl}
                 alt="Profile QR Code"

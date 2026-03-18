@@ -19,47 +19,28 @@ import {
   ArrowLeft,
   Calendar,
 } from "lucide-react";
-import confetti from "canvas-confetti";
-
 export default function TicketSuccessPage() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Trigger confetti on mount
-    const duration = 2000;
-    const end = Date.now() + duration;
+    let cancelled = false;
+    import("canvas-confetti").then(mod => {
+      if (cancelled) return;
+      const confetti = mod.default;
+      const duration = 2000;
+      const end = Date.now() + duration;
+      const frame = () => {
+        confetti({ particleCount: 3, angle: 60, spread: 55, origin: { x: 0 }, colors: ["#ec4899", "#8b5cf6", "#d946ef"] });
+        confetti({ particleCount: 3, angle: 120, spread: 55, origin: { x: 1 }, colors: ["#ec4899", "#8b5cf6", "#d946ef"] });
+        if (Date.now() < end) requestAnimationFrame(frame);
+      };
+      frame();
+    });
 
-    const frame = () => {
-      confetti({
-        particleCount: 3,
-        angle: 60,
-        spread: 55,
-        origin: { x: 0 },
-        colors: ["#ec4899", "#8b5cf6", "#d946ef"],
-      });
-      confetti({
-        particleCount: 3,
-        angle: 120,
-        spread: 55,
-        origin: { x: 1 },
-        colors: ["#ec4899", "#8b5cf6", "#d946ef"],
-      });
-
-      if (Date.now() < end) {
-        requestAnimationFrame(frame);
-      }
-    };
-
-    frame();
-
-    // Simulate verification
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1500);
-
-    return () => clearTimeout(timer);
+    const timer = setTimeout(() => { setLoading(false); }, 1500);
+    return () => { cancelled = true; clearTimeout(timer); };
   }, [sessionId]);
 
   return (

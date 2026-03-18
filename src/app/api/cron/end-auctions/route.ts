@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
 
           if (error) {
             console.error(`Failed to end auction ${auction.id} (${auction.title}):`, error);
-            return { id: auction.id, title: auction.title, success: false, error: error.message };
+            return { id: auction.id, title: auction.title, success: false, error: "Failed to end auction" };
           }
 
           // Send email notifications if auction was sold

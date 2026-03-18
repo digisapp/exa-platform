@@ -12,7 +12,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const supabase: any = createServiceRoleClient();
 
     // Find pending_payment orders older than 24 hours (abandoned checkouts)

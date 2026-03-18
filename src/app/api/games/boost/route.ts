@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import crypto from "crypto";
+import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
 /**
  * Fisher-Yates shuffle using crypto.randomInt for unbiased randomness.
@@ -17,6 +18,9 @@ function secureShufflePop<T>(arr: T[], count: number): T[] {
 
 // GET - Fetch models for the swipe game
 export async function GET(request: NextRequest) {
+  const rateLimitResponse = await checkEndpointRateLimit(request, "game");
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     // as any needed: nullable field mismatches with RPC parameters and Json results
     const supabase: any = await createClient();

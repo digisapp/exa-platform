@@ -19,6 +19,8 @@ import { format } from "date-fns";
 import type { Metadata } from "next";
 import { WorkshopCheckout } from "../workshops/[slug]/workshop-checkout";
 
+export const revalidate = 300;
+
 const WORKSHOP_SLUG = "runway-workshop";
 
 interface Workshop {

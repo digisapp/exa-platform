@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { DeliveryStatusBadge } from "./DeliveryStatusBadge";
-import { FileImage, Calendar, FolderDown, User } from "lucide-react";
+import { FileImage, Calendar, User } from "lucide-react";
 
 interface DeliveryCardProps {
   delivery: {

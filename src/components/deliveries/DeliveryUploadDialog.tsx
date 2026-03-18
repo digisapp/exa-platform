@@ -144,7 +144,7 @@ export function DeliveryUploadDialog({
       throw new Error(err.error || "Failed to get upload URL");
     }
 
-    const { signedUrl, token, storagePath } = await signedRes.json();
+    const { signedUrl, storagePath } = await signedRes.json();
 
     // Step 2: Upload to Supabase Storage directly
     setFiles((prev) => prev.map((f, i) => i === index ? { ...f, progress: 30 } : f));
@@ -261,8 +261,6 @@ export function DeliveryUploadDialog({
     }
   };
 
-  const pendingOrUploading = files.some((f) => f.status === "uploading");
-  const allDone = files.length > 0 && files.every((f) => f.status === "done");
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>

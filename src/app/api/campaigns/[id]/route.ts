@@ -153,7 +153,7 @@ export async function PUT(
       if (error.code === "23505") {
         return NextResponse.json({ error: "A campaign with this name already exists" }, { status: 400 });
       }
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error("Campaign error:", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 
     if (!campaign) {
@@ -208,7 +208,7 @@ export async function DELETE(
       .eq("brand_id", actor.id);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error("Campaign error:", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });

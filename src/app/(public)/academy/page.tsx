@@ -6,7 +6,6 @@ import { Card } from "@/components/ui/card";
 import {
   Sparkles,
   CheckCircle2,
-  Calendar,
   Award,
   Users,
   Clock,

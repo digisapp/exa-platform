@@ -477,7 +477,7 @@ export default function AdminModelsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, debouncedSearch, stateFilter, approvalFilter, ratingFilter, activeView, sortField, sortDirection]);
+  }, [page, debouncedSearch, stateFilter, approvalFilter, ratingFilter, sortField, sortDirection, claimFilter]);
 
   // Load invite stats
   const loadInviteStats = useCallback(async () => {

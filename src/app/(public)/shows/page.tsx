@@ -6,7 +6,7 @@ import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 // Cache page for 5 minutes - events don't change frequently
 export const revalidate = 300;
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import {
   MapPin,
   Calendar,
