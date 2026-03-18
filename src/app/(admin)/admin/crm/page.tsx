@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,10 +44,12 @@ import {
   BarChart3,
   Copy,
   Trash2,
+  Building2,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { formatDistanceToNow, format } from "date-fns";
+import { BrandOutreachPanel } from "@/components/crm/BrandOutreachPanel";
 
 interface CallRequest {
   id: string;
@@ -118,6 +121,14 @@ function getInitials(name: string): string {
 }
 
 export default function AdminCrmPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const activeTab = searchParams.get("tab") || "leads";
+
+  const setActiveTab = (tab: string) => {
+    router.push(`/admin/crm${tab === "leads" ? "" : `?tab=${tab}`}`);
+  };
+
   const [callRequests, setCallRequests] = useState<CallRequest[]>([]);
   const [tags, setTags] = useState<CrmTag[]>([]);
   const [loading, setLoading] = useState(true);
@@ -530,31 +541,67 @@ export default function AdminCrmPage() {
         <div>
           <h1 className="text-xl md:text-2xl font-bold flex items-center gap-3">
             <Phone className="h-6 w-6 md:h-7 md:w-7 text-pink-500" />
-            Call Requests & CRM
+            CRM
           </h1>
           <p className="text-sm text-muted-foreground">
-            Manage incoming call requests and model relationships
+            Manage leads, call requests, and brand outreach
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={copyPublicLink}>
-            <Copy className="h-4 w-4 mr-2" />
-            Copy Link
-          </Button>
-          <Link href="/admin/crm/availability">
-            <Button variant="outline" size="sm">
-              <Calendar className="h-4 w-4 mr-2" />
-              Availability
-            </Button>
-          </Link>
-          <Link href="/admin/crm/analytics">
-            <Button variant="outline" size="sm">
-              <BarChart3 className="h-4 w-4 mr-2" />
-              Analytics
-            </Button>
-          </Link>
+          {activeTab === "leads" && (
+            <>
+              <Button variant="outline" size="sm" onClick={copyPublicLink}>
+                <Copy className="h-4 w-4 mr-2" />
+                Copy Link
+              </Button>
+              <Link href="/admin/crm/availability">
+                <Button variant="outline" size="sm">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Availability
+                </Button>
+              </Link>
+              <Link href="/admin/crm/analytics">
+                <Button variant="outline" size="sm">
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  Analytics
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
       </div>
+
+      {/* Tabs */}
+      <div className="flex gap-1 border-b border-border">
+        <button
+          onClick={() => setActiveTab("leads")}
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === "leads"
+              ? "border-pink-500 text-pink-500"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Phone className="h-4 w-4" />
+          Model Leads
+        </button>
+        <button
+          onClick={() => setActiveTab("brands")}
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === "brands"
+              ? "border-pink-500 text-pink-500"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Building2 className="h-4 w-4" />
+          Brand Outreach
+        </button>
+      </div>
+
+      {/* Brand Outreach Tab */}
+      {activeTab === "brands" && <BrandOutreachPanel />}
+
+      {/* Model Leads Tab */}
+      {activeTab === "leads" && (<>
 
       {/* Stats - Mobile optimized grid */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
@@ -1119,6 +1166,7 @@ export default function AdminCrmPage() {
           )}
         </DialogContent>
       </Dialog>
+      </>)}
     </div>
   );
 }

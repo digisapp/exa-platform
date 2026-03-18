@@ -1501,79 +1501,6 @@ export type Database = {
           },
         ]
       }
-      catwalk_scores: {
-        Row: {
-          created_at: string | null
-          gems_collected: number
-          id: string
-          model_id: string
-          perfect_walks: number
-          pose_score: number
-          runway_id: string
-          total_score: number
-          walk_score: number
-        }
-        Insert: {
-          created_at?: string | null
-          gems_collected?: number
-          id?: string
-          model_id: string
-          perfect_walks?: number
-          pose_score?: number
-          runway_id?: string
-          total_score?: number
-          walk_score?: number
-        }
-        Update: {
-          created_at?: string | null
-          gems_collected?: number
-          id?: string
-          model_id?: string
-          perfect_walks?: number
-          pose_score?: number
-          runway_id?: string
-          total_score?: number
-          walk_score?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "catwalk_scores_model_id_fkey"
-            columns: ["model_id"]
-            isOneToOne: false
-            referencedRelation: "models"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      catwalk_unlocks: {
-        Row: {
-          id: string
-          model_id: string
-          runway_id: string
-          unlocked_at: string | null
-        }
-        Insert: {
-          id?: string
-          model_id: string
-          runway_id: string
-          unlocked_at?: string | null
-        }
-        Update: {
-          id?: string
-          model_id?: string
-          runway_id?: string
-          unlocked_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "catwalk_unlocks_model_id_fkey"
-            columns: ["model_id"]
-            isOneToOne: false
-            referencedRelation: "models"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       coin_escrows: {
         Row: {
           actor_id: string
@@ -3102,85 +3029,6 @@ export type Database = {
           },
         ]
       }
-      lifestyle_activities: {
-        Row: {
-          activity_type: string
-          created_at: string | null
-          gems_change: number
-          id: string
-          model_id: string
-          streak_day: number | null
-        }
-        Insert: {
-          activity_type: string
-          created_at?: string | null
-          gems_change: number
-          id?: string
-          model_id: string
-          streak_day?: number | null
-        }
-        Update: {
-          activity_type?: string
-          created_at?: string | null
-          gems_change?: number
-          id?: string
-          model_id?: string
-          streak_day?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "lifestyle_activities_model_id_fkey"
-            columns: ["model_id"]
-            isOneToOne: false
-            referencedRelation: "models"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      lifestyle_stats: {
-        Row: {
-          current_streak: number | null
-          last_activity_date: string | null
-          longest_streak: number | null
-          model_id: string
-          total_content: number | null
-          total_events: number | null
-          total_wellness: number | null
-          total_workouts: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          current_streak?: number | null
-          last_activity_date?: string | null
-          longest_streak?: number | null
-          model_id: string
-          total_content?: number | null
-          total_events?: number | null
-          total_wellness?: number | null
-          total_workouts?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          current_streak?: number | null
-          last_activity_date?: string | null
-          longest_streak?: number | null
-          model_id?: string
-          total_content?: number | null
-          total_events?: number | null
-          total_wellness?: number | null
-          total_workouts?: number | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "lifestyle_stats_model_id_fkey"
-            columns: ["model_id"]
-            isOneToOne: true
-            referencedRelation: "models"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       login_streaks: {
         Row: {
           current_streak: number | null
@@ -4573,38 +4421,6 @@ export type Database = {
         }
         Relationships: []
       }
-      mystery_box_history: {
-        Row: {
-          box_tier: string
-          created_at: string | null
-          gems_won: number
-          id: string
-          model_id: string
-        }
-        Insert: {
-          box_tier: string
-          created_at?: string | null
-          gems_won: number
-          id?: string
-          model_id: string
-        }
-        Update: {
-          box_tier?: string
-          created_at?: string | null
-          gems_won?: number
-          id?: string
-          model_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "mystery_box_history_model_id_fkey"
-            columns: ["model_id"]
-            isOneToOne: false
-            referencedRelation: "models"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       notification_preferences: {
         Row: {
           booking_request_email: boolean | null
@@ -5992,41 +5808,6 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "public_model_actors"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      runway_rush_scores: {
-        Row: {
-          created_at: string | null
-          distance: number
-          gems_collected: number
-          id: string
-          model_id: string
-          score: number
-        }
-        Insert: {
-          created_at?: string | null
-          distance?: number
-          gems_collected?: number
-          id?: string
-          model_id: string
-          score: number
-        }
-        Update: {
-          created_at?: string | null
-          distance?: number
-          gems_collected?: number
-          id?: string
-          model_id?: string
-          score?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "runway_rush_scores_model_id_fkey"
-            columns: ["model_id"]
-            isOneToOne: false
-            referencedRelation: "models"
             referencedColumns: ["id"]
           },
         ]

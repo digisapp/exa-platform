@@ -180,7 +180,7 @@ export default async function AdminPage() {
         </Button>
 
         <Button variant="outline" asChild className="h-auto py-4 flex-col gap-2">
-          <Link href="/admin/brand-outreach">
+          <Link href="/admin/crm?tab=brands">
             <Megaphone className="h-6 w-6 text-pink-500" />
             <span>Brand Outreach</span>
           </Link>

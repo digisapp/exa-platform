@@ -2,35 +2,17 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { escapeIlike } from "@/lib/utils";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   ArrowLeft,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-  Search,
   Users,
   Eye,
-  Coins,
   Heart,
   Loader2,
-  ChevronLeft,
-  ChevronRight,
   TrendingUp,
   Star,
   Calendar,
@@ -44,37 +26,17 @@ import {
   UserPlus,
   Sparkles,
   Building2,
-  Globe,
-  ExternalLink,
   Instagram,
   ArrowRight,
   Camera,
-  Phone,
-  Plus,
-  Pencil,
-  Trash2,
-  X,
 } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ApproveRejectButtons } from "@/components/admin/AdminActions";
 import { toast } from "sonner";
-import { ModelActionsDropdown, FanActionsDropdown } from "@/components/admin/AdminActions";
-
-function SortIndicator({ active, direction }: { active: boolean; direction: "asc" | "desc" }) {
-  if (!active) return <ArrowUpDown className="h-4 w-4 ml-1 opacity-50" />;
-  return direction === "asc"
-    ? <ArrowUp className="h-4 w-4 ml-1 text-pink-500" />
-    : <ArrowDown className="h-4 w-4 ml-1 text-pink-500" />;
-}
+import { ModelActionsDropdown } from "@/components/admin/AdminActions";
+import FansTab from "@/components/admin/community/FansTab";
+import BrandsTab from "@/components/admin/community/BrandsTab";
+import MediaTab from "@/components/admin/community/MediaTab";
 
 function RatingStars({ modelId, currentRating, onRatingChange }: {
   modelId: string;
@@ -211,88 +173,6 @@ interface Model {
   referral_count?: number;
 }
 
-interface Fan {
-  id: string;
-  user_id: string;
-  actor_id?: string;
-  display_name: string | null;
-  username: string | null;
-  email: string | null;
-  avatar_url: string | null;
-  coin_balance: number;
-  total_coins_purchased: number;
-  state: string | null;
-  is_suspended: boolean;
-  created_at: string;
-  coins_spent?: number;
-  following_count?: number;
-  report_count?: number;
-  has_pending_model_app?: boolean;
-}
-
-interface Brand {
-  id: string;
-  company_name: string;
-  contact_name: string | null;
-  email: string;
-  website: string | null;
-  bio: string | null;
-  subscription_tier: string;
-  is_verified: boolean;
-  form_data: {
-    industry?: string;
-    budget_range?: string;
-  } | null;
-  created_at: string;
-}
-
-interface MediaContact {
-  id: string;
-  name: string;
-  title: string | null;
-  media_company: string | null;
-  email: string | null;
-  phone: string | null;
-  instagram_handle: string | null;
-  website_url: string | null;
-  category: string | null;
-  notes: string | null;
-  status: string;
-  last_contacted_at: string | null;
-  created_at: string;
-}
-
-const MEDIA_CATEGORIES: { value: string; label: string }[] = [
-  { value: "fashion", label: "Fashion" },
-  { value: "lifestyle", label: "Lifestyle" },
-  { value: "entertainment", label: "Entertainment" },
-  { value: "sports", label: "Sports" },
-  { value: "photography", label: "Photography" },
-  { value: "videography", label: "Videography" },
-  { value: "blog", label: "Blog / Digital" },
-  { value: "podcast", label: "Podcast" },
-  { value: "news", label: "News / Press" },
-  { value: "tv", label: "TV / Broadcast" },
-  { value: "swimwear", label: "Swimwear / Swim" },
-  { value: "beauty", label: "Beauty / Wellness" },
-  { value: "other", label: "Other" },
-];
-
-const MEDIA_STATUSES: { value: string; label: string; color: string }[] = [
-  { value: "new", label: "New", color: "text-blue-400 bg-blue-500/10 border-blue-500/30" },
-  { value: "contacted", label: "Contacted", color: "text-amber-400 bg-amber-500/10 border-amber-500/30" },
-  { value: "responded", label: "Responded", color: "text-violet-400 bg-violet-500/10 border-violet-500/30" },
-  { value: "interested", label: "Interested", color: "text-green-400 bg-green-500/10 border-green-500/30" },
-  { value: "not_interested", label: "Not Interested", color: "text-muted-foreground bg-muted/50 border-border" },
-  { value: "do_not_contact", label: "Do Not Contact", color: "text-red-400 bg-red-500/10 border-red-500/30" },
-];
-
-const BLANK_CONTACT: Omit<MediaContact, "id" | "created_at"> = {
-  name: "", title: null, media_company: null, email: null, phone: null,
-  instagram_handle: null, website_url: null, category: null, notes: null,
-  status: "new", last_contacted_at: null,
-};
-
 interface ModelApplication {
   id: string;
   display_name: string;
@@ -305,34 +185,9 @@ interface ModelApplication {
   created_at: string;
 }
 
-type FanSortField = "coins_spent" | "following_count" | "coin_balance" | "created_at" | "report_count";
-type SortDirection = "asc" | "desc";
-
-// State abbreviations (stored in DB) mapped to display names
-const US_STATES: { abbr: string; name: string }[] = [
-  { abbr: "AL", name: "Alabama" }, { abbr: "AK", name: "Alaska" }, { abbr: "AZ", name: "Arizona" },
-  { abbr: "AR", name: "Arkansas" }, { abbr: "CA", name: "California" }, { abbr: "CO", name: "Colorado" },
-  { abbr: "CT", name: "Connecticut" }, { abbr: "DE", name: "Delaware" }, { abbr: "FL", name: "Florida" },
-  { abbr: "GA", name: "Georgia" }, { abbr: "HI", name: "Hawaii" }, { abbr: "ID", name: "Idaho" },
-  { abbr: "IL", name: "Illinois" }, { abbr: "IN", name: "Indiana" }, { abbr: "IA", name: "Iowa" },
-  { abbr: "KS", name: "Kansas" }, { abbr: "KY", name: "Kentucky" }, { abbr: "LA", name: "Louisiana" },
-  { abbr: "ME", name: "Maine" }, { abbr: "MD", name: "Maryland" }, { abbr: "MA", name: "Massachusetts" },
-  { abbr: "MI", name: "Michigan" }, { abbr: "MN", name: "Minnesota" }, { abbr: "MS", name: "Mississippi" },
-  { abbr: "MO", name: "Missouri" }, { abbr: "MT", name: "Montana" }, { abbr: "NE", name: "Nebraska" },
-  { abbr: "NV", name: "Nevada" }, { abbr: "NH", name: "New Hampshire" }, { abbr: "NJ", name: "New Jersey" },
-  { abbr: "NM", name: "New Mexico" }, { abbr: "NY", name: "New York" }, { abbr: "NC", name: "North Carolina" },
-  { abbr: "ND", name: "North Dakota" }, { abbr: "OH", name: "Ohio" }, { abbr: "OK", name: "Oklahoma" },
-  { abbr: "OR", name: "Oregon" }, { abbr: "PA", name: "Pennsylvania" }, { abbr: "RI", name: "Rhode Island" },
-  { abbr: "SC", name: "South Carolina" }, { abbr: "SD", name: "South Dakota" }, { abbr: "TN", name: "Tennessee" },
-  { abbr: "TX", name: "Texas" }, { abbr: "UT", name: "Utah" }, { abbr: "VT", name: "Vermont" },
-  { abbr: "VA", name: "Virginia" }, { abbr: "WA", name: "Washington" }, { abbr: "WV", name: "West Virginia" },
-  { abbr: "WI", name: "Wisconsin" }, { abbr: "WY", name: "Wyoming" }
-];
-
 export default function AdminCommunityPage() {
   const [activeTab, setActiveTab] = useState("models");
   const supabase = createClient();
-  const pageSize = 50;
 
   // Combined stats
   const [stats, setStats] = useState({
@@ -366,39 +221,9 @@ export default function AdminCommunityPage() {
   const [recentModels, setRecentModels] = useState<Model[]>([]);
   const [recentModelsLoading, setRecentModelsLoading] = useState(true);
 
-  // Fans state
-  const [fans, setFans] = useState<Fan[]>([]);
-  const [fansLoading, setFansLoading] = useState(true);
-  const [fansTotalCount, setFansTotalCount] = useState(0);
-  const [fansPage, setFansPage] = useState(1);
-  const [fansSearch, setFansSearch] = useState("");
-  const [fansStateFilter, setFansStateFilter] = useState<string>("all");
-  const [fansStatusFilter, setFansStatusFilter] = useState<string>("all");
-  const [fansReportsFilter, setFansReportsFilter] = useState<string>("all");
-  const [fansSortField, setFansSortField] = useState<FanSortField>("created_at");
-  const [fansSortDirection, setFansSortDirection] = useState<SortDirection>("desc");
-
-  // Brands state
-  const [brands, setBrands] = useState<Brand[]>([]);
-  const [brandsLoading, setBrandsLoading] = useState(true);
-  const [brandsFilter, setBrandsFilter] = useState<"pending" | "approved" | "all">("pending");
-
   // Model applications state
   const [modelApps, setModelApps] = useState<ModelApplication[]>([]);
   const [modelAppsLoading, setModelAppsLoading] = useState(true);
-
-  // Media contacts state
-  const [mediaContacts, setMediaContacts] = useState<MediaContact[]>([]);
-  const [mediaLoading, setMediaLoading] = useState(false);
-  const [mediaSearch, setMediaSearch] = useState("");
-  const [mediaStatusFilter, setMediaStatusFilter] = useState("all");
-  const [mediaCategoryFilter, setMediaCategoryFilter] = useState("all");
-  const [mediaDialogOpen, setMediaDialogOpen] = useState(false);
-  const [editingContact, setEditingContact] = useState<MediaContact | null>(null);
-  const [mediaForm, setMediaForm] = useState<Omit<MediaContact, "id" | "created_at">>(BLANK_CONTACT);
-  const [mediaSaving, setMediaSaving] = useState(false);
-
-  // Bulk selection and CSV export moved to dedicated /admin/models page
 
   // Load stats
   const loadStats = useCallback(async () => {
@@ -548,132 +373,6 @@ export default function AdminCommunityPage() {
     }
   }, []);
 
-  // Load fans
-  const loadFans = useCallback(async () => {
-    setFansLoading(true);
-
-    let query = (supabase.from("fans") as any)
-      .select(`id, user_id, display_name, username, email, avatar_url, coin_balance, total_coins_purchased, state, is_suspended, created_at`, { count: "exact" });
-
-    if (fansSearch) query = query.or(`display_name.ilike.%${escapeIlike(fansSearch)}%,email.ilike.%${escapeIlike(fansSearch)}%`);
-    if (fansStateFilter !== "all") query = query.eq("state", fansStateFilter);
-    if (fansStatusFilter !== "all") query = query.eq("is_suspended", fansStatusFilter === "suspended");
-
-    if (fansSortField === "coin_balance" || fansSortField === "created_at") {
-      query = query.order(fansSortField, { ascending: fansSortDirection === "asc", nullsFirst: false });
-    } else {
-      query = query.order("created_at", { ascending: false });
-    }
-
-    const from = (fansPage - 1) * pageSize;
-    query = query.range(from, from + pageSize - 1);
-
-    const { data, count, error } = await query;
-    if (error) { console.error(error); setFansLoading(false); return; }
-
-    if (data?.length > 0) {
-      const fanIds = data.map((f: any) => f.id);
-      const userIds = data.map((f: any) => f.user_id).filter(Boolean);
-
-      // Get actor IDs
-      const { data: actors } = await (supabase.from("actors") as any)
-        .select("id, user_id").in("user_id", userIds).eq("type", "fan");
-
-      const userToActorMap = new Map<string, string>();
-      actors?.forEach((a: any) => { userToActorMap.set(a.user_id, a.id); });
-      data.forEach((fan: any) => { fan.actor_id = userToActorMap.get(fan.user_id); });
-
-      const actorIds = actors?.map((a: any) => a.id) || [];
-
-      // Get coins spent
-      const { data: transactions } = await (supabase.from("coin_transactions") as any)
-        .select("actor_id, amount").in("actor_id", fanIds).lt("amount", 0);
-
-      const spentMap = new Map<string, number>();
-      transactions?.forEach((tx: any) => {
-        spentMap.set(tx.actor_id, (spentMap.get(tx.actor_id) || 0) + Math.abs(tx.amount));
-      });
-
-      // Get following count
-      const { data: follows } = await (supabase.from("follows") as any)
-        .select("follower_id").in("follower_id", fanIds);
-
-      const followMap = new Map<string, number>();
-      follows?.forEach((f: any) => {
-        followMap.set(f.follower_id, (followMap.get(f.follower_id) || 0) + 1);
-      });
-
-      // Get report counts
-      const reportMap = new Map<string, number>();
-      if (actorIds.length > 0) {
-        const { data: reports } = await (supabase.from("reports") as any)
-          .select("reported_user_id").in("reported_user_id", actorIds);
-        reports?.forEach((r: any) => {
-          reportMap.set(r.reported_user_id, (reportMap.get(r.reported_user_id) || 0) + 1);
-        });
-      }
-
-      // Check which fans have pending model applications
-      const pendingModelAppSet = new Set<string>();
-      if (userIds.length > 0) {
-        const { data: pendingApps } = await (supabase.from("model_applications") as any)
-          .select("user_id")
-          .in("user_id", userIds)
-          .eq("status", "pending");
-        pendingApps?.forEach((app: any) => pendingModelAppSet.add(app.user_id));
-      }
-
-      data.forEach((fan: any) => {
-        fan.coins_spent = spentMap.get(fan.id) || 0;
-        fan.following_count = followMap.get(fan.id) || 0;
-        fan.report_count = fan.actor_id ? (reportMap.get(fan.actor_id) || 0) : 0;
-        fan.has_pending_model_app = pendingModelAppSet.has(fan.user_id);
-      });
-
-      // Filter by reports
-      let filteredData = data;
-      if (fansReportsFilter === "has_reports") {
-        filteredData = data.filter((f: any) => f.report_count > 0);
-      }
-
-      // Sort computed fields
-      if (fansSortField === "coins_spent" || fansSortField === "following_count" || fansSortField === "report_count") {
-        filteredData.sort((a: any, b: any) => {
-          const aVal = a[fansSortField] || 0;
-          const bVal = b[fansSortField] || 0;
-          return fansSortDirection === "asc" ? aVal - bVal : bVal - aVal;
-        });
-      }
-
-      setFans(filteredData);
-      setFansTotalCount(count || 0);
-      setFansLoading(false);
-      return;
-    }
-
-    setFans(data || []);
-    setFansTotalCount(count || 0);
-    setFansLoading(false);
-  }, [supabase, fansSearch, fansStateFilter, fansStatusFilter, fansReportsFilter, fansSortField, fansSortDirection, fansPage]);
-
-  // Load brands
-  const loadBrands = useCallback(async () => {
-    setBrandsLoading(true);
-    let query = (supabase.from("brands") as any).select("*");
-
-    if (brandsFilter === "pending") {
-      query = query.eq("is_verified", false);
-    } else if (brandsFilter === "approved") {
-      query = query.eq("is_verified", true);
-    }
-
-    const { data } = await query
-      .order("created_at", { ascending: false })
-      .limit(50);
-    setBrands(data || []);
-    setBrandsLoading(false);
-  }, [supabase, brandsFilter]);
-
   // Load model applications
   const loadModelApps = useCallback(async () => {
     setModelAppsLoading(true);
@@ -685,80 +384,6 @@ export default function AdminCommunityPage() {
     setModelApps(data || []);
     setModelAppsLoading(false);
   }, [supabase]);
-
-  // Load media contacts
-  const loadMediaContacts = useCallback(async () => {
-    setMediaLoading(true);
-    const params = new URLSearchParams({ search: mediaSearch, status: mediaStatusFilter, category: mediaCategoryFilter });
-    const res = await fetch(`/api/admin/media-contacts?${params}`);
-    if (res.ok) {
-      const data = await res.json();
-      setMediaContacts(data.contacts || []);
-    }
-    setMediaLoading(false);
-  }, [mediaSearch, mediaStatusFilter, mediaCategoryFilter]);
-
-  const openAddContact = () => {
-    setEditingContact(null);
-    setMediaForm(BLANK_CONTACT);
-    setMediaDialogOpen(true);
-  };
-
-  const openEditContact = (contact: MediaContact) => {
-    setEditingContact(contact);
-    setMediaForm({
-      name: contact.name,
-      title: contact.title,
-      media_company: contact.media_company,
-      email: contact.email,
-      phone: contact.phone,
-      instagram_handle: contact.instagram_handle,
-      website_url: contact.website_url,
-      category: contact.category,
-      notes: contact.notes,
-      status: contact.status,
-      last_contacted_at: contact.last_contacted_at,
-    });
-    setMediaDialogOpen(true);
-  };
-
-  const saveMediaContact = async () => {
-    if (!mediaForm.name.trim()) { toast.error("Name is required"); return; }
-    setMediaSaving(true);
-    try {
-      const url = editingContact
-        ? `/api/admin/media-contacts?id=${editingContact.id}`
-        : "/api/admin/media-contacts";
-      const method = editingContact ? "PATCH" : "POST";
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(mediaForm),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to save");
-      }
-      toast.success(editingContact ? "Contact updated" : "Contact added");
-      setMediaDialogOpen(false);
-      await loadMediaContacts();
-    } catch (err: any) {
-      toast.error(err.message || "Failed to save contact");
-    } finally {
-      setMediaSaving(false);
-    }
-  };
-
-  const deleteMediaContact = async (contact: MediaContact) => {
-    if (!confirm(`Delete ${contact.name}?`)) return;
-    const res = await fetch(`/api/admin/media-contacts?id=${contact.id}`, { method: "DELETE" });
-    if (res.ok) {
-      toast.success("Contact deleted");
-      setMediaContacts(prev => prev.filter(c => c.id !== contact.id));
-    } else {
-      toast.error("Failed to delete");
-    }
-  };
 
   useEffect(() => {
     void loadStats();
@@ -772,18 +397,6 @@ export default function AdminCommunityPage() {
     }
   }, [activeTab, loadRecentModels, loadModelApps]);
 
-  useEffect(() => {
-    if (activeTab === "fans") void loadFans();
-  }, [activeTab, fansSearch, fansStateFilter, fansStatusFilter, fansReportsFilter, fansSortField, fansSortDirection, fansPage, loadFans]);
-
-  useEffect(() => {
-    if (activeTab === "brands") void loadBrands();
-  }, [activeTab, brandsFilter, loadBrands]);
-
-  useEffect(() => {
-    if (activeTab === "media") void loadMediaContacts();
-  }, [activeTab, mediaSearch, mediaStatusFilter, mediaCategoryFilter, loadMediaContacts]);
-
   const handleRatingChange = (modelId: string, rating: number | null) => {
     setRecentModels(prev => prev.map(m => m.id === modelId ? { ...m, admin_rating: rating } : m));
   };
@@ -791,14 +404,6 @@ export default function AdminCommunityPage() {
   const handleNewFaceToggle = (modelId: string, newFace: boolean) => {
     setRecentModels(prev => prev.map(m => m.id === modelId ? { ...m, new_face: newFace } : m));
   };
-
-  const handleFanSort = (field: FanSortField) => {
-    if (fansSortField === field) setFansSortDirection(d => d === "asc" ? "desc" : "asc");
-    else { setFansSortField(field); setFansSortDirection("desc"); }
-    setFansPage(1);
-  };
-
-  const fansTotalPages = Math.ceil(fansTotalCount / pageSize);
 
   return (
     <div className="container px-8 md:px-16 py-8 space-y-6">
@@ -897,7 +502,7 @@ export default function AdminCommunityPage() {
           </TabsTrigger>
           <TabsTrigger value="media" className="gap-2">
             <Camera className="h-4 w-4" />
-            Media ({mediaContacts.length})
+            Media
           </TabsTrigger>
         </TabsList>
 
@@ -1154,502 +759,19 @@ export default function AdminCommunityPage() {
 
         {/* Fans Tab */}
         <TabsContent value="fans" className="space-y-6">
-          {/* Filters */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex flex-wrap gap-4">
-                <div className="flex-1 min-w-[200px]">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search by name or email..."
-                      value={fansSearch}
-                      onChange={(e) => { setFansSearch(e.target.value); setFansPage(1); }}
-                      className="pl-9"
-                    />
-                  </div>
-                </div>
-                <Select value={fansStateFilter} onValueChange={(v) => { setFansStateFilter(v); setFansPage(1); }}>
-                  <SelectTrigger className="w-[180px]"><SelectValue placeholder="Filter by state" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All States</SelectItem>
-                    {US_STATES.map((state) => (<SelectItem key={state.abbr} value={state.abbr}>{state.name}</SelectItem>))}
-                  </SelectContent>
-                </Select>
-                <Select value={fansStatusFilter} onValueChange={(v) => { setFansStatusFilter(v); setFansPage(1); }}>
-                  <SelectTrigger className="w-[180px]"><SelectValue placeholder="Filter by status" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="suspended">Suspended</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={fansReportsFilter} onValueChange={(v) => { setFansReportsFilter(v); setFansPage(1); }}>
-                  <SelectTrigger className="w-[180px]"><SelectValue placeholder="Filter by reports" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Fans</SelectItem>
-                    <SelectItem value="has_reports">Has Reports</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Fans Table */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Fans</CardTitle>
-                  <CardDescription>
-                    {fansTotalCount > 0
-                      ? `Showing ${((fansPage - 1) * pageSize) + 1} - ${Math.min(fansPage * pageSize, fansTotalCount)} of ${fansTotalCount.toLocaleString()}`
-                      : "No fans found"}
-                  </CardDescription>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setFansPage(p => Math.max(1, p - 1))} disabled={fansPage === 1}>
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <span className="text-sm text-muted-foreground">Page {fansPage} of {fansTotalPages}</span>
-                  <Button variant="outline" size="sm" onClick={() => setFansPage(p => Math.min(fansTotalPages, p + 1))} disabled={fansPage === fansTotalPages}>
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {fansLoading ? (
-                <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
-              ) : fans.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground"><Users className="h-12 w-12 mx-auto mb-4 opacity-50" /><p>No fans found</p></div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[250px]">Fan</TableHead>
-                        <TableHead>State</TableHead>
-                        <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleFanSort("created_at")}>
-                          <div className="flex items-center"><Calendar className="h-4 w-4 mr-1" />Joined<SortIndicator active={fansSortField === "created_at"} direction={fansSortDirection} /></div>
-                        </TableHead>
-                        <TableHead>Actions</TableHead>
-                        <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleFanSort("report_count")}>
-                          <div className="flex items-center"><AlertTriangle className="h-4 w-4 mr-1" />Reports<SortIndicator active={fansSortField === "report_count"} direction={fansSortDirection} /></div>
-                        </TableHead>
-                        <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleFanSort("coins_spent")}>
-                          <div className="flex items-center"><Coins className="h-4 w-4 mr-1" />Spent<SortIndicator active={fansSortField === "coins_spent"} direction={fansSortDirection} /></div>
-                        </TableHead>
-                        <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleFanSort("following_count")}>
-                          <div className="flex items-center"><Heart className="h-4 w-4 mr-1" />Favorites<SortIndicator active={fansSortField === "following_count"} direction={fansSortDirection} /></div>
-                        </TableHead>
-                        <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleFanSort("coin_balance")}>
-                          <div className="flex items-center"><Coins className="h-4 w-4 mr-1" />Balance<SortIndicator active={fansSortField === "coin_balance"} direction={fansSortDirection} /></div>
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {fans.map((fan) => (
-                        <TableRow key={fan.id}>
-                          <TableCell>
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex-shrink-0">
-                                {fan.avatar_url ? (
-                                  <Image src={fan.avatar_url} alt={fan.display_name || "Fan"} width={80} height={80} className="w-full h-full object-cover" />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center text-sm font-bold">{fan.display_name?.charAt(0) || fan.email?.charAt(0)?.toUpperCase() || "F"}</div>
-                                )}
-                              </div>
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <p className="font-medium truncate">{fan.display_name || "Fan"}</p>
-                                  {fan.has_pending_model_app && (
-                                    <span className="flex-shrink-0 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-semibold bg-pink-500/15 text-pink-400 border border-pink-500/25">
-                                      Model Applicant
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="text-sm text-muted-foreground truncate">{fan.email}</p>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell><span className="text-sm text-muted-foreground">{fan.state || "-"}</span></TableCell>
-                          <TableCell><span className="text-sm text-muted-foreground">{new Date(fan.created_at).toLocaleDateString()}</span></TableCell>
-                          <TableCell><FanActionsDropdown id={fan.id} fanName={fan.display_name || fan.email || "Fan"} fanUsername={fan.username} isSuspended={fan.is_suspended || false} onAction={loadFans} /></TableCell>
-                          <TableCell>
-                            {(fan.report_count || 0) > 0 ? (
-                              <span className="inline-flex items-center gap-1 text-red-500 font-medium"><AlertTriangle className="h-4 w-4" />{fan.report_count}</span>
-                            ) : <span className="text-muted-foreground">0</span>}
-                          </TableCell>
-                          <TableCell><span className={`font-medium ${(fan.coins_spent || 0) > 0 ? "text-yellow-500" : ""}`}>{(fan.coins_spent || 0).toLocaleString()}</span></TableCell>
-                          <TableCell><span className={`font-medium ${(fan.following_count || 0) > 0 ? "text-pink-500" : ""}`}>{(fan.following_count || 0).toLocaleString()}</span></TableCell>
-                          <TableCell><span className={`font-medium ${fan.coin_balance > 0 ? "text-green-500" : ""}`}>{(fan.coin_balance || 0).toLocaleString()}</span></TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <FansTab />
         </TabsContent>
 
         {/* Brands Tab */}
         <TabsContent value="brands" className="space-y-6">
-          {/* Filter */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <Select value={brandsFilter} onValueChange={(v: "pending" | "approved" | "all") => setBrandsFilter(v)}>
-                  <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="Filter brands" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pending">Pending Approval</SelectItem>
-                    <SelectItem value="approved">Approved</SelectItem>
-                    <SelectItem value="all">All Brands</SelectItem>
-                  </SelectContent>
-                </Select>
-                <span className="text-sm text-muted-foreground">
-                  Showing {brands.length} {brandsFilter === "all" ? "brands" : brandsFilter === "pending" ? "pending" : "approved"}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                {brandsFilter === "pending" ? "Pending Brand Inquiries" : brandsFilter === "approved" ? "Approved Brands" : "All Brands"}
-              </CardTitle>
-              <CardDescription>
-                {brandsFilter === "pending" ? "Partnership requests awaiting approval" : brandsFilter === "approved" ? "Verified brand partners" : "All brand inquiries and partners"}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {brandsLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                </div>
-              ) : brands.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Building2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>{brandsFilter === "pending" ? "No pending brand inquiries" : brandsFilter === "approved" ? "No approved brands yet" : "No brands yet"}</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {brands.map((brand) => (
-                    <div
-                      key={brand.id}
-                      className="p-4 rounded-lg bg-muted/50 space-y-3"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg">
-                            {brand.company_name?.charAt(0).toUpperCase() || "B"}
-                          </div>
-                          <div>
-                            <p className="font-semibold text-lg">{brand.company_name}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {brand.contact_name}
-                            </p>
-                          </div>
-                        </div>
-                        {brand.is_verified ? (
-                          <Badge className="bg-green-500/10 text-green-500 border-green-500/50">
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            Approved
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/50">
-                            <Clock className="h-3 w-3 mr-1" />
-                            Pending
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div className="flex items-center gap-2">
-                          <Mail className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-muted-foreground truncate">{brand.email}</span>
-                        </div>
-                        {brand.website && (
-                          <div className="flex items-center gap-2">
-                            <Globe className="h-4 w-4 text-muted-foreground" />
-                            <a href={brand.website} target="_blank" rel="noopener noreferrer" className="text-cyan-500 hover:underline truncate flex items-center gap-1">
-                              Website <ExternalLink className="h-3 w-3" />
-                            </a>
-                          </div>
-                        )}
-                        {brand.form_data?.industry && (
-                          <div className="flex items-center gap-2">
-                            <Building2 className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-muted-foreground">{brand.form_data.industry}</span>
-                          </div>
-                        )}
-                        {brand.form_data?.budget_range && (
-                          <div className="text-muted-foreground">
-                            Budget: {brand.form_data.budget_range.replace(/_/g, " ")}
-                          </div>
-                        )}
-                      </div>
-                      {brand.bio && (
-                        <p className="text-sm text-muted-foreground bg-background/50 p-3 rounded">
-                          {brand.bio}
-                        </p>
-                      )}
-                      <div className="flex items-center justify-between pt-2">
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(brand.created_at).toLocaleDateString()}
-                        </span>
-                        {!brand.is_verified && (
-                          <ApproveRejectButtons id={brand.id} type="brand" onSuccess={() => { loadBrands(); loadStats(); }} />
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <BrandsTab />
         </TabsContent>
+
         {/* Media Tab */}
         <TabsContent value="media" className="space-y-6">
-          {/* Filters + Add Button */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex flex-wrap gap-4">
-                <div className="flex-1 min-w-[200px]">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search name, company, email, instagram..."
-                      value={mediaSearch}
-                      onChange={(e) => setMediaSearch(e.target.value)}
-                      className="pl-9"
-                    />
-                  </div>
-                </div>
-                <Select value={mediaCategoryFilter} onValueChange={setMediaCategoryFilter}>
-                  <SelectTrigger className="w-[180px]"><SelectValue placeholder="All Categories" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    {MEDIA_CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <Select value={mediaStatusFilter} onValueChange={setMediaStatusFilter}>
-                  <SelectTrigger className="w-[180px]"><SelectValue placeholder="All Statuses" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    {MEDIA_STATUSES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <Button onClick={openAddContact} className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Contact
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Contacts Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Camera className="h-5 w-5 text-violet-400" />
-                Media Contacts
-                <Badge variant="outline" className="ml-2">{mediaContacts.length}</Badge>
-              </CardTitle>
-              <CardDescription>Press, photographers, bloggers, and media partners</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {mediaLoading ? (
-                <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
-              ) : mediaContacts.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Camera className="h-12 w-12 mx-auto mb-4 opacity-30" />
-                  <p className="mb-4">No media contacts yet</p>
-                  <Button onClick={openAddContact} variant="outline">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add your first contact
-                  </Button>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[180px]">Name</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Phone</TableHead>
-                        <TableHead>Instagram</TableHead>
-                        <TableHead>Company</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {mediaContacts.map((contact) => {
-                        const statusMeta = MEDIA_STATUSES.find(s => s.value === contact.status);
-                        const categoryLabel = MEDIA_CATEGORIES.find(c => c.value === contact.category)?.label;
-                        return (
-                          <TableRow key={contact.id}>
-                            <TableCell>
-                              <div>
-                                <p className="font-medium">{contact.name}</p>
-                                {contact.title && <p className="text-xs text-muted-foreground">{contact.title}</p>}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              {contact.email ? (
-                                <a href={`mailto:${contact.email}`} className="text-sm text-cyan-400 hover:underline flex items-center gap-1">
-                                  <Mail className="h-3.5 w-3.5" />
-                                  {contact.email}
-                                </a>
-                              ) : <span className="text-muted-foreground text-sm">—</span>}
-                            </TableCell>
-                            <TableCell>
-                              {contact.phone ? (
-                                <span className="flex items-center gap-1 text-sm">
-                                  <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                                  {contact.phone}
-                                </span>
-                              ) : <span className="text-muted-foreground text-sm">—</span>}
-                            </TableCell>
-                            <TableCell>
-                              {contact.instagram_handle ? (
-                                <a
-                                  href={`https://instagram.com/${contact.instagram_handle.replace(/^@/, "")}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center gap-1 text-pink-400 hover:text-pink-300 text-sm"
-                                >
-                                  <Instagram className="h-3.5 w-3.5" />
-                                  @{contact.instagram_handle.replace(/^@/, "")}
-                                </a>
-                              ) : <span className="text-muted-foreground text-sm">—</span>}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-1.5">
-                                {contact.website_url ? (
-                                  <a href={contact.website_url} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline flex items-center gap-1 text-sm">
-                                    {contact.media_company || "—"}
-                                    <ExternalLink className="h-3 w-3" />
-                                  </a>
-                                ) : (
-                                  <span className="text-sm text-muted-foreground">{contact.media_company || "—"}</span>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              {categoryLabel ? (
-                                <Badge variant="outline" className="text-xs">{categoryLabel}</Badge>
-                              ) : <span className="text-muted-foreground text-sm">—</span>}
-                            </TableCell>
-                            <TableCell>
-                              {statusMeta && (
-                                <Badge variant="outline" className={`text-xs ${statusMeta.color}`}>
-                                  {statusMeta.label}
-                                </Badge>
-                              )}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex items-center justify-end gap-2">
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditContact(contact)}>
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-red-500/10" onClick={() => deleteMediaContact(contact)}>
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <MediaTab />
         </TabsContent>
       </Tabs>
-
-      {/* Add / Edit Media Contact Dialog */}
-      <Dialog open={mediaDialogOpen} onOpenChange={setMediaDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{editingContact ? "Edit Contact" : "Add Media Contact"}</DialogTitle>
-          </DialogHeader>
-          <div className="grid grid-cols-2 gap-4 py-4">
-            <div className="space-y-1.5">
-              <Label>Name *</Label>
-              <Input value={mediaForm.name} onChange={e => setMediaForm(f => ({ ...f, name: e.target.value }))} placeholder="Full name" />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Title / Role</Label>
-              <Input value={mediaForm.title || ""} onChange={e => setMediaForm(f => ({ ...f, title: e.target.value || null }))} placeholder="e.g. Editor, Photographer" />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Media Company</Label>
-              <Input value={mediaForm.media_company || ""} onChange={e => setMediaForm(f => ({ ...f, media_company: e.target.value || null }))} placeholder="Publication or company" />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Category</Label>
-              <Select value={mediaForm.category || ""} onValueChange={v => setMediaForm(f => ({ ...f, category: v || null }))}>
-                <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
-                <SelectContent>
-                  {MEDIA_CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Email</Label>
-              <Input type="email" value={mediaForm.email || ""} onChange={e => setMediaForm(f => ({ ...f, email: e.target.value || null }))} placeholder="email@example.com" />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Phone</Label>
-              <Input value={mediaForm.phone || ""} onChange={e => setMediaForm(f => ({ ...f, phone: e.target.value || null }))} placeholder="+1 (555) 000-0000" />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Instagram Handle</Label>
-              <Input value={mediaForm.instagram_handle || ""} onChange={e => setMediaForm(f => ({ ...f, instagram_handle: e.target.value || null }))} placeholder="@handle" />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Website URL</Label>
-              <Input value={mediaForm.website_url || ""} onChange={e => setMediaForm(f => ({ ...f, website_url: e.target.value || null }))} placeholder="https://..." />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Status</Label>
-              <Select value={mediaForm.status} onValueChange={v => setMediaForm(f => ({ ...f, status: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {MEDIA_STATUSES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="col-span-2 space-y-1.5">
-              <Label>Notes</Label>
-              <Textarea
-                value={mediaForm.notes || ""}
-                onChange={e => setMediaForm(f => ({ ...f, notes: e.target.value || null }))}
-                placeholder="Any notes about this contact..."
-                rows={3}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setMediaDialogOpen(false)} disabled={mediaSaving}>
-              <X className="h-4 w-4 mr-2" />
-              Cancel
-            </Button>
-            <Button onClick={saveMediaContact} disabled={mediaSaving} className="bg-gradient-to-r from-pink-500 to-violet-500">
-              {mediaSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-              {editingContact ? "Save Changes" : "Add Contact"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
