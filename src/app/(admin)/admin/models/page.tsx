@@ -29,8 +29,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Star,
-  Clock,
-  UserCheck,
   UserPlus,
   Sparkles,
   Instagram,
@@ -41,7 +39,6 @@ import {
   CheckSquare,
   Square,
   CheckCircle,
-  Check,
   MessageSquare,
   Phone,
 } from "lucide-react";
