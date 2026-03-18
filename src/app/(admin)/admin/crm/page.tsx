@@ -50,6 +50,8 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { formatDistanceToNow, format } from "date-fns";
 import { BrandOutreachPanel } from "@/components/crm/BrandOutreachPanel";
+import { TravelOutreachPanel } from "@/components/crm/TravelOutreachPanel";
+import { Plane } from "lucide-react";
 
 interface CallRequest {
   id: string;
@@ -595,10 +597,24 @@ export default function AdminCrmPage() {
           <Building2 className="h-4 w-4" />
           Brand Outreach
         </button>
+        <button
+          onClick={() => setActiveTab("travel")}
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === "travel"
+              ? "border-pink-500 text-pink-500"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Plane className="h-4 w-4" />
+          Travel Outreach
+        </button>
       </div>
 
       {/* Brand Outreach Tab */}
       {activeTab === "brands" && <BrandOutreachPanel />}
+
+      {/* Travel Outreach Tab */}
+      {activeTab === "travel" && <TravelOutreachPanel />}
 
       {/* Model Leads Tab */}
       {activeTab === "leads" && (<>
