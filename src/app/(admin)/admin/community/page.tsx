@@ -15,14 +15,8 @@ import {
   Loader2,
   TrendingUp,
   Star,
-  Calendar,
-  AlertTriangle,
-  Check,
   CheckCircle,
   Clock,
-  UserCheck,
-  Mail,
-  Send,
   UserPlus,
   Sparkles,
   Building2,
@@ -157,8 +151,6 @@ interface Model {
   created_at: string;
   followers_count?: number;
   user_id: string | null;
-  invite_token: string | null;
-  claimed_at: string | null;
   // New tracking fields
   total_earned?: number;
   content_count?: number;
@@ -199,24 +191,6 @@ export default function AdminCommunityPage() {
     pendingModelApps: 0,
   });
 
-  // Invite stats
-  const [inviteStats, setInviteStats] = useState({
-    pending: 0,
-    invited: 0,
-    claimed: 0,
-    warmup: {
-      started: false,
-      startDate: null as string | null,
-      day: 0,
-      dailyLimit: 0,
-      sentToday: 0,
-      remainingToday: 0,
-      schedule: [] as { day: number; limit: number }[],
-    },
-  });
-  const [sendingInvites, setSendingInvites] = useState(false);
-  const [inviteProgress, setInviteProgress] = useState({ sent: 0, total: 0 });
-
   // Models preview state (full table moved to /admin/models)
   const [recentModels, setRecentModels] = useState<Model[]>([]);
   const [recentModelsLoading, setRecentModelsLoading] = useState(true);
@@ -252,102 +226,6 @@ export default function AdminCommunityPage() {
       pendingModelApps: pendingModelApps || 0,
     });
   }, [supabase]);
-
-  // Load invite stats
-  const loadInviteStats = useCallback(async () => {
-    try {
-      const res = await fetch("/api/admin/invites/send");
-      if (res.ok) {
-        const data = await res.json();
-        setInviteStats(data);
-      }
-    } catch (error) {
-      console.error("Failed to load invite stats:", error);
-    }
-  }, []);
-
-  // Send bulk invites
-  const sendBulkInvites = async () => {
-    if (sendingInvites) return;
-
-    if (!inviteStats.warmup.started) {
-      toast.error("Email warmup not started. Add EMAIL_WARMUP_START_DATE to Vercel environment variables first.");
-      return;
-    }
-
-    if (inviteStats.warmup.remainingToday === 0) {
-      toast.info(`Daily limit reached (${inviteStats.warmup.dailyLimit}). Try again tomorrow.`);
-      return;
-    }
-
-    if (inviteStats.pending === 0) {
-      toast.info("No pending invites to send");
-      return;
-    }
-
-    const toSend = Math.min(inviteStats.pending, inviteStats.warmup.remainingToday);
-    const confirmed = window.confirm(
-      `Send invite emails?\n\n` +
-      `Day ${inviteStats.warmup.day} of warmup\n` +
-      `Daily limit: ${inviteStats.warmup.dailyLimit}\n` +
-      `Already sent today: ${inviteStats.warmup.sentToday}\n` +
-      `Will send: up to ${toSend} emails\n\n` +
-      `Continue?`
-    );
-
-    if (!confirmed) return;
-
-    setSendingInvites(true);
-    setInviteProgress({ sent: 0, total: toSend });
-
-    try {
-      let totalSent = 0;
-      let hasMore = true;
-
-      while (hasMore) {
-        const res = await fetch("/api/admin/invites/send", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sendAll: true }),
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          if (data.warmupNotStarted) {
-            toast.error("Email warmup not started. Set EMAIL_WARMUP_START_DATE in Vercel.");
-            break;
-          }
-          throw new Error(data.error || "Failed to send invites");
-        }
-
-        totalSent += data.sent;
-        setInviteProgress({ sent: totalSent, total: toSend });
-
-        hasMore = data.hasMore && data.remainingToday > 0;
-
-        if (data.failed > 0) {
-          console.warn(`${data.failed} emails failed to send`);
-        }
-
-        if (data.remainingToday === 0) {
-          toast.info(`Daily limit reached. Sent ${totalSent} today.`);
-          break;
-        }
-      }
-
-      if (totalSent > 0) {
-        toast.success(`Successfully sent ${totalSent} invite emails!`);
-      }
-      await loadInviteStats();
-      await loadRecentModels();
-    } catch (error) {
-      console.error("Failed to send invites:", error);
-      toast.error("Failed to send invites");
-    } finally {
-      setSendingInvites(false);
-    }
-  };
 
   // Load recent models preview (10 most recent)
   const loadRecentModels = useCallback(async () => {
@@ -387,8 +265,7 @@ export default function AdminCommunityPage() {
 
   useEffect(() => {
     void loadStats();
-    void loadInviteStats();
-  }, [loadStats, loadInviteStats]);
+  }, [loadStats]);
 
   useEffect(() => {
     if (activeTab === "models") {
@@ -565,91 +442,6 @@ export default function AdminCommunityPage() {
                     })}
                   </div>
                 )}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Invite Stats & Send Button */}
-          {inviteStats.pending > 0 && (
-            <Card className="border-amber-500/50 bg-amber-500/5">
-              <CardContent className="pt-6">
-                <div className="space-y-4">
-                  {/* Stats Row */}
-                  <div className="flex flex-wrap items-center justify-between gap-4">
-                    <div className="flex items-center gap-6">
-                      <div className="flex items-center gap-2">
-                        <Mail className="h-5 w-5 text-amber-500" />
-                        <div>
-                          <p className="text-2xl font-bold">{inviteStats.pending.toLocaleString()}</p>
-                          <p className="text-xs text-muted-foreground">Pending Invites</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Send className="h-5 w-5 text-blue-500" />
-                        <div>
-                          <p className="text-2xl font-bold">{inviteStats.invited.toLocaleString()}</p>
-                          <p className="text-xs text-muted-foreground">Emails Sent</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <UserCheck className="h-5 w-5 text-green-500" />
-                        <div>
-                          <p className="text-2xl font-bold">{inviteStats.claimed.toLocaleString()}</p>
-                          <p className="text-xs text-muted-foreground">Claimed</p>
-                        </div>
-                      </div>
-                    </div>
-                    <Button
-                      onClick={sendBulkInvites}
-                      disabled={sendingInvites || inviteStats.pending === 0 || !inviteStats.warmup.started || inviteStats.warmup.remainingToday === 0}
-                      className="bg-gradient-to-r from-pink-500 to-violet-500"
-                    >
-                      {sendingInvites ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Sending... ({inviteProgress.sent}/{inviteProgress.total})
-                        </>
-                      ) : (
-                        <>
-                          <Mail className="mr-2 h-4 w-4" />
-                          Send Invite Emails
-                        </>
-                      )}
-                    </Button>
-                  </div>
-
-                  {/* Warmup Status */}
-                  {!inviteStats.warmup.started ? (
-                    <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
-                      <p className="text-sm text-yellow-500 font-medium flex items-center gap-2">
-                        <AlertTriangle className="h-4 w-4" />
-                        Email warmup not started
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Add <code className="bg-muted px-1 rounded">EMAIL_WARMUP_START_DATE</code> to Vercel environment variables (format: YYYY-MM-DD) to begin sending invites.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="flex flex-wrap items-center gap-4 text-sm">
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span>Day {inviteStats.warmup.day} of warmup</span>
-                      </div>
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted">
-                        <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                        <span>Daily limit: {inviteStats.warmup.dailyLimit}</span>
-                      </div>
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 text-green-500">
-                        <Check className="h-4 w-4" />
-                        <span>Sent today: {inviteStats.warmup.sentToday}</span>
-                      </div>
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 text-blue-500">
-                        <Clock className="h-4 w-4" />
-                        <span>Remaining: {inviteStats.warmup.remainingToday}</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
               </CardContent>
             </Card>
           )}
