@@ -156,11 +156,15 @@ export async function POST(request: NextRequest) {
       data: { publicUrl },
     } = storageClient.storage.from(bucket).getPublicUrl(filename);
 
+    // Get model_id for the media_asset record
+    const modelId = actor.type === "model" ? await getModelId(supabase, user.id) : null;
+
     // Create media_asset record
     const { data: mediaAsset, error: mediaError } = await supabase
       .from("media_assets")
       .insert({
         owner_id: actor.id,
+        model_id: modelId,
         type: "photo",
         storage_path: filename,
         url: publicUrl,
@@ -182,15 +186,11 @@ export async function POST(request: NextRequest) {
     }
 
     // If avatar upload, update the model's profile_photo_url
-    if (uploadType === "avatar" && actor.type === "model") {
-      // Get model ID (models.id != actors.id)
-      const modelId = await getModelId(supabase, user.id);
-      if (modelId) {
-        await supabase
-          .from("models")
-          .update({ profile_photo_url: publicUrl })
-          .eq("id", modelId);
-      }
+    if (uploadType === "avatar" && modelId) {
+      await supabase
+        .from("models")
+        .update({ profile_photo_url: publicUrl })
+        .eq("id", modelId);
     }
 
     return NextResponse.json({
@@ -240,12 +240,16 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "No actor found" }, { status: 400 });
     }
 
+    // Get model_id for ownership check
+    const modelId = await getModelId(supabase, user.id);
+
     // Get media asset to verify ownership and get storage path
+    // Check both owner_id (actor) and model_id for backwards compatibility
     const { data: mediaAsset } = await supabase
       .from("media_assets")
       .select("*")
       .eq("id", mediaId)
-      .eq("owner_id", actor.id)
+      .or(`owner_id.eq.${actor.id}${modelId ? `,model_id.eq.${modelId}` : ""}`)
       .single() as { data: { id: string; storage_path: string; source: string } | null };
 
     if (!mediaAsset) {

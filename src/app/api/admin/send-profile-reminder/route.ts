@@ -162,6 +162,13 @@ export async function POST(request: NextRequest) {
   }
 }
 
+interface AcademyApplicant {
+  id: string;
+  applicant_name: string;
+  applicant_email: string;
+  status: string;
+}
+
 // Send profile reminder emails specifically to Miami Swim Week applicants
 // who don't have a profile photo on their model account
 async function sendMswApplicantReminders({
@@ -172,13 +179,13 @@ async function sendMswApplicantReminders({
   limit: number;
 }) {
   // 1. Get all Miami Swim Week applicants
-  const { data: applications, error: appError } = await adminClient
+  const { data: applications, error: appError } = await (adminClient as any)
     .from("academy_applications")
     .select("id, applicant_name, applicant_email, status")
     .eq("cohort", "miami-swim-week")
     .not("status", "eq", "cancelled")
     .not("status", "eq", "refunded")
-    .limit(limit);
+    .limit(limit) as { data: AcademyApplicant[] | null; error: any };
 
   if (appError) throw appError;
 
