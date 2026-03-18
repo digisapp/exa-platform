@@ -34,51 +34,6 @@ export async function POST(request: NextRequest) {
     // Get referrer model ID from request or user metadata (set during signup)
     const referrerModelId = requestReferrerId || user.user_metadata?.referrer_model_id || null;
 
-    // FIRST: Check if there's an existing model record with this email (from imports)
-    // This handles models who were imported before they had an auth account
-    if (user.email) {
-      const { data: existingModel } = await supabase
-        .from("models")
-        .select("id, user_id, is_approved")
-        .eq("email", user.email.toLowerCase())
-        .is("user_id", null)
-        .single();
-
-      if (existingModel) {
-        // Link the existing model to this user
-        await supabase.from("models")
-          .update({ user_id: user.id })
-          .eq("id", existingModel.id);
-
-        // Check if actor already exists
-        const { data: existingActor } = await supabase
-          .from("actors")
-          .select("id")
-          .eq("user_id", user.id)
-          .single();
-
-        if (!existingActor) {
-          // Create actor record for this model
-          await supabase.from("actors")
-            .insert({
-              user_id: user.id,
-              type: "model",
-            });
-        } else {
-          // Update existing actor to type model if it was fan
-          await supabase.from("actors")
-            .update({ type: "model" })
-            .eq("user_id", user.id);
-        }
-
-        return NextResponse.json({
-          success: true,
-          actorId: existingModel.id,
-          linkedExistingModel: true,
-        });
-      }
-    }
-
     // Check if user already has an actor record
     const { data: existingActor } = await supabase
       .from("actors")

@@ -203,39 +203,6 @@ export async function GET(request: Request) {
 
       // If this is a confirmed signup, create the profile
       if (type === "signup" || signupType) {
-        // First check for legacy/imported model by email
-        if (data.user.email) {
-          const { data: modelByEmail } = await (supabase.from("models") as any)
-            .select("id, user_id, is_approved, claimed_at")
-            .eq("email", data.user.email)
-            .is("user_id", null)
-            .single();
-
-          if (modelByEmail) {
-            // Link existing model to user and approve them
-            await (supabase.from("models") as any)
-              .update({
-                user_id: data.user.id,
-                claimed_at: new Date().toISOString(),
-                is_approved: true, // Auto-approve when imported model claims account
-              })
-              .eq("id", modelByEmail.id);
-
-            await (supabase.from("actors") as any)
-              .upsert({
-                id: modelByEmail.id,
-                user_id: data.user.id,
-                type: "model"
-              });
-
-            // This is an imported model - send password reset so they can set their own password
-            await sendPasswordResetForImportedModel(data.user.email, origin);
-
-            // Redirect to set-password page
-            return NextResponse.redirect(`${origin}/auth/set-password`);
-          }
-        }
-
         // Brand signup - create brand profile (fallback if /api/auth/create-brand didn't run)
         if (signupType === "brand") {
           const companyName = userMeta.company_name || displayName;
@@ -299,44 +266,6 @@ export async function GET(request: Request) {
 
         // Fan signup - redirect to dashboard
         return NextResponse.redirect(`${origin}/dashboard`);
-      }
-
-      // Legacy: Check if model exists by email (for invited models)
-      if (data.user.email) {
-        const { data: modelByEmail } = await (supabase.from("models") as any)
-          .select("id, user_id, is_approved")
-          .eq("email", data.user.email)
-          .single();
-
-        if (modelByEmail) {
-          // Link model to user if not already linked
-          if (!modelByEmail.user_id) {
-            await (supabase.from("models") as any)
-              .update({
-                user_id: data.user.id,
-                claimed_at: new Date().toISOString(),
-                is_approved: true, // Auto-approve when imported model claims account
-              })
-              .eq("id", modelByEmail.id);
-
-            // Create actor record for this model
-            await (supabase.from("actors") as any)
-              .insert({
-                id: modelByEmail.id,
-                user_id: data.user.id,
-                type: "model"
-              });
-
-            // Send password reset for imported model
-            await sendPasswordResetForImportedModel(data.user.email, origin);
-            return NextResponse.redirect(`${origin}/auth/set-password`);
-          }
-
-          if (modelByEmail.is_approved) {
-            return NextResponse.redirect(`${origin}/dashboard`);
-          }
-          return NextResponse.redirect(`${origin}/pending-approval`);
-        }
       }
 
       // New user - redirect to fan signup

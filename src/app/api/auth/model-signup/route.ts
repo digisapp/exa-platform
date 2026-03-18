@@ -335,46 +335,6 @@ async function createFanAndApplication(
   dateOfBirth: string | null | undefined,
   height: string | null | undefined
 ): Promise<boolean> {
-  // Check for existing model record with this email (from imports)
-  const { data: existingModel } = await adminClient
-    .from("models")
-    .select("id, user_id, is_approved")
-    .eq("email", email)
-    .is("user_id", null)
-    .single();
-
-  if (existingModel) {
-    // Link the existing model to this user and approve them
-    await adminClient.from("models")
-      .update({
-        user_id: userId,
-        claimed_at: new Date().toISOString(),
-        is_approved: true, // Auto-approve when imported model claims account
-      })
-      .eq("id", existingModel.id);
-
-    // Check/create actor record
-    const { data: existingActor } = await adminClient
-      .from("actors")
-      .select("id")
-      .eq("user_id", userId)
-      .single();
-
-    if (!existingActor) {
-      await adminClient.from("actors")
-        .insert({ user_id: userId, type: "model" });
-    } else {
-      await adminClient.from("actors")
-        .update({ type: "model" })
-        .eq("user_id", userId);
-    }
-
-    // Send password reset email so they can set their own password after confirming
-    await sendPasswordResetEmailForImportedModel(email);
-
-    return true; // Was imported model
-  }
-
   // Create actor record
   const { data: actor } = await adminClient
     .from("actors")

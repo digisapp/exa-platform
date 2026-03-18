@@ -51,7 +51,8 @@ import { toast } from "sonner";
 import { formatDistanceToNow, format } from "date-fns";
 import { BrandOutreachPanel } from "@/components/crm/BrandOutreachPanel";
 import { TravelOutreachPanel } from "@/components/crm/TravelOutreachPanel";
-import { Plane } from "lucide-react";
+import { ModelOutreachPanel } from "@/components/crm/ModelOutreachPanel";
+import { Plane, UserPlus } from "lucide-react";
 
 interface CallRequest {
   id: string;
@@ -608,6 +609,17 @@ export default function AdminCrmPage() {
           <Plane className="h-4 w-4" />
           Travel Outreach
         </button>
+        <button
+          onClick={() => setActiveTab("outreach")}
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === "outreach"
+              ? "border-pink-500 text-pink-500"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <UserPlus className="h-4 w-4" />
+          Model Outreach
+        </button>
       </div>
 
       {/* Brand Outreach Tab */}
@@ -615,6 +627,9 @@ export default function AdminCrmPage() {
 
       {/* Travel Outreach Tab */}
       {activeTab === "travel" && <TravelOutreachPanel />}
+
+      {/* Model Outreach Tab */}
+      {activeTab === "outreach" && <ModelOutreachPanel />}
 
       {/* Model Leads Tab */}
       {activeTab === "leads" && (<>
