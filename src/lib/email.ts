@@ -3248,7 +3248,7 @@ export async function sendMiamiSwimWeekProfileReminderEmail({
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
       to: [to],
-      subject: "Miami Swim Week 2026 - Complete Your Profile for Designers!",
+      subject: "Quick Tip to Stand Out for Miami Swim Week 2026",
       html: `
 <!DOCTYPE html>
 <html>
@@ -3270,7 +3270,7 @@ export async function sendMiamiSwimWeekProfileReminderEmail({
                 Miami Swim Week 2026
               </h1>
               <p style="margin: 15px 0 0; color: rgba(255,255,255,0.95); font-size: 16px; font-weight: 500;">
-                Designers need your complete profile!
+                Help designers find you!
               </p>
             </td>
           </tr>
@@ -3282,8 +3282,11 @@ export async function sendMiamiSwimWeekProfileReminderEmail({
                 ${greeting}
               </p>
               <p style="margin: 0 0 25px; color: #a1a1aa; font-size: 16px; line-height: 1.7;">
-                <strong style="color: #ec4899;">Miami Swim Week 2026</strong> is approaching and designers are reviewing model profiles for their shows.
-                We noticed your profile is missing some key information that brands need for casting decisions.
+                We're so excited that you applied for <strong style="color: #ec4899;">Miami Swim Week 2026</strong>!
+                Designers are starting to browse model profiles to find talent for their shows, and we'd love to help you stand out.
+              </p>
+              <p style="margin: 0 0 25px; color: #a1a1aa; font-size: 16px; line-height: 1.7;">
+                We noticed your profile is missing a couple of things that would really help designers discover you:
               </p>
 
               <!-- What's Missing -->
@@ -3291,28 +3294,25 @@ export async function sendMiamiSwimWeekProfileReminderEmail({
                 <tr>
                   <td style="padding: 25px;">
                     <p style="margin: 0 0 15px; color: #f97316; font-size: 16px; font-weight: 600;">
-                      Action Required
-                    </p>
-                    <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 15px; line-height: 1.6;">
-                      Login to your <a href="${BASE_URL}" style="color: #ec4899; text-decoration: none;">examodels.com</a> account to update your profile settings.
-                    </p>
-                    <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 15px; line-height: 1.6;">
-                      To be considered for Miami Swim Week shows, designers need:
+                      Quick Profile Tips
                     </p>
                     <table width="100%" cellpadding="0" cellspacing="0">
                       <tr>
                         <td style="padding: 10px 0; color: #a1a1aa; font-size: 15px;">
                           <span style="color: #ec4899; margin-right: 10px;">1.</span>
-                          <strong style="color: #fff;">Profile Photo</strong> - A clear, professional headshot or full body shot
+                          <strong style="color: #fff;">Add a Profile Image</strong> - A great headshot or full body shot helps designers put a face to your name
                         </td>
                       </tr>
                       <tr>
                         <td style="padding: 10px 0; color: #a1a1aa; font-size: 15px;">
                           <span style="color: #06b6d4; margin-right: 10px;">2.</span>
-                          <strong style="color: #fff;">Measurements</strong> - Height, bust, waist, hips for swimwear fittings (input measurements in profile settings)
+                          <strong style="color: #fff;">Add Portfolio Content</strong> - Upload your best photos and videos so designers can get a feel for your look and style
                         </td>
                       </tr>
                     </table>
+                    <p style="margin: 20px 0 0; color: #a1a1aa; font-size: 14px; line-height: 1.6;">
+                      Profiles with photos and portfolio content get way more attention from designers — it only takes a few minutes!
+                    </p>
                   </td>
                 </tr>
               </table>
@@ -3322,7 +3322,7 @@ export async function sendMiamiSwimWeekProfileReminderEmail({
                 <tr>
                   <td align="center">
                     <a href="${dashboardUrl}" style="display: inline-block; background: linear-gradient(135deg, #06b6d4 0%, #ec4899 100%); color: white; text-decoration: none; padding: 16px 40px; border-radius: 30px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 15px rgba(236, 72, 153, 0.4);">
-                      Complete My Profile Now
+                      Update My Profile
                     </a>
                   </td>
                 </tr>
