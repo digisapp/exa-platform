@@ -158,7 +158,7 @@ export async function POST(request: NextRequest) {
       const { data: existingModelByInsta } = await adminClient
         .from("models")
         .select("id, email, user_id")
-        .ilike("instagram_handle", escapeIlike(normalizedInstagram))
+        .ilike("instagram_name", escapeIlike(normalizedInstagram))
         .not("user_id", "is", null)  // Only check claimed models
         .single();
 

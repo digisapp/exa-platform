@@ -15,7 +15,6 @@ export async function GET(
     const { username } = await params;
 
     // Get model by username
-    // as any needed: instagram_handle column not in typed models schema
     const { data: model, error: modelError } = await (supabase
       .from("models")
       .select(`
@@ -25,7 +24,7 @@ export async function GET(
         last_name,
         profile_photo_url,
         bio,
-        instagram_handle
+        instagram_name
       `)
       .eq("username", username.toLowerCase())
       .single() as any);
@@ -188,7 +187,7 @@ export async function GET(
         fullName: `${model.first_name || ""} ${model.last_name || ""}`.trim(),
         photo: model.profile_photo_url,
         bio: model.bio,
-        instagram: model.instagram_handle,
+        instagram: model.instagram_name,
       },
       affiliateCode: affiliateCode?.code || null,
       discount: affiliateCode?.discount_type

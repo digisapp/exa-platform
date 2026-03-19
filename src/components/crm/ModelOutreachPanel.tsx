@@ -34,7 +34,7 @@ interface UnclaimedModel {
   first_name: string | null;
   last_name: string | null;
   email: string | null;
-  instagram_handle: string | null;
+  instagram_name: string | null;
   instagram_followers: number | null;
   profile_photo_url: string | null;
   created_at: string;
@@ -64,7 +64,7 @@ export function ModelOutreachPanel() {
     const { data, error } = await (supabase as any)
       .from("models")
       .select(
-        "id, username, first_name, last_name, email, instagram_handle, instagram_followers, profile_photo_url, created_at, user_id, claimed_at, invite_sent_at"
+        "id, username, first_name, last_name, email, instagram_name, instagram_followers, profile_photo_url, created_at, user_id, claimed_at, invite_sent_at"
       )
       .is("user_id", null)
       .is("claimed_at", null)
@@ -93,7 +93,7 @@ export function ModelOutreachPanel() {
     const matchesSearch =
       displayName.includes(q) ||
       (model.email?.toLowerCase().includes(q) ?? false) ||
-      (model.instagram_handle?.toLowerCase().includes(q) ?? false);
+      (model.instagram_name?.toLowerCase().includes(q) ?? false);
 
     const matchesEmail =
       hasEmailFilter === "all" ||
@@ -102,8 +102,8 @@ export function ModelOutreachPanel() {
 
     const matchesInstagram =
       hasInstagramFilter === "all" ||
-      (hasInstagramFilter === "yes" && !!model.instagram_handle) ||
-      (hasInstagramFilter === "no" && !model.instagram_handle);
+      (hasInstagramFilter === "yes" && !!model.instagram_name) ||
+      (hasInstagramFilter === "no" && !model.instagram_name);
 
     const matchesInvite =
       inviteStatusFilter === "all" ||
@@ -116,7 +116,7 @@ export function ModelOutreachPanel() {
   const stats = {
     total: models.length,
     withEmail: models.filter((m) => !!m.email).length,
-    withInstagram: models.filter((m) => !!m.instagram_handle).length,
+    withInstagram: models.filter((m) => !!m.instagram_name).length,
     contacted: models.filter((m) => !!m.invite_sent_at).length,
   };
 
@@ -171,7 +171,7 @@ export function ModelOutreachPanel() {
     const rows = selectedItems.map((m) => [
       getDisplayName(m),
       m.email || "",
-      m.instagram_handle || "",
+      m.instagram_name || "",
       m.instagram_followers?.toString() || "",
       m.created_at ? format(new Date(m.created_at), "yyyy-MM-dd") : "",
     ]);
@@ -403,15 +403,15 @@ export function ModelOutreachPanel() {
                           {model.email}
                         </span>
                       )}
-                      {model.instagram_handle && (
+                      {model.instagram_name && (
                         <a
-                          href={`https://instagram.com/${model.instagram_handle}`}
+                          href={`https://instagram.com/${model.instagram_name}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center gap-1 hover:text-pink-500"
                         >
                           <Instagram className="h-3.5 w-3.5" />@
-                          {model.instagram_handle}
+                          {model.instagram_name}
                         </a>
                       )}
                       <span className="flex items-center gap-1">
