@@ -3,6 +3,7 @@
 -- Replace with proper policies: only service role (webhooks/admin) and applicants viewing their own
 
 DROP POLICY IF EXISTS "Service role full access" ON academy_applications;
+DROP POLICY IF EXISTS "Applicants can view own applications" ON academy_applications;
 
 -- Applicants can view their own applications by email
 CREATE POLICY "Applicants can view own applications" ON academy_applications

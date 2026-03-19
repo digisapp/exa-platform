@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS public.miami_digitals_bookings (
 ALTER TABLE public.miami_digitals_bookings ENABLE ROW LEVEL SECURITY;
 
 -- Only admins can view
+DROP POLICY IF EXISTS "Admins can manage digitals bookings" ON public.miami_digitals_bookings;
 CREATE POLICY "Admins can manage digitals bookings"
   ON public.miami_digitals_bookings
   FOR ALL
