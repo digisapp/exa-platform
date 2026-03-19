@@ -62,6 +62,7 @@ export async function POST(
 
     const { error: modelError } = await supabase.from("models")
       .insert({
+        id: fanId, // Use actor ID so models.id = actors.id
         user_id: fanUserId as string,
         email: fan.email ?? "",
         username: username,

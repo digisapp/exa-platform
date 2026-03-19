@@ -179,9 +179,22 @@ export async function PATCH(
 
         modelUsername = finalUsername;
 
-        // Create the model record
+        // Update actor type to model first to get the actor ID
+        const { data: updatedActor, error: actorError } = await adminClient
+          .from("actors")
+          .update({ type: "model" })
+          .eq("user_id", application.user_id)
+          .select("id")
+          .single();
+
+        if (actorError) {
+          console.error("Error updating actor:", actorError);
+        }
+
+        // Create the model record with id matching actor id
         const { error: modelError } = await adminClient.from("models")
           .insert({
+            ...(updatedActor?.id ? { id: updatedActor.id } : {}),
             user_id: application.user_id,
             email: application.email,
             username: finalUsername,
@@ -198,14 +211,6 @@ export async function PATCH(
         if (modelError) {
           console.error("Error creating model:", modelError);
         }
-
-        // Update actor type to model using admin client
-        const { data: updatedActor, error: actorError } = await adminClient
-          .from("actors")
-          .update({ type: "model" })
-          .eq("user_id", application.user_id)
-          .select("id")
-          .single();
 
         // Delete the old fan record (cleanup)
         if (!actorError && updatedActor?.id) {
