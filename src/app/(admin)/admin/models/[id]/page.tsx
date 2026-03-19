@@ -38,13 +38,12 @@ interface ModelDetails {
   username: string;
   first_name: string | null;
   last_name: string | null;
-  name: string | null;
   email: string | null;
   phone: string | null;
   bio: string | null;
   city: string | null;
   state: string | null;
-  country: string | null;
+  country_code: string | null;
   height: string | null;
   dob: string | null;
   bust: string | null;
@@ -54,13 +53,11 @@ interface ModelDetails {
   shoe_size: string | null;
   hair_color: string | null;
   eye_color: string | null;
-  instagram_handle: string | null;
   instagram_name: string | null;
   instagram_followers: number | null;
-  tiktok_handle: string | null;
+  tiktok_username: string | null;
   tiktok_followers: number | null;
   profile_photo_url: string | null;
-  avatar_url: string | null;
   profile_views: number;
   coin_balance: number;
   withheld_balance: number;
@@ -68,11 +65,10 @@ interface ModelDetails {
   level_cached: string | null;
   is_approved: boolean;
   is_featured: boolean;
-  profile_complete: boolean;
-  availability: string | null;
+  profile_completion_percent: number;
+  availability_status: string | null;
   admin_rating: number | null;
   user_id: string | null;
-  invite_token: string | null;
   claimed_at: string | null;
   created_at: string;
   updated_at: string;
@@ -323,9 +319,9 @@ export default function AdminModelDetailPage() {
 
   const displayName = model.first_name
     ? `${model.first_name} ${model.last_name || ""}`.trim()
-    : model.name || model.username;
+    : model.username;
 
-  const profilePhoto = model.profile_photo_url || model.avatar_url;
+  const profilePhoto = model.profile_photo_url;
 
   const formatDate = (date: string | null) => {
     if (!date) return null;
@@ -348,7 +344,7 @@ export default function AdminModelDetailPage() {
     return age;
   };
 
-  const instagramHandle = model.instagram_name || model.instagram_handle;
+  const instagramHandle = model.instagram_name;
 
   return (
     <div className="container px-8 md:px-16 py-8 space-y-6 max-w-6xl">
@@ -429,7 +425,7 @@ export default function AdminModelDetailPage() {
               <InfoRow label="Phone" value={model.phone || application?.phone} copyable icon={Phone} />
               <InfoRow
                 label="Location"
-                value={[model.city, model.state, model.country].filter(Boolean).join(", ") || null}
+                value={[model.city, model.state, model.country_code].filter(Boolean).join(", ") || null}
                 icon={MapPin}
               />
             </CardContent>
@@ -461,17 +457,17 @@ export default function AdminModelDetailPage() {
                   )}
                 </div>
               )}
-              {model.tiktok_handle && (
+              {model.tiktok_username && (
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-muted-foreground">TikTok</span>
                     <a
-                      href={`https://tiktok.com/@${model.tiktok_handle.replace("@", "")}`}
+                      href={`https://tiktok.com/@${model.tiktok_username.replace("@", "")}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-pink-500 hover:underline"
                     >
-                      @{model.tiktok_handle.replace("@", "")}
+                      @{model.tiktok_username.replace("@", "")}
                     </a>
                   </div>
                   {model.tiktok_followers && (
@@ -481,7 +477,7 @@ export default function AdminModelDetailPage() {
                   )}
                 </div>
               )}
-              {!instagramHandle && !model.tiktok_handle && (
+              {!instagramHandle && !model.tiktok_username && (
                 <p className="text-sm text-muted-foreground">No social accounts linked</p>
               )}
             </CardContent>
@@ -592,7 +588,7 @@ export default function AdminModelDetailPage() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Availability</span>
-                <span className="capitalize font-medium">{model.availability || "Available"}</span>
+                <span className="capitalize font-medium">{model.availability_status || "Available"}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Joined</span>
