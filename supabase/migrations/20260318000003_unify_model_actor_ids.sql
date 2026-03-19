@@ -8,8 +8,7 @@
 --
 -- Safety: storage_path and url columns are NOT modified — files remain accessible
 -- at their original storage locations. Only the model_id reference columns are updated.
-
-BEGIN;
+-- No explicit BEGIN/COMMIT — Supabase CLI auto-wraps migrations in a transaction.
 
 -- Step 1: Create mapping of old model IDs to new (actor) IDs
 CREATE TEMP TABLE model_id_mapping AS
@@ -19,22 +18,71 @@ JOIN public.actors a ON m.user_id = a.user_id
 WHERE m.id != a.id
   AND m.user_id IS NOT NULL;
 
--- Verify no conflicts (new_id must not already exist as a models.id)
+-- Step 2: Pre-flight conflict checks
 DO $$
 DECLARE
   conflict_count INTEGER;
 BEGIN
+  -- Check 1: new_id must not already exist as a models.id
   SELECT COUNT(*) INTO conflict_count
   FROM model_id_mapping mm
   JOIN public.models m ON m.id = mm.new_id;
 
   IF conflict_count > 0 THEN
-    RAISE EXCEPTION 'Found % conflicting IDs — new actor IDs already exist as model IDs', conflict_count;
+    RAISE EXCEPTION 'ABORT: Found % new IDs that already exist as model IDs', conflict_count;
   END IF;
+
+  -- Check 2: Verify no duplicate new_ids in the mapping (would mean two models share a user_id)
+  SELECT COUNT(*) INTO conflict_count
+  FROM (
+    SELECT new_id FROM model_id_mapping GROUP BY new_id HAVING COUNT(*) > 1
+  ) dupes;
+
+  IF conflict_count > 0 THEN
+    RAISE EXCEPTION 'ABORT: Found % duplicate actor IDs in mapping — data corruption', conflict_count;
+  END IF;
+
+  -- Check 3: Verify no PK/UNIQUE conflicts in child tables that use model_id as PK
+  -- (top_models_stats, model_analytics/lifestyle_activity_summaries)
+  -- These would fail if a row with new_id already exists
+  DECLARE
+    tbl TEXT;
+    child_conflicts INTEGER;
+  BEGIN
+    FOR tbl IN
+      SELECT rel.relname
+      FROM pg_constraint con
+      JOIN pg_class rel ON con.conrelid = rel.oid
+      JOIN pg_namespace nsp ON rel.relnamespace = nsp.oid
+      JOIN pg_attribute att ON att.attrelid = con.conrelid AND att.attnum = ANY(con.conkey)
+      WHERE con.confrelid = 'public.models'::regclass
+        AND con.contype = 'f'
+        AND nsp.nspname = 'public'
+        AND att.attname = 'model_id'
+        -- Only check tables where model_id has a PK or UNIQUE constraint
+        AND EXISTS (
+          SELECT 1 FROM pg_constraint uc
+          WHERE uc.conrelid = con.conrelid
+            AND uc.contype IN ('p', 'u')
+            AND att.attnum = ANY(uc.conkey)
+        )
+    LOOP
+      EXECUTE format(
+        'SELECT COUNT(*) FROM public.%I existing
+         JOIN model_id_mapping mm ON existing.model_id = mm.new_id',
+        tbl
+      ) INTO child_conflicts;
+
+      IF child_conflicts > 0 THEN
+        RAISE EXCEPTION 'ABORT: % rows in %.model_id would conflict with new IDs (PK/UNIQUE violation)',
+          child_conflicts, tbl;
+      END IF;
+    END LOOP;
+  END;
 END $$;
 
--- Step 2: Dynamically drop all FK constraints referencing models(id),
--- update the referencing columns, then re-add the constraints.
+-- Step 3: Drop all FK constraints referencing models(id),
+-- update the referencing columns, update models.id, then re-add constraints.
 DO $$
 DECLARE
   r RECORD;
@@ -53,9 +101,9 @@ BEGIN
   END IF;
 
   -- Collect all FK constraints referencing models(id)
-  -- and store their full definitions for re-creation
+  -- Use DISTINCT ON to avoid duplicates from composite keys
   FOR r IN
-    SELECT
+    SELECT DISTINCT ON (con.conname)
       con.conname AS constraint_name,
       rel.relname AS table_name,
       att.attname AS column_name,
@@ -67,6 +115,7 @@ BEGIN
     WHERE con.confrelid = 'public.models'::regclass
       AND con.contype = 'f'
       AND nsp.nspname = 'public'
+    ORDER BY con.conname
   LOOP
     -- Save constraint definition for re-creation
     constraint_defs := array_append(constraint_defs,
@@ -88,12 +137,10 @@ BEGIN
     END IF;
   END LOOP;
 
-  -- Step 3: Update the models.id primary key
-  -- First drop the PK constraint
+  -- Update the models.id primary key
   ALTER TABLE public.models DROP CONSTRAINT models_pkey;
   RAISE NOTICE 'Dropped models primary key';
 
-  -- Update models.id
   UPDATE public.models m
   SET id = mm.new_id
   FROM model_id_mapping mm
@@ -101,18 +148,17 @@ BEGIN
   GET DIAGNOSTICS update_count = ROW_COUNT;
   RAISE NOTICE 'Updated % model IDs', update_count;
 
-  -- Re-add primary key
   ALTER TABLE public.models ADD CONSTRAINT models_pkey PRIMARY KEY (id);
   RAISE NOTICE 'Re-added models primary key';
 
-  -- Step 4: Re-add all FK constraints
+  -- Re-add all FK constraints
   FOREACH def IN ARRAY constraint_defs
   LOOP
     EXECUTE def;
   END LOOP;
   RAISE NOTICE 'Re-added all % FK constraints', array_length(constraint_defs, 1);
 
-  -- Step 5: Verification — ensure zero mismatches remain
+  -- Final verification — ensure zero mismatches remain
   SELECT COUNT(*) INTO remaining
   FROM public.models m
   JOIN public.actors a ON m.user_id = a.user_id
@@ -125,5 +171,3 @@ BEGIN
 END $$;
 
 DROP TABLE IF EXISTS model_id_mapping;
-
-COMMIT;
