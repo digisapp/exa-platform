@@ -1,55 +1,117 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 
+const RESEND_API_KEY = process.env.RESEND_API_KEY!;
+
+// Basic spam indicators
+const SPAM_PATTERNS = [
+  /\b(viagra|cialis|lottery|winner|inheritance|nigerian|prince)\b/i,
+  /\b(buy now|act now|limited time|click here|unsubscribe)\b/i,
+  /\b(casino|betting|crypto.?currency|bitcoin.?invest)\b/i,
+];
+
+function isLikelySpam(subject: string, text: string): boolean {
+  const combined = `${subject} ${text}`;
+  let score = 0;
+  for (const pattern of SPAM_PATTERNS) {
+    if (pattern.test(combined)) score++;
+  }
+  // Flag if 2+ spam patterns match
+  return score >= 2;
+}
+
+/**
+ * Parse "Name <email>" format into { name, email }
+ */
+function parseEmailAddress(raw: string): { name: string; email: string } {
+  const match = raw.match(/^(.+?)\s*<(.+?)>$/);
+  if (match) {
+    return { name: match[1].trim(), email: match[2].trim() };
+  }
+  return { name: raw.split("@")[0] || "", email: raw.trim() };
+}
+
 /**
  * Resend Inbound Webhook
  *
- * Receives inbound emails from Resend when someone replies to an email
- * sent from examodels.com. Stores the email in the emails table.
+ * Webhook payload for email.received only contains metadata.
+ * Must call GET /emails/receiving/{id} to get the actual email body.
  *
- * Setup in Resend Dashboard:
- * 1. Go to Resend > Webhooks
- * 2. Add endpoint: https://www.examodels.com/api/webhooks/resend
- * 3. Subscribe to: email.received (inbound)
- *
- * For inbound emails specifically:
- * 1. Go to Resend > Domains > examodels.com > Inbound
- * 2. Enable inbound and set webhook URL
+ * Resend payload format:
+ * {
+ *   "type": "email.received",
+ *   "created_at": "...",
+ *   "data": {
+ *     "email_id": "uuid",
+ *     "from": "Name <email>",
+ *     "to": ["email"],
+ *     "cc": [],
+ *     "bcc": [],
+ *     "subject": "...",
+ *     "message_id": "<...>",
+ *     "attachments": [...]
+ *   }
+ * }
  */
 export async function POST(request: NextRequest) {
   try {
     const payload = await request.json();
-
-    // Resend sends different event types
     const eventType = payload.type;
 
     // Handle inbound email
     if (eventType === "email.received") {
       const data = payload.data;
-      const supabaseAdmin = createServiceRoleClient();
+      const emailId = data.email_id;
 
-      // Extract sender info
-      const fromEmail = data.from || data.envelope?.from || "";
-      const fromName = data.from_name || fromEmail.split("@")[0] || "";
-      const toEmail = Array.isArray(data.to) ? data.to[0] : (data.to || "");
-      const subject = data.subject || "(no subject)";
-      const bodyHtml = data.html || null;
-      const bodyText = data.text || null;
-      const cc = Array.isArray(data.cc) ? data.cc.join(", ") : (data.cc || null);
+      if (!emailId) {
+        console.error("Resend webhook: missing email_id");
+        return NextResponse.json({ error: "Missing email_id" }, { status: 400 });
+      }
 
-      // Try to find the original outbound email this is replying to (thread matching)
+      // Fetch the full email content from Resend API
+      const resendRes = await fetch(`https://api.resend.com/emails/receiving/${emailId}`, {
+        headers: { Authorization: `Bearer ${RESEND_API_KEY}` },
+      });
+
+      if (!resendRes.ok) {
+        console.error("Failed to fetch email from Resend:", resendRes.status);
+        return NextResponse.json({ error: "Failed to fetch email content" }, { status: 500 });
+      }
+
+      const fullEmail = await resendRes.json();
+
+      // Parse sender
+      const fromRaw = fullEmail.from || data.from || "";
+      const { name: fromName, email: fromEmail } = parseEmailAddress(fromRaw);
+      const toEmail = Array.isArray(fullEmail.to) ? fullEmail.to[0] : (fullEmail.to || "");
+      const subject = fullEmail.subject || data.subject || "(no subject)";
+      const bodyHtml = fullEmail.html || null;
+      const bodyText = fullEmail.text || null;
+      const cc = Array.isArray(fullEmail.cc) ? fullEmail.cc.join(", ") : null;
+      const headers = fullEmail.headers || {};
+      const messageId = fullEmail.message_id || data.message_id || null;
+
+      // Spam check
+      if (isLikelySpam(subject, bodyText || "")) {
+        console.log(`Spam detected from ${fromEmail}: ${subject}`);
+        return NextResponse.json({ success: true, spam: true });
+      }
+
+      const supabaseAdmin = createServiceRoleClient() as any;
+
+      // Thread detection: In-Reply-To header → message_id match → subject match → sender match
       let threadId = null;
-      const inReplyTo = data.headers?.["in-reply-to"] || data.headers?.["In-Reply-To"];
-      const references = data.headers?.["references"] || data.headers?.["References"];
+
+      // 1. Try In-Reply-To / References headers
+      const inReplyTo = headers["in-reply-to"] || headers["In-Reply-To"];
+      const references = headers["references"] || headers["References"];
 
       if (inReplyTo || references) {
-        // Extract Resend message ID from headers
         const refIds = (references || inReplyTo || "").split(/\s+/).filter(Boolean);
         for (const refId of refIds) {
-          // Clean angle brackets: <msg_id> -> msg_id
           const cleanId = refId.replace(/[<>]/g, "");
-          const { data: parentEmail } = await (supabaseAdmin
-            .from("emails" as any) as any)
+          const { data: parentEmail } = await supabaseAdmin
+            .from("emails")
             .select("id")
             .eq("resend_message_id", cleanId)
             .single();
@@ -61,10 +123,30 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // If no thread found by headers, try matching by from_email + recent outbound
+      // 2. Subject-based fallback (strip Re:/Fwd: and match)
+      if (!threadId && subject) {
+        const cleanSubject = subject.replace(/^(Re|Fwd|Fw):\s*/gi, "").trim();
+        if (cleanSubject) {
+          const { data: subjectMatch } = await supabaseAdmin
+            .from("emails")
+            .select("id")
+            .eq("direction", "outbound")
+            .eq("to_email", fromEmail)
+            .ilike("subject", cleanSubject)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .single();
+
+          if (subjectMatch) {
+            threadId = subjectMatch.id;
+          }
+        }
+      }
+
+      // 3. Sender-based fallback (most recent outbound to this sender)
       if (!threadId) {
-        const { data: recentOutbound } = await (supabaseAdmin
-          .from("emails" as any) as any)
+        const { data: recentOutbound } = await supabaseAdmin
+          .from("emails")
           .select("id")
           .eq("direction", "outbound")
           .eq("to_email", fromEmail)
@@ -77,10 +159,34 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      // User linking: match from_email to a model, fan, or brand
+      let linkedActorId: string | null = null;
+      let linkedActorType: string | null = null;
+
+      // Look up user by email in auth.users (service role can list users)
+      const { data: { users } } = await supabaseAdmin.auth.admin.listUsers({
+        filter: fromEmail,
+        perPage: 1,
+      });
+
+      if (users && users.length > 0) {
+        const { data: linkedActor } = await supabaseAdmin
+          .from("actors")
+          .select("id, type")
+          .eq("user_id", users[0].id)
+          .single();
+
+        if (linkedActor) {
+          linkedActorId = linkedActor.id;
+          linkedActorType = linkedActor.type;
+        }
+      }
+
       // Store the inbound email
-      await (supabaseAdmin.from("emails" as any) as any).insert({
+      await supabaseAdmin.from("emails").insert({
         direction: "inbound",
         thread_id: threadId,
+        resend_message_id: emailId,
         from_email: fromEmail,
         from_name: fromName,
         to_email: toEmail,
@@ -90,15 +196,18 @@ export async function POST(request: NextRequest) {
         cc,
         status: "received",
         metadata: {
-          resend_event_id: payload.id,
-          headers: data.headers || {},
-          attachments: data.attachments?.length || 0,
+          message_id: messageId,
+          headers,
+          attachments: fullEmail.attachments?.length || 0,
+          linked_actor_id: linkedActorId,
+          linked_actor_type: linkedActorType,
         },
       });
 
-      // If this is a reply to an outbound email, mark the outbound as "replied"
+      // Mark the original outbound as "replied"
       if (threadId) {
-        await (supabaseAdmin.from("emails" as any) as any)
+        await supabaseAdmin
+          .from("emails")
           .update({ status: "replied", replied_at: new Date().toISOString() })
           .eq("id", threadId)
           .eq("direction", "outbound");
@@ -111,9 +220,10 @@ export async function POST(request: NextRequest) {
     if (eventType === "email.delivered" || eventType === "email.bounced") {
       const messageId = payload.data?.email_id;
       if (messageId) {
-        const supabaseAdmin = createServiceRoleClient();
+        const supabaseAdmin = createServiceRoleClient() as any;
         const newStatus = eventType === "email.delivered" ? "delivered" : "bounced";
-        await (supabaseAdmin.from("emails" as any) as any)
+        await supabaseAdmin
+          .from("emails")
           .update({ status: newStatus })
           .eq("resend_message_id", messageId)
           .eq("direction", "outbound");

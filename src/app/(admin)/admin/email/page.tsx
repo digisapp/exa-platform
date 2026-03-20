@@ -300,12 +300,33 @@ export default function AdminEmailPage() {
               </p>
             </div>
 
-            {/* Body */}
+            {/* Linked user */}
+            {selectedEmail.metadata?.linked_actor_type && (
+              <div className="flex items-center gap-2 text-xs">
+                <Badge variant="outline" className="text-[10px]">
+                  {selectedEmail.metadata.linked_actor_type}
+                </Badge>
+                <span className="text-muted-foreground">
+                  Matched to a registered {selectedEmail.metadata.linked_actor_type}
+                </span>
+              </div>
+            )}
+
+            {/* Body — sandboxed iframe for HTML, plain text fallback */}
             <div className="border-t pt-4">
               {selectedEmail.body_html ? (
-                <div
-                  className="prose prose-sm dark:prose-invert max-w-none [&_img]:max-w-full [&_a]:text-blue-500"
-                  dangerouslySetInnerHTML={{ __html: selectedEmail.body_html }}
+                <iframe
+                  srcDoc={selectedEmail.body_html}
+                  sandbox=""
+                  className="w-full min-h-[300px] border rounded-lg bg-white"
+                  style={{ height: "auto" }}
+                  onLoad={(e) => {
+                    const iframe = e.target as HTMLIFrameElement;
+                    if (iframe.contentDocument) {
+                      iframe.style.height = Math.max(300, iframe.contentDocument.body.scrollHeight + 32) + "px";
+                    }
+                  }}
+                  title="Email content"
                 />
               ) : (
                 <pre className="whitespace-pre-wrap text-sm font-sans">
