@@ -2,7 +2,6 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { FloatingOrbs } from "@/components/ui/floating-orbs";
 import {
   MapPin,
   Instagram,
@@ -320,8 +319,7 @@ export default async function ModelProfilePage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <div className="min-h-screen relative">
-        <FloatingOrbs />
+      <div className="min-h-screen relative bg-black">
 
         {/* Track profile view */}
         <ViewTracker modelId={model.id} />
