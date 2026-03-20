@@ -322,7 +322,7 @@ export default async function DashboardPage() {
         ? (adminClient.from("fans") as any).select("id, display_name, username, avatar_url").in("id", activityFanIds)
         : { data: [] },
       activityBrandIds.length > 0
-        ? (adminClient.from("brands") as any).select("id, company_name, logo_url").in("id", activityBrandIds)
+        ? (adminClient.from("brands") as any).select("id, company_name, username, logo_url").in("id", activityBrandIds)
         : { data: [] },
       activityModelUserIds.length > 0
         ? (adminClient.from("models") as any).select("id, user_id, first_name, last_name, username, profile_photo_url").in("user_id", activityModelUserIds)
@@ -333,14 +333,16 @@ export default async function DashboardPage() {
       activityActorsMap.set(fan.id, {
         type: "fan",
         name: fan.display_name || fan.username || "Fan",
-        avatar: fan.avatar_url
+        avatar: fan.avatar_url,
+        username: fan.username || null,
       });
     }
     for (const brand of activityBrands.data || []) {
       activityActorsMap.set(brand.id, {
         type: "brand",
         name: brand.company_name || "Brand",
-        avatar: brand.logo_url
+        avatar: brand.logo_url,
+        username: brand.username || null,
       });
     }
     for (const actorData of activityActors || []) {
@@ -686,9 +688,6 @@ export default async function DashboardPage() {
           <CardTitle className="flex items-center gap-2">
             <Activity className="h-5 w-5 text-pink-500" />
             Recent Activity
-            {activityFeed.length > 0 && (
-              <Badge className="bg-pink-500 text-white ml-2">{activityFeed.length}</Badge>
-            )}
           </CardTitle>
           <Button variant="ghost" size="sm" asChild>
             <Link href="/chats" className="text-pink-500">
@@ -702,11 +701,19 @@ export default async function DashboardPage() {
             <div className="space-y-3">
               {activityFeed.map((item) => {
                 const timeAgo = getTimeAgo(item.createdAt);
-                return (
-                  <div
-                    key={item.id}
-                    className="flex items-center gap-3 p-3 rounded-xl bg-white/50 dark:bg-muted/50 border border-transparent"
-                  >
+                const href =
+                  item.type === "message" && item.conversationId
+                    ? `/chats/${item.conversationId}`
+                    : item.type === "follower" && item.actor?.username
+                      ? `/${item.actor.username}`
+                      : item.type === "tip"
+                        ? "/wallet"
+                        : item.type === "follower"
+                          ? "/followers"
+                          : null;
+
+                const content = (
+                  <>
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
                       item.type === "tip"
                         ? "bg-gradient-to-br from-amber-500/20 to-yellow-500/20"
@@ -720,7 +727,7 @@ export default async function DashboardPage() {
                           alt={item.actor.name}
                           width={40}
                           height={40}
-                          className="rounded-full object-cover"
+                          className="rounded-full object-cover w-10 h-10"
                         />
                       ) : item.type === "tip" ? (
                         <Coins className="h-5 w-5 text-amber-500" />
@@ -748,17 +755,8 @@ export default async function DashboardPage() {
                       <p className="text-xs text-muted-foreground mt-0.5">{timeAgo}</p>
                     </div>
 
-                    {item.type === "message" && item.conversationId && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        asChild
-                        className="flex-shrink-0 text-blue-500 hover:text-blue-600"
-                      >
-                        <Link href={`/chats/${item.conversationId}`}>
-                          Reply
-                        </Link>
-                      </Button>
+                    {item.type === "message" && (
+                      <span className="flex-shrink-0 text-xs font-medium text-blue-500">Reply</span>
                     )}
                     {item.type === "tip" && (
                       <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/30 flex-shrink-0">
@@ -770,6 +768,23 @@ export default async function DashboardPage() {
                         New
                       </Badge>
                     )}
+                  </>
+                );
+
+                return href ? (
+                  <Link
+                    key={item.id}
+                    href={href}
+                    className="flex items-center gap-3 p-3 rounded-xl bg-white/50 dark:bg-muted/50 hover:bg-white dark:hover:bg-muted transition-colors border border-transparent hover:border-pink-500/20"
+                  >
+                    {content}
+                  </Link>
+                ) : (
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-3 p-3 rounded-xl bg-white/50 dark:bg-muted/50 border border-transparent"
+                  >
+                    {content}
                   </div>
                 );
               })}
