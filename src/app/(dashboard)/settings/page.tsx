@@ -22,6 +22,8 @@ import { ModelRatesTab } from "@/components/settings/ModelRatesTab";
 import { ModelCollabsTab } from "@/components/settings/ModelCollabsTab";
 import { ModelPrivacyTab } from "@/components/settings/ModelPrivacyTab";
 import { ModelFollowersTab } from "@/components/settings/ModelFollowersTab";
+import { useTranslation } from "@/i18n";
+import { cn } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -79,6 +81,7 @@ export default function ProfilePage() {
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const supabase = createClient();
+  const { t, locale, setLocale } = useTranslation();
 
   // Check if username can be changed (14 day cooldown like Instagram)
   const canChangeUsername = () => {
@@ -1125,8 +1128,8 @@ export default function ProfilePage() {
     <div className="max-w-3xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Settings</h1>
-          <p className="text-muted-foreground mt-1">Manage your profile and account settings</p>
+          <h1 className="text-3xl font-bold">{t.settings.title}</h1>
+          <p className="text-muted-foreground mt-1">{locale === "es" ? "Administra tu perfil y configuración de cuenta" : "Manage your profile and account settings"}</p>
         </div>
         {/* Account type and stats */}
         <div className="flex items-center gap-3">
@@ -1141,27 +1144,64 @@ export default function ProfilePage() {
         </div>
       </div>
 
+      {/* Language Toggle */}
+      <Card>
+        <CardContent className="flex items-center justify-between py-4">
+          <div className="flex items-center gap-3">
+            <Globe className="h-5 w-5 text-muted-foreground" />
+            <div>
+              <p className="text-sm font-medium">{t.settings.language}</p>
+              <p className="text-xs text-muted-foreground">{t.settings.languageDesc}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1 rounded-full bg-muted p-1">
+            <button
+              onClick={() => setLocale("en")}
+              className={cn(
+                "px-3 py-1.5 rounded-full text-sm font-medium transition-all",
+                locale === "en"
+                  ? "bg-white dark:bg-zinc-800 shadow-sm text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              English
+            </button>
+            <button
+              onClick={() => setLocale("es")}
+              className={cn(
+                "px-3 py-1.5 rounded-full text-sm font-medium transition-all",
+                locale === "es"
+                  ? "bg-white dark:bg-zinc-800 shadow-sm text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Español
+            </button>
+          </div>
+        </CardContent>
+      </Card>
+
       <Tabs defaultValue="profile" className="space-y-6">
         <TabsList>
           <TabsTrigger value="profile">
             <User className="h-4 w-4 mr-2" />
-            Profile
+            {t.settings.profile}
           </TabsTrigger>
           <TabsTrigger value="rates">
             <DollarSign className="h-4 w-4 mr-2" />
-            Rates
+            {t.settings.rates}
           </TabsTrigger>
           <TabsTrigger value="collabs">
             <Handshake className="h-4 w-4 mr-2" />
-            Collabs
+            {t.settings.collabs}
           </TabsTrigger>
           <TabsTrigger value="followers" onClick={loadFollowers}>
             <Users className="h-4 w-4 mr-2" />
-            Followers
+            {t.followers.title}
           </TabsTrigger>
           <TabsTrigger value="privacy">
             <Lock className="h-4 w-4 mr-2" />
-            Privacy
+            {t.settings.privacy}
           </TabsTrigger>
         </TabsList>
 
@@ -1210,7 +1250,7 @@ export default function ProfilePage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Basic Information</CardTitle>
+              <CardTitle>{locale === "es" ? "Información Básica" : "Basic Information"}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Username - Full Width */}
@@ -1268,7 +1308,7 @@ export default function ProfilePage() {
               {/* First Name and Last Name - Same Row */}
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="first_name">First Name</Label>
+                  <Label htmlFor="first_name">{t.settings.firstName}</Label>
                   <Input
                     id="first_name"
                     value={model.first_name || ""}
@@ -1276,7 +1316,7 @@ export default function ProfilePage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="last_name">Last Name</Label>
+                  <Label htmlFor="last_name">{t.settings.lastName}</Label>
                   <Input
                     id="last_name"
                     value={model.last_name || ""}
@@ -1285,7 +1325,7 @@ export default function ProfilePage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="bio">Bio</Label>
+                <Label htmlFor="bio">{t.settings.bio}</Label>
                 <Textarea
                   id="bio"
                   value={model.bio || ""}
@@ -1362,12 +1402,12 @@ export default function ProfilePage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Location</CardTitle>
+              <CardTitle>{t.settings.location}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="city">City</Label>
+                  <Label htmlFor="city">{t.settings.city}</Label>
                   <Input
                     id="city"
                     value={model.city || ""}
@@ -1375,7 +1415,7 @@ export default function ProfilePage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="state">State</Label>
+                  <Label htmlFor="state">{t.settings.state}</Label>
                   <Select
                     value={model.state || ""}
                     onValueChange={(v) => setModel({ ...model, state: v })}
@@ -1587,13 +1627,13 @@ export default function ProfilePage() {
 
           <Card id="measurements">
             <CardHeader>
-              <CardTitle>Measurements</CardTitle>
+              <CardTitle>{t.settings.measurements}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Row 1: Height and Measurements */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="height">Height</Label>
+                  <Label htmlFor="height">{t.settings.height}</Label>
                   <Input
                     id="height"
                     value={model.height || ""}
@@ -1693,7 +1733,7 @@ export default function ProfilePage() {
             disabled={saving}
             className="w-full bg-gradient-to-r from-pink-500 to-violet-500"
           >
-            {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : "Save Changes"}
+            {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t.settings.saving}</> : t.settings.save}
           </Button>
         </TabsContent>
 
@@ -1712,7 +1752,7 @@ export default function ProfilePage() {
       <div className="sticky bottom-0 z-10 -mx-4 px-4 py-3 bg-background/95 backdrop-blur-sm border-t sm:relative sm:mx-0 sm:px-0 sm:py-0 sm:bg-transparent sm:backdrop-blur-none sm:border-0">
         <div className="flex justify-end gap-4">
           <Button variant="outline" onClick={() => router.push("/dashboard")} className="hidden sm:inline-flex">
-            Cancel
+            {t.settings.cancel}
           </Button>
           <Button
             onClick={handleSave}
@@ -1722,10 +1762,10 @@ export default function ProfilePage() {
             {saving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
+                {t.settings.saving}
               </>
             ) : (
-              "Save Changes"
+              t.settings.save
             )}
           </Button>
         </div>

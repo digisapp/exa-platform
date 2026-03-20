@@ -6,6 +6,7 @@ import { DashboardClientWrapper } from "@/components/layout/DashboardClientWrapp
 import { ActivityTracker } from "@/components/ActivityTracker";
 import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 import { RouteFocusManager } from "@/components/layout/RouteFocusManager";
+import { I18nProvider } from "@/i18n";
 
 // Prevent caching to ensure fresh auth state on every request
 export const dynamic = 'force-dynamic';
@@ -104,6 +105,7 @@ export default async function DashboardLayout({
   }
 
   return (
+    <I18nProvider>
     <CoinBalanceProvider initialBalance={coinBalance}>
       <div className="min-h-screen bg-background">
         <RouteFocusManager />
@@ -133,5 +135,6 @@ export default async function DashboardLayout({
         />
       </div>
     </CoinBalanceProvider>
+    </I18nProvider>
   );
 }

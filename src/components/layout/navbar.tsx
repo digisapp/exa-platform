@@ -36,6 +36,7 @@ import {
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { useCoinBalanceOptional } from "@/contexts/CoinBalanceContext";
+import { useTranslation } from "@/i18n";
 
 interface NavbarProps {
   user?: {
@@ -51,27 +52,6 @@ interface NavbarProps {
 
 const publicLinks: { href: string; label: string; icon: any }[] = [];
 
-const modelLinks = [
-  { href: "/dashboard", label: "Home", icon: Home },
-  { href: "/chats", label: "Chats", icon: MessageCircle },
-  { href: "/content", label: "Content", icon: Images },
-];
-
-const fanLinks = [
-  { href: "/dashboard", label: "Home", icon: Home },
-  { href: "/models", label: "Explore", icon: Users },
-  { href: "/chats", label: "Chats", icon: MessageCircle },
-  { href: "/my-bids", label: "My Bids", icon: Gavel },
-];
-
-const brandLinks = [
-  { href: "/dashboard", label: "Home", icon: Home },
-  { href: "/models", label: "Explore", icon: Users },
-  { href: "/favorites", label: "Favorites", icon: Heart },
-  { href: "/chats", label: "Chats", icon: MessageCircle },
-  { href: "/campaigns", label: "Campaigns", icon: Megaphone },
-  { href: "/brands/content", label: "Content", icon: FolderDown },
-];
 
 const adminLinks = [
   { href: "/admin", label: "Home", icon: Home },
@@ -84,14 +64,37 @@ export function Navbar({ user, actorType, unreadCount = 0 }: NavbarProps) {
   const pathname = usePathname();
   const coinBalanceContext = useCoinBalanceOptional();
   const coinBalance = coinBalanceContext?.balance ?? 0;
+  const { t } = useTranslation();
+
+  // Translated nav links
+  const translatedModelLinks = [
+    { href: "/dashboard", label: t.nav.home, icon: Home },
+    { href: "/chats", label: t.nav.chats, icon: MessageCircle },
+    { href: "/content", label: t.nav.content, icon: Images },
+  ];
+  const translatedFanLinks = [
+    { href: "/dashboard", label: t.nav.home, icon: Home },
+    { href: "/models", label: t.nav.explore, icon: Users },
+    { href: "/chats", label: t.nav.chats, icon: MessageCircle },
+    { href: "/my-bids", label: t.nav.myBids, icon: Gavel },
+  ];
+  const translatedBrandLinks = [
+    { href: "/dashboard", label: t.nav.home, icon: Home },
+    { href: "/models", label: t.nav.explore, icon: Users },
+    { href: "/favorites", label: t.nav.favorites, icon: Heart },
+    { href: "/chats", label: t.nav.chats, icon: MessageCircle },
+    { href: "/campaigns", label: t.nav.campaigns, icon: Megaphone },
+    { href: "/brands/content", label: t.nav.content, icon: FolderDown },
+  ];
+
   const links = actorType === "admin"
     ? adminLinks
     : actorType === "model"
-      ? modelLinks
+      ? translatedModelLinks
       : actorType === "fan"
-        ? fanLinks
+        ? translatedFanLinks
         : actorType === "brand"
-          ? brandLinks
+          ? translatedBrandLinks
           : publicLinks;
 
   const isLinkActive = (href: string) => {
@@ -156,14 +159,14 @@ export function Navbar({ user, actorType, unreadCount = 0 }: NavbarProps) {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
                     <div className="px-3 py-2 text-center">
-                      <p className="text-xs text-muted-foreground">Available Balance</p>
+                      <p className="text-xs text-muted-foreground">{t.nav.availableBalance}</p>
                       <p className="text-xl font-bold text-yellow-500">{coinBalance.toLocaleString()}</p>
                     </div>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
                       <Link href="/wallet" className="cursor-pointer justify-center">
                         <Plus className="mr-2 h-4 w-4" />
-                        Buy Coins
+                        {t.nav.buyCoins}
                       </Link>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -191,7 +194,7 @@ export function Navbar({ user, actorType, unreadCount = 0 }: NavbarProps) {
                     <DropdownMenuItem asChild>
                       <Link href="/wallet" className="cursor-pointer">
                         <Plus className="mr-2 h-4 w-4" />
-                        Buy Coins
+                        {t.nav.buyCoins}
                       </Link>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -247,7 +250,7 @@ export function Navbar({ user, actorType, unreadCount = 0 }: NavbarProps) {
                     <DropdownMenuItem asChild>
                       <Link href="/wallet" className="cursor-pointer">
                         <Coins className="mr-2 h-4 w-4" />
-                        Wallet
+                        {t.nav.wallet}
                         <span className="ml-auto text-xs text-muted-foreground">
                           {coinBalance.toLocaleString()}
                         </span>
@@ -259,13 +262,13 @@ export function Navbar({ user, actorType, unreadCount = 0 }: NavbarProps) {
                       <DropdownMenuItem asChild>
                         <Link href="/my-bids" className="cursor-pointer">
                           <Gavel className="mr-2 h-4 w-4" />
-                          My Bids
+                          {t.nav.myBids}
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
                         <Link href="/my-content" className="cursor-pointer">
                           <FolderHeart className="mr-2 h-4 w-4" />
-                          My Content
+                          {t.nav.myContent}
                         </Link>
                       </DropdownMenuItem>
                     </>
@@ -275,25 +278,25 @@ export function Navbar({ user, actorType, unreadCount = 0 }: NavbarProps) {
                       <DropdownMenuItem asChild>
                         <Link href="/contracts" className="cursor-pointer">
                           <FileText className="mr-2 h-4 w-4" />
-                          Contracts
+                          {t.nav.contracts}
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
                         <Link href="/brands/content" className="cursor-pointer">
                           <FolderDown className="mr-2 h-4 w-4" />
-                          Content
+                          {t.nav.content}
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
                         <Link href="/brands/analytics" className="cursor-pointer">
                           <BarChart3 className="mr-2 h-4 w-4" />
-                          Analytics
+                          {t.nav.analytics}
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
                         <Link href="/brands/subscription" className="cursor-pointer">
                           <Crown className="mr-2 h-4 w-4" />
-                          Subscription
+                          {t.nav.subscription}
                         </Link>
                       </DropdownMenuItem>
                     </>
@@ -303,19 +306,19 @@ export function Navbar({ user, actorType, unreadCount = 0 }: NavbarProps) {
                       <DropdownMenuItem asChild>
                         <Link href="/bookings" className="cursor-pointer">
                           <Calendar className="mr-2 h-4 w-4" />
-                          Bookings
+                          {t.nav.bookings}
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
                         <Link href="/analytics" className="cursor-pointer">
                           <BarChart3 className="mr-2 h-4 w-4" />
-                          Analytics
+                          {t.nav.analytics}
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
                         <Link href="/comp-card" className="cursor-pointer">
                           <Camera className="mr-2 h-4 w-4" />
-                          Comp Card
+                          {t.nav.compCard}
                         </Link>
                       </DropdownMenuItem>
                     </>
@@ -323,14 +326,14 @@ export function Navbar({ user, actorType, unreadCount = 0 }: NavbarProps) {
                   <DropdownMenuItem asChild>
                     <Link href="/boost" className="cursor-pointer">
                       <Flame className="mr-2 h-4 w-4 text-orange-500" />
-                      EXA Boost
+                      {t.nav.exaBoost}
                     </Link>
                   </DropdownMenuItem>
                   {actorType === "model" && (
                     <DropdownMenuItem asChild>
                       <Link href="/bids/manage" className="cursor-pointer">
                         <Gavel className="mr-2 h-4 w-4" />
-                        Bids
+                        {t.nav.bids}
                       </Link>
                     </DropdownMenuItem>
                   )}
@@ -338,7 +341,7 @@ export function Navbar({ user, actorType, unreadCount = 0 }: NavbarProps) {
                     <DropdownMenuItem asChild>
                       <Link href="/settings" className="cursor-pointer">
                         <Settings className="mr-2 h-4 w-4" />
-                        Settings
+                        {t.nav.settings}
                       </Link>
                     </DropdownMenuItem>
                   )}
@@ -352,10 +355,10 @@ export function Navbar({ user, actorType, unreadCount = 0 }: NavbarProps) {
           ) : (
             <div className="flex items-center gap-2">
               <Button variant="ghost" asChild>
-                <Link href="/signin">Sign In</Link>
+                <Link href="/signin">{t.nav.signIn}</Link>
               </Button>
               <Button asChild className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600">
-                <Link href="/signup">Sign Up</Link>
+                <Link href="/signup">{t.nav.signUp}</Link>
               </Button>
             </div>
           )}

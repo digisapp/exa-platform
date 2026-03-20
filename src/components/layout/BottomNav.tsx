@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Home, MessageCircle, Coins, Users, Images, Megaphone } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCoinBalanceOptional } from "@/contexts/CoinBalanceContext";
+import { useTranslation } from "@/i18n";
 
 interface BottomNavProps {
   user: {
@@ -21,6 +22,7 @@ export function BottomNav({ user, actorType, unreadCount = 0 }: BottomNavProps) 
   const pathname = usePathname();
   const coinBalanceContext = useCoinBalanceOptional();
   const coinBalance = coinBalanceContext?.balance ?? 0;
+  const { t } = useTranslation();
 
   // Determine home path based on actor type
   const homePath = actorType === "admin" ? "/admin" : "/dashboard";
@@ -45,7 +47,7 @@ export function BottomNav({ user, actorType, unreadCount = 0 }: BottomNavProps) 
           )}
         >
           <Home className="h-5 w-5" />
-          <span className="text-[10px] font-medium">Home</span>
+          <span className="text-[10px] font-medium">{t.nav.home}</span>
         </Link>
 
         {/* Content (for models) or Explore (for fans/brands) */}
@@ -58,7 +60,7 @@ export function BottomNav({ user, actorType, unreadCount = 0 }: BottomNavProps) 
             )}
           >
             <Images className="h-5 w-5" />
-            <span className="text-[10px] font-medium">Content</span>
+            <span className="text-[10px] font-medium">{t.nav.content}</span>
           </Link>
         ) : actorType === "fan" || actorType === "brand" ? (
           <Link
@@ -69,7 +71,7 @@ export function BottomNav({ user, actorType, unreadCount = 0 }: BottomNavProps) 
             )}
           >
             <Users className="h-5 w-5" />
-            <span className="text-[10px] font-medium">Explore</span>
+            <span className="text-[10px] font-medium">{t.nav.explore}</span>
           </Link>
         ) : null}
 
@@ -89,7 +91,7 @@ export function BottomNav({ user, actorType, unreadCount = 0 }: BottomNavProps) 
               </span>
             )}
           </div>
-          <span className="text-[10px] font-medium">Chats</span>
+          <span className="text-[10px] font-medium">{t.nav.chats}</span>
         </Link>
 
         {/* Wallet (for models) or Buy Coins (for fans) or Campaigns (for brands) */}
@@ -102,7 +104,7 @@ export function BottomNav({ user, actorType, unreadCount = 0 }: BottomNavProps) 
             )}
           >
             <Megaphone className="h-5 w-5" />
-            <span className="text-[10px] font-medium">Campaigns</span>
+            <span className="text-[10px] font-medium">{t.nav.campaigns}</span>
           </Link>
         ) : actorType === "fan" ? (
           <Link
@@ -113,7 +115,7 @@ export function BottomNav({ user, actorType, unreadCount = 0 }: BottomNavProps) 
             )}
           >
             <Coins className="h-5 w-5" />
-            <span className="text-[10px] font-medium">Wallet</span>
+            <span className="text-[10px] font-medium">{t.nav.wallet}</span>
           </Link>
         ) : (
           <Link
@@ -149,7 +151,7 @@ export function BottomNav({ user, actorType, unreadCount = 0 }: BottomNavProps) 
               {user.name?.charAt(0) || user.email?.charAt(0) || "U"}
             </AvatarFallback>
           </Avatar>
-          <span className="text-[10px] font-medium">Settings</span>
+          <span className="text-[10px] font-medium">{t.nav.settings}</span>
         </Link>
       </div>
     </nav>
