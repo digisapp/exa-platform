@@ -319,7 +319,7 @@ export default async function ModelProfilePage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <div className="min-h-screen relative bg-black">
+      <div className="min-h-screen relative profile-bg">
 
         {/* Track profile view */}
         <ViewTracker modelId={model.id} />

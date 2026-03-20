@@ -195,6 +195,35 @@
     inset 0 0 80px rgba(255, 105, 180, 0.05);
 }
 
+/* Profile Page — smoky luxury background */
+.profile-bg {
+  background: #0a0a0a;
+  position: relative;
+  overflow: hidden;
+}
+.profile-bg::before {
+  content: '';
+  position: absolute;
+  top: -20%;
+  left: -10%;
+  width: 60%;
+  height: 70%;
+  background: radial-gradient(ellipse, rgba(139, 92, 246, 0.12) 0%, transparent 70%);
+  filter: blur(80px);
+  pointer-events: none;
+}
+.profile-bg::after {
+  content: '';
+  position: absolute;
+  bottom: -10%;
+  right: -15%;
+  width: 55%;
+  height: 60%;
+  background: radial-gradient(ellipse, rgba(236, 72, 153, 0.10) 0%, transparent 70%);
+  filter: blur(80px);
+  pointer-events: none;
+}
+
 /* Profile Card - Enhanced pop effect */
 .profile-card {
   background: linear-gradient(
