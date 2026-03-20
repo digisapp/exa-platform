@@ -11,7 +11,6 @@ import {
   Shield,
   Users,
   DollarSign,
-  XCircle,
 } from "lucide-react";
 import { ModelSignupDialogES } from "@/components/auth/ModelSignupDialogES";
 import type { Metadata } from "next";
@@ -316,8 +315,8 @@ export default function ModeloPage() {
               <div>
                 <p className="font-medium">Plataforma Segura y Profesional</p>
                 <p className="text-sm text-muted-foreground">
-                  EXA es para modelos profesionales — no es OnlyFans. Tu imagen
-                  y reputación están protegidas. Contenido limpio y profesional.
+                  EXA es para modelos profesionales. Tu imagen y reputación
+                  están protegidas. Contenido limpio y profesional.
                 </p>
               </div>
             </div>
@@ -332,13 +331,12 @@ export default function ModeloPage() {
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <XCircle className="h-5 w-5 text-red-400 mt-0.5 flex-shrink-0" />
+              <Globe className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
               <div>
-                <p className="font-medium">Otras Plataformas No Te Apoyan</p>
+                <p className="font-medium">Hecha para Modelos Globales</p>
                 <p className="text-sm text-muted-foreground">
-                  Fanfix y Passes son solo para Estados Unidos y en inglés.
-                  OnlyFans tiene estigma de contenido adulto. EXA es global,
-                  profesional, y te da oportunidades reales.
+                  EXA es global, profesional, y te da oportunidades reales —
+                  gigs, shows, bookings, y contenido exclusivo todo en un solo lugar.
                 </p>
               </div>
             </div>
