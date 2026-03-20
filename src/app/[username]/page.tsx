@@ -510,20 +510,6 @@ export default async function ModelProfilePage({ params }: Props) {
             </div>
           )}
 
-          {/* Focus Tags */}
-          {model.focus_tags && model.focus_tags.length > 0 && (
-            <div className="flex items-center justify-center gap-2 mb-4 flex-wrap">
-              {model.focus_tags.map((tag: string) => (
-                <span
-                  key={tag}
-                  className="px-3 py-1 rounded-full text-xs font-medium bg-white/10 text-white/70 border border-white/10"
-                >
-                  {tag.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}
-                </span>
-              ))}
-            </div>
-          )}
-
           {/* Social Media Icons + Follower Counts */}
           {model.show_social_media && (socialLinks.length > 0 || model.email) && (
             <div className="flex items-center justify-center gap-3 mb-5 flex-wrap">
