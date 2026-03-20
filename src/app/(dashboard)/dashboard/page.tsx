@@ -30,7 +30,6 @@ import {
   Gavel,
   Plus,
   Eye,
-  Heart,
   TrendingUp,
 } from "lucide-react";
 import { formatCoins, coinsToUsd, formatUsd } from "@/lib/coin-config";
@@ -106,10 +105,7 @@ export default async function DashboardPage() {
   const oneMonthAgo = new Date();
   oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
 
-  const [{ count: followerCount }, { data: monthlyTransactions }, { data: allBookings }] = await Promise.all([
-    (adminClient.from("follows") as any)
-      .select("*", { count: "exact", head: true })
-      .eq("following_id", actor.id),
+  const [{ data: monthlyTransactions }, { data: allBookings }] = await Promise.all([
     (adminClient.from("coin_transactions") as any)
       .select("amount")
       .eq("actor_id", actor.id)
@@ -404,7 +400,7 @@ export default async function DashboardPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <Link href="/wallet" className="group">
           <Card className="border-amber-500/20 hover:border-amber-500/40 transition-colors">
             <CardContent className="p-4">
@@ -438,18 +434,6 @@ export default async function DashboardPage() {
               </div>
               <p className="text-2xl font-bold tracking-tight">{(model.profile_views || 0).toLocaleString()}</p>
               <p className="text-xs text-muted-foreground mt-0.5">All time</p>
-            </CardContent>
-          </Card>
-        </Link>
-        <Link href="/followers" className="group">
-          <Card className="border-pink-500/20 hover:border-pink-500/40 transition-colors">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                <Heart className="h-4 w-4 text-pink-500" />
-                <span className="text-xs font-medium">Followers</span>
-              </div>
-              <p className="text-2xl font-bold tracking-tight">{(followerCount || 0).toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Total</p>
             </CardContent>
           </Card>
         </Link>
