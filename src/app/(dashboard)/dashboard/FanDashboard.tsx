@@ -108,106 +108,26 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* Low Coin CTA + Live Bids row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {coinBalance < 20 && (
-          <Card className="border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-yellow-500/5">
-            <CardContent className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <Coins className="h-6 w-6 text-amber-500" />
-                <div>
-                  <p className="font-medium">Get coins to start connecting</p>
-                  <p className="text-sm text-muted-foreground">Packages start at just $3.99</p>
-                </div>
+      {/* Low Coin CTA */}
+      {coinBalance < 20 && (
+        <Card className="border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-yellow-500/5">
+          <CardContent className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <Coins className="h-6 w-6 text-amber-500" />
+              <div>
+                <p className="font-medium">Get coins to start connecting</p>
+                <p className="text-sm text-muted-foreground">Packages start at just $3.99</p>
               </div>
-              <Button asChild className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-semibold">
-                <Link href="/coins">
-                  <Coins className="mr-2 h-4 w-4" />
-                  Get Coins
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Live Bids */}
-        <Card className="border-violet-500/20 bg-gradient-to-br from-violet-500/5 to-pink-500/5">
-          <CardHeader className="flex flex-row items-center justify-between pb-3">
-            <CardTitle className="flex items-center gap-2">
-              <Gavel className="h-5 w-5 text-violet-500" />
-              Live Bids
-            </CardTitle>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/bids" className="text-violet-400 hover:text-violet-300">
-                Browse All
-                <ArrowRight className="ml-1 h-4 w-4" />
+            </div>
+            <Button asChild className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-semibold">
+              <Link href="/coins">
+                <Coins className="mr-2 h-4 w-4" />
+                Get Coins
               </Link>
             </Button>
-          </CardHeader>
-          <CardContent>
-            {liveAuctions && liveAuctions.length > 0 ? (
-              <div className="space-y-3">
-                <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent">
-                  {liveAuctions.slice(0, 5).map((auction: any) => {
-                    const myBid = myBidMap.get(auction.id);
-                    const isWinning = myBid?.status === "winning";
-                    const isOutbid = !!myBid && !isWinning;
-                    const price = auction.current_bid || auction.starting_price;
-                    const modelName = auction.model
-                      ? `${auction.model.first_name || ""} ${auction.model.last_name || ""}`.trim() || auction.model.username
-                      : "Model";
-                    const category = auction.category
-                      ? auction.category.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())
-                      : "Auction";
-                    return (
-                      <Link
-                        key={auction.id}
-                        href={`/bids/${auction.id}`}
-                        className="flex items-center gap-3 p-3 rounded-xl bg-zinc-800/40 hover:bg-zinc-800/70 transition-colors"
-                      >
-                        <Avatar className={`h-10 w-10 shrink-0 border-2 ${isWinning ? "border-amber-400" : isOutbid ? "border-red-400/60" : "border-zinc-600"}`}>
-                          <AvatarImage src={auction.model?.profile_photo_url || undefined} />
-                          <AvatarFallback className="bg-zinc-700 text-zinc-300 text-sm">
-                            {modelName[0] || "?"}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate">{modelName}</p>
-                          <p className="text-xs text-zinc-500 truncate">{category}</p>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <div className="flex items-center gap-1 justify-end text-amber-400">
-                            <Coins className="h-3 w-3" />
-                            <span className="text-sm font-semibold">{formatCoins(price)}</span>
-                          </div>
-                          {isWinning && <p className="text-xs text-amber-400 font-medium">Winning</p>}
-                          {isOutbid && <p className="text-xs text-red-400 font-medium">Outbid</p>}
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-                <Button asChild variant="outline" size="sm" className="w-full border-violet-500/30 text-violet-400 hover:bg-violet-500/10">
-                  <Link href="/bids">
-                    <Gavel className="h-3.5 w-3.5 mr-2" />
-                    Browse All Live Bids
-                  </Link>
-                </Button>
-              </div>
-            ) : (
-              <div className="text-center py-6 space-y-3">
-                <p className="text-muted-foreground text-sm">No live bids right now.</p>
-                <Button asChild className="bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600">
-                  <Link href="/bids">
-                    <Gavel className="h-4 w-4 mr-2" />
-                    Check Back Soon
-                  </Link>
-                </Button>
-              </div>
-            )}
           </CardContent>
         </Card>
-      </div>
+      )}
 
       {/* Favorites */}
       {favoriteModels.length > 0 && (
@@ -250,7 +170,59 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
         </div>
       )}
 
-      {/* Featured Models */}
+      {/* Live Bids — only shown when auctions exist */}
+      {liveAuctions && liveAuctions.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="flex items-center gap-2 text-lg font-semibold">
+              <Gavel className="h-5 w-5 text-violet-500" />
+              Live Bids
+            </h3>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/bids" className="text-violet-400 hover:text-violet-300">
+                View All
+                <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
+            {liveAuctions.slice(0, 6).map((auction: any) => {
+              const myBid = myBidMap.get(auction.id);
+              const isWinning = myBid?.status === "winning";
+              const isOutbid = !!myBid && !isWinning;
+              const price = auction.current_bid || auction.starting_price;
+              const modelName = auction.model
+                ? `${auction.model.first_name || ""} ${auction.model.last_name || ""}`.trim() || auction.model.username
+                : "Model";
+              return (
+                <Link
+                  key={auction.id}
+                  href={`/bids/${auction.id}`}
+                  className="flex-shrink-0 w-40 p-3 rounded-xl border border-violet-500/20 bg-gradient-to-br from-violet-500/5 to-pink-500/5 hover:border-violet-500/40 transition-colors"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <Avatar className={`h-8 w-8 shrink-0 border-2 ${isWinning ? "border-amber-400" : isOutbid ? "border-red-400/60" : "border-zinc-600"}`}>
+                      <AvatarImage src={auction.model?.profile_photo_url || undefined} />
+                      <AvatarFallback className="bg-zinc-700 text-zinc-300 text-xs">
+                        {modelName[0] || "?"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <p className="font-medium text-sm truncate">{modelName}</p>
+                  </div>
+                  <div className="flex items-center gap-1 text-amber-400">
+                    <Coins className="h-3 w-3" />
+                    <span className="text-sm font-semibold">{formatCoins(price)}</span>
+                  </div>
+                  {isWinning && <p className="text-xs text-amber-400 font-medium mt-1">Winning</p>}
+                  {isOutbid && <p className="text-xs text-red-400 font-medium mt-1">Outbid</p>}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Discover Models */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
