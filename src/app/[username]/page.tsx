@@ -599,6 +599,16 @@ export default async function ModelProfilePage({ params }: Props) {
             </div>
           )}
 
+          {/* Content Tabs (Photos/Videos/PPV) */}
+          <ProfileContentTabs
+            photos={photos || []}
+            videos={videos || []}
+            premiumContentCount={premiumContentCount || 0}
+            modelId={model.id}
+            coinBalance={coinBalance}
+            isOwner={isOwner}
+          />
+
           {/* View Rates & Book Button */}
           {model.show_booking_rates !== false && (
             (() => {
@@ -615,7 +625,7 @@ export default async function ModelProfilePage({ params }: Props) {
               if (!hasAnyRates) return null;
 
               return (
-                <div className="mb-6">
+                <div className="mt-6">
                   <Link
                     href={`/${model.username}/rates`}
                     className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white font-semibold transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-pink-500/25"
@@ -627,16 +637,6 @@ export default async function ModelProfilePage({ params }: Props) {
               );
             })()
           )}
-
-          {/* Content Tabs (Photos/Videos/PPV) */}
-          <ProfileContentTabs
-            photos={photos || []}
-            videos={videos || []}
-            premiumContentCount={premiumContentCount || 0}
-            modelId={model.id}
-            coinBalance={coinBalance}
-            isOwner={isOwner}
-          />
         </div>
       </div>
       </div>
