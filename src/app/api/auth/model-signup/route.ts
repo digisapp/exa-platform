@@ -17,6 +17,7 @@ const modelSignupSchema = z.object({
   phone: z.string().max(20, "Phone number is too long").optional().nullable(),
   date_of_birth: z.string().optional().nullable(),
   height: z.string().max(10, "Height is too long").optional().nullable(),
+  preferred_language: z.string().max(5).optional().nullable(),
 }).refine(
   (data) => data.instagram_username?.trim() || data.tiktok_username?.trim(),
   { message: "Please provide at least one social media handle", path: ["instagram_username"] }
@@ -131,6 +132,7 @@ export async function POST(request: NextRequest) {
       phone,
       date_of_birth,
       height,
+      preferred_language,
     } = validationResult.data;
 
     // Age validation (if date_of_birth provided)
@@ -248,7 +250,8 @@ export async function POST(request: NextRequest) {
         tiktok_username,
         phone,
         date_of_birth,
-        height
+        height,
+        preferred_language
       );
 
       return NextResponse.json({
@@ -308,7 +311,8 @@ export async function POST(request: NextRequest) {
       tiktok_username,
       phone,
       date_of_birth,
-      height
+      height,
+      preferred_language
     );
 
     return NextResponse.json({
@@ -333,7 +337,8 @@ async function createFanAndApplication(
   tiktokUsername: string | null | undefined,
   phone: string | null | undefined,
   dateOfBirth: string | null | undefined,
-  height: string | null | undefined
+  height: string | null | undefined,
+  preferredLanguage: string | null | undefined
 ): Promise<boolean> {
   // Create actor record
   const { data: actor } = await adminClient
@@ -356,7 +361,8 @@ async function createFanAndApplication(
       email: email,
       display_name: displayName,
       coin_balance: 10,
-    }, { onConflict: "user_id" });
+      preferred_language: preferredLanguage || "en",
+    } as any, { onConflict: "user_id" });
 
   // Record welcome bonus
   await adminClient.from("coin_transactions")

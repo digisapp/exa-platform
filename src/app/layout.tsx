@@ -6,6 +6,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { PageViewTracker } from "@/components/analytics/PageViewTracker";
 import { ServiceWorkerRegistration } from "@/components/pwa/ServiceWorkerRegistration";
+import { GoogleTranslate } from "@/components/GoogleTranslate";
+import { SpanishBanner } from "@/components/SpanishBanner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -136,6 +138,8 @@ export default function RootLayout({
         </Suspense>
         <ServiceWorkerRegistration />
         <Toaster position="top-center" />
+        <GoogleTranslate />
+        <SpanishBanner />
       </body>
     </html>
   );

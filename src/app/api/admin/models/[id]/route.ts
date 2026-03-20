@@ -49,9 +49,9 @@ export async function PATCH(
     const { is_approved } = parsed.data;
 
     // Get current model data before update
-    const { data: model } = await supabase
+    const { data: model } = await (supabase
       .from("models")
-      .select("email, first_name, last_name, username, is_approved, user_id")
+      .select("email, first_name, last_name, username, is_approved, user_id, preferred_language") as any)
       .eq("id", id)
       .single();
 
@@ -95,6 +95,7 @@ export async function PATCH(
           to: email,
           modelName,
           username: model.username || "",
+          language: (model as any).preferred_language || "en",
         });
       } catch (emailError) {
         // Log email error but don't fail the request

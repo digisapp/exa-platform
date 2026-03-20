@@ -9,6 +9,7 @@ import {
   CheckCircle,
   ArrowRight,
   Crown,
+  Globe,
 } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -76,6 +77,17 @@ export default async function ForModelsPage() {
       />
 
       <main className="container px-4 md:px-8 py-12 max-w-4xl mx-auto">
+        {/* Language Toggle */}
+        <div className="flex justify-end mb-4">
+          <Link
+            href="/modelo"
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-pink-500 transition-colors"
+          >
+            <Globe className="h-4 w-4" />
+            Español
+          </Link>
+        </div>
+
         {/* Swipe Carousel */}
         <div className="mb-12 -mx-4 md:mx-0">
           <p className="text-center text-sm text-muted-foreground mb-4 px-4">

@@ -76,6 +76,17 @@ export async function PATCH(
       // Track the actual model username for email/chat (may differ from application data)
       let modelUsername = "";
 
+      // Get preferred language from fan record before it gets deleted
+      let preferredLanguage = "en";
+      const { data: fanRecord } = await (adminClient as any)
+        .from("fans")
+        .select("preferred_language")
+        .eq("user_id", application.user_id)
+        .single();
+      if (fanRecord?.preferred_language) {
+        preferredLanguage = fanRecord.preferred_language;
+      }
+
       // Check if model already exists by user_id
       const { data: existingModelByUser } = await adminClient.from("models")
         .select("id, username")
@@ -192,7 +203,7 @@ export async function PATCH(
         }
 
         // Create the model record with id matching actor id
-        const { error: modelError } = await adminClient.from("models")
+        const { error: modelError } = await (adminClient.from("models") as any)
           .insert({
             ...(updatedActor?.id ? { id: updatedActor.id } : {}),
             user_id: application.user_id,
@@ -206,6 +217,7 @@ export async function PATCH(
             show_location: true,
             show_social_media: true,
             coin_balance: 0,
+            preferred_language: preferredLanguage,
           });
 
         if (modelError) {
@@ -248,6 +260,7 @@ export async function PATCH(
         to: application.email,
         modelName: application.display_name || "Model",
         username: modelUsername,
+        language: preferredLanguage,
       });
 
       if (!emailResult.success) {

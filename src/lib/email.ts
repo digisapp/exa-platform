@@ -96,10 +96,12 @@ export async function sendModelApprovalEmail({
   to,
   modelName,
   username,
+  language = "en",
 }: {
   to: string;
   modelName: string;
   username: string;
+  language?: string;
 }) {
   try {
     // Check if unsubscribed
@@ -113,10 +115,56 @@ export async function sendModelApprovalEmail({
     const dashboardUrl = `${BASE_URL}/dashboard`;
     const unsubscribeToken = await getUnsubscribeToken(to);
 
+    const isSpanish = language?.startsWith("es");
+
+    const subject = isSpanish
+      ? "Bienvenida a EXA Models - ¡Tu Solicitud fue Aprobada!"
+      : "Welcome to EXA Models - Your Application is Approved!";
+
+    const headerTitle = isSpanish ? "Bienvenida a EXA Models" : "Welcome to EXA Models";
+    const headerSubtitle = isSpanish ? "¡Tu solicitud ha sido aprobada!" : "Your application has been approved!";
+    const greeting = isSpanish ? `Hola ${escapeHtml(modelName)},` : `Hey ${escapeHtml(modelName)},`;
+    const bodyText = isSpanish
+      ? "¡Buenas noticias! Tu solicitud como modelo ha sido aprobada. Ya eres parte de la comunidad EXA y tu perfil está activo."
+      : "Great news! Your model application has been approved. You're now part of the EXA community and your profile is live!";
+    const viewProfileText = isSpanish ? "Ver Tu Perfil" : "View Your Profile";
+    const nextStepsTitle = isSpanish ? "Próximos Pasos" : "Next Steps to Get Started";
+    const goToDashboardText = isSpanish ? "Ir al Dashboard" : "Go to Dashboard";
+
+    const steps = isSpanish ? [
+      { title: "Completa Tu Perfil", desc: "Agrega tu bio, medidas, fotos y portafolio para destacar." },
+      { title: "Conecta Tus Redes Sociales", desc: "Vincula tu Instagram, TikTok y otras cuentas para crecer tu alcance." },
+      { title: "Explora Gigs y Oportunidades", desc: "Encuentra trabajos de modelaje, colaboraciones con marcas y oportunidades pagadas." },
+      { title: "Gana Monedas y Cobra", desc: "Recibe propinas de fans, vende contenido premium y retira tus ganancias." },
+    ] : [
+      { title: "Complete Your Profile", desc: "Add your bio, measurements, photos, and portfolio to stand out." },
+      { title: "Connect Your Social Media", desc: "Link your Instagram, TikTok, and other accounts to grow your reach." },
+      { title: "Browse Gigs & Opportunities", desc: "Find modeling gigs, brand collaborations, and paid opportunities." },
+      { title: "Earn Coins & Get Paid", desc: "Receive tips from fans, sell premium content, and cash out your earnings." },
+    ];
+
+    const stepsHtml = steps.map((step, i) => `
+                <tr>
+                  <td style="padding: 15px; background-color: #262626; border-radius: 8px;">
+                    <table cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="width: 40px; vertical-align: top;">
+                          <div style="width: 28px; height: 28px; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); border-radius: 50%; text-align: center; line-height: 28px; color: white; font-weight: bold;">${i + 1}</div>
+                        </td>
+                        <td style="vertical-align: top;">
+                          <p style="margin: 0 0 5px; color: #ffffff; font-weight: 600;">${step.title}</p>
+                          <p style="margin: 0; color: #a1a1aa; font-size: 14px;">${step.desc}</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr><td style="height: 10px;"></td></tr>`).join("");
+
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
       to: [to],
-      subject: "Welcome to EXA Models - Your Application is Approved!",
+      subject,
       html: `
 <!DOCTYPE html>
 <html>
@@ -134,10 +182,10 @@ export async function sendModelApprovalEmail({
           <tr>
             <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 40px 30px; text-align: center;">
               <h1 style="margin: 0; color: white; font-size: 28px; font-weight: bold;">
-                Welcome to EXA Models
+                ${headerTitle}
               </h1>
               <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
-                Your application has been approved!
+                ${headerSubtitle}
               </p>
             </td>
           </tr>
@@ -146,10 +194,10 @@ export async function sendModelApprovalEmail({
           <tr>
             <td style="padding: 40px 30px;">
               <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
-                Hey ${escapeHtml(modelName)},
+                ${greeting}
               </p>
               <p style="margin: 0 0 30px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
-                Great news! Your model application has been approved. You're now part of the EXA community and your profile is live!
+                ${bodyText}
               </p>
 
               <!-- Profile Link -->
@@ -157,7 +205,7 @@ export async function sendModelApprovalEmail({
                 <tr>
                   <td align="center">
                     <a href="${profileUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
-                      View Your Profile
+                      ${viewProfileText}
                     </a>
                   </td>
                 </tr>
@@ -165,80 +213,11 @@ export async function sendModelApprovalEmail({
 
               <!-- Next Steps -->
               <h2 style="margin: 0 0 20px; color: #ffffff; font-size: 20px; font-weight: 600;">
-                Next Steps to Get Started
+                ${nextStepsTitle}
               </h2>
 
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
-                <!-- Step 1 -->
-                <tr>
-                  <td style="padding: 15px; background-color: #262626; border-radius: 8px; margin-bottom: 10px;">
-                    <table cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="width: 40px; vertical-align: top;">
-                          <div style="width: 28px; height: 28px; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); border-radius: 50%; text-align: center; line-height: 28px; color: white; font-weight: bold;">1</div>
-                        </td>
-                        <td style="vertical-align: top;">
-                          <p style="margin: 0 0 5px; color: #ffffff; font-weight: 600;">Complete Your Profile</p>
-                          <p style="margin: 0; color: #a1a1aa; font-size: 14px;">Add your bio, measurements, photos, and portfolio to stand out.</p>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-                <tr><td style="height: 10px;"></td></tr>
-
-                <!-- Step 2 -->
-                <tr>
-                  <td style="padding: 15px; background-color: #262626; border-radius: 8px;">
-                    <table cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="width: 40px; vertical-align: top;">
-                          <div style="width: 28px; height: 28px; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); border-radius: 50%; text-align: center; line-height: 28px; color: white; font-weight: bold;">2</div>
-                        </td>
-                        <td style="vertical-align: top;">
-                          <p style="margin: 0 0 5px; color: #ffffff; font-weight: 600;">Connect Your Social Media</p>
-                          <p style="margin: 0; color: #a1a1aa; font-size: 14px;">Link your Instagram, TikTok, and other accounts to grow your reach.</p>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-                <tr><td style="height: 10px;"></td></tr>
-
-                <!-- Step 3 -->
-                <tr>
-                  <td style="padding: 15px; background-color: #262626; border-radius: 8px;">
-                    <table cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="width: 40px; vertical-align: top;">
-                          <div style="width: 28px; height: 28px; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); border-radius: 50%; text-align: center; line-height: 28px; color: white; font-weight: bold;">3</div>
-                        </td>
-                        <td style="vertical-align: top;">
-                          <p style="margin: 0 0 5px; color: #ffffff; font-weight: 600;">Browse Gigs & Opportunities</p>
-                          <p style="margin: 0; color: #a1a1aa; font-size: 14px;">Find modeling gigs, brand collaborations, and paid opportunities.</p>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-                <tr><td style="height: 10px;"></td></tr>
-
-                <!-- Step 4 -->
-                <tr>
-                  <td style="padding: 15px; background-color: #262626; border-radius: 8px;">
-                    <table cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="width: 40px; vertical-align: top;">
-                          <div style="width: 28px; height: 28px; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); border-radius: 50%; text-align: center; line-height: 28px; color: white; font-weight: bold;">4</div>
-                        </td>
-                        <td style="vertical-align: top;">
-                          <p style="margin: 0 0 5px; color: #ffffff; font-weight: 600;">Earn Coins & Get Paid</p>
-                          <p style="margin: 0; color: #a1a1aa; font-size: 14px;">Receive tips from fans, sell premium content, and cash out your earnings.</p>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
+                ${stepsHtml}
               </table>
 
               <!-- Dashboard Link -->
@@ -246,7 +225,7 @@ export async function sendModelApprovalEmail({
                 <tr>
                   <td align="center">
                     <a href="${dashboardUrl}" style="display: inline-block; background-color: #262626; color: white; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 500; font-size: 14px; border: 1px solid #404040;">
-                      Go to Dashboard
+                      ${goToDashboardText}
                     </a>
                   </td>
                 </tr>
