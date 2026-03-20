@@ -195,32 +195,6 @@
     inset 0 0 80px rgba(255, 105, 180, 0.05);
 }
 
-/* Profile Page — clean luxury background */
-.profile-bg {
-  background: linear-gradient(180deg, #f5f0eb 0%, #ede7e0 40%, #e8e0d8 100%);
-  position: relative;
-  overflow: hidden;
-}
-.profile-bg::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 50%;
-  background: radial-gradient(ellipse at 30% 0%, rgba(200, 180, 160, 0.3) 0%, transparent 60%);
-  pointer-events: none;
-}
-.profile-bg::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 50%;
-  background: radial-gradient(ellipse at 70% 100%, rgba(180, 160, 145, 0.2) 0%, transparent 60%);
-  pointer-events: none;
-}
 
 /* Profile Card - Enhanced pop effect */
 .profile-card {

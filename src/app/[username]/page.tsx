@@ -15,6 +15,7 @@ import {
 import { TikTokIcon } from "@/components/ui/tiktok-icon";
 import { SnapchatIcon } from "@/components/ui/snapchat-icon";
 import { XIcon } from "@/components/ui/x-icon";
+import { FloatingOrbs } from "@/components/ui/floating-orbs";
 import type { Metadata } from "next";
 import { ShareButton } from "@/components/ui/share-button";
 import { AddToCampaignButton } from "@/components/ui/add-to-campaign-button";
@@ -319,7 +320,8 @@ export default async function ModelProfilePage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <div className="min-h-screen relative profile-bg">
+      <div className="min-h-screen relative">
+        <FloatingOrbs />
 
         {/* Track profile view */}
         <ViewTracker modelId={model.id} />
