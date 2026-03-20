@@ -8,11 +8,9 @@ import {
   Users,
   Heart,
   Coins,
-  Gavel,
 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { formatCoins } from "@/lib/coin-config";
 import { ModelCard } from "@/components/models/model-card";
+import { ForYouFeed, type FeedItem } from "./ForYouFeed";
 
 function seededShuffle<T>(array: T[], seed: number): T[] {
   const result = [...array];
@@ -28,8 +26,17 @@ function seededShuffle<T>(array: T[], seed: number): T[] {
 export async function FanDashboard({ actorId }: { actorId: string }) {
   const supabase = await createClient();
 
-  // Query favorites, featured models, coin balance, live auctions, and fan's own bids in parallel
-  const [{ data: follows }, { data: allFeaturedModels }, { data: fanData }, { data: liveAuctions }, { data: myBids }] = await Promise.all([
+  // Query favorites, featured models, coin balance, live auctions, bids, and feed content in parallel
+  const [
+    { data: follows },
+    { data: allFeaturedModels },
+    { data: fanData },
+    { data: liveAuctions },
+    { data: myBids },
+    { data: recentContent },
+    { data: trendingContent },
+    { data: myUnlocks },
+  ] = await Promise.all([
     (supabase.from("follows") as any)
       .select(`
         created_at,
@@ -61,7 +68,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
       .single(),
     // All currently live auctions with model info
     (supabase.from("auctions") as any)
-      .select("id, title, category, current_bid, starting_price, status, model:models!auctions_model_id_fkey(first_name, last_name, username, profile_photo_url)")
+      .select("id, title, category, cover_image_url, current_bid, starting_price, bid_count, ends_at, status, model:models!auctions_model_id_fkey(first_name, last_name, username, profile_photo_url, is_verified)")
       .eq("status", "active")
       .gt("ends_at", new Date().toISOString())
       .order("ends_at", { ascending: true })
@@ -71,6 +78,32 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
       .select("auction_id, amount, status")
       .eq("bidder_id", actorId)
       .in("status", ["winning", "active", "outbid"]),
+    // Recent premium content (last 30 days) for feed
+    (supabase.from("premium_content") as any)
+      .select(`
+        id, title, description, media_type, preview_url, media_url,
+        coin_price, unlock_count, created_at,
+        model:models!premium_content_model_id_fkey(id, username, first_name, last_name, profile_photo_url, is_verified)
+      `)
+      .eq("is_active", true)
+      .gte("created_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+      .order("created_at", { ascending: false })
+      .limit(50),
+    // Trending premium content (top unlocks, all time)
+    (supabase.from("premium_content") as any)
+      .select(`
+        id, title, description, media_type, preview_url, media_url,
+        coin_price, unlock_count, created_at,
+        model:models!premium_content_model_id_fkey(id, username, first_name, last_name, profile_photo_url, is_verified)
+      `)
+      .eq("is_active", true)
+      .gt("unlock_count", 0)
+      .order("unlock_count", { ascending: false })
+      .limit(20),
+    // Fan's already-unlocked content
+    (supabase.from("content_unlocks") as any)
+      .select("content_id")
+      .eq("buyer_id", actorId),
   ]);
 
   const coinBalance = fanData?.coin_balance ?? 0;
@@ -105,6 +138,101 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
   const daysSinceEpoch = Math.floor(Date.now() / (1000 * 60 * 60 * 24));
   const rotationPeriod = Math.floor(daysSinceEpoch / 3);
   const featuredModels = seededShuffle(allFeaturedModels || [], rotationPeriod).slice(0, 8);
+
+  // Build the "For You" feed
+  const unlockedIds = new Set((myUnlocks || []).map((u: any) => u.content_id));
+  const followedModelIds = new Set(favoriteModels.map((m: any) => m.id));
+  const seenContentIds = new Set<string>();
+
+  const feedItems: FeedItem[] = [];
+
+  // Add content from followed models first (prioritized)
+  for (const content of (recentContent || [])) {
+    if (!content.model || seenContentIds.has(content.id)) continue;
+    if (!followedModelIds.has(content.model.id)) continue;
+    seenContentIds.add(content.id);
+    const isUnlocked = unlockedIds.has(content.id);
+    feedItems.push({
+      type: "content",
+      id: content.id,
+      model: content.model,
+      title: content.title,
+      description: content.description,
+      media_type: content.media_type,
+      preview_url: content.preview_url,
+      coin_price: content.coin_price,
+      unlock_count: content.unlock_count,
+      created_at: content.created_at,
+      isUnlocked,
+      mediaUrl: isUnlocked ? content.media_url : null,
+      isFollowed: true,
+    });
+  }
+
+  // Mix in live auctions
+  for (const auction of (liveAuctions || []).slice(0, 4)) {
+    if (!auction.model) continue;
+    const myBid = myBidMap.get(auction.id);
+    feedItems.push({
+      type: "auction",
+      id: auction.id,
+      model: { ...auction.model, is_verified: auction.model.is_verified ?? false },
+      title: auction.title,
+      category: auction.category,
+      cover_image_url: auction.cover_image_url,
+      current_bid: auction.current_bid,
+      starting_price: auction.starting_price,
+      bid_count: auction.bid_count || 0,
+      ends_at: auction.ends_at,
+      myBidStatus: myBid?.status || null,
+    });
+  }
+
+  // Fill with trending/recent content from non-followed models
+  const allNonFollowed = [
+    ...(trendingContent || []),
+    ...(recentContent || []),
+  ];
+  for (const content of allNonFollowed) {
+    if (feedItems.length >= 20) break;
+    if (!content.model || seenContentIds.has(content.id)) continue;
+    if (followedModelIds.has(content.model.id)) continue; // already added above
+    seenContentIds.add(content.id);
+    const isUnlocked = unlockedIds.has(content.id);
+    feedItems.push({
+      type: "content",
+      id: content.id,
+      model: content.model,
+      title: content.title,
+      description: content.description,
+      media_type: content.media_type,
+      preview_url: content.preview_url,
+      coin_price: content.coin_price,
+      unlock_count: content.unlock_count,
+      created_at: content.created_at,
+      isUnlocked,
+      mediaUrl: isUnlocked ? content.media_url : null,
+      isFollowed: false,
+    });
+  }
+
+  // Interleave: followed content first, then alternate auction/trending
+  // Sort followed content by date, keep auctions interspersed
+  const followedItems = feedItems.filter(i => i.type === "content" && i.isFollowed);
+  const auctionItems = feedItems.filter(i => i.type === "auction");
+  const discoverItems = feedItems.filter(i => i.type === "content" && !i.isFollowed);
+
+  const sortedFeed: FeedItem[] = [];
+  // Start with followed content
+  sortedFeed.push(...followedItems);
+  // Insert auctions after every 2 followed items, or at the start if no followed content
+  let insertIdx = Math.min(2, sortedFeed.length);
+  for (const auction of auctionItems) {
+    sortedFeed.splice(insertIdx, 0, auction);
+    insertIdx += 3;
+  }
+  // Append discover content at the end
+  sortedFeed.push(...discoverItems);
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -170,57 +298,8 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
         </div>
       )}
 
-      {/* Live Bids — only shown when auctions exist */}
-      {liveAuctions && liveAuctions.length > 0 && (
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="flex items-center gap-2 text-lg font-semibold">
-              <Gavel className="h-5 w-5 text-violet-500" />
-              Live Bids
-            </h3>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/bids" className="text-violet-400 hover:text-violet-300">
-                View All
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
-            {liveAuctions.slice(0, 6).map((auction: any) => {
-              const myBid = myBidMap.get(auction.id);
-              const isWinning = myBid?.status === "winning";
-              const isOutbid = !!myBid && !isWinning;
-              const price = auction.current_bid || auction.starting_price;
-              const modelName = auction.model
-                ? `${auction.model.first_name || ""} ${auction.model.last_name || ""}`.trim() || auction.model.username
-                : "Model";
-              return (
-                <Link
-                  key={auction.id}
-                  href={`/bids/${auction.id}`}
-                  className="flex-shrink-0 w-40 p-3 rounded-xl border border-violet-500/20 bg-gradient-to-br from-violet-500/5 to-pink-500/5 hover:border-violet-500/40 transition-colors"
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <Avatar className={`h-8 w-8 shrink-0 border-2 ${isWinning ? "border-amber-400" : isOutbid ? "border-red-400/60" : "border-zinc-600"}`}>
-                      <AvatarImage src={auction.model?.profile_photo_url || undefined} />
-                      <AvatarFallback className="bg-zinc-700 text-zinc-300 text-xs">
-                        {modelName[0] || "?"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <p className="font-medium text-sm truncate">{modelName}</p>
-                  </div>
-                  <div className="flex items-center gap-1 text-amber-400">
-                    <Coins className="h-3 w-3" />
-                    <span className="text-sm font-semibold">{formatCoins(price)}</span>
-                  </div>
-                  {isWinning && <p className="text-xs text-amber-400 font-medium mt-1">Winning</p>}
-                  {isOutbid && <p className="text-xs text-red-400 font-medium mt-1">Outbid</p>}
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      {/* For You Feed */}
+      <ForYouFeed items={sortedFeed} coinBalance={coinBalance} />
 
       {/* Discover Models */}
       <Card>
