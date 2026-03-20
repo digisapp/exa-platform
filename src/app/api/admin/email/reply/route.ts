@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       subject,
       html: bodyHtml || undefined,
       text: bodyText || undefined,
-      replyTo: "hello@examodels.com",
+      replyTo: "hello@inbound.examodels.com",
     });
 
     if (resendError) {

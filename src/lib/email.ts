@@ -2,6 +2,7 @@ import { Resend } from "resend";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 
 const FROM_EMAIL = "EXA Models <noreply@examodels.com>";
+const REPLY_TO_EMAIL = "hello@inbound.examodels.com";
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || (() => {
   console.warn("NEXT_PUBLIC_APP_URL not set, falling back to production URL");
   return "https://www.examodels.com";
@@ -163,6 +164,7 @@ export async function sendModelApprovalEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject,
       html: `
@@ -274,6 +276,7 @@ export async function sendBrandApprovalEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: "Your Brand Account is Verified - Welcome to EXA Models!",
       html: `
@@ -422,6 +425,7 @@ export async function sendModelInviteEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: `${modelName}, you're invited to join EXA Models!`,
       html: `
@@ -562,6 +566,7 @@ export async function sendModelRejectionEmail({
     const resend = getResendClient();
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: "EXA Models - Application Update",
       html: `
@@ -661,6 +666,7 @@ export async function sendContentPurchaseEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: `💰 ${buyerName} just unlocked your content!`,
       html: `
@@ -786,6 +792,7 @@ export async function sendTipReceivedEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: `🎁 ${tipperName} sent you ${amount} coins!`,
       html: `
@@ -902,6 +909,7 @@ export async function sendPPVUnlockedEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: `🔓 ${buyerName} unlocked your PPV message for ${amount} coins!`,
       html: `
@@ -1030,6 +1038,7 @@ export async function sendBookingRequestEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: `New Booking Request from ${clientName}`,
       html: `
@@ -1189,6 +1198,7 @@ export async function sendBookingAcceptedEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: `${modelName} accepted your booking request!`,
       html: `
@@ -1371,6 +1381,7 @@ export async function sendBookingDeclinedEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: `Booking update: ${modelName} couldn't accept your request`,
       html: `
@@ -1520,6 +1531,7 @@ export async function sendVideoCallRequestEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: `${emoji} ${callerName} wants to ${callTypeLabel} call you!`,
       html: `
@@ -1652,6 +1664,7 @@ export async function sendOfferReceivedEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: `🎉 New Offer from ${brandName}: ${offerTitle}`,
       html: `
@@ -1801,6 +1814,7 @@ export async function sendGigApplicationAcceptedEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: `You're in! Accepted for ${gigTitle}`,
       html: `
@@ -1956,6 +1970,7 @@ export async function sendCreatorHouseAcceptedEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: `You're in! EXA Models Creator House - Complete Your Payment`,
       html: `
@@ -2150,6 +2165,7 @@ export async function sendGigApplicationRejectedEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: `Application Update: ${gigTitle}`,
       html: `
@@ -2268,6 +2284,7 @@ export async function sendOfferReminderEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: `⏰ Reminder: ${offerTitle} is coming up!`,
       html: `
@@ -2417,6 +2434,7 @@ export async function sendEmailConfirmationEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: "Confirm Your EXA Models Email",
       html: `
@@ -2544,6 +2562,7 @@ export async function sendPasswordResetEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: "Reset Your EXA Models Password",
       html: `
@@ -2663,6 +2682,7 @@ export async function sendCoinBalanceReminderEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: `You've earned $${usdValue}! Your coins are ready to cash out`,
       html: `
@@ -2806,6 +2826,7 @@ export async function sendProfileCompletionReminderEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: `${modelName}, let's make your EXA profile shine!`,
       html: `
@@ -3009,6 +3030,7 @@ export async function sendMiamiSwimWeekInviteEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: "Miami Swim Week 2026 - Create Your EXA Profile & Apply Today!",
       html: `
@@ -3226,6 +3248,7 @@ export async function sendMiamiSwimWeekProfileReminderEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: "Quick Tip to Stand Out for Miami Swim Week 2026",
       html: `
@@ -3368,6 +3391,7 @@ export async function sendNewGigAnnouncementEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: `New ${typeLabel}: ${gigTitle} - Apply Now!`,
       html: `
@@ -3510,6 +3534,7 @@ export async function sendContentProgramOutreachEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: `${brandName} - Exclusive Swimwear Content Program Invitation`,
       html: `
@@ -3630,6 +3655,7 @@ export async function sendContentProgramApplicationEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: `Application Received - ${brandName}`,
       html: `
@@ -3723,6 +3749,7 @@ export async function sendContentProgramApprovedEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: `Welcome to the Program - ${brandName} Approved!`,
       html: `
@@ -3842,6 +3869,7 @@ export async function sendContentProgramPaymentReminderEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: `Month ${paymentMonth} Payment Due - ${brandName}`,
       html: `
@@ -4402,6 +4430,7 @@ export async function sendAuctionSoldEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: `Your listing sold for ${amount} coins!`,
       html: `
@@ -4522,6 +4551,7 @@ export async function sendAuctionWonEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: `You won "${auctionTitle}"!`,
       html: `
@@ -4619,6 +4649,7 @@ export async function sendScheduleCallEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: "Schedule a Call \u2014 Updated Link | EXA Models",
       html: `
@@ -4716,6 +4747,7 @@ export async function sendContractSentEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: `New Contract from ${brandName} - Action Required`,
       html: `
@@ -4807,6 +4839,7 @@ export async function sendContractSignedEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: `Contract Signed by ${modelName}`,
       html: `
@@ -4899,6 +4932,7 @@ export async function sendPayoutProcessedEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: `Your payout of $${amount.toFixed(2)} has been processed`,
       html: `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body style="margin:0;padding:0;background-color:#0a0a0a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="background-color:#0a0a0a;padding:40px 20px;"><tr><td align="center"><table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background-color:#1a1a1a;border-radius:16px;overflow:hidden;"><tr><td style="background:linear-gradient(135deg,#ec4899 0%,#8b5cf6 100%);padding:30px;text-align:center;"><p style="margin:0;font-size:48px;">💸</p><h1 style="margin:10px 0 0;color:white;font-size:24px;font-weight:bold;">Payout Processed!</h1></td></tr><tr><td style="padding:40px 30px;"><p style="margin:0 0 20px;color:#ffffff;font-size:18px;">Hey ${escapeHtml(modelName)}!</p><p style="margin:0 0 30px;color:#a1a1aa;font-size:16px;line-height:1.6;">Great news — your payout has been processed and is on its way.</p><table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:30px;"><tr><td align="center" style="padding:30px;background-color:#262626;border-radius:12px;"><p style="margin:0 0 5px;color:#71717a;font-size:14px;">Payout Amount</p><p style="margin:0;color:#ec4899;font-size:42px;font-weight:bold;">$${amount.toFixed(2)}</p><p style="margin:10px 0 0;color:#a1a1aa;font-size:14px;">via ${escapeHtml(method)}</p></td></tr></table><p style="margin:0 0 30px;color:#a1a1aa;font-size:14px;line-height:1.6;">Funds typically arrive within 1–3 business days depending on your payment method.</p><table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center"><a href="${walletUrl}" style="display:inline-block;background:linear-gradient(135deg,#ec4899 0%,#8b5cf6 100%);color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:16px;">View Wallet</a></td></tr></table></td></tr>${generateEmailFooter(unsubscribeToken)}</table></td></tr></table></body></html>`,
@@ -4940,6 +4974,7 @@ export async function sendAuctionOutbidEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: `You've been outbid on "${auctionTitle}"`,
       html: `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body style="margin:0;padding:0;background-color:#0a0a0a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="background-color:#0a0a0a;padding:40px 20px;"><tr><td align="center"><table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background-color:#1a1a1a;border-radius:16px;overflow:hidden;"><tr><td style="background:linear-gradient(135deg,#f59e0b 0%,#ef4444 100%);padding:30px;text-align:center;"><p style="margin:0;font-size:48px;">⚡</p><h1 style="margin:10px 0 0;color:white;font-size:24px;font-weight:bold;">You've Been Outbid</h1></td></tr><tr><td style="padding:40px 30px;"><p style="margin:0 0 20px;color:#ffffff;font-size:18px;">Hey ${escapeHtml(bidderName)}!</p><p style="margin:0 0 30px;color:#a1a1aa;font-size:16px;line-height:1.6;">Someone placed a higher bid on <strong style="color:#ffffff;">${escapeHtml(auctionTitle)}</strong>. Don't miss out — bid again to stay in the lead!</p><table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:30px;"><tr><td style="padding:20px;background-color:#262626;border-radius:12px;"><table width="100%" cellpadding="0" cellspacing="0"><tr><td style="padding:10px 0;border-bottom:1px solid #3f3f3f;"><p style="margin:0;color:#71717a;font-size:13px;">Your bid</p><p style="margin:4px 0 0;color:#ffffff;font-size:18px;font-weight:600;">${yourBid} coins</p></td></tr><tr><td style="padding:10px 0 0;"><p style="margin:0;color:#71717a;font-size:13px;">Current highest bid</p><p style="margin:4px 0 0;color:#f59e0b;font-size:22px;font-weight:bold;">${currentBid} coins</p></td></tr></table></td></tr></table><table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center"><a href="${auctionUrl}" style="display:inline-block;background:linear-gradient(135deg,#f59e0b 0%,#ef4444 100%);color:white;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:16px;">Bid Again</a></td></tr></table></td></tr>${generateEmailFooter(unsubscribeToken)}</table></td></tr></table></body></html>`,
@@ -5039,6 +5074,7 @@ export async function sendEXABidsAnnouncementEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: "New Feature: EXA Bids — Let Brands & Fans Bid for Your Services 🔥",
       html: `
@@ -5244,6 +5280,7 @@ export async function sendTicketPurchaseConfirmationEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: `Your ${eventName} tickets are confirmed!`,
       html: `
@@ -5364,6 +5401,7 @@ export async function sendWorkshopRegistrationConfirmationEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: `You are confirmed for the ${workshopTitle}!`,
       html: `
@@ -5481,6 +5519,7 @@ export async function sendAcademyEnrollmentConfirmationEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: `Welcome to EXA Beauty Academy — ${cohortName} Cohort!`,
       html: `
@@ -5609,6 +5648,7 @@ export async function sendPrintOrderConfirmationEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: "Comp Card Print Order Confirmed!",
       html: `
@@ -5700,6 +5740,7 @@ export async function sendPrintReadyForPickupEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: "Your Comp Cards Are Ready for Pickup!",
       html: `
@@ -5787,6 +5828,7 @@ export async function sendWorkshopPaymentFailedEmail({
 
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: [to],
       subject: `Your ${workshopTitle} registration has been cancelled`,
       html: `
