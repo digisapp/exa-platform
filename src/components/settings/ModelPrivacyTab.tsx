@@ -6,8 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { LogOut, AlertTriangle, Trash2, Loader2 } from "lucide-react";
-import { LogoutButton } from "@/components/auth/logout-button";
+import { AlertTriangle, Trash2, Loader2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -117,26 +116,6 @@ export function ModelPrivacyTab({ model, onChange, onDeleteAccount, deleting }: 
               checked={(model as any).allow_tips ?? true}
               onCheckedChange={(v) => onChange({ ...model, allow_tips: v } as any)}
             />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Sign Out */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <LogOut className="h-5 w-5" />
-            Sign Out
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">
-                Sign out of your account on this device
-              </p>
-            </div>
-            <LogoutButton className="text-red-500 hover:text-red-600 hover:bg-red-500/10" />
           </div>
         </CardContent>
       </Card>
