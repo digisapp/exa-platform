@@ -267,7 +267,7 @@ export default async function ModelProfilePage({ params }: Props) {
     }
   }
 
-  // Get model's actor ID
+  // Get model's actor ID and follower count
   const { data: modelActor } = await supabase
     .from("actors")
     .select("id")
@@ -275,6 +275,7 @@ export default async function ModelProfilePage({ params }: Props) {
     .single() as { data: { id: string } | null };
 
   const modelActorId = modelActor?.id || null;
+
 
   // Display name - show first_name + last_name, or fallback to username
   const displayName = model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username;
@@ -335,7 +336,7 @@ export default async function ModelProfilePage({ params }: Props) {
         </div>
       )}
 
-      <div className="relative z-10 container max-w-lg md:max-w-2xl mx-auto py-6 px-4">
+      <div className="relative z-10 container max-w-lg md:max-w-3xl mx-auto py-6 px-4">
         {/* Main Profile Card */}
         <div className="profile-card rounded-3xl p-6 text-center relative">
           {/* Header Row: Back/Logo and Share */}
@@ -427,13 +428,13 @@ export default async function ModelProfilePage({ params }: Props) {
                   className="block relative"
                   title={`Confirmed ${eventBadges[0].badges.events.name} Model`}
                 >
-                  <div className={`w-40 h-40 rounded-full overflow-hidden ring-[4px] ring-amber-400 ${isOwner ? 'profile-pic-breathing' : ''}`}>
+                  <div className={`w-48 h-48 md:w-56 md:h-56 rounded-full overflow-hidden ring-[4px] ring-amber-400 ${isOwner ? 'profile-pic-breathing' : ''}`}>
                     {model.profile_photo_url ? (
                       <Image
                         src={model.profile_photo_url}
                         alt={displayName}
-                        width={160}
-                        height={160}
+                        width={224}
+                        height={224}
                         className="w-full h-full object-cover"
                         priority
                       />
@@ -462,13 +463,13 @@ export default async function ModelProfilePage({ params }: Props) {
                   </div>
                 </Link>
               ) : (
-                <div className={`w-40 h-40 rounded-full overflow-hidden ${isOwner ? 'profile-pic-breathing' : 'ring-2 ring-white/30 shadow-[0_0_30px_rgba(255,105,180,0.3),0_0_60px_rgba(0,191,255,0.2)]'}`}>
+                <div className={`w-48 h-48 md:w-56 md:h-56 rounded-full overflow-hidden ${isOwner ? 'profile-pic-breathing' : 'ring-2 ring-white/30 shadow-[0_0_30px_rgba(255,105,180,0.3),0_0_60px_rgba(0,191,255,0.2)]'}`}>
                   {model.profile_photo_url ? (
                     <Image
                       src={model.profile_photo_url}
                       alt={displayName}
-                      width={160}
-                      height={160}
+                      width={224}
+                      height={224}
                       className="w-full h-full object-cover"
                       priority
                     />
@@ -506,6 +507,20 @@ export default async function ModelProfilePage({ params }: Props) {
             <div className="flex items-center justify-center gap-1 text-sm text-white/60 mb-4">
               <MapPin className="h-3.5 w-3.5" />
               <span>{model.city && model.state ? `${model.city}, ${model.state}` : model.city || model.state}</span>
+            </div>
+          )}
+
+          {/* Focus Tags */}
+          {model.focus_tags && model.focus_tags.length > 0 && (
+            <div className="flex items-center justify-center gap-2 mb-4 flex-wrap">
+              {model.focus_tags.map((tag: string) => (
+                <span
+                  key={tag}
+                  className="px-3 py-1 rounded-full text-xs font-medium bg-white/10 text-white/70 border border-white/10"
+                >
+                  {tag.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                </span>
+              ))}
             </div>
           )}
 
