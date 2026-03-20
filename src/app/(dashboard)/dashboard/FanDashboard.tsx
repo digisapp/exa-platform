@@ -273,13 +273,19 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
               >
                 <div className="relative">
                   <div className="w-16 h-16 md:w-20 md:h-20 rounded-full ring-2 ring-pink-500/50 group-hover:ring-pink-500 transition-all overflow-hidden">
-                    <Image
-                      src={model.profile_photo_url}
-                      alt={model.first_name || model.username}
-                      width={80}
-                      height={80}
-                      className="w-full h-full object-cover"
-                    />
+                    {model.profile_photo_url ? (
+                      <Image
+                        src={model.profile_photo_url}
+                        alt={model.first_name || model.username}
+                        width={80}
+                        height={80}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center text-white font-bold text-lg">
+                        {(model.first_name || model.username || "?")[0].toUpperCase()}
+                      </div>
+                    )}
                   </div>
                   {model.is_verified && (
                     <div className="absolute -bottom-0.5 -right-0.5 bg-blue-500 rounded-full p-0.5">
