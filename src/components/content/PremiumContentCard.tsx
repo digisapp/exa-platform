@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Coins, Play, Loader2, ImageOff } from "lucide-react";
+import { Coins, Play, Loader2, ImageOff, Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -43,10 +43,47 @@ export function PremiumContentCard({
   const [showPreview, setShowPreview] = useState(false);
   const [showFull, setShowFull] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const isFree = content.coin_price === 0;
   const canAfford = isFree || coinBalance >= content.coin_price;
   const isVideo = content.media_type === "video";
+
+  // Autoplay muted when scrolled into view, pause when out of view
+  useEffect(() => {
+    if (!isVideo) return;
+    const el = containerRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        const video = videoRef.current;
+        if (!video) return;
+        if (entry.isIntersecting) {
+          video.play().catch(() => {});
+        } else {
+          video.pause();
+          // Re-mute when scrolled away so next autoplay is silent
+          video.muted = true;
+          setIsMuted(true);
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [isVideo]);
+
+  const toggleMute = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = !video.muted;
+    setIsMuted(video.muted);
+  }, []);
 
   const handleUnlock = async () => {
     if (!canAfford) {
@@ -97,6 +134,7 @@ export function PremiumContentCard({
     <>
       {/* Card */}
       <div
+        ref={containerRef}
         className={cn(
           "relative rounded-xl overflow-hidden cursor-pointer group",
           "bg-gradient-to-br from-gray-900 to-gray-800",
@@ -112,18 +150,30 @@ export function PremiumContentCard({
         {((isUnlocked && mediaUrl) || content.preview_url) && !imageError ? (
           <>
             {isVideo ? (
-              <video
-                src={isUnlocked && mediaUrl ? mediaUrl : content.preview_url!}
-                muted
-                playsInline
-                preload="metadata"
-                className={cn(
-                  "absolute inset-0 w-full h-full object-cover transition-all duration-300",
-                  !isUnlocked && !isFree && !isOwner && "blur-md scale-105 brightness-75",
-                  isUnlocked && "group-hover:scale-105"
-                )}
-                onError={() => setImageError(true)}
-              />
+              <>
+                <video
+                  ref={videoRef}
+                  src={isUnlocked && mediaUrl ? mediaUrl : content.preview_url!}
+                  muted
+                  playsInline
+                  loop
+                  preload="metadata"
+                  className={cn(
+                    "absolute inset-0 w-full h-full object-cover transition-all duration-300",
+                    !isUnlocked && !isFree && !isOwner && "blur-md scale-105 brightness-75",
+                    isUnlocked && "group-hover:scale-105"
+                  )}
+                  onError={() => setImageError(true)}
+                />
+                {/* Mute/Unmute toggle */}
+                <button
+                  onClick={toggleMute}
+                  className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-black/50 backdrop-blur-sm text-white/80 hover:text-white hover:bg-black/70 transition-all"
+                  aria-label={isMuted ? "Unmute" : "Mute"}
+                >
+                  {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                </button>
+              </>
             ) : (
               <Image
                 src={isUnlocked && mediaUrl ? mediaUrl : content.preview_url!}
