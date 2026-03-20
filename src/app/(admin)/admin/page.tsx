@@ -26,6 +26,7 @@ import {
   ShoppingBag,
   Plane,
   Megaphone,
+  Mail,
 } from "lucide-react";
 
 export default async function AdminPage() {
@@ -237,6 +238,13 @@ export default async function AdminPage() {
           <Link href="/admin/messages">
             <MessageCircle className="h-6 w-6 text-indigo-500" />
             <span>Messages</span>
+          </Link>
+        </Button>
+
+        <Button variant="outline" asChild className="h-auto py-4 flex-col gap-2">
+          <Link href="/admin/email">
+            <Mail className="h-6 w-6 text-blue-500" />
+            <span>Email</span>
           </Link>
         </Button>
 
