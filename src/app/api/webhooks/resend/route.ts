@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Webhook } from "svix";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY!;
+const RESEND_WEBHOOK_SECRET = process.env.RESEND_WEBHOOK_SECRET!;
 
 // Basic spam indicators
 const SPAM_PATTERNS = [
@@ -55,7 +57,29 @@ function parseEmailAddress(raw: string): { name: string; email: string } {
  */
 export async function POST(request: NextRequest) {
   try {
-    const payload = await request.json();
+    // Verify webhook signature
+    const body = await request.text();
+    const svixId = request.headers.get("svix-id");
+    const svixTimestamp = request.headers.get("svix-timestamp");
+    const svixSignature = request.headers.get("svix-signature");
+
+    if (!svixId || !svixTimestamp || !svixSignature) {
+      return NextResponse.json({ error: "Missing signature headers" }, { status: 401 });
+    }
+
+    const wh = new Webhook(RESEND_WEBHOOK_SECRET);
+    let payload: any;
+    try {
+      payload = wh.verify(body, {
+        "svix-id": svixId,
+        "svix-timestamp": svixTimestamp,
+        "svix-signature": svixSignature,
+      }) as any;
+    } catch {
+      console.error("Resend webhook signature verification failed");
+      return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+    }
+
     const eventType = payload.type;
 
     // Handle inbound email
