@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -69,6 +69,7 @@ export default function AdminEmailPage() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
 
   // Compose state
@@ -86,8 +87,19 @@ export default function AdminEmailPage() {
   const [autoReplyEnabled, setAutoReplyEnabled] = useState(false);
   const [autoReplyLoading, setAutoReplyLoading] = useState(true);
 
+  const searchTimerRef = useRef<NodeJS.Timeout>();
+
   const limit = 30;
   const totalPages = Math.ceil(total / limit);
+
+  // Debounce search input
+  useEffect(() => {
+    searchTimerRef.current = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(searchTimerRef.current);
+  }, [search]);
 
   const fetchEmails = useCallback(async () => {
     setLoading(true);
@@ -98,7 +110,7 @@ export default function AdminEmailPage() {
         page: page.toString(),
         limit: limit.toString(),
       });
-      if (search) params.set("search", search);
+      if (debouncedSearch) params.set("search", debouncedSearch);
 
       const res = await fetch(`/api/admin/email?${params}`);
       const data = await res.json();
@@ -114,7 +126,7 @@ export default function AdminEmailPage() {
     } finally {
       setLoading(false);
     }
-  }, [tab, page, search]);
+  }, [tab, page, debouncedSearch]);
 
   useEffect(() => {
     fetchEmails();
@@ -155,6 +167,17 @@ export default function AdminEmailPage() {
     setSelectedEmail(null);
   }, [tab]);
 
+  // Escape key to go back from detail view
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && selectedEmail && !showReply && !showCompose) {
+        setSelectedEmail(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedEmail, showReply, showCompose]);
+
   const handleTabChange = (newTab: string) => {
     router.push(`/admin/email?tab=${newTab}`);
   };
@@ -177,6 +200,8 @@ export default function AdminEmailPage() {
 
   const openEmail = async (email: Email) => {
     setSelectedEmail(email);
+    setShowReply(false);
+    setReplyBody("");
     await markAsRead(email);
   };
 
@@ -285,12 +310,23 @@ export default function AdminEmailPage() {
       return null;
     }
     // outbound
+    const isAutoSent = email.metadata?.auto_sent === true;
     if (email.status === "delivered")
-      return <Badge variant="outline" className="text-green-500 border-green-500/30 text-[10px]">Delivered</Badge>;
+      return (
+        <span className="flex items-center gap-1">
+          <Badge variant="outline" className="text-green-500 border-green-500/30 text-[10px]">Delivered</Badge>
+          {isAutoSent && <Badge variant="outline" className="text-violet-500 border-violet-500/30 text-[10px]"><Bot className="h-2.5 w-2.5 mr-0.5" />AI</Badge>}
+        </span>
+      );
     if (email.status === "bounced")
       return <Badge variant="outline" className="text-red-500 border-red-500/30 text-[10px]">Bounced</Badge>;
     if (email.status === "sent")
-      return <Badge variant="outline" className="text-blue-500 border-blue-500/30 text-[10px]">Sent</Badge>;
+      return (
+        <span className="flex items-center gap-1">
+          <Badge variant="outline" className="text-blue-500 border-blue-500/30 text-[10px]">Sent</Badge>
+          {isAutoSent && <Badge variant="outline" className="text-violet-500 border-violet-500/30 text-[10px]"><Bot className="h-2.5 w-2.5 mr-0.5" />AI</Badge>}
+        </span>
+      );
     return null;
   };
 
@@ -344,15 +380,30 @@ export default function AdminEmailPage() {
               </p>
             </div>
 
-            {/* Linked user */}
-            {selectedEmail.metadata?.linked_actor_type && (
-              <div className="flex items-center gap-2 text-xs">
-                <Badge variant="outline" className="text-[10px]">
-                  {selectedEmail.metadata.linked_actor_type}
-                </Badge>
-                <span className="text-muted-foreground">
-                  Matched to a registered {selectedEmail.metadata.linked_actor_type}
-                </span>
+            {/* AI info + Linked user */}
+            {(selectedEmail.ai_category || selectedEmail.metadata?.linked_actor_type) && (
+              <div className="flex items-center gap-3 flex-wrap text-xs">
+                {selectedEmail.ai_category && (
+                  <div className="flex items-center gap-1.5">
+                    <Bot className="h-3 w-3 text-violet-400" />
+                    <Badge variant="outline" className="text-[10px] border-violet-500/30 text-violet-500">
+                      {selectedEmail.ai_category.replace(/_/g, " ")}
+                    </Badge>
+                    {selectedEmail.ai_summary && (
+                      <span className="text-muted-foreground">{selectedEmail.ai_summary}</span>
+                    )}
+                  </div>
+                )}
+                {selectedEmail.metadata?.linked_actor_type && (
+                  <div className="flex items-center gap-1.5">
+                    <Badge variant="outline" className="text-[10px]">
+                      {selectedEmail.metadata.linked_actor_type}
+                    </Badge>
+                    <span className="text-muted-foreground">
+                      Registered {selectedEmail.metadata.linked_actor_type}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
 
@@ -361,13 +412,17 @@ export default function AdminEmailPage() {
               {selectedEmail.body_html ? (
                 <iframe
                   srcDoc={selectedEmail.body_html}
-                  sandbox=""
+                  sandbox="allow-same-origin"
                   className="w-full min-h-[300px] border rounded-lg bg-white"
                   style={{ height: "auto" }}
                   onLoad={(e) => {
                     const iframe = e.target as HTMLIFrameElement;
-                    if (iframe.contentDocument) {
-                      iframe.style.height = Math.max(300, iframe.contentDocument.body.scrollHeight + 32) + "px";
+                    try {
+                      if (iframe.contentDocument?.body) {
+                        iframe.style.height = Math.max(300, iframe.contentDocument.body.scrollHeight + 32) + "px";
+                      }
+                    } catch {
+                      // Cross-origin fallback
                     }
                   }}
                   title="Email content"
@@ -379,8 +434,8 @@ export default function AdminEmailPage() {
               )}
             </div>
 
-            {/* AI Draft — show when available for inbound emails */}
-            {selectedEmail.direction === "inbound" && selectedEmail.ai_draft_text && (
+            {/* AI Draft — show when available for inbound emails that haven't been replied to */}
+            {selectedEmail.direction === "inbound" && selectedEmail.ai_draft_text && selectedEmail.status !== "replied" && (
               <div className="border-t pt-4">
                 <div className="rounded-lg border border-violet-500/20 bg-violet-500/5 p-4 space-y-3">
                   <div className="flex items-center justify-between">
@@ -580,10 +635,7 @@ export default function AdminEmailPage() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(1);
-          }}
+          onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by email, name, or subject..."
           className="pl-10"
         />
@@ -610,7 +662,7 @@ export default function AdminEmailPage() {
               </p>
               <p className="text-sm text-muted-foreground mt-1">
                 {tab === "inbox"
-                  ? "Inbound replies will appear here once Resend Inbound is configured"
+                  ? "Replies to your emails will appear here automatically"
                   : "Emails you send will be tracked here"}
               </p>
             </div>
