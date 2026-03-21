@@ -26,6 +26,10 @@ import {
   ChevronRight,
   RefreshCw,
   ArrowLeft,
+  Bot,
+  Check,
+  X,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -46,6 +50,12 @@ interface Email {
   read_at: string | null;
   replied_at: string | null;
   metadata: any;
+  ai_category: string | null;
+  ai_confidence: number | null;
+  ai_summary: string | null;
+  ai_draft_html: string | null;
+  ai_draft_text: string | null;
+  ai_processed_at: string | null;
 }
 
 export default function AdminEmailPage() {
@@ -335,6 +345,73 @@ export default function AdminEmailPage() {
               )}
             </div>
 
+            {/* AI Draft — show when available for inbound emails */}
+            {selectedEmail.direction === "inbound" && selectedEmail.ai_draft_text && (
+              <div className="border-t pt-4">
+                <div className="rounded-lg border border-violet-500/20 bg-violet-500/5 p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-violet-500" />
+                      <span className="text-sm font-medium">AI Draft Reply</span>
+                      {selectedEmail.ai_category && (
+                        <Badge variant="outline" className="text-[10px] border-violet-500/30 text-violet-500">
+                          {selectedEmail.ai_category.replace(/_/g, " ")}
+                        </Badge>
+                      )}
+                      {selectedEmail.ai_confidence != null && (
+                        <span className="text-[10px] text-muted-foreground">
+                          {Math.round(selectedEmail.ai_confidence * 100)}% confidence
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {selectedEmail.ai_summary && (
+                    <p className="text-xs text-muted-foreground italic">
+                      Summary: {selectedEmail.ai_summary}
+                    </p>
+                  )}
+
+                  <div className="bg-background rounded-md p-3 text-sm whitespace-pre-wrap border">
+                    {selectedEmail.ai_draft_text}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      className="bg-gradient-to-r from-pink-500 to-violet-500"
+                      onClick={() => {
+                        setReplyBody(selectedEmail.ai_draft_text || "");
+                        setShowReply(true);
+                      }}
+                    >
+                      <Check className="h-3 w-3 mr-1" />
+                      Use Draft
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setReplyBody(selectedEmail.ai_draft_text || "");
+                        setShowReply(true);
+                      }}
+                    >
+                      Edit Draft
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-muted-foreground"
+                      onClick={() => setShowReply(true)}
+                    >
+                      <X className="h-3 w-3 mr-1" />
+                      Ignore
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Reply button for inbound */}
             {selectedEmail.direction === "inbound" && (
               <div className="border-t pt-4">
@@ -532,11 +609,16 @@ export default function AdminEmailPage() {
                     >
                       {email.subject}
                     </p>
-                    {email.body_text && (
+                    {email.ai_summary ? (
+                      <p className="text-xs text-muted-foreground truncate mt-0.5 flex items-center gap-1">
+                        <Bot className="h-3 w-3 inline flex-shrink-0 text-violet-400" />
+                        {email.ai_summary}
+                      </p>
+                    ) : email.body_text ? (
                       <p className="text-xs text-muted-foreground truncate mt-0.5">
                         {email.body_text.slice(0, 100)}
                       </p>
-                    )}
+                    ) : null}
                   </div>
 
                   <p className="text-xs text-muted-foreground whitespace-nowrap flex-shrink-0">

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Webhook } from "svix";
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import { classifyAndDraftReply } from "@/lib/ai-email";
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY!;
 const RESEND_WEBHOOK_SECRET = process.env.RESEND_WEBHOOK_SECRET!;
@@ -207,7 +208,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Store the inbound email
-      await supabaseAdmin.from("emails").insert({
+      const { data: savedEmail } = await supabaseAdmin.from("emails").insert({
         direction: "inbound",
         thread_id: threadId,
         resend_message_id: emailId,
@@ -226,7 +227,30 @@ export async function POST(request: NextRequest) {
           linked_actor_id: linkedActorId,
           linked_actor_type: linkedActorType,
         },
-      });
+      }).select("id").single();
+
+      // AI: classify email and draft a response (non-blocking)
+      if (savedEmail?.id) {
+        classifyAndDraftReply({
+          fromEmail,
+          fromName,
+          subject,
+          bodyText,
+          bodyHtml,
+          linkedActorType,
+        }).then(async (ai) => {
+          await supabaseAdmin.from("emails").update({
+            ai_category: ai.category,
+            ai_confidence: ai.confidence,
+            ai_summary: ai.summary,
+            ai_draft_html: ai.draftHtml,
+            ai_draft_text: ai.draftText,
+            ai_processed_at: new Date().toISOString(),
+          }).eq("id", savedEmail.id);
+        }).catch((err) => {
+          console.error("AI email processing failed:", err);
+        });
+      }
 
       // Mark the original outbound as "replied"
       if (threadId) {
