@@ -31,6 +31,12 @@ export async function GET(request: NextRequest) {
 
   // Thread view: fetch all emails in a conversation
   if (threadId) {
+    // Validate UUID format to prevent injection
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(threadId)) {
+      return NextResponse.json({ error: "Invalid thread_id" }, { status: 400 });
+    }
+
     const { data: threadEmails, error: threadError } = await (supabase.from("emails" as any) as any)
       .select("*")
       .or(`id.eq.${threadId},thread_id.eq.${threadId}`)

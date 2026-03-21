@@ -63,9 +63,23 @@ interface Email {
   ai_processed_at: string | null;
 }
 
+/** Strip dangerous HTML (scripts, event handlers) for safe quoting */
+function sanitizeHtml(html: string): string {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/\son\w+="[^"]*"/gi, "")
+    .replace(/\son\w+='[^']*'/gi, "")
+    .replace(/javascript:/gi, "");
+}
+
 /** Wrap plain text in EXA-branded HTML email template */
 function wrapInBrandedTemplate(bodyText: string, isReply?: boolean, originalEmail?: Email | null): string {
   const bodyHtml = bodyText.replace(/\n/g, "<br>");
+
+  const quotedContent = originalEmail?.body_html
+    ? sanitizeHtml(originalEmail.body_html)
+    : `<p>${originalEmail?.body_text || ""}</p>`;
 
   const quotedReply = isReply && originalEmail
     ? `<tr>
@@ -75,7 +89,7 @@ function wrapInBrandedTemplate(bodyText: string, isReply?: boolean, originalEmai
               On ${new Date(originalEmail.created_at).toLocaleString()}, ${originalEmail.from_name || originalEmail.from_email} wrote:
             </p>
             <div style="color: #a1a1aa; font-size: 14px; line-height: 1.6;">
-              ${originalEmail.body_html || `<p>${originalEmail.body_text || ""}</p>`}
+              ${quotedContent}
             </div>
           </div>
         </td>
