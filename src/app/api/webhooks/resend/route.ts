@@ -248,18 +248,26 @@ export async function POST(request: NextRequest) {
             ai_processed_at: new Date().toISOString(),
           }).eq("id", savedEmail.id);
 
-          // Auto-send if safe category + high confidence
+          // Check if auto-reply is enabled
           if (ai.autoSendable) {
-            await sendAutoReply({
-              emailId: savedEmail.id,
-              toEmail: fromEmail,
-              subject,
-              draftHtml: ai.draftHtml,
-              draftText: ai.draftText,
-              category: ai.category,
-              confidence: ai.confidence,
-              supabaseAdmin,
-            });
+            const { data: setting } = await supabaseAdmin
+              .from("platform_settings")
+              .select("value")
+              .eq("key", "ai_auto_reply_enabled")
+              .single();
+
+            if (setting?.value === true) {
+              await sendAutoReply({
+                emailId: savedEmail.id,
+                toEmail: fromEmail,
+                subject,
+                draftHtml: ai.draftHtml,
+                draftText: ai.draftText,
+                category: ai.category,
+                confidence: ai.confidence,
+                supabaseAdmin,
+              });
+            }
           }
         }).catch((err) => {
           console.error("AI email processing failed:", err);

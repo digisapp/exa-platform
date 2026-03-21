@@ -31,6 +31,7 @@ import {
   X,
   Sparkles,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
@@ -81,6 +82,10 @@ export default function AdminEmailPage() {
   const [showReply, setShowReply] = useState(false);
   const [replyBody, setReplyBody] = useState("");
 
+  // Auto-reply toggle
+  const [autoReplyEnabled, setAutoReplyEnabled] = useState(false);
+  const [autoReplyLoading, setAutoReplyLoading] = useState(true);
+
   const limit = 30;
   const totalPages = Math.ceil(total / limit);
 
@@ -114,6 +119,35 @@ export default function AdminEmailPage() {
   useEffect(() => {
     fetchEmails();
   }, [fetchEmails]);
+
+  // Load auto-reply setting
+  useEffect(() => {
+    fetch("/api/admin/settings?key=ai_auto_reply_enabled")
+      .then((r) => r.json())
+      .then((d) => setAutoReplyEnabled(d.value === true))
+      .catch(() => {})
+      .finally(() => setAutoReplyLoading(false));
+  }, []);
+
+  const toggleAutoReply = async (enabled: boolean) => {
+    setAutoReplyEnabled(enabled);
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: "ai_auto_reply_enabled", value: enabled }),
+      });
+      if (res.ok) {
+        toast.success(enabled ? "AI auto-reply enabled" : "AI auto-reply disabled");
+      } else {
+        setAutoReplyEnabled(!enabled);
+        toast.error("Failed to update setting");
+      }
+    } catch {
+      setAutoReplyEnabled(!enabled);
+      toast.error("Failed to update setting");
+    }
+  };
 
   // Reset page when switching tabs
   useEffect(() => {
@@ -484,13 +518,26 @@ export default function AdminEmailPage() {
             Send and receive emails via Resend
           </p>
         </div>
-        <Button
-          onClick={() => setShowCompose(true)}
-          className="bg-gradient-to-r from-pink-500 to-violet-500"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Compose
-        </Button>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={autoReplyEnabled}
+              onCheckedChange={toggleAutoReply}
+              disabled={autoReplyLoading}
+            />
+            <label className="text-xs text-muted-foreground flex items-center gap-1 cursor-pointer">
+              <Bot className="h-3 w-3" />
+              Auto-reply
+            </label>
+          </div>
+          <Button
+            onClick={() => setShowCompose(true)}
+            className="bg-gradient-to-r from-pink-500 to-violet-500"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Compose
+          </Button>
+        </div>
       </div>
 
       {/* Tabs */}
