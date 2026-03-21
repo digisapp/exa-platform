@@ -646,12 +646,17 @@ export default function AdminEmailPage() {
                           : `To: ${email.to_email}`}
                       </p>
                       {getStatusBadge(email)}
+                      {email.ai_category === "spam" && (
+                        <Badge variant="outline" className="text-[10px] border-red-500/30 text-red-400">spam</Badge>
+                      )}
                     </div>
                     <p
                       className={`text-sm truncate ${
-                        isUnread
-                          ? "text-foreground font-medium"
-                          : "text-muted-foreground"
+                        email.ai_category === "spam"
+                          ? "text-muted-foreground/50 line-through"
+                          : isUnread
+                            ? "text-foreground font-medium"
+                            : "text-muted-foreground"
                       }`}
                     >
                       {email.subject}

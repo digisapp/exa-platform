@@ -239,17 +239,22 @@ export async function POST(request: NextRequest) {
           bodyHtml,
           linkedActorType,
         }).then(async (ai) => {
-          await supabaseAdmin.from("emails").update({
+          // Mark spam emails so they don't clutter the inbox
+          const updateData: any = {
             ai_category: ai.category,
             ai_confidence: ai.confidence,
             ai_summary: ai.summary,
-            ai_draft_html: ai.draftHtml,
-            ai_draft_text: ai.draftText,
+            ai_draft_html: ai.draftHtml || null,
+            ai_draft_text: ai.draftText || null,
             ai_processed_at: new Date().toISOString(),
-          }).eq("id", savedEmail.id);
+          };
+          if (ai.category === "spam") {
+            updateData.status = "read"; // Auto-dismiss spam
+          }
+          await supabaseAdmin.from("emails").update(updateData).eq("id", savedEmail.id);
 
-          // Check if auto-reply is enabled
-          if (ai.autoSendable) {
+          // Never auto-reply to spam — check if auto-reply is enabled for legit emails
+          if (ai.autoSendable && ai.category !== "spam") {
             const { data: setting } = await supabaseAdmin
               .from("platform_settings")
               .select("value")
