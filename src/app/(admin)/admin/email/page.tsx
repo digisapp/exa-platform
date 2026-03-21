@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -30,6 +31,9 @@ import {
   Check,
   X,
   Sparkles,
+  Trash2,
+  CheckCheck,
+  MessageSquare,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
@@ -59,6 +63,72 @@ interface Email {
   ai_processed_at: string | null;
 }
 
+/** Wrap plain text in EXA-branded HTML email template */
+function wrapInBrandedTemplate(bodyText: string, isReply?: boolean, originalEmail?: Email | null): string {
+  const bodyHtml = bodyText.replace(/\n/g, "<br>");
+
+  const quotedReply = isReply && originalEmail
+    ? `<tr>
+        <td style="padding: 0 30px 30px;">
+          <div style="border-left: 3px solid #ec4899; padding-left: 16px; margin-top: 8px;">
+            <p style="margin: 0 0 8px; color: #71717a; font-size: 12px;">
+              On ${new Date(originalEmail.created_at).toLocaleString()}, ${originalEmail.from_name || originalEmail.from_email} wrote:
+            </p>
+            <div style="color: #a1a1aa; font-size: 14px; line-height: 1.6;">
+              ${originalEmail.body_html || `<p>${originalEmail.body_text || ""}</p>`}
+            </div>
+          </div>
+        </td>
+      </tr>`
+    : "";
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+          <!-- Header with logo -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 24px 30px; text-align: center;">
+              <h1 style="margin: 0; color: white; font-size: 24px; font-weight: bold; letter-spacing: 2px;">
+                EXA MODELS
+              </h1>
+            </td>
+          </tr>
+          <!-- Body -->
+          <tr>
+            <td style="padding: 30px;">
+              <div style="color: #e4e4e7; font-size: 15px; line-height: 1.7;">
+                ${bodyHtml}
+              </div>
+            </td>
+          </tr>
+          ${quotedReply}
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 24px 30px; border-top: 1px solid #262626; text-align: center;">
+              <p style="margin: 0 0 8px; color: #a1a1aa; font-size: 13px;">
+                Questions? Reply to this email or DM us on Instagram
+              </p>
+              <p style="margin: 0; color: #71717a; font-size: 12px;">
+                EXA Models — Where Models Shine
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
 export default function AdminEmailPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -86,6 +156,13 @@ export default function AdminEmailPage() {
   // Auto-reply toggle
   const [autoReplyEnabled, setAutoReplyEnabled] = useState(false);
   const [autoReplyLoading, setAutoReplyLoading] = useState(true);
+
+  // Bulk selection
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // Thread view
+  const [threadEmails, setThreadEmails] = useState<Email[]>([]);
+  const [showThread, setShowThread] = useState(false);
 
   const searchTimerRef = useRef<NodeJS.Timeout>();
 
@@ -165,18 +242,24 @@ export default function AdminEmailPage() {
   useEffect(() => {
     setPage(1);
     setSelectedEmail(null);
+    setSelectedIds(new Set());
+    setShowThread(false);
   }, [tab]);
 
   // Escape key to go back from detail view
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && selectedEmail && !showReply && !showCompose) {
-        setSelectedEmail(null);
+        if (showThread) {
+          setShowThread(false);
+        } else {
+          setSelectedEmail(null);
+        }
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedEmail, showReply, showCompose]);
+  }, [selectedEmail, showReply, showCompose, showThread]);
 
   const handleTabChange = (newTab: string) => {
     router.push(`/admin/email?tab=${newTab}`);
@@ -189,7 +272,6 @@ export default function AdminEmailPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ emailId: email.id }),
       });
-      // Update local state
       setEmails((prev) =>
         prev.map((e) =>
           e.id === email.id ? { ...e, status: "read", read_at: new Date().toISOString() } : e
@@ -202,7 +284,106 @@ export default function AdminEmailPage() {
     setSelectedEmail(email);
     setShowReply(false);
     setReplyBody("");
+    setShowThread(false);
+    setThreadEmails([]);
     await markAsRead(email);
+  };
+
+  // Fetch thread for an email
+  const loadThread = async (email: Email) => {
+    const threadId = email.thread_id || email.id;
+    try {
+      const res = await fetch(`/api/admin/email?thread_id=${threadId}`);
+      const data = await res.json();
+      if (res.ok && data.emails.length > 0) {
+        setThreadEmails(data.emails);
+        setShowThread(true);
+      } else {
+        toast.info("No thread found — this is a standalone email");
+      }
+    } catch {
+      toast.error("Failed to load thread");
+    }
+  };
+
+  // Delete single email
+  const deleteEmail = async (emailId: string) => {
+    try {
+      const res = await fetch("/api/admin/email", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emailId }),
+      });
+      if (res.ok) {
+        toast.success("Email deleted");
+        setEmails((prev) => prev.filter((e) => e.id !== emailId));
+        setTotal((prev) => prev - 1);
+        if (selectedEmail?.id === emailId) setSelectedEmail(null);
+      } else {
+        toast.error("Failed to delete");
+      }
+    } catch {
+      toast.error("Failed to delete email");
+    }
+  };
+
+  // Bulk actions
+  const bulkMarkAsRead = async () => {
+    const ids = Array.from(selectedIds);
+    try {
+      const res = await fetch("/api/admin/email", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emailIds: ids }),
+      });
+      if (res.ok) {
+        toast.success(`${ids.length} email${ids.length > 1 ? "s" : ""} marked as read`);
+        setEmails((prev) =>
+          prev.map((e) =>
+            ids.includes(e.id) ? { ...e, status: "read", read_at: new Date().toISOString() } : e
+          )
+        );
+        setSelectedIds(new Set());
+      }
+    } catch {
+      toast.error("Failed to update");
+    }
+  };
+
+  const bulkDelete = async () => {
+    const ids = Array.from(selectedIds);
+    try {
+      const res = await fetch("/api/admin/email", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emailIds: ids }),
+      });
+      if (res.ok) {
+        toast.success(`${ids.length} email${ids.length > 1 ? "s" : ""} deleted`);
+        setEmails((prev) => prev.filter((e) => !ids.includes(e.id)));
+        setTotal((prev) => prev - ids.length);
+        setSelectedIds(new Set());
+      }
+    } catch {
+      toast.error("Failed to delete");
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === emails.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(emails.map((e) => e.id)));
+    }
   };
 
   const handleSend = async () => {
@@ -219,7 +400,7 @@ export default function AdminEmailPage() {
         body: JSON.stringify({
           to: composeTo,
           subject: composeSubject,
-          bodyHtml: `<div style="font-family: sans-serif; font-size: 14px; line-height: 1.6; color: #333;">${composeBody.replace(/\n/g, "<br>")}</div>`,
+          bodyHtml: wrapInBrandedTemplate(composeBody),
           bodyText: composeBody,
         }),
       });
@@ -260,12 +441,7 @@ export default function AdminEmailPage() {
         body: JSON.stringify({
           to: selectedEmail.from_email,
           subject: replySubject,
-          bodyHtml: `<div style="font-family: sans-serif; font-size: 14px; line-height: 1.6; color: #333;">${replyBody.replace(/\n/g, "<br>")}</div>
-            <br><br>
-            <div style="border-left: 2px solid #ccc; padding-left: 12px; margin-top: 16px; color: #666;">
-              <p style="font-size: 12px; color: #999;">On ${new Date(selectedEmail.created_at).toLocaleString()}, ${selectedEmail.from_name || selectedEmail.from_email} wrote:</p>
-              ${selectedEmail.body_html || `<p>${selectedEmail.body_text || ""}</p>`}
-            </div>`,
+          bodyHtml: wrapInBrandedTemplate(replyBody, true, selectedEmail),
           bodyText: `${replyBody}\n\n---\nOn ${new Date(selectedEmail.created_at).toLocaleString()}, ${selectedEmail.from_name || selectedEmail.from_email} wrote:\n${selectedEmail.body_text || ""}`,
           replyToEmailId: selectedEmail.id,
         }),
@@ -276,7 +452,6 @@ export default function AdminEmailPage() {
         toast.success("Reply sent!");
         setShowReply(false);
         setReplyBody("");
-        // Update the email status in local state
         setSelectedEmail((prev) =>
           prev ? { ...prev, status: "replied", replied_at: new Date().toISOString() } : null
         );
@@ -309,7 +484,6 @@ export default function AdminEmailPage() {
         return <Badge variant="outline" className="text-green-500 border-green-500/30 text-[10px]">Replied</Badge>;
       return null;
     }
-    // outbound
     const isAutoSent = email.metadata?.auto_sent === true;
     if (email.status === "delivered")
       return (
@@ -330,16 +504,101 @@ export default function AdminEmailPage() {
     return null;
   };
 
-  // Detail view
-  if (selectedEmail) {
+  // Render a single email message (used in detail and thread view)
+  const renderEmailMessage = (email: Email, isThread = false) => (
+    <div key={email.id} className={`space-y-3 ${isThread ? "pb-4 border-b last:border-b-0" : ""}`}>
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-medium">
+              {email.direction === "inbound" ? (
+                <>{email.from_name || email.from_email}</>
+              ) : (
+                <span className="text-pink-500">EXA Models</span>
+              )}
+            </p>
+            {email.direction === "inbound" ? (
+              <Badge variant="outline" className="text-[9px]">Received</Badge>
+            ) : (
+              <Badge variant="outline" className="text-[9px] border-pink-500/30 text-pink-500">Sent</Badge>
+            )}
+            {email.metadata?.auto_sent && (
+              <Badge variant="outline" className="text-[9px] border-violet-500/30 text-violet-500">
+                <Bot className="h-2.5 w-2.5 mr-0.5" />AI
+              </Badge>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {email.direction === "inbound"
+              ? `${email.from_email} → ${email.to_email}`
+              : `${email.from_email} → ${email.to_email}`}
+          </p>
+        </div>
+        <p className="text-xs text-muted-foreground whitespace-nowrap">
+          {new Date(email.created_at).toLocaleString()}
+        </p>
+      </div>
+
+      <div>
+        {email.body_html ? (
+          <iframe
+            srcDoc={email.body_html}
+            sandbox="allow-same-origin"
+            className="w-full min-h-[200px] border rounded-lg bg-white"
+            style={{ height: "auto" }}
+            onLoad={(e) => {
+              const iframe = e.target as HTMLIFrameElement;
+              try {
+                if (iframe.contentDocument?.body) {
+                  iframe.style.height = Math.max(200, iframe.contentDocument.body.scrollHeight + 32) + "px";
+                }
+              } catch { /* cross-origin fallback */ }
+            }}
+            title="Email content"
+          />
+        ) : (
+          <pre className="whitespace-pre-wrap text-sm font-sans text-muted-foreground">
+            {email.body_text || "(no content)"}
+          </pre>
+        )}
+      </div>
+    </div>
+  );
+
+  // Thread view
+  if (showThread && selectedEmail && threadEmails.length > 0) {
     return (
       <div className="max-w-4xl mx-auto space-y-4">
         <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setSelectedEmail(null)}
-          >
+          <Button variant="ghost" size="sm" onClick={() => setShowThread(false)}>
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Back to email
+          </Button>
+          <h1 className="text-lg font-semibold truncate flex-1">
+            Thread: {selectedEmail.subject}
+          </h1>
+          <Badge variant="outline" className="text-[10px]">
+            {threadEmails.length} message{threadEmails.length > 1 ? "s" : ""}
+          </Badge>
+        </div>
+
+        <Card>
+          <CardContent className="p-6 space-y-6">
+            {threadEmails.map((email) => renderEmailMessage(email, true))}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Detail view
+  if (selectedEmail) {
+    const hasThread = selectedEmail.thread_id || emails.some((e) => e.thread_id === selectedEmail.id);
+
+    return (
+      <div className="max-w-4xl mx-auto space-y-4">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" onClick={() => setSelectedEmail(null)}>
             <ArrowLeft className="h-4 w-4 mr-1" />
             Back
           </Button>
@@ -347,6 +606,22 @@ export default function AdminEmailPage() {
             {selectedEmail.subject}
           </h1>
           {getStatusBadge(selectedEmail)}
+          <div className="flex items-center gap-1">
+            {hasThread && (
+              <Button variant="ghost" size="sm" onClick={() => loadThread(selectedEmail)} title="View thread">
+                <MessageSquare className="h-4 w-4" />
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-red-500 hover:text-red-600 hover:bg-red-500/10"
+              onClick={() => deleteEmail(selectedEmail.id)}
+              title="Delete email"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         <Card>
@@ -407,7 +682,7 @@ export default function AdminEmailPage() {
               </div>
             )}
 
-            {/* Body — sandboxed iframe for HTML, plain text fallback */}
+            {/* Body */}
             <div className="border-t pt-4">
               {selectedEmail.body_html ? (
                 <iframe
@@ -421,9 +696,7 @@ export default function AdminEmailPage() {
                       if (iframe.contentDocument?.body) {
                         iframe.style.height = Math.max(300, iframe.contentDocument.body.scrollHeight + 32) + "px";
                       }
-                    } catch {
-                      // Cross-origin fallback
-                    }
+                    } catch { /* cross-origin fallback */ }
                   }}
                   title="Email content"
                 />
@@ -434,7 +707,7 @@ export default function AdminEmailPage() {
               )}
             </div>
 
-            {/* AI Draft — show when available for inbound emails that haven't been replied to */}
+            {/* AI Draft */}
             {selectedEmail.direction === "inbound" && selectedEmail.ai_draft_text && selectedEmail.status !== "replied" && (
               <div className="border-t pt-4">
                 <div className="rounded-lg border border-violet-500/20 bg-violet-500/5 p-4 space-y-3">
@@ -501,7 +774,7 @@ export default function AdminEmailPage() {
               </div>
             )}
 
-            {/* Reply button for inbound */}
+            {/* Reply */}
             {selectedEmail.direction === "inbound" && (
               <div className="border-t pt-4">
                 {showReply ? (
@@ -543,13 +816,18 @@ export default function AdminEmailPage() {
                     </div>
                   </div>
                 ) : (
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowReply(true)}
-                  >
-                    <Reply className="h-4 w-4 mr-2" />
-                    Reply
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" onClick={() => setShowReply(true)}>
+                      <Reply className="h-4 w-4 mr-2" />
+                      Reply
+                    </Button>
+                    {hasThread && (
+                      <Button variant="outline" onClick={() => loadThread(selectedEmail)}>
+                        <MessageSquare className="h-4 w-4 mr-2" />
+                        View Thread
+                      </Button>
+                    )}
+                  </div>
                 )}
               </div>
             )}
@@ -630,6 +908,32 @@ export default function AdminEmailPage() {
         </Button>
       </div>
 
+      {/* Bulk Actions Bar */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-3 px-4 py-2 bg-muted/50 rounded-lg border">
+          <span className="text-sm font-medium">{selectedIds.size} selected</span>
+          <div className="flex-1" />
+          {tab === "inbox" && (
+            <Button variant="outline" size="sm" onClick={bulkMarkAsRead}>
+              <CheckCheck className="h-3.5 w-3.5 mr-1" />
+              Mark Read
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-red-500 border-red-500/30 hover:bg-red-500/10"
+            onClick={bulkDelete}
+          >
+            <Trash2 className="h-3.5 w-3.5 mr-1" />
+            Delete
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>
+            <X className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      )}
+
       {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -667,72 +971,99 @@ export default function AdminEmailPage() {
               </p>
             </div>
           ) : (
-            emails.map((email) => {
-              const isUnread =
-                email.direction === "inbound" && email.status === "received";
-              return (
-                <button
-                  key={email.id}
-                  onClick={() => openEmail(email)}
-                  className={`w-full text-left flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors ${
-                    isUnread ? "bg-blue-500/5" : ""
-                  }`}
-                >
-                  <div className="flex-shrink-0">
-                    {isUnread ? (
-                      <Mail className="h-4 w-4 text-blue-500" />
-                    ) : (
-                      <MailOpen className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p
-                        className={`text-sm truncate ${
-                          isUnread ? "font-semibold" : "font-medium"
-                        }`}
-                      >
-                        {email.direction === "inbound"
-                          ? email.from_name || email.from_email
-                          : `To: ${email.to_email}`}
-                      </p>
-                      {getStatusBadge(email)}
-                      {email.ai_category === "spam" && (
-                        <Badge variant="outline" className="text-[10px] border-red-500/30 text-red-400">spam</Badge>
-                      )}
-                    </div>
-                    <p
-                      className={`text-sm truncate ${
-                        email.ai_category === "spam"
-                          ? "text-muted-foreground/50 line-through"
-                          : isUnread
-                            ? "text-foreground font-medium"
-                            : "text-muted-foreground"
-                      }`}
+            <>
+              {/* Select all row */}
+              {emails.length > 0 && (
+                <div className="flex items-center gap-3 px-4 py-2 bg-muted/30">
+                  <Checkbox
+                    checked={selectedIds.size === emails.length && emails.length > 0}
+                    onCheckedChange={toggleSelectAll}
+                  />
+                  <span className="text-xs text-muted-foreground">
+                    {selectedIds.size === emails.length ? "Deselect all" : "Select all"}
+                  </span>
+                </div>
+              )}
+              {emails.map((email) => {
+                const isUnread =
+                  email.direction === "inbound" && email.status === "received";
+                const isSelected = selectedIds.has(email.id);
+                return (
+                  <div
+                    key={email.id}
+                    className={`flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors ${
+                      isUnread ? "bg-blue-500/5" : ""
+                    } ${isSelected ? "bg-pink-500/5" : ""}`}
+                  >
+                    <Checkbox
+                      checked={isSelected}
+                      onCheckedChange={() => toggleSelect(email.id)}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <button
+                      onClick={() => openEmail(email)}
+                      className="flex-1 flex items-center gap-3 text-left min-w-0"
                     >
-                      {email.subject}
-                    </p>
-                    {email.ai_summary ? (
-                      <p className="text-xs text-muted-foreground truncate mt-0.5 flex items-center gap-1">
-                        <Bot className="h-3 w-3 inline flex-shrink-0 text-violet-400" />
-                        {email.ai_summary}
-                      </p>
-                    ) : email.body_text ? (
-                      <p className="text-xs text-muted-foreground truncate mt-0.5">
-                        {email.body_text.slice(0, 100)}
-                      </p>
-                    ) : null}
-                  </div>
+                      <div className="flex-shrink-0">
+                        {isUnread ? (
+                          <Mail className="h-4 w-4 text-blue-500" />
+                        ) : (
+                          <MailOpen className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </div>
 
-                  <p className="text-xs text-muted-foreground whitespace-nowrap flex-shrink-0">
-                    {formatDistanceToNow(new Date(email.created_at), {
-                      addSuffix: true,
-                    })}
-                  </p>
-                </button>
-              );
-            })
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p
+                            className={`text-sm truncate ${
+                              isUnread ? "font-semibold" : "font-medium"
+                            }`}
+                          >
+                            {email.direction === "inbound"
+                              ? email.from_name || email.from_email
+                              : `To: ${email.to_email}`}
+                          </p>
+                          {getStatusBadge(email)}
+                          {email.ai_category === "spam" && (
+                            <Badge variant="outline" className="text-[10px] border-red-500/30 text-red-400">spam</Badge>
+                          )}
+                          {email.thread_id && (
+                            <MessageSquare className="h-3 w-3 text-muted-foreground" />
+                          )}
+                        </div>
+                        <p
+                          className={`text-sm truncate ${
+                            email.ai_category === "spam"
+                              ? "text-muted-foreground/50 line-through"
+                              : isUnread
+                                ? "text-foreground font-medium"
+                                : "text-muted-foreground"
+                          }`}
+                        >
+                          {email.subject}
+                        </p>
+                        {email.ai_summary ? (
+                          <p className="text-xs text-muted-foreground truncate mt-0.5 flex items-center gap-1">
+                            <Bot className="h-3 w-3 inline flex-shrink-0 text-violet-400" />
+                            {email.ai_summary}
+                          </p>
+                        ) : email.body_text ? (
+                          <p className="text-xs text-muted-foreground truncate mt-0.5">
+                            {email.body_text.slice(0, 100)}
+                          </p>
+                        ) : null}
+                      </div>
+
+                      <p className="text-xs text-muted-foreground whitespace-nowrap flex-shrink-0">
+                        {formatDistanceToNow(new Date(email.created_at), {
+                          addSuffix: true,
+                        })}
+                      </p>
+                    </button>
+                  </div>
+                );
+              })}
+            </>
           )}
         </CardContent>
       </Card>
@@ -798,6 +1129,10 @@ export default function AdminEmailPage() {
                 className="resize-none"
               />
             </div>
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <Sparkles className="h-3 w-3 text-pink-500" />
+              Sent with EXA Models branded template
+            </p>
             <div className="flex justify-end gap-2">
               <Button variant="ghost" onClick={() => setShowCompose(false)}>
                 Cancel

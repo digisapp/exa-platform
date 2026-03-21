@@ -23,10 +23,24 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const direction = searchParams.get("direction") || "inbound";
+  const threadId = searchParams.get("thread_id");
   const page = parseInt(searchParams.get("page") || "1");
   const limit = parseInt(searchParams.get("limit") || "30");
   const search = searchParams.get("search") || "";
   const offset = (page - 1) * limit;
+
+  // Thread view: fetch all emails in a conversation
+  if (threadId) {
+    const { data: threadEmails, error: threadError } = await (supabase.from("emails" as any) as any)
+      .select("*")
+      .or(`id.eq.${threadId},thread_id.eq.${threadId}`)
+      .order("created_at", { ascending: true });
+
+    if (threadError) {
+      return NextResponse.json({ error: threadError.message }, { status: 500 });
+    }
+    return NextResponse.json({ emails: threadEmails || [], total: threadEmails?.length || 0, page: 1, limit: 100 });
+  }
 
   let query = (supabase.from("emails" as any) as any)
     .select("*", { count: "exact" })
@@ -49,7 +63,7 @@ export async function GET(request: NextRequest) {
 
 /**
  * PATCH /api/admin/email
- * Mark email as read
+ * Mark email(s) as read — supports single emailId or array of emailIds
  */
 export async function PATCH(request: NextRequest) {
   const supabase = await createClient();
@@ -66,14 +80,16 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { emailId } = await request.json();
-  if (!emailId) {
-    return NextResponse.json({ error: "emailId required" }, { status: 400 });
+  const body = await request.json();
+  const ids: string[] = body.emailIds || (body.emailId ? [body.emailId] : []);
+
+  if (ids.length === 0) {
+    return NextResponse.json({ error: "emailId or emailIds required" }, { status: 400 });
   }
 
   const { error } = await (supabase.from("emails" as any) as any)
     .update({ status: "read", read_at: new Date().toISOString() })
-    .eq("id", emailId)
+    .in("id", ids)
     .eq("status", "received");
 
   if (error) {
@@ -81,4 +97,46 @@ export async function PATCH(request: NextRequest) {
   }
 
   return NextResponse.json({ success: true });
+}
+
+/**
+ * DELETE /api/admin/email
+ * Delete email(s) — supports single emailId or array of emailIds
+ */
+export async function DELETE(request: NextRequest) {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { data: actor } = await (supabase.from("actors") as any)
+    .select("type")
+    .eq("user_id", user.id)
+    .single();
+
+  if (!actor || actor.type !== "admin") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const body = await request.json();
+  const ids: string[] = body.emailIds || (body.emailId ? [body.emailId] : []);
+
+  if (ids.length === 0) {
+    return NextResponse.json({ error: "emailId or emailIds required" }, { status: 400 });
+  }
+
+  // Clear thread_id references first (so child emails don't break)
+  await (supabase.from("emails" as any) as any)
+    .update({ thread_id: null })
+    .in("thread_id", ids);
+
+  const { error } = await (supabase.from("emails" as any) as any)
+    .delete()
+    .in("id", ids);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true, deleted: ids.length });
 }

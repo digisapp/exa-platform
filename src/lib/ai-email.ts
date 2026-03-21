@@ -184,11 +184,34 @@ export async function sendAutoReply({
 
     const replySubject = subject.startsWith("Re:") ? subject : `Re: ${subject}`;
 
+    const brandedHtml = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+        <tr><td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 24px 30px; text-align: center;">
+          <h1 style="margin: 0; color: white; font-size: 24px; font-weight: bold; letter-spacing: 2px;">EXA MODELS</h1>
+        </td></tr>
+        <tr><td style="padding: 30px;">
+          <div style="color: #e4e4e7; font-size: 15px; line-height: 1.7;">${draftHtml}</div>
+        </td></tr>
+        <tr><td style="padding: 24px 30px; border-top: 1px solid #262626; text-align: center;">
+          <p style="margin: 0 0 8px; color: #a1a1aa; font-size: 13px;">Questions? Reply to this email or DM us on Instagram</p>
+          <p style="margin: 0; color: #71717a; font-size: 12px;">EXA Models — Where Models Shine</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
     const { data: resendResponse, error } = await resend.emails.send({
       from: "EXA Models <hello@examodels.com>",
       to: [toEmail],
       subject: replySubject,
-      html: `<div style="font-family: sans-serif; font-size: 14px; line-height: 1.6; color: #333;">${draftHtml}</div>`,
+      html: brandedHtml,
       text: draftText,
       replyTo: "hello@inbound.examodels.com",
     });
