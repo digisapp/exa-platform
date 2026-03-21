@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Webhook } from "svix";
 import { createServiceRoleClient } from "@/lib/supabase/service";
-import { classifyAndDraftReply } from "@/lib/ai-email";
+import { classifyAndDraftReply, sendAutoReply } from "@/lib/ai-email";
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY!;
 const RESEND_WEBHOOK_SECRET = process.env.RESEND_WEBHOOK_SECRET!;
@@ -247,6 +247,20 @@ export async function POST(request: NextRequest) {
             ai_draft_text: ai.draftText,
             ai_processed_at: new Date().toISOString(),
           }).eq("id", savedEmail.id);
+
+          // Auto-send if safe category + high confidence
+          if (ai.autoSendable) {
+            await sendAutoReply({
+              emailId: savedEmail.id,
+              toEmail: fromEmail,
+              subject,
+              draftHtml: ai.draftHtml,
+              draftText: ai.draftText,
+              category: ai.category,
+              confidence: ai.confidence,
+              supabaseAdmin,
+            });
+          }
         }).catch((err) => {
           console.error("AI email processing failed:", err);
         });

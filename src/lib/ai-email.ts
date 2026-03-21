@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { Resend } from "resend";
 
 const xai = new OpenAI({
   apiKey: process.env.XAI_API_KEY,
@@ -128,4 +129,88 @@ function escapeHtml(str: string): string {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+// Auto-send categories that are safe for automated replies
+const AUTO_SEND_CATEGORIES = [
+  "model_application",
+  "booking_inquiry",
+  "event_inquiry",
+  "academy_inquiry",
+];
+
+/**
+ * Send an AI-drafted reply automatically via Resend
+ * Only sends if category is in the safe list and confidence is high
+ */
+export async function sendAutoReply({
+  emailId,
+  toEmail,
+  subject,
+  draftHtml,
+  draftText,
+  category,
+  confidence,
+  supabaseAdmin,
+}: {
+  emailId: string;
+  toEmail: string;
+  subject: string;
+  draftHtml: string;
+  draftText: string;
+  category: string;
+  confidence: number;
+  supabaseAdmin: any;
+}): Promise<boolean> {
+  // Safety checks
+  if (!AUTO_SEND_CATEGORIES.includes(category)) return false;
+  if (confidence < 0.85) return false;
+  if (!draftText || !draftHtml) return false;
+
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+
+    const replySubject = subject.startsWith("Re:") ? subject : `Re: ${subject}`;
+
+    const { data: resendResponse, error } = await resend.emails.send({
+      from: "EXA Models <hello@examodels.com>",
+      to: [toEmail],
+      subject: replySubject,
+      html: `<div style="font-family: sans-serif; font-size: 14px; line-height: 1.6; color: #333;">${draftHtml}</div>`,
+      text: draftText,
+      replyTo: "hello@inbound.examodels.com",
+    });
+
+    if (error) {
+      console.error("Auto-reply send failed:", error);
+      return false;
+    }
+
+    // Store the outbound reply
+    await supabaseAdmin.from("emails").insert({
+      direction: "outbound",
+      thread_id: emailId,
+      resend_message_id: resendResponse?.id || null,
+      from_email: "hello@examodels.com",
+      from_name: "EXA Models",
+      to_email: toEmail,
+      subject: replySubject,
+      body_html: draftHtml,
+      body_text: draftText,
+      status: "sent",
+      metadata: { auto_sent: true, ai_category: category, ai_confidence: confidence },
+    });
+
+    // Mark inbound email as replied
+    await supabaseAdmin.from("emails")
+      .update({ status: "replied", replied_at: new Date().toISOString() })
+      .eq("id", emailId)
+      .eq("direction", "inbound");
+
+    console.log(`Auto-replied to ${toEmail} (category: ${category}, confidence: ${confidence})`);
+    return true;
+  } catch (err) {
+    console.error("Auto-reply error:", err);
+    return false;
+  }
 }
