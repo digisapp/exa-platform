@@ -116,13 +116,28 @@ export async function POST(request: NextRequest) {
       const headers = fullEmail.headers || {};
       const messageId = fullEmail.message_id || data.message_id || null;
 
-      // Spam check
+      const supabaseAdmin = createServiceRoleClient() as any;
+
+      // Spam check — store in DB with spam status instead of dropping silently
       if (isLikelySpam(subject, bodyText || "")) {
         console.log(`Spam detected from ${fromEmail}: ${subject}`);
+        await supabaseAdmin.from("emails").insert({
+          direction: "inbound",
+          resend_message_id: emailId,
+          from_email: fromEmail,
+          from_name: fromName,
+          to_email: toEmail,
+          subject,
+          body_html: bodyHtml,
+          body_text: bodyText,
+          status: "read",
+          ai_category: "spam",
+          ai_confidence: 0.95,
+          ai_summary: "Blocked by spam filter (pattern match)",
+          metadata: { spam_layer: 1 },
+        });
         return NextResponse.json({ success: true, spam: true });
       }
-
-      const supabaseAdmin = createServiceRoleClient() as any;
 
       // Thread detection: In-Reply-To header → message_id match → subject match → sender match
       let threadId = null;
@@ -168,21 +183,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // 3. Sender-based fallback (most recent outbound to this sender)
-      if (!threadId) {
-        const { data: recentOutbound } = await supabaseAdmin
-          .from("emails")
-          .select("id")
-          .eq("direction", "outbound")
-          .eq("to_email", fromEmail)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .single();
-
-        if (recentOutbound) {
-          threadId = recentOutbound.id;
-        }
-      }
+      // Removed sender-based fallback — too aggressive, incorrectly threads unrelated emails
 
       // User linking: match from_email to a model, fan, or brand
       let linkedActorId: string | null = null;

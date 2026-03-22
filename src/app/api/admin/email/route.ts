@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const direction = searchParams.get("direction") || "inbound";
   const threadId = searchParams.get("thread_id");
+  const status = searchParams.get("status");
   const page = parseInt(searchParams.get("page") || "1");
   const limit = parseInt(searchParams.get("limit") || "30");
   const search = searchParams.get("search") || "";
@@ -54,8 +55,14 @@ export async function GET(request: NextRequest) {
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
 
+  if (status) {
+    query = query.eq("status", status);
+  }
+
   if (search) {
-    query = query.or(`from_email.ilike.%${search}%,to_email.ilike.%${search}%,subject.ilike.%${search}%,from_name.ilike.%${search}%`);
+    // Sanitize search input — escape PostgREST special characters to prevent filter injection
+    const sanitized = search.replace(/[%_\\,().]/g, (c) => `\\${c}`);
+    query = query.or(`from_email.ilike.%${sanitized}%,to_email.ilike.%${sanitized}%,subject.ilike.%${sanitized}%,from_name.ilike.%${sanitized}%`);
   }
 
   const { data: emails, count, error } = await query;

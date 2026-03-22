@@ -63,23 +63,33 @@ interface Email {
   ai_processed_at: string | null;
 }
 
+/** Escape special chars for safe HTML insertion */
+function escapeHtmlChars(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 /** Strip dangerous HTML (scripts, event handlers) for safe quoting */
 function sanitizeHtml(html: string): string {
   return html
     .replace(/<script[\s\S]*?<\/script>/gi, "")
     .replace(/<style[\s\S]*?<\/style>/gi, "")
-    .replace(/\son\w+="[^"]*"/gi, "")
-    .replace(/\son\w+='[^']*'/gi, "")
+    .replace(/\son\w+\s*=\s*"[^"]*"/gi, "")
+    .replace(/\son\w+\s*=\s*'[^']*'/gi, "")
+    .replace(/\son\w+\s*=\s*[^\s>]+/gi, "")
     .replace(/javascript:/gi, "");
 }
 
 /** Wrap plain text in EXA-branded HTML email template */
 function wrapInBrandedTemplate(bodyText: string, isReply?: boolean, originalEmail?: Email | null): string {
-  const bodyHtml = bodyText.replace(/\n/g, "<br>");
+  const bodyHtml = escapeHtmlChars(bodyText).replace(/\n/g, "<br>");
 
   const quotedContent = originalEmail?.body_html
     ? sanitizeHtml(originalEmail.body_html)
-    : `<p>${originalEmail?.body_text || ""}</p>`;
+    : `<p>${escapeHtmlChars(originalEmail?.body_text || "")}</p>`;
 
   const quotedReply = isReply && originalEmail
     ? `<tr>
@@ -178,6 +188,13 @@ export default function AdminEmailPage() {
   const [threadEmails, setThreadEmails] = useState<Email[]>([]);
   const [showThread, setShowThread] = useState(false);
 
+  // Delete confirmation
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+
+  // Total unread (separate from paginated list)
+  const [totalUnread, setTotalUnread] = useState(0);
+
   const searchTimerRef = useRef<NodeJS.Timeout>();
 
   const limit = 30;
@@ -223,6 +240,21 @@ export default function AdminEmailPage() {
     fetchEmails();
   }, [fetchEmails]);
 
+  // Fetch total unread count (not just current page)
+  const fetchUnreadCount = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/email?direction=inbound&status=received&page=1&limit=1");
+      if (res.ok) {
+        const data = await res.json();
+        setTotalUnread(data.total || 0);
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  useEffect(() => {
+    fetchUnreadCount();
+  }, [fetchUnreadCount, emails]);
+
   // Load auto-reply setting
   useEffect(() => {
     fetch("/api/admin/settings?key=ai_auto_reply_enabled")
@@ -247,7 +279,7 @@ export default function AdminEmailPage() {
         toast.error("Failed to update setting");
       }
     } catch {
-      setAutoReplyEnabled(!enabled);
+      setAutoReplyEnabled(!enabled); // Rollback on network error
       toast.error("Failed to update setting");
     }
   };
@@ -320,8 +352,13 @@ export default function AdminEmailPage() {
     }
   };
 
-  // Delete single email
+  // Delete single email (with confirmation)
   const deleteEmail = async (emailId: string) => {
+    if (confirmDelete !== emailId) {
+      setConfirmDelete(emailId);
+      return;
+    }
+    setConfirmDelete(null);
     try {
       const res = await fetch("/api/admin/email", {
         method: "DELETE",
@@ -365,6 +402,11 @@ export default function AdminEmailPage() {
   };
 
   const bulkDelete = async () => {
+    if (!confirmBulkDelete) {
+      setConfirmBulkDelete(true);
+      return;
+    }
+    setConfirmBulkDelete(false);
     const ids = Array.from(selectedIds);
     try {
       const res = await fetch("/api/admin/email", {
@@ -486,9 +528,7 @@ export default function AdminEmailPage() {
     }
   };
 
-  const unreadCount = emails.filter(
-    (e) => e.direction === "inbound" && e.status === "received"
-  ).length;
+  // unreadCount uses totalUnread from dedicated API call (not just current page)
 
   const getStatusBadge = (email: Email) => {
     if (email.direction === "inbound") {
@@ -607,7 +647,9 @@ export default function AdminEmailPage() {
 
   // Detail view
   if (selectedEmail) {
-    const hasThread = selectedEmail.thread_id || emails.some((e) => e.thread_id === selectedEmail.id);
+    // Always show thread button — thread_id means it's part of a thread,
+    // and any email could have replies not on the current page
+    const hasThread = !!selectedEmail.thread_id || selectedEmail.status === "replied";
 
     return (
       <div className="max-w-4xl mx-auto space-y-4">
@@ -629,11 +671,13 @@ export default function AdminEmailPage() {
             <Button
               variant="ghost"
               size="sm"
-              className="text-red-500 hover:text-red-600 hover:bg-red-500/10"
+              className={confirmDelete === selectedEmail.id ? "text-white bg-red-500 hover:bg-red-600" : "text-red-500 hover:text-red-600 hover:bg-red-500/10"}
               onClick={() => deleteEmail(selectedEmail.id)}
-              title="Delete email"
+              onBlur={() => setConfirmDelete(null)}
+              title={confirmDelete === selectedEmail.id ? "Click again to confirm" : "Delete email"}
             >
               <Trash2 className="h-4 w-4" />
+              {confirmDelete === selectedEmail.id && <span className="ml-1 text-xs">Confirm?</span>}
             </Button>
           </div>
         </div>
@@ -756,13 +800,49 @@ export default function AdminEmailPage() {
                     <Button
                       size="sm"
                       className="bg-gradient-to-r from-pink-500 to-violet-500"
-                      onClick={() => {
-                        setReplyBody(selectedEmail.ai_draft_text || "");
-                        setShowReply(true);
+                      disabled={sending}
+                      onClick={async () => {
+                        // Send the AI draft immediately without editing
+                        setSending(true);
+                        try {
+                          const draftText = selectedEmail.ai_draft_text || "";
+                          const replySubject = selectedEmail.subject.startsWith("Re:")
+                            ? selectedEmail.subject
+                            : `Re: ${selectedEmail.subject}`;
+                          const res = await fetch("/api/admin/email/reply", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              to: selectedEmail.from_email,
+                              subject: replySubject,
+                              bodyHtml: wrapInBrandedTemplate(draftText, true, selectedEmail),
+                              bodyText: draftText,
+                              replyToEmailId: selectedEmail.id,
+                            }),
+                          });
+                          if (res.ok) {
+                            toast.success("AI draft sent!");
+                            setSelectedEmail((prev) =>
+                              prev ? { ...prev, status: "replied", replied_at: new Date().toISOString() } : null
+                            );
+                            setEmails((prev) =>
+                              prev.map((e) =>
+                                e.id === selectedEmail.id ? { ...e, status: "replied", replied_at: new Date().toISOString() } : e
+                              )
+                            );
+                          } else {
+                            const data = await res.json();
+                            toast.error(data.error || "Failed to send");
+                          }
+                        } catch {
+                          toast.error("Failed to send");
+                        } finally {
+                          setSending(false);
+                        }
                       }}
                     >
-                      <Check className="h-3 w-3 mr-1" />
-                      Use Draft
+                      {sending ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Check className="h-3 w-3 mr-1" />}
+                      Send Draft
                     </Button>
                     <Button
                       size="sm"
@@ -899,9 +979,9 @@ export default function AdminEmailPage() {
         >
           <Inbox className="h-4 w-4" />
           Inbox
-          {tab === "inbox" && unreadCount > 0 && (
+          {tab === "inbox" && totalUnread > 0 && (
             <Badge className="bg-pink-500 text-white text-[10px] px-1.5 py-0">
-              {unreadCount}
+              {totalUnread}
             </Badge>
           )}
         </button>
@@ -936,11 +1016,12 @@ export default function AdminEmailPage() {
           <Button
             variant="outline"
             size="sm"
-            className="text-red-500 border-red-500/30 hover:bg-red-500/10"
+            className={confirmBulkDelete ? "text-white bg-red-500 border-red-500 hover:bg-red-600" : "text-red-500 border-red-500/30 hover:bg-red-500/10"}
             onClick={bulkDelete}
+            onBlur={() => setConfirmBulkDelete(false)}
           >
             <Trash2 className="h-3.5 w-3.5 mr-1" />
-            Delete
+            {confirmBulkDelete ? "Confirm Delete?" : "Delete"}
           </Button>
           <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>
             <X className="h-3.5 w-3.5" />

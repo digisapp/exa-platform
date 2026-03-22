@@ -25,11 +25,43 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { to, subject, bodyHtml, bodyText, replyToEmailId } = await request.json();
+  const { to, subject, bodyHtml, bodyText, replyToEmailId, attachments } = await request.json();
 
   if (!to || !subject || (!bodyHtml && !bodyText)) {
     return NextResponse.json(
       { error: "to, subject, and body (html or text) are required" },
+      { status: 400 }
+    );
+  }
+
+  // Validate email format
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(to)) {
+    return NextResponse.json(
+      { error: "Invalid email address" },
+      { status: 400 }
+    );
+  }
+
+  // Validate attachments (max 10 files, 25MB total to stay under Vercel/Resend limits)
+  const rawAttachments = attachments || [];
+  if (rawAttachments.length > 10) {
+    return NextResponse.json(
+      { error: "Maximum 10 attachments allowed" },
+      { status: 400 }
+    );
+  }
+
+  let totalSize = 0;
+  const resendAttachments = rawAttachments.map((a: { content: string; filename: string; contentType?: string }) => {
+    const buf = Buffer.from(a.content, "base64");
+    totalSize += buf.length;
+    return { content: buf, filename: a.filename, contentType: a.contentType };
+  });
+
+  if (totalSize > 25 * 1024 * 1024) {
+    return NextResponse.json(
+      { error: "Total attachment size exceeds 25MB limit" },
       { status: 400 }
     );
   }
@@ -43,6 +75,7 @@ export async function POST(request: NextRequest) {
       html: bodyHtml || undefined,
       text: bodyText || undefined,
       replyTo: "hello@inbound.examodels.com",
+      ...(resendAttachments.length > 0 && { attachments: resendAttachments }),
     });
 
     if (resendError) {
