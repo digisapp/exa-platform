@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 import Link from "next/link";
@@ -47,7 +47,11 @@ import {
   FolderDown,
   Inbox,
   DollarSign,
+  CameraIcon,
+  ImagePlus,
+  XCircle,
 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
@@ -113,6 +117,14 @@ export default function ContentPage() {
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<"image" | "video">("image");
+
+  // Multi-file upload state (portfolio only)
+  const [mediaFiles, setMediaFiles] = useState<File[]>([]);
+  const [mediaPreviews, setMediaPreviews] = useState<string[]>([]);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStatus, setUploadStatus] = useState<string | null>(null); // e.g. "Uploading 2 of 5..."
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const videoCameraInputRef = useRef<HTMLInputElement>(null);
 
   const fetchContent = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -203,20 +215,13 @@ export default function ContentPage() {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.type.startsWith("image/")) {
-      setMediaType("image");
-    } else if (file.type.startsWith("video/")) {
-      setMediaType("video");
-    } else {
+  const validateFile = (file: File): boolean => {
+    if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
       toast.error("Unsupported format", {
         description: "Please select a JPG, PNG, WebP, GIF image or MP4, MOV, WebM video.",
         duration: 5000,
       });
-      return;
+      return false;
     }
 
     const maxSize = 50 * 1024 * 1024;
@@ -226,11 +231,40 @@ export default function ContentPage() {
         description: `Your file is ${formatFileSize(file.size)}. Maximum size is 50MB.`,
         duration: 5000,
       });
-      return;
+      return false;
     }
+    return true;
+  };
 
-    setMediaFile(file);
-    setMediaPreview(URL.createObjectURL(file));
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    // Reset the input so the same file(s) can be re-selected
+    e.target.value = "";
+
+    if (isPaid) {
+      // PPV: single file only
+      const file = files[0];
+      if (!validateFile(file)) return;
+      setMediaType(file.type.startsWith("video/") ? "video" : "image");
+      setMediaFile(file);
+      setMediaPreview(URL.createObjectURL(file));
+    } else {
+      // Portfolio: multi-file support
+      const valid = files.filter(validateFile);
+      if (valid.length === 0) return;
+
+      if (valid.length === 1 && mediaFiles.length === 0) {
+        // Single file - also set the legacy single-file state for preview
+        setMediaType(valid[0].type.startsWith("video/") ? "video" : "image");
+        setMediaFile(valid[0]);
+        setMediaPreview(URL.createObjectURL(valid[0]));
+      }
+
+      setMediaFiles((prev) => [...prev, ...valid]);
+      setMediaPreviews((prev) => [...prev, ...valid.map((f) => URL.createObjectURL(f))]);
+    }
   };
 
   // Helper to safely parse JSON response
@@ -246,8 +280,9 @@ export default function ContentPage() {
   };
 
   // Direct upload to Supabase using signed URL (bypasses Vercel's 4.5MB limit)
-  const uploadViaSigned = async (file: File) => {
+  const uploadViaSigned = async (file: File, fileTitle?: string) => {
     // Step 1: Get signed URL
+    setUploadProgress(5);
     const signedResponse = await fetch("/api/upload/signed-url", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -255,23 +290,37 @@ export default function ContentPage() {
         fileName: file.name,
         fileType: file.type,
         fileSize: file.size,
-        title: title || null,
+        title: fileTitle ?? title || null,
       }),
     });
 
     const signedData = await safeJsonParse(signedResponse);
     if (!signedResponse.ok) throw new Error(signedData.error || "Failed to get upload URL");
 
-    // Step 2: Upload directly to Supabase Storage
-    const uploadResponse = await fetch(signedData.signedUrl, {
-      method: "PUT",
-      headers: { "Content-Type": file.type },
-      body: file,
+    // Step 2: Upload directly to Supabase Storage with progress tracking
+    await new Promise<void>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("PUT", signedData.signedUrl);
+      xhr.setRequestHeader("Content-Type", file.type);
+
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          // Map upload progress to 10-85% range (5% for signed URL, 85-100% for completion)
+          const pct = Math.round(10 + (e.loaded / e.total) * 75);
+          setUploadProgress(pct);
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) resolve();
+        else reject(new Error("Upload to storage failed"));
+      };
+      xhr.onerror = () => reject(new Error("Upload to storage failed"));
+      xhr.send(file);
     });
 
-    if (!uploadResponse.ok) throw new Error("Upload to storage failed");
-
     // Step 3: Complete the upload
+    setUploadProgress(90);
     const completeResponse = await fetch("/api/upload/complete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -285,57 +334,103 @@ export default function ContentPage() {
     const completeData = await safeJsonParse(completeResponse);
     if (!completeResponse.ok) throw new Error(completeData.error || "Failed to complete upload");
 
+    setUploadProgress(100);
     return completeData;
   };
 
+  const uploadSingleFile = async (file: File, fileTitle?: string) => {
+    const VERCEL_LIMIT = 4 * 1024 * 1024;
+    const type = file.type.startsWith("video/") ? "video" : "image";
+
+    if (isPaid) {
+      if (file.size > VERCEL_LIMIT) {
+        const data = await uploadViaSigned(file, fileTitle);
+        await createPaidContent(data.storagePath || data.url);
+      } else {
+        setUploadProgress(10);
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const uploadResponse = await fetch("/api/upload/premium", {
+          method: "POST",
+          body: formData,
+        });
+
+        setUploadProgress(80);
+        const uploadData = await safeJsonParse(uploadResponse);
+        if (!uploadResponse.ok) throw new Error(uploadData.error || "Failed to upload file");
+
+        await createPaidContent(uploadData.storagePath || uploadData.url);
+        setUploadProgress(100);
+      }
+    } else {
+      if (file.size > VERCEL_LIMIT) {
+        await uploadViaSigned(file, fileTitle);
+      } else {
+        setUploadProgress(10);
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("type", type === "video" ? "video" : "portfolio");
+        if (fileTitle) formData.append("title", fileTitle);
+
+        const uploadResponse = await fetch("/api/upload/media", {
+          method: "POST",
+          body: formData,
+        });
+
+        setUploadProgress(80);
+        const uploadData = await safeJsonParse(uploadResponse);
+        if (!uploadResponse.ok) throw new Error(uploadData.error || "Failed to upload file");
+        setUploadProgress(100);
+      }
+    }
+  };
+
   const handleUpload = async () => {
-    if (!mediaFile || !modelId) return;
+    if (!modelId) return;
+
+    // Determine which files to upload
+    const filesToUpload = isPaid ? (mediaFile ? [mediaFile] : []) : mediaFiles.length > 0 ? mediaFiles : (mediaFile ? [mediaFile] : []);
+    if (filesToUpload.length === 0) return;
 
     setUploading(true);
-    const VERCEL_LIMIT = 4 * 1024 * 1024; // 4MB (conservative, Vercel is 4.5MB)
+    setUploadProgress(0);
+    let successCount = 0;
+    let failCount = 0;
 
     try {
+      for (let i = 0; i < filesToUpload.length; i++) {
+        const file = filesToUpload[i];
+        setUploadProgress(0);
+
+        if (filesToUpload.length > 1) {
+          setUploadStatus(`Uploading ${i + 1} of ${filesToUpload.length}...`);
+        }
+
+        try {
+          await uploadSingleFile(file, filesToUpload.length > 1 ? undefined : title || undefined);
+          successCount++;
+        } catch (error) {
+          failCount++;
+          console.error(`Failed to upload file ${i + 1}:`, error);
+        }
+      }
+
       if (isPaid) {
-        // Premium content - store storagePath in DB (not the expiring signed URL)
-        if (mediaFile.size > VERCEL_LIMIT) {
-          const data = await uploadViaSigned(mediaFile);
-          await createPaidContent(data.storagePath || data.url);
-        } else {
-          const formData = new FormData();
-          formData.append("file", mediaFile);
-
-          const uploadResponse = await fetch("/api/upload/premium", {
-            method: "POST",
-            body: formData,
-          });
-
-          const uploadData = await safeJsonParse(uploadResponse);
-          if (!uploadResponse.ok) throw new Error(uploadData.error || "Failed to upload file");
-
-          await createPaidContent(uploadData.storagePath || uploadData.url);
-        }
+        // PPV success is handled in createPaidContent
       } else {
-        // Free portfolio content - use signed URL for large files
-        if (mediaFile.size > VERCEL_LIMIT) {
-          await uploadViaSigned(mediaFile);
+        if (failCount === 0) {
+          toast.success(
+            successCount === 1
+              ? "Added to your portfolio!"
+              : `${successCount} items added to your portfolio!`
+          );
         } else {
-          const formData = new FormData();
-          formData.append("file", mediaFile);
-          formData.append("type", mediaType === "video" ? "video" : "portfolio");
-          if (title) {
-            formData.append("title", title);
-          }
-
-          const uploadResponse = await fetch("/api/upload/media", {
-            method: "POST",
-            body: formData,
+          toast.warning(`${successCount} uploaded, ${failCount} failed`, {
+            description: "Some files couldn't be uploaded. Try again for the failed ones.",
+            duration: 5000,
           });
-
-          const uploadData = await safeJsonParse(uploadResponse);
-          if (!uploadResponse.ok) throw new Error(uploadData.error || "Failed to upload file");
         }
-
-        toast.success("Added to your portfolio!");
         setDialogOpen(false);
         resetForm();
         fetchContent();
@@ -345,7 +440,6 @@ export default function ContentPage() {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
       const fileType = mediaType === "video" ? "video" : "photo";
 
-      // Provide user-friendly error messages
       if (errorMessage.includes("too large") || errorMessage.includes("413")) {
         toast.error("File too large", {
           description: `Your ${fileType} exceeds the 50MB limit. Please compress it or try a smaller file.`,
@@ -369,6 +463,8 @@ export default function ContentPage() {
       }
     } finally {
       setUploading(false);
+      setUploadProgress(0);
+      setUploadStatus(null);
     }
   };
 
@@ -446,6 +542,22 @@ export default function ContentPage() {
     setCoinPrice("10");
     setMediaFile(null);
     setMediaPreview(null);
+    setMediaFiles([]);
+    mediaPreviews.forEach((url) => URL.revokeObjectURL(url));
+    setMediaPreviews([]);
+    setUploadProgress(0);
+    setUploadStatus(null);
+  };
+
+  const removeFile = (index: number) => {
+    URL.revokeObjectURL(mediaPreviews[index]);
+    setMediaFiles((prev) => prev.filter((_, i) => i !== index));
+    setMediaPreviews((prev) => prev.filter((_, i) => i !== index));
+    // If removing the last file, also clear single-file state
+    if (mediaFiles.length <= 1) {
+      setMediaFile(null);
+      setMediaPreview(null);
+    }
   };
 
   const openUploadDialog = (paid: boolean) => {
@@ -876,25 +988,26 @@ export default function ContentPage() {
       />
 
       {/* Upload Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+      <Dialog open={dialogOpen} onOpenChange={(open) => { if (!uploading) { setDialogOpen(open); if (!open) resetForm(); } }}>
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{isPaid ? "Create PPV Content" : "Upload to Portfolio"}</DialogTitle>
             <DialogDescription>
               {isPaid
                 ? "Set a price and fans will pay coins to unlock this content"
-                : "This will appear in your Photos/Videos tabs on your profile"
+                : "Add photos and videos to your public profile"
               }
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            {/* File Upload */}
-            <div className="space-y-2">
-              {mediaPreview ? (
+            {/* File Selection Area */}
+            <div className="space-y-3">
+              {/* Single file preview (PPV) or multi-file thumbnails (portfolio) */}
+              {isPaid && mediaPreview ? (
                 <div className="relative aspect-video rounded-lg overflow-hidden bg-black">
                   {mediaType === "video" ? (
-                    <video src={mediaPreview} className="w-full h-full object-contain" controls />
+                    <video src={mediaPreview} className="w-full h-full object-contain" controls playsInline />
                   ) : (
                     <Image src={mediaPreview} alt="Preview" fill className="object-contain" />
                   )}
@@ -902,39 +1015,128 @@ export default function ContentPage() {
                     variant="destructive"
                     size="sm"
                     className="absolute top-2 right-2"
-                    onClick={() => { setMediaFile(null); setMediaPreview(null); }}
+                    onClick={() => { setMediaFile(null); setMediaPreview(null); setMediaFiles([]); setMediaPreviews([]); }}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
+              ) : !isPaid && mediaFiles.length > 0 ? (
+                <div className="space-y-3">
+                  {/* Multi-file thumbnail grid */}
+                  <div className="grid grid-cols-3 gap-2">
+                    {mediaPreviews.map((preview, i) => (
+                      <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-muted">
+                        {mediaFiles[i]?.type.startsWith("video/") ? (
+                          <video src={preview} className="w-full h-full object-cover" muted playsInline preload="metadata" />
+                        ) : (
+                          <Image src={preview} alt={`File ${i + 1}`} fill className="object-cover" />
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => removeFile(i)}
+                          className="absolute top-1 right-1 bg-black/70 rounded-full p-0.5"
+                        >
+                          <XCircle className="h-4 w-4 text-white" />
+                        </button>
+                        {mediaFiles[i]?.type.startsWith("video/") && (
+                          <div className="absolute bottom-1 left-1 bg-black/60 px-1.5 py-0.5 rounded text-[10px] text-white">
+                            Video
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    {/* Add more button in grid */}
+                    <label className="aspect-square rounded-lg border-2 border-dashed flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors">
+                      <Plus className="h-6 w-6 text-muted-foreground" />
+                      <span className="text-[10px] text-muted-foreground mt-1">Add more</span>
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept="image/*,video/*"
+                        multiple
+                        onChange={handleFileSelect}
+                      />
+                    </label>
+                  </div>
+                  <p className="text-xs text-muted-foreground text-center">
+                    {mediaFiles.length} file{mediaFiles.length !== 1 ? "s" : ""} selected
+                    ({formatFileSize(mediaFiles.reduce((sum, f) => sum + f.size, 0))})
+                  </p>
+                </div>
               ) : (
-                <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-xl cursor-pointer hover:bg-muted/50 transition-colors">
-                  <Upload className="h-10 w-10 text-muted-foreground mb-3" />
-                  <p className="text-sm font-medium">Click to upload</p>
-                  <p className="text-xs text-muted-foreground mt-1">Photo or video up to 50MB</p>
-                  <input
-                    type="file"
-                    className="hidden"
-                    accept="image/*,video/*"
-                    onChange={handleFileSelect}
-                  />
-                </label>
+                <div className="space-y-3">
+                  {/* Main upload area */}
+                  <label className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed rounded-xl cursor-pointer hover:bg-muted/50 active:bg-muted/70 transition-colors">
+                    <ImagePlus className="h-8 w-8 text-muted-foreground mb-2" />
+                    <p className="text-sm font-medium">
+                      {isPaid ? "Select photo or video" : "Select from library"}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {isPaid ? "Photo or video up to 50MB" : "Select multiple photos & videos"}
+                    </p>
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/*,video/*"
+                      multiple={!isPaid}
+                      onChange={handleFileSelect}
+                    />
+                  </label>
+
+                  {/* Camera capture buttons - visible on all devices, functional on mobile */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-12"
+                      onClick={() => cameraInputRef.current?.click()}
+                    >
+                      <CameraIcon className="mr-2 h-4 w-4" />
+                      Take Photo
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-12"
+                      onClick={() => videoCameraInputRef.current?.click()}
+                    >
+                      <Video className="mr-2 h-4 w-4" />
+                      Record Video
+                    </Button>
+                    {/* Hidden camera inputs with capture attribute for iOS/Android */}
+                    <input
+                      ref={cameraInputRef}
+                      type="file"
+                      className="hidden"
+                      accept="image/*"
+                      capture="environment"
+                      onChange={handleFileSelect}
+                    />
+                    <input
+                      ref={videoCameraInputRef}
+                      type="file"
+                      className="hidden"
+                      accept="video/*"
+                      capture="environment"
+                      onChange={handleFileSelect}
+                    />
+                  </div>
+                </div>
               )}
             </div>
 
-            {/* Title Input - for all content */}
-            <div className="space-y-2">
-              <Label htmlFor="title">Title (optional)</Label>
-              <Input
-                id="title"
-                placeholder="Add a title..."
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground">
-                Shows when viewers hover over your content
-              </p>
-            </div>
+            {/* Title Input - show for PPV or single portfolio file */}
+            {(isPaid || mediaFiles.length <= 1) && (
+              <div className="space-y-2">
+                <Label htmlFor="title">Title (optional)</Label>
+                <Input
+                  id="title"
+                  placeholder="Add a title..."
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+              </div>
+            )}
 
             {/* Content Type Toggle */}
             <div className={cn(
@@ -952,7 +1154,20 @@ export default function ContentPage() {
               <Switch
                 id="paid-toggle"
                 checked={isPaid}
-                onCheckedChange={setIsPaid}
+                onCheckedChange={(checked) => {
+                  setIsPaid(checked);
+                  // When switching to PPV, keep only first file
+                  if (checked && mediaFiles.length > 1) {
+                    const first = mediaFiles[0];
+                    const firstPreview = mediaPreviews[0];
+                    mediaPreviews.slice(1).forEach((url) => URL.revokeObjectURL(url));
+                    setMediaFiles([first]);
+                    setMediaPreviews([firstPreview]);
+                    setMediaFile(first);
+                    setMediaPreview(firstPreview);
+                    setMediaType(first.type.startsWith("video/") ? "video" : "image");
+                  }
+                }}
               />
             </div>
 
@@ -966,6 +1181,7 @@ export default function ContentPage() {
                     <Input
                       type="number"
                       min="1"
+                      inputMode="numeric"
                       value={coinPrice}
                       onChange={(e) => setCoinPrice(e.target.value)}
                       className="pl-10 text-lg font-semibold"
@@ -989,21 +1205,39 @@ export default function ContentPage() {
               </div>
             )}
 
+            {/* Upload Progress */}
+            {uploading && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">
+                    {uploadStatus || "Uploading..."}
+                  </span>
+                  <span className="font-medium">{uploadProgress}%</span>
+                </div>
+                <Progress value={uploadProgress} className="h-2" />
+              </div>
+            )}
+
             {/* Upload Button */}
             <Button
               onClick={handleUpload}
-              disabled={!mediaFile || uploading}
+              disabled={(isPaid ? !mediaFile : mediaFiles.length === 0) || uploading}
               className="w-full h-12 text-base bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
             >
               {uploading ? (
                 <>
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Uploading...
+                  {uploadStatus || "Uploading..."}
                 </>
               ) : (
                 <>
                   <Upload className="mr-2 h-5 w-5" />
-                  {isPaid ? `Create PPV (${coinPrice} coins)` : "Upload to Portfolio"}
+                  {isPaid
+                    ? `Create PPV (${coinPrice} coins)`
+                    : mediaFiles.length > 1
+                      ? `Upload ${mediaFiles.length} Files`
+                      : "Upload to Portfolio"
+                  }
                 </>
               )}
             </Button>
