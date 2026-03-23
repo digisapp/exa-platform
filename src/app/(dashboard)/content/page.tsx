@@ -20,6 +20,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Lock,
   Plus,
   Trash2,
@@ -36,6 +46,7 @@ import {
   TrendingUp,
   FolderDown,
   Inbox,
+  DollarSign,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -92,6 +103,7 @@ export default function ContentPage() {
   const [libraryItems, setLibraryItems] = useState<LibraryItem[]>([]);
   const [selectedLibraryItemId, setSelectedLibraryItemId] = useState<string | null>(null);
   const [librarySheetOpen, setLibrarySheetOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; type: "portfolio" | "ppv" } | null>(null);
 
   // Form state
   const [title, setTitle] = useState("");
@@ -139,16 +151,20 @@ export default function ContentPage() {
 
     setPortfolio((portfolioData || []) as unknown as MediaAsset[]);
 
-    // Get PPV content
-    const { data: contentData } = await supabase
-      .from("premium_content")
-      .select("*")
-      .eq("model_id", model.id)
-      .eq("is_active", true)
-      .gt("coin_price", 0)
-      .order("created_at", { ascending: false });
-
-    setContent(contentData || []);
+    // Get PPV content via API (generates fresh signed URLs)
+    try {
+      const res = await fetch(`/api/content?modelId=${model.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        const items = (data.content || []).map((item: any) => ({
+          ...item,
+          media_url: item.mediaUrl || item.media_url,
+        }));
+        setContent(items);
+      }
+    } catch (error) {
+      console.error("Failed to load PPV content:", error);
+    }
 
     // Get total earnings
     const { data: earnings } = await supabase
@@ -381,26 +397,28 @@ export default function ContentPage() {
     fetchContent();
   };
 
-  const handleDelete = async (contentId: string) => {
-    if (!confirm("Delete this content?")) return;
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
 
-    const response = await fetch(`/api/content?id=${contentId}`, { method: "DELETE" });
-    if (response.ok) {
-      toast.success("Deleted");
-      setContent((prev) => prev.filter((c) => c.id !== contentId));
+    if (deleteTarget.type === "ppv") {
+      const response = await fetch(`/api/content?id=${deleteTarget.id}`, { method: "DELETE" });
+      if (response.ok) {
+        toast.success("Deleted");
+        setContent((prev) => prev.filter((c) => c.id !== deleteTarget.id));
+      } else {
+        toast.error("Failed to delete");
+      }
     } else {
-      toast.error("Failed to delete");
+      const response = await fetch(`/api/upload?id=${deleteTarget.id}`, { method: "DELETE" });
+      if (response.ok) {
+        toast.success("Deleted");
+        setPortfolio((prev) => prev.filter((p) => p.id !== deleteTarget.id));
+      } else {
+        toast.error("Failed to delete");
+      }
     }
-  };
 
-  const handleDeletePortfolio = async (mediaId: string) => {
-    const response = await fetch(`/api/upload?id=${mediaId}`, { method: "DELETE" });
-    if (response.ok) {
-      toast.success("Deleted");
-      setPortfolio((prev) => prev.filter((p) => p.id !== mediaId));
-    } else {
-      toast.error("Failed to delete");
-    }
+    setDeleteTarget(null);
   };
 
   const handleToggleVisibility = async (mediaId: string, currentVisible: boolean | null) => {
@@ -524,6 +542,12 @@ export default function ContentPage() {
               <div>
                 <p className="text-2xl font-bold">{totalEarnings}</p>
                 <p className="text-xs text-muted-foreground">Coins Earned</p>
+                {totalEarnings > 0 && (
+                  <p className="text-xs text-green-500 font-medium flex items-center gap-0.5 mt-0.5">
+                    <DollarSign className="h-3 w-3" />
+                    {(totalEarnings * 0.10).toFixed(2)}
+                  </p>
+                )}
               </div>
             </div>
           </CardContent>
@@ -589,7 +613,16 @@ export default function ContentPage() {
                     className="group relative aspect-square rounded-xl overflow-hidden bg-muted"
                   >
                     {item.asset_type === "video" ? (
-                      <video src={item.url} className="w-full h-full object-cover" />
+                      <video
+                        src={item.url}
+                        className="w-full h-full object-cover"
+                        muted
+                        loop
+                        playsInline
+                        onMouseEnter={(e) => e.currentTarget.play().catch(() => {})}
+                        onMouseLeave={(e) => { e.currentTarget.pause(); e.currentTarget.currentTime = 0; }}
+                        preload="metadata"
+                      />
                     ) : (
                       <Image
                         src={item.photo_url || item.url}
@@ -643,7 +676,7 @@ export default function ContentPage() {
                         className="h-8 w-8"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleDeletePortfolio(item.id);
+                          setDeleteTarget({ id: item.id, type: "portfolio" });
                         }}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -668,32 +701,6 @@ export default function ContentPage() {
                 ))}
               </div>
             </>
-          )}
-        </TabsContent>
-
-        {/* From EXA Tab */}
-        <TabsContent value="exa" className="space-y-4">
-          {libraryItems.length === 0 ? (
-            <div className="text-center py-16 text-muted-foreground">
-              <Inbox className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p className="font-medium">No shared content yet</p>
-              <p className="text-sm mt-1">
-                Content shared by EXA will appear here
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {libraryItems.map((item) => (
-                <LibraryContentCard
-                  key={item.assignmentId}
-                  item={item}
-                  onClick={() => {
-                    setSelectedLibraryItemId(item.libraryItemId);
-                    setLibrarySheetOpen(true);
-                  }}
-                />
-              ))}
-            </div>
           )}
         </TabsContent>
 
@@ -729,7 +736,7 @@ export default function ContentPage() {
                   {totalEarnings > 0 && (
                     <div className="flex items-center gap-1 text-sm text-green-500">
                       <TrendingUp className="h-4 w-4" />
-                      <span>{totalEarnings} coins earned</span>
+                      <span>{totalEarnings} coins (${(totalEarnings * 0.10).toFixed(2)})</span>
                     </div>
                   )}
                 </div>
@@ -745,7 +752,16 @@ export default function ContentPage() {
                     className="group relative aspect-square rounded-xl overflow-hidden bg-muted"
                   >
                     {item.media_type === "video" ? (
-                      <video src={item.media_url} className="w-full h-full object-cover" />
+                      <video
+                        src={item.media_url}
+                        className="w-full h-full object-cover"
+                        muted
+                        loop
+                        playsInline
+                        onMouseEnter={(e) => e.currentTarget.play().catch(() => {})}
+                        onMouseLeave={(e) => { e.currentTarget.pause(); e.currentTarget.currentTime = 0; }}
+                        preload="metadata"
+                      />
                     ) : (
                       <Image
                         src={item.media_url}
@@ -783,7 +799,7 @@ export default function ContentPage() {
                       className="absolute top-2 right-2 h-8 w-8 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleDelete(item.id);
+                        setDeleteTarget({ id: item.id, type: "ppv" });
                       }}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -801,7 +817,56 @@ export default function ContentPage() {
             </>
           )}
         </TabsContent>
+
+        {/* From EXA Tab */}
+        <TabsContent value="exa" className="space-y-4">
+          {libraryItems.length === 0 ? (
+            <div className="text-center py-16 text-muted-foreground">
+              <Inbox className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p className="font-medium">No shared content yet</p>
+              <p className="text-sm mt-1">
+                Content shared by EXA will appear here
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {libraryItems.map((item) => (
+                <LibraryContentCard
+                  key={item.assignmentId}
+                  item={item}
+                  onClick={() => {
+                    setSelectedLibraryItemId(item.libraryItemId);
+                    setLibrarySheetOpen(true);
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </TabsContent>
       </Tabs>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this {deleteTarget?.type === "ppv" ? "PPV content" : "portfolio item"}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTarget?.type === "ppv"
+                ? "This will permanently remove this content and it will no longer be available to fans."
+                : "This will permanently remove this item from your portfolio and public profile."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Library Content Detail Sheet */}
       <LibraryContentDetailSheet
