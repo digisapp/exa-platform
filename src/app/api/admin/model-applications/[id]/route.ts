@@ -70,95 +70,52 @@ export async function PATCH(
 
     // If approved, convert fan to model
     if (status === "approved") {
-      // Use admin client to bypass RLS for actor updates
       const adminClient = createServiceRoleClient();
-
-      // Track the actual model username for email/chat (may differ from application data)
       let modelUsername = "";
 
-      // Get preferred language from fan record before it gets deleted
-      let preferredLanguage = "en";
-      const { data: fanRecord } = await (adminClient as any)
-        .from("fans")
-        .select("preferred_language")
-        .eq("user_id", application.user_id)
-        .single();
-      if (fanRecord?.preferred_language) {
-        preferredLanguage = fanRecord.preferred_language;
-      }
+      // Parallel: fetch fan language + check all 3 possible existing model matches at once
+      const [
+        { data: fanRecord },
+        { data: existingModelByUser },
+        { data: igModel },
+        { data: emailModel },
+      ] = await Promise.all([
+        (adminClient as any).from("fans").select("preferred_language").eq("user_id", application.user_id).single(),
+        adminClient.from("models").select("id, username, user_id").eq("user_id", application.user_id).single(),
+        application.instagram_username
+          ? adminClient.from("models").select("id, username, user_id").ilike("instagram_name", escapeIlike(application.instagram_username)).single()
+          : Promise.resolve({ data: null }),
+        application.email
+          ? adminClient.from("models").select("id, username, user_id").ilike("email", escapeIlike(application.email)).single()
+          : Promise.resolve({ data: null }),
+      ]);
 
-      // Check if model already exists by user_id
-      const { data: existingModelByUser } = await adminClient.from("models")
-        .select("id, username")
-        .eq("user_id", application.user_id)
-        .single();
-
-      // Also check for existing model by Instagram username (might be imported with no user_id)
-      // Use case-insensitive matching since Instagram usernames can vary in casing
-      let existingModelByInstagram = null;
-      if (application.instagram_username && !existingModelByUser) {
-        const { data: igModel } = await adminClient.from("models")
-          .select("id, username, user_id")
-          .ilike("instagram_name", escapeIlike(application.instagram_username))
-          .single();
-
-        if (igModel && !igModel.user_id) {
-          existingModelByInstagram = igModel;
-        }
-      }
-
-      // Also check by email if no match yet (case-insensitive)
-      let existingModelByEmail = null;
-      if (!existingModelByUser && !existingModelByInstagram && application.email) {
-        const { data: emailModel } = await adminClient.from("models")
-          .select("id, username, user_id")
-          .ilike("email", escapeIlike(application.email))
-          .single();
-
-        if (emailModel && !emailModel.user_id) {
-          existingModelByEmail = emailModel;
-        }
-      }
-
-      // Determine which existing model to link to
+      const preferredLanguage = fanRecord?.preferred_language || "en";
+      const existingModelByInstagram = igModel && !igModel.user_id && !existingModelByUser ? igModel : null;
+      const existingModelByEmail = emailModel && !emailModel.user_id && !existingModelByUser && !existingModelByInstagram ? emailModel : null;
       const existingModel = existingModelByUser || existingModelByInstagram || existingModelByEmail;
 
       if (existingModel && !existingModelByUser) {
         // Found existing model by Instagram/email - link user_id to it
         modelUsername = existingModel.username || "";
-        const { error: linkError } = await adminClient.from("models")
-          .update({
+        // Parallel: link model + update actor type
+        const [{ error: linkError }, { data: updatedActor, error: actorError }] = await Promise.all([
+          adminClient.from("models").update({
             user_id: application.user_id,
             is_approved: true,
             status: "approved",
             claimed_at: new Date().toISOString(),
-            // Update instagram_name from the application to ensure dots are preserved
             ...(application.instagram_username ? { instagram_name: application.instagram_username } : {}),
-          })
-          .eq("id", existingModel.id);
+          }).eq("id", existingModel.id),
+          adminClient.from("actors").update({ type: "model" }).eq("user_id", application.user_id).select("id").single(),
+        ]);
 
-        if (linkError) {
-          console.error("Error linking model:", linkError);
-        }
-
-        // Update actor type to model
-        const { data: updatedActor, error: actorError } = await adminClient
-          .from("actors")
-          .update({ type: "model" })
-          .eq("user_id", application.user_id)
-          .select("id")
-          .single();
-
-        // Delete the old fan record (cleanup)
+        if (linkError) console.error("Error linking model:", linkError);
         if (!actorError && updatedActor?.id) {
-          await adminClient
-            .from("fans")
-            .delete()
-            .eq("id", updatedActor.id);
+          await adminClient.from("fans").delete().eq("id", updatedActor.id);
         }
       } else if (!existingModel) {
         // No existing model found - create new one
-        // Sanitize social usernames — reject if they look like an email or URL
         const looksLikeEmail = (s: string) => s.includes("@") || /\.(com|net|org|io|co)$/i.test(s);
         const igUsername = application.instagram_username && !looksLikeEmail(application.instagram_username)
           ? application.instagram_username : null;
@@ -166,7 +123,6 @@ export async function PATCH(
           ? application.tiktok_username : null;
         const username = igUsername || ttUsername || application.email.split("@")[0];
 
-        // Make username unique by adding numbers if needed
         let finalUsername = username.toLowerCase().replace(/[^a-z0-9_]/g, "");
         let attempt = 0;
 
@@ -190,7 +146,6 @@ export async function PATCH(
 
         modelUsername = finalUsername;
 
-        // Update actor type to model first to get the actor ID
         const { data: updatedActor, error: actorError } = await adminClient
           .from("actors")
           .update({ type: "model" })
@@ -202,146 +157,122 @@ export async function PATCH(
           console.error("Error updating actor:", actorError);
         }
 
-        // Create the model record with id matching actor id
-        const { error: modelError } = await (adminClient.from("models") as any)
-          .insert({
-            ...(updatedActor?.id ? { id: updatedActor.id } : {}),
-            user_id: application.user_id,
-            email: application.email,
-            username: finalUsername,
-            first_name: application.display_name,
-            instagram_name: application.instagram_username || null,
-            tiktok_username: application.tiktok_username || null,
-            is_approved: true,
-            status: "approved",
-            show_location: true,
-            show_social_media: true,
-            coin_balance: 0,
-            preferred_language: preferredLanguage,
-          });
+        // Parallel: create model record + delete fan record
+        const modelInsert = (adminClient.from("models") as any).insert({
+          ...(updatedActor?.id ? { id: updatedActor.id } : {}),
+          user_id: application.user_id,
+          email: application.email,
+          username: finalUsername,
+          first_name: application.display_name,
+          instagram_name: application.instagram_username || null,
+          tiktok_username: application.tiktok_username || null,
+          is_approved: true,
+          status: "approved",
+          show_location: true,
+          show_social_media: true,
+          coin_balance: 0,
+          preferred_language: preferredLanguage,
+        });
 
-        if (modelError) {
-          console.error("Error creating model:", modelError);
-        }
-
-        // Delete the old fan record (cleanup)
         if (!actorError && updatedActor?.id) {
-          await adminClient
-            .from("fans")
-            .delete()
-            .eq("id", updatedActor.id);
+          const [modelResult] = await Promise.all([
+            modelInsert,
+            adminClient.from("fans").delete().eq("id", updatedActor.id),
+          ]);
+          if (modelResult?.error) console.error("Error creating model:", modelResult.error);
+        } else {
+          const { error: modelError } = await modelInsert;
+          if (modelError) console.error("Error creating model:", modelError);
         }
       } else {
         // Model already exists by user_id, just approve it
         modelUsername = existingModelByUser!.username || "";
-        await adminClient.from("models")
-          .update({ is_approved: true, status: "approved" })
-          .eq("user_id", application.user_id);
+        // Parallel: approve model + update actor type
+        const [, { data: updatedActor, error: actorError }] = await Promise.all([
+          adminClient.from("models").update({ is_approved: true, status: "approved" }).eq("user_id", application.user_id),
+          adminClient.from("actors").update({ type: "model" }).eq("user_id", application.user_id).select("id").single(),
+        ]);
 
-        // Update actor type to model (in case it was still 'fan')
-        const { data: updatedActor, error: actorError } = await adminClient
-          .from("actors")
-          .update({ type: "model" })
-          .eq("user_id", application.user_id)
-          .select("id")
-          .single();
-
-        // Delete the old fan record (cleanup)
         if (!actorError && updatedActor?.id) {
-          await adminClient
-            .from("fans")
-            .delete()
-            .eq("id", updatedActor.id);
+          await adminClient.from("fans").delete().eq("id", updatedActor.id);
         }
       }
 
-      // Send approval email with the actual model username (not raw application data)
-      const emailResult = await sendModelApprovalEmail({
-        to: application.email,
-        modelName: application.display_name || "Model",
-        username: modelUsername,
-        language: preferredLanguage,
-      });
+      // Fire-and-forget: send email + welcome chat in background (don't block response)
+      const sendEmailAndChat = async () => {
+        try {
+          const emailResult = await sendModelApprovalEmail({
+            to: application.email,
+            modelName: application.display_name || "Model",
+            username: modelUsername,
+            language: preferredLanguage,
+          });
+          if (!emailResult.success) console.error("Failed to send approval email:", emailResult.error);
+        } catch (e) {
+          console.error("Failed to send approval email:", e);
+        }
 
-      if (!emailResult.success) {
-        console.error("Failed to send approval email:", emailResult.error);
-        // Don't fail the request, just log the error
-      }
+        try {
+          const { data: modelActor } = await adminClient
+            .from("actors")
+            .select("id")
+            .eq("user_id", application.user_id)
+            .single();
 
-      // Send welcome chat message from admin (using adminClient to bypass RLS)
-      try {
-        // Get model's actor ID
-        const { data: modelActor } = await adminClient
-          .from("actors")
-          .select("id")
-          .eq("user_id", application.user_id)
-          .single();
+          if (modelActor) {
+            let conversationId: string | null = null;
 
-        if (modelActor) {
-          // Find existing conversation or create new one
-          let conversationId: string | null = null;
+            // Single query: find shared conversation instead of looping
+            const { data: adminConvs } = await adminClient
+              .from("conversation_participants")
+              .select("conversation_id")
+              .eq("actor_id", actor.id);
 
-          // Check for existing conversation between admin and model
-          const { data: existingConv } = await adminClient
-            .from("conversation_participants")
-            .select("conversation_id")
-            .eq("actor_id", actor.id);
-
-          if (existingConv) {
-            for (const cp of existingConv) {
-              const { data: hasModel } = await adminClient
+            if (adminConvs?.length) {
+              const convIds = adminConvs.map((c: { conversation_id: string }) => c.conversation_id);
+              const { data: match } = await adminClient
                 .from("conversation_participants")
-                .select("actor_id")
-                .eq("conversation_id", cp.conversation_id)
+                .select("conversation_id")
                 .eq("actor_id", modelActor.id)
+                .in("conversation_id", convIds)
+                .limit(1)
                 .single();
-              if (hasModel) {
-                conversationId = cp.conversation_id;
-                break;
+
+              conversationId = match?.conversation_id || null;
+            }
+
+            if (!conversationId) {
+              const { data: newConv } = await adminClient
+                .from("conversations")
+                .insert({ type: "direct" })
+                .select()
+                .single();
+
+              if (newConv) {
+                conversationId = newConv.id;
+                await adminClient.from("conversation_participants").insert([
+                  { conversation_id: conversationId, actor_id: actor.id },
+                  { conversation_id: conversationId, actor_id: modelActor.id },
+                ]);
               }
             }
-          }
 
-          // Create new conversation if none exists
-          if (!conversationId) {
-            const { data: newConv } = await adminClient
-              .from("conversations")
-              .insert({ type: "direct" })
-              .select()
-              .single();
-
-            if (newConv) {
-              conversationId = newConv.id;
-              await adminClient.from("conversation_participants").insert([
-                { conversation_id: conversationId, actor_id: actor.id },
-                { conversation_id: conversationId, actor_id: modelActor.id },
-              ]);
+            if (conversationId) {
+              await adminClient.from("messages").insert({
+                conversation_id: conversationId,
+                sender_id: actor.id,
+                content: `Welcome to EXA, ${application.display_name || "Model"}! 🎉\n\nYour profile has been approved and you're now part of our community.\n\nHere's how to get started:\n• Complete your profile with photos and bio\n• Share your examodels.com/${modelUsername} on Instagram Bio + Story\n• Engage with the community 😊`,
+                is_system: false,
+              });
             }
           }
-
-          // Send welcome message
-          if (conversationId) {
-            const welcomeMessage = `Welcome to EXA, ${application.display_name || "Model"}! 🎉
-
-Your profile has been approved and you're now part of our community.
-
-Here's how to get started:
-• Complete your profile with photos and bio
-• Share your examodels.com/${modelUsername} on Instagram Bio + Story
-• Engage with the community 😊`;
-
-            await adminClient.from("messages").insert({
-              conversation_id: conversationId,
-              sender_id: actor.id,
-              content: welcomeMessage,
-              is_system: false,
-            });
-          }
+        } catch (chatError) {
+          console.error("Failed to send welcome chat message:", chatError);
         }
-      } catch (chatError) {
-        console.error("Failed to send welcome chat message:", chatError);
-        // Don't fail the request, just log the error
-      }
+      };
+
+      // Don't await — email + chat happen after response is sent
+      sendEmailAndChat();
     }
     // Note: No email is sent on rejection
 
