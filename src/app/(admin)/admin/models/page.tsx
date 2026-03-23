@@ -646,7 +646,7 @@ export default function AdminModelsPage() {
                       <TableCell>
                         {model.instagram_name ? (
                           <div className="flex flex-col">
-                            <a href={`https://instagram.com/${model.instagram_name.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-pink-500 hover:text-pink-400 transition-colors text-sm">{model.instagram_name.replace('@', '')}</a>
+                            <a href={`https://instagram.com/${model.instagram_name.replace('@', '').replace(/\s+/g, '')}`} target="_blank" rel="noopener noreferrer" className="text-pink-500 hover:text-pink-400 transition-colors text-sm">{model.instagram_name.replace('@', '')}</a>
                             {model.instagram_followers ? <span className="text-xs text-muted-foreground">{(model.instagram_followers / 1000).toFixed(1)}K</span> : null}
                           </div>
                         ) : <span className="text-muted-foreground text-sm">-</span>}

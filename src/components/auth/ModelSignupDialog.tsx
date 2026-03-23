@@ -100,6 +100,11 @@ export function ModelSignupDialog({ children }: ModelSignupDialogProps) {
       return;
     }
 
+    if (/\s/.test(instagram.trim().replace(/^@/, ""))) {
+      toast.error("Instagram usernames don't contain spaces — did you enter your name instead?");
+      return;
+    }
+
     if (!email.trim()) {
       toast.error("Please enter your email");
       return;

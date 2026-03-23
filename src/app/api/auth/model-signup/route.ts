@@ -39,6 +39,7 @@ function extractInstagramUsername(input: string | null | undefined): string | nu
     .replace(/^@/, "")
     .split("/")[0]  // Remove trailing paths like /reels, /posts, etc.
     .split("?")[0]  // Remove query params
+    .replace(/\s+/g, "")  // Remove spaces (Instagram handles never have spaces)
     .toLowerCase()
     .trim();
 

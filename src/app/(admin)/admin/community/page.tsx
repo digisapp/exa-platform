@@ -423,7 +423,7 @@ export default function AdminCommunityPage() {
                               <div className="flex items-center gap-3 text-sm text-muted-foreground">
                                 {app.instagram_username && (
                                   <a
-                                    href={`https://instagram.com/${app.instagram_username?.replace(/^@/, '')}`}
+                                    href={`https://instagram.com/${app.instagram_username?.replace(/^@/, '').replace(/\s+/g, '')}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-pink-500 hover:text-pink-400 flex items-center gap-1"
@@ -499,7 +499,7 @@ export default function AdminCommunityPage() {
                         </Link>
                         {model.instagram_name && (
                           <a
-                            href={`https://instagram.com/${model.instagram_name.replace('@', '')}`}
+                            href={`https://instagram.com/${model.instagram_name.replace('@', '').replace(/\s+/g, '')}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="hidden sm:flex items-center gap-1 text-pink-500 hover:text-pink-400 text-sm"

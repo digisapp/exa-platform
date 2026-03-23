@@ -442,7 +442,7 @@ export default function AdminModelDetailPage() {
                   <div className="flex items-center gap-2">
                     <Instagram className="h-4 w-4 text-pink-500" />
                     <a
-                      href={`https://instagram.com/${instagramHandle.replace("@", "")}`}
+                      href={`https://instagram.com/${instagramHandle.replace("@", "").replace(/\s+/g, "")}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-pink-500 hover:underline"
