@@ -1,24 +1,26 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useCallback, useRef } from "react";
-import { createClient } from "@/lib/supabase/client";
-import Image from "next/image";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import Image from 'next/image';
+import Link from 'next/link';
+import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import { useContentData, ContentItem, ContentSet, ContentFilters } from '@/hooks/useContentData';
+
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,544 +30,1506 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from '@/components/ui/alert-dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Lock,
-  Plus,
-  Trash2,
-  Loader2,
-  Upload,
-  Coins,
-  Eye,
-  EyeOff,
-  Image as ImageIcon,
-  Video,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import { Checkbox } from '@/components/ui/checkbox';
+
+import {
   Camera,
+  Video,
+  Eye,
+  Lock,
+  Coins,
+  Upload,
+  Plus,
+  Pencil,
+  Trash2,
+  Search,
+  Loader2,
   ExternalLink,
-  Sparkles,
+  Calendar,
+  Clock,
+  BarChart3,
+  FolderOpen,
+  Image as ImageIcon,
+  X,
+  ChevronDown,
+  Package,
   TrendingUp,
-  FolderDown,
-  Inbox,
-  DollarSign,
-  CameraIcon,
-  ImagePlus,
-  XCircle,
-} from "lucide-react";
-import { Progress } from "@/components/ui/progress";
-import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "sonner";
-import { cn } from "@/lib/utils";
-import { LibraryContentCard } from "@/components/deliveries/LibraryContentCard";
-import { LibraryContentDetailSheet } from "@/components/deliveries/LibraryContentDetailSheet";
+} from 'lucide-react';
 
-interface MediaAsset {
-  id: string;
-  asset_type: string;
-  photo_url: string | null;
-  url: string;
-  created_at: string;
-  title: string | null;
-  is_visible: boolean | null;
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-interface PremiumContent {
-  id: string;
-  title: string | null;
-  description: string | null;
-  media_type: string;
-  media_url: string;
-  preview_url: string | null;
-  coin_price: number;
-  unlock_count: number | null;
-  created_at: string | null;
+function relativeTime(dateStr: string): string {
+  const now = new Date();
+  const target = new Date(dateStr);
+  const diffMs = target.getTime() - now.getTime();
+  const absDiffMs = Math.abs(diffMs);
+  const seconds = Math.floor(absDiffMs / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+
+  if (days > 0) return rtf.format(diffMs > 0 ? days : -days, 'day');
+  if (hours > 0) return rtf.format(diffMs > 0 ? hours : -hours, 'hour');
+  if (minutes > 0) return rtf.format(diffMs > 0 ? minutes : -minutes, 'minute');
+  return rtf.format(diffMs > 0 ? seconds : -seconds, 'second');
 }
 
-interface LibraryItem {
-  assignmentId: string;
-  libraryItemId: string;
-  title: string;
-  description: string | null;
-  notes: string | null;
-  assignedAt: string;
-  fileCount: number;
-  totalSize: number;
+function isScheduled(item: ContentItem): boolean {
+  return !!item.publish_at && new Date(item.publish_at) > new Date();
 }
+
+function getMediaUrl(url: string): string {
+  if (url.startsWith('http')) return url;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  return `${supabaseUrl}/storage/v1/object/public/portfolio/${url}`;
+}
+
+// ---------------------------------------------------------------------------
+// Main Page Component
+// ---------------------------------------------------------------------------
 
 export default function ContentPage() {
-  const supabase = createClient();
+  const {
+    items,
+    sets,
+    stats,
+    loading,
+    filters,
+    selectedIds,
+    refreshAll,
+    createItem,
+    updateItem,
+    deleteItem,
+    bulkAction,
+    createSet,
+    updateSet,
+    deleteSet,
+    toggleSelect,
+    selectAll,
+    clearSelection,
+    isSelected,
+    setFilter,
+  } = useContentData();
 
-  const [content, setContent] = useState<PremiumContent[]>([]);
-  const [portfolio, setPortfolio] = useState<MediaAsset[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [modelId, setModelId] = useState<string | null>(null);
+  // Local UI state
+  const [activeTab, setActiveTab] = useState('all');
   const [modelUsername, setModelUsername] = useState<string | null>(null);
-  const [totalEarnings, setTotalEarnings] = useState(0);
-  const [activeTab, setActiveTab] = useState("portfolio");
-  const [libraryItems, setLibraryItems] = useState<LibraryItem[]>([]);
-  const [selectedLibraryItemId, setSelectedLibraryItemId] = useState<string | null>(null);
-  const [librarySheetOpen, setLibrarySheetOpen] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string; type: "portfolio" | "ppv" } | null>(null);
+  const [searchInput, setSearchInput] = useState('');
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Form state
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [isPaid, setIsPaid] = useState(false);
-  const [coinPrice, setCoinPrice] = useState("10");
-  const [mediaFile, setMediaFile] = useState<File | null>(null);
-  const [mediaPreview, setMediaPreview] = useState<string | null>(null);
-  const [mediaType, setMediaType] = useState<"image" | "video">("image");
+  // Dialogs
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [editItem, setEditItem] = useState<ContentItem | null>(null);
+  const [deleteConfirmItem, setDeleteConfirmItem] = useState<ContentItem | null>(null);
+  const [editSet, setEditSet] = useState<ContentSet | null>(null);
+  const [createSetOpen, setCreateSetOpen] = useState(false);
+  const [deleteConfirmSet, setDeleteConfirmSet] = useState<ContentSet | null>(null);
+  const [bulkPriceOpen, setBulkPriceOpen] = useState(false);
+  const [bulkSetOpen, setBulkSetOpen] = useState(false);
 
-  // Multi-file upload state (portfolio only)
-  const [mediaFiles, setMediaFiles] = useState<File[]>([]);
-  const [mediaPreviews, setMediaPreviews] = useState<string[]>([]);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadStatus, setUploadStatus] = useState<string | null>(null); // e.g. "Uploading 2 of 5..."
-  const cameraInputRef = useRef<HTMLInputElement>(null);
-  const videoCameraInputRef = useRef<HTMLInputElement>(null);
-
-  const fetchContent = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data: actor } = await supabase
-      .from("actors")
-      .select("id, type")
-      .eq("user_id", user.id)
-      .single() as { data: { id: string; type: string } | null };
-
-    if (!actor || (actor.type !== "model" && actor.type !== "admin")) return;
-
-    const { data: model } = await supabase
-      .from("models")
-      .select("id, username")
-      .eq("user_id", user.id)
-      .single() as { data: { id: string; username: string } | null };
-
-    if (!model) {
-      setLoading(false);
-      return;
+  // Fetch model username on mount
+  useEffect(() => {
+    async function loadProfile() {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: model } = (await supabase
+        .from('models')
+        .select('username')
+        .eq('user_id', user.id)
+        .single()) as { data: { username: string } | null };
+      if (model) setModelUsername(model.username);
     }
-
-    setModelId(model.id);
-    setModelUsername(model.username);
-
-    // Get portfolio content
-    // Note: is_visible column added via migration - using * to include it when available
-    const { data: portfolioData } = await supabase
-      .from("media_assets")
-      .select("*")
-      .eq("model_id", model.id)
-      .in("asset_type", ["portfolio", "video"])
-      .order("created_at", { ascending: false });
-
-    setPortfolio((portfolioData || []) as unknown as MediaAsset[]);
-
-    // Get PPV content via API (generates fresh signed URLs)
-    try {
-      const res = await fetch(`/api/content?modelId=${model.id}`);
-      if (res.ok) {
-        const data = await res.json();
-        const items = (data.content || []).map((item: any) => ({
-          ...item,
-          media_url: item.mediaUrl || item.media_url,
-        }));
-        setContent(items);
-      }
-    } catch (error) {
-      console.error("Failed to load PPV content:", error);
-    }
-
-    // Get total earnings
-    const { data: earnings } = await supabase
-      .from("coin_transactions")
-      .select("amount")
-      .eq("actor_id", actor.id)
-      .eq("action", "content_sale") as { data: { amount: number }[] | null };
-
-    const total = earnings?.reduce((sum, e) => sum + e.amount, 0) || 0;
-    setTotalEarnings(total);
-
-    setLoading(false);
-  }, [supabase]);
-
-  const loadLibraryItems = useCallback(async () => {
-    try {
-      const res = await fetch("/api/media-hub/assigned");
-      if (res.ok) {
-        const data = await res.json();
-        setLibraryItems(data.items || []);
-      }
-    } catch (error) {
-      console.error("Failed to load library items:", error);
-    }
+    loadProfile();
   }, []);
 
+  // Debounced search
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      setSearchInput(value);
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+      searchTimerRef.current = setTimeout(() => {
+        setFilter('search', value);
+      }, 300);
+    },
+    [setFilter],
+  );
+
   useEffect(() => {
-    fetchContent();
-    loadLibraryItems();
-  }, [fetchContent, loadLibraryItems]);
+    return () => {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    };
+  }, []);
 
-  // Format file size for display
-  const formatFileSize = (bytes: number): string => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
+  // Scheduled items for Drops tab
+  const scheduledItems = useMemo(
+    () => items.filter((item) => isScheduled(item)),
+    [items],
+  );
 
-  const validateFile = (file: File): boolean => {
-    if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
-      toast.error("Unsupported format", {
-        description: "Please select a JPG, PNG, WebP, GIF image or MP4, MOV, WebM video.",
-        duration: 5000,
-      });
-      return false;
-    }
+  // ---------------------------------------------------------------------------
+  // Header
+  // ---------------------------------------------------------------------------
 
-    const maxSize = 50 * 1024 * 1024;
-    if (file.size > maxSize) {
-      const fileType = file.type.startsWith("video/") ? "Video" : "Photo";
-      toast.error(`${fileType} too large`, {
-        description: `Your file is ${formatFileSize(file.size)}. Maximum size is 50MB.`,
-        duration: 5000,
-      });
-      return false;
-    }
-    return true;
-  };
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">My Content</h1>
+          <div className="flex items-center gap-3">
+            {modelUsername && (
+              <Link
+                href={`/${modelUsername}`}
+                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ExternalLink className="h-4 w-4" />
+                View Profile
+              </Link>
+            )}
+            <Button
+              onClick={() => setUploadOpen(true)}
+              className="bg-gradient-to-r from-pink-500 to-violet-500 text-white hover:from-pink-600 hover:to-violet-600"
+            >
+              <Upload className="mr-2 h-4 w-4" />
+              Upload
+            </Button>
+          </div>
+        </div>
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
+        {/* Stats Row */}
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+          <Card className="overflow-hidden">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 p-2.5">
+                  <Camera className="h-4 w-4 text-white" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Total Items</p>
+                  <p className="text-xl font-bold">{stats?.total_items ?? 0}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="overflow-hidden">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-gradient-to-br from-green-500 to-green-600 p-2.5">
+                  <Eye className="h-4 w-4 text-white" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Portfolio</p>
+                  <p className="text-xl font-bold">{stats?.portfolio_count ?? 0}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="overflow-hidden">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-gradient-to-br from-pink-500 to-pink-600 p-2.5">
+                  <Lock className="h-4 w-4 text-white" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Exclusive</p>
+                  <p className="text-xl font-bold">{stats?.exclusive_count ?? 0}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="overflow-hidden">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-gradient-to-br from-amber-500 to-amber-600 p-2.5">
+                  <Coins className="h-4 w-4 text-white" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Revenue</p>
+                  <p className="text-xl font-bold">
+                    {stats?.total_revenue ?? 0}{' '}
+                    <span className="text-xs font-normal text-muted-foreground">
+                      (${((stats?.total_revenue ?? 0) * 0.1).toFixed(2)})
+                    </span>
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-    // Reset the input so the same file(s) can be re-selected
-    e.target.value = "";
+        {/* Loading state */}
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          /* Tabs */
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="mb-6">
+              <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="sets">Sets</TabsTrigger>
+              <TabsTrigger value="drops">
+                Drops
+                {scheduledItems.length > 0 && (
+                  <Badge variant="secondary" className="ml-1.5 text-xs">
+                    {scheduledItems.length}
+                  </Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="stats">Stats</TabsTrigger>
+            </TabsList>
 
-    if (isPaid) {
-      // PPV: single file only
-      const file = files[0];
-      if (!validateFile(file)) return;
-      setMediaType(file.type.startsWith("video/") ? "video" : "image");
-      setMediaFile(file);
-      setMediaPreview(URL.createObjectURL(file));
-    } else {
-      // Portfolio: multi-file support
-      const valid = files.filter(validateFile);
-      if (valid.length === 0) return;
+            <TabsContent value="all">
+              <AllTab
+                items={items}
+                sets={sets}
+                filters={filters}
+                selectedIds={selectedIds}
+                searchInput={searchInput}
+                onSearchChange={handleSearchChange}
+                setFilter={setFilter}
+                toggleSelect={toggleSelect}
+                selectAll={selectAll}
+                clearSelection={clearSelection}
+                isSelected={isSelected}
+                bulkAction={bulkAction}
+                onEditItem={setEditItem}
+                onDeleteItem={setDeleteConfirmItem}
+                onUpload={() => setUploadOpen(true)}
+                onBulkPrice={() => setBulkPriceOpen(true)}
+                onBulkSet={() => setBulkSetOpen(true)}
+              />
+            </TabsContent>
 
-      if (valid.length === 1 && mediaFiles.length === 0) {
-        // Single file - also set the legacy single-file state for preview
-        setMediaType(valid[0].type.startsWith("video/") ? "video" : "image");
-        setMediaFile(valid[0]);
-        setMediaPreview(URL.createObjectURL(valid[0]));
-      }
+            <TabsContent value="sets">
+              <SetsTab
+                sets={sets}
+                items={items}
+                onCreateSet={() => setCreateSetOpen(true)}
+                onEditSet={setEditSet}
+                onDeleteSet={setDeleteConfirmSet}
+              />
+            </TabsContent>
 
-      setMediaFiles((prev) => [...prev, ...valid]);
-      setMediaPreviews((prev) => [...prev, ...valid.map((f) => URL.createObjectURL(f))]);
-    }
-  };
+            <TabsContent value="drops">
+              <DropsTab items={scheduledItems} updateItem={updateItem} onEditItem={setEditItem} />
+            </TabsContent>
 
-  // Helper to safely parse JSON response
-  const safeJsonParse = async (response: Response) => {
-    try {
-      return await response.json();
-    } catch {
-      if (response.status === 413) {
-        throw new Error("File too large for this upload method");
-      }
-      throw new Error("Server error - please try again");
-    }
-  };
+            <TabsContent value="stats">
+              <StatsTab stats={stats} sets={sets} items={items} />
+            </TabsContent>
+          </Tabs>
+        )}
+      </div>
 
-  // Direct upload to Supabase using signed URL (bypasses Vercel's 4.5MB limit)
-  const uploadViaSigned = async (file: File, fileTitle?: string) => {
-    // Step 1: Get signed URL
-    setUploadProgress(5);
-    const signedResponse = await fetch("/api/upload/signed-url", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        fileName: file.name,
-        fileType: file.type,
-        fileSize: file.size,
-        title: fileTitle ?? title || null,
-      }),
-    });
+      {/* Upload Dialog */}
+      <UploadDialog
+        open={uploadOpen}
+        onOpenChange={setUploadOpen}
+        sets={sets}
+        createItem={createItem}
+        refreshAll={refreshAll}
+      />
 
-    const signedData = await safeJsonParse(signedResponse);
-    if (!signedResponse.ok) throw new Error(signedData.error || "Failed to get upload URL");
+      {/* Edit Item Dialog */}
+      {editItem && (
+        <ItemEditDialog
+          item={editItem}
+          sets={sets}
+          open={!!editItem}
+          onOpenChange={(open) => {
+            if (!open) setEditItem(null);
+          }}
+          updateItem={updateItem}
+          deleteItem={deleteItem}
+        />
+      )}
 
-    // Step 2: Upload directly to Supabase Storage with progress tracking
-    await new Promise<void>((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.open("PUT", signedData.signedUrl);
-      xhr.setRequestHeader("Content-Type", file.type);
+      {/* Delete Item Confirm */}
+      {deleteConfirmItem && (
+        <AlertDialog
+          open={!!deleteConfirmItem}
+          onOpenChange={(open) => {
+            if (!open) setDeleteConfirmItem(null);
+          }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Content</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete &quot;{deleteConfirmItem.title || 'Untitled'}&quot;?
+                This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={() => {
+                  deleteItem(deleteConfirmItem.id);
+                  setDeleteConfirmItem(null);
+                }}
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
 
-      xhr.upload.onprogress = (e) => {
-        if (e.lengthComputable) {
-          // Map upload progress to 10-85% range (5% for signed URL, 85-100% for completion)
-          const pct = Math.round(10 + (e.loaded / e.total) * 75);
-          setUploadProgress(pct);
-        }
-      };
+      {/* Set Edit/Create Dialog */}
+      <SetDialog
+        open={createSetOpen || !!editSet}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCreateSetOpen(false);
+            setEditSet(null);
+          }
+        }}
+        set={editSet}
+        items={items}
+        createSet={createSet}
+        updateSet={updateSet}
+        deleteSet={deleteSet}
+      />
 
-      xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) resolve();
-        else reject(new Error("Upload to storage failed"));
-      };
-      xhr.onerror = () => reject(new Error("Upload to storage failed"));
-      xhr.send(file);
-    });
+      {/* Delete Set Confirm */}
+      {deleteConfirmSet && (
+        <AlertDialog
+          open={!!deleteConfirmSet}
+          onOpenChange={(open) => {
+            if (!open) setDeleteConfirmSet(null);
+          }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Set</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete &quot;{deleteConfirmSet.title}&quot;? Items in this
+                set will not be deleted but will be unassigned.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={() => {
+                  deleteSet(deleteConfirmSet.id);
+                  setDeleteConfirmSet(null);
+                }}
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
 
-    // Step 3: Complete the upload
-    setUploadProgress(90);
-    const completeResponse = await fetch("/api/upload/complete", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        storagePath: signedData.storagePath,
-        bucket: signedData.bucket,
-        uploadMeta: signedData.uploadMeta,
-      }),
-    });
+      {/* Bulk Price Dialog */}
+      <BulkPriceDialog
+        open={bulkPriceOpen}
+        onOpenChange={setBulkPriceOpen}
+        selectedCount={selectedIds.size}
+        onConfirm={(price) => {
+          bulkAction('set_price', { coin_price: price });
+          setBulkPriceOpen(false);
+        }}
+      />
 
-    const completeData = await safeJsonParse(completeResponse);
-    if (!completeResponse.ok) throw new Error(completeData.error || "Failed to complete upload");
+      {/* Bulk Set Dialog */}
+      <BulkSetDialog
+        open={bulkSetOpen}
+        onOpenChange={setBulkSetOpen}
+        sets={sets}
+        selectedCount={selectedIds.size}
+        onConfirm={(setId) => {
+          bulkAction('set_set', { set_id: setId });
+          setBulkSetOpen(false);
+        }}
+      />
+    </div>
+  );
+}
 
-    setUploadProgress(100);
-    return completeData;
-  };
+// ===========================================================================
+// ALL TAB
+// ===========================================================================
 
-  const uploadSingleFile = async (file: File, fileTitle?: string) => {
-    const VERCEL_LIMIT = 4 * 1024 * 1024;
-    const type = file.type.startsWith("video/") ? "video" : "image";
+function AllTab({
+  items,
+  sets,
+  filters,
+  selectedIds,
+  searchInput,
+  onSearchChange,
+  setFilter,
+  toggleSelect,
+  selectAll,
+  clearSelection,
+  isSelected,
+  bulkAction,
+  onEditItem,
+  onDeleteItem,
+  onUpload,
+  onBulkPrice,
+  onBulkSet,
+}: {
+  items: ContentItem[];
+  sets: ContentSet[];
+  filters: { status: string | null; media_type: string | null; sort: string; order: string };
+  selectedIds: Set<string>;
+  searchInput: string;
+  onSearchChange: (v: string) => void;
+  setFilter: <K extends keyof ContentFilters>(key: K, value: ContentFilters[K]) => void;
+  toggleSelect: (id: string) => void;
+  selectAll: () => void;
+  clearSelection: () => void;
+  isSelected: (id: string) => boolean;
+  bulkAction: (action: string, params?: Record<string, unknown>) => Promise<void>;
+  onEditItem: (item: ContentItem) => void;
+  onDeleteItem: (item: ContentItem) => void;
+  onUpload: () => void;
+  onBulkPrice: () => void;
+  onBulkSet: () => void;
+}) {
+  const hasSelection = selectedIds.size > 0;
 
-    if (isPaid) {
-      if (file.size > VERCEL_LIMIT) {
-        const data = await uploadViaSigned(file, fileTitle);
-        await createPaidContent(data.storagePath || data.url);
+  return (
+    <div className="space-y-4">
+      {/* Filter Bar */}
+      <div className="flex flex-wrap items-center gap-3">
+        <Select
+          value={filters.status || 'all'}
+          onValueChange={(v) => setFilter('status', v === 'all' ? null : v)}
+        >
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="private">Private</SelectItem>
+            <SelectItem value="portfolio">Portfolio</SelectItem>
+            <SelectItem value="exclusive">Exclusive</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={filters.media_type || 'all'}
+          onValueChange={(v) => setFilter('media_type', v === 'all' ? null : v)}
+        >
+          <SelectTrigger className="w-[130px]">
+            <SelectValue placeholder="Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Types</SelectItem>
+            <SelectItem value="image">Photos</SelectItem>
+            <SelectItem value="video">Videos</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <div className="relative flex-1 min-w-[180px]">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search content..."
+            value={searchInput}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+
+        <Select
+          value={`${filters.sort}_${filters.order}`}
+          onValueChange={(v) => {
+            const map: Record<string, [string, string]> = {
+              created_at_desc: ['created_at', 'desc'],
+              created_at_asc: ['created_at', 'asc'],
+              unlock_count_desc: ['unlock_count', 'desc'],
+              coin_price_desc: ['coin_price', 'desc'],
+            };
+            const [sort, order] = map[v] || ['created_at', 'desc'];
+            setFilter('sort', sort);
+            setFilter('order', order as 'asc' | 'desc');
+          }}
+        >
+          <SelectTrigger className="w-[150px]">
+            <SelectValue placeholder="Sort" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="created_at_desc">Newest</SelectItem>
+            <SelectItem value="created_at_asc">Oldest</SelectItem>
+            <SelectItem value="unlock_count_desc">Most Unlocks</SelectItem>
+            <SelectItem value="coin_price_desc">Highest Price</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Bulk Action Bar */}
+      {hasSelection && (
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/50 p-3">
+          <span className="text-sm font-medium">{selectedIds.size} selected</span>
+          <div className="mx-2 h-4 w-px bg-border" />
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                Set Status <ChevronDown className="ml-1 h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => bulkAction('set_status', { status: 'private' })}>
+                Private
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => bulkAction('set_status', { status: 'portfolio' })}>
+                Portfolio
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => bulkAction('set_status', { status: 'exclusive' })}>
+                Exclusive
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Button variant="outline" size="sm" onClick={onBulkPrice}>
+            Set Price
+          </Button>
+
+          <Button variant="outline" size="sm" onClick={onBulkSet}>
+            Add to Set
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-destructive hover:text-destructive"
+            onClick={() => bulkAction('delete')}
+          >
+            <Trash2 className="mr-1 h-3 w-3" />
+            Delete
+          </Button>
+
+          <div className="flex-1" />
+
+          <Button variant="ghost" size="sm" onClick={clearSelection}>
+            <X className="mr-1 h-3 w-3" />
+            Clear
+          </Button>
+        </div>
+      )}
+
+      {/* Select All */}
+      {items.length > 0 && (
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={hasSelection ? clearSelection : selectAll}>
+            {hasSelection ? 'Deselect All' : 'Select All'}
+          </Button>
+          <span className="text-xs text-muted-foreground">{items.length} items</span>
+        </div>
+      )}
+
+      {/* Content Grid */}
+      {items.length === 0 ? (
+        <Card className="py-16">
+          <CardContent className="flex flex-col items-center justify-center text-center">
+            <div className="mb-4 rounded-full bg-muted p-4">
+              <ImageIcon className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h3 className="mb-2 text-lg font-semibold">Upload your first photo or video</h3>
+            <p className="mb-4 text-sm text-muted-foreground">
+              Your content library is empty. Start building your portfolio.
+            </p>
+            <Button
+              onClick={onUpload}
+              className="bg-gradient-to-r from-pink-500 to-violet-500 text-white hover:from-pink-600 hover:to-violet-600"
+            >
+              <Upload className="mr-2 h-4 w-4" />
+              Upload
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {items.map((item) => (
+            <ContentItemCard
+              key={item.id}
+              item={item}
+              sets={sets}
+              selected={isSelected(item.id)}
+              onToggleSelect={() => toggleSelect(item.id)}
+              onEdit={() => onEditItem(item)}
+              onDelete={() => onDeleteItem(item)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ===========================================================================
+// Content Item Card
+// ===========================================================================
+
+function ContentItemCard({
+  item,
+  sets,
+  selected,
+  onToggleSelect,
+  onEdit,
+  onDelete,
+}: {
+  item: ContentItem;
+  sets: ContentSet[];
+  selected: boolean;
+  onToggleSelect: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const setName = item.set_id ? sets.find((s) => s.id === item.set_id)?.title : null;
+  const mediaUrl = getMediaUrl(item.media_url);
+  const scheduled = isScheduled(item);
+
+  useEffect(() => {
+    if (item.media_type === 'video' && videoRef.current) {
+      if (hovered) {
+        videoRef.current.play().catch(() => {});
       } else {
-        setUploadProgress(10);
-        const formData = new FormData();
-        formData.append("file", file);
-
-        const uploadResponse = await fetch("/api/upload/premium", {
-          method: "POST",
-          body: formData,
-        });
-
-        setUploadProgress(80);
-        const uploadData = await safeJsonParse(uploadResponse);
-        if (!uploadResponse.ok) throw new Error(uploadData.error || "Failed to upload file");
-
-        await createPaidContent(uploadData.storagePath || uploadData.url);
-        setUploadProgress(100);
-      }
-    } else {
-      if (file.size > VERCEL_LIMIT) {
-        await uploadViaSigned(file, fileTitle);
-      } else {
-        setUploadProgress(10);
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("type", type === "video" ? "video" : "portfolio");
-        if (fileTitle) formData.append("title", fileTitle);
-
-        const uploadResponse = await fetch("/api/upload/media", {
-          method: "POST",
-          body: formData,
-        });
-
-        setUploadProgress(80);
-        const uploadData = await safeJsonParse(uploadResponse);
-        if (!uploadResponse.ok) throw new Error(uploadData.error || "Failed to upload file");
-        setUploadProgress(100);
+        videoRef.current.pause();
+        videoRef.current.currentTime = 0;
       }
     }
+  }, [hovered, item.media_type]);
+
+  return (
+    <div
+      className="group relative aspect-square cursor-pointer overflow-hidden rounded-lg border bg-muted"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={onEdit}
+    >
+      {/* Media */}
+      {item.media_type === 'video' ? (
+        <video
+          ref={videoRef}
+          src={mediaUrl}
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <Image
+          src={mediaUrl}
+          alt={item.title || 'Content'}
+          fill
+          className="object-cover"
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+        />
+      )}
+
+      {/* Checkbox */}
+      <div
+        className={cn(
+          'absolute left-2 top-2 z-10 transition-opacity',
+          selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 sm:opacity-0',
+          'max-sm:opacity-100',
+        )}
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleSelect();
+        }}
+      >
+        <Checkbox checked={selected} className="h-5 w-5 border-2 border-white bg-black/30" />
+      </div>
+
+      {/* Status Badge */}
+      <div className="absolute left-2 top-9 z-10 flex flex-col gap-1">
+        {item.status === 'private' && (
+          <Badge variant="secondary" className="text-[10px]">
+            Private
+          </Badge>
+        )}
+        {item.status === 'portfolio' && (
+          <Badge className="bg-green-500/90 text-[10px] text-white hover:bg-green-500">
+            Portfolio
+          </Badge>
+        )}
+        {item.status === 'exclusive' && (
+          <Badge className="bg-gradient-to-r from-pink-500 to-violet-500 text-[10px] text-white">
+            <Coins className="mr-0.5 h-3 w-3" />
+            {item.coin_price}
+          </Badge>
+        )}
+        {scheduled && (
+          <Badge variant="outline" className="border-amber-500 bg-amber-500/10 text-[10px] text-amber-600">
+            <Calendar className="mr-0.5 h-3 w-3" />
+            {new Date(item.publish_at!).toLocaleDateString()}
+          </Badge>
+        )}
+        {setName && (
+          <Badge variant="outline" className="bg-background/80 text-[10px]">
+            <FolderOpen className="mr-0.5 h-3 w-3" />
+            {setName}
+          </Badge>
+        )}
+      </div>
+
+      {/* Tags at bottom */}
+      {item.tags && item.tags.length > 0 && (
+        <div className="absolute bottom-2 left-2 right-2 z-10 flex flex-wrap gap-1">
+          {item.tags.slice(0, 3).map((tag) => (
+            <Badge key={tag} variant="secondary" className="text-[9px] bg-black/50 text-white">
+              {tag}
+            </Badge>
+          ))}
+          {item.tags.length > 3 && (
+            <Badge variant="secondary" className="text-[9px] bg-black/50 text-white">
+              +{item.tags.length - 3}
+            </Badge>
+          )}
+        </div>
+      )}
+
+      {/* Hover overlay */}
+      <div
+        className={cn(
+          'absolute inset-0 z-[5] flex items-center justify-center gap-3 bg-black/40 transition-opacity',
+          hovered ? 'opacity-100' : 'opacity-0',
+        )}
+      >
+        <Button
+          size="icon"
+          variant="secondary"
+          className="h-9 w-9"
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit();
+          }}
+        >
+          <Pencil className="h-4 w-4" />
+        </Button>
+        <Button
+          size="icon"
+          variant="secondary"
+          className="h-9 w-9 text-destructive hover:text-destructive"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ===========================================================================
+// Item Edit Dialog
+// ===========================================================================
+
+function ItemEditDialog({
+  item,
+  sets,
+  open,
+  onOpenChange,
+  updateItem,
+  deleteItem,
+}: {
+  item: ContentItem;
+  sets: ContentSet[];
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  updateItem: (id: string, data: Partial<ContentItem>) => Promise<ContentItem | null>;
+  deleteItem: (id: string) => Promise<void>;
+}) {
+  const [title, setTitle] = useState(item.title || '');
+  const [description, setDescription] = useState(item.description || '');
+  const [status, setStatus] = useState(item.status);
+  const [coinPrice, setCoinPrice] = useState(item.coin_price);
+  const [tags, setTags] = useState(item.tags?.join(', ') || '');
+  const [setId, setSetId] = useState(item.set_id || '');
+  const [publishAt, setPublishAt] = useState(
+    item.publish_at ? item.publish_at.slice(0, 16) : '',
+  );
+  const [saving, setSaving] = useState(false);
+  const mediaUrl = getMediaUrl(item.media_url);
+
+  const handleSave = async () => {
+    setSaving(true);
+    const parsedTags = tags
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean);
+    await updateItem(item.id, {
+      title: title || null,
+      description: description || null,
+      status,
+      coin_price: status === 'exclusive' ? coinPrice : 0,
+      tags: parsedTags,
+      set_id: setId || null,
+      publish_at: publishAt ? new Date(publishAt).toISOString() : null,
+    });
+    setSaving(false);
+    onOpenChange(false);
   };
 
-  const handleUpload = async () => {
-    if (!modelId) return;
+  const handleDelete = async () => {
+    await deleteItem(item.id);
+    onOpenChange(false);
+  };
 
-    // Determine which files to upload
-    const filesToUpload = isPaid ? (mediaFile ? [mediaFile] : []) : mediaFiles.length > 0 ? mediaFiles : (mediaFile ? [mediaFile] : []);
-    if (filesToUpload.length === 0) return;
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Edit Content</DialogTitle>
+          <DialogDescription>Update the details of this content item.</DialogDescription>
+        </DialogHeader>
 
-    setUploading(true);
-    setUploadProgress(0);
-    let successCount = 0;
-    let failCount = 0;
+        <div className="space-y-4">
+          {/* Preview */}
+          <div className="relative aspect-video overflow-hidden rounded-lg bg-muted">
+            {item.media_type === 'video' ? (
+              <video
+                src={mediaUrl}
+                controls
+                className="h-full w-full object-contain"
+                preload="metadata"
+              />
+            ) : (
+              <Image
+                src={mediaUrl}
+                alt={item.title || 'Content'}
+                fill
+                className="object-contain"
+                sizes="500px"
+              />
+            )}
+          </div>
 
-    try {
-      for (let i = 0; i < filesToUpload.length; i++) {
-        const file = filesToUpload[i];
-        setUploadProgress(0);
+          {/* Title */}
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-title">Title</Label>
+            <Input
+              id="edit-title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Give this content a title"
+            />
+          </div>
 
-        if (filesToUpload.length > 1) {
-          setUploadStatus(`Uploading ${i + 1} of ${filesToUpload.length}...`);
-        }
+          {/* Description */}
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-desc">Description</Label>
+            <Textarea
+              id="edit-desc"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Optional description"
+              rows={3}
+            />
+          </div>
 
-        try {
-          await uploadSingleFile(file, filesToUpload.length > 1 ? undefined : title || undefined);
-          successCount++;
-        } catch (error) {
-          failCount++;
-          console.error(`Failed to upload file ${i + 1}:`, error);
-        }
-      }
+          {/* Status */}
+          <div className="space-y-1.5">
+            <Label>Status</Label>
+            <Select value={status} onValueChange={(v) => setStatus(v as ContentItem['status'])}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="private">Private</SelectItem>
+                <SelectItem value="portfolio">Portfolio</SelectItem>
+                <SelectItem value="exclusive">Exclusive</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-      if (isPaid) {
-        // PPV success is handled in createPaidContent
-      } else {
-        if (failCount === 0) {
-          toast.success(
-            successCount === 1
-              ? "Added to your portfolio!"
-              : `${successCount} items added to your portfolio!`
+          {/* Coin Price */}
+          {status === 'exclusive' && (
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-price">Coin Price</Label>
+              <div className="relative">
+                <Coins className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="edit-price"
+                  type="number"
+                  min={0}
+                  max={10000}
+                  value={coinPrice}
+                  onChange={(e) => setCoinPrice(Number(e.target.value))}
+                  className="pl-9"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                ${(coinPrice * 0.1).toFixed(2)} USD equivalent
+              </p>
+            </div>
+          )}
+
+          {/* Tags */}
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-tags">Tags</Label>
+            <Input
+              id="edit-tags"
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
+              placeholder="tag1, tag2, tag3"
+            />
+            {tags && (
+              <div className="flex flex-wrap gap-1">
+                {tags
+                  .split(',')
+                  .map((t) => t.trim())
+                  .filter(Boolean)
+                  .map((tag) => (
+                    <Badge key={tag} variant="secondary" className="text-xs">
+                      {tag}
+                    </Badge>
+                  ))}
+              </div>
+            )}
+          </div>
+
+          {/* Set */}
+          <div className="space-y-1.5">
+            <Label>Set</Label>
+            <Select value={setId || 'none'} onValueChange={(v) => setSetId(v === 'none' ? '' : v)}>
+              <SelectTrigger>
+                <SelectValue placeholder="None" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
+                {sets.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Schedule */}
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-publish">Schedule (publish at)</Label>
+            <Input
+              id="edit-publish"
+              type="datetime-local"
+              value={publishAt}
+              onChange={(e) => setPublishAt(e.target.value)}
+            />
+            {publishAt && (
+              <p className="text-xs text-muted-foreground">
+                Will publish {relativeTime(publishAt)}
+              </p>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-2 pt-2">
+            <Button onClick={handleSave} disabled={saving} className="flex-1">
+              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Save Changes
+            </Button>
+            <Button variant="destructive" onClick={handleDelete}>
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ===========================================================================
+// SETS TAB
+// ===========================================================================
+
+function SetsTab({
+  sets,
+  items,
+  onCreateSet,
+  onEditSet,
+  onDeleteSet,
+}: {
+  sets: ContentSet[];
+  items: ContentItem[];
+  onCreateSet: () => void;
+  onEditSet: (s: ContentSet) => void;
+  onDeleteSet: (s: ContentSet) => void;
+}) {
+  if (sets.length === 0) {
+    return (
+      <Card className="py-16">
+        <CardContent className="flex flex-col items-center justify-center text-center">
+          <div className="mb-4 rounded-full bg-muted p-4">
+            <Package className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <h3 className="mb-2 text-lg font-semibold">Create your first set to organize content</h3>
+          <p className="mb-4 text-sm text-muted-foreground">
+            Sets let you group content together and optionally offer bundle pricing.
+          </p>
+          <Button onClick={onCreateSet}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Set
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <Button onClick={onCreateSet}>
+          <Plus className="mr-2 h-4 w-4" />
+          Create Set
+        </Button>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        {sets.map((set) => {
+          const coverItem = items.find((i) => i.set_id === set.id);
+          const coverUrl = coverItem ? getMediaUrl(coverItem.media_url) : null;
+
+          return (
+            <Card
+              key={set.id}
+              className="cursor-pointer overflow-hidden transition-shadow hover:shadow-md"
+              onClick={() => onEditSet(set)}
+            >
+              {/* Cover */}
+              <div className="relative h-40 bg-gradient-to-br from-muted to-muted-foreground/10">
+                {coverUrl && (
+                  <Image src={coverUrl} alt={set.title} fill className="object-cover" sizes="50vw" />
+                )}
+                <div className="absolute right-2 top-2 flex gap-1">
+                  <Badge
+                    className={cn(
+                      'text-[10px]',
+                      set.status === 'live' && 'bg-green-500 text-white',
+                      set.status === 'draft' && 'bg-gray-500 text-white',
+                      set.status === 'archived' && 'bg-amber-500 text-white',
+                    )}
+                  >
+                    {set.status.charAt(0).toUpperCase() + set.status.slice(1)}
+                  </Badge>
+                </div>
+              </div>
+
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold truncate">{set.title}</h3>
+                    {set.description && (
+                      <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
+                        {set.description}
+                      </p>
+                    )}
+                    <div className="mt-2 flex items-center gap-2">
+                      <Badge variant="secondary" className="text-xs">
+                        {set.item_count} items
+                      </Badge>
+                      {set.coin_price != null && set.coin_price > 0 && (
+                        <Badge variant="outline" className="text-xs">
+                          <Coins className="mr-0.5 h-3 w-3" />
+                          {set.coin_price} bundle
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 shrink-0"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEditSet(set);
+                        }}
+                      >
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-destructive"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDeleteSet(set);
+                        }}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </CardContent>
+            </Card>
           );
-        } else {
-          toast.warning(`${successCount} uploaded, ${failCount} failed`, {
-            description: "Some files couldn't be uploaded. Try again for the failed ones.",
-            duration: 5000,
-          });
-        }
-        setDialogOpen(false);
-        resetForm();
-        fetchContent();
-      }
-    } catch (error) {
-      console.error("Upload error:", error);
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      const fileType = mediaType === "video" ? "video" : "photo";
+        })}
+      </div>
+    </div>
+  );
+}
 
-      if (errorMessage.includes("too large") || errorMessage.includes("413")) {
-        toast.error("File too large", {
-          description: `Your ${fileType} exceeds the 50MB limit. Please compress it or try a smaller file.`,
-          duration: 5000,
-        });
-      } else if (errorMessage.includes("Invalid file type")) {
-        toast.error("Unsupported format", {
-          description: `This ${fileType} format isn't supported. Try MP4 for videos or JPG/PNG for photos.`,
-          duration: 5000,
-        });
-      } else if (errorMessage.includes("storage failed")) {
-        toast.error("Upload failed", {
-          description: "We couldn't save your file. Please check your connection and try again.",
-          duration: 5000,
-        });
-      } else {
-        toast.error("Upload failed", {
-          description: errorMessage,
-          duration: 5000,
-        });
-      }
-    } finally {
-      setUploading(false);
-      setUploadProgress(0);
-      setUploadStatus(null);
-    }
-  };
+// ===========================================================================
+// Set Dialog (Create / Edit)
+// ===========================================================================
 
-  const createPaidContent = async (mediaUrl: string) => {
-    const response = await fetch("/api/content", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: title || null,
-        description: description || null,
-        mediaUrl,
-        mediaType,
-        previewUrl: null,
-        coinPrice: parseInt(coinPrice) || 1,
-      }),
-    });
+function SetDialog({
+  open,
+  onOpenChange,
+  set,
+  items,
+  createSet,
+  updateSet,
+  deleteSet,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  set: ContentSet | null;
+  items: ContentItem[];
+  createSet: (data: Partial<ContentSet>) => Promise<ContentSet | null>;
+  updateSet: (id: string, data: Partial<ContentSet>) => Promise<ContentSet | null>;
+  deleteSet: (id: string) => Promise<void>;
+}) {
+  const isEdit = !!set;
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [coinPrice, setCoinPrice] = useState<number | ''>('');
+  const [status, setStatus] = useState<'draft' | 'live' | 'archived'>('draft');
+  const [saving, setSaving] = useState(false);
 
-    if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.error || "Failed to create content");
-    }
-
-    toast.success("PPV content created!");
-    setDialogOpen(false);
-    resetForm();
-    fetchContent();
-  };
-
-  const confirmDelete = async () => {
-    if (!deleteTarget) return;
-
-    if (deleteTarget.type === "ppv") {
-      const response = await fetch(`/api/content?id=${deleteTarget.id}`, { method: "DELETE" });
-      if (response.ok) {
-        toast.success("Deleted");
-        setContent((prev) => prev.filter((c) => c.id !== deleteTarget.id));
-      } else {
-        toast.error("Failed to delete");
-      }
+  // Reset form when set changes
+  useEffect(() => {
+    if (set) {
+      setTitle(set.title);
+      setDescription(set.description || '');
+      setCoinPrice(set.coin_price ?? '');
+      setStatus(set.status);
     } else {
-      const response = await fetch(`/api/upload?id=${deleteTarget.id}`, { method: "DELETE" });
-      if (response.ok) {
-        toast.success("Deleted");
-        setPortfolio((prev) => prev.filter((p) => p.id !== deleteTarget.id));
-      } else {
-        toast.error("Failed to delete");
-      }
+      setTitle('');
+      setDescription('');
+      setCoinPrice('');
+      setStatus('draft');
     }
+  }, [set, open]);
 
-    setDeleteTarget(null);
-  };
+  const setItems = items.filter((i) => set && i.set_id === set.id);
 
-  const handleToggleVisibility = async (mediaId: string, currentVisible: boolean | null) => {
-    const newVisible = !(currentVisible !== false); // Toggle: null/true → false, false → true
-    // Note: is_visible column added via migration - using type assertion until types are regenerated
-    const { error } = await (supabase
-      .from("media_assets") as any)
-      .update({ is_visible: newVisible })
-      .eq("id", mediaId);
+  const handleSave = async () => {
+    if (!title.trim()) {
+      toast.error('Title is required');
+      return;
+    }
+    setSaving(true);
+    const payload: Partial<ContentSet> = {
+      title: title.trim(),
+      description: description.trim() || null,
+      coin_price: coinPrice === '' ? null : Number(coinPrice),
+      status,
+    };
 
-    if (!error) {
-      setPortfolio((prev) =>
-        prev.map((p) => (p.id === mediaId ? { ...p, is_visible: newVisible } : p))
-      );
-      toast.success(newVisible ? "Now visible on profile" : "Hidden from profile");
+    if (isEdit && set) {
+      await updateSet(set.id, payload);
     } else {
-      toast.error("Failed to update visibility");
+      await createSet(payload);
+    }
+    setSaving(false);
+    onOpenChange(false);
+  };
+
+  const handleDelete = async () => {
+    if (set) {
+      await deleteSet(set.id);
+      onOpenChange(false);
     }
   };
 
-  const resetForm = () => {
-    setTitle("");
-    setDescription("");
-    setIsPaid(false);
-    setCoinPrice("10");
-    setMediaFile(null);
-    setMediaPreview(null);
-    setMediaFiles([]);
-    mediaPreviews.forEach((url) => URL.revokeObjectURL(url));
-    setMediaPreviews([]);
-    setUploadProgress(0);
-    setUploadStatus(null);
-  };
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>{isEdit ? 'Edit Set' : 'Create Set'}</DialogTitle>
+          <DialogDescription>
+            {isEdit ? 'Update set details.' : 'Create a new content set.'}
+          </DialogDescription>
+        </DialogHeader>
 
-  const removeFile = (index: number) => {
-    URL.revokeObjectURL(mediaPreviews[index]);
-    setMediaFiles((prev) => prev.filter((_, i) => i !== index));
-    setMediaPreviews((prev) => prev.filter((_, i) => i !== index));
-    // If removing the last file, also clear single-file state
-    if (mediaFiles.length <= 1) {
-      setMediaFile(null);
-      setMediaPreview(null);
-    }
-  };
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="set-title">Title *</Label>
+            <Input
+              id="set-title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="My Photo Set"
+            />
+          </div>
 
-  const openUploadDialog = (paid: boolean) => {
-    setIsPaid(paid);
-    setDialogOpen(true);
-  };
+          <div className="space-y-1.5">
+            <Label htmlFor="set-desc">Description</Label>
+            <Textarea
+              id="set-desc"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Describe this set"
+              rows={3}
+            />
+          </div>
 
-  if (loading) {
+          <div className="space-y-1.5">
+            <Label htmlFor="set-price">Bundle Price (coins)</Label>
+            <div className="relative">
+              <Coins className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                id="set-price"
+                type="number"
+                min={0}
+                max={10000}
+                value={coinPrice}
+                onChange={(e) =>
+                  setCoinPrice(e.target.value === '' ? '' : Number(e.target.value))
+                }
+                className="pl-9"
+                placeholder="Leave empty for no bundle discount"
+              />
+            </div>
+            {coinPrice !== '' && Number(coinPrice) > 0 && (
+              <p className="text-xs text-muted-foreground">
+                ${(Number(coinPrice) * 0.1).toFixed(2)} USD equivalent
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Status</Label>
+            <Select value={status} onValueChange={(v) => setStatus(v as typeof status)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="live">Live</SelectItem>
+                <SelectItem value="archived">Archived</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Items in set */}
+          {isEdit && setItems.length > 0 && (
+            <div className="space-y-1.5">
+              <Label>Items in this set ({setItems.length})</Label>
+              <div className="grid grid-cols-4 gap-2">
+                {setItems.slice(0, 8).map((item) => (
+                  <div
+                    key={item.id}
+                    className="relative aspect-square overflow-hidden rounded-md bg-muted"
+                  >
+                    {item.media_type === 'video' ? (
+                      <video
+                        src={getMediaUrl(item.media_url)}
+                        muted
+                        preload="metadata"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <Image
+                        src={getMediaUrl(item.media_url)}
+                        alt={item.title || ''}
+                        fill
+                        className="object-cover"
+                        sizes="80px"
+                      />
+                    )}
+                  </div>
+                ))}
+                {setItems.length > 8 && (
+                  <div className="flex aspect-square items-center justify-center rounded-md bg-muted text-sm text-muted-foreground">
+                    +{setItems.length - 8}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="flex gap-2 pt-2">
+            <Button onClick={handleSave} disabled={saving} className="flex-1">
+              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isEdit ? 'Save Changes' : 'Create Set'}
+            </Button>
+            {isEdit && (
+              <Button variant="destructive" onClick={handleDelete}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </Button>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ===========================================================================
+// DROPS TAB
+// ===========================================================================
+
+function DropsTab({
+  items,
+  updateItem,
+  onEditItem,
+}: {
+  items: ContentItem[];
+  updateItem: (id: string, data: Partial<ContentItem>) => Promise<ContentItem | null>;
+  onEditItem: (item: ContentItem) => void;
+}) {
+  if (items.length === 0) {
+    return (
+      <Card className="py-16">
+        <CardContent className="flex flex-col items-center justify-center text-center">
+          <div className="mb-4 rounded-full bg-muted p-4">
+            <Calendar className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <h3 className="mb-2 text-lg font-semibold">No scheduled drops</h3>
+          <p className="text-sm text-muted-foreground">
+            Upload content and set a publish date to schedule drops.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {items
+        .sort((a, b) => new Date(a.publish_at!).getTime() - new Date(b.publish_at!).getTime())
+        .map((item) => {
+          const mediaUrl = getMediaUrl(item.media_url);
+          return (
+            <Card key={item.id} className="overflow-hidden">
+              <CardContent className="flex items-center gap-4 p-4">
+                {/* Thumbnail */}
+                <div
+                  className="relative h-16 w-16 shrink-0 cursor-pointer overflow-hidden rounded-md bg-muted"
+                  onClick={() => onEditItem(item)}
+                >
+                  {item.media_type === 'video' ? (
+                    <video
+                      src={mediaUrl}
+                      muted
+                      preload="metadata"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <Image
+                      src={mediaUrl}
+                      alt={item.title || ''}
+                      fill
+                      className="object-cover"
+                      sizes="64px"
+                    />
+                  )}
+                </div>
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium truncate">{item.title || 'Untitled'}</p>
+                  <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+                    <Clock className="h-3.5 w-3.5" />
+                    <span>{new Date(item.publish_at!).toLocaleDateString()}</span>
+                    <span className="text-xs">({relativeTime(item.publish_at!)})</span>
+                  </div>
+                  <div className="mt-1">
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        'text-[10px]',
+                        item.status === 'portfolio' && 'border-green-500 text-green-600',
+                        item.status === 'exclusive' && 'border-pink-500 text-pink-600',
+                      )}
+                    >
+                      Will become: {item.status}
+                    </Badge>
+                  </div>
+                </div>
+
+                {/* Cancel */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => updateItem(item.id, { publish_at: null })}
+                >
+                  <X className="mr-1 h-3 w-3" />
+                  Cancel
+                </Button>
+              </CardContent>
+            </Card>
+          );
+        })}
+    </div>
+  );
+}
+
+// ===========================================================================
+// STATS TAB
+// ===========================================================================
+
+function StatsTab({
+  stats,
+  sets,
+  items,
+}: {
+  stats: import('@/hooks/useContentData').ContentStats | null;
+  sets: ContentSet[];
+  items: ContentItem[];
+}) {
+  if (!stats) {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -573,677 +1537,742 @@ export default function ContentPage() {
     );
   }
 
-  const totalUnlocks = content.reduce((sum, c) => sum + (c.unlock_count || 0), 0);
+  const liveSets = sets.filter((s) => s.status === 'live').length;
+  const totalItems = stats.total_items || 1;
+  const portfolioPct = Math.round((stats.portfolio_count / totalItems) * 100);
+  const exclusivePct = Math.round((stats.exclusive_count / totalItems) * 100);
+  const privatePct = 100 - portfolioPct - exclusivePct;
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">My Content</h1>
-        </div>
-        <div className="flex items-center gap-3">
-          {modelUsername && (
-            <Button variant="outline" asChild>
-              <Link href={`/${modelUsername}`} target="_blank">
-                <ExternalLink className="mr-2 h-4 w-4" />
-                View Profile
-              </Link>
-            </Button>
-          )}
-          <Button
-            onClick={() => openUploadDialog(false)}
-            className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Upload
-          </Button>
-        </div>
-      </div>
-
-      {/* Stats Overview */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border-blue-500/20">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-blue-500/20">
-                <Camera className="h-5 w-5 text-blue-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{portfolio.length}</p>
-                <p className="text-xs text-muted-foreground">Portfolio Items</p>
-              </div>
-            </div>
+    <div className="space-y-6">
+      {/* Summary cards */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <Card>
+          <CardContent className="p-4 text-center">
+            <p className="text-xs text-muted-foreground">Total Revenue</p>
+            <p className="text-2xl font-bold">{stats.total_revenue}</p>
+            <p className="text-xs text-muted-foreground">
+              ${(stats.total_revenue * 0.1).toFixed(2)}
+            </p>
           </CardContent>
         </Card>
-
-        <Card className="bg-gradient-to-br from-pink-500/10 to-violet-500/10 border-pink-500/20">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-pink-500/20">
-                <Lock className="h-5 w-5 text-pink-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{content.length}</p>
-                <p className="text-xs text-muted-foreground">PPV Items</p>
-              </div>
-            </div>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <p className="text-xs text-muted-foreground">Total Unlocks</p>
+            <p className="text-2xl font-bold">{stats.total_unlocks}</p>
           </CardContent>
         </Card>
-
-        <Card className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-green-500/20">
-                <Eye className="h-5 w-5 text-green-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{totalUnlocks}</p>
-                <p className="text-xs text-muted-foreground">Total Unlocks</p>
-              </div>
-            </div>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <p className="text-xs text-muted-foreground">Total Items</p>
+            <p className="text-2xl font-bold">{stats.total_items}</p>
           </CardContent>
         </Card>
-
-        <Card className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 border-amber-500/20">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-amber-500/20">
-                <Coins className="h-5 w-5 text-amber-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{totalEarnings}</p>
-                <p className="text-xs text-muted-foreground">Coins Earned</p>
-                {totalEarnings > 0 && (
-                  <p className="text-xs text-green-500 font-medium flex items-center gap-0.5 mt-0.5">
-                    <DollarSign className="h-3 w-3" />
-                    {(totalEarnings * 0.10).toFixed(2)}
-                  </p>
-                )}
-              </div>
-            </div>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <p className="text-xs text-muted-foreground">Live Sets</p>
+            <p className="text-2xl font-bold">{liveSets}</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Tabs - sticky on scroll */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-md -mx-4 px-4 py-2 md:-mx-8 md:px-8">
-          <TabsList className="grid w-full grid-cols-3 h-12">
-          <TabsTrigger value="portfolio" className="flex items-center gap-2 text-base">
-            <Camera className="h-4 w-4" />
-            Portfolio
-          </TabsTrigger>
-          <TabsTrigger value="ppv" className="flex items-center gap-2 text-base">
-            <Sparkles className="h-4 w-4" />
-            PPV Content
-          </TabsTrigger>
-          <TabsTrigger value="exa" className="flex items-center gap-2 text-base">
-            <FolderDown className="h-4 w-4" />
-            From EXA {libraryItems.length > 0 && `(${libraryItems.length})`}
-          </TabsTrigger>
-          </TabsList>
-        </div>
-
-        {/* Portfolio Tab */}
-        <TabsContent value="portfolio" className="space-y-4">
-          {portfolio.length === 0 ? (
-            <Card className="border-dashed">
-              <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-                <div className="p-4 rounded-full bg-muted mb-4">
-                  <Camera className="h-10 w-10 text-muted-foreground" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2">Build Your Portfolio</h3>
-                <p className="text-muted-foreground mb-6 max-w-sm">
-                  Upload photos and videos that showcase your work. These appear in your public profile.
-                </p>
-                <Button
-                  onClick={() => openUploadDialog(false)}
-                  size="lg"
-                  className="bg-gradient-to-r from-pink-500 to-violet-500"
-                >
-                  <Upload className="mr-2 h-5 w-5" />
-                  Upload Your First Photo
-                </Button>
-              </CardContent>
-            </Card>
+      {/* Top performing items */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <TrendingUp className="h-4 w-4" />
+            Top Performing Items
+          </CardTitle>
+          <CardDescription>Your top 5 items by unlocks</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {stats.top_items.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No unlock data yet. Content with exclusive pricing will appear here.
+            </p>
           ) : (
-            <>
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">
-                  {portfolio.length} item{portfolio.length !== 1 ? 's' : ''} in your portfolio
-                </p>
-                <Button variant="outline" size="sm" onClick={() => openUploadDialog(false)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add More
-                </Button>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {portfolio.map((item) => (
-                  <div
-                    key={item.id}
-                    className="group relative aspect-square rounded-xl overflow-hidden bg-muted"
-                  >
-                    {item.asset_type === "video" ? (
-                      <video
-                        src={item.url}
-                        className="w-full h-full object-cover"
-                        muted
-                        loop
-                        playsInline
-                        onMouseEnter={(e) => e.currentTarget.play().catch(() => {})}
-                        onMouseLeave={(e) => { e.currentTarget.pause(); e.currentTarget.currentTime = 0; }}
-                        preload="metadata"
-                      />
-                    ) : (
-                      <Image
-                        src={item.photo_url || item.url}
-                        alt="Portfolio"
-                        fill
-                        className="object-cover transition-transform group-hover:scale-105"
-                      />
-                    )}
+            <div className="space-y-3">
+              {stats.top_items.map((topItem, idx) => {
+                const fullItem = items.find((i) => i.id === topItem.id);
+                const mediaUrl = fullItem ? getMediaUrl(fullItem.media_url) : null;
+                const revenue = (topItem.coin_price || 0) * (topItem.unlock_count || 0);
 
-                    {/* Overlay on hover */}
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors" />
-
-                    {/* Type Badge */}
-                    <div className="absolute top-2 left-2">
-                      <div className="bg-black/60 backdrop-blur-sm px-2 py-1 rounded-full flex items-center gap-1">
-                        {item.asset_type === "video" ? (
-                          <Video className="h-3 w-3 text-white" />
-                        ) : (
-                          <ImageIcon className="h-3 w-3 text-white" />
-                        )}
-                        <span className="text-white text-xs">
-                          {item.asset_type === "video" ? "Video" : "Photo"}
-                        </span>
-                      </div>
+                return (
+                  <div key={topItem.id} className="flex items-center gap-3">
+                    <span className="w-5 text-sm font-bold text-muted-foreground">
+                      {idx + 1}
+                    </span>
+                    <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md bg-muted">
+                      {mediaUrl && (
+                        <Image
+                          src={mediaUrl}
+                          alt={topItem.title || ''}
+                          fill
+                          className="object-cover"
+                          sizes="40px"
+                        />
+                      )}
                     </div>
-
-                    {/* Action Buttons - visible on mobile, hover on desktop */}
-                    <div className="absolute top-2 right-2 flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                      <Button
-                        variant="secondary"
-                        size="icon"
-                        className={cn(
-                          "h-8 w-8",
-                          item.is_visible === false ? "bg-yellow-500/80 hover:bg-yellow-500" : "bg-white/80 hover:bg-white"
-                        )}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleToggleVisibility(item.id, item.is_visible);
-                        }}
-                        title={item.is_visible === false ? "Hidden from profile - click to show" : "Visible on profile - click to hide"}
-                      >
-                        {item.is_visible === false ? (
-                          <EyeOff className="h-4 w-4 text-yellow-900" />
-                        ) : (
-                          <Eye className="h-4 w-4 text-gray-700" />
-                        )}
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeleteTarget({ id: item.id, type: "portfolio" });
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">
+                        {topItem.title || 'Untitled'}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {topItem.unlock_count} unlocks
+                      </p>
                     </div>
-
-                    {/* Hidden indicator - always visible when hidden */}
-                    {item.is_visible === false && (
-                      <div className="absolute bottom-2 right-2 bg-yellow-500 px-2 py-1 rounded-full flex items-center gap-1">
-                        <EyeOff className="h-3 w-3 text-yellow-900" />
-                        <span className="text-yellow-900 text-xs font-medium">Hidden</span>
-                      </div>
-                    )}
-
-                    {/* Title overlay - show on hover */}
-                    {item.title && (
-                      <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                        <p className="text-white text-sm font-medium truncate">{item.title}</p>
-                      </div>
-                    )}
+                    <div className="text-right">
+                      <p className="text-sm font-semibold">{revenue} coins</p>
+                      <p className="text-xs text-muted-foreground">
+                        ${(revenue * 0.1).toFixed(2)}
+                      </p>
+                    </div>
                   </div>
-                ))}
-              </div>
-            </>
+                );
+              })}
+            </div>
           )}
-        </TabsContent>
+        </CardContent>
+      </Card>
 
-        {/* PPV Tab */}
-        <TabsContent value="ppv" className="space-y-4">
-          {content.length === 0 ? (
-            <Card className="border-dashed">
-              <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-                <div className="p-4 rounded-full bg-gradient-to-br from-pink-500/20 to-violet-500/20 mb-4">
-                  <Sparkles className="h-10 w-10 text-pink-500" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2">Start Earning with PPV</h3>
-                <p className="text-muted-foreground mb-6 max-w-sm">
-                  Upload exclusive content that fans can unlock with coins. Set your own prices and earn from every unlock.
-                </p>
-                <Button
-                  onClick={() => openUploadDialog(true)}
-                  size="lg"
-                  className="bg-gradient-to-r from-pink-500 to-violet-500"
-                >
-                  <Lock className="mr-2 h-5 w-5" />
-                  Create PPV Content
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <p className="text-sm text-muted-foreground">
-                    {content.length} PPV item{content.length !== 1 ? 's' : ''}
-                  </p>
-                  {totalEarnings > 0 && (
-                    <div className="flex items-center gap-1 text-sm text-green-500">
-                      <TrendingUp className="h-4 w-4" />
-                      <span>{totalEarnings} coins (${(totalEarnings * 0.10).toFixed(2)})</span>
-                    </div>
-                  )}
-                </div>
-                <Button variant="outline" size="sm" onClick={() => openUploadDialog(true)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add PPV
-                </Button>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {content.map((item) => (
-                  <div
-                    key={item.id}
-                    className="group relative aspect-square rounded-xl overflow-hidden bg-muted"
-                  >
-                    {item.media_type === "video" ? (
-                      <video
-                        src={item.media_url}
-                        className="w-full h-full object-cover"
-                        muted
-                        loop
-                        playsInline
-                        onMouseEnter={(e) => e.currentTarget.play().catch(() => {})}
-                        onMouseLeave={(e) => { e.currentTarget.pause(); e.currentTarget.currentTime = 0; }}
-                        preload="metadata"
-                      />
-                    ) : (
-                      <Image
-                        src={item.media_url}
-                        alt={item.title || "PPV"}
-                        fill
-                        className="object-cover transition-transform group-hover:scale-105"
-                      />
-                    )}
+      {/* Content breakdown */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <BarChart3 className="h-4 w-4" />
+            Content Breakdown
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between text-sm">
+              <span className="flex items-center gap-2">
+                <div className="h-3 w-3 rounded-full bg-green-500" />
+                Portfolio
+              </span>
+              <span>
+                {stats.portfolio_count} ({portfolioPct}%)
+              </span>
+            </div>
+            <Progress value={portfolioPct} className="h-2 [&>div]:bg-green-500" />
 
-                    {/* Overlay on hover */}
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors" />
+            <div className="flex items-center justify-between text-sm">
+              <span className="flex items-center gap-2">
+                <div className="h-3 w-3 rounded-full bg-pink-500" />
+                Exclusive
+              </span>
+              <span>
+                {stats.exclusive_count} ({exclusivePct}%)
+              </span>
+            </div>
+            <Progress value={exclusivePct} className="h-2 [&>div]:bg-pink-500" />
 
-                    {/* Price Badge */}
-                    <div className="absolute top-2 left-2">
-                      <div className="bg-gradient-to-r from-pink-500 to-violet-500 px-3 py-1 rounded-full flex items-center gap-1.5 shadow-lg">
-                        <Coins className="h-3.5 w-3.5 text-white" />
-                        <span className="text-white text-sm font-bold">{item.coin_price}</span>
-                      </div>
-                    </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="flex items-center gap-2">
+                <div className="h-3 w-3 rounded-full bg-gray-400" />
+                Private
+              </span>
+              <span>
+                {stats.private_count} ({privatePct}%)
+              </span>
+            </div>
+            <Progress value={privatePct} className="h-2 [&>div]:bg-gray-400" />
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
 
-                    {/* Stats Badge */}
-                    {(item.unlock_count || 0) > 0 && (
-                      <div className="absolute bottom-2 left-2">
-                        <div className="bg-black/60 backdrop-blur-sm px-2 py-1 rounded-full flex items-center gap-1">
-                          <Eye className="h-3 w-3 text-white" />
-                          <span className="text-white text-xs">{item.unlock_count || 0}</span>
-                        </div>
-                      </div>
-                    )}
+// ===========================================================================
+// Upload Dialog
+// ===========================================================================
 
-                    {/* Delete Button - visible on mobile, hover on desktop */}
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      className="absolute top-2 right-2 h-8 w-8 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDeleteTarget({ id: item.id, type: "ppv" });
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+interface UploadFile {
+  file: File;
+  preview: string;
+  progress: number;
+  status: 'pending' | 'uploading' | 'done' | 'error';
+  error?: string;
+}
 
-                    {/* Title overlay */}
-                    {item.title && (
-                      <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                        <p className="text-white text-sm font-medium truncate">{item.title}</p>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </TabsContent>
+function UploadDialog({
+  open,
+  onOpenChange,
+  sets,
+  createItem,
+  refreshAll,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  sets: ContentSet[];
+  createItem: (data: Partial<ContentItem>) => Promise<ContentItem | null>;
+  refreshAll: () => Promise<void>;
+}) {
+  const [files, setFiles] = useState<UploadFile[]>([]);
+  const [title, setTitle] = useState('');
+  const [status, setStatus] = useState<'private' | 'portfolio' | 'exclusive'>('private');
+  const [coinPrice, setCoinPrice] = useState(0);
+  const [tags, setTags] = useState('');
+  const [setId, setSetId] = useState('');
+  const [scheduleEnabled, setScheduleEnabled] = useState(false);
+  const [publishAt, setPublishAt] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraImageRef = useRef<HTMLInputElement>(null);
+  const cameraVideoRef = useRef<HTMLInputElement>(null);
 
-        {/* From EXA Tab */}
-        <TabsContent value="exa" className="space-y-4">
-          {libraryItems.length === 0 ? (
-            <div className="text-center py-16 text-muted-foreground">
-              <Inbox className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p className="font-medium">No shared content yet</p>
-              <p className="text-sm mt-1">
-                Content shared by EXA will appear here
+  // Cleanup previews on unmount
+  useEffect(() => {
+    return () => {
+      files.forEach((f) => {
+        if (f.preview) URL.revokeObjectURL(f.preview);
+      });
+    };
+  }, [files]);
+
+  // Reset form on close
+  useEffect(() => {
+    if (!open) {
+      files.forEach((f) => {
+        if (f.preview) URL.revokeObjectURL(f.preview);
+      });
+      setFiles([]);
+      setTitle('');
+      setStatus('private');
+      setCoinPrice(0);
+      setTags('');
+      setSetId('');
+      setScheduleEnabled(false);
+      setPublishAt('');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  const handleFiles = (fileList: FileList | null) => {
+    if (!fileList) return;
+    const newFiles: UploadFile[] = Array.from(fileList).map((file) => ({
+      file,
+      preview: URL.createObjectURL(file),
+      progress: 0,
+      status: 'pending' as const,
+    }));
+    setFiles((prev) => [...prev, ...newFiles]);
+  };
+
+  const removeFile = (idx: number) => {
+    setFiles((prev) => {
+      const removed = prev[idx];
+      if (removed?.preview) URL.revokeObjectURL(removed.preview);
+      return prev.filter((_, i) => i !== idx);
+    });
+  };
+
+  const uploadSingleFile = async (uploadFile: UploadFile, idx: number): Promise<boolean> => {
+    const { file } = uploadFile;
+
+    // Update status
+    setFiles((prev) =>
+      prev.map((f, i) => (i === idx ? { ...f, status: 'uploading' as const, progress: 10 } : f)),
+    );
+
+    try {
+      // Step 1: Get signed URL
+      const signedRes = await fetch('/api/upload/signed-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileName: file.name,
+          fileType: file.type,
+          fileSize: file.size,
+          title: title || file.name.split('.')[0],
+        }),
+      });
+
+      if (!signedRes.ok) {
+        const err = await signedRes.json();
+        throw new Error(err.error || 'Failed to get upload URL');
+      }
+
+      const { signedUrl, storagePath } = await signedRes.json();
+
+      setFiles((prev) =>
+        prev.map((f, i) => (i === idx ? { ...f, progress: 30 } : f)),
+      );
+
+      // Step 2: Upload to storage
+      const uploadRes = await fetch(signedUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': file.type },
+        body: file,
+      });
+
+      if (!uploadRes.ok) {
+        throw new Error('Failed to upload file to storage');
+      }
+
+      setFiles((prev) =>
+        prev.map((f, i) => (i === idx ? { ...f, progress: 70 } : f)),
+      );
+
+      // Step 3: Create content item
+      const isVideo = file.type.startsWith('video/');
+      const parsedTags = tags
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean);
+
+      const itemData: Partial<ContentItem> = {
+        media_url: storagePath,
+        media_type: isVideo ? 'video' : 'image',
+        title: title || null,
+        status,
+        coin_price: status === 'exclusive' ? coinPrice : 0,
+        tags: parsedTags.length > 0 ? parsedTags : undefined,
+        set_id: setId || null,
+        publish_at: scheduleEnabled && publishAt ? new Date(publishAt).toISOString() : null,
+      } as Partial<ContentItem>;
+
+      const result = await createItem(itemData);
+
+      if (!result) throw new Error('Failed to create content item');
+
+      setFiles((prev) =>
+        prev.map((f, i) =>
+          i === idx ? { ...f, status: 'done' as const, progress: 100 } : f,
+        ),
+      );
+
+      return true;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Upload failed';
+      setFiles((prev) =>
+        prev.map((f, i) =>
+          i === idx ? { ...f, status: 'error' as const, error: message, progress: 0 } : f,
+        ),
+      );
+      return false;
+    }
+  };
+
+  const handleUpload = async () => {
+    if (files.length === 0) {
+      toast.error('Select at least one file');
+      return;
+    }
+
+    setUploading(true);
+    let successCount = 0;
+
+    for (let i = 0; i < files.length; i++) {
+      if (files[i].status === 'done') continue;
+      const ok = await uploadSingleFile(files[i], i);
+      if (ok) successCount++;
+    }
+
+    setUploading(false);
+
+    if (successCount > 0) {
+      toast.success(`${successCount} file${successCount > 1 ? 's' : ''} uploaded`);
+      await refreshAll();
+      if (successCount === files.length) {
+        onOpenChange(false);
+      }
+    }
+  };
+
+  const allDone = files.length > 0 && files.every((f) => f.status === 'done');
+  const hasErrors = files.some((f) => f.status === 'error');
+
+  return (
+    <Dialog open={open} onOpenChange={uploading ? undefined : onOpenChange}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Upload Content</DialogTitle>
+          <DialogDescription>Add photos or videos to your content library.</DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {/* File picker area */}
+          {files.length === 0 ? (
+            <div
+              className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 text-center cursor-pointer transition-colors hover:border-primary/50 hover:bg-muted/50"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Upload className="mb-3 h-10 w-10 text-muted-foreground" />
+              <p className="text-sm font-medium">Click to select files</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                JPEG, PNG, WebP, GIF, MP4, MOV, WebM up to 50MB
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {libraryItems.map((item) => (
-                <LibraryContentCard
-                  key={item.assignmentId}
-                  item={item}
-                  onClick={() => {
-                    setSelectedLibraryItemId(item.libraryItemId);
-                    setLibrarySheetOpen(true);
-                  }}
-                />
+            <div className="space-y-2">
+              {files.map((f, idx) => (
+                <div key={idx} className="flex items-center gap-3 rounded-lg border p-2">
+                  <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md bg-muted">
+                    {f.file.type.startsWith('video/') ? (
+                      <video
+                        src={f.preview}
+                        muted
+                        preload="metadata"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <Image
+                        src={f.preview}
+                        alt=""
+                        fill
+                        className="object-cover"
+                        sizes="48px"
+                      />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm truncate">{f.file.name}</p>
+                    <p className="text-xs text-muted-foreground">{formatFileSize(f.file.size)}</p>
+                    {f.status === 'uploading' && (
+                      <Progress value={f.progress} className="mt-1 h-1.5" />
+                    )}
+                    {f.status === 'done' && (
+                      <p className="text-xs text-green-600">Uploaded</p>
+                    )}
+                    {f.status === 'error' && (
+                      <p className="text-xs text-destructive">{f.error}</p>
+                    )}
+                  </div>
+                  {f.status !== 'uploading' && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 shrink-0"
+                      onClick={() => removeFile(idx)}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                </div>
               ))}
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+              >
+                <Plus className="mr-1 h-3.5 w-3.5" />
+                Add More
+              </Button>
             </div>
           )}
-        </TabsContent>
-      </Tabs>
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete this {deleteTarget?.type === "ppv" ? "PPV content" : "portfolio item"}?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {deleteTarget?.type === "ppv"
-                ? "This will permanently remove this content and it will no longer be available to fans."
-                : "This will permanently remove this item from your portfolio and public profile."}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+          {/* Hidden file inputs */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,video/*"
+            multiple
+            className="hidden"
+            onChange={(e) => handleFiles(e.target.files)}
+          />
+          <input
+            ref={cameraImageRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={(e) => handleFiles(e.target.files)}
+          />
+          <input
+            ref={cameraVideoRef}
+            type="file"
+            accept="video/*"
+            capture="environment"
+            className="hidden"
+            onChange={(e) => handleFiles(e.target.files)}
+          />
 
-      {/* Library Content Detail Sheet */}
-      <LibraryContentDetailSheet
-        open={librarySheetOpen}
-        onOpenChange={setLibrarySheetOpen}
-        libraryItemId={selectedLibraryItemId}
-      />
-
-      {/* Upload Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={(open) => { if (!uploading) { setDialogOpen(open); if (!open) resetForm(); } }}>
-        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{isPaid ? "Create PPV Content" : "Upload to Portfolio"}</DialogTitle>
-            <DialogDescription>
-              {isPaid
-                ? "Set a price and fans will pay coins to unlock this content"
-                : "Add photos and videos to your public profile"
-              }
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            {/* File Selection Area */}
-            <div className="space-y-3">
-              {/* Single file preview (PPV) or multi-file thumbnails (portfolio) */}
-              {isPaid && mediaPreview ? (
-                <div className="relative aspect-video rounded-lg overflow-hidden bg-black">
-                  {mediaType === "video" ? (
-                    <video src={mediaPreview} className="w-full h-full object-contain" controls playsInline />
-                  ) : (
-                    <Image src={mediaPreview} alt="Preview" fill className="object-contain" />
-                  )}
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    className="absolute top-2 right-2"
-                    onClick={() => { setMediaFile(null); setMediaPreview(null); setMediaFiles([]); setMediaPreviews([]); }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : !isPaid && mediaFiles.length > 0 ? (
-                <div className="space-y-3">
-                  {/* Multi-file thumbnail grid */}
-                  <div className="grid grid-cols-3 gap-2">
-                    {mediaPreviews.map((preview, i) => (
-                      <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-muted">
-                        {mediaFiles[i]?.type.startsWith("video/") ? (
-                          <video src={preview} className="w-full h-full object-cover" muted playsInline preload="metadata" />
-                        ) : (
-                          <Image src={preview} alt={`File ${i + 1}`} fill className="object-cover" />
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => removeFile(i)}
-                          className="absolute top-1 right-1 bg-black/70 rounded-full p-0.5"
-                        >
-                          <XCircle className="h-4 w-4 text-white" />
-                        </button>
-                        {mediaFiles[i]?.type.startsWith("video/") && (
-                          <div className="absolute bottom-1 left-1 bg-black/60 px-1.5 py-0.5 rounded text-[10px] text-white">
-                            Video
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                    {/* Add more button in grid */}
-                    <label className="aspect-square rounded-lg border-2 border-dashed flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors">
-                      <Plus className="h-6 w-6 text-muted-foreground" />
-                      <span className="text-[10px] text-muted-foreground mt-1">Add more</span>
-                      <input
-                        type="file"
-                        className="hidden"
-                        accept="image/*,video/*"
-                        multiple
-                        onChange={handleFileSelect}
-                      />
-                    </label>
-                  </div>
-                  <p className="text-xs text-muted-foreground text-center">
-                    {mediaFiles.length} file{mediaFiles.length !== 1 ? "s" : ""} selected
-                    ({formatFileSize(mediaFiles.reduce((sum, f) => sum + f.size, 0))})
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {/* Main upload area */}
-                  <label className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed rounded-xl cursor-pointer hover:bg-muted/50 active:bg-muted/70 transition-colors">
-                    <ImagePlus className="h-8 w-8 text-muted-foreground mb-2" />
-                    <p className="text-sm font-medium">
-                      {isPaid ? "Select photo or video" : "Select from library"}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {isPaid ? "Photo or video up to 50MB" : "Select multiple photos & videos"}
-                    </p>
-                    <input
-                      type="file"
-                      className="hidden"
-                      accept="image/*,video/*"
-                      multiple={!isPaid}
-                      onChange={handleFileSelect}
-                    />
-                  </label>
-
-                  {/* Camera capture buttons - visible on all devices, functional on mobile */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="h-12"
-                      onClick={() => cameraInputRef.current?.click()}
-                    >
-                      <CameraIcon className="mr-2 h-4 w-4" />
-                      Take Photo
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="h-12"
-                      onClick={() => videoCameraInputRef.current?.click()}
-                    >
-                      <Video className="mr-2 h-4 w-4" />
-                      Record Video
-                    </Button>
-                    {/* Hidden camera inputs with capture attribute for iOS/Android */}
-                    <input
-                      ref={cameraInputRef}
-                      type="file"
-                      className="hidden"
-                      accept="image/*"
-                      capture="environment"
-                      onChange={handleFileSelect}
-                    />
-                    <input
-                      ref={videoCameraInputRef}
-                      type="file"
-                      className="hidden"
-                      accept="video/*"
-                      capture="environment"
-                      onChange={handleFileSelect}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Title Input - show for PPV or single portfolio file */}
-            {(isPaid || mediaFiles.length <= 1) && (
-              <div className="space-y-2">
-                <Label htmlFor="title">Title (optional)</Label>
-                <Input
-                  id="title"
-                  placeholder="Add a title..."
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                />
-              </div>
-            )}
-
-            {/* Content Type Toggle */}
-            <div className={cn(
-              "flex items-center justify-between p-4 rounded-xl border-2 transition-colors",
-              isPaid ? "border-pink-500/50 bg-pink-500/5" : "border-muted"
-            )}>
-              <div className="space-y-0.5">
-                <Label htmlFor="paid-toggle" className="text-base font-medium">
-                  {isPaid ? "PPV Content" : "Free Content"}
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  {isPaid ? "Fans pay coins to unlock" : "Visible to everyone"}
-                </p>
-              </div>
-              <Switch
-                id="paid-toggle"
-                checked={isPaid}
-                onCheckedChange={(checked) => {
-                  setIsPaid(checked);
-                  // When switching to PPV, keep only first file
-                  if (checked && mediaFiles.length > 1) {
-                    const first = mediaFiles[0];
-                    const firstPreview = mediaPreviews[0];
-                    mediaPreviews.slice(1).forEach((url) => URL.revokeObjectURL(url));
-                    setMediaFiles([first]);
-                    setMediaPreviews([firstPreview]);
-                    setMediaFile(first);
-                    setMediaPreview(firstPreview);
-                    setMediaType(first.type.startsWith("video/") ? "video" : "image");
-                  }
-                }}
-              />
-            </div>
-
-            {/* PPV Options */}
-            {isPaid && (
-              <div className="space-y-4 p-4 rounded-xl bg-muted/50">
-                <div className="space-y-2">
-                  <Label>Price</Label>
-                  <div className="relative">
-                    <Coins className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-pink-500" />
-                    <Input
-                      type="number"
-                      min="1"
-                      inputMode="numeric"
-                      value={coinPrice}
-                      onChange={(e) => setCoinPrice(e.target.value)}
-                      className="pl-10 text-lg font-semibold"
-                    />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                      coins
-                    </span>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description (optional)</Label>
-                  <Textarea
-                    id="description"
-                    placeholder="Describe what fans will see..."
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    rows={2}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Upload Progress */}
-            {uploading && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">
-                    {uploadStatus || "Uploading..."}
-                  </span>
-                  <span className="font-medium">{uploadProgress}%</span>
-                </div>
-                <Progress value={uploadProgress} className="h-2" />
-              </div>
-            )}
-
-            {/* Upload Button */}
+          {/* Camera buttons */}
+          <div className="flex gap-2">
             <Button
-              onClick={handleUpload}
-              disabled={(isPaid ? !mediaFile : mediaFiles.length === 0) || uploading}
-              className="w-full h-12 text-base bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
+              variant="outline"
+              size="sm"
+              onClick={() => cameraImageRef.current?.click()}
+              disabled={uploading}
             >
-              {uploading ? (
-                <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  {uploadStatus || "Uploading..."}
-                </>
-              ) : (
-                <>
-                  <Upload className="mr-2 h-5 w-5" />
-                  {isPaid
-                    ? `Create PPV (${coinPrice} coins)`
-                    : mediaFiles.length > 1
-                      ? `Upload ${mediaFiles.length} Files`
-                      : "Upload to Portfolio"
-                  }
-                </>
-              )}
+              <Camera className="mr-1.5 h-4 w-4" />
+              Take Photo
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => cameraVideoRef.current?.click()}
+              disabled={uploading}
+            >
+              <Video className="mr-1.5 h-4 w-4" />
+              Record Video
             </Button>
           </div>
-        </DialogContent>
-      </Dialog>
-    </div>
+
+          {/* Title */}
+          <div className="space-y-1.5">
+            <Label htmlFor="upload-title">Title (optional)</Label>
+            <Input
+              id="upload-title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Give your content a title"
+              disabled={uploading}
+            />
+          </div>
+
+          {/* Status */}
+          <div className="space-y-1.5">
+            <Label>Status</Label>
+            <Select
+              value={status}
+              onValueChange={(v) => setStatus(v as typeof status)}
+              disabled={uploading}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="private">Private</SelectItem>
+                <SelectItem value="portfolio">Portfolio</SelectItem>
+                <SelectItem value="exclusive">Exclusive</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Coin price */}
+          {status === 'exclusive' && (
+            <div className="space-y-1.5">
+              <Label htmlFor="upload-price">Coin Price</Label>
+              <div className="relative">
+                <Coins className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="upload-price"
+                  type="number"
+                  min={0}
+                  max={10000}
+                  value={coinPrice}
+                  onChange={(e) => setCoinPrice(Number(e.target.value))}
+                  className="pl-9"
+                  disabled={uploading}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                ${(coinPrice * 0.1).toFixed(2)} USD equivalent
+              </p>
+            </div>
+          )}
+
+          {/* Tags */}
+          <div className="space-y-1.5">
+            <Label htmlFor="upload-tags">Tags</Label>
+            <Input
+              id="upload-tags"
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
+              placeholder="tag1, tag2, tag3"
+              disabled={uploading}
+            />
+            {tags && (
+              <div className="flex flex-wrap gap-1">
+                {tags
+                  .split(',')
+                  .map((t) => t.trim())
+                  .filter(Boolean)
+                  .map((tag) => (
+                    <Badge key={tag} variant="secondary" className="text-xs">
+                      {tag}
+                    </Badge>
+                  ))}
+              </div>
+            )}
+          </div>
+
+          {/* Set */}
+          <div className="space-y-1.5">
+            <Label>Set (optional)</Label>
+            <Select
+              value={setId || 'none'}
+              onValueChange={(v) => setSetId(v === 'none' ? '' : v)}
+              disabled={uploading}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="None" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
+                {sets.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Schedule */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={scheduleEnabled}
+                onCheckedChange={setScheduleEnabled}
+                disabled={uploading}
+              />
+              <Label>Schedule for later</Label>
+            </div>
+            {scheduleEnabled && (
+              <Input
+                type="datetime-local"
+                value={publishAt}
+                onChange={(e) => setPublishAt(e.target.value)}
+                disabled={uploading}
+              />
+            )}
+          </div>
+
+          {/* Upload button */}
+          <Button
+            onClick={allDone ? () => onOpenChange(false) : handleUpload}
+            disabled={uploading || files.length === 0}
+            className="w-full bg-gradient-to-r from-pink-500 to-violet-500 text-white hover:from-pink-600 hover:to-violet-600"
+          >
+            {uploading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Uploading...
+              </>
+            ) : allDone ? (
+              'Done'
+            ) : hasErrors ? (
+              'Retry Failed'
+            ) : (
+              <>
+                <Upload className="mr-2 h-4 w-4" />
+                Upload {files.length} {files.length === 1 ? 'File' : 'Files'}
+              </>
+            )}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ===========================================================================
+// Bulk Price Dialog
+// ===========================================================================
+
+function BulkPriceDialog({
+  open,
+  onOpenChange,
+  selectedCount,
+  onConfirm,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  selectedCount: number;
+  onConfirm: (price: number) => void;
+}) {
+  const [price, setPrice] = useState(0);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Set Price</DialogTitle>
+          <DialogDescription>
+            Set the coin price for {selectedCount} selected item{selectedCount > 1 ? 's' : ''}.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="relative">
+            <Coins className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="number"
+              min={0}
+              max={10000}
+              value={price}
+              onChange={(e) => setPrice(Number(e.target.value))}
+              className="pl-9"
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            ${(price * 0.1).toFixed(2)} USD equivalent per item
+          </p>
+          <div className="flex gap-2">
+            <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button className="flex-1" onClick={() => onConfirm(price)}>
+              Apply
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ===========================================================================
+// Bulk Set Dialog
+// ===========================================================================
+
+function BulkSetDialog({
+  open,
+  onOpenChange,
+  sets,
+  selectedCount,
+  onConfirm,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  sets: ContentSet[];
+  selectedCount: number;
+  onConfirm: (setId: string | null) => void;
+}) {
+  const [selectedSet, setSelectedSet] = useState('none');
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Add to Set</DialogTitle>
+          <DialogDescription>
+            Assign {selectedCount} selected item{selectedCount > 1 ? 's' : ''} to a set.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <Select value={selectedSet} onValueChange={setSelectedSet}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select a set" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">None (remove from set)</SelectItem>
+              {sets.map((s) => (
+                <SelectItem key={s.id} value={s.id}>
+                  {s.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <div className="flex gap-2">
+            <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button
+              className="flex-1"
+              onClick={() => onConfirm(selectedSet === 'none' ? null : selectedSet)}
+            >
+              Apply
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
