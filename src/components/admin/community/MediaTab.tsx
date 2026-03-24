@@ -253,6 +253,7 @@ export default function MediaTab() {
                     <TableHead>Instagram</TableHead>
                     <TableHead>Phone</TableHead>
                     <TableHead>Email</TableHead>
+                    <TableHead>Notes</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -293,6 +294,11 @@ export default function MediaTab() {
                               <Mail className="h-3.5 w-3.5" />
                               {contact.email}
                             </a>
+                          ) : <span className="text-muted-foreground text-sm">&mdash;</span>}
+                        </TableCell>
+                        <TableCell>
+                          {contact.notes ? (
+                            <p className="text-sm text-muted-foreground max-w-[200px] truncate" title={contact.notes}>{contact.notes}</p>
                           ) : <span className="text-muted-foreground text-sm">&mdash;</span>}
                         </TableCell>
                         <TableCell className="text-right">
