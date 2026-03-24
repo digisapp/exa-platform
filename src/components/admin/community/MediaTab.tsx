@@ -208,6 +208,16 @@ export default function MediaTab() {
               <Plus className="h-4 w-4 mr-2" />
               Add Contact
             </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                navigator.clipboard.writeText(`${window.location.origin}/media-submit`);
+                toast.success("Media submission link copied!");
+              }}
+            >
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Copy Form Link
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -240,19 +250,14 @@ export default function MediaTab() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[180px]">Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Phone</TableHead>
                     <TableHead>Instagram</TableHead>
-                    <TableHead>Company</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>Phone</TableHead>
+                    <TableHead>Email</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {mediaContacts.map((contact) => {
-                    const statusMeta = MEDIA_STATUSES.find(s => s.value === contact.status);
-                    const categoryLabel = MEDIA_CATEGORIES.find(c => c.value === contact.category)?.label;
                     return (
                       <TableRow key={contact.id}>
                         <TableCell>
@@ -260,22 +265,6 @@ export default function MediaTab() {
                             <p className="font-medium">{contact.name}</p>
                             {contact.title && <p className="text-xs text-muted-foreground">{contact.title}</p>}
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          {contact.email ? (
-                            <a href={`mailto:${contact.email}`} className="text-sm text-cyan-400 hover:underline flex items-center gap-1">
-                              <Mail className="h-3.5 w-3.5" />
-                              {contact.email}
-                            </a>
-                          ) : <span className="text-muted-foreground text-sm">&mdash;</span>}
-                        </TableCell>
-                        <TableCell>
-                          {contact.phone ? (
-                            <span className="flex items-center gap-1 text-sm">
-                              <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                              {contact.phone}
-                            </span>
-                          ) : <span className="text-muted-foreground text-sm">&mdash;</span>}
                         </TableCell>
                         <TableCell>
                           {contact.instagram_handle ? (
@@ -291,28 +280,20 @@ export default function MediaTab() {
                           ) : <span className="text-muted-foreground text-sm">&mdash;</span>}
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-1.5">
-                            {contact.website_url ? (
-                              <a href={contact.website_url} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline flex items-center gap-1 text-sm">
-                                {contact.media_company || "\u2014"}
-                                <ExternalLink className="h-3 w-3" />
-                              </a>
-                            ) : (
-                              <span className="text-sm text-muted-foreground">{contact.media_company || "\u2014"}</span>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {categoryLabel ? (
-                            <Badge variant="outline" className="text-xs">{categoryLabel}</Badge>
+                          {contact.phone ? (
+                            <span className="flex items-center gap-1 text-sm">
+                              <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                              {contact.phone}
+                            </span>
                           ) : <span className="text-muted-foreground text-sm">&mdash;</span>}
                         </TableCell>
                         <TableCell>
-                          {statusMeta && (
-                            <Badge variant="outline" className={`text-xs ${statusMeta.color}`}>
-                              {statusMeta.label}
-                            </Badge>
-                          )}
+                          {contact.email ? (
+                            <a href={`mailto:${contact.email}`} className="text-sm text-cyan-400 hover:underline flex items-center gap-1">
+                              <Mail className="h-3.5 w-3.5" />
+                              {contact.email}
+                            </a>
+                          ) : <span className="text-muted-foreground text-sm">&mdash;</span>}
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">

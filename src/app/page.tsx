@@ -182,9 +182,9 @@ export default async function HomePage() {
 
         {/* Split Hero Section */}
         <section id="signup" className="container px-8 md:px-16 py-6 md:py-10 scroll-mt-20">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
             {/* Models Side — full width on mobile */}
-            <div className="col-span-2 md:col-span-1 relative p-6 md:p-8 rounded-3xl bg-gradient-to-br from-pink-500/10 via-violet-500/5 to-transparent border border-pink-500/20 hover:border-pink-500/40 transition-all group">
+            <div className="col-span-2 lg:col-span-1 relative p-6 md:p-8 rounded-3xl bg-gradient-to-br from-pink-500/10 via-violet-500/5 to-transparent border border-pink-500/20 hover:border-pink-500/40 transition-all group">
               {/* Decorative glow */}
               <div className="absolute -top-20 -left-20 w-40 h-40 bg-pink-500/20 rounded-full blur-3xl opacity-50 group-hover:opacity-70 transition-opacity" />
 
@@ -219,9 +219,9 @@ export default async function HomePage() {
                 </span>
 
                 <h2 className="text-lg md:text-3xl lg:text-4xl font-bold tracking-tight mb-3 md:mb-4">
-                  Follow Models.
+                  Call, Chat,
                   <br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Get Exclusive.</span>
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Connect with Models.</span>
                 </h2>
 
                 <FanSignupDialog>
@@ -255,6 +255,30 @@ export default async function HomePage() {
                     <ArrowRight className="ml-1.5 h-3.5 w-3.5 md:ml-2 md:h-4 md:w-4" />
                   </Button>
                 </BrandInquiryDialog>
+              </div>
+            </div>
+
+            {/* Media Side */}
+            <div className="relative p-4 md:p-8 rounded-3xl bg-gradient-to-br from-violet-500/10 via-purple-500/5 to-transparent border border-violet-500/20 hover:border-violet-500/40 transition-all group">
+              <div className="absolute -top-20 -right-10 w-40 h-40 bg-violet-500/20 rounded-full blur-3xl opacity-50 group-hover:opacity-70 transition-opacity" />
+
+              <div className="relative z-10">
+                <span className="inline-block px-3 py-1 md:px-4 md:py-1.5 rounded-full text-xs md:text-sm font-semibold bg-gradient-to-r from-violet-500 to-purple-500 text-white mb-3 md:mb-6">
+                  For Media
+                </span>
+
+                <h2 className="text-lg md:text-3xl lg:text-4xl font-bold tracking-tight mb-3 md:mb-4">
+                  Press. Photo.
+                  <br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-purple-500">Collaborate.</span>
+                </h2>
+
+                <Link href="/media-submit">
+                  <Button className="w-full md:w-auto text-sm md:text-base px-4 md:px-8 h-9 md:h-12 rounded-full bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 text-white">
+                    Media Inquiry
+                    <ArrowRight className="ml-1.5 h-3.5 w-3.5 md:ml-2 md:h-4 md:w-4" />
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
