@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
       referrer: referrer || null,
       user_agent: userAgent.slice(0, 500),
       ip_hash: ipHash,
-      device: deviceType,
+      device_type: deviceType,
       browser,
       os,
       screen_width: screenWidth || null,
