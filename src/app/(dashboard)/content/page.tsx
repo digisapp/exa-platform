@@ -63,7 +63,6 @@ import {
   Loader2,
   ExternalLink,
   Calendar,
-  Clock,
   BarChart3,
   FolderOpen,
   Image as ImageIcon,
@@ -83,27 +82,6 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function relativeTime(dateStr: string): string {
-  const now = new Date();
-  const target = new Date(dateStr);
-  const diffMs = target.getTime() - now.getTime();
-  const absDiffMs = Math.abs(diffMs);
-  const seconds = Math.floor(absDiffMs / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
-
-  const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
-
-  if (days > 0) return rtf.format(diffMs > 0 ? days : -days, 'day');
-  if (hours > 0) return rtf.format(diffMs > 0 ? hours : -hours, 'hour');
-  if (minutes > 0) return rtf.format(diffMs > 0 ? minutes : -minutes, 'minute');
-  return rtf.format(diffMs > 0 ? seconds : -seconds, 'second');
-}
-
-function isScheduled(item: ContentItem): boolean {
-  return !!item.publish_at && new Date(item.publish_at) > new Date();
-}
 
 function getMediaUrl(url: string): string {
   if (url.startsWith('http')) return url;
@@ -191,11 +169,6 @@ export default function ContentPage() {
   }, []);
 
   // Scheduled items for Drops tab
-  const scheduledItems = useMemo(
-    () => items.filter((item) => isScheduled(item)),
-    [items],
-  );
-
   // ---------------------------------------------------------------------------
   // Header
   // ---------------------------------------------------------------------------
@@ -237,14 +210,6 @@ export default function ContentPage() {
             <TabsList className="mb-6">
               <TabsTrigger value="all">All</TabsTrigger>
               <TabsTrigger value="sets">Sets</TabsTrigger>
-              <TabsTrigger value="drops">
-                Drops
-                {scheduledItems.length > 0 && (
-                  <Badge variant="secondary" className="ml-1.5 text-xs">
-                    {scheduledItems.length}
-                  </Badge>
-                )}
-              </TabsTrigger>
               <TabsTrigger value="stats">Stats</TabsTrigger>
             </TabsList>
 
@@ -278,10 +243,6 @@ export default function ContentPage() {
                 onEditSet={setEditSet}
                 onDeleteSet={setDeleteConfirmSet}
               />
-            </TabsContent>
-
-            <TabsContent value="drops">
-              <DropsTab items={scheduledItems} updateItem={updateItem} onEditItem={setEditItem} />
             </TabsContent>
 
             <TabsContent value="stats">
@@ -1357,102 +1318,6 @@ function SetDialog({
 // ===========================================================================
 // DROPS TAB
 // ===========================================================================
-
-function DropsTab({
-  items,
-  updateItem,
-  onEditItem,
-}: {
-  items: ContentItem[];
-  updateItem: (id: string, data: Partial<ContentItem>) => Promise<ContentItem | null>;
-  onEditItem: (item: ContentItem) => void;
-}) {
-  if (items.length === 0) {
-    return (
-      <Card className="py-16">
-        <CardContent className="flex flex-col items-center justify-center text-center">
-          <div className="mb-4 rounded-full bg-muted p-4">
-            <Calendar className="h-8 w-8 text-muted-foreground" />
-          </div>
-          <h3 className="mb-2 text-lg font-semibold">No scheduled drops</h3>
-          <p className="text-sm text-muted-foreground">
-            Upload content and set a publish date to schedule drops.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <div className="space-y-3">
-      {items
-        .sort((a, b) => new Date(a.publish_at!).getTime() - new Date(b.publish_at!).getTime())
-        .map((item) => {
-          const mediaUrl = getMediaUrl(item.media_url);
-          return (
-            <Card key={item.id} className="overflow-hidden">
-              <CardContent className="flex items-center gap-4 p-4">
-                {/* Thumbnail */}
-                <div
-                  className="relative h-16 w-16 shrink-0 cursor-pointer overflow-hidden rounded-md bg-muted"
-                  onClick={() => onEditItem(item)}
-                >
-                  {item.media_type === 'video' ? (
-                    <video
-                      src={mediaUrl}
-                      muted
-                      preload="metadata"
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <Image
-                      src={mediaUrl}
-                      alt={item.title || ''}
-                      fill
-                      className="object-cover"
-                      sizes="64px"
-                    />
-                  )}
-                </div>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{item.title || 'Untitled'}</p>
-                  <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-                    <Clock className="h-3.5 w-3.5" />
-                    <span>{new Date(item.publish_at!).toLocaleDateString()}</span>
-                    <span className="text-xs">({relativeTime(item.publish_at!)})</span>
-                  </div>
-                  <div className="mt-1">
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        'text-[10px]',
-                        item.status === 'portfolio' && 'border-green-500 text-green-600',
-                        item.status === 'exclusive' && 'border-pink-500 text-pink-600',
-                      )}
-                    >
-                      Will become: {item.status === 'exclusive' ? 'PPV' : item.status}
-                    </Badge>
-                  </div>
-                </div>
-
-                {/* Cancel */}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => updateItem(item.id, { publish_at: null })}
-                >
-                  <X className="mr-1 h-3 w-3" />
-                  Cancel
-                </Button>
-              </CardContent>
-            </Card>
-          );
-        })}
-    </div>
-  );
-}
 
 // ===========================================================================
 // STATS TAB
