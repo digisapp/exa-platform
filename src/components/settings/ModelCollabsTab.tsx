@@ -39,6 +39,46 @@ export function ModelCollabsTab({ model, onChange }: ModelCollabsTabProps) {
 
         {(model as any).open_to_collabs && (
           <>
+            {/* Collab Types */}
+            <div className="space-y-3">
+              <Label className="text-base font-semibold">Types of Collabs You&apos;re Open To</Label>
+              <p className="text-sm text-muted-foreground">Select all that apply so brands know what you offer</p>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { key: "sponsored_post", label: "Sponsored Posts" },
+                  { key: "product_review", label: "Product Reviews" },
+                  { key: "brand_ambassador", label: "Brand Ambassador" },
+                  { key: "ugc_content", label: "UGC Content" },
+                  { key: "event_appearance", label: "Event Appearances" },
+                  { key: "affiliate", label: "Affiliate / Commission" },
+                  { key: "giveaway", label: "Giveaways" },
+                  { key: "takeover", label: "Account Takeovers" },
+                ].map(({ key, label }) => {
+                  const collabTypes: string[] = (model as any).collab_types || [];
+                  const isSelected = collabTypes.includes(key);
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => {
+                        const updated = isSelected
+                          ? collabTypes.filter((t: string) => t !== key)
+                          : [...collabTypes, key];
+                        onChange({ ...model, collab_types: updated } as any);
+                      }}
+                      className={`px-3 py-2 rounded-lg border text-sm font-medium transition-colors text-left ${
+                        isSelected
+                          ? "border-pink-500 bg-pink-500/10 text-pink-500"
+                          : "border-border hover:border-pink-500/30 text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Instagram stats */}
             <div className="space-y-4">
               <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Instagram</h4>

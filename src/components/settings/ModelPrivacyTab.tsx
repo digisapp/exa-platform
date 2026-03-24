@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { AlertTriangle, Trash2, Loader2 } from "lucide-react";
+import { AlertTriangle, Trash2, Loader2, PauseCircle } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -117,6 +117,34 @@ export function ModelPrivacyTab({ model, onChange, onDeleteAccount, deleting }: 
               onCheckedChange={(v) => onChange({ ...model, allow_tips: v } as any)}
             />
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Deactivate Account */}
+      <Card className="border-amber-500/20">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-amber-500">
+            <PauseCircle className="h-5 w-5" />
+            Deactivate Account
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm text-muted-foreground">
+                Temporarily hide your profile from search and public pages. Your data stays safe and you can reactivate anytime.
+              </p>
+            </div>
+            <Switch
+              checked={(model as any).deactivated ?? false}
+              onCheckedChange={(v) => onChange({ ...model, deactivated: v } as any)}
+            />
+          </div>
+          {(model as any).deactivated && (
+            <p className="mt-3 text-sm text-amber-500/80 bg-amber-500/10 rounded-lg p-3">
+              Your profile is currently hidden. Toggle this off to reactivate.
+            </p>
+          )}
         </CardContent>
       </Card>
 

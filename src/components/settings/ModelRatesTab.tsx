@@ -1,11 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { Camera, BarChart3, User, Globe } from "lucide-react";
+import { Camera, BarChart3, User, Globe, ChevronDown } from "lucide-react";
 import type { Model } from "@/types/database";
 
 const coinsToUSD = (coins: number) =>
@@ -17,6 +18,8 @@ interface ModelRatesTabProps {
 }
 
 export function ModelRatesTab({ model, onChange }: ModelRatesTabProps) {
+  const [bookingRatesOpen, setBookingRatesOpen] = useState(false);
+
   return (
     <>
       <Card>
@@ -201,247 +204,262 @@ export function ModelRatesTab({ model, onChange }: ModelRatesTabProps) {
             />
           </div>
 
-          {/* Photography Rates */}
-          <div className="space-y-4">
-            <h4 className="font-semibold flex items-center gap-2">
-              <Camera className="h-4 w-4 text-pink-500" />
-              Photography & Content
-            </h4>
-            <div className="grid gap-4">
-              <div className="flex items-center justify-between p-3 rounded-lg border bg-pink-500/5">
-                <div>
-                  <Label>Hourly Rate</Label>
-                  <p className="text-xs text-muted-foreground">Per hour for photoshoots</p>
-                </div>
-                <div className="flex flex-col items-end gap-1">
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      inputMode="numeric"
-                      min="0"
-                      max="100000"
-                      value={model.photoshoot_hourly_rate || ""}
-                      onChange={(e) => onChange({ ...model, photoshoot_hourly_rate: parseInt(e.target.value) || 0 })}
-                      className="w-24 text-right"
-                      placeholder="1500"
-                    />
-                    <span className="text-sm text-muted-foreground">coins</span>
-                  </div>
-                  {model.photoshoot_hourly_rate ? <span className="text-xs text-emerald-400/80">{coinsToUSD(model.photoshoot_hourly_rate)}/hr</span> : null}
-                </div>
-              </div>
-              <div className="flex items-center justify-between p-3 rounded-lg border bg-pink-500/5">
-                <div>
-                  <Label>Half-Day Rate</Label>
-                  <p className="text-xs text-muted-foreground">4 hours of shooting</p>
-                </div>
-                <div className="flex flex-col items-end gap-1">
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      inputMode="numeric"
-                      min="0"
-                      max="500000"
-                      value={model.photoshoot_half_day_rate || ""}
-                      onChange={(e) => onChange({ ...model, photoshoot_half_day_rate: parseInt(e.target.value) || 0 })}
-                      className="w-24 text-right"
-                      placeholder="5000"
-                    />
-                    <span className="text-sm text-muted-foreground">coins</span>
-                  </div>
-                  {model.photoshoot_half_day_rate ? <span className="text-xs text-emerald-400/80">{coinsToUSD(model.photoshoot_half_day_rate)}</span> : null}
-                </div>
-              </div>
-              <div className="flex items-center justify-between p-3 rounded-lg border bg-pink-500/5">
-                <div>
-                  <Label>Full-Day Rate</Label>
-                  <p className="text-xs text-muted-foreground">8 hours of shooting</p>
-                </div>
-                <div className="flex flex-col items-end gap-1">
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      inputMode="numeric"
-                      min="0"
-                      max="1000000"
-                      value={model.photoshoot_full_day_rate || ""}
-                      onChange={(e) => onChange({ ...model, photoshoot_full_day_rate: parseInt(e.target.value) || 0 })}
-                      className="w-24 text-right"
-                      placeholder="8000"
-                    />
-                    <span className="text-sm text-muted-foreground">coins</span>
-                  </div>
-                  {model.photoshoot_full_day_rate ? <span className="text-xs text-emerald-400/80">{coinsToUSD(model.photoshoot_full_day_rate)}</span> : null}
-                </div>
-              </div>
+          {/* Collapsible Booking Rate Categories */}
+          <button
+            type="button"
+            onClick={() => setBookingRatesOpen(!bookingRatesOpen)}
+            className="w-full flex items-center justify-between p-4 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"
+          >
+            <div className="text-left">
+              <p className="font-semibold">Rate Categories</p>
+              <p className="text-sm text-muted-foreground">Photography, events, private bookings & travel fees</p>
             </div>
-          </div>
+            <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${bookingRatesOpen ? "rotate-180" : ""}`} />
+          </button>
 
-          {/* Promotional Rates */}
-          <div className="space-y-4">
-            <h4 className="font-semibold flex items-center gap-2">
-              <BarChart3 className="h-4 w-4 text-blue-500" />
-              Promotional & Events
-            </h4>
-            <div className="grid gap-4">
-              <div className="flex items-center justify-between p-3 rounded-lg border bg-blue-500/5">
-                <div>
-                  <Label>Promo Modeling</Label>
-                  <p className="text-xs text-muted-foreground">Per hour for promotional work</p>
-                </div>
-                <div className="flex flex-col items-end gap-1">
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      inputMode="numeric"
-                      min="0"
-                      max="100000"
-                      value={model.promo_hourly_rate || ""}
-                      onChange={(e) => onChange({ ...model, promo_hourly_rate: parseInt(e.target.value) || 0 })}
-                      className="w-24 text-right"
-                      placeholder="750"
-                    />
-                    <span className="text-sm text-muted-foreground">coins</span>
+          {bookingRatesOpen && (
+            <div className="space-y-6 animate-in slide-in-from-top-2 duration-200">
+              {/* Photography Rates */}
+              <div className="space-y-4">
+                <h4 className="font-semibold flex items-center gap-2">
+                  <Camera className="h-4 w-4 text-pink-500" />
+                  Photography & Content
+                </h4>
+                <div className="grid gap-4">
+                  <div className="flex items-center justify-between p-3 rounded-lg border bg-pink-500/5">
+                    <div>
+                      <Label>Hourly Rate</Label>
+                      <p className="text-xs text-muted-foreground">Per hour for photoshoots</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          inputMode="numeric"
+                          min="0"
+                          max="100000"
+                          value={model.photoshoot_hourly_rate || ""}
+                          onChange={(e) => onChange({ ...model, photoshoot_hourly_rate: parseInt(e.target.value) || 0 })}
+                          className="w-24 text-right"
+                          placeholder="1500"
+                        />
+                        <span className="text-sm text-muted-foreground">coins</span>
+                      </div>
+                      {model.photoshoot_hourly_rate ? <span className="text-xs text-emerald-400/80">{coinsToUSD(model.photoshoot_hourly_rate)}/hr</span> : null}
+                    </div>
                   </div>
-                  {model.promo_hourly_rate ? <span className="text-xs text-emerald-400/80">{coinsToUSD(model.promo_hourly_rate)}/hr</span> : null}
+                  <div className="flex items-center justify-between p-3 rounded-lg border bg-pink-500/5">
+                    <div>
+                      <Label>Half-Day Rate</Label>
+                      <p className="text-xs text-muted-foreground">4 hours of shooting</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          inputMode="numeric"
+                          min="0"
+                          max="500000"
+                          value={model.photoshoot_half_day_rate || ""}
+                          onChange={(e) => onChange({ ...model, photoshoot_half_day_rate: parseInt(e.target.value) || 0 })}
+                          className="w-24 text-right"
+                          placeholder="5000"
+                        />
+                        <span className="text-sm text-muted-foreground">coins</span>
+                      </div>
+                      {model.photoshoot_half_day_rate ? <span className="text-xs text-emerald-400/80">{coinsToUSD(model.photoshoot_half_day_rate)}</span> : null}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-lg border bg-pink-500/5">
+                    <div>
+                      <Label>Full-Day Rate</Label>
+                      <p className="text-xs text-muted-foreground">8 hours of shooting</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          inputMode="numeric"
+                          min="0"
+                          max="1000000"
+                          value={model.photoshoot_full_day_rate || ""}
+                          onChange={(e) => onChange({ ...model, photoshoot_full_day_rate: parseInt(e.target.value) || 0 })}
+                          className="w-24 text-right"
+                          placeholder="8000"
+                        />
+                        <span className="text-sm text-muted-foreground">coins</span>
+                      </div>
+                      {model.photoshoot_full_day_rate ? <span className="text-xs text-emerald-400/80">{coinsToUSD(model.photoshoot_full_day_rate)}</span> : null}
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center justify-between p-3 rounded-lg border bg-blue-500/5">
-                <div>
-                  <Label>Brand Ambassador</Label>
-                  <p className="text-xs text-muted-foreground">Daily rate for brand work</p>
-                </div>
-                <div className="flex flex-col items-end gap-1">
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      inputMode="numeric"
-                      min="0"
-                      max="500000"
-                      value={model.brand_ambassador_daily_rate || ""}
-                      onChange={(e) => onChange({ ...model, brand_ambassador_daily_rate: parseInt(e.target.value) || 0 })}
-                      className="w-24 text-right"
-                      placeholder="3000"
-                    />
-                    <span className="text-sm text-muted-foreground">coins</span>
+
+              {/* Promotional Rates */}
+              <div className="space-y-4">
+                <h4 className="font-semibold flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4 text-blue-500" />
+                  Promotional & Events
+                </h4>
+                <div className="grid gap-4">
+                  <div className="flex items-center justify-between p-3 rounded-lg border bg-blue-500/5">
+                    <div>
+                      <Label>Promo Modeling</Label>
+                      <p className="text-xs text-muted-foreground">Per hour for promotional work</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          inputMode="numeric"
+                          min="0"
+                          max="100000"
+                          value={model.promo_hourly_rate || ""}
+                          onChange={(e) => onChange({ ...model, promo_hourly_rate: parseInt(e.target.value) || 0 })}
+                          className="w-24 text-right"
+                          placeholder="750"
+                        />
+                        <span className="text-sm text-muted-foreground">coins</span>
+                      </div>
+                      {model.promo_hourly_rate ? <span className="text-xs text-emerald-400/80">{coinsToUSD(model.promo_hourly_rate)}/hr</span> : null}
+                    </div>
                   </div>
-                  {model.brand_ambassador_daily_rate ? <span className="text-xs text-emerald-400/80">{coinsToUSD(model.brand_ambassador_daily_rate)}/day</span> : null}
+                  <div className="flex items-center justify-between p-3 rounded-lg border bg-blue-500/5">
+                    <div>
+                      <Label>Brand Ambassador</Label>
+                      <p className="text-xs text-muted-foreground">Daily rate for brand work</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          inputMode="numeric"
+                          min="0"
+                          max="500000"
+                          value={model.brand_ambassador_daily_rate || ""}
+                          onChange={(e) => onChange({ ...model, brand_ambassador_daily_rate: parseInt(e.target.value) || 0 })}
+                          className="w-24 text-right"
+                          placeholder="3000"
+                        />
+                        <span className="text-sm text-muted-foreground">coins</span>
+                      </div>
+                      {model.brand_ambassador_daily_rate ? <span className="text-xs text-emerald-400/80">{coinsToUSD(model.brand_ambassador_daily_rate)}/day</span> : null}
+                    </div>
+                  </div>
                 </div>
               </div>
+
+              {/* Private & Social Rates */}
+              <div className="space-y-4">
+                <h4 className="font-semibold flex items-center gap-2">
+                  <User className="h-4 w-4 text-violet-500" />
+                  Private & Social
+                </h4>
+                <div className="grid gap-4">
+                  <div className="flex items-center justify-between p-3 rounded-lg border bg-violet-500/5">
+                    <div>
+                      <Label>Private Events</Label>
+                      <p className="text-xs text-muted-foreground">Per hour for private events</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          inputMode="numeric"
+                          min="0"
+                          max="100000"
+                          value={model.private_event_hourly_rate || ""}
+                          onChange={(e) => onChange({ ...model, private_event_hourly_rate: parseInt(e.target.value) || 0 })}
+                          className="w-24 text-right"
+                          placeholder="2000"
+                        />
+                        <span className="text-sm text-muted-foreground">coins</span>
+                      </div>
+                      {model.private_event_hourly_rate ? <span className="text-xs text-emerald-400/80">{coinsToUSD(model.private_event_hourly_rate)}/hr</span> : null}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-lg border bg-violet-500/5">
+                    <div>
+                      <Label>Social Companion</Label>
+                      <p className="text-xs text-muted-foreground">Per hour for social events</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          inputMode="numeric"
+                          min="0"
+                          max="100000"
+                          value={model.social_companion_hourly_rate || ""}
+                          onChange={(e) => onChange({ ...model, social_companion_hourly_rate: parseInt(e.target.value) || 0 })}
+                          className="w-24 text-right"
+                          placeholder="1500"
+                        />
+                        <span className="text-sm text-muted-foreground">coins</span>
+                      </div>
+                      {model.social_companion_hourly_rate ? <span className="text-xs text-emerald-400/80">{coinsToUSD(model.social_companion_hourly_rate)}/hr</span> : null}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-lg border bg-violet-500/5">
+                    <div>
+                      <Label>Meet & Greet</Label>
+                      <p className="text-xs text-muted-foreground">Flat fee for appearances</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          inputMode="numeric"
+                          min="0"
+                          max="500000"
+                          value={model.meet_greet_rate || ""}
+                          onChange={(e) => onChange({ ...model, meet_greet_rate: parseInt(e.target.value) || 0 })}
+                          className="w-24 text-right"
+                          placeholder="1000"
+                        />
+                        <span className="text-sm text-muted-foreground">coins</span>
+                      </div>
+                      {model.meet_greet_rate ? <span className="text-xs text-emerald-400/80">{coinsToUSD(model.meet_greet_rate)}</span> : null}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Travel Fee */}
+              <div className="space-y-4">
+                <h4 className="font-semibold flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-green-500" />
+                  Additional Fees
+                </h4>
+                <div className="flex items-center justify-between p-3 rounded-lg border bg-green-500/5">
+                  <div>
+                    <Label>Travel Fee</Label>
+                    <p className="text-xs text-muted-foreground">For out-of-area bookings</p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        inputMode="numeric"
+                        min="0"
+                        max="100000"
+                        value={model.travel_fee || ""}
+                        onChange={(e) => onChange({ ...model, travel_fee: parseInt(e.target.value) || 0 })}
+                        className="w-24 text-right"
+                        placeholder="500"
+                      />
+                      <span className="text-sm text-muted-foreground">coins</span>
+                    </div>
+                    {model.travel_fee ? <span className="text-xs text-emerald-400/80">{coinsToUSD(model.travel_fee)}</span> : null}
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-sm text-muted-foreground">
+                Set a rate to 0 coins to hide that service if you don&apos;t offer it.
+              </p>
             </div>
-          </div>
-
-          {/* Private & Social Rates */}
-          <div className="space-y-4">
-            <h4 className="font-semibold flex items-center gap-2">
-              <User className="h-4 w-4 text-violet-500" />
-              Private & Social
-            </h4>
-            <div className="grid gap-4">
-              <div className="flex items-center justify-between p-3 rounded-lg border bg-violet-500/5">
-                <div>
-                  <Label>Private Events</Label>
-                  <p className="text-xs text-muted-foreground">Per hour for private events</p>
-                </div>
-                <div className="flex flex-col items-end gap-1">
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      inputMode="numeric"
-                      min="0"
-                      max="100000"
-                      value={model.private_event_hourly_rate || ""}
-                      onChange={(e) => onChange({ ...model, private_event_hourly_rate: parseInt(e.target.value) || 0 })}
-                      className="w-24 text-right"
-                      placeholder="2000"
-                    />
-                    <span className="text-sm text-muted-foreground">coins</span>
-                  </div>
-                  {model.private_event_hourly_rate ? <span className="text-xs text-emerald-400/80">{coinsToUSD(model.private_event_hourly_rate)}/hr</span> : null}
-                </div>
-              </div>
-              <div className="flex items-center justify-between p-3 rounded-lg border bg-violet-500/5">
-                <div>
-                  <Label>Social Companion</Label>
-                  <p className="text-xs text-muted-foreground">Per hour for social events</p>
-                </div>
-                <div className="flex flex-col items-end gap-1">
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      inputMode="numeric"
-                      min="0"
-                      max="100000"
-                      value={model.social_companion_hourly_rate || ""}
-                      onChange={(e) => onChange({ ...model, social_companion_hourly_rate: parseInt(e.target.value) || 0 })}
-                      className="w-24 text-right"
-                      placeholder="1500"
-                    />
-                    <span className="text-sm text-muted-foreground">coins</span>
-                  </div>
-                  {model.social_companion_hourly_rate ? <span className="text-xs text-emerald-400/80">{coinsToUSD(model.social_companion_hourly_rate)}/hr</span> : null}
-                </div>
-              </div>
-              <div className="flex items-center justify-between p-3 rounded-lg border bg-violet-500/5">
-                <div>
-                  <Label>Meet & Greet</Label>
-                  <p className="text-xs text-muted-foreground">Flat fee for appearances</p>
-                </div>
-                <div className="flex flex-col items-end gap-1">
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      inputMode="numeric"
-                      min="0"
-                      max="500000"
-                      value={model.meet_greet_rate || ""}
-                      onChange={(e) => onChange({ ...model, meet_greet_rate: parseInt(e.target.value) || 0 })}
-                      className="w-24 text-right"
-                      placeholder="1000"
-                    />
-                    <span className="text-sm text-muted-foreground">coins</span>
-                  </div>
-                  {model.meet_greet_rate ? <span className="text-xs text-emerald-400/80">{coinsToUSD(model.meet_greet_rate)}</span> : null}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Travel Fee */}
-          <div className="space-y-4">
-            <h4 className="font-semibold flex items-center gap-2">
-              <Globe className="h-4 w-4 text-green-500" />
-              Additional Fees
-            </h4>
-            <div className="flex items-center justify-between p-3 rounded-lg border bg-green-500/5">
-              <div>
-                <Label>Travel Fee</Label>
-                <p className="text-xs text-muted-foreground">For out-of-area bookings</p>
-              </div>
-              <div className="flex flex-col items-end gap-1">
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
-                    inputMode="numeric"
-                    min="0"
-                    max="100000"
-                    value={model.travel_fee || ""}
-                    onChange={(e) => onChange({ ...model, travel_fee: parseInt(e.target.value) || 0 })}
-                    className="w-24 text-right"
-                    placeholder="500"
-                  />
-                  <span className="text-sm text-muted-foreground">coins</span>
-                </div>
-                {model.travel_fee ? <span className="text-xs text-emerald-400/80">{coinsToUSD(model.travel_fee)}</span> : null}
-              </div>
-            </div>
-          </div>
-
-          {/* Tip */}
-          <p className="text-sm text-muted-foreground">
-            Set a rate to 0 coins to hide that service if you don&apos;t offer it.
-          </p>
-
+          )}
         </CardContent>
       </Card>
     </>

@@ -61,7 +61,6 @@ import {
   Search,
   Loader2,
   ExternalLink,
-  Calendar,
   BarChart3,
   FolderOpen,
   Image as ImageIcon,
@@ -616,7 +615,6 @@ function ContentItemCard({
   const videoRef = useRef<HTMLVideoElement>(null);
   const setName = item.set_id ? sets.find((s) => s.id === item.set_id)?.title : null;
   const mediaUrl = getMediaUrl(item.media_url);
-  const scheduled = isScheduled(item);
 
   useEffect(() => {
     if (item.media_type === 'video' && videoRef.current) {
@@ -688,12 +686,6 @@ function ContentItemCard({
           <Badge className="bg-gradient-to-r from-pink-500 to-violet-500 text-[10px] text-white">
             <Coins className="mr-0.5 h-3 w-3" />
             {item.coin_price}
-          </Badge>
-        )}
-        {scheduled && (
-          <Badge variant="outline" className="border-amber-500 bg-amber-500/10 text-[10px] text-amber-600">
-            <Calendar className="mr-0.5 h-3 w-3" />
-            {new Date(item.publish_at!).toLocaleDateString()}
           </Badge>
         )}
         {setName && (
@@ -779,9 +771,6 @@ function ItemEditDialog({
   const [coinPrice, setCoinPrice] = useState(item.coin_price);
   const [tags, setTags] = useState(item.tags?.join(', ') || '');
   const [setId, setSetId] = useState(item.set_id || '');
-  const [publishAt, setPublishAt] = useState(
-    item.publish_at ? item.publish_at.slice(0, 16) : '',
-  );
   const [saving, setSaving] = useState(false);
   const mediaUrl = getMediaUrl(item.media_url);
 
@@ -798,7 +787,7 @@ function ItemEditDialog({
       coin_price: status === 'exclusive' ? coinPrice : 0,
       tags: parsedTags,
       set_id: setId || null,
-      publish_at: publishAt ? new Date(publishAt).toISOString() : null,
+      publish_at: null,
     });
     setSaving(false);
     onOpenChange(false);
@@ -938,22 +927,6 @@ function ItemEditDialog({
                 ))}
               </SelectContent>
             </Select>
-          </div>
-
-          {/* Schedule */}
-          <div className="space-y-1.5">
-            <Label htmlFor="edit-publish">Schedule (publish at)</Label>
-            <Input
-              id="edit-publish"
-              type="datetime-local"
-              value={publishAt}
-              onChange={(e) => setPublishAt(e.target.value)}
-            />
-            {publishAt && (
-              <p className="text-xs text-muted-foreground">
-                Will publish {relativeTime(publishAt)}
-              </p>
-            )}
           </div>
 
           {/* Actions */}

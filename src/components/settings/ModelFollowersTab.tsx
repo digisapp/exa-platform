@@ -1,11 +1,15 @@
 "use client";
 
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, MessageCircle, Loader2 } from "lucide-react";
+import { Users, MessageCircle, Loader2, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+
+const FOLLOWERS_PER_PAGE = 20;
 
 const getTypeLabel = (type: string) => {
   switch (type) {
@@ -32,6 +36,20 @@ interface ModelFollowersTabProps {
 }
 
 export function ModelFollowersTab({ followers, followersLoading, followerCount }: ModelFollowersTabProps) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [page, setPage] = useState(1);
+
+  const filtered = useMemo(() => {
+    if (!searchQuery.trim()) return followers;
+    const q = searchQuery.toLowerCase();
+    return followers.filter((f: any) =>
+      f.displayName?.toLowerCase().includes(q) || f.type?.toLowerCase().includes(q)
+    );
+  }, [followers, searchQuery]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / FOLLOWERS_PER_PAGE));
+  const paginated = filtered.slice((page - 1) * FOLLOWERS_PER_PAGE, page * FOLLOWERS_PER_PAGE);
+
   return (
     <Card>
       <CardHeader>
@@ -50,7 +68,22 @@ export function ModelFollowersTab({ followers, followersLoading, followerCount }
           </div>
         ) : followers.length > 0 ? (
           <div className="space-y-3">
-            {followers.map((follower: any) => (
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search followers..."
+                value={searchQuery}
+                onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
+                className="pl-9"
+              />
+            </div>
+
+            {filtered.length === 0 ? (
+              <p className="text-center text-muted-foreground py-6">No followers match &quot;{searchQuery}&quot;</p>
+            ) : null}
+
+            {paginated.map((follower: any) => (
               <div
                 key={follower.id}
                 className="flex items-center gap-4 p-3 rounded-lg border hover:border-pink-500/30 transition-colors"
@@ -124,6 +157,38 @@ export function ModelFollowersTab({ followers, followersLoading, followerCount }
                 </Button>
               </div>
             ))}
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-3 border-t">
+                <p className="text-sm text-muted-foreground">
+                  {filtered.length} {filtered.length === 1 ? "follower" : "followers"}{searchQuery ? " found" : ""}
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    disabled={page <= 1}
+                    onClick={() => setPage(page - 1)}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    {page} / {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    disabled={page >= totalPages}
+                    onClick={() => setPage(page + 1)}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="text-center py-12">
