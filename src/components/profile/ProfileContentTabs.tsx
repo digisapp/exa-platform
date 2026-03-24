@@ -339,7 +339,7 @@ export function ProfileContentTabs({
             )}
           >
             <Lock className="h-4 w-4" />
-            PPV
+            Paid
             <span className="text-xs bg-pink-500/20 px-1.5 py-0.5 rounded-full">
               {premiumContentCount}
             </span>

@@ -12,7 +12,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import {
   Dialog,
@@ -438,8 +437,8 @@ function AllTab({
           <SelectContent>
             <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="private">Private</SelectItem>
-            <SelectItem value="portfolio">Portfolio</SelectItem>
-            <SelectItem value="exclusive">PPV</SelectItem>
+            <SelectItem value="portfolio">Public</SelectItem>
+            <SelectItem value="exclusive">Paid</SelectItem>
           </SelectContent>
         </Select>
 
@@ -510,10 +509,10 @@ function AllTab({
                 Private
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => bulkAction('set_status', { status: 'portfolio' })}>
-                Portfolio
+                Public
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => bulkAction('set_status', { status: 'exclusive' })}>
-                PPV
+                Paid
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -682,7 +681,7 @@ function ContentItemCard({
         )}
         {item.status === 'portfolio' && (
           <Badge className="bg-green-500/90 text-[10px] text-white hover:bg-green-500">
-            Portfolio
+            Public
           </Badge>
         )}
         {item.status === 'exclusive' && (
@@ -871,8 +870,8 @@ function ItemEditDialog({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="private">Private</SelectItem>
-                <SelectItem value="portfolio">Portfolio</SelectItem>
-                <SelectItem value="exclusive">PPV</SelectItem>
+                <SelectItem value="portfolio">Public</SelectItem>
+                <SelectItem value="exclusive">Paid</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -1391,7 +1390,7 @@ function StatsTab({
         <CardContent>
           {stats.top_items.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No unlock data yet. Items with PPV pricing will appear here.
+              No unlock data yet. Paid items will appear here.
             </p>
           ) : (
             <div className="space-y-3">
@@ -1451,7 +1450,7 @@ function StatsTab({
             <div className="flex items-center justify-between text-sm">
               <span className="flex items-center gap-2">
                 <div className="h-3 w-3 rounded-full bg-green-500" />
-                Portfolio
+                Public
               </span>
               <span>
                 {stats.portfolio_count} ({portfolioPct}%)
@@ -1462,7 +1461,7 @@ function StatsTab({
             <div className="flex items-center justify-between text-sm">
               <span className="flex items-center gap-2">
                 <div className="h-3 w-3 rounded-full bg-pink-500" />
-                PPV
+                Paid
               </span>
               <span>
                 {stats.exclusive_count} ({exclusivePct}%)
@@ -1516,10 +1515,6 @@ function UploadDialog({
   const [title, setTitle] = useState('');
   const [status, setStatus] = useState<'private' | 'portfolio' | 'exclusive'>('private');
   const [coinPrice, setCoinPrice] = useState(0);
-  const [tags, setTags] = useState('');
-  const [setId, setSetId] = useState('');
-  const [scheduleEnabled, setScheduleEnabled] = useState(false);
-  const [publishAt, setPublishAt] = useState('');
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraImageRef = useRef<HTMLInputElement>(null);
@@ -1544,10 +1539,6 @@ function UploadDialog({
       setTitle('');
       setStatus('private');
       setCoinPrice(0);
-      setTags('');
-      setSetId('');
-      setScheduleEnabled(false);
-      setPublishAt('');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -1620,10 +1611,6 @@ function UploadDialog({
 
       // Step 3: Create content item
       const isVideo = file.type.startsWith('video/');
-      const parsedTags = tags
-        .split(',')
-        .map((t) => t.trim())
-        .filter(Boolean);
 
       const itemData: Partial<ContentItem> = {
         media_url: storagePath,
@@ -1631,9 +1618,6 @@ function UploadDialog({
         title: title || null,
         status,
         coin_price: status === 'exclusive' ? coinPrice : 0,
-        tags: parsedTags.length > 0 ? parsedTags : undefined,
-        set_id: setId || null,
-        publish_at: scheduleEnabled && publishAt ? new Date(publishAt).toISOString() : null,
       } as Partial<ContentItem>;
 
       const result = await createItem(itemData);
@@ -1692,7 +1676,7 @@ function UploadDialog({
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Upload Content</DialogTitle>
-          <DialogDescription>Add photos or videos to your content library.</DialogDescription>
+          <DialogDescription>Add photos or videos to your content.</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -1842,8 +1826,8 @@ function UploadDialog({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="private">Private</SelectItem>
-                <SelectItem value="portfolio">Portfolio</SelectItem>
-                <SelectItem value="exclusive">PPV</SelectItem>
+                <SelectItem value="portfolio">Public</SelectItem>
+                <SelectItem value="exclusive">Paid</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -1870,73 +1854,6 @@ function UploadDialog({
               </p>
             </div>
           )}
-
-          {/* Tags */}
-          <div className="space-y-1.5">
-            <Label htmlFor="upload-tags">Tags</Label>
-            <Input
-              id="upload-tags"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-              placeholder="tag1, tag2, tag3"
-              disabled={uploading}
-            />
-            {tags && (
-              <div className="flex flex-wrap gap-1">
-                {tags
-                  .split(',')
-                  .map((t) => t.trim())
-                  .filter(Boolean)
-                  .map((tag) => (
-                    <Badge key={tag} variant="secondary" className="text-xs">
-                      {tag}
-                    </Badge>
-                  ))}
-              </div>
-            )}
-          </div>
-
-          {/* Set */}
-          <div className="space-y-1.5">
-            <Label>Set (optional)</Label>
-            <Select
-              value={setId || 'none'}
-              onValueChange={(v) => setSetId(v === 'none' ? '' : v)}
-              disabled={uploading}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="None" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">None</SelectItem>
-                {sets.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>
-                    {s.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Schedule */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Switch
-                checked={scheduleEnabled}
-                onCheckedChange={setScheduleEnabled}
-                disabled={uploading}
-              />
-              <Label>Schedule for later</Label>
-            </div>
-            {scheduleEnabled && (
-              <Input
-                type="datetime-local"
-                value={publishAt}
-                onChange={(e) => setPublishAt(e.target.value)}
-                disabled={uploading}
-              />
-            )}
-          </div>
 
           {/* Upload button */}
           <Button
