@@ -44,8 +44,6 @@ interface Session {
   currentStreak?: number;
   longestStreak?: number;
   lastPlayDate?: string | null;
-  hasSpunToday?: boolean;
-  totalSpinCoins?: number;
 }
 
 interface TopModelsGameProps {
@@ -77,24 +75,6 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
     pointsGiven: 0,
   });
   const [streak, setStreak] = useState(0);
-  const [hasSpunToday, setHasSpunToday] = useState(false);
-
-  // Handle spin completion - update coin balance (both local and global context)
-  const handleSpinComplete = (coins: number, newBalance?: number) => {
-    // Use server's new balance if provided, otherwise calculate locally
-    if (newBalance !== undefined) {
-      setCoinBalance(newBalance);
-      // Also update global context so navbar reflects the new balance
-      coinBalanceContext?.setBalance(newBalance);
-    } else {
-      setCoinBalance((prev) => prev + coins);
-      // Also update global context
-      coinBalanceContext?.addCoins(coins);
-    }
-    setHasSpunToday(true);
-    toast.success(`You won ${coins} coins! Check your wallet.`);
-  };
-
   // Check if first visit
   useEffect(() => {
     const hasSeenWelcome = localStorage.getItem("topModelsWelcomeSeen");
@@ -108,10 +88,6 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
     if (initialUser && session?.currentStreak !== undefined) {
       // Signed-in user: use streak from Supabase
       setStreak(session.currentStreak);
-      // Set hasSpunToday from session
-      if (session.hasSpunToday !== undefined) {
-        setHasSpunToday(session.hasSpunToday);
-      }
     } else if (!initialUser) {
       // Anonymous user: use localStorage
       const today = new Date().toDateString();
@@ -133,7 +109,7 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
         }
       }
     }
-  }, [initialUser, session?.currentStreak, session?.hasSpunToday]);
+  }, [initialUser, session?.currentStreak]);
 
   const dismissWelcome = () => {
     localStorage.setItem("topModelsWelcomeSeen", "true");
@@ -394,8 +370,6 @@ export function TopModelsGame({ initialUser }: TopModelsGameProps) {
               sessionStats={sessionStats}
               streak={streak}
               isLoggedIn={!!initialUser}
-              hasSpunToday={hasSpunToday}
-              onSpinComplete={handleSpinComplete}
             />
           ) : models.length > 0 ? (
             <SwipeStack

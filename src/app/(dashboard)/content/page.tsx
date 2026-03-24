@@ -6,7 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { useContentData, ContentItem, ContentSet, ContentFilters } from '@/hooks/useContentData';
+import { useContentData, ContentItem, ContentFilters } from '@/hooks/useContentData';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,14 +38,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
 
@@ -62,11 +60,9 @@ import {
   Loader2,
   ExternalLink,
   BarChart3,
-  FolderOpen,
   Image as ImageIcon,
   X,
   ChevronDown,
-  Package,
   TrendingUp,
 } from 'lucide-react';
 
@@ -94,7 +90,6 @@ function getMediaUrl(url: string): string {
 export default function ContentPage() {
   const {
     items,
-    sets,
     stats,
     loading,
     filters,
@@ -104,9 +99,6 @@ export default function ContentPage() {
     updateItem,
     deleteItem,
     bulkAction,
-    createSet,
-    updateSet,
-    deleteSet,
     toggleSelect,
     selectAll,
     clearSelection,
@@ -124,11 +116,7 @@ export default function ContentPage() {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [editItem, setEditItem] = useState<ContentItem | null>(null);
   const [deleteConfirmItem, setDeleteConfirmItem] = useState<ContentItem | null>(null);
-  const [editSet, setEditSet] = useState<ContentSet | null>(null);
-  const [createSetOpen, setCreateSetOpen] = useState(false);
-  const [deleteConfirmSet, setDeleteConfirmSet] = useState<ContentSet | null>(null);
   const [bulkPriceOpen, setBulkPriceOpen] = useState(false);
-  const [bulkSetOpen, setBulkSetOpen] = useState(false);
 
   // Fetch model username on mount
   useEffect(() => {
@@ -205,21 +193,87 @@ export default function ContentPage() {
         ) : (
           /* Tabs */
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="mb-6">
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="sets">Sets</TabsTrigger>
-              <TabsTrigger value="stats">Stats</TabsTrigger>
-            </TabsList>
+            {/* Unified toolbar: tabs + filters in one row */}
+            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <TabsList>
+                <TabsTrigger value="all">All</TabsTrigger>
+                <TabsTrigger value="stats">Stats</TabsTrigger>
+              </TabsList>
+
+              {activeTab === 'all' && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <Select
+                    value={filters.status || 'all'}
+                    onValueChange={(v) => setFilter('status', v === 'all' ? null : v)}
+                  >
+                    <SelectTrigger className="h-9 w-[120px] text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="private">Private</SelectItem>
+                      <SelectItem value="portfolio">Public</SelectItem>
+                      <SelectItem value="exclusive">PPV</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select
+                    value={filters.media_type || 'all'}
+                    onValueChange={(v) => setFilter('media_type', v === 'all' ? null : v)}
+                  >
+                    <SelectTrigger className="h-9 w-[110px] text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Types</SelectItem>
+                      <SelectItem value="image">Photos</SelectItem>
+                      <SelectItem value="video">Videos</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      placeholder="Search..."
+                      value={searchInput}
+                      onChange={(e) => handleSearchChange(e.target.value)}
+                      className="h-9 w-[140px] pl-8 text-xs"
+                    />
+                  </div>
+
+                  <Select
+                    value={`${filters.sort}_${filters.order}`}
+                    onValueChange={(v) => {
+                      const map: Record<string, [string, string]> = {
+                        created_at_desc: ['created_at', 'desc'],
+                        created_at_asc: ['created_at', 'asc'],
+                        unlock_count_desc: ['unlock_count', 'desc'],
+                        coin_price_desc: ['coin_price', 'desc'],
+                      };
+                      const [sort, order] = map[v] || ['created_at', 'desc'];
+                      setFilter('sort', sort);
+                      setFilter('order', order as 'asc' | 'desc');
+                    }}
+                  >
+                    <SelectTrigger className="h-9 w-[120px] text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="created_at_desc">Newest</SelectItem>
+                      <SelectItem value="created_at_asc">Oldest</SelectItem>
+                      <SelectItem value="unlock_count_desc">Most Unlocks</SelectItem>
+                      <SelectItem value="coin_price_desc">Highest Price</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
 
             <TabsContent value="all">
               <AllTab
                 items={items}
-                sets={sets}
                 filters={filters}
                 selectedIds={selectedIds}
-                searchInput={searchInput}
-                onSearchChange={handleSearchChange}
-                setFilter={setFilter}
                 toggleSelect={toggleSelect}
                 selectAll={selectAll}
                 clearSelection={clearSelection}
@@ -229,22 +283,11 @@ export default function ContentPage() {
                 onDeleteItem={setDeleteConfirmItem}
                 onUpload={() => setUploadOpen(true)}
                 onBulkPrice={() => setBulkPriceOpen(true)}
-                onBulkSet={() => setBulkSetOpen(true)}
-              />
-            </TabsContent>
-
-            <TabsContent value="sets">
-              <SetsTab
-                sets={sets}
-                items={items}
-                onCreateSet={() => setCreateSetOpen(true)}
-                onEditSet={setEditSet}
-                onDeleteSet={setDeleteConfirmSet}
               />
             </TabsContent>
 
             <TabsContent value="stats">
-              <StatsTab stats={stats} sets={sets} items={items} />
+              <StatsTab stats={stats} items={items} />
             </TabsContent>
           </Tabs>
         )}
@@ -254,7 +297,6 @@ export default function ContentPage() {
       <UploadDialog
         open={uploadOpen}
         onOpenChange={setUploadOpen}
-        sets={sets}
         createItem={createItem}
         refreshAll={refreshAll}
       />
@@ -263,7 +305,6 @@ export default function ContentPage() {
       {editItem && (
         <ItemEditDialog
           item={editItem}
-          sets={sets}
           open={!!editItem}
           onOpenChange={(open) => {
             if (!open) setEditItem(null);
@@ -305,54 +346,6 @@ export default function ContentPage() {
         </AlertDialog>
       )}
 
-      {/* Set Edit/Create Dialog */}
-      <SetDialog
-        open={createSetOpen || !!editSet}
-        onOpenChange={(open) => {
-          if (!open) {
-            setCreateSetOpen(false);
-            setEditSet(null);
-          }
-        }}
-        set={editSet}
-        items={items}
-        createSet={createSet}
-        updateSet={updateSet}
-        deleteSet={deleteSet}
-      />
-
-      {/* Delete Set Confirm */}
-      {deleteConfirmSet && (
-        <AlertDialog
-          open={!!deleteConfirmSet}
-          onOpenChange={(open) => {
-            if (!open) setDeleteConfirmSet(null);
-          }}
-        >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete Set</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to delete &quot;{deleteConfirmSet.title}&quot;? Items in this
-                set will not be deleted but will be unassigned.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                onClick={() => {
-                  deleteSet(deleteConfirmSet.id);
-                  setDeleteConfirmSet(null);
-                }}
-              >
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
-
       {/* Bulk Price Dialog */}
       <BulkPriceDialog
         open={bulkPriceOpen}
@@ -364,17 +357,6 @@ export default function ContentPage() {
         }}
       />
 
-      {/* Bulk Set Dialog */}
-      <BulkSetDialog
-        open={bulkSetOpen}
-        onOpenChange={setBulkSetOpen}
-        sets={sets}
-        selectedCount={selectedIds.size}
-        onConfirm={(setId) => {
-          bulkAction('set_set', { set_id: setId });
-          setBulkSetOpen(false);
-        }}
-      />
     </div>
   );
 }
@@ -385,12 +367,8 @@ export default function ContentPage() {
 
 function AllTab({
   items,
-  sets,
   filters,
   selectedIds,
-  searchInput,
-  onSearchChange,
-  setFilter,
   toggleSelect,
   selectAll,
   clearSelection,
@@ -400,15 +378,10 @@ function AllTab({
   onDeleteItem,
   onUpload,
   onBulkPrice,
-  onBulkSet,
 }: {
   items: ContentItem[];
-  sets: ContentSet[];
   filters: { status: string | null; media_type: string | null; sort: string; order: string };
   selectedIds: Set<string>;
-  searchInput: string;
-  onSearchChange: (v: string) => void;
-  setFilter: <K extends keyof ContentFilters>(key: K, value: ContentFilters[K]) => void;
   toggleSelect: (id: string) => void;
   selectAll: () => void;
   clearSelection: () => void;
@@ -418,79 +391,11 @@ function AllTab({
   onDeleteItem: (item: ContentItem) => void;
   onUpload: () => void;
   onBulkPrice: () => void;
-  onBulkSet: () => void;
 }) {
   const hasSelection = selectedIds.size > 0;
 
   return (
     <div className="space-y-4">
-      {/* Filter Bar */}
-      <div className="flex flex-wrap items-center gap-3">
-        <Select
-          value={filters.status || 'all'}
-          onValueChange={(v) => setFilter('status', v === 'all' ? null : v)}
-        >
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="private">Private</SelectItem>
-            <SelectItem value="portfolio">Public</SelectItem>
-            <SelectItem value="exclusive">PPV</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Select
-          value={filters.media_type || 'all'}
-          onValueChange={(v) => setFilter('media_type', v === 'all' ? null : v)}
-        >
-          <SelectTrigger className="w-[130px]">
-            <SelectValue placeholder="Type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            <SelectItem value="image">Photos</SelectItem>
-            <SelectItem value="video">Videos</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <div className="relative flex-1 min-w-[180px]">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search content..."
-            value={searchInput}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-
-        <Select
-          value={`${filters.sort}_${filters.order}`}
-          onValueChange={(v) => {
-            const map: Record<string, [string, string]> = {
-              created_at_desc: ['created_at', 'desc'],
-              created_at_asc: ['created_at', 'asc'],
-              unlock_count_desc: ['unlock_count', 'desc'],
-              coin_price_desc: ['coin_price', 'desc'],
-            };
-            const [sort, order] = map[v] || ['created_at', 'desc'];
-            setFilter('sort', sort);
-            setFilter('order', order as 'asc' | 'desc');
-          }}
-        >
-          <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="Sort" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="created_at_desc">Newest</SelectItem>
-            <SelectItem value="created_at_asc">Oldest</SelectItem>
-            <SelectItem value="unlock_count_desc">Most Unlocks</SelectItem>
-            <SelectItem value="coin_price_desc">Highest Price</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
       {/* Bulk Action Bar */}
       {hasSelection && (
         <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/50 p-3">
@@ -518,10 +423,6 @@ function AllTab({
 
           <Button variant="outline" size="sm" onClick={onBulkPrice}>
             Set Price
-          </Button>
-
-          <Button variant="outline" size="sm" onClick={onBulkSet}>
-            Add to Set
           </Button>
 
           <Button
@@ -579,7 +480,6 @@ function AllTab({
             <ContentItemCard
               key={item.id}
               item={item}
-              sets={sets}
               selected={isSelected(item.id)}
               onToggleSelect={() => toggleSelect(item.id)}
               onEdit={() => onEditItem(item)}
@@ -598,14 +498,12 @@ function AllTab({
 
 function ContentItemCard({
   item,
-  sets,
   selected,
   onToggleSelect,
   onEdit,
   onDelete,
 }: {
   item: ContentItem;
-  sets: ContentSet[];
   selected: boolean;
   onToggleSelect: () => void;
   onEdit: () => void;
@@ -613,7 +511,6 @@ function ContentItemCard({
 }) {
   const [hovered, setHovered] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const setName = item.set_id ? sets.find((s) => s.id === item.set_id)?.title : null;
   const mediaUrl = getMediaUrl(item.media_url);
 
   useEffect(() => {
@@ -655,10 +552,10 @@ function ContentItemCard({
         />
       )}
 
-      {/* Checkbox */}
+      {/* Checkbox — top left */}
       <div
         className={cn(
-          'absolute left-2 top-2 z-10 transition-opacity',
+          'absolute left-2 top-2 z-20 transition-opacity',
           selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 sm:opacity-0',
           'max-sm:opacity-100',
         )}
@@ -670,47 +567,27 @@ function ContentItemCard({
         <Checkbox checked={selected} className="h-5 w-5 border-2 border-white bg-black/30" />
       </div>
 
-      {/* Status Badge */}
-      <div className="absolute left-2 top-9 z-10 flex flex-col gap-1">
+      {/* Status indicator — top right */}
+      <div className="absolute right-2 top-2 z-10 flex items-center gap-1">
         {item.status === 'private' && (
-          <Badge variant="secondary" className="text-[10px]">
+          <span className="flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white/80 backdrop-blur-sm">
+            <Lock className="h-2.5 w-2.5" />
             Private
-          </Badge>
+          </span>
         )}
         {item.status === 'portfolio' && (
-          <Badge className="bg-green-500/90 text-[10px] text-white hover:bg-green-500">
+          <span className="flex items-center gap-1 rounded-full bg-green-500/80 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
             Public
-          </Badge>
+          </span>
         )}
         {item.status === 'exclusive' && (
-          <Badge className="bg-gradient-to-r from-pink-500 to-violet-500 text-[10px] text-white">
-            <Coins className="mr-0.5 h-3 w-3" />
+          <span className="flex items-center gap-1 rounded-full bg-gradient-to-r from-pink-500/90 to-violet-500/90 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
+            <Coins className="h-2.5 w-2.5" />
             {item.coin_price}
-          </Badge>
-        )}
-        {setName && (
-          <Badge variant="outline" className="bg-background/80 text-[10px]">
-            <FolderOpen className="mr-0.5 h-3 w-3" />
-            {setName}
-          </Badge>
+          </span>
         )}
       </div>
 
-      {/* Tags at bottom */}
-      {item.tags && item.tags.length > 0 && (
-        <div className="absolute bottom-2 left-2 right-2 z-10 flex flex-wrap gap-1">
-          {item.tags.slice(0, 3).map((tag) => (
-            <Badge key={tag} variant="secondary" className="text-[9px] bg-black/50 text-white">
-              {tag}
-            </Badge>
-          ))}
-          {item.tags.length > 3 && (
-            <Badge variant="secondary" className="text-[9px] bg-black/50 text-white">
-              +{item.tags.length - 3}
-            </Badge>
-          )}
-        </div>
-      )}
 
       {/* Hover overlay */}
       <div
@@ -752,14 +629,12 @@ function ContentItemCard({
 
 function ItemEditDialog({
   item,
-  sets,
   open,
   onOpenChange,
   updateItem,
   deleteItem,
 }: {
   item: ContentItem;
-  sets: ContentSet[];
   open: boolean;
   onOpenChange: (v: boolean) => void;
   updateItem: (id: string, data: Partial<ContentItem>) => Promise<ContentItem | null>;
@@ -769,25 +644,16 @@ function ItemEditDialog({
   const [description, setDescription] = useState(item.description || '');
   const [status, setStatus] = useState(item.status);
   const [coinPrice, setCoinPrice] = useState(item.coin_price);
-  const [tags, setTags] = useState(item.tags?.join(', ') || '');
-  const [setId, setSetId] = useState(item.set_id || '');
   const [saving, setSaving] = useState(false);
   const mediaUrl = getMediaUrl(item.media_url);
 
   const handleSave = async () => {
     setSaving(true);
-    const parsedTags = tags
-      .split(',')
-      .map((t) => t.trim())
-      .filter(Boolean);
     await updateItem(item.id, {
       title: title || null,
       description: description || null,
       status,
       coin_price: status === 'exclusive' ? coinPrice : 0,
-      tags: parsedTags,
-      set_id: setId || null,
-      publish_at: null,
     });
     setSaving(false);
     onOpenChange(false);
@@ -887,48 +753,6 @@ function ItemEditDialog({
             </div>
           )}
 
-          {/* Tags */}
-          <div className="space-y-1.5">
-            <Label htmlFor="edit-tags">Tags</Label>
-            <Input
-              id="edit-tags"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-              placeholder="tag1, tag2, tag3"
-            />
-            {tags && (
-              <div className="flex flex-wrap gap-1">
-                {tags
-                  .split(',')
-                  .map((t) => t.trim())
-                  .filter(Boolean)
-                  .map((tag) => (
-                    <Badge key={tag} variant="secondary" className="text-xs">
-                      {tag}
-                    </Badge>
-                  ))}
-              </div>
-            )}
-          </div>
-
-          {/* Set */}
-          <div className="space-y-1.5">
-            <Label>Set</Label>
-            <Select value={setId || 'none'} onValueChange={(v) => setSetId(v === 'none' ? '' : v)}>
-              <SelectTrigger>
-                <SelectValue placeholder="None" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">None</SelectItem>
-                {sets.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>
-                    {s.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
           {/* Actions */}
           <div className="flex gap-2 pt-2">
             <Button onClick={handleSave} disabled={saving} className="flex-1">
@@ -947,361 +771,14 @@ function ItemEditDialog({
 }
 
 // ===========================================================================
-// SETS TAB
-// ===========================================================================
-
-function SetsTab({
-  sets,
-  items,
-  onCreateSet,
-  onEditSet,
-  onDeleteSet,
-}: {
-  sets: ContentSet[];
-  items: ContentItem[];
-  onCreateSet: () => void;
-  onEditSet: (s: ContentSet) => void;
-  onDeleteSet: (s: ContentSet) => void;
-}) {
-  if (sets.length === 0) {
-    return (
-      <Card className="py-16">
-        <CardContent className="flex flex-col items-center justify-center text-center">
-          <div className="mb-4 rounded-full bg-muted p-4">
-            <Package className="h-8 w-8 text-muted-foreground" />
-          </div>
-          <h3 className="mb-2 text-lg font-semibold">Create your first set to organize content</h3>
-          <p className="mb-4 text-sm text-muted-foreground">
-            Sets let you group content together and optionally offer bundle pricing.
-          </p>
-          <Button onClick={onCreateSet}>
-            <Plus className="mr-2 h-4 w-4" />
-            Create Set
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="flex justify-end">
-        <Button onClick={onCreateSet}>
-          <Plus className="mr-2 h-4 w-4" />
-          Create Set
-        </Button>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        {sets.map((set) => {
-          const coverItem = items.find((i) => i.set_id === set.id);
-          const coverUrl = coverItem ? getMediaUrl(coverItem.media_url) : null;
-
-          return (
-            <Card
-              key={set.id}
-              className="cursor-pointer overflow-hidden transition-shadow hover:shadow-md"
-              onClick={() => onEditSet(set)}
-            >
-              {/* Cover */}
-              <div className="relative h-40 bg-gradient-to-br from-muted to-muted-foreground/10">
-                {coverUrl && (
-                  <Image src={coverUrl} alt={set.title} fill className="object-cover" sizes="50vw" />
-                )}
-                <div className="absolute right-2 top-2 flex gap-1">
-                  <Badge
-                    className={cn(
-                      'text-[10px]',
-                      set.status === 'live' && 'bg-green-500 text-white',
-                      set.status === 'draft' && 'bg-gray-500 text-white',
-                      set.status === 'archived' && 'bg-amber-500 text-white',
-                    )}
-                  >
-                    {set.status.charAt(0).toUpperCase() + set.status.slice(1)}
-                  </Badge>
-                </div>
-              </div>
-
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold truncate">{set.title}</h3>
-                    {set.description && (
-                      <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
-                        {set.description}
-                      </p>
-                    )}
-                    <div className="mt-2 flex items-center gap-2">
-                      <Badge variant="secondary" className="text-xs">
-                        {set.item_count} items
-                      </Badge>
-                      {set.coin_price != null && set.coin_price > 0 && (
-                        <Badge variant="outline" className="text-xs">
-                          <Coins className="mr-0.5 h-3 w-3" />
-                          {set.coin_price} bundle
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 shrink-0"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <ChevronDown className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onEditSet(set);
-                        }}
-                      >
-                        <Pencil className="mr-2 h-4 w-4" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className="text-destructive"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDeleteSet(set);
-                        }}
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// ===========================================================================
-// Set Dialog (Create / Edit)
-// ===========================================================================
-
-function SetDialog({
-  open,
-  onOpenChange,
-  set,
-  items,
-  createSet,
-  updateSet,
-  deleteSet,
-}: {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-  set: ContentSet | null;
-  items: ContentItem[];
-  createSet: (data: Partial<ContentSet>) => Promise<ContentSet | null>;
-  updateSet: (id: string, data: Partial<ContentSet>) => Promise<ContentSet | null>;
-  deleteSet: (id: string) => Promise<void>;
-}) {
-  const isEdit = !!set;
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [coinPrice, setCoinPrice] = useState<number | ''>('');
-  const [status, setStatus] = useState<'draft' | 'live' | 'archived'>('draft');
-  const [saving, setSaving] = useState(false);
-
-  // Reset form when set changes
-  useEffect(() => {
-    if (set) {
-      setTitle(set.title);
-      setDescription(set.description || '');
-      setCoinPrice(set.coin_price ?? '');
-      setStatus(set.status);
-    } else {
-      setTitle('');
-      setDescription('');
-      setCoinPrice('');
-      setStatus('draft');
-    }
-  }, [set, open]);
-
-  const setItems = items.filter((i) => set && i.set_id === set.id);
-
-  const handleSave = async () => {
-    if (!title.trim()) {
-      toast.error('Title is required');
-      return;
-    }
-    setSaving(true);
-    const payload: Partial<ContentSet> = {
-      title: title.trim(),
-      description: description.trim() || null,
-      coin_price: coinPrice === '' ? null : Number(coinPrice),
-      status,
-    };
-
-    if (isEdit && set) {
-      await updateSet(set.id, payload);
-    } else {
-      await createSet(payload);
-    }
-    setSaving(false);
-    onOpenChange(false);
-  };
-
-  const handleDelete = async () => {
-    if (set) {
-      await deleteSet(set.id);
-      onOpenChange(false);
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>{isEdit ? 'Edit Set' : 'Create Set'}</DialogTitle>
-          <DialogDescription>
-            {isEdit ? 'Update set details.' : 'Create a new content set.'}
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="set-title">Title *</Label>
-            <Input
-              id="set-title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="My Photo Set"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="set-desc">Description</Label>
-            <Textarea
-              id="set-desc"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe this set"
-              rows={3}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="set-price">Bundle Price (coins)</Label>
-            <div className="relative">
-              <Coins className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                id="set-price"
-                type="number"
-                min={0}
-                max={10000}
-                value={coinPrice}
-                onChange={(e) =>
-                  setCoinPrice(e.target.value === '' ? '' : Number(e.target.value))
-                }
-                className="pl-9"
-                placeholder="Leave empty for no bundle discount"
-              />
-            </div>
-            {coinPrice !== '' && Number(coinPrice) > 0 && (
-              <p className="text-xs text-muted-foreground">
-                ${(Number(coinPrice) * 0.1).toFixed(2)} USD equivalent
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-1.5">
-            <Label>Status</Label>
-            <Select value={status} onValueChange={(v) => setStatus(v as typeof status)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="live">Live</SelectItem>
-                <SelectItem value="archived">Archived</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Items in set */}
-          {isEdit && setItems.length > 0 && (
-            <div className="space-y-1.5">
-              <Label>Items in this set ({setItems.length})</Label>
-              <div className="grid grid-cols-4 gap-2">
-                {setItems.slice(0, 8).map((item) => (
-                  <div
-                    key={item.id}
-                    className="relative aspect-square overflow-hidden rounded-md bg-muted"
-                  >
-                    {item.media_type === 'video' ? (
-                      <video
-                        src={getMediaUrl(item.media_url)}
-                        muted
-                        preload="metadata"
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <Image
-                        src={getMediaUrl(item.media_url)}
-                        alt={item.title || ''}
-                        fill
-                        className="object-cover"
-                        sizes="80px"
-                      />
-                    )}
-                  </div>
-                ))}
-                {setItems.length > 8 && (
-                  <div className="flex aspect-square items-center justify-center rounded-md bg-muted text-sm text-muted-foreground">
-                    +{setItems.length - 8}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          <div className="flex gap-2 pt-2">
-            <Button onClick={handleSave} disabled={saving} className="flex-1">
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isEdit ? 'Save Changes' : 'Create Set'}
-            </Button>
-            {isEdit && (
-              <Button variant="destructive" onClick={handleDelete}>
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
-              </Button>
-            )}
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ===========================================================================
-// DROPS TAB
-// ===========================================================================
-
-// ===========================================================================
 // STATS TAB
 // ===========================================================================
 
 function StatsTab({
   stats,
-  sets,
   items,
 }: {
   stats: import('@/hooks/useContentData').ContentStats | null;
-  sets: ContentSet[];
   items: ContentItem[];
 }) {
   if (!stats) {
@@ -1312,7 +789,6 @@ function StatsTab({
     );
   }
 
-  const liveSets = sets.filter((s) => s.status === 'live').length;
   const totalItems = stats.total_items || 1;
   const portfolioPct = Math.round((stats.portfolio_count / totalItems) * 100);
   const exclusivePct = Math.round((stats.exclusive_count / totalItems) * 100);
@@ -1345,8 +821,8 @@ function StatsTab({
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <p className="text-xs text-muted-foreground">Live Sets</p>
-            <p className="text-2xl font-bold">{liveSets}</p>
+            <p className="text-xs text-muted-foreground">PPV Items</p>
+            <p className="text-2xl font-bold">{stats.exclusive_count}</p>
           </CardContent>
         </Card>
       </div>
@@ -1474,13 +950,11 @@ interface UploadFile {
 function UploadDialog({
   open,
   onOpenChange,
-  sets,
   createItem,
   refreshAll,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  sets: ContentSet[];
   createItem: (data: Partial<ContentItem>) => Promise<ContentItem | null>;
   refreshAll: () => Promise<void>;
 }) {
@@ -1911,61 +1385,3 @@ function BulkPriceDialog({
   );
 }
 
-// ===========================================================================
-// Bulk Set Dialog
-// ===========================================================================
-
-function BulkSetDialog({
-  open,
-  onOpenChange,
-  sets,
-  selectedCount,
-  onConfirm,
-}: {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-  sets: ContentSet[];
-  selectedCount: number;
-  onConfirm: (setId: string | null) => void;
-}) {
-  const [selectedSet, setSelectedSet] = useState('none');
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-sm">
-        <DialogHeader>
-          <DialogTitle>Add to Set</DialogTitle>
-          <DialogDescription>
-            Assign {selectedCount} selected item{selectedCount > 1 ? 's' : ''} to a set.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4">
-          <Select value={selectedSet} onValueChange={setSelectedSet}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select a set" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">None (remove from set)</SelectItem>
-              {sets.map((s) => (
-                <SelectItem key={s.id} value={s.id}>
-                  {s.title}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <div className="flex gap-2">
-            <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button
-              className="flex-1"
-              onClick={() => onConfirm(selectedSet === 'none' ? null : selectedSet)}
-            >
-              Apply
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}

@@ -5,8 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Trophy, Clock, RotateCcw, Sparkles, Star, Heart, X, Flame, Zap, UserPlus, Coins, Share2 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { DailySpin } from "./DailySpin";
-
 interface SessionStats {
   likes: number;
   passes: number;
@@ -21,8 +19,6 @@ interface GameCompleteProps {
   sessionStats?: SessionStats;
   streak?: number;
   isLoggedIn?: boolean;
-  hasSpunToday?: boolean;
-  onSpinComplete?: (coins: number, newBalance?: number) => void;
 }
 
 export function GameComplete({
@@ -31,8 +27,6 @@ export function GameComplete({
   sessionStats,
   streak = 0,
   isLoggedIn = false,
-  hasSpunToday = false,
-  onSpinComplete,
 }: GameCompleteProps) {
   const [timeRemaining, setTimeRemaining] = useState<string>("");
 
@@ -177,15 +171,6 @@ export function GameComplete({
             Come back tomorrow to keep it going
           </p>
         </div>
-      )}
-
-      {/* Daily Spin Reward (shows sign-up prompt for anonymous users) */}
-      {!hasSpunToday && (
-        <DailySpin
-          isLoggedIn={isLoggedIn}
-          onSpinComplete={onSpinComplete || (() => {})}
-          hasSpunToday={hasSpunToday}
-        />
       )}
 
       {/* Share Results */}
