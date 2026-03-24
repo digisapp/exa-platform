@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
-      console.error("Failed to track page view:", error);
+      console.error("Failed to track page view:", error.message, error.details, error.code);
       return NextResponse.json({ error: "Failed to track" }, { status: 500 });
     }
 

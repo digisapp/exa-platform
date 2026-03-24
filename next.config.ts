@@ -113,8 +113,8 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${isDev ? " 'unsafe-eval'" : ''} js.stripe.com translate.google.com`,
-              "style-src 'self' 'unsafe-inline' fonts.googleapis.com",
+              `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${isDev ? " 'unsafe-eval'" : ''} js.stripe.com translate.google.com translate.googleapis.com`,
+              "style-src 'self' 'unsafe-inline' fonts.googleapis.com www.gstatic.com",
               "img-src 'self' data: blob: *.supabase.co *.cdninstagram.com www.google.com *.gstatic.com img.youtube.com",
               "font-src 'self' fonts.gstatic.com data:",
               "connect-src 'self' data: blob: *.supabase.co wss://*.supabase.co *.livekit.cloud wss://*.livekit.cloud api.stripe.com *.upstash.io",
