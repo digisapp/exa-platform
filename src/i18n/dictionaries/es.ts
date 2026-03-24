@@ -5,12 +5,12 @@ export const es: Dictionary = {
   nav: {
     home: "Inicio",
     chats: "Mensajes",
-    content: "Portafolio",
+    content: "Contenido",
     explore: "Explorar",
     favorites: "Favoritos",
     campaigns: "Campañas",
     myBids: "Mis Ofertas",
-    myContent: "Mi Portafolio",
+    myContent: "Mi Contenido",
     wallet: "Billetera",
     settings: "Ajustes",
     bookings: "Reservaciones",
@@ -110,12 +110,12 @@ export const es: Dictionary = {
 
   // Content
   content: {
-    title: "Mi Portafolio",
+    title: "Mi Contenido",
     upload: "Subir",
-    uploadContent: "Subir a Portafolio",
+    uploadContent: "Subir Contenido",
     portfolio: "Portafolio",
     ppv: "PPV",
-    allContent: "Todos",
+    allContent: "Todo el Contenido",
     photos: "Fotos",
     videos: "Videos",
     noContent: "Sin contenido aún",
