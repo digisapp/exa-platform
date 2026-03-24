@@ -53,7 +53,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
   Camera,
   Video,
-  Eye,
   Lock,
   Coins,
   Upload,
@@ -225,67 +224,6 @@ export default function ContentPage() {
               Upload
             </Button>
           </div>
-        </div>
-
-        {/* Stats Row */}
-        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-          <Card className="overflow-hidden">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 p-2.5">
-                  <Camera className="h-4 w-4 text-white" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Total Items</p>
-                  <p className="text-xl font-bold">{stats?.total_items ?? 0}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="overflow-hidden">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-gradient-to-br from-green-500 to-green-600 p-2.5">
-                  <Eye className="h-4 w-4 text-white" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Portfolio</p>
-                  <p className="text-xl font-bold">{stats?.portfolio_count ?? 0}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="overflow-hidden">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-gradient-to-br from-pink-500 to-pink-600 p-2.5">
-                  <Lock className="h-4 w-4 text-white" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Exclusive</p>
-                  <p className="text-xl font-bold">{stats?.exclusive_count ?? 0}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="overflow-hidden">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-gradient-to-br from-amber-500 to-amber-600 p-2.5">
-                  <Coins className="h-4 w-4 text-white" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Revenue</p>
-                  <p className="text-xl font-bold">
-                    {stats?.total_revenue ?? 0}{' '}
-                    <span className="text-xs font-normal text-muted-foreground">
-                      (${((stats?.total_revenue ?? 0) * 0.1).toFixed(2)})
-                    </span>
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Loading state */}
@@ -540,7 +478,7 @@ function AllTab({
             <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="private">Private</SelectItem>
             <SelectItem value="portfolio">Portfolio</SelectItem>
-            <SelectItem value="exclusive">Exclusive</SelectItem>
+            <SelectItem value="exclusive">PPV</SelectItem>
           </SelectContent>
         </Select>
 
@@ -614,7 +552,7 @@ function AllTab({
                 Portfolio
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => bulkAction('set_status', { status: 'exclusive' })}>
-                Exclusive
+                PPV
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -973,7 +911,7 @@ function ItemEditDialog({
               <SelectContent>
                 <SelectItem value="private">Private</SelectItem>
                 <SelectItem value="portfolio">Portfolio</SelectItem>
-                <SelectItem value="exclusive">Exclusive</SelectItem>
+                <SelectItem value="exclusive">PPV</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -1494,7 +1432,7 @@ function DropsTab({
                         item.status === 'exclusive' && 'border-pink-500 text-pink-600',
                       )}
                     >
-                      Will become: {item.status}
+                      Will become: {item.status === 'exclusive' ? 'PPV' : item.status}
                     </Badge>
                   </div>
                 </div>
@@ -1588,7 +1526,7 @@ function StatsTab({
         <CardContent>
           {stats.top_items.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No unlock data yet. Content with exclusive pricing will appear here.
+              No unlock data yet. Content with PPV pricing will appear here.
             </p>
           ) : (
             <div className="space-y-3">
@@ -1659,7 +1597,7 @@ function StatsTab({
             <div className="flex items-center justify-between text-sm">
               <span className="flex items-center gap-2">
                 <div className="h-3 w-3 rounded-full bg-pink-500" />
-                Exclusive
+                PPV
               </span>
               <span>
                 {stats.exclusive_count} ({exclusivePct}%)
@@ -2040,7 +1978,7 @@ function UploadDialog({
               <SelectContent>
                 <SelectItem value="private">Private</SelectItem>
                 <SelectItem value="portfolio">Portfolio</SelectItem>
-                <SelectItem value="exclusive">Exclusive</SelectItem>
+                <SelectItem value="exclusive">PPV</SelectItem>
               </SelectContent>
             </Select>
           </div>
