@@ -6,6 +6,7 @@ import { FloatingOrbs } from "@/components/ui/floating-orbs";
 import { ModelSignupDialog } from "@/components/auth/ModelSignupDialog";
 import { BrandInquiryDialog } from "@/components/auth/BrandInquiryDialog";
 import { FanSignupDialog } from "@/components/auth/FanSignupDialog";
+import { MediaInquiryDialog } from "@/components/auth/MediaInquiryDialog";
 import { createClient } from "@/lib/supabase/server";
 import {
   ArrowRight,
@@ -273,12 +274,12 @@ export default async function HomePage() {
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-purple-500">Collaborate.</span>
                 </h2>
 
-                <Link href="/media-submit">
+                <MediaInquiryDialog>
                   <Button className="w-full md:w-auto text-sm md:text-base px-4 md:px-8 h-9 md:h-12 rounded-full bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 text-white">
                     Media Inquiry
                     <ArrowRight className="ml-1.5 h-3.5 w-3.5 md:ml-2 md:h-4 md:w-4" />
                   </Button>
-                </Link>
+                </MediaInquiryDialog>
               </div>
             </div>
           </div>

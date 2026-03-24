@@ -4,10 +4,24 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
-export default function MediaSubmitPage() {
+interface MediaInquiryDialogProps {
+  children: React.ReactNode;
+}
+
+export function MediaInquiryDialog({ children }: MediaInquiryDialogProps) {
+  const [open, setOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -15,8 +29,6 @@ export default function MediaSubmitPage() {
     instagram_handle: "",
     message: "",
   });
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,6 +51,7 @@ export default function MediaSubmitPage() {
 
       toast.success("Submission received! We'll be in touch soon.");
       setForm({ name: "", email: "", phone: "", instagram_handle: "", message: "" });
+      setOpen(false);
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
@@ -47,18 +60,19 @@ export default function MediaSubmitPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
-      <div className="w-full max-w-md space-y-6">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-violet-400 to-purple-500 text-transparent bg-clip-text">
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-center bg-gradient-to-r from-violet-400 to-purple-500 text-transparent bg-clip-text">
             Media Inquiry
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          </DialogTitle>
+          <p className="text-sm text-muted-foreground text-center">
             Press, photographers, bloggers — let us know how you&apos;d like to collaborate.
           </p>
-        </div>
+        </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-3 pt-2">
           <Input
             required
             value={form.name}
@@ -101,7 +115,7 @@ export default function MediaSubmitPage() {
             Submit
           </Button>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
