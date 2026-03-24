@@ -205,7 +205,7 @@ export default function ContentPage() {
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">My Portfolio</h1>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">My Content</h1>
           <div className="flex items-center gap-3">
             {modelUsername && (
               <Link
@@ -1578,7 +1578,7 @@ function StatsTab({
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <BarChart3 className="h-4 w-4" />
-            Portfolio Breakdown
+            Content Breakdown
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -1826,7 +1826,7 @@ function UploadDialog({
     <Dialog open={open} onOpenChange={uploading ? undefined : onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Upload to Portfolio</DialogTitle>
+          <DialogTitle>Upload Content</DialogTitle>
           <DialogDescription>Add photos or videos to your content library.</DialogDescription>
         </DialogHeader>
 
