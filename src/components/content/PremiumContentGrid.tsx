@@ -33,11 +33,30 @@ export function PremiumContentGrid({
   useEffect(() => {
     async function fetchContent() {
       try {
-        const response = await fetch(`/api/content?modelId=${modelId}`);
+        // Try new content system first, fall back to legacy
+        const response = await fetch(`/api/content-hub/public?modelId=${modelId}`);
         const data = await response.json();
 
-        if (response.ok) {
-          setContent(data.content || []);
+        if (response.ok && data.items?.length > 0) {
+          // Map new system shape to PremiumContent interface
+          const exclusive = (data.items || []).filter((i: any) => i.coin_price > 0);
+          setContent(exclusive.map((item: any) => ({
+            id: item.id,
+            title: item.title,
+            description: item.description,
+            media_type: item.media_type,
+            preview_url: item.preview_url,
+            coin_price: item.coin_price,
+            isUnlocked: item.isUnlocked,
+            mediaUrl: item.mediaUrl,
+          })));
+        } else {
+          // Fallback to legacy API
+          const legacyResponse = await fetch(`/api/content?modelId=${modelId}`);
+          const legacyData = await legacyResponse.json();
+          if (legacyResponse.ok) {
+            setContent(legacyData.content || []);
+          }
         }
       } catch (error) {
         console.error("Error fetching content:", error);

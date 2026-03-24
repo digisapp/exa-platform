@@ -94,13 +94,24 @@ export function PremiumContentCard({
     setLoading(true);
 
     try {
-      const response = await fetch("/api/content/unlock", {
+      // Try new content system purchase first
+      let response = await fetch("/api/content-hub/public/purchase", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contentId: content.id }),
+        body: JSON.stringify({ itemId: content.id }),
       });
 
-      const data = await response.json();
+      let data = await response.json();
+
+      // Fall back to legacy unlock if the new system returns 404 (item not in content_items)
+      if (response.status === 404 || (data.error && data.error.includes("not found"))) {
+        response = await fetch("/api/content/unlock", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contentId: content.id }),
+        });
+        data = await response.json();
+      }
 
       if (!response.ok) {
         if (response.status === 402) {
@@ -112,16 +123,16 @@ export function PremiumContentCard({
       }
 
       setIsUnlocked(true);
-      setMediaUrl(data.mediaUrl);
+      setMediaUrl(data.mediaUrl || data.media_url);
       setShowPreview(false);
       setShowFull(true);
 
-      if (!data.alreadyUnlocked) {
-        toast.success(`Unlocked for ${data.amountPaid} coins!`);
+      if (!data.alreadyUnlocked && !data.already_unlocked) {
+        toast.success(`Unlocked for ${data.amountPaid || data.amount_paid} coins!`);
       }
 
       if (onUnlock) {
-        onUnlock(content.id, data.newBalance);
+        onUnlock(content.id, data.newBalance || data.new_balance);
       }
     } catch {
       toast.error("Failed to unlock content");

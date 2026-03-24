@@ -186,29 +186,45 @@ export default async function ModelProfilePage({ params }: Props) {
     })).filter(eb => eb.badges.events !== null);
   }
 
-  // Get portfolio photos - filter out hidden ones (is_visible = false)
-  const { data: allPhotos } = await supabase
-    .from("media_assets")
-    .select("*")
+  // Get portfolio photos from content_items
+  const { data: allPhotos } = await (supabase as any)
+    .from("content_items")
+    .select("id, title, media_url, media_type, status, tags, set_id, created_at")
     .eq("model_id", model.id)
-    .eq("asset_type", "portfolio")
+    .eq("status", "portfolio")
+    .eq("media_type", "image")
+    .or("publish_at.is.null,publish_at.lte." + new Date().toISOString())
+    .order("position", { ascending: true })
     .order("created_at", { ascending: false })
-    .limit(50) as { data: any[] | null };
+    .limit(50);
 
-  // Filter out hidden photos (is_visible column added via migration)
-  const photos = (allPhotos || []).filter((p: any) => p.is_visible !== false);
+  // Map to expected shape for ProfileContentTabs
+  const photos = (allPhotos || []).map((p: any) => ({
+    ...p,
+    photo_url: p.media_url,
+    url: p.media_url,
+    asset_type: "portfolio",
+    is_visible: true,
+  }));
 
-  // Get videos - filter out hidden ones
-  const { data: allVideos } = await supabase
-    .from("media_assets")
-    .select("*")
+  // Get videos from content_items
+  const { data: allVideos } = await (supabase as any)
+    .from("content_items")
+    .select("id, title, media_url, media_type, status, tags, set_id, created_at")
     .eq("model_id", model.id)
-    .eq("asset_type", "video")
+    .eq("status", "portfolio")
+    .eq("media_type", "video")
+    .or("publish_at.is.null,publish_at.lte." + new Date().toISOString())
+    .order("position", { ascending: true })
     .order("created_at", { ascending: false })
-    .limit(24) as { data: any[] | null };
+    .limit(24);
 
-  // Filter out hidden videos
-  const videos = (allVideos || []).filter((v: any) => v.is_visible !== false);
+  const videos = (allVideos || []).map((v: any) => ({
+    ...v,
+    url: v.media_url,
+    asset_type: "video",
+    is_visible: true,
+  }));
 
   // Get model's active auctions (for live bids banner on profile)
   const { data: liveAuctions } = await (supabase as any)
@@ -220,13 +236,24 @@ export default async function ModelProfilePage({ params }: Props) {
     .order("ends_at", { ascending: true })
     .limit(6);
 
-  // Get PPV content count (only paid content)
-  const { count: premiumContentCount } = await supabase
-    .from("premium_content")
+  // Get PPV content count (only paid exclusive content)
+  const { count: premiumContentCount } = await (supabase as any)
+    .from("content_items")
     .select("*", { count: "exact", head: true })
     .eq("model_id", model.id)
-    .eq("is_active", true)
-    .gt("coin_price", 0);
+    .eq("status", "exclusive")
+    .gt("coin_price", 0)
+    .or("publish_at.is.null,publish_at.lte." + new Date().toISOString());
+
+  // Get content sets
+  const { data: contentSets } = await (supabase as any)
+    .from("content_sets")
+    .select("id, title, description, cover_item_id, coin_price, status")
+    .eq("model_id", model.id)
+    .eq("status", "live")
+    .order("position", { ascending: true });
+
+  const setsCount = contentSets?.length || 0;
 
   // Get current user's actor info
   let coinBalance = 0;
@@ -607,6 +634,8 @@ export default async function ModelProfilePage({ params }: Props) {
             modelId={model.id}
             coinBalance={coinBalance}
             isOwner={isOwner}
+            contentSets={contentSets || []}
+            setsCount={setsCount}
           />
 
           {/* View Rates & Book Button */}

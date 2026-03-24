@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { Camera, Video, Lock, X, Play, ImageOff, ChevronLeft, ChevronRight } from "lucide-react";
+import { Camera, Video, Lock, X, Play, ImageOff, ChevronLeft, ChevronRight, FolderOpen, Coins } from "lucide-react";
 import { PremiumContentGrid } from "@/components/content/PremiumContentGrid";
 
 interface MediaAsset {
@@ -124,6 +124,15 @@ const INITIAL_VIDEOS = 6;
 const LOAD_MORE_PHOTOS = 12;
 const LOAD_MORE_VIDEOS = 6;
 
+interface ContentSetPublic {
+  id: string;
+  title: string;
+  description: string | null;
+  cover_item_id: string | null;
+  coin_price: number | null;
+  status: string;
+}
+
 interface ProfileContentTabsProps {
   photos: MediaAsset[];
   videos: MediaAsset[];
@@ -131,6 +140,8 @@ interface ProfileContentTabsProps {
   modelId: string;
   coinBalance: number;
   isOwner: boolean;
+  contentSets?: ContentSetPublic[];
+  setsCount?: number;
 }
 
 export function ProfileContentTabs({
@@ -140,8 +151,10 @@ export function ProfileContentTabs({
   modelId,
   coinBalance,
   isOwner,
+  contentSets = [],
+  setsCount = 0,
 }: ProfileContentTabsProps) {
-  const [activeTab, setActiveTab] = useState<"photos" | "videos" | "ppv">("photos");
+  const [activeTab, setActiveTab] = useState<"photos" | "videos" | "ppv" | "sets">("photos");
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<MediaAsset | null>(null);
   const [selectedType, setSelectedType] = useState<"photo" | "video">("photo");
@@ -339,9 +352,26 @@ export function ProfileContentTabs({
             )}
           >
             <Lock className="h-4 w-4" />
-            PPV
+            Exclusive
             <span className="text-xs bg-pink-500/20 px-1.5 py-0.5 rounded-full">
               {premiumContentCount}
+            </span>
+          </button>
+        )}
+        {setsCount > 0 && (
+          <button
+            onClick={() => setActiveTab("sets")}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all",
+              activeTab === "sets"
+                ? "bg-white/10 text-white"
+                : "text-white/50 hover:text-white/80"
+            )}
+          >
+            <FolderOpen className="h-4 w-4" />
+            Sets
+            <span className="text-xs bg-white/20 px-1.5 py-0.5 rounded-full">
+              {setsCount}
             </span>
           </button>
         )}
@@ -483,6 +513,41 @@ export function ProfileContentTabs({
             initialCoinBalance={coinBalance}
             isOwner={isOwner}
           />
+        </div>
+      )}
+
+      {activeTab === "sets" && contentSets.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {contentSets.map((set) => (
+            <button
+              key={set.id}
+              onClick={() => {
+                setActiveTab("ppv");
+              }}
+              className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-white/10 to-white/5 border border-white/10 hover:border-white/20 transition-all text-left"
+            >
+              <div className="p-5">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3 className="text-white font-semibold text-lg truncate">{set.title}</h3>
+                    {set.description && (
+                      <p className="text-white/50 text-sm mt-1 line-clamp-2">{set.description}</p>
+                    )}
+                  </div>
+                  {set.coin_price != null && set.coin_price > 0 && (
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-pink-500/20 to-violet-500/20 border border-pink-500/30 shrink-0">
+                      <Coins className="h-3.5 w-3.5 text-amber-400" />
+                      <span className="text-pink-300 font-bold text-sm">{set.coin_price}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="mt-3 flex items-center gap-2 text-white/40 text-xs">
+                  <FolderOpen className="h-3.5 w-3.5" />
+                  <span>View exclusive content</span>
+                </div>
+              </div>
+            </button>
+          ))}
         </div>
       )}
 
