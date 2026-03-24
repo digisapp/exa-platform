@@ -120,7 +120,7 @@ export function useContentData() {
       const res = await fetch(`/api/content-hub/items${qs}`);
       if (!res.ok) throw new Error('Failed to fetch items');
       const data = await res.json();
-      setItems(data);
+      setItems(data.items || []);
     } catch {
       toast.error('Failed to load content items');
     }
@@ -131,7 +131,7 @@ export function useContentData() {
       const res = await fetch('/api/content-hub/sets');
       if (!res.ok) throw new Error('Failed to fetch sets');
       const data = await res.json();
-      setSets(data);
+      setSets(data.sets || []);
     } catch {
       toast.error('Failed to load content sets');
     }
