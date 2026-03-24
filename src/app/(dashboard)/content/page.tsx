@@ -205,7 +205,7 @@ export default function ContentPage() {
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">My Content</h1>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">My Portfolio</h1>
           <div className="flex items-center gap-3">
             {modelUsername && (
               <Link
@@ -324,7 +324,7 @@ export default function ContentPage() {
         >
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete Content</AlertDialogTitle>
+              <AlertDialogTitle>Delete Item</AlertDialogTitle>
               <AlertDialogDescription>
                 Are you sure you want to delete &quot;{deleteConfirmItem.title || 'Untitled'}&quot;?
                 This action cannot be undone.
@@ -853,7 +853,7 @@ function ItemEditDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Edit Content</DialogTitle>
+          <DialogTitle>Edit Item</DialogTitle>
           <DialogDescription>Update the details of this content item.</DialogDescription>
         </DialogHeader>
 
@@ -1526,7 +1526,7 @@ function StatsTab({
         <CardContent>
           {stats.top_items.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No unlock data yet. Content with PPV pricing will appear here.
+              No unlock data yet. Items with PPV pricing will appear here.
             </p>
           ) : (
             <div className="space-y-3">
@@ -1578,7 +1578,7 @@ function StatsTab({
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <BarChart3 className="h-4 w-4" />
-            Content Breakdown
+            Portfolio Breakdown
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -1826,7 +1826,7 @@ function UploadDialog({
     <Dialog open={open} onOpenChange={uploading ? undefined : onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Upload Content</DialogTitle>
+          <DialogTitle>Upload to Portfolio</DialogTitle>
           <DialogDescription>Add photos or videos to your content library.</DialogDescription>
         </DialogHeader>
 

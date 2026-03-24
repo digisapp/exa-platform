@@ -3,12 +3,12 @@ export const en = {
   nav: {
     home: "Home",
     chats: "Chats",
-    content: "Content",
+    content: "Portfolio",
     explore: "Explore",
     favorites: "Favorites",
     campaigns: "Campaigns",
     myBids: "My Bids",
-    myContent: "My Content",
+    myContent: "My Portfolio",
     wallet: "Wallet",
     settings: "Settings",
     bookings: "Bookings",
@@ -108,12 +108,12 @@ export const en = {
 
   // Content
   content: {
-    title: "My Content",
+    title: "My Portfolio",
     upload: "Upload",
-    uploadContent: "Upload Content",
+    uploadContent: "Upload to Portfolio",
     portfolio: "Portfolio",
     ppv: "PPV",
-    allContent: "All Content",
+    allContent: "All Items",
     photos: "Photos",
     videos: "Videos",
     noContent: "No content yet",
