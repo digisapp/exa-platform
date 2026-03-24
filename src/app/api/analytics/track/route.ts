@@ -58,14 +58,14 @@ export async function POST(request: NextRequest) {
     const trackSchema = z.object({
       path: z.string().min(1),
       visitorId: z.string().min(1),
-      sessionId: z.string().optional(),
-      referrer: z.string().optional(),
-      screenWidth: z.number().optional(),
-      modelId: z.string().optional(),
-      modelUsername: z.string().optional(),
-      utmSource: z.string().optional(),
-      utmMedium: z.string().optional(),
-      utmCampaign: z.string().optional(),
+      sessionId: z.string().nullish(),
+      referrer: z.string().nullish(),
+      screenWidth: z.number().nullish(),
+      modelId: z.string().nullish(),
+      modelUsername: z.string().nullish(),
+      utmSource: z.string().nullish(),
+      utmMedium: z.string().nullish(),
+      utmCampaign: z.string().nullish(),
     });
     const parsed = trackSchema.safeParse(await request.json());
     if (!parsed.success) {
