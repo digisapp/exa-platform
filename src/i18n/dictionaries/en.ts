@@ -112,7 +112,7 @@ export const en = {
     upload: "Upload",
     uploadContent: "Upload Content",
     portfolio: "Public",
-    ppv: "Paid",
+    ppv: "PPV",
     allContent: "All Content",
     photos: "Photos",
     videos: "Videos",

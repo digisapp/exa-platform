@@ -114,7 +114,7 @@ export const es: Dictionary = {
     upload: "Subir",
     uploadContent: "Subir Contenido",
     portfolio: "Público",
-    ppv: "De pago",
+    ppv: "PPV",
     allContent: "Todo el Contenido",
     photos: "Fotos",
     videos: "Videos",

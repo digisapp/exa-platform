@@ -438,7 +438,7 @@ function AllTab({
             <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="private">Private</SelectItem>
             <SelectItem value="portfolio">Public</SelectItem>
-            <SelectItem value="exclusive">Paid</SelectItem>
+            <SelectItem value="exclusive">PPV</SelectItem>
           </SelectContent>
         </Select>
 
@@ -512,7 +512,7 @@ function AllTab({
                 Public
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => bulkAction('set_status', { status: 'exclusive' })}>
-                Paid
+                PPV
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -871,7 +871,7 @@ function ItemEditDialog({
               <SelectContent>
                 <SelectItem value="private">Private</SelectItem>
                 <SelectItem value="portfolio">Public</SelectItem>
-                <SelectItem value="exclusive">Paid</SelectItem>
+                <SelectItem value="exclusive">PPV</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -1390,7 +1390,7 @@ function StatsTab({
         <CardContent>
           {stats.top_items.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No unlock data yet. Paid items will appear here.
+              No unlock data yet. PPV items will appear here.
             </p>
           ) : (
             <div className="space-y-3">
@@ -1461,7 +1461,7 @@ function StatsTab({
             <div className="flex items-center justify-between text-sm">
               <span className="flex items-center gap-2">
                 <div className="h-3 w-3 rounded-full bg-pink-500" />
-                Paid
+                PPV
               </span>
               <span>
                 {stats.exclusive_count} ({exclusivePct}%)
@@ -1827,7 +1827,7 @@ function UploadDialog({
               <SelectContent>
                 <SelectItem value="private">Private</SelectItem>
                 <SelectItem value="portfolio">Public</SelectItem>
-                <SelectItem value="exclusive">Paid</SelectItem>
+                <SelectItem value="exclusive">PPV</SelectItem>
               </SelectContent>
             </Select>
           </div>
