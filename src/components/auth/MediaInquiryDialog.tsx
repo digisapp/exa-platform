@@ -68,7 +68,7 @@ export function MediaInquiryDialog({ children }: MediaInquiryDialogProps) {
             Media Inquiry
           </DialogTitle>
           <p className="text-sm text-muted-foreground text-center">
-            Press, photographers, bloggers — let us know how you&apos;d like to collaborate.
+            Press, photographers, videographers
           </p>
         </DialogHeader>
 
