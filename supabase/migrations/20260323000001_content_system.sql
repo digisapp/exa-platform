@@ -410,7 +410,7 @@ SELECT
   ma.title,
   COALESCE(ma.storage_path, ma.url, ma.photo_url),
   'image',
-  CASE WHEN ma.is_visible = false THEN 'private' ELSE 'portfolio' END,
+  'portfolio',
   ma.created_at
 FROM public.media_assets ma
 WHERE ma.model_id IS NOT NULL
@@ -424,7 +424,7 @@ SELECT
   ma.title,
   COALESCE(ma.storage_path, ma.url),
   'video',
-  CASE WHEN ma.is_visible = false THEN 'private' ELSE 'portfolio' END,
+  'portfolio',
   ma.created_at
 FROM public.media_assets ma
 WHERE ma.model_id IS NOT NULL
