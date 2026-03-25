@@ -1,6 +1,8 @@
 export const revalidate = 60;
 
+import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
+import Image from "next/image";
 import { Navbar } from "@/components/layout/navbar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -29,6 +31,8 @@ import {
   Dumbbell,
   Palette,
   Package,
+  Sparkles,
+  Target,
 } from "lucide-react";
 import { Footer } from "@/components/layout/footer";
 import type { Metadata } from "next";
@@ -725,7 +729,49 @@ function SponsorContactButton({ packageName, price }: { packageName: string; pri
   );
 }
 
-export default function SponsorMswPage() {
+export default async function SponsorMswPage() {
+  // Fetch confirmed MSW models
+  let eventModels: any[] = [];
+  try {
+    const supabase = await createClient();
+
+    const { data: event } = await supabase
+      .from("events")
+      .select("id")
+      .eq("slug", "miami-swim-week-2026")
+      .single() as { data: { id: string } | null };
+
+    if (event) {
+      const { data: eventBadge } = await supabase
+        .from("badges")
+        .select("id")
+        .eq("event_id", event.id)
+        .eq("badge_type", "event")
+        .eq("is_active", true)
+        .single() as { data: { id: string } | null };
+
+      if (eventBadge) {
+        const { data: badgeHolders } = await supabase
+          .from("model_badges")
+          .select("model_id")
+          .eq("badge_id", eventBadge.id) as { data: { model_id: string }[] | null };
+
+        const modelIds = badgeHolders?.map((b) => b.model_id) || [];
+
+        if (modelIds.length > 0) {
+          const { data: fullModels } = await supabase
+            .from("models")
+            .select("id, username, first_name, last_name, profile_photo_url")
+            .in("id", modelIds)
+            .not("profile_photo_url", "is", null);
+          eventModels = fullModels || [];
+        }
+      }
+    }
+  } catch {
+    // silently fail — page renders fine without models
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -1147,6 +1193,95 @@ export default function SponsorMswPage() {
             ))}
           </div>
         </div>
+
+        {/* Custom Influencer Campaign */}
+        <div className="mb-20">
+          <div className="relative overflow-hidden rounded-3xl border border-cyan-500/20 bg-gradient-to-br from-cyan-500/5 via-blue-500/5 to-violet-500/5 p-8 md:p-12">
+            <div className="absolute top-6 right-6 text-7xl opacity-10 select-none pointer-events-none">🎯</div>
+
+            <Badge className="mb-5 bg-cyan-500/10 text-cyan-400 border-cyan-500/20 px-4 py-1">
+              Flexible
+            </Badge>
+            <h2 className="text-2xl md:text-3xl font-bold mb-4 max-w-xl">
+              Build a Custom Influencer Campaign
+            </h2>
+            <p className="text-muted-foreground text-lg leading-relaxed mb-8 max-w-2xl">
+              Don&apos;t see a package that fits? Work directly with our team to build a custom campaign using our confirmed Miami Swim Week models. Choose your deliverables, pick your models, and set your budget.
+            </p>
+
+            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+              {[
+                { icon: <Camera className="h-5 w-5 text-cyan-400" />, title: "Content Creation", desc: "Reels, TikToks, Stories, and photo content from professional models — shot during Swim Week" },
+                { icon: <Target className="h-5 w-5 text-cyan-400" />, title: "Affiliate & Swipe-Up Links", desc: "Tracked affiliate campaigns with swipe-up links — measure real ROI from model-driven traffic" },
+                { icon: <Megaphone className="h-5 w-5 text-cyan-400" />, title: "Product Reviews & Unboxing", desc: "Authentic product reviews and unboxing content from models your target audience follows" },
+                { icon: <Zap className="h-5 w-5 text-cyan-400" />, title: "Story Takeovers", desc: "Models take over your brand&apos;s Instagram Stories live from Miami Swim Week — real-time engagement" },
+                { icon: <Users className="h-5 w-5 text-cyan-400" />, title: "Pick Your Models", desc: "Hand-select models from our confirmed roster based on follower count, aesthetic, niche, or audience demo" },
+                { icon: <ShoppingBag className="h-5 w-5 text-cyan-400" />, title: "Product Seeding", desc: "Get your product into the hands of specific models — they wear it, use it, and post about it organically" },
+              ].map((item) => (
+                <div key={item.title} className="p-5 rounded-2xl bg-black/20 border border-white/5">
+                  <div className="mb-3">{item.icon}</div>
+                  <p className="font-semibold text-sm mb-1">{item.title}</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+
+            <a
+              href="mailto:nathan@examodels.com?subject=Custom%20Influencer%20Campaign%20—%20Miami%20Swim%20Week%202026&body=Hi%20Nathan%2C%0A%0AI%27m%20interested%20in%20building%20a%20custom%20influencer%20campaign%20for%20Miami%20Swim%20Week%202026.%0A%0ABrand%3A%20%0AWebsite%3A%20%0AGoal%3A%20%0ABudget%20range%3A%20%0ADeliverables%20I%27m%20interested%20in%3A%20%0A%0ALooking%20forward%20to%20connecting."
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold px-8 py-4 rounded-xl transition-all hover:shadow-lg hover:shadow-cyan-500/25 hover:scale-[1.02]"
+            >
+              <Mail className="h-5 w-5" />
+              Build Your Campaign
+              <ArrowRight className="h-4 w-4" />
+            </a>
+          </div>
+        </div>
+
+        {/* Confirmed Model Roster */}
+        {eventModels.length > 0 && (
+          <div className="mb-20">
+            <div className="text-center mb-10">
+              <Badge className="mb-4 bg-amber-500/10 text-amber-400 border-amber-500/20 px-4 py-1">
+                Confirmed Talent
+              </Badge>
+              <h2 className="text-2xl md:text-3xl font-bold mb-3">
+                Models Walking Miami Swim Week
+              </h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                {eventModels.length} confirmed models and counting — these are the creators who will be wearing your product, posting your brand, and walking your runway. This is who your sponsorship puts you in front of.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              {eventModels.map((model: any) => (
+                <Link
+                  key={model.id}
+                  href={`/${model.username}`}
+                  target="_blank"
+                  className="group block"
+                >
+                  <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-muted">
+                    <Image
+                      src={model.profile_photo_url}
+                      alt={model.first_name || model.username}
+                      fill
+                      sizes="(max-width: 768px) 50vw, 20vw"
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                    <div className="absolute bottom-0 left-0 right-0 p-3">
+                      <p className="text-white text-xs font-semibold truncate">
+                        {model.first_name
+                          ? `${model.first_name} ${model.last_name || ""}`.trim()
+                          : model.username}
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Who Should Sponsor */}
         <div className="mb-20">
