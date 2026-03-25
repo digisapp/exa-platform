@@ -614,7 +614,7 @@ const STATS = [
   { value: "600+", label: "Models at Casting Call" },
   { value: "125+", label: "Runway Models" },
   { value: "100+", label: "Models Staying On-Site" },
-  { value: "Millions", label: "Combined Social Reach" },
+  { value: "50M+", label: "Combined Social Reach" },
   { value: "7 Days", label: "May 25–31, 2026" },
 ];
 
