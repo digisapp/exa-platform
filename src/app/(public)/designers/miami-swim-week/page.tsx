@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   },
 };
 
-const VENUE = "The National Hotel Miami Beach";
+const VENUE = "The Alexander Hotel, 5225 Collins Ave, Miami Beach";
 
 const PACKAGES = [
   {
@@ -247,7 +247,7 @@ export default async function MswBrandPage() {
           <div className="flex flex-wrap gap-3 text-white/90">
             <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
               <MapPin className="h-4 w-4 text-pink-400" />
-              <span className="font-medium text-sm">The National Hotel Miami Beach</span>
+              <span className="font-medium text-sm">The Alexander Hotel, Miami Beach</span>
             </div>
             <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
               <Calendar className="h-4 w-4 text-cyan-400" />
@@ -401,7 +401,7 @@ export default async function MswBrandPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-sm">Private Showroom</p>
-                <p className="text-xs text-muted-foreground mt-0.5">The National Hotel Miami Beach · Ballroom · 2 EXA models included · +$350/additional model</p>
+                <p className="text-xs text-muted-foreground mt-0.5">The Alexander Hotel, Miami Beach · Ballroom · 2 EXA models included · +$350/additional model</p>
               </div>
               <div className="flex-shrink-0 w-full sm:w-56">
                 <SimpleCheckoutButton packageId="showroom-fullday" price={1600} label="Book Now" colorClass="from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 shadow-amber-500/20 hover:shadow-amber-500/30" />

@@ -56,10 +56,10 @@ const PACKAGES = {
     description: "4-hour private ballroom showroom at our Miami Swim Week hotel venue. Your brand, your space — invite buyers, press, and VIPs for an exclusive presentation.",
   },
   "showroom-fullday": {
-    name: "Private Showroom — The National Hotel Miami Beach",
+    name: "Private Showroom — The Alexander Hotel, Miami Beach",
     fullPrice: 160000, // $1,600.00 in cents
     installmentPrice: 160000, // full only
-    description: "Private ballroom showroom at The National Hotel Miami Beach during Swim Week. Your brand, your space — invite buyers, press, and VIPs for an exclusive presentation.",
+    description: "Private ballroom showroom at The Alexander Hotel, Miami Beach during Swim Week. Your brand, your space — invite buyers, press, and VIPs for an exclusive presentation.",
   },
   "swim-shop": {
     name: "EXA Swim Shop — May 26–31, 2026",

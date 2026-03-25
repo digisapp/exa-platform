@@ -28,7 +28,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Sponsor Miami Swim Week 2026 | EXA Models",
   description:
-    "Partner with EXA Models at Miami Swim Week 2026 (May 26–31, The National Hotel Miami Beach). Sponsorship packages for brands — runway visibility, activations, gift bags, and more.",
+    "Partner with EXA Models at Miami Swim Week 2026 (May 26–31, The Alexander Hotel, Miami Beach). Sponsorship packages for brands — runway visibility, activations, gift bags, and more.",
   openGraph: {
     title: "Sponsor Miami Swim Week 2026 | EXA Models",
     description:
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   },
 };
 
-const VENUE = "The National Hotel Miami Beach";
+const VENUE = "The Alexander Hotel, 5225 Collins Ave, Miami Beach";
 
 const PACKAGES = [
   {
@@ -54,7 +54,7 @@ const PACKAGES = [
       "Top billing — \u201cPresented by [Brand]\u201d across all event materials",
       "Logo on all 6 runway backdrops (every show)",
       "2-minute branded video played at Opening Night",
-      "Full-week brand activation booth at The National Hotel",
+      "Full-week brand activation booth at The Alexander Hotel",
       "10 VIP passes to all shows",
       "Dedicated EXA model brand ambassador for the week",
       "Product placement in 200+ model & VIP gift bags",
@@ -78,7 +78,7 @@ const PACKAGES = [
     icon: <Megaphone className="h-5 w-5 text-pink-400" />,
     features: [
       "Logo on runway backdrop — all 6 shows",
-      "Brand activation booth at The National Hotel",
+      "Brand activation booth at The Alexander Hotel",
       "6 VIP passes per show",
       "1 show-opening brand moment (logo card + PA mention)",
       "EXA model brand ambassador (3 days)",
@@ -172,7 +172,7 @@ const PACKAGES = [
   {
     id: "brand-activation",
     name: "Brand Activation Booth",
-    tagline: "Pop-up experience at The National Hotel",
+    tagline: "Pop-up experience at The Alexander Hotel",
     price: 2500,
     badge: null,
     badgeGradient: "",
@@ -181,7 +181,7 @@ const PACKAGES = [
     color: "from-teal-500/10 to-cyan-500/5",
     icon: <ShoppingBag className="h-5 w-5 text-teal-400" />,
     features: [
-      "Branded pop-up space at The National Hotel during Swim Week",
+      "Branded pop-up space at The Alexander Hotel during Swim Week",
       "Reach attendees, press, buyers, and models in person",
       "Product sampling, demos, or sales — your call",
       "2 VIP passes",
@@ -235,7 +235,7 @@ const STATS = [
   { value: "6", label: "Runway Shows" },
   { value: "90+", label: "Professional Models" },
   { value: "May 26–31", label: "Swim Week 2026" },
-  { value: "Miami Beach", label: "The National Hotel" },
+  { value: "Miami Beach", label: "The Alexander Hotel" },
 ];
 
 const FAQS = [
