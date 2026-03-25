@@ -653,65 +653,6 @@ const FAQS = [
   },
 ];
 
-const BUNDLES = [
-  {
-    id: "creator-takeover",
-    name: "Creator Takeover Package",
-    price: 12500,
-    originalValue: 22000,
-    badge: "Best Value",
-    badgeGradient: "from-emerald-500 to-green-500",
-    borderColor: "border-emerald-500/30",
-    color: "from-emerald-500/20 to-green-500/10",
-    icon: <Camera className="h-5 w-5 text-emerald-400" />,
-    tagline: "Maximum content output — pool, studio, dinner, and gift bags combined",
-    includes: [
-      "Pool Deck Takeover ($8,000)",
-      "Branded Content Studio ($4,500)",
-      "Private Creator Dinner ($7,500)",
-      "Gift Bag Sponsor ($2,000)",
-    ],
-    contentGuarantee: "100+ pieces of creator content, 500K–2M+ projected views",
-  },
-  {
-    id: "casting-domination",
-    name: "Casting Domination Package",
-    price: 9500,
-    originalValue: 21000,
-    badge: "Own The Day",
-    badgeGradient: "from-orange-500 to-red-500",
-    borderColor: "border-orange-500/30",
-    color: "from-orange-500/20 to-red-500/10",
-    icon: <Trophy className="h-5 w-5 text-orange-400" />,
-    tagline: "Own the entire casting day ecosystem — every model sees, touches, and posts your brand",
-    includes: [
-      "Casting Call Presenting Sponsor ($10,000)",
-      "Casting Day Product Sampling ($5,000)",
-      "Casting Day Photo Wall ($4,000)",
-      "Casting Day Hydration Sponsor ($3,500)",
-    ],
-    contentGuarantee: "200+ tagged posts from 600+ models in a single day",
-  },
-  {
-    id: "hotel-experience",
-    name: "Hotel Experience Package",
-    price: 8500,
-    originalValue: 16000,
-    badge: "Full Guest Journey",
-    badgeGradient: "from-rose-500 to-pink-500",
-    borderColor: "border-rose-500/30",
-    color: "from-rose-500/20 to-pink-500/10",
-    icon: <Hotel className="h-5 w-5 text-rose-400" />,
-    tagline: "Own the full model hotel experience — check-in to checkout, your brand is everywhere",
-    includes: [
-      "Model Welcome Gift Bag ($5,000)",
-      "Nightly Turn-Down Gift ($3,500)",
-      "Mini-Fridge Stocking ($4,000)",
-      "Hotel Branding & Signage ($6,000)",
-    ],
-    contentGuarantee: "75+ organic posts from 100+ models sharing your brand throughout their stay",
-  },
-];
 
 function SponsorContactButton({ packageName, price }: { packageName: string; price: number }) {
   const subject = encodeURIComponent(`Miami Swim Week 2026 — ${packageName} ($${price.toLocaleString()})`);
@@ -1111,72 +1052,6 @@ export default async function SponsorMswPage() {
                   </div>
 
                   <SponsorContactButton packageName={pkg.name} price={pkg.price} />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-
-        {/* Bundle Packages */}
-        <div className="mb-20">
-          <div className="text-center mb-10">
-            <Badge className="mb-4 bg-emerald-500/10 text-emerald-400 border-emerald-500/20 px-4 py-1">
-              Save 30–55% vs. Individual Packages
-            </Badge>
-            <h2 className="text-3xl font-bold mb-3">Bundle Packages</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Pre-built combinations designed for maximum impact. Each bundle saves you thousands vs. buying individually — and guarantees content output.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {BUNDLES.map((bundle) => (
-              <Card
-                key={bundle.id}
-                className={`relative overflow-hidden border ${bundle.borderColor} shadow-xl`}
-              >
-                <div className={`absolute inset-0 bg-gradient-to-br ${bundle.color} opacity-30 pointer-events-none`} />
-
-                <div className="absolute top-5 right-5 z-10">
-                  <span
-                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r ${bundle.badgeGradient} text-white shadow-md`}
-                  >
-                    {bundle.badge}
-                  </span>
-                </div>
-
-                <CardContent className="relative p-6 md:p-8">
-                  <div className="flex items-center gap-2 mb-1">
-                    {bundle.icon}
-                    <p className="text-xs text-muted-foreground uppercase tracking-widest font-medium">
-                      Bundle Package
-                    </p>
-                  </div>
-                  <h3 className="text-xl font-bold mb-1">{bundle.name}</h3>
-                  <p className="text-sm text-muted-foreground italic mb-4">{bundle.tagline}</p>
-
-                  <div className="flex items-baseline gap-2 mb-4">
-                    <span className="text-2xl font-bold text-white">${bundle.price.toLocaleString()}</span>
-                    <span className="text-sm text-muted-foreground line-through">${bundle.originalValue.toLocaleString()}</span>
-                    <span className="text-xs text-emerald-400 font-semibold">Save ${(bundle.originalValue - bundle.price).toLocaleString()}</span>
-                  </div>
-
-                  <div className="space-y-2 mb-4">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Includes:</p>
-                    {bundle.includes.map((item) => (
-                      <div key={item} className="flex items-start gap-2 text-sm">
-                        <Check className="h-3.5 w-3.5 text-emerald-400 flex-shrink-0 mt-0.5" />
-                        <span className="text-muted-foreground leading-snug">{item}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 mb-6">
-                    <p className="text-xs font-semibold text-emerald-400">Guaranteed Content Output</p>
-                    <p className="text-sm text-muted-foreground mt-0.5">{bundle.contentGuarantee}</p>
-                  </div>
-
-                  <SponsorContactButton packageName={bundle.name} price={bundle.price} />
                 </CardContent>
               </Card>
             ))}
