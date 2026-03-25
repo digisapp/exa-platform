@@ -104,11 +104,10 @@ export default async function SwimCrownPage() {
 
       <main>
         {/* ─── Hero ─── */}
-        <section className="relative overflow-hidden py-24 sm:py-32 lg:py-40">
+        <section className="relative overflow-hidden pt-16 sm:pt-20 pb-8">
           {/* Ambient glow */}
           <div className="pointer-events-none absolute inset-0">
             <div className="absolute left-1/2 top-0 -translate-x-1/2 h-[600px] w-[900px] rounded-full bg-gradient-to-br from-amber-500/20 via-yellow-500/10 to-transparent blur-3xl" />
-            <div className="absolute right-0 bottom-0 h-[400px] w-[400px] rounded-full bg-gradient-to-tl from-pink-500/15 via-violet-500/10 to-transparent blur-3xl" />
           </div>
 
           <div className="container relative mx-auto px-4 text-center">
@@ -127,44 +126,13 @@ export default async function SwimCrownPage() {
                 CROWN
               </span>
             </h1>
-
-            <p className="mx-auto mt-6 max-w-2xl text-lg sm:text-xl text-muted-foreground leading-relaxed">
-              The Search for the World&apos;s #1 Swim Model
-            </p>
-
-            <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground/70">
-              Compete for the crown, walk the runway at Miami Swim Week, and
-              prove you&apos;re the world&apos;s top swimwear model on the global stage.
-            </p>
-
-            <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link href="/swimcrown/enter">
-                <Button
-                  size="lg"
-                  className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-bold px-8 py-6 text-lg rounded-full shadow-lg shadow-amber-500/25"
-                >
-                  <Crown className="mr-2 h-5 w-5" />
-                  Enter the Competition
-                </Button>
-              </Link>
-              <Link href="/swimcrown/contestants">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="border-amber-500/30 text-amber-300 hover:bg-amber-500/10 px-8 py-6 text-lg rounded-full"
-                >
-                  View Contestants
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-            </div>
           </div>
         </section>
 
-        {/* ─── Runway Video ─── */}
-        <section className="relative">
-          <div className="max-w-5xl mx-auto px-4">
-            <div className="relative aspect-video rounded-2xl overflow-hidden border border-amber-500/20 shadow-2xl shadow-amber-500/10">
+        {/* ─── Runway Video with Overlay ─── */}
+        <section className="relative pb-8">
+          <div className="max-w-sm sm:max-w-md mx-auto px-4">
+            <div className="relative aspect-[9/16] rounded-2xl overflow-hidden border border-amber-500/20 shadow-2xl shadow-amber-500/10">
               <video
                 autoPlay
                 muted
@@ -173,6 +141,40 @@ export default async function SwimCrownPage() {
                 className="w-full h-full object-cover"
                 src="https://nanftzomzluetblqgrvo.supabase.co/storage/v1/object/public/portfolio/swimcrown/jb-paris-crown.mp4"
               />
+              {/* Dark gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+
+              {/* Text + CTA overlay */}
+              <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8 text-center">
+                <p className="text-white text-lg sm:text-xl font-bold leading-snug mb-2">
+                  The Search for the World&apos;s #1 Swim Model
+                </p>
+                <p className="text-white/70 text-sm leading-relaxed mb-6">
+                  Compete for the crown, walk the runway at Miami Swim Week, and
+                  prove you&apos;re the world&apos;s top swimwear model on the global stage.
+                </p>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <Link href="/swimcrown/enter">
+                    <Button
+                      size="lg"
+                      className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-bold px-6 py-5 text-base rounded-full shadow-lg shadow-amber-500/25"
+                    >
+                      <Crown className="mr-2 h-5 w-5" />
+                      Enter the Competition
+                    </Button>
+                  </Link>
+                  <Link href="/swimcrown/contestants">
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="border-white/30 text-white hover:bg-white/10 px-6 py-5 text-base rounded-full"
+                    >
+                      View Contestants
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Button>
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         </section>

@@ -901,7 +901,7 @@ export default function AdminWorkshopsPage() {
           <DialogHeader>
             <DialogTitle>Registrations - {selectedWorkshop?.title}</DialogTitle>
             <DialogDescription>
-              {registrations.filter(r => r.status === "completed").length} confirmed registrations
+              {new Set(registrations.filter(r => r.status === "completed").map(r => r.buyer_email?.toLowerCase())).size} confirmed registrations
             </DialogDescription>
           </DialogHeader>
 
@@ -911,7 +911,24 @@ export default function AdminWorkshopsPage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {registrations.map((reg) => (
+              {(() => {
+                // Deduplicate: if a person has a completed registration, hide their pending ones
+                const completedEmails = new Set(
+                  registrations
+                    .filter((r) => r.status === "completed")
+                    .map((r) => r.buyer_email?.toLowerCase())
+                );
+                const deduped = registrations.filter(
+                  (r) => r.status === "completed" || !completedEmails.has(r.buyer_email?.toLowerCase())
+                );
+                // Sort: completed first, then pending
+                deduped.sort((a, b) => {
+                  if (a.status === "completed" && b.status !== "completed") return -1;
+                  if (a.status !== "completed" && b.status === "completed") return 1;
+                  return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+                });
+                return deduped;
+              })().map((reg) => (
                 <Card key={reg.id}>
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
