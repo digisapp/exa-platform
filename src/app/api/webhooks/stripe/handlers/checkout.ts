@@ -72,6 +72,12 @@ export async function handleCheckoutSessionCompleted(
     return;
   }
 
+  // Check if this is a SwimCrown entry
+  if (session.metadata?.type === "swimcrown_entry") {
+    await handleSwimCrownEntry(session, supabaseAdmin);
+    return;
+  }
+
   // Check if this is a shop order
   if (session.metadata?.order_id) {
     await handleShopOrderPayment(session, supabaseAdmin);
@@ -642,6 +648,32 @@ async function handleCompCardPrintPayment(session: Stripe.Checkout.Session, supa
     }
   } catch (emailError) {
     console.error("Failed to send print order confirmation email:", emailError);
+  }
+}
+
+async function handleSwimCrownEntry(session: Stripe.Checkout.Session, supabaseAdmin: SupabaseClient) {
+  const modelId = session.metadata?.model_id;
+  const competitionId = session.metadata?.competition_id;
+  const tier = session.metadata?.tier;
+
+  if (!modelId || !competitionId || !tier) {
+    console.error("Missing SwimCrown entry metadata:", session.id);
+    return;
+  }
+
+  // Update contestant payment status to paid and auto-approve
+  const { error: updateError } = await (supabaseAdmin as any)
+    .from("swimcrown_contestants")
+    .update({
+      payment_status: "paid",
+      status: "approved",
+      stripe_session_id: session.id,
+    })
+    .eq("competition_id", competitionId)
+    .eq("model_id", modelId);
+
+  if (updateError) {
+    console.error("Error updating SwimCrown contestant:", updateError);
   }
 }
 
