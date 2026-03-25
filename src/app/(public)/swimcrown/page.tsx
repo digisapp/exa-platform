@@ -18,7 +18,14 @@ import {
   Users,
   Vote,
   Gem,
+  Globe,
+  TrendingUp,
+  HelpCircle,
+  ChevronDown,
+  Instagram,
+  UserCircle,
 } from "lucide-react";
+import { CountdownTimer } from "@/components/swimcrown/CountdownTimer";
 
 export const metadata: Metadata = {
   title: "SwimCrown - Global Swim Model Competition | EXA",
@@ -127,12 +134,12 @@ export default async function SwimCrownPage() {
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-lg sm:text-xl text-muted-foreground leading-relaxed">
-              The Global Swim Model Competition
+              The Search for the World&apos;s #1 Swim Model
             </p>
 
             <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground/70">
               Compete for the crown, walk the runway at Miami Swim Week, and
-              launch your career on the world stage.
+              prove you&apos;re the world&apos;s top swimwear model on the global stage.
             </p>
 
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -159,6 +166,19 @@ export default async function SwimCrownPage() {
           </div>
         </section>
 
+        {/* ─── Countdown ─── */}
+        <section className="py-16 sm:py-20 bg-gradient-to-b from-black/20 to-transparent">
+          <div className="container mx-auto px-4 text-center">
+            <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-amber-400/80">
+              Miami Swim Week Starts In
+            </p>
+            <CountdownTimer />
+            <p className="mt-6 text-xs text-muted-foreground/60">
+              July 10, 2026 &middot; Miami Beach, FL
+            </p>
+          </div>
+        </section>
+
         {/* ─── About ─── */}
         <section className="py-20 sm:py-24">
           <div className="container mx-auto px-4 max-w-3xl text-center">
@@ -168,11 +188,12 @@ export default async function SwimCrownPage() {
               </span>
             </h2>
             <p className="text-muted-foreground text-lg leading-relaxed">
-              SwimCrown is the premier global swimwear model competition hosted
-              on EXA. Models from around the world compete for votes, exposure,
-              and the coveted SwimCrown Queen title. Our winners are crowned live
-              at Miami Swim Week and receive cash prizes, professional shoots,
-              and career-changing opportunities.
+              SwimCrown is the premier global competition to find the{" "}
+              <span className="text-amber-300 font-semibold">world&apos;s #1 swimwear model</span>.
+              Hosted on EXA, models from every corner of the globe compete for
+              votes, exposure, and the coveted SwimCrown Queen title. Our winner
+              is crowned live at Miami Swim Week and receives cash prizes,
+              professional shoots, and career-changing opportunities.
             </p>
           </div>
         </section>
@@ -194,9 +215,12 @@ export default async function SwimCrownPage() {
                 <p className="text-muted-foreground text-base sm:text-lg leading-relaxed max-w-xl">
                   The SwimCrown competition show will be held live during{" "}
                   <span className="text-amber-300 font-semibold">Miami Swim Week</span>.
-                  All competing models will be gifted a swimsuit by our sponsored
+                  Every contestant who enters will{" "}
+                  <span className="text-white font-semibold">walk the runway</span>{" "}
+                  in the SwimCrown Show, wearing a swimsuit gifted by our sponsored
                   swimwear designer{" "}
                   <span className="text-amber-300 font-semibold">(TBA)</span>.
+                  Each model will be scored live by our expert panel of judges.
                 </p>
               </div>
             </Card>
@@ -456,6 +480,181 @@ export default async function SwimCrownPage() {
                 </Link>
               </Card>
             </div>
+          </div>
+        </section>
+
+        {/* ─── Social Proof Stats ─── */}
+        <section className="py-16 sm:py-20 bg-gradient-to-b from-transparent via-amber-950/5 to-transparent">
+          <div className="container mx-auto px-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
+              {[
+                { icon: Users, value: "500+", label: "Models Entered" },
+                { icon: Globe, value: "50+", label: "Countries" },
+                { icon: TrendingUp, value: "10K+", label: "Votes Cast" },
+                { icon: Trophy, value: "$10K+", label: "In Prizes" },
+              ].map((stat) => (
+                <div key={stat.label} className="text-center">
+                  <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/10 border border-amber-500/20">
+                    <stat.icon className="h-6 w-6 text-amber-400" />
+                  </div>
+                  <p className="text-2xl sm:text-3xl font-black text-white">{stat.value}</p>
+                  <p className="mt-1 text-xs sm:text-sm text-muted-foreground">{stat.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ─── Judges Panel ─── */}
+        <section className="py-20 sm:py-24">
+          <div className="container mx-auto px-4">
+            <h2 className="text-center text-3xl sm:text-4xl font-bold mb-4">
+              <span className="bg-gradient-to-r from-amber-300 to-yellow-400 bg-clip-text text-transparent">
+                Meet the Judges
+              </span>
+            </h2>
+            <p className="text-center text-muted-foreground mb-12 max-w-xl mx-auto">
+              Our expert panel will select the final winners
+            </p>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
+              {[
+                { name: "Coming Soon", role: "Fashion Director" },
+                { name: "Coming Soon", role: "Swimwear Designer" },
+                { name: "Coming Soon", role: "Celebrity Judge" },
+                { name: "Coming Soon", role: "Industry Expert" },
+              ].map((judge, i) => (
+                <Card key={i} className="border-zinc-800 bg-zinc-900/50 p-6 text-center">
+                  <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-amber-500/20 to-yellow-500/10 border border-amber-500/20">
+                    <UserCircle className="h-10 w-10 text-amber-400/50" />
+                  </div>
+                  <h3 className="text-sm font-bold text-white">{judge.name}</h3>
+                  <p className="mt-1 text-xs text-muted-foreground">{judge.role}</p>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ─── FAQ ─── */}
+        <section className="py-20 sm:py-24 bg-gradient-to-b from-transparent via-amber-950/5 to-transparent">
+          <div className="container mx-auto px-4 max-w-3xl">
+            <h2 className="text-center text-3xl sm:text-4xl font-bold mb-4">
+              <HelpCircle className="inline-block mr-2 h-8 w-8 text-amber-400" />
+              <span className="bg-gradient-to-r from-amber-300 to-yellow-400 bg-clip-text text-transparent">
+                Frequently Asked Questions
+              </span>
+            </h2>
+            <p className="text-center text-muted-foreground mb-12">
+              Everything you need to know about SwimCrown
+            </p>
+
+            <div className="space-y-4">
+              {[
+                {
+                  q: "Who can enter SwimCrown?",
+                  a: "Any aspiring or professional model aged 18+ from anywhere in the world can enter. SwimCrown is a global competition open to all.",
+                },
+                {
+                  q: "How are winners chosen?",
+                  a: "Winners are determined by a combination of public fan votes (using EXA coins) and our expert judging panel. The SwimCrown Queen receives the most combined score, while Fan Favorite is based solely on public votes.",
+                },
+                {
+                  q: "Can international models enter?",
+                  a: "Absolutely! SwimCrown welcomes models from every country. Our finalists will be flown to Miami for Swim Week. Travel arrangements for international winners will be coordinated by our team.",
+                },
+                {
+                  q: "What is the entry deadline?",
+                  a: "Entry closes two weeks before Miami Swim Week 2026. We recommend entering early to maximize your voting period and build momentum with fans.",
+                },
+                {
+                  q: "How does voting work?",
+                  a: "Fans vote using EXA coins — 1 coin equals 1 vote. Coins can be purchased on the EXA platform. There is no limit to how many votes a contestant can receive.",
+                },
+                {
+                  q: "What happens at the live show?",
+                  a: "Finalists walk the runway at Miami Swim Week wearing swimsuits gifted by our sponsored designer. The SwimCrown Queen is crowned live on stage with cash prizes awarded on the spot.",
+                },
+              ].map((faq, i) => (
+                <details key={i} className="group">
+                  <summary className="flex cursor-pointer items-center justify-between rounded-xl border border-zinc-800 bg-zinc-900/50 px-6 py-4 text-left text-white font-medium hover:border-amber-500/30 transition-colors">
+                    {faq.q}
+                    <ChevronDown className="h-5 w-5 text-amber-400 shrink-0 ml-4 transition-transform group-open:rotate-180" />
+                  </summary>
+                  <div className="px-6 pb-4 pt-2 text-sm text-muted-foreground leading-relaxed">
+                    {faq.a}
+                  </div>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ─── Sponsors ─── */}
+        <section className="py-20 sm:py-24">
+          <div className="container mx-auto px-4">
+            <h2 className="text-center text-3xl sm:text-4xl font-bold mb-4">
+              <span className="bg-gradient-to-r from-amber-300 to-yellow-400 bg-clip-text text-transparent">
+                Our Sponsors & Partners
+              </span>
+            </h2>
+            <p className="text-center text-muted-foreground mb-12 max-w-xl mx-auto">
+              Proudly supported by the biggest names in swim and resort fashion
+            </p>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 max-w-5xl mx-auto items-center">
+              {[
+                "TRIANGL",
+                "FRANKIES BIKINIS",
+                "MONDAY SWIMWEAR",
+                "VITAMIN A",
+                "AGUA BENDITA",
+                "L*SPACE",
+              ].map((brand) => (
+                <div
+                  key={brand}
+                  className="flex h-20 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 hover:border-amber-500/30 transition-colors"
+                >
+                  <span className="text-xs sm:text-sm font-bold tracking-widest text-zinc-400 text-center">
+                    {brand}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <p className="text-center text-xs text-muted-foreground/50 mt-6">
+              Sponsor lineup subject to change. Interested in sponsoring?{" "}
+              <Link href="/contact" className="text-amber-400 hover:underline">
+                Contact us
+              </Link>
+            </p>
+          </div>
+        </section>
+
+        {/* ─── Follow Along ─── */}
+        <section className="py-16 sm:py-20 bg-gradient-to-b from-transparent via-amber-950/5 to-transparent">
+          <div className="container mx-auto px-4 text-center max-w-2xl">
+            <Instagram className="mx-auto h-10 w-10 text-amber-400 mb-4" />
+            <h2 className="text-2xl sm:text-3xl font-bold mb-3 text-white">
+              Follow the Journey
+            </h2>
+            <p className="text-muted-foreground mb-6">
+              Go behind the scenes, watch contestant highlights, and stay updated
+              on all things SwimCrown.
+            </p>
+            <a
+              href="https://instagram.com/examodels"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button
+                variant="outline"
+                size="lg"
+                className="border-amber-500/30 text-amber-300 hover:bg-amber-500/10 rounded-full px-8"
+              >
+                <Instagram className="mr-2 h-5 w-5" />
+                @examodels
+              </Button>
+            </a>
           </div>
         </section>
 
