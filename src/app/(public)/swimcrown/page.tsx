@@ -161,6 +161,22 @@ export default async function SwimCrownPage() {
           </div>
         </section>
 
+        {/* ─── Runway Video ─── */}
+        <section className="relative">
+          <div className="max-w-5xl mx-auto px-4">
+            <div className="relative aspect-video rounded-2xl overflow-hidden border border-amber-500/20 shadow-2xl shadow-amber-500/10">
+              <video
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="w-full h-full object-cover"
+                src="https://nanftzomzluetblqgrvo.supabase.co/storage/v1/object/public/portfolio/swimcrown/jb-paris-crown.mp4"
+              />
+            </div>
+          </div>
+        </section>
+
         {/* ─── Countdown ─── */}
         <section className="py-16 sm:py-20 bg-gradient-to-b from-black/20 to-transparent">
           <div className="container mx-auto px-4 text-center">
