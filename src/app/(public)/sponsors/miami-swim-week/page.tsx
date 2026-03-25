@@ -8,7 +8,6 @@ import {
   MapPin,
   Calendar,
   Users,
-  Sparkles,
   Check,
   ArrowRight,
   Star,
@@ -27,8 +26,6 @@ import {
   Sun,
   Hotel,
   Utensils,
-  Wifi,
-  BatteryCharging,
   Dumbbell,
   Palette,
   Package,
@@ -779,48 +776,19 @@ export default function SponsorMswPage() {
 
       <main className="container px-4 md:px-8 py-14">
 
-        {/* Pitch */}
-        <div className="text-center max-w-3xl mx-auto mb-16">
+        {/* Pitch + Stats */}
+        <div className="text-center max-w-3xl mx-auto mb-10">
           <Badge className="mb-4 bg-amber-500/10 text-amber-400 border-amber-500/20 px-4 py-1">
             Full Hotel Takeover · 7 Days · Millions of Social Reach
           </Badge>
           <h2 className="text-3xl md:text-4xl font-bold mb-5">
             Turn Your Brand Into Content Seen by Millions
           </h2>
-          <p className="text-muted-foreground text-lg leading-relaxed mb-4">
-            EXA Models is taking over The Alexander Hotel for an entire week. 600+ models at our Monday casting call. 125+ walking 6 runway shows. 100+ staying on-site at the hotel. A sunset show on the beach. A 120ft yacht on the Intracoastal. Branded experiences from lobby to poolside to backstage.
-          </p>
           <p className="text-muted-foreground text-lg leading-relaxed">
-            These models have social media followings ranging from 5,000 to 5 million — and they&apos;ll be sharing content all week. When your brand is in their hands, on their runway, and in their hotel room, it ends up in front of millions of their followers. <span className="text-white font-semibold">Where else in the world can a brand connect with 600+ models in one location?</span>
+            600+ models with followings from 5K to 5M. A full hotel takeover, sunset beach runway, 120ft yacht, and 6 shows. Your brand in their hands, on their runway, and in their hotel room — it ends up in front of millions. <span className="text-white font-semibold">Where else in the world can a brand connect with 600+ models in one location?</span>
           </p>
         </div>
 
-        {/* Social Reach Callout */}
-        <div className="max-w-4xl mx-auto mb-20 p-8 md:p-10 rounded-3xl border border-pink-500/20 bg-gradient-to-r from-pink-500/5 via-violet-500/5 to-blue-500/5 text-center">
-          <p className="text-xs uppercase tracking-widest text-pink-400 font-semibold mb-3">The Real Value</p>
-          <h3 className="text-2xl md:text-3xl font-bold mb-4">
-            600+ Models = Millions of Organic Impressions
-          </h3>
-          <p className="text-muted-foreground leading-relaxed max-w-2xl mx-auto mb-6">
-            Every model who touches your product, poses in front of your logo, or receives your gift bag is a content creator with an engaged audience. Some have 5,000 followers. Some have 5 million. They post stories, reels, and TikToks all week — and your brand is in the frame.
-          </p>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="p-4 rounded-2xl bg-black/20 border border-white/5">
-              <p className="text-2xl font-bold text-pink-400">5K–5M</p>
-              <p className="text-xs text-muted-foreground mt-1">Follower Range Per Model</p>
-            </div>
-            <div className="p-4 rounded-2xl bg-black/20 border border-white/5">
-              <p className="text-2xl font-bold text-violet-400">600+</p>
-              <p className="text-xs text-muted-foreground mt-1">Models Creating Content</p>
-            </div>
-            <div className="p-4 rounded-2xl bg-black/20 border border-white/5">
-              <p className="text-2xl font-bold text-blue-400">7 Days</p>
-              <p className="text-xs text-muted-foreground mt-1">Of Brand Exposure</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-20">
           {STATS.map((s) => (
             <div key={s.label} className="text-center p-5 rounded-2xl bg-muted/30 border border-white/5">
@@ -1183,41 +1151,6 @@ export default function SponsorMswPage() {
           </div>
         </div>
 
-        {/* Content Guarantee Chart */}
-        <div className="mb-20">
-          <div className="max-w-3xl mx-auto">
-            <div className="text-center mb-8">
-              <Badge className="mb-4 bg-violet-500/10 text-violet-400 border-violet-500/20 px-4 py-1">
-                Every Package Comes With Content
-              </Badge>
-              <h2 className="text-2xl font-bold mb-3">Guaranteed Content Output</h2>
-              <p className="text-muted-foreground">
-                You&apos;re not buying a logo placement. You&apos;re buying content, reach, and distribution. Here&apos;s what every tier guarantees.
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              {[
-                { tier: "$15K+", posts: "100–200+ tagged posts", extra: "Dedicated content team + hero video + full usage rights", color: "border-yellow-500/30 bg-yellow-500/5" },
-                { tier: "$10K–$15K", posts: "75–150 tagged posts", extra: "Full usage rights + EXA social amplification", color: "border-pink-500/20 bg-pink-500/5" },
-                { tier: "$5K–$10K", posts: "25–75 tagged posts", extra: "Usage rights + EXA social feature", color: "border-cyan-500/20 bg-cyan-500/5" },
-                { tier: "$2K–$5K", posts: "10–25 tagged posts", extra: "EXA social mention + event website logo", color: "border-amber-500/20 bg-amber-500/5" },
-              ].map((item) => (
-                <div key={item.tier} className={`flex items-center gap-4 md:gap-6 p-4 md:p-5 rounded-2xl border ${item.color}`}>
-                  <div className="text-center flex-shrink-0 w-24">
-                    <p className="text-lg font-bold text-white">{item.tier}</p>
-                  </div>
-                  <div className="h-10 w-px bg-white/10 flex-shrink-0" />
-                  <div className="flex-1">
-                    <p className="font-semibold text-sm">{item.posts}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{item.extra}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
         {/* Who Should Sponsor */}
         <div className="mb-20">
           <div className="relative overflow-hidden rounded-3xl border border-amber-500/20 bg-gradient-to-br from-amber-500/5 via-orange-500/5 to-pink-500/5 p-8 md:p-12">
@@ -1255,32 +1188,6 @@ export default function SponsorMswPage() {
           </div>
         </div>
 
-        {/* What's Included Breakdown */}
-        <div className="mb-20">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl font-bold mb-3">What Every Sponsor Gets</h2>
-            <p className="text-muted-foreground">No matter which package you choose</p>
-          </div>
-          <div className="max-w-3xl mx-auto space-y-3">
-            {[
-              { icon: <Sparkles className="h-4 w-4 text-amber-400" />, title: "Access to 600+ Models With Real Social Followings", desc: "Models with 5K to 5M followers — your brand gets organic exposure to millions through their content", color: "border-amber-500/20 bg-amber-500/5" },
-              { icon: <Users className="h-4 w-4 text-pink-400" />, title: "Unmatched Concentration of Talent", desc: "There is nowhere else in the world where a brand can connect with 600+ models in one location, one week — this is it", color: "border-pink-500/20 bg-pink-500/5" },
-              { icon: <Camera className="h-4 w-4 text-sky-400" />, title: "Organic UGC at Scale", desc: "Models post stories, reels, and TikToks all week — your product in the frame means organic content you can't buy", color: "border-sky-500/20 bg-sky-500/5" },
-              { icon: <Megaphone className="h-4 w-4 text-violet-400" />, title: "EXA Social Media + Press", desc: "Featured across EXA's Instagram, website, and press outreach — plus official event photography and video", color: "border-violet-500/20 bg-violet-500/5" },
-            ].map((item) => (
-              <div key={item.title} className={`flex items-start gap-4 px-5 py-4 rounded-2xl border ${item.color}`}>
-                <div className="p-2 rounded-xl bg-black/20 flex-shrink-0 mt-0.5">
-                  {item.icon}
-                </div>
-                <div>
-                  <p className="font-semibold text-sm">{item.title}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{item.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* FAQ */}
         <div className="max-w-2xl mx-auto mb-20">
           <h2 className="text-2xl font-bold text-center mb-8">Frequently Asked Questions</h2>
@@ -1297,43 +1204,30 @@ export default function SponsorMswPage() {
           </div>
         </div>
 
-        {/* Quick Summary */}
-        <div className="mb-20">
-          <div className="max-w-3xl mx-auto text-center p-8 md:p-10 rounded-3xl border border-white/10 bg-muted/20">
-            <p className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-4">The Bottom Line</p>
-            <h2 className="text-2xl md:text-3xl font-bold mb-6">
-              Here&apos;s What You&apos;re Getting
-            </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div className="p-4 rounded-2xl bg-black/20 border border-white/5">
-                <p className="text-xl font-bold text-amber-400">600+</p>
-                <p className="text-xs text-muted-foreground mt-1">Creators</p>
-              </div>
-              <div className="p-4 rounded-2xl bg-black/20 border border-white/5">
-                <p className="text-xl font-bold text-pink-400">7 Days</p>
-                <p className="text-xs text-muted-foreground mt-1">Of Content</p>
-              </div>
-              <div className="p-4 rounded-2xl bg-black/20 border border-white/5">
-                <p className="text-xl font-bold text-violet-400">100–200+</p>
-                <p className="text-xs text-muted-foreground mt-1">Guaranteed Posts</p>
-              </div>
-              <div className="p-4 rounded-2xl bg-black/20 border border-white/5">
-                <p className="text-xl font-bold text-cyan-400">$2K</p>
-                <p className="text-xs text-muted-foreground mt-1">Starting At</p>
-              </div>
-            </div>
-            <p className="text-muted-foreground text-sm leading-relaxed max-w-xl mx-auto">
-              A full hotel takeover, beach runway, 120ft yacht, 6 shows, and 600+ models creating content with your brand for an entire week. Content lives forever — this isn&apos;t a 2-hour event, it&apos;s a 7-day content factory.
-            </p>
-          </div>
-        </div>
-
         {/* Bottom CTA */}
         <div className="text-center p-10 md:p-14 rounded-3xl bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-pink-500/10 border border-amber-500/20">
           <h2 className="text-2xl md:text-3xl font-bold mb-3">Secure Your Sponsorship</h2>
-          <p className="text-muted-foreground mb-8 max-w-md mx-auto leading-relaxed">
-            Packages are limited and selling fast. Send us your brand name and the package you want — we&apos;ll send a sponsorship deck and lock in your spot.
+          <p className="text-muted-foreground mb-4 max-w-lg mx-auto leading-relaxed">
+            600+ models. 7 days. 6 shows. A full hotel takeover, beach runway, and 120ft yacht — your brand in every frame. Packages start at $500.
           </p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-xl mx-auto mb-8">
+            <div className="p-3 rounded-xl bg-black/20 border border-white/5">
+              <p className="text-lg font-bold text-amber-400">600+</p>
+              <p className="text-xs text-muted-foreground">Creators</p>
+            </div>
+            <div className="p-3 rounded-xl bg-black/20 border border-white/5">
+              <p className="text-lg font-bold text-pink-400">7 Days</p>
+              <p className="text-xs text-muted-foreground">Of Content</p>
+            </div>
+            <div className="p-3 rounded-xl bg-black/20 border border-white/5">
+              <p className="text-lg font-bold text-violet-400">100–200+</p>
+              <p className="text-xs text-muted-foreground">Guaranteed Posts</p>
+            </div>
+            <div className="p-3 rounded-xl bg-black/20 border border-white/5">
+              <p className="text-lg font-bold text-cyan-400">$500</p>
+              <p className="text-xs text-muted-foreground">Starting At</p>
+            </div>
+          </div>
           <a
             href="mailto:nathan@examodels.com?subject=Miami%20Swim%20Week%202026%20—%20Reserve%20My%20Spot&body=Hi%20Nathan%2C%0A%0AI%20want%20to%20secure%20a%20sponsorship%20for%20Miami%20Swim%20Week%202026.%0A%0ABrand%3A%20%0AWebsite%3A%20%0APackage(s)%20of%20interest%3A%20%0ABudget%20range%3A%20%0A%0ALooking%20forward%20to%20connecting."
             className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold px-8 py-4 rounded-xl transition-all hover:shadow-lg hover:shadow-amber-500/25 hover:scale-[1.02]"
