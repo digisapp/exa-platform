@@ -150,8 +150,8 @@ export default function ProfilePage() {
       toast.error("Please select a valid image (JPEG, PNG, or WebP)");
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image must be less than 5MB");
+    if (file.size > 15 * 1024 * 1024) {
+      toast.error("Image must be less than 15MB");
       return;
     }
 

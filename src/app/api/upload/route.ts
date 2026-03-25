@@ -10,7 +10,7 @@ export const runtime = "nodejs";
 export const maxDuration = 60; // 60 seconds timeout
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
 
 export async function POST(request: NextRequest) {
   try {
