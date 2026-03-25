@@ -113,19 +113,17 @@ export default async function SwimCrownPage() {
 
           <div className="container relative mx-auto px-4 text-center">
             <div className="relative mb-4 inline-flex items-center justify-center">
-              <span className="text-6xl sm:text-7xl lg:text-8xl drop-shadow-[0_0_20px_rgba(251,191,36,0.5)] animate-pulse [animation-duration:3s]">
-                👑
-              </span>
+              <Crown className="h-16 sm:h-20 lg:h-24 w-16 sm:w-20 lg:w-24 text-amber-400 drop-shadow-[0_0_20px_rgba(251,191,36,0.5)] animate-pulse [animation-duration:3s]" />
               <Sparkles className="absolute -top-2 -right-4 h-5 w-5 text-yellow-300 animate-ping [animation-duration:2s]" />
               <Sparkles className="absolute -top-1 -left-4 h-4 w-4 text-amber-300 animate-ping [animation-duration:2.5s] [animation-delay:0.5s]" />
               <Sparkles className="absolute -bottom-1 right-0 h-3 w-3 text-yellow-400 animate-ping [animation-duration:3s] [animation-delay:1s]" />
             </div>
 
             <h1 className="mx-auto max-w-4xl text-6xl sm:text-7xl lg:text-8xl font-black tracking-tighter">
-              <span className="bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent">
+              <span className="text-white">
                 SWIM
               </span>
-              <span className="bg-gradient-to-r from-yellow-400 via-amber-400 to-orange-500 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent">
                 CROWN
               </span>
             </h1>
