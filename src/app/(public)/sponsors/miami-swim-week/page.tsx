@@ -791,27 +791,17 @@ export default async function SponsorMswPage() {
 
         {/* Overlay */}
         <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 pointer-events-none">
-          <Badge className="mb-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 px-4 py-1.5 text-sm font-semibold tracking-wide">
-            For Brands & Sponsors
-          </Badge>
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 drop-shadow-lg">
-            Sponsor EXA&apos;s Miami Swim Week
+            Miami Swim Week 2026
           </h1>
-          <p className="text-white/90 text-lg md:text-xl mb-5 max-w-2xl leading-relaxed">
-            Turn your brand into content seen by millions. 600+ creators. 7 days. 100–200+ guaranteed posts. There is nowhere else like this.
-          </p>
           <div className="flex flex-wrap gap-3 text-white/90">
             <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
-              <MapPin className="h-4 w-4 text-amber-400" />
-              <span className="font-medium text-sm">{VENUE}</span>
-            </div>
-            <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
-              <Calendar className="h-4 w-4 text-cyan-400" />
+              <Calendar className="h-4 w-4 text-amber-400" />
               <span className="font-medium text-sm">May 25–31, 2026</span>
             </div>
             <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
-              <Users className="h-4 w-4 text-pink-400" />
-              <span className="font-medium text-sm">600+ Models · 6 Runway Shows · Full Hotel Takeover</span>
+              <MapPin className="h-4 w-4 text-cyan-400" />
+              <span className="font-medium text-sm">The Alexander Hotel, Miami Beach</span>
             </div>
           </div>
         </div>
