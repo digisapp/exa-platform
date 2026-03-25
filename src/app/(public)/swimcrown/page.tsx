@@ -9,7 +9,6 @@ import { Card } from "@/components/ui/card";
 import {
   Crown,
   Star,
-  Camera,
   Heart,
   ArrowRight,
   Sparkles,
@@ -282,7 +281,7 @@ export default async function SwimCrownPage() {
               Over $10,000 in total prizes for our winners
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
               {/* Queen */}
               <Card className="relative overflow-hidden border-amber-500/30 bg-gradient-to-b from-amber-500/10 to-transparent p-6 text-center">
                 <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-400 to-yellow-500" />
@@ -347,25 +346,6 @@ export default async function SwimCrownPage() {
                 </ul>
               </Card>
 
-              {/* Miss Photogenic */}
-              <Card className="relative overflow-hidden border-violet-500/30 bg-gradient-to-b from-violet-500/10 to-transparent p-6 text-center">
-                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-violet-500 to-purple-500" />
-                <Camera className="mx-auto h-10 w-10 text-violet-400 mb-3" />
-                <h3 className="text-lg font-bold text-violet-300">
-                  Miss Photogenic
-                </h3>
-                <p className="text-3xl font-black text-white mt-2">$1,000</p>
-                <ul className="mt-4 space-y-2 text-sm text-muted-foreground text-left">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-violet-400 mt-0.5 shrink-0" />
-                    Judge-selected
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-violet-400 mt-0.5 shrink-0" />
-                    Magazine feature
-                  </li>
-                </ul>
-              </Card>
             </div>
           </div>
         </section>
