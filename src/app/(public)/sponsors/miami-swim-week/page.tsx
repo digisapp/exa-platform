@@ -41,7 +41,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Sponsor Miami Swim Week 2026 | EXA Models",
   description:
-    "Partner with EXA Models at Miami Swim Week 2026 (May 25–31, The Alexander Hotel, Miami Beach). 600+ models, 7 days, runway shows, casting call sponsorships, activations, gift bags, and more.",
+    "Partner with EXA Models at Miami Swim Week 2026 (May 25–31, Miami Beach Hotel, Miami Beach). 600+ models, 7 days, runway shows, casting call sponsorships, activations, gift bags, and more.",
   openGraph: {
     title: "Sponsor Miami Swim Week 2026 | EXA Models",
     description:
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
   },
 };
 
-const VENUE = "The Alexander Hotel, 5225 Collins Ave, Miami Beach";
+const VENUE = "Miami Beach Hotel, Miami Beach";
 
 const SCHEDULE = [
   {
@@ -345,7 +345,7 @@ const HOTEL_PACKAGES = [
   {
     id: "content-studio",
     name: "Branded Content Studio",
-    tagline: "Branded photo/video studio at The Alexander Hotel for models to create content with your product",
+    tagline: "Branded photo/video studio at Miami Beach Hotel for models to create content with your product",
     price: 4500,
     badge: null,
     badgeGradient: "",
@@ -354,7 +354,7 @@ const HOTEL_PACKAGES = [
     color: "from-violet-500/10 to-purple-500/5",
     icon: <Camera className="h-5 w-5 text-violet-400" />,
     features: [
-      "Branded photo/video studio set up at The Alexander Hotel",
+      "Branded photo/video studio set up at Miami Beach Hotel",
       "Ring lights, backdrops, and props — all branded with your product",
       "EXA social media amplification",
       "2 VIP passes to runway shows",
@@ -401,7 +401,7 @@ const PACKAGES = [
       "Top billing — \u201cPresented by [Brand]\u201d across all event materials",
       "Logo on all 6 runway backdrops (every show)",
       "2-minute branded video played at Opening Night",
-      "Full-week brand activation booth at The Alexander Hotel",
+      "Full-week brand activation booth at Miami Beach Hotel",
       "10 VIP passes to all shows",
       "Dedicated EXA model brand ambassador for the week",
       "Product placement in 200+ model & VIP gift bags",
@@ -425,7 +425,7 @@ const PACKAGES = [
     icon: <Megaphone className="h-5 w-5 text-pink-400" />,
     features: [
       "Logo on runway backdrop — all 6 shows",
-      "Brand activation booth at The Alexander Hotel",
+      "Brand activation booth at Miami Beach Hotel",
       "6 VIP passes per show",
       "1 show-opening brand moment (logo card + PA mention)",
       "EXA model brand ambassador (3 days)",
@@ -521,7 +521,7 @@ const PACKAGES = [
   {
     id: "brand-activation",
     name: "Pop-Up Experience",
-    tagline: "Branded pop-up at The Alexander Hotel — sample, demo, or sell all week",
+    tagline: "Branded pop-up at Miami Beach Hotel — sample, demo, or sell all week",
     price: 2500,
     badge: null,
     badgeGradient: "",
@@ -530,7 +530,7 @@ const PACKAGES = [
     color: "from-teal-500/10 to-cyan-500/5",
     icon: <ShoppingBag className="h-5 w-5 text-teal-400" />,
     features: [
-      "Branded pop-up space at The Alexander Hotel during Swim Week",
+      "Branded pop-up space at Miami Beach Hotel during Swim Week",
       "Reach attendees, press, buyers, and models in person",
       "Product sampling, demos, or sales — your call",
       "2 VIP passes",
@@ -649,7 +649,7 @@ export default async function SponsorMswPage() {
             </div>
             <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
               <MapPin className="h-4 w-4 text-cyan-400" />
-              <span className="font-medium text-sm">The Alexander Hotel, Miami Beach</span>
+              <span className="font-medium text-sm">Miami Beach Hotel, Miami Beach</span>
             </div>
           </div>
         </div>
@@ -795,7 +795,7 @@ export default async function SponsorMswPage() {
           {
             title: "Premium Experience Sponsorships",
             subtitle: "Beach · Yacht · Pool Deck",
-            description: "The Alexander Hotel sits right on the beach with the Intracoastal across the street. A sunset sand runway show, a 120ft yacht for VIP cruises and photoshoots — these are the moments brands dream about.",
+            description: "Miami Beach Hotel sits right on the beach with the Intracoastal across the street. A sunset sand runway show, a 120ft yacht for VIP cruises and photoshoots — these are the moments brands dream about.",
             badgeColor: "bg-blue-500/10 text-blue-400 border-blue-500/20",
             checkColor: "from-blue-500/20 to-cyan-500/20",
             checkIcon: "text-blue-400",
@@ -804,7 +804,7 @@ export default async function SponsorMswPage() {
           {
             title: "Hotel Activation Packages",
             subtitle: "100+ Models Staying On-Site · Full Hotel Takeover",
-            description: "100+ models are staying at The Alexander Hotel all week. That means your brand has access to them 24/7 — in their rooms, at breakfast, poolside, backstage, and everywhere in between.",
+            description: "100+ models are staying at Miami Beach Hotel all week. That means your brand has access to them 24/7 — in their rooms, at breakfast, poolside, backstage, and everywhere in between.",
             badgeColor: "bg-rose-500/10 text-rose-400 border-rose-500/20",
             checkColor: "from-rose-500/20 to-pink-500/20",
             checkIcon: "text-rose-400",
