@@ -177,6 +177,32 @@ export default async function SwimCrownPage() {
           </div>
         </section>
 
+        {/* ─── Show Highlight ─── */}
+        <section className="py-16 sm:py-20">
+          <div className="container mx-auto px-4 max-w-3xl">
+            <Card className="relative overflow-hidden border-amber-500/20 bg-gradient-to-br from-amber-500/5 via-zinc-900/80 to-zinc-900/80 p-8 sm:p-10">
+              <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-400" />
+              <div className="flex flex-col items-center text-center gap-4">
+                <div className="flex items-center gap-2 text-amber-400">
+                  <Star className="h-5 w-5" />
+                  <span className="text-xs font-bold tracking-widest uppercase">Live Event</span>
+                  <Star className="h-5 w-5" />
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-bold text-white">
+                  The SwimCrown Show
+                </h3>
+                <p className="text-muted-foreground text-base sm:text-lg leading-relaxed max-w-xl">
+                  The SwimCrown competition show will be held live during{" "}
+                  <span className="text-amber-300 font-semibold">Miami Swim Week</span>.
+                  All competing models will be gifted a swimsuit by our sponsored
+                  swimwear designer{" "}
+                  <span className="text-amber-300 font-semibold">(TBA)</span>.
+                </p>
+              </div>
+            </Card>
+          </div>
+        </section>
+
         {/* ─── Prizes ─── */}
         <section className="py-20 sm:py-24 bg-gradient-to-b from-transparent via-amber-950/5 to-transparent">
           <div className="container mx-auto px-4">
