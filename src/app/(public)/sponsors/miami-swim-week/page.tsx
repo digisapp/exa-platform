@@ -730,17 +730,9 @@ export default async function SponsorMswPage() {
         {/* Confirmed Model Roster — Credibility Section */}
         {eventModels.length > 0 && (
           <div className="mb-20">
-            <div className="text-center mb-8">
-              <Badge className="mb-4 bg-amber-500/10 text-amber-400 border-amber-500/20 px-4 py-1">
-                Confirmed Talent
-              </Badge>
-              <h2 className="text-2xl md:text-3xl font-bold mb-3">
-                Models Walking Miami Swim Week
-              </h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
-                {eventModels.length} confirmed models and counting — these are the creators who will be wearing your product and walking your runway. This is who your sponsorship puts you in front of.
-              </p>
-            </div>
+            <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">
+              Confirmed Models
+            </h2>
 
             <ModelGrid models={eventModels} />
           </div>
@@ -890,9 +882,6 @@ export default async function SponsorMswPage() {
         {/* Bottom CTA */}
         <div className="text-center p-10 md:p-14 rounded-3xl bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-pink-500/10 border border-amber-500/20">
           <h2 className="text-2xl md:text-3xl font-bold mb-3">Secure Your Sponsorship</h2>
-          <p className="text-muted-foreground mb-4 max-w-lg mx-auto leading-relaxed">
-            600+ models. 7 days. 6 shows. A full hotel takeover, beach runway, and 120ft yacht — your brand in every frame. Packages start at $500.
-          </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-xl mx-auto mb-8">
             <div className="p-3 rounded-xl bg-black/20 border border-white/5">
               <p className="text-lg font-bold text-amber-400">600+</p>
@@ -919,16 +908,6 @@ export default async function SponsorMswPage() {
             Reserve Your Spot
             <ArrowRight className="h-4 w-4" />
           </a>
-          <p className="text-sm text-muted-foreground mt-3">
-            nathan@examodels.com
-          </p>
-          <p className="text-xs text-muted-foreground mt-4">
-            Or visit{" "}
-            <Link href="/shows/miami-swim-week-2026" className="text-amber-400 hover:underline">
-              examodels.com/swimweek
-            </Link>{" "}
-            to see our full show lineup
-          </p>
         </div>
       </main>
       <Footer />
