@@ -104,21 +104,13 @@ export default async function SwimCrownPage() {
 
       <main>
         {/* ─── Hero ─── */}
-        <section className="relative overflow-hidden pt-16 sm:pt-20 pb-8">
-          {/* Ambient glow */}
-          <div className="pointer-events-none absolute inset-0">
-            <div className="absolute left-1/2 top-0 -translate-x-1/2 h-[600px] w-[900px] rounded-full bg-gradient-to-br from-amber-500/20 via-yellow-500/10 to-transparent blur-3xl" />
-          </div>
-
-          <div className="container relative mx-auto px-4 text-center">
-            <div className="relative mb-4 inline-flex items-center justify-center">
-              <Crown className="h-16 sm:h-20 lg:h-24 w-16 sm:w-20 lg:w-24 text-amber-400 drop-shadow-[0_0_20px_rgba(251,191,36,0.5)] animate-pulse [animation-duration:3s]" />
-              <Sparkles className="absolute -top-2 -right-4 h-5 w-5 text-yellow-300 animate-ping [animation-duration:2s]" />
-              <Sparkles className="absolute -top-1 -left-4 h-4 w-4 text-amber-300 animate-ping [animation-duration:2.5s] [animation-delay:0.5s]" />
-              <Sparkles className="absolute -bottom-1 right-0 h-3 w-3 text-yellow-400 animate-ping [animation-duration:3s] [animation-delay:1s]" />
+        <section className="pt-12 sm:pt-16 pb-6">
+          <div className="container mx-auto px-4 text-center">
+            <div className="relative mb-3 inline-flex items-center justify-center">
+              <Crown className="h-10 sm:h-12 w-10 sm:w-12 text-amber-400 drop-shadow-[0_0_15px_rgba(251,191,36,0.4)]" />
             </div>
 
-            <h1 className="mx-auto max-w-4xl text-6xl sm:text-7xl lg:text-8xl font-black tracking-tighter">
+            <h1 className="mx-auto max-w-4xl text-4xl sm:text-5xl font-black tracking-tighter">
               <span className="bg-gradient-to-r from-cyan-300 via-sky-400 to-blue-400 bg-clip-text text-transparent">
                 SWIM
               </span>
