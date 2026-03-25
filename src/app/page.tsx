@@ -269,9 +269,9 @@ export default async function HomePage() {
                 </span>
 
                 <h2 className="text-lg md:text-3xl lg:text-4xl font-bold tracking-tight mb-3 md:mb-4">
-                  Press. Photo.
+                  Press. Media.
                   <br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-purple-500">Collaborate.</span>
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-purple-500">Photographers.</span>
                 </h2>
 
                 <MediaInquiryDialog>
