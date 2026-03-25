@@ -560,13 +560,6 @@ const PACKAGES = [
   },
 ];
 
-const STATS = [
-  { value: "600+", label: "Models at Casting Call" },
-  { value: "125+", label: "Runway Models" },
-  { value: "100+", label: "Models Staying On-Site" },
-  { value: "50M+", label: "Combined Social Reach" },
-  { value: "7 Days", label: "May 25–31, 2026" },
-];
 
 
 function SponsorContactButton({ packageName, price }: { packageName: string; price: number }) {
@@ -664,70 +657,120 @@ export default async function SponsorMswPage() {
 
       <main className="container px-4 md:px-8 py-14">
 
-        {/* Pitch + Stats */}
-        <div className="text-center max-w-3xl mx-auto mb-10">
-          <Badge className="mb-4 bg-amber-500/10 text-amber-400 border-amber-500/20 px-4 py-1">
-            Full Hotel Takeover · 7 Days · Global Exposure
-          </Badge>
-          <h2 className="text-3xl md:text-4xl font-bold mb-5">
-            Position Your Brand at the Center of Miami Swim Week
-          </h2>
-          <p className="text-muted-foreground text-lg leading-relaxed">
-            600+ models and creators with audiences ranging from 5K to 5M. From a sunset beach runway to a 120ft yacht and a full hotel takeover, your brand is seamlessly integrated into every moment — captured, shared, and distributed across millions of viewers worldwide. <span className="text-white font-semibold">This level of access doesn&apos;t exist anywhere else.</span>
-          </p>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-20">
-          {STATS.map((s) => (
-            <div key={s.label} className="text-center p-5 rounded-2xl bg-muted/30 border border-white/5">
-              <p className="text-2xl md:text-3xl font-bold text-white">{s.value}</p>
-              <p className="text-sm text-muted-foreground mt-1">{s.label}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Full Week Schedule */}
-        <div className="mb-20">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold mb-3">Full Week Schedule</h2>
-            <p className="text-muted-foreground">
-              7 days of shows, activations, and brand experiences at The Alexander Hotel
+        {/* Pitch + Schedule — Split Layout */}
+        <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 mb-16 items-start">
+          {/* Left — Pitch + Stats */}
+          <div>
+            <Badge className="mb-4 bg-amber-500/10 text-amber-400 border-amber-500/20 px-4 py-1">
+              Full Hotel Takeover · 7 Days · Global Exposure
+            </Badge>
+            <h2 className="text-3xl md:text-4xl font-bold mb-5">
+              Position Your Brand at the Center of Miami Swim Week
+            </h2>
+            <p className="text-muted-foreground text-lg leading-relaxed mb-8">
+              600+ models and creators with audiences ranging from 5K to 5M. From a sunset beach runway to a 120ft yacht and a full hotel takeover, your brand is seamlessly integrated into every moment — captured, shared, and distributed across millions of viewers worldwide. <span className="text-white font-semibold">This level of access doesn&apos;t exist anywhere else.</span>
             </p>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div className="text-center p-4 rounded-2xl bg-muted/30 border border-white/5">
+                <p className="text-2xl md:text-3xl font-bold text-amber-400">600+</p>
+                <p className="text-xs text-muted-foreground mt-1">Models at Casting</p>
+              </div>
+              <div className="text-center p-4 rounded-2xl bg-muted/30 border border-white/5">
+                <p className="text-2xl md:text-3xl font-bold text-pink-400">50M+</p>
+                <p className="text-xs text-muted-foreground mt-1">Combined Reach</p>
+              </div>
+              <div className="text-center p-4 rounded-2xl bg-muted/30 border border-white/5">
+                <p className="text-2xl md:text-3xl font-bold text-cyan-400">7 Days</p>
+                <p className="text-xs text-muted-foreground mt-1">May 25–31</p>
+              </div>
+            </div>
           </div>
 
-          <div className="grid gap-3 max-w-4xl mx-auto">
-            {SCHEDULE.map((event) => (
-              <div
-                key={event.date}
-                className={`flex items-center gap-4 md:gap-6 p-4 md:p-5 rounded-2xl border transition-all ${
-                  event.highlight
-                    ? "border-amber-500/30 bg-gradient-to-r from-amber-500/10 to-orange-500/5"
-                    : "border-white/5 bg-muted/30"
-                }`}
-              >
-                <div className="text-center flex-shrink-0 w-16 md:w-20">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider">{event.day}</p>
-                  <p className={`text-lg md:text-xl font-bold ${event.highlight ? "text-amber-400" : "text-white"}`}>
-                    {event.date.split(" ")[1]}
-                  </p>
-                  <p className="text-xs text-muted-foreground">May</p>
-                </div>
-                <div className="h-10 w-px bg-white/10 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="font-bold text-sm md:text-base">{event.title}</h3>
-                    {event.badge && (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-gradient-to-r from-amber-500 to-orange-500 text-white">
-                        {event.badge}
-                      </span>
-                    )}
+          {/* Right — Compact Schedule */}
+          <div className="rounded-2xl border border-white/10 bg-muted/20 p-6">
+            <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-amber-400" />
+              Full Week Schedule
+            </h3>
+            <div className="space-y-2">
+              {SCHEDULE.map((event) => (
+                <div
+                  key={event.date}
+                  className={`flex items-center gap-3 p-3 rounded-xl ${
+                    event.highlight
+                      ? "border border-amber-500/20 bg-amber-500/5"
+                      : "bg-white/[0.02]"
+                  }`}
+                >
+                  <div className="text-center flex-shrink-0 w-12">
+                    <p className="text-[10px] text-muted-foreground uppercase">{event.day.slice(0, 3)}</p>
+                    <p className={`text-base font-bold ${event.highlight ? "text-amber-400" : "text-white"}`}>
+                      {event.date.split(" ")[1]}
+                    </p>
                   </div>
-                  <p className="text-xs md:text-sm text-muted-foreground mt-0.5">{event.description}</p>
+                  <div className="h-8 w-px bg-white/10 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-sm">{event.title}</p>
+                      {event.badge && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-gradient-to-r from-amber-500 to-orange-500 text-white">
+                          {event.badge}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
+
+        {/* Confirmed Model Roster — Credibility Section */}
+        {eventModels.length > 0 && (
+          <div className="mb-20">
+            <div className="text-center mb-8">
+              <Badge className="mb-4 bg-amber-500/10 text-amber-400 border-amber-500/20 px-4 py-1">
+                Confirmed Talent
+              </Badge>
+              <h2 className="text-2xl md:text-3xl font-bold mb-3">
+                Models Walking Miami Swim Week
+              </h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                {eventModels.length} confirmed models and counting — these are the creators who will be wearing your product and walking your runway. This is who your sponsorship puts you in front of.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-3">
+              {eventModels.map((model: any) => (
+                <Link
+                  key={model.id}
+                  href={`/${model.username}`}
+                  target="_blank"
+                  className="group block"
+                >
+                  <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-muted">
+                    <Image
+                      src={model.profile_photo_url}
+                      alt={model.first_name || model.username}
+                      fill
+                      sizes="(max-width: 768px) 33vw, 12.5vw"
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                    <div className="absolute bottom-0 left-0 right-0 p-2">
+                      <p className="text-white text-[10px] font-semibold truncate">
+                        {model.first_name
+                          ? `${model.first_name} ${model.last_name || ""}`.trim()
+                          : model.username}
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* All Sponsorship Packages — Accordion Layout */}
         {[
@@ -739,6 +782,15 @@ export default async function SponsorMswPage() {
             checkColor: "from-orange-500/20 to-red-500/20",
             checkIcon: "text-orange-400",
             packages: CASTING_CALL_PACKAGES,
+          },
+          {
+            title: "Show Week Sponsorship Packages",
+            subtitle: "Tuesday–Sunday · 6 Runway Shows",
+            description: "Choose your level of visibility — or mix and match to build a custom partnership. Official Category Sponsorships are exclusive — one brand per vertical.",
+            badgeColor: "bg-pink-500/10 text-pink-400 border-pink-500/20",
+            checkColor: "from-amber-500/20 to-orange-500/20",
+            checkIcon: "text-amber-400",
+            packages: PACKAGES,
           },
           {
             title: "Premium Experience Sponsorships",
@@ -757,15 +809,6 @@ export default async function SponsorMswPage() {
             checkColor: "from-rose-500/20 to-pink-500/20",
             checkIcon: "text-rose-400",
             packages: HOTEL_PACKAGES,
-          },
-          {
-            title: "Show Week Sponsorship Packages",
-            subtitle: "Tuesday–Sunday · 6 Runway Shows",
-            description: "Choose your level of visibility — or mix and match to build a custom partnership. Official Category Sponsorships are exclusive — one brand per vertical.",
-            badgeColor: "bg-pink-500/10 text-pink-400 border-pink-500/20",
-            checkColor: "from-amber-500/20 to-orange-500/20",
-            checkIcon: "text-amber-400",
-            packages: PACKAGES,
           },
         ].map((section) => (
           <div key={section.title} className="mb-16">
@@ -868,51 +911,6 @@ export default async function SponsorMswPage() {
           </div>
         </div>
 
-        {/* Confirmed Model Roster */}
-        {eventModels.length > 0 && (
-          <div className="mb-20">
-            <div className="text-center mb-10">
-              <Badge className="mb-4 bg-amber-500/10 text-amber-400 border-amber-500/20 px-4 py-1">
-                Confirmed Talent
-              </Badge>
-              <h2 className="text-2xl md:text-3xl font-bold mb-3">
-                Models Walking Miami Swim Week
-              </h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
-                {eventModels.length} confirmed models and counting — these are the creators who will be wearing your product, posting your brand, and walking your runway. This is who your sponsorship puts you in front of.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-              {eventModels.map((model: any) => (
-                <Link
-                  key={model.id}
-                  href={`/${model.username}`}
-                  target="_blank"
-                  className="group block"
-                >
-                  <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-muted">
-                    <Image
-                      src={model.profile_photo_url}
-                      alt={model.first_name || model.username}
-                      fill
-                      sizes="(max-width: 768px) 50vw, 20vw"
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                    <div className="absolute bottom-0 left-0 right-0 p-3">
-                      <p className="text-white text-xs font-semibold truncate">
-                        {model.first_name
-                          ? `${model.first_name} ${model.last_name || ""}`.trim()
-                          : model.username}
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
 
 
         {/* Bottom CTA */}
