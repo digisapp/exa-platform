@@ -108,11 +108,6 @@ export default async function SwimCrownPage() {
           </div>
 
           <div className="container relative mx-auto px-4 text-center">
-            <Badge className="mb-6 inline-flex items-center gap-1.5 border-amber-500/30 bg-amber-500/10 text-amber-300 px-4 py-1.5 text-sm">
-              <Sparkles className="h-3.5 w-3.5" />
-              2026 Miami Swim Week
-            </Badge>
-
             <div className="relative mb-4 inline-flex items-center justify-center">
               <span className="text-6xl sm:text-7xl lg:text-8xl drop-shadow-[0_0_20px_rgba(251,191,36,0.5)] animate-pulse [animation-duration:3s]">
                 👑
