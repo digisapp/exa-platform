@@ -1218,69 +1218,6 @@ export default function SponsorMswPage() {
           </div>
         </div>
 
-        {/* ROI Framing */}
-        <div className="mb-20">
-          <div className="max-w-4xl mx-auto p-8 md:p-10 rounded-3xl border border-amber-500/20 bg-gradient-to-r from-amber-500/5 via-orange-500/5 to-red-500/5">
-            <div className="text-center mb-8">
-              <p className="text-xs uppercase tracking-widest text-amber-400 font-semibold mb-3">Why This Is A No-Brainer</p>
-              <h3 className="text-2xl md:text-3xl font-bold mb-4">
-                Compare What Brands Normally Pay
-              </h3>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6 mb-8">
-              <div className="p-6 rounded-2xl bg-black/20 border border-white/5">
-                <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-4">Typical Influencer Marketing Costs</p>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">1 influencer post (50K followers)</span>
-                    <span className="text-sm font-semibold text-white">$500–$2,000</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">1 influencer post (500K followers)</span>
-                    <span className="text-sm font-semibold text-white">$2,000–$10,000</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">10-creator campaign</span>
-                    <span className="text-sm font-semibold text-white">$10,000–$50,000</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">100-creator campaign</span>
-                    <span className="text-sm font-semibold text-white">$50,000–$200,000</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-6 rounded-2xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/20">
-                <p className="text-xs uppercase tracking-wider text-amber-400 font-semibold mb-4">At EXA Swim Week</p>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">600+ creators in one location</span>
-                    <span className="text-sm font-semibold text-amber-400">Included</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">100–200+ tagged posts</span>
-                    <span className="text-sm font-semibold text-amber-400">Guaranteed</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">7 days of content</span>
-                    <span className="text-sm font-semibold text-amber-400">Guaranteed</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Full usage rights</span>
-                    <span className="text-sm font-semibold text-amber-400">Included</span>
-                  </div>
-                </div>
-                <div className="mt-4 pt-4 border-t border-amber-500/20">
-                  <p className="text-sm text-muted-foreground">Starting at</p>
-                  <p className="text-2xl font-bold text-amber-400">$2,000</p>
-                  <p className="text-xs text-muted-foreground mt-1">That&apos;s less than a single influencer post for access to 600+ creators</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Who Should Sponsor */}
         <div className="mb-20">
           <div className="relative overflow-hidden rounded-3xl border border-amber-500/20 bg-gradient-to-br from-amber-500/5 via-orange-500/5 to-pink-500/5 p-8 md:p-12">
