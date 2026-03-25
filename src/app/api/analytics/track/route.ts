@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
     const serviceClient = createServiceRoleClient();
 
     const { error } = await (serviceClient as any).from("page_views").insert({
-      path: path,
+      page_path: path,
       page_type: pageType,
       model_id: modelId || null,
       model_username: modelUsername || null,
