@@ -21,6 +21,17 @@ import {
   Zap,
   Trophy,
   Frame,
+  Droplets,
+  Ship,
+  Waves,
+  Sun,
+  Hotel,
+  Utensils,
+  Wifi,
+  BatteryCharging,
+  Dumbbell,
+  Palette,
+  Package,
 } from "lucide-react";
 import { Footer } from "@/components/layout/footer";
 import type { Metadata } from "next";
@@ -28,15 +39,514 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Sponsor Miami Swim Week 2026 | EXA Models",
   description:
-    "Partner with EXA Models at Miami Swim Week 2026 (May 26–31, The Alexander Hotel, Miami Beach). Sponsorship packages for brands — runway visibility, activations, gift bags, and more.",
+    "Partner with EXA Models at Miami Swim Week 2026 (May 25–31, The Alexander Hotel, Miami Beach). 600+ models, 7 days, runway shows, casting call sponsorships, activations, gift bags, and more.",
   openGraph: {
     title: "Sponsor Miami Swim Week 2026 | EXA Models",
     description:
-      "Get your brand in front of thousands of fashion, beauty, and lifestyle consumers at Miami Swim Week 2026. Packages from $2,000 to $20,000.",
+      "Get your brand in front of 600+ models and thousands of fashion, beauty, and lifestyle consumers at Miami Swim Week 2026. Packages from $500 to $20,000.",
   },
 };
 
 const VENUE = "The Alexander Hotel, 5225 Collins Ave, Miami Beach";
+
+const SCHEDULE = [
+  {
+    day: "Monday",
+    date: "May 25",
+    title: "Casting Call",
+    description: "600+ models attend the open casting call — the biggest gathering of talent all week",
+    highlight: true,
+    badge: "600+ Models",
+  },
+  {
+    day: "Tuesday",
+    date: "May 26",
+    title: "Opening Show",
+    description: "The grand opening runway show kicks off Miami Swim Week 2026",
+    highlight: true,
+    badge: "Opening Night",
+  },
+  {
+    day: "Wednesday",
+    date: "May 27",
+    title: "Day 2 Show",
+    description: "Runway show featuring emerging and established swimwear designers",
+    highlight: false,
+    badge: null,
+  },
+  {
+    day: "Thursday",
+    date: "May 28",
+    title: "Day 3 Show",
+    description: "Mid-week runway show with designer collections and brand activations",
+    highlight: false,
+    badge: null,
+  },
+  {
+    day: "Friday",
+    date: "May 29",
+    title: "Day 4 Show",
+    description: "Runway show plus VIP cocktail hour and brand activations",
+    highlight: false,
+    badge: null,
+  },
+  {
+    day: "Saturday",
+    date: "May 30",
+    title: "Sunset Beach Show",
+    description: "Stunning sand runway show on the beach at sunset — the most iconic show of the week",
+    highlight: true,
+    badge: "Beach Runway",
+  },
+  {
+    day: "Sunday",
+    date: "May 31",
+    title: "Closing Show",
+    description: "The grand finale — closing runway show of Miami Swim Week 2026",
+    highlight: true,
+    badge: "Grand Finale",
+  },
+];
+
+const CASTING_CALL_PACKAGES = [
+  {
+    id: "casting-presenting",
+    name: "Casting Call Presenting Sponsor",
+    tagline: "\"EXA Casting Call Presented by [Your Brand]\" — 600+ models see your brand all day",
+    price: 10000,
+    badge: "Only 1 Available",
+    badgeGradient: "from-orange-500 to-red-500",
+    borderColor: "border-orange-500/30",
+    highlight: true,
+    color: "from-orange-500/20 to-red-500/10",
+    icon: <Trophy className="h-5 w-5 text-orange-400" />,
+    features: [
+      "Title naming rights — \"EXA Casting Call Presented by [Brand]\"",
+      "Your brand in front of 600+ models for the entire casting day",
+      "Branded step-and-repeat wall — every model photos in front of your logo",
+      "Full brand activation booth at the casting venue",
+      "Product sampling to all 600+ models",
+      "Branded gift bag for every model at check-in",
+      "Dedicated EXA social media coverage of your brand at casting",
+      "600+ models post casting photos on social — your logo in every shot",
+      "Email blast to all registered models featuring your brand",
+      "Logo on all casting call promotional materials",
+      "6 VIP passes to all runway shows",
+      "First right of refusal for show week sponsorship",
+      "🎥 Content guarantee: 150+ tagged posts from casting day alone",
+    ],
+  },
+  {
+    id: "casting-product-sampling",
+    name: "Casting Day Product Sampling",
+    tagline: "Put your product directly in the hands of 600+ models",
+    price: 5000,
+    badge: "High Impact",
+    badgeGradient: "from-pink-500 to-rose-500",
+    borderColor: "border-pink-500/30",
+    highlight: false,
+    color: "from-pink-500/10 to-rose-500/10",
+    icon: <Gift className="h-5 w-5 text-pink-400" />,
+    features: [
+      "Product sampling station — hand your product to 600+ models",
+      "Branded table/display at the casting venue",
+      "QR code or promo card distribution to all attendees",
+      "Social media feature from EXA showcasing your sampling activation",
+      "Product included in casting day gift bags",
+      "Logo on casting day signage",
+      "2 VIP passes to a runway show of your choice",
+    ],
+  },
+  {
+    id: "casting-hydration",
+    name: "Casting Day Hydration Sponsor",
+    tagline: "Keep 600+ models refreshed with your brand",
+    price: 3500,
+    badge: null,
+    badgeGradient: "",
+    borderColor: "border-cyan-500/20",
+    highlight: false,
+    color: "from-cyan-500/10 to-blue-500/5",
+    icon: <Droplets className="h-5 w-5 text-cyan-400" />,
+    features: [
+      "Exclusive beverage/hydration partner for casting day",
+      "Branded refreshment station for 600+ models",
+      "Your product is the only drink available at casting",
+      "Branded signage at all refreshment areas",
+      "Social media coverage of hydration station",
+      "Logo on casting day materials",
+      "2 VIP passes to a runway show",
+    ],
+  },
+  {
+    id: "casting-photo-wall",
+    name: "Casting Day Photo Wall Sponsor",
+    tagline: "Every model takes a photo in front of your brand",
+    price: 4000,
+    badge: null,
+    badgeGradient: "",
+    borderColor: "border-violet-500/20",
+    highlight: false,
+    color: "from-violet-500/10 to-purple-500/5",
+    icon: <Camera className="h-5 w-5 text-violet-400" />,
+    features: [
+      "Branded step-and-repeat photo wall — 600+ models pose in front of your logo",
+      "All casting photos delivered to you for marketing use",
+      "Models share their casting photos on social — your brand in every shot",
+      "Digital photo delivery with your brand watermark",
+      "Social media feature from EXA",
+      "Logo on casting day signage",
+      "2 VIP passes to a runway show",
+    ],
+  },
+  {
+    id: "casting-swag-bag",
+    name: "Casting Day Swag Bag",
+    tagline: "Your product in 600+ model swag bags",
+    price: 2500,
+    badge: null,
+    badgeGradient: "",
+    borderColor: "border-amber-500/20",
+    highlight: false,
+    color: "from-amber-500/10 to-yellow-500/5",
+    icon: <ShoppingBag className="h-5 w-5 text-amber-400" />,
+    features: [
+      "Product placed in 600+ casting day swag bags",
+      "Every model receives your product at check-in",
+      "Branded insert card with your promo/QR code",
+      "\"Official Casting Day Partner\" designation",
+      "EXA social media unboxing feature",
+      "Logo on event website",
+    ],
+  },
+];
+
+const PREMIUM_EXPERIENCES = [
+  {
+    id: "beach-show-sponsor",
+    name: "Sunset Beach Show Sponsor",
+    tagline: "Own the most iconic moment — the sand runway at sunset",
+    price: 15000,
+    badge: "Only 1 Available",
+    badgeGradient: "from-orange-500 to-yellow-500",
+    borderColor: "border-orange-500/30",
+    highlight: true,
+    color: "from-orange-500/20 to-yellow-500/10",
+    icon: <Sun className="h-5 w-5 text-orange-400" />,
+    features: [
+      "Title naming rights — \"Sunset Beach Show Presented by [Brand]\"",
+      "Branded beach runway backdrop and sand signage",
+      "Brand activation on the beach during the show",
+      "Branded cabanas and seating for VIP guests",
+      "Product sampling to all beach show attendees",
+      "125+ models walk past your branding on the sand",
+      "Sunset golden-hour content — the most shareable moment of the week",
+      "6 VIP passes + premium beach seating",
+      "Dedicated social media coverage from EXA",
+      "Full photo & video rights from the beach show",
+      "🎥 Content guarantee: 100+ tagged posts + hero sunset video",
+    ],
+  },
+  {
+    id: "yacht-presenting",
+    name: "Yacht Experience — Presenting Sponsor",
+    tagline: "Brand the 120ft yacht on the Intracoastal",
+    price: 12000,
+    badge: "Only 1 Available",
+    badgeGradient: "from-blue-500 to-cyan-500",
+    borderColor: "border-blue-500/30",
+    highlight: false,
+    color: "from-blue-500/20 to-cyan-500/10",
+    icon: <Ship className="h-5 w-5 text-blue-400" />,
+    features: [
+      "Full branding on 120ft yacht — banners, signage, and branded experience",
+      "Host a VIP sunset cruise with models, influencers, and press",
+      "Branded photoshoot on the yacht with select EXA models",
+      "Product activations and sampling on board",
+      "Cocktail service branded with your product",
+      "All yacht content (photos/video) delivered for your marketing use",
+      "Social media coverage from EXA — yacht content goes viral",
+      "8 VIP passes for the cruise",
+      "Option for multiple cruise events throughout the week",
+    ],
+  },
+  {
+    id: "yacht-photoshoot",
+    name: "Yacht Photoshoot Package",
+    tagline: "Exclusive branded photoshoot with models on a 120ft yacht",
+    price: 7500,
+    badge: null,
+    badgeGradient: "",
+    borderColor: "border-sky-500/20",
+    highlight: false,
+    color: "from-sky-500/10 to-blue-500/5",
+    icon: <Camera className="h-5 w-5 text-sky-400" />,
+    features: [
+      "Half-day exclusive photoshoot on the 120ft yacht",
+      "5 EXA models styled with your product",
+      "Professional photographer and videographer included",
+      "All content delivered — full commercial usage rights",
+      "Behind-the-scenes social media content from EXA",
+      "Product placement throughout the yacht",
+      "4 VIP passes for the shoot day",
+    ],
+  },
+  {
+    id: "jet-ski",
+    name: "Jet Ski Brand Experience",
+    tagline: "Branded jet ski fleet for models and VIPs",
+    price: 5000,
+    badge: null,
+    badgeGradient: "",
+    borderColor: "border-cyan-500/20",
+    highlight: false,
+    color: "from-cyan-500/10 to-teal-500/5",
+    icon: <Waves className="h-5 w-5 text-cyan-400" />,
+    features: [
+      "Branded jet ski fleet available for models and VIPs",
+      "Your logo on all jet skis and rider gear",
+      "Action content — models on jet skis with your branding",
+      "Photo and video content delivered for marketing use",
+      "Social media coverage from EXA",
+      "2 days of branded water experiences",
+      "4 VIP passes to runway shows",
+    ],
+  },
+  {
+    id: "pool-deck",
+    name: "Pool Deck Takeover",
+    tagline: "Brand the hotel pool — cabanas, loungers, and activations all week",
+    price: 8000,
+    badge: "Only 1 Available",
+    badgeGradient: "from-teal-500 to-cyan-500",
+    borderColor: "border-teal-500/30",
+    highlight: false,
+    color: "from-teal-500/10 to-cyan-500/5",
+    icon: <Waves className="h-5 w-5 text-teal-400" />,
+    features: [
+      "Full pool deck branding — cabanas, umbrellas, loungers, signage",
+      "Branded refreshment station at the pool",
+      "Product sampling to 100+ models staying at the hotel",
+      "Pop-up activation space poolside",
+      "Pool party event option (one evening)",
+      "Content creation — models at the pool with your brand",
+      "Social media coverage all week",
+      "4 VIP passes to runway shows",
+    ],
+  },
+];
+
+const HOTEL_PACKAGES = [
+  {
+    id: "hotel-welcome-bag",
+    name: "Model Welcome Gift Bag Sponsor",
+    tagline: "Every model checks in to a room with your product",
+    price: 5000,
+    badge: "100+ Models",
+    badgeGradient: "from-rose-500 to-pink-500",
+    borderColor: "border-rose-500/30",
+    highlight: true,
+    color: "from-rose-500/20 to-pink-500/10",
+    icon: <Gift className="h-5 w-5 text-rose-400" />,
+    features: [
+      "Your product in 100+ model welcome bags — placed in every room at check-in",
+      "Branded welcome card with your message and promo code",
+      "\"Official Welcome Partner\" designation",
+      "Models unbox and share on social — organic UGC from day one",
+      "EXA social media unboxing/arrival content featuring your brand",
+      "Logo on all Swim Week communications to models",
+      "2 VIP passes to any runway show",
+    ],
+  },
+  {
+    id: "hotel-pillow-gift",
+    name: "Nightly Turn-Down Gift Sponsor",
+    tagline: "Your product on every model's pillow, every night",
+    price: 3500,
+    badge: null,
+    badgeGradient: "",
+    borderColor: "border-pink-500/20",
+    highlight: false,
+    color: "from-pink-500/10 to-rose-500/5",
+    icon: <Package className="h-5 w-5 text-pink-400" />,
+    features: [
+      "Nightly pillow gifts for 100+ models — samples, minis, or promo cards",
+      "Different product each night or same product all week — your choice",
+      "Branded turn-down card with your messaging",
+      "Models share the surprise on social — high organic engagement",
+      "EXA social media feature",
+      "Logo on event website",
+    ],
+  },
+  {
+    id: "hotel-mini-fridge",
+    name: "Mini-Fridge Stocking Sponsor",
+    tagline: "Your beverage brand in every model's hotel room fridge",
+    price: 4000,
+    badge: "Only 1 Beverage Brand",
+    badgeGradient: "from-cyan-500 to-blue-500",
+    borderColor: "border-cyan-500/20",
+    highlight: false,
+    color: "from-cyan-500/10 to-blue-500/5",
+    icon: <Droplets className="h-5 w-5 text-cyan-400" />,
+    features: [
+      "Stock 100+ hotel room mini-fridges with your beverage",
+      "Your product is the first thing models reach for every day",
+      "Branded fridge card with your messaging",
+      "Exclusive — only one beverage brand in the fridge",
+      "EXA social media feature",
+      "Logo on event website",
+      "2 VIP passes to a runway show",
+    ],
+  },
+  {
+    id: "morning-wellness",
+    name: "Morning Wellness Sponsor",
+    tagline: "Brand the daily morning yoga and stretch session",
+    price: 3000,
+    badge: null,
+    badgeGradient: "",
+    borderColor: "border-green-500/20",
+    highlight: false,
+    color: "from-green-500/10 to-emerald-500/5",
+    icon: <Dumbbell className="h-5 w-5 text-green-400" />,
+    features: [
+      "Branded morning wellness session on the pool deck — yoga, stretch, or meditation",
+      "Product sampling to all participating models",
+      "Branded yoga mats, water bottles, or wellness kits",
+      "Beautiful sunrise content with 100+ models and your brand",
+      "Social media coverage from EXA",
+      "\"Official Wellness Partner\" designation",
+      "2 VIP passes to a runway show",
+    ],
+  },
+  {
+    id: "glam-lounge",
+    name: "Backstage Glam Lounge Sponsor",
+    tagline: "Brand the backstage hair & makeup room all week",
+    price: 6000,
+    badge: "High Exposure",
+    badgeGradient: "from-pink-500 to-violet-500",
+    borderColor: "border-pink-500/30",
+    highlight: false,
+    color: "from-pink-500/10 to-violet-500/5",
+    icon: <Palette className="h-5 w-5 text-pink-400" />,
+    features: [
+      "Full branding of the backstage glam lounge — all 6 shows",
+      "125+ models use your products for their runway looks",
+      "Branded mirrors, stations, and signage",
+      "Backstage content — models getting glammed with your product",
+      "Product gifting to all models backstage",
+      "\"Official Beauty Partner\" backstage designation",
+      "EXA social media backstage content featuring your brand",
+      "4 VIP passes to all shows",
+    ],
+  },
+  {
+    id: "content-studio",
+    name: "Branded Content Studio",
+    tagline: "UGC creation station — models create content with your product all week",
+    price: 4500,
+    badge: null,
+    badgeGradient: "",
+    borderColor: "border-violet-500/20",
+    highlight: false,
+    color: "from-violet-500/10 to-purple-500/5",
+    icon: <Camera className="h-5 w-5 text-violet-400" />,
+    features: [
+      "Branded photo/video studio set up at The Alexander Hotel",
+      "Ring lights, backdrops, and props — all branded with your product",
+      "100+ models create organic UGC with your product throughout the week",
+      "Guarantee 50+ pieces of model-created content",
+      "All content delivered with full usage rights",
+      "EXA social media amplification",
+      "2 VIP passes to runway shows",
+    ],
+  },
+  {
+    id: "influencer-dinner",
+    name: "Private Creator Dinner",
+    tagline: "Intimate dinner with 30+ top creators — expected output: 40–60 posts, 200K–1M+ views",
+    price: 7500,
+    badge: "High ROI",
+    badgeGradient: "from-amber-500 to-orange-500",
+    borderColor: "border-amber-500/20",
+    highlight: false,
+    color: "from-amber-500/10 to-orange-500/5",
+    icon: <Utensils className="h-5 w-5 text-amber-400" />,
+    features: [
+      "Host an exclusive branded dinner for 30+ top models and influencers",
+      "Full venue branding — table settings, menu cards, signage",
+      "Your product featured as the dinner's signature drink or gift",
+      "Intimate, high-value networking with EXA's top talent",
+      "Professional photography and videography",
+      "Content delivered for your marketing use",
+      "EXA social media coverage",
+      "4 VIP passes to runway shows",
+    ],
+  },
+  {
+    id: "charging-station",
+    name: "Charging Station Sponsor",
+    tagline: "Branded phone charging stations in lobby and backstage",
+    price: 2000,
+    badge: null,
+    badgeGradient: "",
+    borderColor: "border-yellow-500/20",
+    highlight: false,
+    color: "from-yellow-500/10 to-amber-500/5",
+    icon: <BatteryCharging className="h-5 w-5 text-yellow-400" />,
+    features: [
+      "Branded charging stations in hotel lobby, backstage, and event areas",
+      "Your logo on every charging station — models and guests see it daily",
+      "QR code/promo card at each station",
+      "High dwell-time placement — people stand there while they charge",
+      "Logo on event website",
+      "2 VIP passes to a runway show",
+    ],
+  },
+  {
+    id: "wifi-sponsor",
+    name: "Hotel Wi-Fi Sponsor",
+    tagline: "Brand the hotel Wi-Fi login page all week",
+    price: 2500,
+    badge: null,
+    badgeGradient: "",
+    borderColor: "border-blue-500/20",
+    highlight: false,
+    color: "from-blue-500/10 to-indigo-500/5",
+    icon: <Wifi className="h-5 w-5 text-blue-400" />,
+    features: [
+      "Branded Wi-Fi login splash page — \"Powered by [Brand]\"",
+      "Every guest and model sees your brand when they connect",
+      "Custom landing page with your promo, QR code, or offer",
+      "All week — hundreds of daily impressions",
+      "Logo on event website",
+      "2 VIP passes to a runway show",
+    ],
+  },
+  {
+    id: "hotel-signage",
+    name: "Hotel Branding & Signage Package",
+    tagline: "Elevator wraps, hallway banners, room key cards, and lobby displays",
+    price: 6000,
+    badge: null,
+    badgeGradient: "",
+    borderColor: "border-indigo-500/20",
+    highlight: false,
+    color: "from-indigo-500/10 to-violet-500/5",
+    icon: <Hotel className="h-5 w-5 text-indigo-400" />,
+    features: [
+      "Branded elevator wraps — your brand seen on every floor, every trip",
+      "Hallway banners and directional signage with your logo",
+      "Branded hotel room key cards for 100+ model rooms",
+      "Lobby display/installation with your product",
+      "Your brand is literally impossible to miss all week",
+      "EXA social media feature",
+      "4 VIP passes to runway shows",
+    ],
+  },
+];
 
 const PACKAGES = [
   {
@@ -44,7 +554,7 @@ const PACKAGES = [
     name: "Presenting Sponsor",
     tagline: "Miami Swim Week 2026 Presented by [Your Brand]",
     price: 20000,
-    badge: "Most Impactful",
+    badge: "Only 1 Available",
     badgeGradient: "from-yellow-500 to-amber-500",
     borderColor: "border-yellow-500/30",
     highlight: true,
@@ -62,7 +572,9 @@ const PACKAGES = [
       "Logo on event website, email blasts & press kits",
       "Backstage content access & photo opportunity",
       "Full photo & video rights from all shows",
+      "Organic social exposure from 600+ models — your brand in their content all week",
       "Logo on Red Carpet Promo Wall",
+      "🎥 Content guarantee: 200+ tagged posts, dedicated hero video, full usage rights",
     ],
   },
   {
@@ -86,6 +598,7 @@ const PACKAGES = [
       "2 dedicated EXA social media features",
       "Logo on event website & email blasts",
       "Logo on Red Carpet Promo Wall",
+      "🎥 Content guarantee: 75–150 tagged posts + full usage rights",
     ],
   },
   {
@@ -93,7 +606,7 @@ const PACKAGES = [
     name: "Official Category Sponsor",
     tagline: "\u201cOfficial Skincare / Beverage / Wellness Partner\u201d",
     price: 7500,
-    badge: "Exclusive",
+    badge: "Only 1 Per Category",
     badgeGradient: "from-cyan-500 to-blue-500",
     borderColor: "border-cyan-500/30",
     highlight: false,
@@ -109,12 +622,13 @@ const PACKAGES = [
       "Product in model & VIP gift bags",
       "Logo on event website",
       "Logo on Red Carpet Promo Wall",
+      "🎥 Content guarantee: 50–100 tagged posts + usage rights",
     ],
   },
   {
     id: "gold",
-    name: "Gold Sponsor",
-    tagline: "Runway logo placement + weekend activation",
+    name: "Runway Visibility Package",
+    tagline: "Your logo on the runway + weekend brand activation",
     price: 5000,
     badge: null,
     badgeGradient: "",
@@ -130,12 +644,13 @@ const PACKAGES = [
       "1 dedicated EXA social media feature",
       "Logo on event website",
       "Logo on Red Carpet Promo Wall",
+      "🎥 Content guarantee: 25–50 tagged posts",
     ],
   },
   {
     id: "community-sponsor",
-    name: "Community Sponsor",
-    tagline: "Your logo on the Red Carpet Promo Wall",
+    name: "Supporting Brand Partner",
+    tagline: "Your logo on the Red Carpet Promo Wall + show tickets",
     price: 500,
     badge: null,
     badgeGradient: "",
@@ -171,8 +686,8 @@ const PACKAGES = [
   },
   {
     id: "brand-activation",
-    name: "Brand Activation Booth",
-    tagline: "Pop-up experience at The Alexander Hotel",
+    name: "Pop-Up Experience",
+    tagline: "Branded pop-up at The Alexander Hotel — sample, demo, or sell all week",
     price: 2500,
     badge: null,
     badgeGradient: "",
@@ -211,8 +726,8 @@ const PACKAGES = [
   },
   {
     id: "photo-video",
-    name: "Media Sponsor",
-    tagline: "Brand placement in all official show photography",
+    name: "Official Content Partner",
+    tagline: "Your brand in every official photo and video — content delivered for your use",
     price: 1500,
     badge: null,
     badgeGradient: "",
@@ -232,36 +747,106 @@ const PACKAGES = [
 ];
 
 const STATS = [
+  { value: "600+", label: "Models at Casting Call" },
+  { value: "125+", label: "Runway Models" },
+  { value: "100+", label: "Models Staying On-Site" },
+  { value: "Millions", label: "Combined Social Reach" },
+  { value: "7 Days", label: "May 25–31, 2026" },
   { value: "6", label: "Runway Shows" },
-  { value: "90+", label: "Professional Models" },
-  { value: "May 26–31", label: "Swim Week 2026" },
-  { value: "Miami Beach", label: "The Alexander Hotel" },
 ];
 
 const FAQS = [
   {
     q: "Who attends Miami Swim Week?",
-    a: "Buyers, press, fashion editors, influencers, models, photographers, and thousands of consumers passionate about swimwear, beauty, and lifestyle. It's one of the most high-energy fashion weeks in the US.",
+    a: "600+ models attend our Monday casting call alone — each with their own social media following. Throughout the week: buyers, press, fashion editors, influencers, photographers, and thousands of consumers. 100+ models stay on-site at the hotel all week.",
+  },
+  {
+    q: "What kind of social media exposure can I expect?",
+    a: "Our models have followings ranging from 5,000 to 5 million. When your brand is in their hands — at casting, backstage, at the pool, or in their hotel room — they post it. Stories, reels, TikToks. You're getting organic, authentic content from hundreds of creators. That's millions of impressions you can't buy through traditional ads.",
+  },
+  {
+    q: "Why is this different from other sponsorship events?",
+    a: "Where else can your brand connect with 600+ models in one location? This isn't a one-night event — it's a full 7-day hotel takeover with casting, 6 runway shows, a beach show, yacht experiences, and 100+ models living on-site. Your brand is embedded in every moment of their week.",
   },
   {
     q: "What categories are a good fit for sponsoring?",
-    a: "Any brand targeting fashion-forward, beauty-conscious, or health-focused consumers. Top performing categories: skincare, sunscreen, medspa, wellness/supplements, spirits, beverages, haircare, and beauty.",
+    a: "Any brand targeting fashion-forward, beauty-conscious consumers. Top performers: skincare, sunscreen, medspa, wellness/supplements, spirits, beverages, haircare, beauty, swimwear, fitness, and tech/apps. If models use it, wear it, or drink it — it works here.",
   },
   {
     q: "Can I customize a package?",
-    a: "Absolutely. If you have a specific activation in mind or want to mix elements across tiers, reach out and we'll put together a custom proposal.",
+    a: "Absolutely. Mix and match across casting call, hotel activations, beach/yacht experiences, and show week packages. Want a custom yacht photoshoot + casting day sampling + hotel room gifting combo? We'll build it.",
   },
   {
     q: "Do I need to be in Miami?",
-    a: "For booth activations, yes — you or a brand rep should be present. For gift bag, media, and logo-only packages, we handle everything and ship your materials home.",
+    a: "For booth activations and sampling, yes — you or a brand rep should be present. For gift bags, hotel room gifting, Wi-Fi branding, signage, and media packages, we handle everything.",
   },
   {
     q: "What's the deadline?",
-    a: "Sponsorship slots are limited — especially Official Category Sponsor (only one per vertical) and the Presenting Sponsor (exclusive). We recommend reaching out as early as possible.",
+    a: "Sponsorship slots are limited and selling fast — especially the Sunset Beach Show, Yacht Experience, Casting Call Presenting Sponsor, and Official Category Sponsor (one per vertical). Reach out early to lock in the best packages.",
   },
   {
     q: "How do we get started?",
-    a: "Email nathan@examodels.com with your brand name and the package you're interested in. We'll send a sponsorship deck and get you set up.",
+    a: "Email nathan@examodels.com with your brand name and the package(s) you're interested in. We'll send a sponsorship deck and get you set up.",
+  },
+];
+
+const BUNDLES = [
+  {
+    id: "creator-takeover",
+    name: "Creator Takeover Package",
+    price: 12500,
+    originalValue: 22000,
+    badge: "Best Value",
+    badgeGradient: "from-emerald-500 to-green-500",
+    borderColor: "border-emerald-500/30",
+    color: "from-emerald-500/20 to-green-500/10",
+    icon: <Camera className="h-5 w-5 text-emerald-400" />,
+    tagline: "Maximum content output — pool, studio, dinner, and gift bags combined",
+    includes: [
+      "Pool Deck Takeover ($8,000)",
+      "Branded Content Studio ($4,500)",
+      "Private Creator Dinner ($7,500)",
+      "Gift Bag Sponsor ($2,000)",
+    ],
+    contentGuarantee: "100+ pieces of creator content, 500K–2M+ projected views",
+  },
+  {
+    id: "casting-domination",
+    name: "Casting Domination Package",
+    price: 9500,
+    originalValue: 21000,
+    badge: "Own The Day",
+    badgeGradient: "from-orange-500 to-red-500",
+    borderColor: "border-orange-500/30",
+    color: "from-orange-500/20 to-red-500/10",
+    icon: <Trophy className="h-5 w-5 text-orange-400" />,
+    tagline: "Own the entire casting day ecosystem — every model sees, touches, and posts your brand",
+    includes: [
+      "Casting Call Presenting Sponsor ($10,000)",
+      "Casting Day Product Sampling ($5,000)",
+      "Casting Day Photo Wall ($4,000)",
+      "Casting Day Hydration Sponsor ($3,500)",
+    ],
+    contentGuarantee: "200+ tagged posts from 600+ models in a single day",
+  },
+  {
+    id: "hotel-experience",
+    name: "Hotel Experience Package",
+    price: 8500,
+    originalValue: 16000,
+    badge: "Full Guest Journey",
+    badgeGradient: "from-rose-500 to-pink-500",
+    borderColor: "border-rose-500/30",
+    color: "from-rose-500/20 to-pink-500/10",
+    icon: <Hotel className="h-5 w-5 text-rose-400" />,
+    tagline: "Own the full model hotel experience — check-in to checkout, your brand is everywhere",
+    includes: [
+      "Model Welcome Gift Bag ($5,000)",
+      "Nightly Turn-Down Gift ($3,500)",
+      "Mini-Fridge Stocking ($4,000)",
+      "Hotel Branding & Signage ($6,000)",
+    ],
+    contentGuarantee: "75+ organic posts from 100+ models sharing your brand throughout their stay",
   },
 ];
 
@@ -307,7 +892,7 @@ export default function SponsorMswPage() {
             Sponsor EXA&apos;s Miami Swim Week
           </h1>
           <p className="text-white/90 text-lg md:text-xl mb-5 max-w-2xl leading-relaxed">
-            Put your brand on the runway. Reach fashion, beauty & lifestyle.
+            600+ models. Millions of combined social media followers. 7 days. One hotel. Where else in the world can your brand connect with this many models in one location?
           </p>
           <div className="flex flex-wrap gap-3 text-white/90">
             <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
@@ -316,11 +901,11 @@ export default function SponsorMswPage() {
             </div>
             <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
               <Calendar className="h-4 w-4 text-cyan-400" />
-              <span className="font-medium text-sm">May 26–31, 2026</span>
+              <span className="font-medium text-sm">May 25–31, 2026</span>
             </div>
             <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
               <Users className="h-4 w-4 text-pink-400" />
-              <span className="font-medium text-sm">6 Runway Shows</span>
+              <span className="font-medium text-sm">600+ Models · 6 Runway Shows · Full Hotel Takeover</span>
             </div>
           </div>
         </div>
@@ -331,18 +916,46 @@ export default function SponsorMswPage() {
         {/* Pitch */}
         <div className="text-center max-w-3xl mx-auto mb-16">
           <Badge className="mb-4 bg-amber-500/10 text-amber-400 border-amber-500/20 px-4 py-1">
-            Sponsorship Opportunity
+            Full Hotel Takeover · 7 Days · Millions of Social Reach
           </Badge>
           <h2 className="text-3xl md:text-4xl font-bold mb-5">
-            Put Your Brand on the Runway
+            There&apos;s Nothing Else Like This
           </h2>
+          <p className="text-muted-foreground text-lg leading-relaxed mb-4">
+            EXA Models is taking over The Alexander Hotel for an entire week. 600+ models at our Monday casting call. 125+ walking 6 runway shows. 100+ staying on-site at the hotel. A sunset show on the beach. A 120ft yacht on the Intracoastal. Branded experiences from lobby to poolside to backstage.
+          </p>
           <p className="text-muted-foreground text-lg leading-relaxed">
-            EXA Models is producing 6 runway shows at Miami Swim Week 2026. We&apos;re inviting select brands to partner with us — from runway backdrop logos to full-week activations, gift bag placements, and official category exclusives.
+            These models have social media followings ranging from 5,000 to 5 million — and they&apos;ll be sharing content all week. When your brand is in their hands, on their runway, and in their hotel room, it ends up in front of millions of their followers. <span className="text-white font-semibold">Where else in the world can a brand connect with 600+ models in one location?</span>
           </p>
         </div>
 
+        {/* Social Reach Callout */}
+        <div className="max-w-4xl mx-auto mb-20 p-8 md:p-10 rounded-3xl border border-pink-500/20 bg-gradient-to-r from-pink-500/5 via-violet-500/5 to-blue-500/5 text-center">
+          <p className="text-xs uppercase tracking-widest text-pink-400 font-semibold mb-3">The Real Value</p>
+          <h3 className="text-2xl md:text-3xl font-bold mb-4">
+            600+ Models = Millions of Organic Impressions
+          </h3>
+          <p className="text-muted-foreground leading-relaxed max-w-2xl mx-auto mb-6">
+            Every model who touches your product, poses in front of your logo, or receives your gift bag is a content creator with an engaged audience. Some have 5,000 followers. Some have 5 million. They post stories, reels, and TikToks all week — and your brand is in the frame.
+          </p>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="p-4 rounded-2xl bg-black/20 border border-white/5">
+              <p className="text-2xl font-bold text-pink-400">5K–5M</p>
+              <p className="text-xs text-muted-foreground mt-1">Follower Range Per Model</p>
+            </div>
+            <div className="p-4 rounded-2xl bg-black/20 border border-white/5">
+              <p className="text-2xl font-bold text-violet-400">600+</p>
+              <p className="text-xs text-muted-foreground mt-1">Models Creating Content</p>
+            </div>
+            <div className="p-4 rounded-2xl bg-black/20 border border-white/5">
+              <p className="text-2xl font-bold text-blue-400">7 Days</p>
+              <p className="text-xs text-muted-foreground mt-1">Of Brand Exposure</p>
+            </div>
+          </div>
+        </div>
+
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-20">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-20">
           {STATS.map((s) => (
             <div key={s.label} className="text-center p-5 rounded-2xl bg-muted/30 border border-white/5">
               <p className="text-2xl md:text-3xl font-bold text-white">{s.value}</p>
@@ -351,10 +964,236 @@ export default function SponsorMswPage() {
           ))}
         </div>
 
-        {/* Sponsorship Packages */}
+        {/* Full Week Schedule */}
         <div className="mb-20">
           <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold mb-3">Sponsorship Packages</h2>
+            <h2 className="text-3xl font-bold mb-3">Full Week Schedule</h2>
+            <p className="text-muted-foreground">
+              7 days of shows, activations, and brand experiences at The Alexander Hotel
+            </p>
+          </div>
+
+          <div className="grid gap-3 max-w-4xl mx-auto">
+            {SCHEDULE.map((event) => (
+              <div
+                key={event.date}
+                className={`flex items-center gap-4 md:gap-6 p-4 md:p-5 rounded-2xl border transition-all ${
+                  event.highlight
+                    ? "border-amber-500/30 bg-gradient-to-r from-amber-500/10 to-orange-500/5"
+                    : "border-white/5 bg-muted/30"
+                }`}
+              >
+                <div className="text-center flex-shrink-0 w-16 md:w-20">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider">{event.day}</p>
+                  <p className={`text-lg md:text-xl font-bold ${event.highlight ? "text-amber-400" : "text-white"}`}>
+                    {event.date.split(" ")[1]}
+                  </p>
+                  <p className="text-xs text-muted-foreground">May</p>
+                </div>
+                <div className="h-10 w-px bg-white/10 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-bold text-sm md:text-base">{event.title}</h3>
+                    {event.badge && (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-gradient-to-r from-amber-500 to-orange-500 text-white">
+                        {event.badge}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs md:text-sm text-muted-foreground mt-0.5">{event.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Casting Call Sponsor Packages */}
+        <div className="mb-20">
+          <div className="text-center mb-4">
+            <Badge className="mb-4 bg-orange-500/10 text-orange-400 border-orange-500/20 px-4 py-1">
+              Monday May 25th · 600+ Models
+            </Badge>
+            <h2 className="text-3xl font-bold mb-3">Casting Call Sponsorships</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Our open casting call draws 600+ female models in a single day — each with their own social media following, from 5K to 5M. This is the single largest gathering of models at any event during Swim Week. Put your product in their hands and it ends up on their feeds. No other activation gives you this kind of direct, one-day access to this many influencers.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6 mt-10">
+            {CASTING_CALL_PACKAGES.map((pkg, index) => (
+              <Card
+                key={pkg.id}
+                className={`relative overflow-hidden border ${pkg.borderColor} ${
+                  pkg.highlight ? "shadow-2xl shadow-orange-500/10 md:col-span-2 max-w-2xl mx-auto w-full" : ""
+                } ${!pkg.highlight && CASTING_CALL_PACKAGES.filter(p => !p.highlight).length % 2 !== 0 && index === CASTING_CALL_PACKAGES.length - 1 ? "md:col-span-2 max-w-xl mx-auto w-full" : ""}`}
+              >
+                <div className={`absolute inset-0 bg-gradient-to-br ${pkg.color} opacity-30 pointer-events-none`} />
+
+                {pkg.badge && (
+                  <div className="absolute top-5 right-5 z-10">
+                    <span
+                      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r ${pkg.badgeGradient} text-white shadow-md`}
+                    >
+                      {pkg.badge}
+                    </span>
+                  </div>
+                )}
+
+                <CardContent className="relative p-6 md:p-8">
+                  <div className="flex items-center gap-2 mb-1">
+                    {pkg.icon}
+                    <p className="text-xs text-muted-foreground uppercase tracking-widest font-medium">
+                      Casting Call Package
+                    </p>
+                  </div>
+                  <h3 className="text-2xl font-bold mb-1">{pkg.name}</h3>
+                  <p className="text-sm text-muted-foreground italic mb-6">{pkg.tagline}</p>
+
+                  <div className="space-y-3 mb-8">
+                    {pkg.features.map((feature) => (
+                      <div key={feature} className="flex items-start gap-3 text-sm">
+                        <div className="flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br from-orange-500/20 to-red-500/20 flex items-center justify-center mt-0.5">
+                          <Check className="h-3 w-3 text-orange-400" />
+                        </div>
+                        <span className="text-muted-foreground leading-snug">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <SponsorContactButton packageName={pkg.name} price={pkg.price} />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* Premium Experience Packages — Beach, Yacht, Jet Ski, Pool */}
+        <div className="mb-20">
+          <div className="text-center mb-4">
+            <Badge className="mb-4 bg-blue-500/10 text-blue-400 border-blue-500/20 px-4 py-1">
+              Beach · Yacht · Jet Ski · Pool Deck
+            </Badge>
+            <h2 className="text-3xl font-bold mb-3">Premium Experience Sponsorships</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              The Alexander Hotel sits right on the beach with the Intracoastal across the street. A sunset sand runway show, a 120ft yacht for VIP cruises and photoshoots, branded jet ski experiences, and a full pool deck takeover — these are the moments brands dream about.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6 mt-10">
+            {PREMIUM_EXPERIENCES.map((pkg, index) => (
+              <Card
+                key={pkg.id}
+                className={`relative overflow-hidden border ${pkg.borderColor} ${
+                  pkg.highlight ? "shadow-2xl shadow-orange-500/10 md:col-span-2 max-w-2xl mx-auto w-full" : ""
+                } ${!pkg.highlight && PREMIUM_EXPERIENCES.filter(p => !p.highlight).length % 2 !== 0 && index === PREMIUM_EXPERIENCES.length - 1 ? "md:col-span-2 max-w-xl mx-auto w-full" : ""}`}
+              >
+                <div className={`absolute inset-0 bg-gradient-to-br ${pkg.color} opacity-30 pointer-events-none`} />
+
+                {pkg.badge && (
+                  <div className="absolute top-5 right-5 z-10">
+                    <span
+                      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r ${pkg.badgeGradient} text-white shadow-md`}
+                    >
+                      {pkg.badge}
+                    </span>
+                  </div>
+                )}
+
+                <CardContent className="relative p-6 md:p-8">
+                  <div className="flex items-center gap-2 mb-1">
+                    {pkg.icon}
+                    <p className="text-xs text-muted-foreground uppercase tracking-widest font-medium">
+                      Premium Experience
+                    </p>
+                  </div>
+                  <h3 className="text-2xl font-bold mb-1">{pkg.name}</h3>
+                  <p className="text-sm text-muted-foreground italic mb-6">{pkg.tagline}</p>
+
+                  <div className="space-y-3 mb-8">
+                    {pkg.features.map((feature) => (
+                      <div key={feature} className="flex items-start gap-3 text-sm">
+                        <div className="flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center mt-0.5">
+                          <Check className="h-3 w-3 text-blue-400" />
+                        </div>
+                        <span className="text-muted-foreground leading-snug">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <SponsorContactButton packageName={pkg.name} price={pkg.price} />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* Hotel Activation Packages */}
+        <div className="mb-20">
+          <div className="text-center mb-4">
+            <Badge className="mb-4 bg-rose-500/10 text-rose-400 border-rose-500/20 px-4 py-1">
+              100+ Models Staying On-Site · Full Hotel Takeover
+            </Badge>
+            <h2 className="text-3xl font-bold mb-3">Hotel Activation Packages</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              100+ models are staying at The Alexander Hotel all week. That means your brand has access to them 24/7 — in their rooms, at breakfast, poolside, backstage, and everywhere in between. These activations turn the entire hotel into your brand experience.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6 mt-10">
+            {HOTEL_PACKAGES.map((pkg, index) => (
+              <Card
+                key={pkg.id}
+                className={`relative overflow-hidden border ${pkg.borderColor} ${
+                  pkg.highlight ? "shadow-2xl shadow-rose-500/10 md:col-span-2 max-w-2xl mx-auto w-full" : ""
+                } ${!pkg.highlight && HOTEL_PACKAGES.filter(p => !p.highlight).length % 2 !== 0 && index === HOTEL_PACKAGES.length - 1 ? "md:col-span-2 max-w-xl mx-auto w-full" : ""}`}
+              >
+                <div className={`absolute inset-0 bg-gradient-to-br ${pkg.color} opacity-30 pointer-events-none`} />
+
+                {pkg.badge && (
+                  <div className="absolute top-5 right-5 z-10">
+                    <span
+                      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r ${pkg.badgeGradient} text-white shadow-md`}
+                    >
+                      {pkg.badge}
+                    </span>
+                  </div>
+                )}
+
+                <CardContent className="relative p-6 md:p-8">
+                  <div className="flex items-center gap-2 mb-1">
+                    {pkg.icon}
+                    <p className="text-xs text-muted-foreground uppercase tracking-widest font-medium">
+                      Hotel Activation
+                    </p>
+                  </div>
+                  <h3 className="text-2xl font-bold mb-1">{pkg.name}</h3>
+                  <p className="text-sm text-muted-foreground italic mb-6">{pkg.tagline}</p>
+
+                  <div className="space-y-3 mb-8">
+                    {pkg.features.map((feature) => (
+                      <div key={feature} className="flex items-start gap-3 text-sm">
+                        <div className="flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br from-rose-500/20 to-pink-500/20 flex items-center justify-center mt-0.5">
+                          <Check className="h-3 w-3 text-rose-400" />
+                        </div>
+                        <span className="text-muted-foreground leading-snug">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <SponsorContactButton packageName={pkg.name} price={pkg.price} />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* Show Week Sponsorship Packages */}
+        <div className="mb-20">
+          <div className="text-center mb-10">
+            <Badge className="mb-4 bg-pink-500/10 text-pink-400 border-pink-500/20 px-4 py-1">
+              Tuesday–Sunday · 6 Runway Shows
+            </Badge>
+            <h2 className="text-3xl font-bold mb-3">Show Week Sponsorship Packages</h2>
             <p className="text-muted-foreground">
               Choose your level of visibility — or mix and match to build a custom partnership
             </p>
@@ -412,6 +1251,170 @@ export default function SponsorMswPage() {
           </div>
         </div>
 
+        {/* Bundle Packages */}
+        <div className="mb-20">
+          <div className="text-center mb-10">
+            <Badge className="mb-4 bg-emerald-500/10 text-emerald-400 border-emerald-500/20 px-4 py-1">
+              Save 30–55% vs. Individual Packages
+            </Badge>
+            <h2 className="text-3xl font-bold mb-3">Bundle Packages</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Pre-built combinations designed for maximum impact. Each bundle saves you thousands vs. buying individually — and guarantees content output.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {BUNDLES.map((bundle) => (
+              <Card
+                key={bundle.id}
+                className={`relative overflow-hidden border ${bundle.borderColor} shadow-xl`}
+              >
+                <div className={`absolute inset-0 bg-gradient-to-br ${bundle.color} opacity-30 pointer-events-none`} />
+
+                <div className="absolute top-5 right-5 z-10">
+                  <span
+                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r ${bundle.badgeGradient} text-white shadow-md`}
+                  >
+                    {bundle.badge}
+                  </span>
+                </div>
+
+                <CardContent className="relative p-6 md:p-8">
+                  <div className="flex items-center gap-2 mb-1">
+                    {bundle.icon}
+                    <p className="text-xs text-muted-foreground uppercase tracking-widest font-medium">
+                      Bundle Package
+                    </p>
+                  </div>
+                  <h3 className="text-xl font-bold mb-1">{bundle.name}</h3>
+                  <p className="text-sm text-muted-foreground italic mb-4">{bundle.tagline}</p>
+
+                  <div className="flex items-baseline gap-2 mb-4">
+                    <span className="text-2xl font-bold text-white">${bundle.price.toLocaleString()}</span>
+                    <span className="text-sm text-muted-foreground line-through">${bundle.originalValue.toLocaleString()}</span>
+                    <span className="text-xs text-emerald-400 font-semibold">Save ${(bundle.originalValue - bundle.price).toLocaleString()}</span>
+                  </div>
+
+                  <div className="space-y-2 mb-4">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Includes:</p>
+                    {bundle.includes.map((item) => (
+                      <div key={item} className="flex items-start gap-2 text-sm">
+                        <Check className="h-3.5 w-3.5 text-emerald-400 flex-shrink-0 mt-0.5" />
+                        <span className="text-muted-foreground leading-snug">{item}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 mb-6">
+                    <p className="text-xs font-semibold text-emerald-400">Guaranteed Content Output</p>
+                    <p className="text-sm text-muted-foreground mt-0.5">{bundle.contentGuarantee}</p>
+                  </div>
+
+                  <SponsorContactButton packageName={bundle.name} price={bundle.price} />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* Content Guarantee Chart */}
+        <div className="mb-20">
+          <div className="max-w-3xl mx-auto">
+            <div className="text-center mb-8">
+              <Badge className="mb-4 bg-violet-500/10 text-violet-400 border-violet-500/20 px-4 py-1">
+                Every Package Comes With Content
+              </Badge>
+              <h2 className="text-2xl font-bold mb-3">Guaranteed Content Output</h2>
+              <p className="text-muted-foreground">
+                You&apos;re not buying a logo placement. You&apos;re buying content, reach, and distribution. Here&apos;s what every tier guarantees.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              {[
+                { tier: "$15K+", posts: "100–200+ tagged posts", extra: "Dedicated content team + hero video + full usage rights", color: "border-yellow-500/30 bg-yellow-500/5" },
+                { tier: "$10K–$15K", posts: "75–150 tagged posts", extra: "Full usage rights + EXA social amplification", color: "border-pink-500/20 bg-pink-500/5" },
+                { tier: "$5K–$10K", posts: "25–75 tagged posts", extra: "Usage rights + EXA social feature", color: "border-cyan-500/20 bg-cyan-500/5" },
+                { tier: "$2K–$5K", posts: "10–25 tagged posts", extra: "EXA social mention + event website logo", color: "border-amber-500/20 bg-amber-500/5" },
+              ].map((item) => (
+                <div key={item.tier} className={`flex items-center gap-4 md:gap-6 p-4 md:p-5 rounded-2xl border ${item.color}`}>
+                  <div className="text-center flex-shrink-0 w-24">
+                    <p className="text-lg font-bold text-white">{item.tier}</p>
+                  </div>
+                  <div className="h-10 w-px bg-white/10 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="font-semibold text-sm">{item.posts}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{item.extra}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ROI Framing */}
+        <div className="mb-20">
+          <div className="max-w-4xl mx-auto p-8 md:p-10 rounded-3xl border border-amber-500/20 bg-gradient-to-r from-amber-500/5 via-orange-500/5 to-red-500/5">
+            <div className="text-center mb-8">
+              <p className="text-xs uppercase tracking-widest text-amber-400 font-semibold mb-3">Why This Is A No-Brainer</p>
+              <h3 className="text-2xl md:text-3xl font-bold mb-4">
+                Compare What Brands Normally Pay
+              </h3>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
+              <div className="p-6 rounded-2xl bg-black/20 border border-white/5">
+                <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-4">Typical Influencer Marketing Costs</p>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">1 influencer post (50K followers)</span>
+                    <span className="text-sm font-semibold text-white">$500–$2,000</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">1 influencer post (500K followers)</span>
+                    <span className="text-sm font-semibold text-white">$2,000–$10,000</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">10-creator campaign</span>
+                    <span className="text-sm font-semibold text-white">$10,000–$50,000</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">100-creator campaign</span>
+                    <span className="text-sm font-semibold text-white">$50,000–$200,000</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 rounded-2xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/20">
+                <p className="text-xs uppercase tracking-wider text-amber-400 font-semibold mb-4">At EXA Swim Week</p>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">600+ creators in one location</span>
+                    <span className="text-sm font-semibold text-amber-400">Included</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">100–200+ tagged posts</span>
+                    <span className="text-sm font-semibold text-amber-400">Guaranteed</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">7 days of content</span>
+                    <span className="text-sm font-semibold text-amber-400">Guaranteed</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Full usage rights</span>
+                    <span className="text-sm font-semibold text-amber-400">Included</span>
+                  </div>
+                </div>
+                <div className="mt-4 pt-4 border-t border-amber-500/20">
+                  <p className="text-sm text-muted-foreground">Starting at</p>
+                  <p className="text-2xl font-bold text-amber-400">$2,000</p>
+                  <p className="text-xs text-muted-foreground mt-1">That&apos;s less than a single influencer post for access to 600+ creators</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Who Should Sponsor */}
         <div className="mb-20">
           <div className="relative overflow-hidden rounded-3xl border border-amber-500/20 bg-gradient-to-br from-amber-500/5 via-orange-500/5 to-pink-500/5 p-8 md:p-12">
@@ -424,17 +1427,20 @@ export default function SponsorMswPage() {
               Brands That Win at Swim Week
             </h2>
             <p className="text-muted-foreground text-lg leading-relaxed mb-8 max-w-2xl">
-              Our audience is fashion-forward, beauty-obsessed, and high-spend. These are the categories that consistently perform best at runway events like ours.
+              600+ models with social followings from 5K to 5M. They&apos;re beauty-obsessed, fashion-forward, and they share everything. When your product is in their hands, it&apos;s on their feed — and in front of their followers. These are the categories that convert.
             </p>
 
             <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
               {[
-                { emoji: "☀️", category: "Sunscreen & SPF", desc: "Models and attendees live in the sun — SPF brands are a natural fit" },
-                { emoji: "💆", category: "Skincare & Medspa", desc: "Backstage beauty partners get direct model and influencer exposure" },
-                { emoji: "💇", category: "Haircare", desc: "Your product in every model's hair and in the gift bag" },
-                { emoji: "🥂", category: "Spirits & Beverages", desc: "Cocktail hour sponsorships put your brand in every hand at the party" },
-                { emoji: "💊", category: "Wellness & Supplements", desc: "Health-conscious models and buyers are your target demo" },
-                { emoji: "💄", category: "Beauty & Makeup", desc: "Official beauty partners get the most backstage and content exposure" },
+                { emoji: "☀️", category: "Sunscreen & SPF", desc: "600+ models in the Miami sun — SPF brands get massive sampling and organic social content" },
+                { emoji: "💆", category: "Skincare & Medspa", desc: "Models are your ideal customer and your best influencer — direct backstage access" },
+                { emoji: "💇", category: "Haircare", desc: "Your product in every model's hair backstage, in the gift bag, and on their social feeds" },
+                { emoji: "🥂", category: "Spirits & Beverages", desc: "Cocktail hours, yacht cruises, pool parties — your brand in every hand, every photo" },
+                { emoji: "💊", category: "Wellness & Supplements", desc: "Health-conscious models with massive followings are your target demo and your marketing channel" },
+                { emoji: "💄", category: "Beauty & Makeup", desc: "Official beauty partner = backstage access to 125+ models and the UGC that comes with it" },
+                { emoji: "👙", category: "Swimwear & Fashion", desc: "It's Swim Week — fashion brands get runway placement, model content, and industry press" },
+                { emoji: "🏋️", category: "Fitness & Activewear", desc: "Morning wellness sessions, pool deck activations — fitness brands connect with models who live the lifestyle" },
+                { emoji: "📱", category: "Tech & Apps", desc: "600+ models with phones in hand all week — app installs, tech demos, and authentic content creation" },
               ].map((item) => (
                 <div key={item.category} className="p-5 rounded-2xl bg-black/20 border border-white/5">
                   <p className="text-2xl mb-2">{item.emoji}</p>
@@ -454,10 +1460,10 @@ export default function SponsorMswPage() {
           </div>
           <div className="max-w-3xl mx-auto space-y-3">
             {[
-              { icon: <Sparkles className="h-4 w-4 text-amber-400" />, title: "Access to 90+ Professional Models", desc: "All confirmed for Swim Week 2026 — your brand reaches real talent with real audiences", color: "border-amber-500/20 bg-amber-500/5" },
-              { icon: <Camera className="h-4 w-4 text-sky-400" />, title: "Event Photography & Video Exposure", desc: "All sponsor logos and activations captured in official event photography", color: "border-sky-500/20 bg-sky-500/5" },
-              { icon: <Megaphone className="h-4 w-4 text-pink-400" />, title: "EXA Social Media Reach", desc: "Featured across EXA's Instagram", color: "border-pink-500/20 bg-pink-500/5" },
-              { icon: <Users className="h-4 w-4 text-violet-400" />, title: "VIP Crowd Access", desc: "Buyers, influencers, press, and fashion insiders — high-value, high-intent attendees", color: "border-violet-500/20 bg-violet-500/5" },
+              { icon: <Sparkles className="h-4 w-4 text-amber-400" />, title: "Access to 600+ Models With Real Social Followings", desc: "Models with 5K to 5M followers — your brand gets organic exposure to millions through their content", color: "border-amber-500/20 bg-amber-500/5" },
+              { icon: <Users className="h-4 w-4 text-pink-400" />, title: "Unmatched Concentration of Talent", desc: "There is nowhere else in the world where a brand can connect with 600+ models in one location, one week — this is it", color: "border-pink-500/20 bg-pink-500/5" },
+              { icon: <Camera className="h-4 w-4 text-sky-400" />, title: "Organic UGC at Scale", desc: "Models post stories, reels, and TikToks all week — your product in the frame means organic content you can't buy", color: "border-sky-500/20 bg-sky-500/5" },
+              { icon: <Megaphone className="h-4 w-4 text-violet-400" />, title: "EXA Social Media + Press", desc: "Featured across EXA's Instagram, website, and press outreach — plus official event photography and video", color: "border-violet-500/20 bg-violet-500/5" },
             ].map((item) => (
               <div key={item.title} className={`flex items-start gap-4 px-5 py-4 rounded-2xl border ${item.color}`}>
                 <div className="p-2 rounded-xl bg-black/20 flex-shrink-0 mt-0.5">
