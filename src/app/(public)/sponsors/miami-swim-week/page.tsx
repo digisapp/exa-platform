@@ -135,6 +135,7 @@ const CASTING_CALL_PACKAGES = [
       "6 VIP passes to all runway shows",
       "First right of refusal for show week sponsorship",
       "🎥 Content guarantee: 150+ tagged posts from casting day alone",
+      "📊 Estimated reach: 1M–5M+ organic impressions from 600+ creators posting",
     ],
   },
   {
@@ -186,6 +187,7 @@ const PREMIUM_EXPERIENCES = [
       "Dedicated social media coverage from EXA",
       "Full photo & video rights from the beach show",
       "🎥 Content guarantee: 100+ tagged posts + hero sunset video",
+      "📊 Estimated reach: 500K–3M+ organic impressions — sunset content goes viral",
     ],
   },
   {
@@ -477,6 +479,7 @@ const PACKAGES = [
       "Organic social exposure from 600+ models — your brand in their content all week",
       "Logo on Red Carpet Promo Wall",
       "🎥 Content guarantee: 200+ tagged posts, dedicated hero video, full usage rights",
+      "📊 Estimated reach: 2M–10M+ organic impressions across model and EXA channels",
     ],
   },
   {
@@ -501,6 +504,7 @@ const PACKAGES = [
       "Logo on event website & email blasts",
       "Logo on Red Carpet Promo Wall",
       "🎥 Content guarantee: 75–150 tagged posts + full usage rights",
+      "📊 Estimated reach: 500K–3M+ organic impressions",
     ],
   },
   {
@@ -525,6 +529,7 @@ const PACKAGES = [
       "Logo on event website",
       "Logo on Red Carpet Promo Wall",
       "🎥 Content guarantee: 50–100 tagged posts + usage rights",
+      "📊 Estimated reach: 300K–1.5M+ organic impressions",
     ],
   },
   {
@@ -774,7 +779,7 @@ export default function SponsorMswPage() {
             Sponsor EXA&apos;s Miami Swim Week
           </h1>
           <p className="text-white/90 text-lg md:text-xl mb-5 max-w-2xl leading-relaxed">
-            600+ models. Millions of combined social media followers. 7 days. One hotel. Where else in the world can your brand connect with this many models in one location?
+            Turn your brand into content seen by millions. 600+ creators. 7 days. 100–200+ guaranteed posts. There is nowhere else like this.
           </p>
           <div className="flex flex-wrap gap-3 text-white/90">
             <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
@@ -801,7 +806,7 @@ export default function SponsorMswPage() {
             Full Hotel Takeover · 7 Days · Millions of Social Reach
           </Badge>
           <h2 className="text-3xl md:text-4xl font-bold mb-5">
-            There&apos;s Nothing Else Like This
+            Turn Your Brand Into Content Seen by Millions
           </h2>
           <p className="text-muted-foreground text-lg leading-relaxed mb-4">
             EXA Models is taking over The Alexander Hotel for an entire week. 600+ models at our Monday casting call. 125+ walking 6 runway shows. 100+ staying on-site at the hotel. A sunset show on the beach. A 120ft yacht on the Intracoastal. Branded experiences from lobby to poolside to backstage.
@@ -1422,20 +1427,54 @@ export default function SponsorMswPage() {
           </div>
         </div>
 
+        {/* Quick Summary */}
+        <div className="mb-20">
+          <div className="max-w-3xl mx-auto text-center p-8 md:p-10 rounded-3xl border border-white/10 bg-muted/20">
+            <p className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-4">The Bottom Line</p>
+            <h2 className="text-2xl md:text-3xl font-bold mb-6">
+              Here&apos;s What You&apos;re Getting
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <div className="p-4 rounded-2xl bg-black/20 border border-white/5">
+                <p className="text-xl font-bold text-amber-400">600+</p>
+                <p className="text-xs text-muted-foreground mt-1">Creators</p>
+              </div>
+              <div className="p-4 rounded-2xl bg-black/20 border border-white/5">
+                <p className="text-xl font-bold text-pink-400">7 Days</p>
+                <p className="text-xs text-muted-foreground mt-1">Of Content</p>
+              </div>
+              <div className="p-4 rounded-2xl bg-black/20 border border-white/5">
+                <p className="text-xl font-bold text-violet-400">100–200+</p>
+                <p className="text-xs text-muted-foreground mt-1">Guaranteed Posts</p>
+              </div>
+              <div className="p-4 rounded-2xl bg-black/20 border border-white/5">
+                <p className="text-xl font-bold text-cyan-400">$2K</p>
+                <p className="text-xs text-muted-foreground mt-1">Starting At</p>
+              </div>
+            </div>
+            <p className="text-muted-foreground text-sm leading-relaxed max-w-xl mx-auto">
+              A full hotel takeover, beach runway, 120ft yacht, 6 shows, and 600+ models creating content with your brand for an entire week. Content lives forever — this isn&apos;t a 2-hour event, it&apos;s a 7-day content factory.
+            </p>
+          </div>
+        </div>
+
         {/* Bottom CTA */}
         <div className="text-center p-10 md:p-14 rounded-3xl bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-pink-500/10 border border-amber-500/20">
-          <h2 className="text-2xl md:text-3xl font-bold mb-3">Ready to Sponsor?</h2>
+          <h2 className="text-2xl md:text-3xl font-bold mb-3">Secure Your Sponsorship</h2>
           <p className="text-muted-foreground mb-8 max-w-md mx-auto leading-relaxed">
-            Email us with your brand name and the package you&apos;re interested in. We&apos;ll send a sponsorship deck and get you set up fast.
+            Packages are limited and selling fast. Send us your brand name and the package you want — we&apos;ll send a sponsorship deck and lock in your spot.
           </p>
           <a
-            href="mailto:nathan@examodels.com?subject=Miami%20Swim%20Week%202026%20Sponsorship&body=Hi%20Nathan%2C%0A%0AI'm%20interested%20in%20sponsoring%20Miami%20Swim%20Week%202026.%0A%0ABrand%3A%20%0AWebsite%3A%20%0APackage%20of%20interest%3A%20%0A%0ALooking%20forward%20to%20connecting."
+            href="mailto:nathan@examodels.com?subject=Miami%20Swim%20Week%202026%20—%20Reserve%20My%20Spot&body=Hi%20Nathan%2C%0A%0AI%20want%20to%20secure%20a%20sponsorship%20for%20Miami%20Swim%20Week%202026.%0A%0ABrand%3A%20%0AWebsite%3A%20%0APackage(s)%20of%20interest%3A%20%0ABudget%20range%3A%20%0A%0ALooking%20forward%20to%20connecting."
             className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold px-8 py-4 rounded-xl transition-all hover:shadow-lg hover:shadow-amber-500/25 hover:scale-[1.02]"
           >
             <Mail className="h-5 w-5" />
-            nathan@examodels.com
+            Reserve Your Spot
             <ArrowRight className="h-4 w-4" />
           </a>
+          <p className="text-sm text-muted-foreground mt-3">
+            nathan@examodels.com
+          </p>
           <p className="text-xs text-muted-foreground mt-4">
             Or visit{" "}
             <Link href="/shows/miami-swim-week-2026" className="text-amber-400 hover:underline">
