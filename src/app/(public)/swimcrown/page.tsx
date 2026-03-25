@@ -185,13 +185,15 @@ export default async function SwimCrownPage() {
               </span>
             </h2>
             <p className="text-muted-foreground text-lg leading-relaxed">
-              SwimCrown is a global swimwear model competition where models
-              from around the world compete to be crowned the{" "}
-              <span className="text-amber-300 font-semibold">world&apos;s #1 swim model</span>.
-              Think of it as the Super Bowl of swimwear modeling — models enter,
-              fans vote, and the top competitors walk the runway live in Miami.
-              Cash prizes, professional shoots, brand deals, and a title that
-              launches careers.
+              SwimCrown is the premier swimwear model competition held live during{" "}
+              <span className="text-amber-300 font-semibold">Miami Swim Week</span>{" "}
+              — the biggest stage in the swim industry. Models from around the
+              world compete for the title of{" "}
+              <span className="text-amber-300 font-semibold">world&apos;s #1 swim model</span>,
+              walking the runway in front of top designers, brands, and industry
+              judges. Fans vote online, the top competitors hit the stage in Miami,
+              and one model walks away with the Crown — plus cash prizes,
+              professional shoots, and brand deals that launch careers.
             </p>
           </div>
         </section>
@@ -407,25 +409,28 @@ export default async function SwimCrownPage() {
           <div className="container mx-auto px-4">
             <h2 className="text-center text-3xl sm:text-4xl font-bold mb-4">
               <span className="bg-gradient-to-r from-amber-300 to-yellow-400 bg-clip-text text-transparent">
-                Entry Tiers
+                Compete Your Way
               </span>
             </h2>
             <p className="text-center text-muted-foreground mb-12 max-w-xl mx-auto">
-              Choose the tier that fits your goals
+              Every tier gets you on stage — pick the one that matches your ambition
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
               {/* Standard */}
-              <Card className="relative border-zinc-800 bg-zinc-900/50 p-6">
-                <h3 className="text-lg font-bold text-white">Standard</h3>
+              <Card className="relative border-zinc-800 bg-zinc-900/50 p-6 flex flex-col">
+                <h3 className="text-lg font-bold text-white">Standard Entry</h3>
                 <p className="mt-1 text-3xl font-black text-white">
                   $299
                 </p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  You&apos;re in the competition — but you&apos;re on your own. No training, no photoshoot, no extra exposure. Your profile goes live, fans vote, and the rest is up to you.
+                </p>
                 <ul className="mt-6 space-y-3 text-sm text-muted-foreground">
                   {[
-                    "SwimCrown contestant profile",
+                    "Official SwimCrown contestant profile",
                     "Online public voting",
-                    "Official contestant badge",
+                    "Verified contestant badge",
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
@@ -433,15 +438,17 @@ export default async function SwimCrownPage() {
                     </li>
                   ))}
                 </ul>
-                <Link href="/swimcrown/enter" className="block mt-8">
-                  <Button className="w-full border-amber-500/30 text-amber-300 hover:bg-amber-500/10" variant="outline">
-                    Select Standard
-                  </Button>
-                </Link>
+                <div className="mt-auto pt-8">
+                  <Link href="/swimcrown/enter" className="block">
+                    <Button className="w-full border-amber-500/30 text-amber-300 hover:bg-amber-500/10" variant="outline">
+                      Enter Standard
+                    </Button>
+                  </Link>
+                </div>
               </Card>
 
               {/* Crown — Featured */}
-              <Card className="relative border-amber-500/40 bg-gradient-to-b from-amber-500/10 to-zinc-900/50 p-6 ring-1 ring-amber-500/20 scale-[1.02]">
+              <Card className="relative border-amber-500/40 bg-gradient-to-b from-amber-500/10 to-zinc-900/50 p-6 ring-1 ring-amber-500/20 scale-[1.02] flex flex-col">
                 <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-bold px-3">
                   Most Popular
                 </Badge>
@@ -451,12 +458,16 @@ export default async function SwimCrownPage() {
                 <p className="mt-1 text-3xl font-black text-white">
                   $549
                 </p>
+                <p className="mt-2 text-sm text-amber-300/70">
+                  Don&apos;t just enter — prepare to win. Get runway training so you shine on stage, a professional swim photoshoot to elevate your look, and a digital comp card that makes you stand out to judges. This is how serious competitors show up.
+                </p>
                 <ul className="mt-6 space-y-3 text-sm text-muted-foreground">
                   {[
                     "Everything in Standard",
-                    "Runway training session",
+                    "Runway training to perfect your walk and stage presence",
                     "Professional swim photoshoot",
-                    "Digital comp card",
+                    "Digital comp card to elevate your portfolio",
+                    "Higher visibility with judges during competition",
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
@@ -464,17 +475,19 @@ export default async function SwimCrownPage() {
                     </li>
                   ))}
                 </ul>
-                <Link href="/swimcrown/enter" className="block mt-8">
-                  <Button className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-bold">
-                    Select Crown
-                  </Button>
-                </Link>
+                <div className="mt-auto pt-8">
+                  <Link href="/swimcrown/enter" className="block">
+                    <Button className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-bold">
+                      Enter Crown
+                    </Button>
+                  </Link>
+                </div>
               </Card>
 
               {/* Elite */}
-              <Card className="relative border-violet-500/30 bg-gradient-to-b from-violet-500/5 to-zinc-900/50 p-6">
+              <Card className="relative border-violet-500/30 bg-gradient-to-b from-violet-500/5 to-zinc-900/50 p-6 flex flex-col">
                 <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-pink-500 to-violet-500 text-white font-bold px-3">
-                  Premium
+                  VIP
                 </Badge>
                 <h3 className="text-lg font-bold text-violet-300 mt-2">
                   Elite Package
@@ -482,12 +495,17 @@ export default async function SwimCrownPage() {
                 <p className="mt-1 text-3xl font-black text-white">
                   $799
                 </p>
+                <p className="mt-2 text-sm text-violet-300/70">
+                  The full competitive edge. Get 1-on-1 runway coaching to master your catwalk, a designer swimwear photoshoot that goes straight into your Swim portfolio, and priority placement in front of judges and designers — giving you the highest chances to win the Crown and book future shows.
+                </p>
                 <ul className="mt-6 space-y-3 text-sm text-muted-foreground">
                   {[
                     "Everything in Crown",
-                    "Priority placement in gallery",
-                    "Social media feature on EXA",
-                    "Exclusive video interview",
+                    "1-on-1 private runway coaching",
+                    "Designer swimwear photoshoot for your Swim portfolio",
+                    "Portfolio shared with designers for future show bookings",
+                    "Priority placement — seen first by judges",
+                    "Featured across EXA social channels",
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-violet-400 mt-0.5 shrink-0" />
@@ -495,11 +513,13 @@ export default async function SwimCrownPage() {
                     </li>
                   ))}
                 </ul>
-                <Link href="/swimcrown/enter" className="block mt-8">
-                  <Button className="w-full border-violet-500/30 text-violet-300 hover:bg-violet-500/10" variant="outline">
-                    Select Elite
-                  </Button>
-                </Link>
+                <div className="mt-auto pt-8">
+                  <Link href="/swimcrown/enter" className="block">
+                    <Button className="w-full border-violet-500/30 text-violet-300 hover:bg-violet-500/10" variant="outline">
+                      Enter Elite
+                    </Button>
+                  </Link>
+                </div>
               </Card>
             </div>
           </div>
