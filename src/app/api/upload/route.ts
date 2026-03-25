@@ -9,7 +9,7 @@ import { checkEndpointRateLimit } from "@/lib/rate-limit";
 export const runtime = "nodejs";
 export const maxDuration = 60; // 60 seconds timeout
 
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/heic", "image/heif"];
 const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
 
 export async function POST(request: NextRequest) {
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     // Validate file size
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { error: "File too large. Maximum size is 5MB" },
+        { error: "File too large. Maximum size is 15MB" },
         { status: 400 }
       );
     }
@@ -83,7 +83,8 @@ export async function POST(request: NextRequest) {
 
     // For AI source images, use a simplified upload path (no processing, no media_asset record)
     if (uploadType === "ai-source") {
-      const { error: uploadError } = await supabase.storage
+      const aiStorageClient = createServiceRoleClient();
+      const { error: uploadError } = await aiStorageClient.storage
         .from("portfolio")
         .upload(filename, inputBuffer, {
           contentType: file.type,
@@ -98,7 +99,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const { data: { publicUrl } } = supabase.storage
+      const { data: { publicUrl } } = aiStorageClient.storage
         .from("portfolio")
         .getPublicUrl(filename);
 
@@ -131,9 +132,9 @@ export async function POST(request: NextRequest) {
     // Determine bucket based on upload type
     const bucket = uploadType === "avatar" ? "avatars" : "portfolio";
 
-    // Use service role client for avatars bucket (its RLS policy checks auth.uid() against
-    // the folder name, but we use actor.id as the folder which differs from user.id)
-    const storageClient = uploadType === "avatar" ? createServiceRoleClient() : supabase;
+    // Use service role client for all storage uploads — the user is already authenticated
+    // and validated above, and there are no RLS policies on storage.objects
+    const storageClient = createServiceRoleClient();
 
     // Upload to Supabase Storage
     const { error: uploadError } = await storageClient.storage
@@ -159,8 +160,9 @@ export async function POST(request: NextRequest) {
     // Get model_id for the media_asset record
     const modelId = actor.type === "model" ? await getModelId(supabase, user.id) : null;
 
-    // Create media_asset record
-    const { data: mediaAsset, error: mediaError } = await supabase
+    // Create media_asset record using service role to bypass RLS
+    const adminDb = createServiceRoleClient();
+    const { data: mediaAsset, error: mediaError } = await adminDb
       .from("media_assets")
       .insert({
         owner_id: actor.id,
@@ -259,12 +261,13 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Delete from storage
+    // Delete from storage using service role client (no storage RLS policies)
+    const deleteClient = createServiceRoleClient();
     const bucket = mediaAsset.source === "avatar" ? "avatars" : "portfolio";
-    await supabase.storage.from(bucket).remove([mediaAsset.storage_path]);
+    await deleteClient.storage.from(bucket).remove([mediaAsset.storage_path]);
 
     // Delete record
-    await supabase.from("media_assets").delete().eq("id", mediaId);
+    await deleteClient.from("media_assets").delete().eq("id", mediaId);
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -990,15 +990,72 @@ function UploadDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
+  const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+  const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/webm'];
+  const MAX_IMAGE_SIZE = 50 * 1024 * 1024; // 50MB
+  const MAX_VIDEO_SIZE = 500 * 1024 * 1024; // 500MB
+  const MAX_FILES = 20;
+
   const handleFiles = (fileList: FileList | null) => {
     if (!fileList) return;
-    const newFiles: UploadFile[] = Array.from(fileList).map((file) => ({
-      file,
-      preview: URL.createObjectURL(file),
-      progress: 0,
-      status: 'pending' as const,
-    }));
-    setFiles((prev) => [...prev, ...newFiles]);
+
+    const incoming = Array.from(fileList);
+
+    // Enforce max file count
+    const remaining = MAX_FILES - files.length;
+    if (remaining <= 0) {
+      toast.error(`You can upload up to ${MAX_FILES} files at a time`);
+      return;
+    }
+    if (incoming.length > remaining) {
+      toast.error(`Only ${remaining} more file${remaining === 1 ? '' : 's'} can be added (max ${MAX_FILES})`);
+    }
+    const toProcess = incoming.slice(0, remaining);
+
+    const accepted: UploadFile[] = [];
+
+    for (const file of toProcess) {
+      // Detect HEIC/HEIF from iPhone
+      const ext = file.name.split('.').pop()?.toLowerCase() || '';
+      const isHeic =
+        file.type === 'image/heic' ||
+        file.type === 'image/heif' ||
+        ext === 'heic' ||
+        ext === 'heif';
+
+      if (isHeic) {
+        toast.error(
+          'HEIC photos are not supported. On your iPhone, go to Settings → Camera → Formats → Most Compatible. Then try again!',
+          { duration: 8000 },
+        );
+        continue;
+      }
+
+      const isImage = ALLOWED_IMAGE_TYPES.includes(file.type);
+      const isVideo = ALLOWED_VIDEO_TYPES.includes(file.type);
+
+      if (!isImage && !isVideo) {
+        toast.error(`"${file.name}" is not a supported format. Use JPEG, PNG, WebP, GIF, MP4, MOV, or WebM.`);
+        continue;
+      }
+
+      const maxSize = isVideo ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
+      if (file.size > maxSize) {
+        toast.error(`"${file.name}" is too large. Max ${isVideo ? '500MB' : '50MB'}.`);
+        continue;
+      }
+
+      accepted.push({
+        file,
+        preview: URL.createObjectURL(file),
+        progress: 0,
+        status: 'pending' as const,
+      });
+    }
+
+    if (accepted.length > 0) {
+      setFiles((prev) => [...prev, ...accepted]);
+    }
   };
 
   const removeFile = (idx: number) => {
@@ -1201,29 +1258,30 @@ function UploadDialog({
           )}
 
           {/* Hidden file inputs */}
+          {/* Explicit MIME types instead of image/* so iOS auto-converts HEIC → JPEG */}
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*,video/*"
+            accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/webm"
             multiple
             className="hidden"
-            onChange={(e) => handleFiles(e.target.files)}
+            onChange={(e) => { handleFiles(e.target.files); e.target.value = ''; }}
           />
           <input
             ref={cameraImageRef}
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp"
             capture="environment"
             className="hidden"
-            onChange={(e) => handleFiles(e.target.files)}
+            onChange={(e) => { handleFiles(e.target.files); e.target.value = ''; }}
           />
           <input
             ref={cameraVideoRef}
             type="file"
-            accept="video/*"
+            accept="video/mp4,video/quicktime,video/webm"
             capture="environment"
             className="hidden"
-            onChange={(e) => handleFiles(e.target.files)}
+            onChange={(e) => { handleFiles(e.target.files); e.target.value = ''; }}
           />
 
           {/* Camera buttons */}

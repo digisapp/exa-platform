@@ -8,7 +8,7 @@ import { checkEndpointRateLimit } from "@/lib/rate-limit";
 // Admin client for database inserts - bypasses RLS
 const adminClient = createServiceRoleClient();
 
-const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/heic", "image/heif"];
 const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
 const MAX_IMAGE_SIZE = 50 * 1024 * 1024; // 50MB
 const MAX_VIDEO_SIZE = 500 * 1024 * 1024; // 500MB
@@ -105,8 +105,9 @@ export async function POST(request: NextRequest) {
     const timestamp = Date.now();
     const filename = `${modelId}/${timestamp}.${ext}`;
 
-    // Upload to Supabase Storage
-    const { error: uploadError } = await supabase.storage
+    // Upload to Supabase Storage using admin client — the user is already authenticated
+    // and validated above, and there are no RLS policies on storage.objects
+    const { error: uploadError } = await adminClient.storage
       .from(bucket)
       .upload(filename, processedBuffer, {
         contentType: finalContentType,

@@ -4,7 +4,7 @@ import { getModelId } from "@/lib/ids";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 
-const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/heic", "image/heif"];
 const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
 const ALLOWED_AUDIO_TYPES = ["audio/webm", "audio/mp4", "audio/mpeg", "audio/ogg", "audio/wav"];
 const MAX_IMAGE_SIZE = 50 * 1024 * 1024; // 50MB
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
 
     if (!isImage && !isVideo && !isAudio) {
       return NextResponse.json(
-        { error: "Invalid file type. Allowed: JPEG, PNG, WebP, GIF, MP4, MOV, WebM, audio files" },
+        { error: "Invalid file type. Allowed: JPEG, PNG, WebP, GIF, HEIC, MP4, MOV, WebM, audio files" },
         { status: 400 }
       );
     }
@@ -66,9 +66,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // HEIC/HEIF from iPhones: store as .jpg since it will be converted on upload/complete
+    const isHeic = fileType === "image/heic" || fileType === "image/heif";
+
     // Generate unique filename - derive extension from validated MIME type, not user filename
     const MIME_TO_EXT: Record<string, string> = {
       "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif",
+      "image/heic": "heic", "image/heif": "heif",
       "video/mp4": "mp4", "video/quicktime": "mov", "video/webm": "webm",
       "audio/webm": "webm", "audio/mp4": "m4a", "audio/mpeg": "mp3", "audio/ogg": "ogg", "audio/wav": "wav",
     };

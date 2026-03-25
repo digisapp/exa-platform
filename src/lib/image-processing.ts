@@ -84,5 +84,5 @@ export async function processImage(
  * Check if a file type is a processable image
  */
 export function isProcessableImage(mimeType: string): boolean {
-  return ["image/jpeg", "image/png", "image/webp", "image/gif"].includes(mimeType);
+  return ["image/jpeg", "image/png", "image/webp", "image/gif", "image/heic", "image/heif"].includes(mimeType);
 }
