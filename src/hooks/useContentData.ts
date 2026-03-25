@@ -164,12 +164,16 @@ export function useContentData() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data),
         });
-        if (!res.ok) throw new Error('Failed to create item');
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.details || errData.error || 'Failed to create item');
+        }
         toast.success('Content item created');
         await Promise.all([fetchItems(), fetchStats()]);
         return await res.json();
-      } catch {
-        toast.error('Failed to create content item');
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Failed to create content item';
+        toast.error(message);
         return null;
       }
     },

@@ -8,14 +8,14 @@ import { z } from "zod";
 const createItemSchema = z.object({
   media_url: z.string().min(1, "media_url is required"),
   media_type: z.enum(["image", "video"]),
-  title: z.string().max(200).optional(),
-  description: z.string().max(1000).optional(),
-  preview_url: z.string().optional(),
+  title: z.string().max(200).optional().nullable(),
+  description: z.string().max(1000).optional().nullable(),
+  preview_url: z.string().optional().nullable(),
   status: z.enum(["private", "portfolio", "exclusive"]).default("private"),
   coin_price: z.number().int().min(0).max(10000).default(0),
-  tags: z.array(z.string()).optional(),
-  publish_at: z.string().datetime().optional(),
-  set_id: z.string().uuid().optional(),
+  tags: z.array(z.string()).optional().nullable(),
+  publish_at: z.string().datetime().optional().nullable(),
+  set_id: z.string().uuid().optional().nullable(),
 });
 
 export async function GET(request: NextRequest) {
@@ -112,8 +112,8 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error("Content item insert error:", error);
-      return NextResponse.json({ error: "Failed to create item" }, { status: 500 });
+      console.error("Content item insert error:", error.message, error.details, error.code);
+      return NextResponse.json({ error: "Failed to create item", details: error.message }, { status: 500 });
     }
 
     return NextResponse.json({ item }, { status: 201 });
