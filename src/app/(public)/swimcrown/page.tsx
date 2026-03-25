@@ -120,7 +120,7 @@ export default async function SwimCrownPage() {
             </div>
 
             <h1 className="mx-auto max-w-4xl text-6xl sm:text-7xl lg:text-8xl font-black tracking-tighter">
-              <span className="text-white">
+              <span className="bg-gradient-to-r from-cyan-300 via-sky-400 to-blue-400 bg-clip-text text-transparent">
                 SWIM
               </span>
               <span className="bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent">
