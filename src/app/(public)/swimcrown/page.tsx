@@ -599,25 +599,28 @@ export default async function SwimCrownPage() {
               </span>
             </h2>
             <p className="text-center text-muted-foreground mb-12 max-w-xl mx-auto">
-              Proudly supported by the biggest names in swim and resort fashion
+              Proudly supported by the biggest names in swim, beauty, and lifestyle
             </p>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 max-w-5xl mx-auto items-center">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-4xl mx-auto items-center">
               {[
-                "TRIANGL",
-                "FRANKIES BIKINIS",
-                "MONDAY SWIMWEAR",
-                "VITAMIN A",
-                "AGUA BENDITA",
-                "L*SPACE",
+                { name: "TRIANGL", category: "Swimwear" },
+                { name: "FRANKIES BIKINIS", category: "Swimwear" },
+                { name: "SUPERGOOP!", category: "Sunscreen" },
+                { name: "SUN BUM", category: "Sun Care" },
+                { name: "COPA CABANA", category: "Resort Wear" },
+                { name: "SOHO HOUSE", category: "Beach Club" },
+                { name: "TARTE", category: "Beauty" },
+                { name: "CELSIUS", category: "Beverage" },
               ].map((brand) => (
                 <div
-                  key={brand}
-                  className="flex h-20 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 hover:border-amber-500/30 transition-colors"
+                  key={brand.name}
+                  className="flex h-20 flex-col items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 hover:border-amber-500/30 transition-colors"
                 >
                   <span className="text-xs sm:text-sm font-bold tracking-widest text-zinc-400 text-center">
-                    {brand}
+                    {brand.name}
                   </span>
+                  <span className="text-[10px] text-zinc-600 mt-1">{brand.category}</span>
                 </div>
               ))}
             </div>
