@@ -149,12 +149,12 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error("Failed to track page view:", error.message, error.details, error.code);
-      return NextResponse.json({ error: "Failed to track" }, { status: 500 });
+      return NextResponse.json({ error: "Failed to track", details: error.message, code: error.code }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Analytics track error:", error);
-    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+    return NextResponse.json({ error: "Internal error", details: error instanceof Error ? error.message : String(error) }, { status: 500 });
   }
 }
