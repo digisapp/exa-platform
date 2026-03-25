@@ -102,10 +102,10 @@ const SCHEDULE = [
   {
     day: "Sunday",
     date: "May 31",
-    title: "Closing Show",
-    description: "The grand finale — closing runway show of Miami Swim Week 2026",
+    title: "Pool Vibes Closing Show",
+    description: "Poolside closing runway show, DJ set, and after party — the ultimate send-off to Swim Week",
     highlight: true,
-    badge: "Grand Finale",
+    badge: "Closing Party",
   },
 ];
 
