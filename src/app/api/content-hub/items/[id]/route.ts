@@ -5,13 +5,13 @@ import { getModelId } from "@/lib/ids";
 import { z } from "zod";
 
 const updateItemSchema = z.object({
-  title: z.string().max(200).optional(),
-  description: z.string().max(1000).optional(),
+  title: z.string().max(200).optional().nullable(),
+  description: z.string().max(1000).optional().nullable(),
   status: z.enum(["private", "portfolio", "exclusive"]).optional(),
   coin_price: z.number().int().min(0).max(10000).optional(),
-  tags: z.array(z.string()).optional(),
-  publish_at: z.string().datetime().nullable().optional(),
-  set_id: z.string().uuid().nullable().optional(),
+  tags: z.array(z.string()).optional().nullable(),
+  publish_at: z.string().datetime().optional().nullable(),
+  set_id: z.string().uuid().optional().nullable(),
   position: z.number().int().min(0).optional(),
 });
 
