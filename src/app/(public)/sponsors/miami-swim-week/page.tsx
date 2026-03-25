@@ -33,6 +33,7 @@ import {
   Package,
   Sparkles,
   Target,
+  ChevronDown,
 } from "lucide-react";
 import { Footer } from "@/components/layout/footer";
 import type { Metadata } from "next";
@@ -389,7 +390,7 @@ const PACKAGES = [
     id: "presenting",
     name: "Presenting Sponsor",
     tagline: "Miami Swim Week 2026 Presented by [Your Brand]",
-    price: 20000,
+    price: 25000,
     badge: "Only 1 Available",
     badgeGradient: "from-yellow-500 to-amber-500",
     borderColor: "border-yellow-500/30",
@@ -408,10 +409,7 @@ const PACKAGES = [
       "Logo on event website, email blasts & press kits",
       "Backstage content access & photo opportunity",
       "Full photo & video rights from all shows",
-      "Organic social exposure from 600+ models — your brand in their content all week",
       "Logo on Red Carpet Promo Wall",
-      "🎥 Content guarantee: 200+ tagged posts, dedicated hero video, full usage rights",
-      "📊 Estimated reach: 2M–10M+ organic impressions across model and EXA channels",
     ],
   },
   {
@@ -443,7 +441,7 @@ const PACKAGES = [
     id: "official-category",
     name: "Official Category Sponsor",
     tagline: "\u201cOfficial Skincare / Beverage / Wellness Partner\u201d",
-    price: 7500,
+    price: 22500,
     badge: "Only 1 Per Category",
     badgeGradient: "from-cyan-500 to-blue-500",
     borderColor: "border-cyan-500/30",
@@ -460,15 +458,13 @@ const PACKAGES = [
       "Product in model & VIP gift bags",
       "Logo on event website",
       "Logo on Red Carpet Promo Wall",
-      "🎥 Content guarantee: 50–100 tagged posts + usage rights",
-      "📊 Estimated reach: 300K–1.5M+ organic impressions",
     ],
   },
   {
     id: "gold",
     name: "Runway Visibility Package",
     tagline: "Your logo on the runway + weekend brand activation",
-    price: 5000,
+    price: 15000,
     badge: null,
     badgeGradient: "",
     borderColor: "border-amber-500/20",
@@ -483,7 +479,6 @@ const PACKAGES = [
       "1 dedicated EXA social media feature",
       "Logo on event website",
       "Logo on Red Carpet Promo Wall",
-      "🎥 Content guarantee: 25–50 tagged posts",
     ],
   },
   {
@@ -506,7 +501,7 @@ const PACKAGES = [
     id: "cocktail-hour",
     name: "Cocktail Hour Sponsor",
     tagline: "Own the pre-show cocktail reception",
-    price: 3500,
+    price: 10500,
     badge: null,
     badgeGradient: "",
     borderColor: "border-violet-500/20",
@@ -571,41 +566,6 @@ const STATS = [
   { value: "100+", label: "Models Staying On-Site" },
   { value: "50M+", label: "Combined Social Reach" },
   { value: "7 Days", label: "May 25–31, 2026" },
-];
-
-const FAQS = [
-  {
-    q: "Who attends Miami Swim Week?",
-    a: "600+ models attend our Monday casting call alone — each with their own social media following. Throughout the week: buyers, press, fashion editors, influencers, photographers, and thousands of consumers. 100+ models stay on-site at the hotel all week.",
-  },
-  {
-    q: "What kind of social media exposure can I expect?",
-    a: "Our models have followings ranging from 5,000 to 5 million. When your brand is in their hands — at casting, backstage, at the pool, or in their hotel room — they post it. Stories, reels, TikToks. You're getting organic, authentic content from hundreds of creators. That's millions of impressions you can't buy through traditional ads.",
-  },
-  {
-    q: "Why is this different from other sponsorship events?",
-    a: "Where else can your brand connect with 600+ models in one location? This isn't a one-night event — it's a full 7-day hotel takeover with casting, 6 runway shows, a beach show, yacht experiences, and 100+ models living on-site. Your brand is embedded in every moment of their week.",
-  },
-  {
-    q: "What categories are a good fit for sponsoring?",
-    a: "Any brand targeting fashion-forward, beauty-conscious consumers. Top performers: skincare, sunscreen, medspa, wellness/supplements, spirits, beverages, haircare, beauty, swimwear, fitness, and tech/apps. If models use it, wear it, or drink it — it works here.",
-  },
-  {
-    q: "Can I customize a package?",
-    a: "Absolutely. Mix and match across casting call, hotel activations, beach/yacht experiences, and show week packages. Want a custom yacht photoshoot + casting day sampling + hotel room gifting combo? We'll build it.",
-  },
-  {
-    q: "Do I need to be in Miami?",
-    a: "For booth activations and sampling, yes — you or a brand rep should be present. For gift bags, hotel room gifting, Wi-Fi branding, signage, and media packages, we handle everything.",
-  },
-  {
-    q: "What's the deadline?",
-    a: "Sponsorship slots are limited and selling fast — especially the Sunset Beach Show, Yacht Experience, Casting Call Presenting Sponsor, and Official Category Sponsor (one per vertical). Reach out early to lock in the best packages.",
-  },
-  {
-    q: "How do we get started?",
-    a: "Email nathan@examodels.com with your brand name and the package(s) you're interested in. We'll send a sponsorship deck and get you set up.",
-  },
 ];
 
 
@@ -769,249 +729,101 @@ export default async function SponsorMswPage() {
           </div>
         </div>
 
-        {/* Casting Call Sponsor Packages */}
-        <div className="mb-20">
-          <div className="text-center mb-4">
-            <Badge className="mb-4 bg-orange-500/10 text-orange-400 border-orange-500/20 px-4 py-1">
-              Monday May 25th · 600+ Models
-            </Badge>
-            <h2 className="text-3xl font-bold mb-3">Casting Call Sponsorships</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Our open casting call draws 600+ female models in a single day — each with their own social media following, from 5K to 5M. This is the single largest gathering of models at any event during Swim Week. Put your product in their hands and it ends up on their feeds. No other activation gives you this kind of direct, one-day access to this many influencers.
-            </p>
-          </div>
+        {/* All Sponsorship Packages — Accordion Layout */}
+        {[
+          {
+            title: "Casting Call Sponsorships",
+            subtitle: "Monday May 25th · 600+ Models",
+            description: "Our open casting call draws 600+ female models in a single day — each with their own social media following, from 5K to 5M. This is the single largest gathering of models at any event during Swim Week.",
+            badgeColor: "bg-orange-500/10 text-orange-400 border-orange-500/20",
+            checkColor: "from-orange-500/20 to-red-500/20",
+            checkIcon: "text-orange-400",
+            packages: CASTING_CALL_PACKAGES,
+          },
+          {
+            title: "Premium Experience Sponsorships",
+            subtitle: "Beach · Yacht · Pool Deck",
+            description: "The Alexander Hotel sits right on the beach with the Intracoastal across the street. A sunset sand runway show, a 120ft yacht for VIP cruises and photoshoots — these are the moments brands dream about.",
+            badgeColor: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+            checkColor: "from-blue-500/20 to-cyan-500/20",
+            checkIcon: "text-blue-400",
+            packages: PREMIUM_EXPERIENCES,
+          },
+          {
+            title: "Hotel Activation Packages",
+            subtitle: "100+ Models Staying On-Site · Full Hotel Takeover",
+            description: "100+ models are staying at The Alexander Hotel all week. That means your brand has access to them 24/7 — in their rooms, at breakfast, poolside, backstage, and everywhere in between.",
+            badgeColor: "bg-rose-500/10 text-rose-400 border-rose-500/20",
+            checkColor: "from-rose-500/20 to-pink-500/20",
+            checkIcon: "text-rose-400",
+            packages: HOTEL_PACKAGES,
+          },
+          {
+            title: "Show Week Sponsorship Packages",
+            subtitle: "Tuesday–Sunday · 6 Runway Shows",
+            description: "Choose your level of visibility — or mix and match to build a custom partnership. Official Category Sponsorships are exclusive — one brand per vertical.",
+            badgeColor: "bg-pink-500/10 text-pink-400 border-pink-500/20",
+            checkColor: "from-amber-500/20 to-orange-500/20",
+            checkIcon: "text-amber-400",
+            packages: PACKAGES,
+          },
+        ].map((section) => (
+          <div key={section.title} className="mb-16">
+            <div className="text-center mb-4">
+              <Badge className={`mb-4 ${section.badgeColor} px-4 py-1`}>
+                {section.subtitle}
+              </Badge>
+              <h2 className="text-3xl font-bold mb-3">{section.title}</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                {section.description}
+              </p>
+            </div>
 
-          <div className="grid md:grid-cols-2 gap-6 mt-10">
-            {CASTING_CALL_PACKAGES.map((pkg, index) => (
-              <Card
-                key={pkg.id}
-                className={`relative overflow-hidden border ${pkg.borderColor} ${
-                  pkg.highlight ? "shadow-2xl shadow-orange-500/10 md:col-span-2 max-w-2xl mx-auto w-full" : ""
-                } ${!pkg.highlight && CASTING_CALL_PACKAGES.filter(p => !p.highlight).length % 2 !== 0 && index === CASTING_CALL_PACKAGES.length - 1 ? "md:col-span-2 max-w-xl mx-auto w-full" : ""}`}
-              >
-                <div className={`absolute inset-0 bg-gradient-to-br ${pkg.color} opacity-30 pointer-events-none`} />
-
-                {pkg.badge && (
-                  <div className="absolute top-5 right-5 z-10">
-                    <span
-                      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r ${pkg.badgeGradient} text-white shadow-md`}
-                    >
-                      {pkg.badge}
-                    </span>
-                  </div>
-                )}
-
-                <CardContent className="relative p-6 md:p-8">
-                  <div className="flex items-center gap-2 mb-1">
-                    {pkg.icon}
-                    <p className="text-xs text-muted-foreground uppercase tracking-widest font-medium">
-                      Casting Call Package
-                    </p>
-                  </div>
-                  <h3 className="text-2xl font-bold mb-1">{pkg.name}</h3>
-                  <p className="text-sm text-muted-foreground italic mb-6">{pkg.tagline}</p>
-
-                  <div className="space-y-3 mb-8">
-                    {pkg.features.map((feature) => (
-                      <div key={feature} className="flex items-start gap-3 text-sm">
-                        <div className="flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br from-orange-500/20 to-red-500/20 flex items-center justify-center mt-0.5">
-                          <Check className="h-3 w-3 text-orange-400" />
-                        </div>
-                        <span className="text-muted-foreground leading-snug">{feature}</span>
+            <div className="space-y-3 mt-10 max-w-3xl mx-auto">
+              {section.packages.map((pkg) => (
+                <details
+                  key={pkg.id}
+                  className={`group rounded-2xl border ${pkg.borderColor} overflow-hidden transition-all [&[open]]:shadow-lg`}
+                >
+                  <summary className="flex items-center gap-4 p-5 md:p-6 cursor-pointer list-none [&::-webkit-details-marker]:hidden select-none hover:bg-white/[0.02] transition-colors">
+                    <div className="flex-shrink-0">{pkg.icon}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <h3 className="font-bold text-base md:text-lg">{pkg.name}</h3>
+                        {pkg.badge && (
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-gradient-to-r ${pkg.badgeGradient} text-white`}>
+                            {pkg.badge}
+                          </span>
+                        )}
                       </div>
-                    ))}
-                  </div>
+                      <p className="text-sm text-muted-foreground mt-0.5 truncate">{pkg.tagline}</p>
+                    </div>
+                    <ChevronDown className="h-5 w-5 text-muted-foreground flex-shrink-0 transition-transform duration-200 group-open:rotate-180" />
+                  </summary>
 
-                  <SponsorContactButton packageName={pkg.name} price={pkg.price} />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
+                  <div className="px-5 md:px-6 pb-6 pt-2 border-t border-white/5">
+                    <div className={`absolute inset-0 bg-gradient-to-br ${pkg.color} opacity-20 pointer-events-none`} />
 
-        {/* Premium Experience Packages — Beach, Yacht, Jet Ski, Pool */}
-        <div className="mb-20">
-          <div className="text-center mb-4">
-            <Badge className="mb-4 bg-blue-500/10 text-blue-400 border-blue-500/20 px-4 py-1">
-              Beach · Yacht · Jet Ski · Pool Deck
-            </Badge>
-            <h2 className="text-3xl font-bold mb-3">Premium Experience Sponsorships</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              The Alexander Hotel sits right on the beach with the Intracoastal across the street. A sunset sand runway show, a 120ft yacht for VIP cruises and photoshoots — these are the moments brands dream about.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6 mt-10">
-            {PREMIUM_EXPERIENCES.map((pkg, index) => (
-              <Card
-                key={pkg.id}
-                className={`relative overflow-hidden border ${pkg.borderColor} ${
-                  pkg.highlight ? "shadow-2xl shadow-orange-500/10 md:col-span-2 max-w-2xl mx-auto w-full" : ""
-                } ${!pkg.highlight && PREMIUM_EXPERIENCES.filter(p => !p.highlight).length % 2 !== 0 && index === PREMIUM_EXPERIENCES.length - 1 ? "md:col-span-2 max-w-xl mx-auto w-full" : ""}`}
-              >
-                <div className={`absolute inset-0 bg-gradient-to-br ${pkg.color} opacity-30 pointer-events-none`} />
-
-                {pkg.badge && (
-                  <div className="absolute top-5 right-5 z-10">
-                    <span
-                      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r ${pkg.badgeGradient} text-white shadow-md`}
-                    >
-                      {pkg.badge}
-                    </span>
-                  </div>
-                )}
-
-                <CardContent className="relative p-6 md:p-8">
-                  <div className="flex items-center gap-2 mb-1">
-                    {pkg.icon}
-                    <p className="text-xs text-muted-foreground uppercase tracking-widest font-medium">
-                      Premium Experience
-                    </p>
-                  </div>
-                  <h3 className="text-2xl font-bold mb-1">{pkg.name}</h3>
-                  <p className="text-sm text-muted-foreground italic mb-6">{pkg.tagline}</p>
-
-                  <div className="space-y-3 mb-8">
-                    {pkg.features.map((feature) => (
-                      <div key={feature} className="flex items-start gap-3 text-sm">
-                        <div className="flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center mt-0.5">
-                          <Check className="h-3 w-3 text-blue-400" />
+                    <div className="space-y-3 mb-6 relative">
+                      {pkg.features.map((feature) => (
+                        <div key={feature} className="flex items-start gap-3 text-sm">
+                          <div className={`flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br ${section.checkColor} flex items-center justify-center mt-0.5`}>
+                            <Check className={`h-3 w-3 ${section.checkIcon}`} />
+                          </div>
+                          <span className="text-muted-foreground leading-snug">{feature}</span>
                         </div>
-                        <span className="text-muted-foreground leading-snug">{feature}</span>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
 
-                  <SponsorContactButton packageName={pkg.name} price={pkg.price} />
-                </CardContent>
-              </Card>
-            ))}
+                    <div className="relative">
+                      <SponsorContactButton packageName={pkg.name} price={pkg.price} />
+                    </div>
+                  </div>
+                </details>
+              ))}
+            </div>
           </div>
-        </div>
-
-        {/* Hotel Activation Packages */}
-        <div className="mb-20">
-          <div className="text-center mb-4">
-            <Badge className="mb-4 bg-rose-500/10 text-rose-400 border-rose-500/20 px-4 py-1">
-              100+ Models Staying On-Site · Full Hotel Takeover
-            </Badge>
-            <h2 className="text-3xl font-bold mb-3">Hotel Activation Packages</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              100+ models are staying at The Alexander Hotel all week. That means your brand has access to them 24/7 — in their rooms, at breakfast, poolside, backstage, and everywhere in between. These activations turn the entire hotel into your brand experience.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6 mt-10">
-            {HOTEL_PACKAGES.map((pkg, index) => (
-              <Card
-                key={pkg.id}
-                className={`relative overflow-hidden border ${pkg.borderColor} ${
-                  pkg.highlight ? "shadow-2xl shadow-rose-500/10 md:col-span-2 max-w-2xl mx-auto w-full" : ""
-                } ${!pkg.highlight && HOTEL_PACKAGES.filter(p => !p.highlight).length % 2 !== 0 && index === HOTEL_PACKAGES.length - 1 ? "md:col-span-2 max-w-xl mx-auto w-full" : ""}`}
-              >
-                <div className={`absolute inset-0 bg-gradient-to-br ${pkg.color} opacity-30 pointer-events-none`} />
-
-                {pkg.badge && (
-                  <div className="absolute top-5 right-5 z-10">
-                    <span
-                      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r ${pkg.badgeGradient} text-white shadow-md`}
-                    >
-                      {pkg.badge}
-                    </span>
-                  </div>
-                )}
-
-                <CardContent className="relative p-6 md:p-8">
-                  <div className="flex items-center gap-2 mb-1">
-                    {pkg.icon}
-                    <p className="text-xs text-muted-foreground uppercase tracking-widest font-medium">
-                      Hotel Activation
-                    </p>
-                  </div>
-                  <h3 className="text-2xl font-bold mb-1">{pkg.name}</h3>
-                  <p className="text-sm text-muted-foreground italic mb-6">{pkg.tagline}</p>
-
-                  <div className="space-y-3 mb-8">
-                    {pkg.features.map((feature) => (
-                      <div key={feature} className="flex items-start gap-3 text-sm">
-                        <div className="flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br from-rose-500/20 to-pink-500/20 flex items-center justify-center mt-0.5">
-                          <Check className="h-3 w-3 text-rose-400" />
-                        </div>
-                        <span className="text-muted-foreground leading-snug">{feature}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <SponsorContactButton packageName={pkg.name} price={pkg.price} />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-
-        {/* Show Week Sponsorship Packages */}
-        <div className="mb-20">
-          <div className="text-center mb-10">
-            <Badge className="mb-4 bg-pink-500/10 text-pink-400 border-pink-500/20 px-4 py-1">
-              Tuesday–Sunday · 6 Runway Shows
-            </Badge>
-            <h2 className="text-3xl font-bold mb-3">Show Week Sponsorship Packages</h2>
-            <p className="text-muted-foreground">
-              Choose your level of visibility — or mix and match to build a custom partnership
-            </p>
-            <p className="text-sm text-amber-400 font-medium mt-2">
-              Official Category Sponsorships are exclusive — one brand per vertical.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            {PACKAGES.map((pkg, index) => (
-              <Card
-                key={pkg.id}
-                className={`relative overflow-hidden border ${pkg.borderColor} ${
-                  pkg.highlight ? "shadow-2xl shadow-yellow-500/10" : ""
-                } ${PACKAGES.length % 2 !== 0 && index === PACKAGES.length - 1 ? "md:col-span-2 max-w-xl mx-auto w-full" : ""}`}
-              >
-                {/* Subtle gradient background */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${pkg.color} opacity-30 pointer-events-none`} />
-
-                {pkg.badge && (
-                  <div className="absolute top-5 right-5 z-10">
-                    <span
-                      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r ${pkg.badgeGradient} text-white shadow-md`}
-                    >
-                      {pkg.badge}
-                    </span>
-                  </div>
-                )}
-
-                <CardContent className="relative p-6 md:p-8">
-                  <div className="flex items-center gap-2 mb-1">
-                    {pkg.icon}
-                    <p className="text-xs text-muted-foreground uppercase tracking-widest font-medium">
-                      Sponsorship Package
-                    </p>
-                  </div>
-                  <h3 className="text-2xl font-bold mb-1">{pkg.name}</h3>
-                  <p className="text-sm text-muted-foreground italic mb-6">{pkg.tagline}</p>
-
-                  <div className="space-y-3 mb-8">
-                    {pkg.features.map((feature) => (
-                      <div key={feature} className="flex items-start gap-3 text-sm">
-                        <div className="flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center mt-0.5">
-                          <Check className="h-3 w-3 text-amber-400" />
-                        </div>
-                        <span className="text-muted-foreground leading-snug">{feature}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <SponsorContactButton packageName={pkg.name} price={pkg.price} />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
+        ))}
 
         {/* Custom Influencer Campaign */}
         <div className="mb-20">
@@ -1102,21 +914,6 @@ export default async function SponsorMswPage() {
           </div>
         )}
 
-        {/* FAQ */}
-        <div className="max-w-2xl mx-auto mb-20">
-          <h2 className="text-2xl font-bold text-center mb-8">Frequently Asked Questions</h2>
-          <div className="space-y-4">
-            {FAQS.map((item) => (
-              <div key={item.q} className="p-5 rounded-xl bg-muted/30 border border-white/5">
-                <p className="font-semibold mb-2 flex items-start gap-2 text-sm">
-                  <Star className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
-                  {item.q}
-                </p>
-                <p className="text-muted-foreground text-sm leading-relaxed pl-6">{item.a}</p>
-              </div>
-            ))}
-          </div>
-        </div>
 
         {/* Bottom CTA */}
         <div className="text-center p-10 md:p-14 rounded-3xl bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-pink-500/10 border border-amber-500/20">
@@ -1134,8 +931,8 @@ export default async function SponsorMswPage() {
               <p className="text-xs text-muted-foreground">Of Content</p>
             </div>
             <div className="p-3 rounded-xl bg-black/20 border border-white/5">
-              <p className="text-lg font-bold text-violet-400">100–200+</p>
-              <p className="text-xs text-muted-foreground">Guaranteed Posts</p>
+              <p className="text-lg font-bold text-violet-400">6</p>
+              <p className="text-xs text-muted-foreground">Runway Shows</p>
             </div>
             <div className="p-3 rounded-xl bg-black/20 border border-white/5">
               <p className="text-lg font-bold text-cyan-400">$500</p>
