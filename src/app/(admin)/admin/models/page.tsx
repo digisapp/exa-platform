@@ -46,6 +46,12 @@ import { toast } from "sonner";
 import { ModelActionsDropdown } from "@/components/admin/AdminActions";
 import { SMSBroadcastModal } from "@/components/admin/SMSBroadcastModal";
 
+function formatFollowers(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${Math.round(n / 1_000)}K`;
+  return n.toLocaleString();
+}
+
 function SortIndicator({ active, direction }: { active: boolean; direction: "asc" | "desc" }) {
   if (!active) return <ArrowUpDown className="h-4 w-4 ml-1 opacity-50" />;
   return direction === "asc"
@@ -647,7 +653,7 @@ export default function AdminModelsPage() {
                         {model.instagram_name ? (
                           <div className="flex flex-col">
                             <a href={`https://instagram.com/${model.instagram_name.replace('@', '').replace(/\s+/g, '')}`} target="_blank" rel="noopener noreferrer" className="text-pink-500 hover:text-pink-400 transition-colors text-sm">{model.instagram_name.replace('@', '')}</a>
-                            {model.instagram_followers ? <span className="text-xs text-muted-foreground">{(model.instagram_followers / 1000).toFixed(1)}K</span> : null}
+                            {model.instagram_followers ? <span className="text-xs text-muted-foreground">{formatFollowers(model.instagram_followers)}</span> : null}
                           </div>
                         ) : <span className="text-muted-foreground text-sm">-</span>}
                       </TableCell>
