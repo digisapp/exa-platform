@@ -1136,7 +1136,7 @@ function UploadDialog({
               <Upload className="mb-3 h-10 w-10 text-muted-foreground" />
               <p className="text-sm font-medium">Click to select files</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                JPEG, PNG, WebP, GIF, MP4, MOV, WebM up to 50MB
+                Images up to 50MB · Videos up to 500MB
               </p>
             </div>
           ) : (

@@ -7,7 +7,8 @@ import { checkEndpointRateLimit } from "@/lib/rate-limit";
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
 const ALLOWED_AUDIO_TYPES = ["audio/webm", "audio/mp4", "audio/mpeg", "audio/ogg", "audio/wav"];
-const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+const MAX_IMAGE_SIZE = 50 * 1024 * 1024; // 50MB
+const MAX_VIDEO_SIZE = 500 * 1024 * 1024; // 500MB
 
 // Admin client for creating signed URLs
 const adminClient = createServiceRoleClient();
@@ -56,9 +57,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (fileSize > MAX_FILE_SIZE) {
+    const maxSize = isVideo ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
+    const maxLabel = isVideo ? "500MB" : "50MB";
+    if (fileSize > maxSize) {
       return NextResponse.json(
-        { error: "File too large. Maximum size is 50MB" },
+        { error: `File too large. Maximum size is ${maxLabel}` },
         { status: 400 }
       );
     }

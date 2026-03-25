@@ -10,7 +10,8 @@ const adminClient = createServiceRoleClient();
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
-const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+const MAX_IMAGE_SIZE = 50 * 1024 * 1024; // 50MB
+const MAX_VIDEO_SIZE = 500 * 1024 * 1024; // 500MB
 
 // POST - Handle small files directly OR create signed URL for large files
 export async function POST(request: NextRequest) {
@@ -54,9 +55,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (file.size > MAX_FILE_SIZE) {
+    const maxSize = isVideo ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
+    const maxLabel = isVideo ? "500MB" : "50MB";
+    if (file.size > maxSize) {
       return NextResponse.json(
-        { error: "File too large. Maximum size is 50MB" },
+        { error: `File too large. Maximum size is ${maxLabel}` },
         { status: 400 }
       );
     }
