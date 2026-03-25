@@ -1272,43 +1272,6 @@ export default async function SponsorMswPage() {
           </div>
         )}
 
-        {/* Who Should Sponsor */}
-        <div className="mb-20">
-          <div className="relative overflow-hidden rounded-3xl border border-amber-500/20 bg-gradient-to-br from-amber-500/5 via-orange-500/5 to-pink-500/5 p-8 md:p-12">
-            <div className="absolute top-6 right-6 text-7xl opacity-10 select-none pointer-events-none">✨</div>
-
-            <Badge className="mb-5 bg-amber-500/10 text-amber-400 border-amber-500/20 px-4 py-1">
-              Perfect Fit
-            </Badge>
-            <h2 className="text-2xl md:text-3xl font-bold mb-4 max-w-xl">
-              Brands That Win at Swim Week
-            </h2>
-            <p className="text-muted-foreground text-lg leading-relaxed mb-8 max-w-2xl">
-              600+ models with social followings from 5K to 5M. They&apos;re beauty-obsessed, fashion-forward, and they share everything. When your product is in their hands, it&apos;s on their feed — and in front of their followers. These are the categories that convert.
-            </p>
-
-            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-              {[
-                { emoji: "☀️", category: "Sunscreen & SPF", desc: "600+ models in the Miami sun — SPF brands get massive sampling and organic social content" },
-                { emoji: "💆", category: "Skincare & Medspa", desc: "Models are your ideal customer and your best influencer — direct backstage access" },
-                { emoji: "💇", category: "Haircare", desc: "Your product in every model's hair backstage, in the gift bag, and on their social feeds" },
-                { emoji: "🥂", category: "Spirits & Beverages", desc: "Cocktail hours, yacht cruises, pool parties — your brand in every hand, every photo" },
-                { emoji: "💊", category: "Wellness & Supplements", desc: "Health-conscious models with massive followings are your target demo and your marketing channel" },
-                { emoji: "💄", category: "Beauty & Makeup", desc: "Official beauty partner = backstage access to 125+ models and the UGC that comes with it" },
-                { emoji: "👙", category: "Swimwear & Fashion", desc: "It's Swim Week — fashion brands get runway placement, model content, and industry press" },
-                { emoji: "🏋️", category: "Fitness & Activewear", desc: "Morning wellness sessions, pool deck activations — fitness brands connect with models who live the lifestyle" },
-                { emoji: "📱", category: "Tech & Apps", desc: "600+ models with phones in hand all week — app installs, tech demos, and authentic content creation" },
-              ].map((item) => (
-                <div key={item.category} className="p-5 rounded-2xl bg-black/20 border border-white/5">
-                  <p className="text-2xl mb-2">{item.emoji}</p>
-                  <p className="font-semibold text-sm mb-1">{item.category}</p>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
         {/* FAQ */}
         <div className="max-w-2xl mx-auto mb-20">
           <h2 className="text-2xl font-bold text-center mb-8">Frequently Asked Questions</h2>
