@@ -616,7 +616,6 @@ const STATS = [
   { value: "100+", label: "Models Staying On-Site" },
   { value: "Millions", label: "Combined Social Reach" },
   { value: "7 Days", label: "May 25–31, 2026" },
-  { value: "6", label: "Runway Shows" },
 ];
 
 const FAQS = [
