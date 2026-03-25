@@ -812,13 +812,13 @@ export default async function SponsorMswPage() {
         {/* Pitch + Stats */}
         <div className="text-center max-w-3xl mx-auto mb-10">
           <Badge className="mb-4 bg-amber-500/10 text-amber-400 border-amber-500/20 px-4 py-1">
-            Full Hotel Takeover · 7 Days · Millions of Social Reach
+            Full Hotel Takeover · 7 Days · Global Exposure
           </Badge>
           <h2 className="text-3xl md:text-4xl font-bold mb-5">
-            Turn Your Brand Into Content Seen by Millions
+            Position Your Brand at the Center of Miami Swim Week
           </h2>
           <p className="text-muted-foreground text-lg leading-relaxed">
-            600+ models with followings from 5K to 5M. A full hotel takeover, sunset beach runway, 120ft yacht, and 6 shows. Your brand in their hands, on their runway, and in their hotel room — it ends up in front of millions. <span className="text-white font-semibold">Where else in the world can a brand connect with 600+ models in one location?</span>
+            600+ models and creators with audiences ranging from 5K to 5M. From a sunset beach runway to a 120ft yacht and a full hotel takeover, your brand is seamlessly integrated into every moment — captured, shared, and distributed across millions of viewers worldwide. <span className="text-white font-semibold">This level of access doesn&apos;t exist anywhere else.</span>
           </p>
         </div>
 
