@@ -114,7 +114,7 @@ const CASTING_CALL_PACKAGES = [
     id: "casting-presenting",
     name: "Casting Call Presenting Sponsor",
     tagline: "\"EXA Casting Call Presented by [Your Brand]\" — 600+ models see your brand all day",
-    price: 10000,
+    price: 14000,
     badge: "Only 1 Available",
     badgeGradient: "from-orange-500 to-red-500",
     borderColor: "border-orange-500/30",
@@ -128,20 +128,17 @@ const CASTING_CALL_PACKAGES = [
       "All casting photos delivered to you for marketing use",
       "Full brand activation booth at the casting venue",
       "Product sampling + branded gift bag for every model at check-in",
-      "Exclusive beverage partner — your brand is the only drink served at casting",
       "Dedicated EXA social media coverage of your brand at casting",
       "Email blast to all registered models featuring your brand",
       "Logo on all casting call promotional materials",
       "6 VIP passes to all runway shows",
-      "First right of refusal for show week sponsorship",
-      "📊 Estimated reach: 1M–5M+ organic impressions from 600+ creators posting",
     ],
   },
   {
     id: "casting-product-sampling",
     name: "Casting Day Product Sampling & Gift Bag",
     tagline: "Put your product directly in the hands of 600+ models — sampling + swag bags",
-    price: 5000,
+    price: 8000,
     badge: "High Impact",
     badgeGradient: "from-pink-500 to-rose-500",
     borderColor: "border-pink-500/30",
@@ -167,7 +164,7 @@ const PREMIUM_EXPERIENCES = [
     id: "beach-show-sponsor",
     name: "Sunset Beach Show Sponsor",
     tagline: "Own the most iconic moment — the sand runway at sunset",
-    price: 15000,
+    price: 12000,
     badge: "Only 1 Available",
     badgeGradient: "from-orange-500 to-yellow-500",
     borderColor: "border-orange-500/30",
@@ -191,8 +188,8 @@ const PREMIUM_EXPERIENCES = [
   {
     id: "yacht-presenting",
     name: "Yacht Experience — Presenting Sponsor",
-    tagline: "Brand the 120ft yacht on the Intracoastal",
-    price: 12000,
+    tagline: "Full day yacht experience with up to 15 models you select from our 125+ roster",
+    price: 16500,
     badge: "Only 1 Available",
     badgeGradient: "from-blue-500 to-cyan-500",
     borderColor: "border-blue-500/30",
@@ -258,9 +255,9 @@ const PREMIUM_EXPERIENCES = [
 
 const HOTEL_PACKAGES = [
   {
-    id: "hotel-welcome-bag",
-    name: "Model Welcome Gift Bag Sponsor",
-    tagline: "100+ models check in to rooms stocked with your product — day one organic content",
+    id: "hotel-welcome-gift",
+    name: "Model Welcome Gift & Room Sponsor",
+    tagline: "Your product in every model room at check-in — 100+ models, 6–8 per room",
     price: 5000,
     badge: "100+ Models",
     badgeGradient: "from-rose-500 to-pink-500",
@@ -269,34 +266,15 @@ const HOTEL_PACKAGES = [
     color: "from-rose-500/20 to-pink-500/10",
     icon: <Gift className="h-5 w-5 text-rose-400" />,
     features: [
-      "Your product in welcome bags for 100+ models — placed in every model room at check-in",
+      "Your product in welcome bags and placed in every model room before check-in — enough for 6–8 models per room",
+      "100+ models discover your brand the moment they arrive",
       "Branded welcome card with your message and promo code",
       "Lobby signage and display featuring your brand",
       "\"Official Welcome Partner\" designation",
-      "Models unbox and share on social — organic UGC from day one",
-      "EXA social media unboxing/arrival content featuring your brand",
-      "Logo on all Swim Week communications to models",
+      "EXA social media feature showcasing your brand at check-in",
+      "Logo on all Swim Week communications to models and event website",
       "2 VIP passes to any runway show",
-    ],
-  },
-  {
-    id: "hotel-room-gift",
-    name: "Model Room Gift Sponsor",
-    tagline: "Your product waiting in every model room at check-in — 100+ models, 6–8 per room",
-    price: 3500,
-    badge: null,
-    badgeGradient: "",
-    borderColor: "border-pink-500/20",
-    highlight: false,
-    color: "from-pink-500/10 to-rose-500/5",
-    icon: <Package className="h-5 w-5 text-pink-400" />,
-    features: [
-      "Your product placed in every model room before check-in — enough for 6–8 models per room",
-      "100+ models discover your brand the moment they arrive",
-      "Branded card with your messaging and promo code",
-      "Models share the surprise on social — high organic engagement",
-      "EXA social media feature",
-      "Logo on event website",
+      "Model content creation & posting available as a paid add-on",
     ],
   },
   {
@@ -318,27 +296,6 @@ const HOTEL_PACKAGES = [
       "EXA social media feature",
       "Logo on event website",
       "2 VIP passes to a runway show",
-    ],
-  },
-  {
-    id: "hotel-signage",
-    name: "Hotel Branding & Signage Package",
-    tagline: "Elevator wraps, hallway banners, room key cards — your brand is impossible to miss",
-    price: 6000,
-    badge: null,
-    badgeGradient: "",
-    borderColor: "border-indigo-500/20",
-    highlight: false,
-    color: "from-indigo-500/10 to-violet-500/5",
-    icon: <Hotel className="h-5 w-5 text-indigo-400" />,
-    features: [
-      "Branded elevator wraps — your brand seen on every floor, every trip",
-      "Hallway banners and directional signage with your logo",
-      "Branded hotel room key cards for model rooms",
-      "Lobby display/installation with your product",
-      "Your brand is literally impossible to miss all week",
-      "EXA social media feature",
-      "4 VIP passes to runway shows",
     ],
   },
   {
@@ -387,7 +344,7 @@ const HOTEL_PACKAGES = [
   {
     id: "content-studio",
     name: "Branded Content Studio",
-    tagline: "UGC creation station — 50+ guaranteed pieces of model-created content",
+    tagline: "Branded photo/video studio at The Alexander Hotel for models to create content with your product",
     price: 4500,
     badge: null,
     badgeGradient: "",
@@ -398,11 +355,9 @@ const HOTEL_PACKAGES = [
     features: [
       "Branded photo/video studio set up at The Alexander Hotel",
       "Ring lights, backdrops, and props — all branded with your product",
-      "100+ models create organic UGC with your product throughout the week",
-      "Guarantee 50+ pieces of model-created content",
-      "All content delivered with full usage rights",
       "EXA social media amplification",
       "2 VIP passes to runway shows",
+      "Additional pricing available for model content creation with deliverables",
     ],
   },
   {
@@ -882,7 +837,7 @@ export default async function SponsorMswPage() {
             </Badge>
             <h2 className="text-3xl font-bold mb-3">Premium Experience Sponsorships</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              The Alexander Hotel sits right on the beach with the Intracoastal across the street. A sunset sand runway show, a 120ft yacht for VIP cruises and photoshoots, branded jet ski experiences, and a full pool deck takeover — these are the moments brands dream about.
+              The Alexander Hotel sits right on the beach with the Intracoastal across the street. A sunset sand runway show, a 120ft yacht for VIP cruises and photoshoots — these are the moments brands dream about.
             </p>
           </div>
 
