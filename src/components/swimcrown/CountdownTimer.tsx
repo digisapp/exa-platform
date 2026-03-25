@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-const TARGET_DATE = new Date("2026-07-10T00:00:00-04:00"); // Miami Swim Week 2026
+const TARGET_DATE = new Date("2026-05-30T00:00:00-04:00"); // SwimCrown Show - May 30, 2026
 
 function getTimeLeft() {
   const now = new Date();

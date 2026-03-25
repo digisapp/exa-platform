@@ -170,11 +170,11 @@ export default async function SwimCrownPage() {
         <section className="py-16 sm:py-20 bg-gradient-to-b from-black/20 to-transparent">
           <div className="container mx-auto px-4 text-center">
             <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-amber-400/80">
-              Miami Swim Week Starts In
+              The SwimCrown Show In
             </p>
             <CountdownTimer />
             <p className="mt-6 text-xs text-muted-foreground/60">
-              July 10, 2026 &middot; Miami Beach, FL
+              Saturday, May 30, 2026 &middot; Miami Beach, FL
             </p>
           </div>
         </section>
@@ -565,7 +565,7 @@ export default async function SwimCrownPage() {
                 },
                 {
                   q: "What is the entry deadline?",
-                  a: "Entry closes two weeks before Miami Swim Week 2026. We recommend entering early to maximize your voting period and build momentum with fans.",
+                  a: "Entry closes two weeks before the SwimCrown Show on May 30, 2026. We recommend entering early to maximize your voting period and build momentum with fans.",
                 },
                 {
                   q: "How does voting work?",
@@ -573,7 +573,7 @@ export default async function SwimCrownPage() {
                 },
                 {
                   q: "What happens at the live show?",
-                  a: "Finalists walk the runway at Miami Swim Week wearing swimsuits gifted by our sponsored designer. The SwimCrown Queen is crowned live on stage with cash prizes awarded on the spot.",
+                  a: "Every contestant walks the runway at the SwimCrown Show on Saturday, May 30, 2026 during Miami Swim Week. Each model wears a swimsuit gifted by our sponsored designer and is scored live by our expert judges. The SwimCrown Queen is crowned on stage with cash prizes awarded on the spot.",
                 },
               ].map((faq, i) => (
                 <details key={i} className="group">
