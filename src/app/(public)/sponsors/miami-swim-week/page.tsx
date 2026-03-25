@@ -78,10 +78,10 @@ const SCHEDULE = [
   {
     day: "Thursday",
     date: "May 28",
-    title: "Day 3 Show",
-    description: "Mid-week runway show with designer collections and brand activations",
-    highlight: false,
-    badge: null,
+    title: "Sunset Beach Show",
+    description: "Stunning sand runway show on the beach at sunset — the most iconic show of the week",
+    highlight: true,
+    badge: "Beach Runway",
   },
   {
     day: "Friday",
@@ -94,10 +94,10 @@ const SCHEDULE = [
   {
     day: "Saturday",
     date: "May 30",
-    title: "Sunset Beach Show",
-    description: "Stunning sand runway show on the beach at sunset — the most iconic show of the week",
-    highlight: true,
-    badge: "Beach Runway",
+    title: "Day 5 Show",
+    description: "Runway show featuring designer collections and brand activations",
+    highlight: false,
+    badge: null,
   },
   {
     day: "Sunday",
