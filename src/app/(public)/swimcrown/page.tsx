@@ -107,10 +107,13 @@ export default async function SwimCrownPage() {
         <section className="pt-12 sm:pt-16 pb-6">
           <div className="container mx-auto px-4 text-center">
             <div className="relative mb-3 inline-flex items-center justify-center">
-              <Crown className="h-10 sm:h-12 w-10 sm:w-12 text-amber-400 drop-shadow-[0_0_15px_rgba(251,191,36,0.4)]" />
+              <Crown className="h-12 sm:h-14 w-12 sm:w-14 text-amber-400 drop-shadow-[0_0_15px_rgba(251,191,36,0.4)]" />
+              <Sparkles className="absolute -top-2 -right-4 h-5 w-5 text-yellow-300 animate-ping [animation-duration:2s]" />
+              <Sparkles className="absolute -top-1 -left-4 h-4 w-4 text-amber-300 animate-ping [animation-duration:2.5s] [animation-delay:0.5s]" />
+              <Sparkles className="absolute -bottom-1 right-0 h-3 w-3 text-yellow-400 animate-ping [animation-duration:3s] [animation-delay:1s]" />
             </div>
 
-            <h1 className="mx-auto max-w-4xl text-4xl sm:text-5xl font-black tracking-tighter">
+            <h1 className="mx-auto max-w-4xl text-5xl sm:text-6xl font-black tracking-tighter">
               <span className="bg-gradient-to-r from-cyan-300 via-sky-400 to-blue-400 bg-clip-text text-transparent">
                 SWIM
               </span>
@@ -145,7 +148,7 @@ export default async function SwimCrownPage() {
                   Compete for the crown, walk the runway at Miami Swim Week, and
                   prove you&apos;re the world&apos;s top swimwear model on the global stage.
                 </p>
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <div className="flex flex-col items-center justify-center gap-3">
                   <Link href="/swimcrown/enter">
                     <Button
                       size="lg"
@@ -155,7 +158,8 @@ export default async function SwimCrownPage() {
                       Enter the Competition
                     </Button>
                   </Link>
-                  <Link href="/swimcrown/contestants">
+                  {/* TODO: Unhide when enough contestants are enrolled */}
+                  {/* <Link href="/swimcrown/contestants">
                     <Button
                       variant="outline"
                       size="lg"
@@ -164,7 +168,7 @@ export default async function SwimCrownPage() {
                       View Contestants
                       <ArrowRight className="ml-2 h-5 w-5" />
                     </Button>
-                  </Link>
+                  </Link> */}
                 </div>
               </div>
             </div>
@@ -172,39 +176,17 @@ export default async function SwimCrownPage() {
         </section>
 
         {/* ─── Countdown ─── */}
-        <section className="py-16 sm:py-20 bg-gradient-to-b from-black/20 to-transparent">
+        <section className="py-10 sm:py-14">
           <div className="container mx-auto px-4 text-center">
-            <p className="mb-6 text-sm font-semibold uppercase tracking-widest text-amber-400/80">
-              The SwimCrown Show In
+            <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-amber-400/80">
+              SwimCrown Competition In
             </p>
-            <CountdownTimer />
-            <p className="mt-6 text-xs text-muted-foreground/60">
-              Saturday, May 30, 2026 &middot; Miami Beach, FL
-            </p>
+            <div className="scale-75 sm:scale-85 origin-top">
+              <CountdownTimer />
+            </div>
           </div>
         </section>
 
-        {/* ─── About ─── */}
-        <section className="py-20 sm:py-24">
-          <div className="container mx-auto px-4 max-w-3xl text-center">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-6">
-              <span className="bg-gradient-to-r from-amber-300 to-yellow-400 bg-clip-text text-transparent">
-                What is SwimCrown?
-              </span>
-            </h2>
-            <p className="text-muted-foreground text-lg leading-relaxed">
-              SwimCrown is the premier swimwear model competition held live during{" "}
-              <span className="text-amber-300 font-semibold">Miami Swim Week</span>{" "}
-              — the biggest stage in the swim industry. Models from around the
-              world compete for the title of{" "}
-              <span className="text-amber-300 font-semibold">world&apos;s #1 swim model</span>,
-              walking the runway in front of top designers, brands, and industry
-              judges. Fans vote online, the top competitors hit the stage in Miami,
-              and one model walks away with the Crown — plus cash prizes,
-              professional shoots, and brand deals that launch careers.
-            </p>
-          </div>
-        </section>
 
         {/* ─── Show Highlight ─── */}
         <section className="relative py-24 sm:py-32 overflow-hidden">
@@ -229,7 +211,7 @@ export default async function SwimCrownPage() {
                 </div>
 
                 <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white">
-                  The SwimCrown Show
+                  SwimCrown Competition
                 </h2>
 
                 <p className="text-lg sm:text-xl font-semibold text-amber-300">
@@ -297,7 +279,7 @@ export default async function SwimCrownPage() {
                 <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-400 to-yellow-500" />
                 <Crown className="mx-auto h-10 w-10 text-amber-400 mb-3" />
                 <h3 className="text-lg font-bold text-amber-300">
-                  SwimCrown Queen
+                  Miss SwimCrown 2026
                 </h3>
                 <p className="text-3xl font-black text-white mt-2">$5,000</p>
                 <ul className="mt-4 space-y-2 text-sm text-muted-foreground text-left">
@@ -583,7 +565,7 @@ export default async function SwimCrownPage() {
                 },
                 {
                   q: "How are winners chosen?",
-                  a: "Winners are determined by a combination of public fan votes (using EXA coins) and our expert judging panel. The SwimCrown Queen receives the most combined score, while Fan Favorite is based solely on public votes.",
+                  a: "Winners are determined by a combination of public fan votes (using EXA coins) and our expert judging panel. The Miss SwimCrown 2026 receives the most combined score, while Fan Favorite is based solely on public votes.",
                 },
                 {
                   q: "Can international models enter?",
@@ -599,7 +581,7 @@ export default async function SwimCrownPage() {
                 },
                 {
                   q: "What happens at the live show?",
-                  a: "Every contestant walks the runway at the SwimCrown Show on Saturday, May 30, 2026 during Miami Swim Week. Each model wears a swimsuit gifted by our sponsored designer and is scored live by our expert judges. The SwimCrown Queen is crowned on stage with cash prizes awarded on the spot.",
+                  a: "Every contestant walks the runway at the SwimCrown Show on Saturday, May 30, 2026 during Miami Swim Week. Each model wears a swimsuit gifted by our sponsored designer and is scored live by our expert judges. The Miss SwimCrown 2026 is crowned on stage with cash prizes awarded on the spot.",
                 },
               ].map((faq, i) => (
                 <details key={i} className="group">
