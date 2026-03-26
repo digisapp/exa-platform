@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { Navbar } from "@/components/layout/navbar";
 import { BottomNav } from "@/components/layout/BottomNav";
@@ -21,6 +22,7 @@ import {
   ChevronDown,
   Instagram,
   UserCircle,
+  Camera,
 } from "lucide-react";
 import { CountdownTimer } from "@/components/swimcrown/CountdownTimer";
 
@@ -167,9 +169,6 @@ export default async function SwimCrownPage() {
               <div className="flex flex-col gap-8 lg:sticky lg:top-24">
                 {/* Countdown */}
                 <div className="text-center lg:text-left">
-                  <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-amber-400/80">
-                    SwimCrown Competition In
-                  </p>
                   <div className="scale-75 sm:scale-85 lg:scale-90 origin-top lg:origin-top-left">
                     <CountdownTimer />
                   </div>
@@ -180,10 +179,6 @@ export default async function SwimCrownPage() {
                   <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-400" />
 
                   <div className="flex flex-col gap-5">
-                    <Badge className="border-amber-500/30 bg-amber-500/10 text-amber-300 px-3 py-1 text-xs w-fit">
-                      1st Annual
-                    </Badge>
-
                     <div className="flex items-center gap-2 text-amber-400">
                       <Star className="h-4 w-4" />
                       <span className="text-xs font-bold tracking-widest uppercase">Live Competition Event</span>
@@ -213,11 +208,11 @@ export default async function SwimCrownPage() {
                       and the world&apos;s #1 swim model will be crowned on stage.
                     </p>
 
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 gap-2">
                       {[
                         { icon: Crown, text: "Walk the Runway" },
-                        { icon: Gem, text: "Gifted Swimsuit" },
-                        { icon: Trophy, text: "Crowned on Stage" },
+                        { icon: Camera, text: "Runway Video + High Visibility" },
+                        { icon: Trophy, text: "Compete for Miss SwimCrown 2026" },
                       ].map((item) => (
                         <div key={item.text} className="flex items-center justify-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/5 px-3 py-2.5">
                           <item.icon className="h-4 w-4 text-amber-400 shrink-0" />
@@ -251,9 +246,6 @@ export default async function SwimCrownPage() {
                 Prize Tiers
               </span>
             </h2>
-            <p className="text-center text-muted-foreground mb-12 max-w-xl mx-auto">
-              Over $10,000 in total prizes for our winners
-            </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
               {/* Queen */}
@@ -509,14 +501,26 @@ export default async function SwimCrownPage() {
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
               {[
-                { name: "Coming Soon", role: "Fashion Director" },
-                { name: "Coming Soon", role: "Swimwear Designer" },
-                { name: "Coming Soon", role: "Celebrity Judge" },
-                { name: "Coming Soon", role: "Industry Expert" },
+                { name: "Miriam", role: "Founder, EXA Models", image: "https://nanftzomzluetblqgrvo.supabase.co/storage/v1/object/public/avatars/172bac94-7d23-43de-8b55-aad09c3115ef/1767135037631.jpg" },
+                { name: "Coming Soon", role: "Swimwear Designer", image: null },
+                { name: "Coming Soon", role: "Celebrity Judge", image: null },
+                { name: "Coming Soon", role: "Industry Expert", image: null },
               ].map((judge, i) => (
                 <Card key={i} className="border-zinc-800 bg-zinc-900/50 p-6 text-center">
-                  <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-amber-500/20 to-yellow-500/10 border border-amber-500/20">
-                    <UserCircle className="h-10 w-10 text-amber-400/50" />
+                  <div className="mx-auto mb-4 relative h-20 w-20 rounded-full overflow-hidden border border-amber-500/20">
+                    {judge.image ? (
+                      <Image
+                        src={judge.image}
+                        alt={judge.name}
+                        fill
+                        className="object-cover"
+                        sizes="80px"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-amber-500/20 to-yellow-500/10">
+                        <UserCircle className="h-10 w-10 text-amber-400/50" />
+                      </div>
+                    )}
                   </div>
                   <h3 className="text-sm font-bold text-white">{judge.name}</h3>
                   <p className="mt-1 text-xs text-muted-foreground">{judge.role}</p>
@@ -532,12 +536,10 @@ export default async function SwimCrownPage() {
             <h2 className="text-center text-3xl sm:text-4xl font-bold mb-4">
               <HelpCircle className="inline-block mr-2 h-8 w-8 text-amber-400" />
               <span className="bg-gradient-to-r from-amber-300 to-yellow-400 bg-clip-text text-transparent">
-                Frequently Asked Questions
+                FAQ
               </span>
             </h2>
-            <p className="text-center text-muted-foreground mb-12">
-              Everything you need to know about SwimCrown
-            </p>
+            <div className="mb-12" />
 
             <div className="space-y-4">
               {[
@@ -588,9 +590,6 @@ export default async function SwimCrownPage() {
                 Our Sponsors & Partners
               </span>
             </h2>
-            <p className="text-center text-muted-foreground mb-12 max-w-xl mx-auto">
-              Proudly supported by the biggest names in swim, beauty, and lifestyle
-            </p>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-4xl mx-auto items-center">
               {[
