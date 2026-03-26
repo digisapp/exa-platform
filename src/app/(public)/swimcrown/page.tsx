@@ -124,137 +124,119 @@ export default async function SwimCrownPage() {
           </div>
         </section>
 
-        {/* ─── Runway Video with Overlay ─── */}
-        <section className="relative pb-8">
-          <div className="max-w-sm sm:max-w-md mx-auto px-4">
-            <div className="relative aspect-[9/16] rounded-2xl overflow-hidden border border-amber-500/20 shadow-2xl shadow-amber-500/10">
-              <video
-                autoPlay
-                muted
-                loop
-                playsInline
-                className="w-full h-full object-cover"
-                src="https://nanftzomzluetblqgrvo.supabase.co/storage/v1/object/public/portfolio/swimcrown/jb-paris-crown.mp4"
-              />
-              {/* Dark gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+        {/* ─── Video + Competition Details — Split Layout ─── */}
+        <section className="relative pb-10">
+          <div className="container mx-auto px-4">
+            <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start max-w-6xl mx-auto">
 
-              {/* Text + CTA overlay */}
-              <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8 text-center">
-                <p className="text-white text-lg sm:text-xl font-bold leading-snug mb-2">
-                  The Search for the World&apos;s #1 Swim Model
-                </p>
-                <p className="text-white/70 text-sm leading-relaxed mb-6">
-                  Compete for the crown, walk the runway at Miami Swim Week, and
-                  prove you&apos;re the world&apos;s top swimwear model on the global stage.
-                </p>
-                <div className="flex flex-col items-center justify-center gap-3">
-                  <Link href="/swimcrown/enter">
-                    <Button
-                      size="lg"
-                      className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-bold px-6 py-5 text-base rounded-full shadow-lg shadow-amber-500/25"
-                    >
-                      <Crown className="mr-2 h-5 w-5" />
-                      Enter the Competition
-                    </Button>
-                  </Link>
-                  {/* TODO: Unhide when enough contestants are enrolled */}
-                  {/* <Link href="/swimcrown/contestants">
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      className="border-white/30 text-white hover:bg-white/10 px-6 py-5 text-base rounded-full"
-                    >
-                      View Contestants
-                      <ArrowRight className="ml-2 h-5 w-5" />
-                    </Button>
-                  </Link> */}
+              {/* Left — Portrait Video with Overlay */}
+              <div className="max-w-sm mx-auto lg:max-w-none">
+                <div className="relative aspect-[9/16] rounded-2xl overflow-hidden border border-amber-500/20 shadow-2xl shadow-amber-500/10">
+                  <video
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    className="w-full h-full object-cover"
+                    src="https://nanftzomzluetblqgrvo.supabase.co/storage/v1/object/public/portfolio/swimcrown/jb-paris-crown.mp4"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+
+                  <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8 text-center">
+                    <p className="text-white text-lg sm:text-xl font-bold leading-snug mb-2">
+                      The Search for the World&apos;s #1 Swim Model
+                    </p>
+                    <p className="text-white/70 text-sm leading-relaxed mb-6">
+                      Compete for the crown, walk the runway at Miami Swim Week, and
+                      prove you&apos;re the world&apos;s top swimwear model on the global stage.
+                    </p>
+                    <Link href="/swimcrown/enter">
+                      <Button
+                        size="lg"
+                        className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-bold px-6 py-5 text-base rounded-full shadow-lg shadow-amber-500/25"
+                      >
+                        <Crown className="mr-2 h-5 w-5" />
+                        Enter the Competition
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </section>
 
-        {/* ─── Countdown ─── */}
-        <section className="py-10 sm:py-14">
-          <div className="container mx-auto px-4 text-center">
-            <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-amber-400/80">
-              SwimCrown Competition In
-            </p>
-            <div className="scale-75 sm:scale-85 origin-top">
-              <CountdownTimer />
-            </div>
-          </div>
-        </section>
-
-
-        {/* ─── Show Highlight ─── */}
-        <section className="relative py-24 sm:py-32 overflow-hidden">
-          {/* Background glow */}
-          <div className="pointer-events-none absolute inset-0">
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[700px] rounded-full bg-gradient-to-br from-amber-500/15 via-yellow-500/10 to-transparent blur-3xl" />
-          </div>
-
-          <div className="container relative mx-auto px-4 max-w-4xl">
-            <div className="relative overflow-hidden rounded-3xl border border-amber-500/30 bg-gradient-to-b from-amber-500/10 via-zinc-900/90 to-zinc-900/90 p-10 sm:p-14 lg:p-16">
-              <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-400" />
-
-              <div className="flex flex-col items-center text-center gap-6">
-                <Badge className="border-amber-500/30 bg-amber-500/10 text-amber-300 px-4 py-1.5 text-sm">
-                  1st Annual
-                </Badge>
-
-                <div className="flex items-center gap-3 text-amber-400">
-                  <Star className="h-6 w-6" />
-                  <span className="text-sm font-bold tracking-widest uppercase">Live Competition Event</span>
-                  <Star className="h-6 w-6" />
+              {/* Right — Competition Details */}
+              <div className="flex flex-col gap-8 lg:sticky lg:top-24">
+                {/* Countdown */}
+                <div className="text-center lg:text-left">
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-amber-400/80">
+                    SwimCrown Competition In
+                  </p>
+                  <div className="scale-75 sm:scale-85 lg:scale-90 origin-top lg:origin-top-left">
+                    <CountdownTimer />
+                  </div>
                 </div>
 
-                <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white">
-                  SwimCrown Competition
-                </h2>
+                {/* Competition Card */}
+                <div className="relative overflow-hidden rounded-2xl border border-amber-500/30 bg-gradient-to-b from-amber-500/10 via-zinc-900/90 to-zinc-900/90 p-8">
+                  <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-400" />
 
-                <p className="text-lg sm:text-xl font-semibold text-amber-300">
-                  Saturday, May 30, 2026 &middot; Miami Beach, FL
-                </p>
+                  <div className="flex flex-col gap-5">
+                    <Badge className="border-amber-500/30 bg-amber-500/10 text-amber-300 px-3 py-1 text-xs w-fit">
+                      1st Annual
+                    </Badge>
 
-                <div className="w-16 h-px bg-gradient-to-r from-transparent via-amber-500/50 to-transparent" />
-
-                <p className="text-muted-foreground text-base sm:text-lg leading-relaxed max-w-2xl">
-                  The inaugural SwimCrown competition show will be held live
-                  during{" "}
-                  <span className="text-amber-300 font-semibold">Miami Swim Week</span>.
-                  Every contestant who enters will{" "}
-                  <span className="text-white font-semibold">walk the runway</span>{" "}
-                  in front of a live audience, wearing a swimsuit gifted by our
-                  sponsored swimwear designer{" "}
-                  <span className="text-amber-300 font-semibold">(TBA)</span>.
-                  Each model will be scored live by our expert panel of judges —
-                  and the world&apos;s #1 swim model will be crowned on stage.
-                </p>
-
-                <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-xl">
-                  {[
-                    { icon: Crown, text: "Walk the Runway" },
-                    { icon: Gem, text: "Gifted Swimsuit" },
-                    { icon: Trophy, text: "Crowned on Stage" },
-                  ].map((item) => (
-                    <div key={item.text} className="flex items-center justify-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3">
-                      <item.icon className="h-4 w-4 text-amber-400 shrink-0" />
-                      <span className="text-sm font-medium text-white">{item.text}</span>
+                    <div className="flex items-center gap-2 text-amber-400">
+                      <Star className="h-4 w-4" />
+                      <span className="text-xs font-bold tracking-widest uppercase">Live Competition Event</span>
+                      <Star className="h-4 w-4" />
                     </div>
-                  ))}
-                </div>
 
-                <Link href="/swimcrown/enter" className="mt-4">
-                  <Button
-                    size="lg"
-                    className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-bold px-10 py-6 text-lg rounded-full shadow-lg shadow-amber-500/25"
-                  >
-                    <Crown className="mr-2 h-5 w-5" />
-                    Enter the Show
-                  </Button>
-                </Link>
+                    <h2 className="text-3xl sm:text-4xl font-black text-white">
+                      SwimCrown Competition
+                    </h2>
+
+                    <p className="text-base font-semibold text-amber-300">
+                      Saturday, May 30, 2026 &middot; Miami Beach, FL
+                    </p>
+
+                    <div className="w-12 h-px bg-gradient-to-r from-amber-500/50 to-transparent" />
+
+                    <p className="text-muted-foreground text-sm leading-relaxed">
+                      The inaugural SwimCrown competition show will be held live
+                      during{" "}
+                      <span className="text-amber-300 font-semibold">Miami Swim Week</span>.
+                      Every contestant who enters will{" "}
+                      <span className="text-white font-semibold">walk the runway</span>{" "}
+                      in front of a live audience, wearing a swimsuit gifted by our
+                      sponsored swimwear designer{" "}
+                      <span className="text-amber-300 font-semibold">(TBA)</span>.
+                      Each model will be scored live by our expert panel of judges —
+                      and the world&apos;s #1 swim model will be crowned on stage.
+                    </p>
+
+                    <div className="grid grid-cols-3 gap-3">
+                      {[
+                        { icon: Crown, text: "Walk the Runway" },
+                        { icon: Gem, text: "Gifted Swimsuit" },
+                        { icon: Trophy, text: "Crowned on Stage" },
+                      ].map((item) => (
+                        <div key={item.text} className="flex items-center justify-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/5 px-3 py-2.5">
+                          <item.icon className="h-4 w-4 text-amber-400 shrink-0" />
+                          <span className="text-xs font-medium text-white">{item.text}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <Link href="/swimcrown/enter">
+                      <Button
+                        size="lg"
+                        className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-bold px-8 py-5 text-base rounded-full shadow-lg shadow-amber-500/25"
+                      >
+                        <Crown className="mr-2 h-5 w-5" />
+                        Enter the Competition
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -653,7 +635,7 @@ export default async function SwimCrownPage() {
               on all things SwimCrown.
             </p>
             <a
-              href="https://instagram.com/examodels"
+              href="https://instagram.com/swimcrown"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -663,7 +645,7 @@ export default async function SwimCrownPage() {
                 className="border-amber-500/30 text-amber-300 hover:bg-amber-500/10 rounded-full px-8"
               >
                 <Instagram className="mr-2 h-5 w-5" />
-                @examodels
+                @swimcrown
               </Button>
             </a>
           </div>
@@ -689,16 +671,6 @@ export default async function SwimCrownPage() {
                   >
                     <Crown className="mr-2 h-5 w-5" />
                     Enter Now
-                  </Button>
-                </Link>
-                <Link href="/swimcrown/contestants">
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className="border-amber-500/30 text-amber-300 hover:bg-amber-500/10 px-8 py-6 text-lg rounded-full"
-                  >
-                    <Users className="mr-2 h-5 w-5" />
-                    View Contestants
                   </Button>
                 </Link>
               </div>
