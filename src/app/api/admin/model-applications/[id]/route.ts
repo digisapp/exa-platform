@@ -111,9 +111,8 @@ export async function PATCH(
         ]);
 
         if (linkError) console.error("Error linking model:", linkError);
-        if (!actorError && updatedActor?.id) {
-          await adminClient.from("fans").delete().eq("id", updatedActor.id);
-        }
+        // Always clean up fan record by user_id (more reliable than by id convention)
+        await adminClient.from("fans").delete().eq("user_id", application.user_id);
       } else if (!existingModel) {
         // No existing model found - create new one
         const looksLikeEmail = (s: string) => s.includes("@") || /\.(com|net|org|io|co)$/i.test(s);
@@ -174,16 +173,12 @@ export async function PATCH(
           preferred_language: preferredLanguage,
         });
 
-        if (!actorError && updatedActor?.id) {
-          const [modelResult] = await Promise.all([
-            modelInsert,
-            adminClient.from("fans").delete().eq("id", updatedActor.id),
-          ]);
-          if (modelResult?.error) console.error("Error creating model:", modelResult.error);
-        } else {
-          const { error: modelError } = await modelInsert;
-          if (modelError) console.error("Error creating model:", modelError);
-        }
+        const [modelResult] = await Promise.all([
+          modelInsert,
+          // Always clean up fan record by user_id (more reliable than by id convention)
+          adminClient.from("fans").delete().eq("user_id", application.user_id),
+        ]);
+        if (modelResult?.error) console.error("Error creating model:", modelResult.error);
       } else {
         // Model already exists by user_id, just approve it
         modelUsername = existingModelByUser!.username || "";
@@ -193,9 +188,8 @@ export async function PATCH(
           adminClient.from("actors").update({ type: "model" }).eq("user_id", application.user_id).select("id").single(),
         ]);
 
-        if (!actorError && updatedActor?.id) {
-          await adminClient.from("fans").delete().eq("id", updatedActor.id);
-        }
+        // Always clean up fan record by user_id (more reliable than by id convention)
+        await adminClient.from("fans").delete().eq("user_id", application.user_id);
       }
 
       // Fire-and-forget: send email + welcome chat in background (don't block response)

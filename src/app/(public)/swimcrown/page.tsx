@@ -528,57 +528,6 @@ export default async function SwimCrownPage() {
           </div>
         </section>
 
-        {/* ─── FAQ ─── */}
-        <section className="py-20 sm:py-24 bg-gradient-to-b from-transparent via-amber-950/5 to-transparent">
-          <div className="container mx-auto px-4 max-w-3xl">
-            <h2 className="text-center text-3xl sm:text-4xl font-bold mb-4">
-              <HelpCircle className="inline-block mr-2 h-8 w-8 text-amber-400" />
-              <span className="bg-gradient-to-r from-amber-300 to-yellow-400 bg-clip-text text-transparent">
-                FAQ
-              </span>
-            </h2>
-            <div className="mb-12" />
-
-            <div className="space-y-4">
-              {[
-                {
-                  q: "Who can enter SwimCrown?",
-                  a: "Any aspiring or professional model aged 18+ from anywhere in the world can enter. SwimCrown is a global competition open to all.",
-                },
-                {
-                  q: "How are winners chosen?",
-                  a: "Winners are determined by a combination of public fan votes (using EXA coins) and our expert judging panel. The Miss SwimCrown 2026 receives the most combined score, while Fan Favorite is based solely on public votes.",
-                },
-                {
-                  q: "Can international models enter?",
-                  a: "Absolutely! SwimCrown welcomes models from every country. Our finalists will be flown to Miami for Swim Week. Travel arrangements for international winners will be coordinated by our team.",
-                },
-                {
-                  q: "What is the entry deadline?",
-                  a: "Entry closes two weeks before the SwimCrown Show on May 30, 2026. We recommend entering early to maximize your voting period and build momentum with fans.",
-                },
-                {
-                  q: "How does voting work?",
-                  a: "Fans vote using EXA coins — 1 coin equals 1 vote. Coins can be purchased on the EXA platform. There is no limit to how many votes a contestant can receive.",
-                },
-                {
-                  q: "What happens at the live show?",
-                  a: "Every contestant walks the runway at the SwimCrown Show on Saturday, May 30, 2026 during Miami Swim Week. Each model wears a swimsuit gifted by our sponsored designer and is scored live by our expert judges. The Miss SwimCrown 2026 is crowned on stage with cash prizes awarded on the spot.",
-                },
-              ].map((faq, i) => (
-                <details key={i} className="group">
-                  <summary className="flex cursor-pointer items-center justify-between rounded-xl border border-zinc-800 bg-zinc-900/50 px-6 py-4 text-left text-white font-medium hover:border-amber-500/30 transition-colors">
-                    {faq.q}
-                    <ChevronDown className="h-5 w-5 text-amber-400 shrink-0 ml-4 transition-transform group-open:rotate-180" />
-                  </summary>
-                  <div className="px-6 pb-4 pt-2 text-sm text-muted-foreground leading-relaxed">
-                    {faq.a}
-                  </div>
-                </details>
-              ))}
-            </div>
-          </div>
-        </section>
 
         {/* ─── Sponsors ─── */}
         <section className="py-20 sm:py-24">

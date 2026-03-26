@@ -191,10 +191,14 @@ export default function AdminFansPage() {
         userToActorMap.set(a.user_id, a.id);
       });
 
-      // Attach actor_id to fan data
+      // Attach actor_id and filter out orphaned fan records (users who are now models/brands)
       data.forEach((fan: any) => {
         fan.actor_id = userToActorMap.get(fan.user_id);
       });
+
+      // Remove fans whose actor type is no longer 'fan' (orphaned records from model approval)
+      const fanUserIds = new Set(actors?.map((a: any) => a.user_id) || []);
+      const activeFansOnly = data.filter((fan: any) => fanUserIds.has(fan.user_id));
 
       const actorIds = actors?.map((a: any) => a.id) || [];
 
@@ -238,16 +242,16 @@ export default function AdminFansPage() {
       }
 
       // Attach to fan data
-      data.forEach((fan: any) => {
+      activeFansOnly.forEach((fan: any) => {
         fan.coins_spent = spentMap.get(fan.id) || 0;
         fan.following_count = followMap.get(fan.id) || 0;
         fan.report_count = fan.actor_id ? (reportMap.get(fan.actor_id) || 0) : 0;
       });
 
       // Filter by reports if needed
-      let filteredData = data;
+      let filteredData = activeFansOnly;
       if (reportsFilter === "has_reports") {
-        filteredData = data.filter((f: any) => f.report_count > 0);
+        filteredData = activeFansOnly.filter((f: any) => f.report_count > 0);
       }
 
       // Sort by computed fields if needed
@@ -260,7 +264,7 @@ export default function AdminFansPage() {
       }
 
       setFans(filteredData);
-      setTotalCount(count || 0);
+      setTotalCount(activeFansOnly.length);
       setLoading(false);
       return;
     }

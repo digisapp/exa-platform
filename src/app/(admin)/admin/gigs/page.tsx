@@ -199,9 +199,12 @@ export default function AdminGigsPage() {
       return;
     }
 
-    // Get all model_badges for this badge
-    const modelIds = apps.map(a => a.model_id);
-    if (modelIds.length === 0) {
+    // Only check badge status for accepted/approved models to avoid URL length limits
+    // with large application counts (490+ UUIDs in .in() exceeds PostgREST URL limits)
+    const acceptedModelIds = apps
+      .filter(a => a.status === "accepted" || a.status === "approved")
+      .map(a => a.model_id);
+    if (acceptedModelIds.length === 0) {
       setModelBadges(new Set());
       return;
     }
@@ -210,7 +213,7 @@ export default function AdminGigsPage() {
       .from("model_badges") as any)
       .select("model_id")
       .eq("badge_id", badge.id)
-      .in("model_id", modelIds);
+      .in("model_id", acceptedModelIds);
 
     setModelBadges(new Set(badges?.map((b: any) => b.model_id) || []));
   }

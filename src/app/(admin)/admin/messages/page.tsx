@@ -18,6 +18,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -404,6 +405,9 @@ export default function AdminMessagesPage() {
                 </span>
               )}
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              View conversation messages
+            </DialogDescription>
           </DialogHeader>
           <div className="h-[500px] overflow-y-auto pr-4">
             {loadingMessages ? (
