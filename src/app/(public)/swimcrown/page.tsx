@@ -152,7 +152,7 @@ export default async function SwimCrownPage() {
                       Compete for the crown, walk the runway at Miami Swim Week, and
                       prove you&apos;re the world&apos;s top swimwear model on the global stage.
                     </p>
-                    <Link href="/swimcrown/enter">
+                    <Link href="/swimcrown/enter" className="lg:hidden">
                       <Button
                         size="lg"
                         className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-bold px-6 py-5 text-base rounded-full shadow-lg shadow-amber-500/25"
@@ -196,16 +196,14 @@ export default async function SwimCrownPage() {
                     <div className="w-12 h-px bg-gradient-to-r from-amber-500/50 to-transparent" />
 
                     <p className="text-muted-foreground text-sm leading-relaxed">
-                      The inaugural SwimCrown competition show will be held live
-                      during{" "}
+                      The inaugural SwimCrown competition debuts live at{" "}
                       <span className="text-amber-300 font-semibold">Miami Swim Week</span>.
-                      Every contestant who enters will{" "}
-                      <span className="text-white font-semibold">walk the runway</span>{" "}
-                      in front of a live audience, wearing a swimsuit gifted by our
-                      sponsored swimwear designer{" "}
+                      Each selected model will take the runway before a live audience,
+                      styled in swimwear provided by our featured designer{" "}
                       <span className="text-amber-300 font-semibold">(TBA)</span>.
-                      Each model will be scored live by our expert panel of judges —
-                      and the world&apos;s #1 swim model will be crowned on stage.
+                      Scored live by an elite panel of judges, the competition will
+                      conclude with the crowning of the{" "}
+                      <span className="text-white font-semibold">World&apos;s #1 Swim Model of the Year</span>!
                     </p>
 
                     <div className="grid grid-cols-1 gap-2">
