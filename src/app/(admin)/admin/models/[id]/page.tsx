@@ -255,17 +255,7 @@ export default function AdminModelDetailPage() {
 
           const totalEarned = earnings?.reduce((sum: number, tx: any) => sum + tx.amount, 0) || 0;
 
-          // Content count
-          const { count: premiumCount } = await (supabase
-            .from("premium_content") as any)
-            .select("*", { count: "exact", head: true })
-            .eq("model_id", modelId);
-
-          const { count: mediaCount } = await (supabase
-            .from("media_assets") as any)
-            .select("*", { count: "exact", head: true })
-            .eq("model_id", modelId);
-
+          // Content count (content_items is single source of truth)
           const { count: contentItemsCount } = await (supabase as any)
             .from("content_items")
             .select("*", { count: "exact", head: true })
@@ -290,7 +280,7 @@ export default function AdminModelDetailPage() {
             setStats({
               followers_count: followersCount || 0,
               total_earned: totalEarned,
-              content_count: Math.max((premiumCount || 0) + (mediaCount || 0), contentItemsCount || 0),
+              content_count: contentItemsCount || 0,
               message_count: messageCount || 0,
               last_post: lastPremium?.created_at || null,
             });
@@ -382,10 +372,10 @@ export default function AdminModelDetailPage() {
           <p className="text-muted-foreground">@{model.username}</p>
         </div>
         <Button asChild>
-          <Link href={`/${model.username}`} target="_blank">
+          <a href={`/${model.username}`} target="_blank" rel="noopener noreferrer">
             <ExternalLink className="h-4 w-4 mr-2" />
             View Profile
-          </Link>
+          </a>
         </Button>
       </div>
 
@@ -686,10 +676,10 @@ export default function AdminModelDetailPage() {
             </CardHeader>
             <CardContent className="space-y-2">
               <Button className="w-full" asChild>
-                <Link href={`/${model.username}`} target="_blank">
+                <a href={`/${model.username}`} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="h-4 w-4 mr-2" />
                   View Public Profile
-                </Link>
+                </a>
               </Button>
               <Button variant="outline" className="w-full" asChild>
                 <Link href="/admin/community">
