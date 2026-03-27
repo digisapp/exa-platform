@@ -150,6 +150,21 @@ export default function AdminWorkshopsPage() {
     }
   };
 
+  const deleteRegistration = async (regId: string, workshopId: string) => {
+    if (!confirm("Delete this registration?")) return;
+    const { error } = await (supabase as any)
+      .from("workshop_registrations")
+      .delete()
+      .eq("id", regId);
+    if (error) {
+      console.error("Error deleting registration:", error);
+      toast.error("Failed to delete registration");
+    } else {
+      toast.success("Registration deleted");
+      loadRegistrations(workshopId);
+    }
+  };
+
   useEffect(() => {
     loadWorkshops();
   }, [loadWorkshops]);
@@ -912,15 +927,20 @@ export default function AdminWorkshopsPage() {
           ) : (
             <div className="space-y-3">
               {(() => {
-                // Deduplicate: if a person has a completed registration, hide their pending ones
-                const completedEmails = new Set(
-                  registrations
-                    .filter((r) => r.status === "completed")
-                    .map((r) => r.buyer_email?.toLowerCase())
-                );
-                const deduped = registrations.filter(
-                  (r) => r.status === "completed" || !completedEmails.has(r.buyer_email?.toLowerCase())
-                );
+                // Deduplicate by email: keep completed over pending, and only the latest per email
+                const bestByEmail = new Map<string, typeof registrations[0]>();
+                for (const r of registrations) {
+                  const key = r.buyer_email?.toLowerCase() || r.id;
+                  const existing = bestByEmail.get(key);
+                  if (!existing) {
+                    bestByEmail.set(key, r);
+                  } else if (r.status === "completed" && existing.status !== "completed") {
+                    bestByEmail.set(key, r);
+                  } else if (r.status === existing.status && new Date(r.created_at) > new Date(existing.created_at)) {
+                    bestByEmail.set(key, r);
+                  }
+                }
+                const deduped = Array.from(bestByEmail.values());
                 // Sort: completed first, then pending
                 deduped.sort((a, b) => {
                   if (a.status === "completed" && b.status !== "completed") return -1;
@@ -956,11 +976,24 @@ export default function AdminWorkshopsPage() {
                         </div>
                       </div>
                     </div>
-                    {reg.completed_at && (
-                      <div className="text-xs text-muted-foreground mt-2">
-                        Registered: {format(new Date(reg.completed_at), "MMM d, yyyy h:mm a")}
-                      </div>
-                    )}
+                    <div className="flex items-center justify-between mt-2">
+                      {reg.completed_at ? (
+                        <div className="text-xs text-muted-foreground">
+                          Registered: {format(new Date(reg.completed_at), "MMM d, yyyy h:mm a")}
+                        </div>
+                      ) : <div />}
+                      {reg.status !== "completed" && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-7 px-2"
+                          onClick={() => deleteRegistration(reg.id, reg.workshop_id)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5 mr-1" />
+                          Delete
+                        </Button>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               ))}
