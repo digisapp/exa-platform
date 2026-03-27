@@ -259,7 +259,7 @@ export default function AdminCommunityPage() {
       .select("*")
       .eq("status", "pending")
       .order("created_at", { ascending: false })
-      .limit(50);
+      .limit(500);
     setModelApps(data || []);
     setModelAppsLoading(false);
   }, [supabase]);
