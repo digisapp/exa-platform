@@ -108,6 +108,10 @@ export default async function SwimCrownPage() {
         {/* ─── Hero ─── */}
         <section className="pt-12 sm:pt-16 pb-6">
           <div className="container mx-auto px-4 text-center">
+            <p className="text-xs sm:text-sm font-bold tracking-[0.3em] uppercase text-amber-400/80 mb-4">
+              EXA Presents
+            </p>
+
             <div className="relative mb-3 inline-flex items-center justify-center">
               <Crown className="h-12 sm:h-14 w-12 sm:w-14 text-amber-400 drop-shadow-[0_0_15px_rgba(251,191,36,0.4)]" />
               <Sparkles className="absolute -top-2 -right-4 h-5 w-5 text-yellow-300 animate-ping [animation-duration:2s]" />
@@ -115,7 +119,11 @@ export default async function SwimCrownPage() {
               <Sparkles className="absolute -bottom-1 right-0 h-3 w-3 text-yellow-400 animate-ping [animation-duration:3s] [animation-delay:1s]" />
             </div>
 
-            <h1 className="mx-auto max-w-4xl text-5xl sm:text-6xl font-black tracking-tighter">
+            <p className="text-[10px] sm:text-xs font-semibold tracking-[0.25em] uppercase text-white/50 mb-1">
+              The 1st Annual
+            </p>
+
+            <h1 className="mx-auto max-w-4xl text-5xl sm:text-6xl md:text-7xl font-black tracking-tighter">
               <span className="bg-gradient-to-r from-cyan-300 via-sky-400 to-blue-400 bg-clip-text text-transparent">
                 SWIM
               </span>
@@ -123,6 +131,17 @@ export default async function SwimCrownPage() {
                 CROWN
               </span>
             </h1>
+
+            <p className="mt-4 text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-white">
+              The Search for the World&apos;s #1
+            </p>
+            <p className="text-2xl sm:text-3xl md:text-4xl font-black bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-300 bg-clip-text text-transparent">
+              Swim Model of the Year
+            </p>
+
+            <p className="mt-4 text-sm sm:text-base text-white/60 font-medium tracking-wide">
+              One Crown. One Title. One Year of Reign.
+            </p>
           </div>
         </section>
 
@@ -146,11 +165,11 @@ export default async function SwimCrownPage() {
 
                   <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8 text-center">
                     <p className="text-white text-lg sm:text-xl font-bold leading-snug mb-2">
-                      The Search for the World&apos;s #1 Swim Model
+                      Who Will Be Crowned Miss SwimCrown 2026?
                     </p>
                     <p className="text-white/70 text-sm leading-relaxed mb-6">
-                      Compete for the crown, walk the runway at Miami Swim Week, and
-                      prove you&apos;re the world&apos;s top swimwear model on the global stage.
+                      Walk the runway at Miami Swim Week, receive the crown and prize money check live on stage,
+                      and hold the title of World&apos;s #1 Swim Model for the entire year.
                     </p>
                     <Link href="/swimcrown/enter" className="lg:hidden">
                       <Button
@@ -181,12 +200,12 @@ export default async function SwimCrownPage() {
                   <div className="flex flex-col gap-5">
                     <div className="flex items-center gap-2 text-amber-400">
                       <Star className="h-4 w-4" />
-                      <span className="text-xs font-bold tracking-widest uppercase">Live Competition Event</span>
+                      <span className="text-xs font-bold tracking-widest uppercase">1st Annual SwimCrown</span>
                       <Star className="h-4 w-4" />
                     </div>
 
                     <h2 className="text-3xl sm:text-4xl font-black text-white">
-                      SwimCrown Competition
+                      EXA Presents: SwimCrown 2026
                     </h2>
 
                     <p className="text-base font-semibold text-amber-300">
@@ -196,14 +215,19 @@ export default async function SwimCrownPage() {
                     <div className="w-12 h-px bg-gradient-to-r from-amber-500/50 to-transparent" />
 
                     <p className="text-muted-foreground text-sm leading-relaxed">
-                      The inaugural SwimCrown competition debuts live at{" "}
+                      The 1st Annual SwimCrown competition debuts live at{" "}
                       <span className="text-amber-300 font-semibold">Miami Swim Week</span>.
                       Each selected model will take the runway before a live audience,
                       styled in swimwear provided by our featured designer{" "}
                       <span className="text-amber-300 font-semibold">(TBA)</span>.
-                      Scored live by an elite panel of judges, the competition will
-                      conclude with the crowning of the{" "}
-                      <span className="text-white font-semibold">World&apos;s #1 Swim Model of the Year</span>!
+                      Scored live by an elite panel of judges, the evening will
+                      culminate with the crowning ceremony — the winner receives the{" "}
+                      <span className="text-white font-semibold">official crown, sash, and oversized prize money check live on stage</span>,
+                      earning the title of{" "}
+                      <span className="text-amber-300 font-semibold">Miss SwimCrown 2026</span>{" "}
+                      and holding the distinction of{" "}
+                      <span className="text-white font-semibold">World&apos;s #1 Swim Model of the Year</span>{" "}
+                      for the entire year.
                     </p>
 
                     <div className="grid grid-cols-1 gap-2">
@@ -257,7 +281,11 @@ export default async function SwimCrownPage() {
                 <ul className="mt-4 space-y-2 text-sm text-muted-foreground text-left">
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
-                    Official crown & sash
+                    Official crown, sash & prize check on stage
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
+                    Hold the title for the entire year
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
@@ -603,11 +631,11 @@ export default async function SwimCrownPage() {
             <div className="mx-auto max-w-2xl">
               <Crown className="mx-auto h-12 w-12 text-amber-400 mb-6" />
               <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-white">
-                Ready to Compete?
+                Will You Be Miss SwimCrown 2026?
               </h2>
               <p className="text-muted-foreground mb-8">
-                Join hundreds of models from around the world and compete for
-                the SwimCrown title at Miami Swim Week 2026.
+                Models from around the world are entering for their chance to be crowned
+                the World&apos;s #1 Swim Model of the Year at Miami Swim Week 2026. Don&apos;t miss your shot.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link href="/swimcrown/enter">
