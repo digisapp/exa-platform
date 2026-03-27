@@ -67,6 +67,7 @@ interface Workshop {
 
 interface Registration {
   id: string;
+  workshop_id: string;
   buyer_email: string;
   buyer_name: string | null;
   buyer_phone: string | null;
