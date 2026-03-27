@@ -107,8 +107,17 @@ export default async function ModelRatesPage({ params }: Props) {
   const hasTravelFee = (model.travel_fee || 0) > 0;
   const hasAnyRates = hasPhotographyRates || hasPromoRates || hasPrivateRates;
 
-  // Get portfolio photos - filter out hidden ones
-  const { data: allPhotos } = await supabase
+  // Get portfolio photos from content_items (new) + legacy media_assets
+  const { data: contentPhotos } = await (supabase as any)
+    .from("content_items")
+    .select("id, media_url, title, created_at")
+    .eq("model_id", model.id)
+    .eq("status", "portfolio")
+    .eq("media_type", "image")
+    .order("created_at", { ascending: false })
+    .limit(6) as { data: any[] | null };
+
+  const { data: legacyPhotos } = await supabase
     .from("media_assets")
     .select("*")
     .eq("model_id", model.id)
@@ -116,7 +125,12 @@ export default async function ModelRatesPage({ params }: Props) {
     .order("created_at", { ascending: false })
     .limit(6) as { data: any[] | null };
 
-  const photos = (allPhotos || []).filter((p: any) => p.is_visible !== false);
+  const mappedContent = (contentPhotos || []).map((p: any) => ({
+    id: p.id, photo_url: p.media_url, url: p.media_url, asset_type: "portfolio", title: p.title, created_at: p.created_at,
+  }));
+  const filteredLegacy = (legacyPhotos || []).filter((p: any) => p.is_visible !== false);
+  const seenIds = new Set(mappedContent.map((p: any) => p.id));
+  const photos = [...mappedContent, ...filteredLegacy.filter((p: any) => !seenIds.has(p.id))].slice(0, 6);
 
   const displayName = model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username;
 

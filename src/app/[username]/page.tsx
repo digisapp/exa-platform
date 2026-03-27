@@ -186,8 +186,17 @@ export default async function ModelProfilePage({ params }: Props) {
     })).filter(eb => eb.badges.events !== null);
   }
 
-  // Get portfolio photos - filter out hidden ones (is_visible = false)
-  const { data: allPhotos } = await supabase
+  // Get portfolio photos from content_items (new unified system) + legacy media_assets
+  const { data: contentPhotos } = await (supabase as any)
+    .from("content_items")
+    .select("id, media_url, media_type, title, status, created_at")
+    .eq("model_id", model.id)
+    .eq("status", "portfolio")
+    .eq("media_type", "image")
+    .order("created_at", { ascending: false })
+    .limit(50) as { data: any[] | null };
+
+  const { data: legacyPhotos } = await supabase
     .from("media_assets")
     .select("*")
     .eq("model_id", model.id)
@@ -195,11 +204,35 @@ export default async function ModelProfilePage({ params }: Props) {
     .order("created_at", { ascending: false })
     .limit(50) as { data: any[] | null };
 
-  // Filter out hidden photos (is_visible column added via migration)
-  const photos = (allPhotos || []).filter((p: any) => p.is_visible !== false);
+  // Map content_items to the shape ProfileContentTabs expects
+  const mappedContentPhotos = (contentPhotos || []).map((p: any) => ({
+    id: p.id,
+    photo_url: p.media_url,
+    url: p.media_url,
+    asset_type: "portfolio",
+    title: p.title,
+    created_at: p.created_at,
+  }));
+  const filteredLegacyPhotos = (legacyPhotos || []).filter((p: any) => p.is_visible !== false);
 
-  // Get videos - filter out hidden ones
-  const { data: allVideos } = await supabase
+  // Combine, deduplicating by id
+  const seenPhotoIds = new Set(mappedContentPhotos.map((p: any) => p.id));
+  const photos = [
+    ...mappedContentPhotos,
+    ...filteredLegacyPhotos.filter((p: any) => !seenPhotoIds.has(p.id)),
+  ];
+
+  // Get videos from content_items + legacy media_assets
+  const { data: contentVideos } = await (supabase as any)
+    .from("content_items")
+    .select("id, media_url, media_type, title, status, created_at")
+    .eq("model_id", model.id)
+    .eq("status", "portfolio")
+    .eq("media_type", "video")
+    .order("created_at", { ascending: false })
+    .limit(24) as { data: any[] | null };
+
+  const { data: legacyVideos } = await supabase
     .from("media_assets")
     .select("*")
     .eq("model_id", model.id)
@@ -207,8 +240,20 @@ export default async function ModelProfilePage({ params }: Props) {
     .order("created_at", { ascending: false })
     .limit(24) as { data: any[] | null };
 
-  // Filter out hidden videos
-  const videos = (allVideos || []).filter((v: any) => v.is_visible !== false);
+  const mappedContentVideos = (contentVideos || []).map((v: any) => ({
+    id: v.id,
+    url: v.media_url,
+    asset_type: "video",
+    title: v.title,
+    created_at: v.created_at,
+  }));
+  const filteredLegacyVideos = (legacyVideos || []).filter((v: any) => v.is_visible !== false);
+
+  const seenVideoIds = new Set(mappedContentVideos.map((v: any) => v.id));
+  const videos = [
+    ...mappedContentVideos,
+    ...filteredLegacyVideos.filter((v: any) => !seenVideoIds.has(v.id)),
+  ];
 
   // Get model's active auctions (for live bids banner on profile)
   const { data: liveAuctions } = await (supabase as any)
