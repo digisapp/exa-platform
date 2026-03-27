@@ -163,16 +163,31 @@ export function ProfileContentTabs({
   // Get the current list based on selected type
   const currentList = selectedType === "photo" ? photos : videos;
 
+  // Preload adjacent images for instant navigation
+  const preloadAdjacentImages = useCallback((index: number, list: MediaAsset[], type: "photo" | "video") => {
+    if (type !== "photo") return;
+    const toPreload = [index - 1, index + 1, index + 2].filter(i => i >= 0 && i < list.length);
+    toPreload.forEach(i => {
+      const src = list[i].photo_url || list[i].url;
+      if (src) {
+        const img = new window.Image();
+        img.src = src;
+      }
+    });
+  }, []);
+
   const openLightbox = (item: MediaAsset, type: "photo" | "video") => {
     const list = type === "photo" ? photos : videos;
     const index = list.findIndex(i => i.id === item.id);
+    const idx = index >= 0 ? index : 0;
     setSelectedItem(item);
     setSelectedType(type);
-    setSelectedIndex(index >= 0 ? index : 0);
+    setSelectedIndex(idx);
     setLightboxOpen(true);
     setVideoPlaying(false);
     setSwipeOffset({ x: 0, y: 0 });
     setIsClosing(false);
+    preloadAdjacentImages(idx, list, type);
   };
 
   const closeLightbox = useCallback(() => {
@@ -193,8 +208,9 @@ export function ProfileContentTabs({
       setSelectedIndex(newIndex);
       setSelectedItem(currentList[newIndex]);
       setVideoPlaying(false);
+      preloadAdjacentImages(newIndex, currentList, selectedType);
     }
-  }, [selectedIndex, currentList]);
+  }, [selectedIndex, currentList, selectedType, preloadAdjacentImages]);
 
   const goToNext = useCallback(() => {
     if (selectedIndex < currentList.length - 1) {
@@ -202,8 +218,9 @@ export function ProfileContentTabs({
       setSelectedIndex(newIndex);
       setSelectedItem(currentList[newIndex]);
       setVideoPlaying(false);
+      preloadAdjacentImages(newIndex, currentList, selectedType);
     }
-  }, [selectedIndex, currentList]);
+  }, [selectedIndex, currentList, selectedType, preloadAdjacentImages]);
 
   const handlePlayVideo = () => {
     if (videoRef.current) {
@@ -593,10 +610,12 @@ export function ProfileContentTabs({
             >
               {selectedType === "photo" ? (
                 <Image
+                  key={selectedItem.id}
                   src={selectedItem.photo_url || selectedItem.url || ""}
                   alt={selectedItem.title || "Full size photo"}
                   width={1200}
                   height={900}
+                  priority
                   className={cn(
                     "max-w-[92vw] max-h-[80vh] md:max-w-[85vw] md:max-h-[85vh]",
                     "object-contain rounded-xl shadow-2xl",
