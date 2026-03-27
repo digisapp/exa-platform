@@ -190,15 +190,44 @@ export default async function ModelProfilePage({ params }: Props) {
   const resolveMediaUrl = (url: string) =>
     url.startsWith("http") ? url : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/${url}`;
 
-  // Get portfolio photos from content_items (single source of truth)
-  const { data: rawPhotos } = await (supabase as any)
-    .from("content_items")
-    .select("id, media_url, media_type, title, created_at")
-    .eq("model_id", model.id)
-    .eq("status", "portfolio")
-    .eq("media_type", "image")
-    .order("created_at", { ascending: false })
-    .limit(50) as { data: any[] | null };
+  // Fetch photos, videos, auctions, and PPV count in parallel
+  const [
+    { data: rawPhotos },
+    { data: rawVideos },
+    { data: liveAuctions },
+    { count: premiumContentCount },
+  ] = await Promise.all([
+    (supabase as any)
+      .from("content_items")
+      .select("id, media_url, media_type, title, created_at")
+      .eq("model_id", model.id)
+      .eq("status", "portfolio")
+      .eq("media_type", "image")
+      .order("created_at", { ascending: false })
+      .limit(50) as Promise<{ data: any[] | null }>,
+    (supabase as any)
+      .from("content_items")
+      .select("id, media_url, media_type, title, created_at")
+      .eq("model_id", model.id)
+      .eq("status", "portfolio")
+      .eq("media_type", "video")
+      .order("created_at", { ascending: false })
+      .limit(24) as Promise<{ data: any[] | null }>,
+    (supabase as any)
+      .from("auctions")
+      .select("id, title, current_bid, starting_price, bid_count, ends_at, buy_now_price, category")
+      .eq("model_id", model.id)
+      .eq("status", "active")
+      .gt("ends_at", new Date().toISOString())
+      .order("ends_at", { ascending: true })
+      .limit(6) as Promise<{ data: any[] | null }>,
+    supabase
+      .from("premium_content")
+      .select("*", { count: "exact", head: true })
+      .eq("model_id", model.id)
+      .eq("is_active", true)
+      .gt("coin_price", 0) as unknown as Promise<{ count: number | null }>,
+  ]);
 
   const photos = (rawPhotos || []).map((p: any) => ({
     id: p.id,
@@ -209,16 +238,6 @@ export default async function ModelProfilePage({ params }: Props) {
     created_at: p.created_at,
   }));
 
-  // Get videos from content_items
-  const { data: rawVideos } = await (supabase as any)
-    .from("content_items")
-    .select("id, media_url, media_type, title, created_at")
-    .eq("model_id", model.id)
-    .eq("status", "portfolio")
-    .eq("media_type", "video")
-    .order("created_at", { ascending: false })
-    .limit(24) as { data: any[] | null };
-
   const videos = (rawVideos || []).map((v: any) => ({
     id: v.id,
     url: resolveMediaUrl(v.media_url),
@@ -226,24 +245,6 @@ export default async function ModelProfilePage({ params }: Props) {
     title: v.title,
     created_at: v.created_at,
   }));
-
-  // Get model's active auctions (for live bids banner on profile)
-  const { data: liveAuctions } = await (supabase as any)
-    .from("auctions")
-    .select("id, title, current_bid, starting_price, bid_count, ends_at, buy_now_price, category")
-    .eq("model_id", model.id)
-    .eq("status", "active")
-    .gt("ends_at", new Date().toISOString())
-    .order("ends_at", { ascending: true })
-    .limit(6);
-
-  // Get PPV content count (only paid content)
-  const { count: premiumContentCount } = await supabase
-    .from("premium_content")
-    .select("*", { count: "exact", head: true })
-    .eq("model_id", model.id)
-    .eq("is_active", true)
-    .gt("coin_price", 0);
 
   // Get current user's actor info
   let coinBalance = 0;

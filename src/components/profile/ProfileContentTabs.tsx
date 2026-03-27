@@ -517,25 +517,9 @@ export function ProfileContentTabs({
         >
           {/* Backdrop - tap to close */}
           <div
-            className="absolute inset-0 cursor-pointer"
+            className="absolute inset-0 cursor-pointer bg-black/95"
             onClick={closeLightbox}
-          >
-            {/* Blurred background image */}
-            {selectedType === "photo" && (
-              <div className="absolute inset-0 overflow-hidden">
-                <Image
-                  src={selectedItem.photo_url || selectedItem.url || ""}
-                  alt="Blurred background"
-                  fill
-                  className="object-cover scale-110 blur-3xl opacity-40"
-                />
-                <div className="absolute inset-0 bg-black/80" />
-              </div>
-            )}
-            {selectedType === "video" && (
-              <div className="absolute inset-0 bg-black/95" />
-            )}
-          </div>
+          />
 
           {/* Close button - positioned near image on mobile, corner on desktop */}
           <button
@@ -609,13 +593,11 @@ export function ProfileContentTabs({
               onClick={(e) => e.stopPropagation()}
             >
               {selectedType === "photo" ? (
-                <Image
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
                   key={selectedItem.id}
                   src={selectedItem.photo_url || selectedItem.url || ""}
                   alt={selectedItem.title || "Full size photo"}
-                  width={1200}
-                  height={900}
-                  priority
                   className={cn(
                     "max-w-[92vw] max-h-[80vh] md:max-w-[85vw] md:max-h-[85vh]",
                     "object-contain rounded-xl shadow-2xl",
