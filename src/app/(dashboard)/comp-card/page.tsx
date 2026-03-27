@@ -182,6 +182,16 @@ export default function CompCardPage() {
       // QR code preview is non-critical
     }
 
+    // Fetch from content_items (new) + legacy media_assets
+    const { data: contentData } = await (supabase as any)
+      .from("content_items")
+      .select("id, media_url, title, created_at")
+      .eq("model_id", modelData.id)
+      .eq("status", "portfolio")
+      .eq("media_type", "image")
+      .order("created_at", { ascending: false })
+      .limit(50);
+
     const { data: portfolioData } = await supabase
       .from("media_assets")
       .select("id, url, photo_url, is_primary, display_order")
@@ -191,7 +201,11 @@ export default function CompCardPage() {
       .order("display_order", { ascending: true })
       .limit(50);
 
-    const allPhotos = portfolioData || [];
+    const mappedContent = (contentData || []).map((p: any) => ({
+      id: p.id, url: p.media_url, photo_url: p.media_url, is_primary: false, display_order: 0,
+    }));
+    const seenIds = new Set(mappedContent.map((p: any) => p.id));
+    const allPhotos = [...mappedContent, ...(portfolioData || []).filter((p: any) => !seenIds.has(p.id))];
     setPhotos(allPhotos);
 
     // Pre-select first 4 portfolio photos

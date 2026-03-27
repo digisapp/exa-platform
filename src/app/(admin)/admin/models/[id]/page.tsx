@@ -266,6 +266,11 @@ export default function AdminModelDetailPage() {
             .select("*", { count: "exact", head: true })
             .eq("model_id", modelId);
 
+          const { count: contentItemsCount } = await (supabase as any)
+            .from("content_items")
+            .select("*", { count: "exact", head: true })
+            .eq("model_id", modelId);
+
           // Message count (conversations)
           const { count: messageCount } = await (supabase
             .from("conversation_participants") as any)
@@ -285,7 +290,7 @@ export default function AdminModelDetailPage() {
             setStats({
               followers_count: followersCount || 0,
               total_earned: totalEarned,
-              content_count: (premiumCount || 0) + (mediaCount || 0),
+              content_count: Math.max((premiumCount || 0) + (mediaCount || 0), contentItemsCount || 0),
               message_count: messageCount || 0,
               last_post: lastPremium?.created_at || null,
             });

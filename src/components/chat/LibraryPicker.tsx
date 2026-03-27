@@ -48,12 +48,27 @@ export function LibraryPicker({
     const supabase = createClient();
 
     try {
-      // Load portfolio photos
+      // Load from content_items (new) + legacy media_assets
+      const { data: contentItems } = await (supabase as any)
+        .from("content_items")
+        .select("id, media_url, media_type")
+        .eq("model_id", modelId)
+        .eq("status", "portfolio")
+        .order("created_at", { ascending: false });
+
       const { data: mediaAssets } = await (supabase
         .from("media_assets") as any)
         .select("id, photo_url, url, asset_type")
         .eq("model_id", modelId)
         .order("created_at", { ascending: false });
+
+      const contentPhotoItems = (contentItems || [])
+        .filter((c: any) => c.media_type === "image")
+        .map((c: any) => ({ id: c.id, url: c.media_url, type: "photo" as const }));
+      const contentVideoItems = (contentItems || [])
+        .filter((c: any) => c.media_type === "video")
+        .map((c: any) => ({ id: c.id, url: c.media_url, type: "video" as const }));
+      const contentIds = new Set((contentItems || []).map((c: any) => c.id));
 
       if (mediaAssets) {
         const assets = mediaAssets as Array<{
@@ -64,7 +79,7 @@ export function LibraryPicker({
         }>;
 
         const photoItems = assets
-          .filter((a) => a.asset_type === "portfolio" || a.asset_type === "photo")
+          .filter((a) => !contentIds.has(a.id) && (a.asset_type === "portfolio" || a.asset_type === "photo"))
           .map((a) => ({
             id: a.id,
             url: a.photo_url || a.url || "",
@@ -72,15 +87,18 @@ export function LibraryPicker({
           }));
 
         const videoItems = assets
-          .filter((a) => a.asset_type === "video")
+          .filter((a) => !contentIds.has(a.id) && a.asset_type === "video")
           .map((a) => ({
             id: a.id,
             url: a.url || "",
             type: "video" as const,
           }));
 
-        setPhotos(photoItems);
-        setVideos(videoItems);
+        setPhotos([...contentPhotoItems, ...photoItems]);
+        setVideos([...contentVideoItems, ...videoItems]);
+      } else {
+        setPhotos(contentPhotoItems);
+        setVideos(contentVideoItems);
       }
 
       // Load PPV content
