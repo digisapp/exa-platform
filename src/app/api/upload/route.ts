@@ -168,6 +168,8 @@ export async function POST(request: NextRequest) {
         owner_id: actor.id,
         model_id: modelId,
         type: "photo",
+        asset_type: uploadType === "avatar" ? "avatar" : "portfolio",
+        photo_url: uploadType !== "avatar" ? publicUrl : null,
         storage_path: filename,
         url: publicUrl,
         mime_type: finalContentType,
