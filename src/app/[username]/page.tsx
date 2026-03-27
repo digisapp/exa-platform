@@ -204,11 +204,15 @@ export default async function ModelProfilePage({ params }: Props) {
     .order("created_at", { ascending: false })
     .limit(50) as { data: any[] | null };
 
+  // Resolve content_items media_url (can be storage path or full URL)
+  const resolveMediaUrl = (url: string) =>
+    url.startsWith("http") ? url : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/${url}`;
+
   // Map content_items to the shape ProfileContentTabs expects
   const mappedContentPhotos = (contentPhotos || []).map((p: any) => ({
     id: p.id,
-    photo_url: p.media_url,
-    url: p.media_url,
+    photo_url: resolveMediaUrl(p.media_url),
+    url: resolveMediaUrl(p.media_url),
     asset_type: "portfolio",
     title: p.title,
     created_at: p.created_at,
@@ -242,7 +246,7 @@ export default async function ModelProfilePage({ params }: Props) {
 
   const mappedContentVideos = (contentVideos || []).map((v: any) => ({
     id: v.id,
-    url: v.media_url,
+    url: resolveMediaUrl(v.media_url),
     asset_type: "video",
     title: v.title,
     created_at: v.created_at,

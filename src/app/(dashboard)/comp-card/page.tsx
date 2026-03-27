@@ -201,8 +201,10 @@ export default function CompCardPage() {
       .order("display_order", { ascending: true })
       .limit(50);
 
+    const resolveMediaUrl = (url: string) =>
+      url.startsWith("http") ? url : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/${url}`;
     const mappedContent = (contentData || []).map((p: any) => ({
-      id: p.id, url: p.media_url, photo_url: p.media_url, is_primary: false, display_order: 0,
+      id: p.id, url: resolveMediaUrl(p.media_url), photo_url: resolveMediaUrl(p.media_url), is_primary: false, display_order: 0,
     }));
     const seenIds = new Set(mappedContent.map((p: any) => p.id));
     const allPhotos = [...mappedContent, ...(portfolioData || []).filter((p: any) => !seenIds.has(p.id))];

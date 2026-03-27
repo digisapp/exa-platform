@@ -125,8 +125,10 @@ export default async function ModelRatesPage({ params }: Props) {
     .order("created_at", { ascending: false })
     .limit(6) as { data: any[] | null };
 
+  const resolveMediaUrl = (url: string) =>
+    url.startsWith("http") ? url : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/${url}`;
   const mappedContent = (contentPhotos || []).map((p: any) => ({
-    id: p.id, photo_url: p.media_url, url: p.media_url, asset_type: "portfolio", title: p.title, created_at: p.created_at,
+    id: p.id, photo_url: resolveMediaUrl(p.media_url), url: resolveMediaUrl(p.media_url), asset_type: "portfolio", title: p.title, created_at: p.created_at,
   }));
   const filteredLegacy = (legacyPhotos || []).filter((p: any) => p.is_visible !== false);
   const seenIds = new Set(mappedContent.map((p: any) => p.id));

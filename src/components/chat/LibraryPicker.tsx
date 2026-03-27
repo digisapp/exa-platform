@@ -62,12 +62,14 @@ export function LibraryPicker({
         .eq("model_id", modelId)
         .order("created_at", { ascending: false });
 
+      const resolveMediaUrl = (url: string) =>
+        url.startsWith("http") ? url : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/${url}`;
       const contentPhotoItems = (contentItems || [])
         .filter((c: any) => c.media_type === "image")
-        .map((c: any) => ({ id: c.id, url: c.media_url, type: "photo" as const }));
+        .map((c: any) => ({ id: c.id, url: resolveMediaUrl(c.media_url), type: "photo" as const }));
       const contentVideoItems = (contentItems || [])
         .filter((c: any) => c.media_type === "video")
-        .map((c: any) => ({ id: c.id, url: c.media_url, type: "video" as const }));
+        .map((c: any) => ({ id: c.id, url: resolveMediaUrl(c.media_url), type: "video" as const }));
       const contentIds = new Set((contentItems || []).map((c: any) => c.id));
 
       if (mediaAssets) {
