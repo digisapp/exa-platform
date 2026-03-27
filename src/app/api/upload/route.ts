@@ -197,6 +197,18 @@ export async function POST(request: NextRequest) {
         .eq("id", modelId);
     }
 
+    // Also write to content_items (single source of truth for portfolio)
+    if (uploadType === "portfolio" && modelId) {
+      await (adminDb as any)
+        .from("content_items")
+        .insert({
+          model_id: modelId,
+          media_url: publicUrl,
+          media_type: "photo",
+          status: "portfolio",
+        });
+    }
+
     return NextResponse.json({
       success: true,
       url: publicUrl,

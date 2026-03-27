@@ -182,7 +182,10 @@ export default function CompCardPage() {
       // QR code preview is non-critical
     }
 
-    // Fetch from content_items (new) + legacy media_assets
+    // Fetch portfolio photos from content_items (single source of truth)
+    const resolveMediaUrl = (url: string) =>
+      url.startsWith("http") ? url : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/${url}`;
+
     const { data: contentData } = await (supabase as any)
       .from("content_items")
       .select("id, media_url, title, created_at")
@@ -192,28 +195,15 @@ export default function CompCardPage() {
       .order("created_at", { ascending: false })
       .limit(50);
 
-    const { data: portfolioData } = await supabase
-      .from("media_assets")
-      .select("id, url, photo_url, is_primary, display_order")
-      .eq("model_id", modelData.id)
-      .eq("asset_type", "portfolio")
-      .neq("is_visible", false)
-      .order("display_order", { ascending: true })
-      .limit(50);
-
-    const resolveMediaUrl = (url: string) =>
-      url.startsWith("http") ? url : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/${url}`;
-    const mappedContent = (contentData || []).map((p: any) => ({
+    const allPhotos = (contentData || []).map((p: any) => ({
       id: p.id, url: resolveMediaUrl(p.media_url), photo_url: resolveMediaUrl(p.media_url), is_primary: false, display_order: 0,
     }));
-    const seenIds = new Set(mappedContent.map((p: any) => p.id));
-    const allPhotos = [...mappedContent, ...(portfolioData || []).filter((p: any) => !seenIds.has(p.id))];
     setPhotos(allPhotos);
 
     // Pre-select first 4 portfolio photos
     if (allPhotos.length > 0) {
       const initial = allPhotos.slice(0, Math.min(MAX_PHOTOS, allPhotos.length));
-      setSelectedIds(initial.map((p) => p.id));
+      setSelectedIds(initial.map((p: any) => p.id));
     }
 
     setLoading(false);

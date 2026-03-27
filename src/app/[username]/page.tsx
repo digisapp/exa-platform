@@ -186,30 +186,21 @@ export default async function ModelProfilePage({ params }: Props) {
     })).filter(eb => eb.badges.events !== null);
   }
 
-  // Get portfolio photos from content_items (new unified system) + legacy media_assets
-  const { data: contentPhotos } = await (supabase as any)
+  // Resolve content_items media_url (can be storage path or full URL)
+  const resolveMediaUrl = (url: string) =>
+    url.startsWith("http") ? url : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/${url}`;
+
+  // Get portfolio photos from content_items (single source of truth)
+  const { data: rawPhotos } = await (supabase as any)
     .from("content_items")
-    .select("id, media_url, media_type, title, status, created_at")
+    .select("id, media_url, media_type, title, created_at")
     .eq("model_id", model.id)
     .eq("status", "portfolio")
     .eq("media_type", "image")
     .order("created_at", { ascending: false })
     .limit(50) as { data: any[] | null };
 
-  const { data: legacyPhotos } = await supabase
-    .from("media_assets")
-    .select("*")
-    .eq("model_id", model.id)
-    .eq("asset_type", "portfolio")
-    .order("created_at", { ascending: false })
-    .limit(50) as { data: any[] | null };
-
-  // Resolve content_items media_url (can be storage path or full URL)
-  const resolveMediaUrl = (url: string) =>
-    url.startsWith("http") ? url : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/${url}`;
-
-  // Map content_items to the shape ProfileContentTabs expects
-  const mappedContentPhotos = (contentPhotos || []).map((p: any) => ({
+  const photos = (rawPhotos || []).map((p: any) => ({
     id: p.id,
     photo_url: resolveMediaUrl(p.media_url),
     url: resolveMediaUrl(p.media_url),
@@ -217,47 +208,24 @@ export default async function ModelProfilePage({ params }: Props) {
     title: p.title,
     created_at: p.created_at,
   }));
-  const filteredLegacyPhotos = (legacyPhotos || []).filter((p: any) => p.is_visible !== false);
 
-  // Combine, deduplicating by id
-  const seenPhotoIds = new Set(mappedContentPhotos.map((p: any) => p.id));
-  const photos = [
-    ...mappedContentPhotos,
-    ...filteredLegacyPhotos.filter((p: any) => !seenPhotoIds.has(p.id)),
-  ];
-
-  // Get videos from content_items + legacy media_assets
-  const { data: contentVideos } = await (supabase as any)
+  // Get videos from content_items
+  const { data: rawVideos } = await (supabase as any)
     .from("content_items")
-    .select("id, media_url, media_type, title, status, created_at")
+    .select("id, media_url, media_type, title, created_at")
     .eq("model_id", model.id)
     .eq("status", "portfolio")
     .eq("media_type", "video")
     .order("created_at", { ascending: false })
     .limit(24) as { data: any[] | null };
 
-  const { data: legacyVideos } = await supabase
-    .from("media_assets")
-    .select("*")
-    .eq("model_id", model.id)
-    .eq("asset_type", "video")
-    .order("created_at", { ascending: false })
-    .limit(24) as { data: any[] | null };
-
-  const mappedContentVideos = (contentVideos || []).map((v: any) => ({
+  const videos = (rawVideos || []).map((v: any) => ({
     id: v.id,
     url: resolveMediaUrl(v.media_url),
     asset_type: "video",
     title: v.title,
     created_at: v.created_at,
   }));
-  const filteredLegacyVideos = (legacyVideos || []).filter((v: any) => v.is_visible !== false);
-
-  const seenVideoIds = new Set(mappedContentVideos.map((v: any) => v.id));
-  const videos = [
-    ...mappedContentVideos,
-    ...filteredLegacyVideos.filter((v: any) => !seenVideoIds.has(v.id)),
-  ];
 
   // Get model's active auctions (for live bids banner on profile)
   const { data: liveAuctions } = await (supabase as any)

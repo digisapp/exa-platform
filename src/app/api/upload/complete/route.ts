@@ -141,6 +141,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Also write to content_items (single source of truth for portfolio/video)
+    if (modelId && (assetType === "portfolio" || assetType === "video")) {
+      await (adminClient as any)
+        .from("content_items")
+        .insert({
+          model_id: modelId,
+          title: title || null,
+          media_url: publicUrl,
+          media_type: isVideo ? "video" : "image",
+          status: "portfolio",
+        });
+    }
+
     return NextResponse.json({
       success: true,
       url: publicUrl,

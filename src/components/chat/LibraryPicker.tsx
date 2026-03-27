@@ -48,7 +48,10 @@ export function LibraryPicker({
     const supabase = createClient();
 
     try {
-      // Load from content_items (new) + legacy media_assets
+      // Load from content_items (single source of truth)
+      const resolveMediaUrl = (url: string) =>
+        url.startsWith("http") ? url : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/${url}`;
+
       const { data: contentItems } = await (supabase as any)
         .from("content_items")
         .select("id, media_url, media_type")
@@ -56,52 +59,12 @@ export function LibraryPicker({
         .eq("status", "portfolio")
         .order("created_at", { ascending: false });
 
-      const { data: mediaAssets } = await (supabase
-        .from("media_assets") as any)
-        .select("id, photo_url, url, asset_type")
-        .eq("model_id", modelId)
-        .order("created_at", { ascending: false });
-
-      const resolveMediaUrl = (url: string) =>
-        url.startsWith("http") ? url : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/${url}`;
-      const contentPhotoItems = (contentItems || [])
+      setPhotos((contentItems || [])
         .filter((c: any) => c.media_type === "image")
-        .map((c: any) => ({ id: c.id, url: resolveMediaUrl(c.media_url), type: "photo" as const }));
-      const contentVideoItems = (contentItems || [])
+        .map((c: any) => ({ id: c.id, url: resolveMediaUrl(c.media_url), type: "photo" as const })));
+      setVideos((contentItems || [])
         .filter((c: any) => c.media_type === "video")
-        .map((c: any) => ({ id: c.id, url: resolveMediaUrl(c.media_url), type: "video" as const }));
-      const contentIds = new Set((contentItems || []).map((c: any) => c.id));
-
-      if (mediaAssets) {
-        const assets = mediaAssets as Array<{
-          id: string;
-          photo_url: string | null;
-          url: string | null;
-          asset_type: string;
-        }>;
-
-        const photoItems = assets
-          .filter((a) => !contentIds.has(a.id) && (a.asset_type === "portfolio" || a.asset_type === "photo"))
-          .map((a) => ({
-            id: a.id,
-            url: a.photo_url || a.url || "",
-            type: "photo" as const,
-          }));
-
-        const videoItems = assets
-          .filter((a) => !contentIds.has(a.id) && a.asset_type === "video")
-          .map((a) => ({
-            id: a.id,
-            url: a.url || "",
-            type: "video" as const,
-          }));
-
-        setPhotos([...contentPhotoItems, ...photoItems]);
-        setVideos([...contentVideoItems, ...videoItems]);
-      } else {
-        setPhotos(contentPhotoItems);
-        setVideos(contentVideoItems);
-      }
+        .map((c: any) => ({ id: c.id, url: resolveMediaUrl(c.media_url), type: "video" as const })));
 
       // Load PPV content
       const { data: premiumContent } = await (supabase
