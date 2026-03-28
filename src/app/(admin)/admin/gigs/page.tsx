@@ -174,7 +174,41 @@ export default function AdminGigsPage() {
       `)
       .eq("gig_id", gigId)
       .order("applied_at", { ascending: false });
-    setApplications(data || []);
+
+    // For models without a profile photo, fall back to their first portfolio image
+    const apps = data || [];
+    const noPhotoModelIds = apps
+      .filter((a: any) => a.model && !a.model.profile_photo_url)
+      .map((a: any) => a.model.id);
+
+    if (noPhotoModelIds.length > 0) {
+      const { data: fallbackPhotos } = await (supabase
+        .from("content_items") as any)
+        .select("model_id, media_url")
+        .in("model_id", noPhotoModelIds)
+        .eq("status", "portfolio")
+        .eq("media_type", "image")
+        .order("created_at", { ascending: false });
+
+      if (fallbackPhotos && fallbackPhotos.length > 0) {
+        const fallbackByModel: Record<string, string> = {};
+        for (const photo of fallbackPhotos) {
+          if (!fallbackByModel[photo.model_id]) {
+            const url = photo.media_url.startsWith("http")
+              ? photo.media_url
+              : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/${photo.media_url}`;
+            fallbackByModel[photo.model_id] = url;
+          }
+        }
+        for (const app of apps) {
+          if (app.model && !app.model.profile_photo_url && fallbackByModel[app.model.id]) {
+            app.model.profile_photo_url = fallbackByModel[app.model.id];
+          }
+        }
+      }
+    }
+
+    setApplications(apps);
 
     // Load badge status for this gig's event
     const gig = gigs.find(g => g.id === gigId);
