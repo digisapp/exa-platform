@@ -182,8 +182,8 @@ export default function AdminGigsPage() {
       .map((a: any) => a.model.id);
 
     if (noPhotoModelIds.length > 0) {
-      const { data: fallbackPhotos } = await (supabase
-        .from("content_items") as any)
+      const { data: fallbackPhotos } = await (supabase as any)
+        .from("content_items")
         .select("model_id, media_url")
         .in("model_id", noPhotoModelIds)
         .eq("status", "portfolio")
