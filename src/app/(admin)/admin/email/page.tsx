@@ -96,7 +96,7 @@ function wrapInBrandedTemplate(bodyText: string, isReply?: boolean, originalEmai
         <td style="padding: 0 30px 30px;">
           <div style="border-left: 3px solid #ec4899; padding-left: 16px; margin-top: 8px;">
             <p style="margin: 0 0 8px; color: #71717a; font-size: 12px;">
-              On ${new Date(originalEmail.created_at).toLocaleString()}, ${originalEmail.from_name || originalEmail.from_email} wrote:
+              On ${new Date(originalEmail.created_at).toLocaleString()}, ${escapeHtmlChars(originalEmail.from_name || originalEmail.from_email)} wrote:
             </p>
             <div style="color: #a1a1aa; font-size: 14px; line-height: 1.6;">
               ${quotedContent}
@@ -284,12 +284,14 @@ export default function AdminEmailPage() {
     }
   };
 
-  // Reset page when switching tabs
+  // Reset state when switching tabs
   useEffect(() => {
     setPage(1);
     setSelectedEmail(null);
     setSelectedIds(new Set());
     setShowThread(false);
+    setSearch("");
+    setDebouncedSearch("");
   }, [tab]);
 
   // Escape key to go back from detail view
@@ -318,10 +320,14 @@ export default function AdminEmailPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ emailId: email.id }),
       });
+      const readUpdate = { status: "read", read_at: new Date().toISOString() };
       setEmails((prev) =>
         prev.map((e) =>
-          e.id === email.id ? { ...e, status: "read", read_at: new Date().toISOString() } : e
+          e.id === email.id ? { ...e, ...readUpdate } : e
         )
+      );
+      setSelectedEmail((prev) =>
+        prev?.id === email.id ? { ...prev, ...readUpdate } : prev
       );
     }
   };
@@ -979,7 +985,7 @@ export default function AdminEmailPage() {
         >
           <Inbox className="h-4 w-4" />
           Inbox
-          {tab === "inbox" && totalUnread > 0 && (
+          {totalUnread > 0 && (
             <Badge className="bg-pink-500 text-white text-[10px] px-1.5 py-0">
               {totalUnread}
             </Badge>
