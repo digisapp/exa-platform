@@ -238,6 +238,9 @@ export default async function ModelProfilePage({ params }: Props) {
     created_at: p.created_at,
   }));
 
+  // Fall back to first portfolio photo if no profile picture is set
+  const profilePhotoUrl = model.profile_photo_url || (photos.length > 0 ? photos[0].photo_url : null);
+
   const videos = (rawVideos || []).map((v: any) => ({
     id: v.id,
     url: resolveMediaUrl(v.media_url),
@@ -319,7 +322,7 @@ export default async function ModelProfilePage({ params }: Props) {
     "@type": "Person",
     name: displayName,
     url: `https://www.examodels.com/${model.username}`,
-    image: model.profile_photo_url || undefined,
+    image: profilePhotoUrl || undefined,
     description: model.bio || `Professional model available for bookings on EXA Models`,
     jobTitle: "Model",
     ...(model.show_location && model.city && model.state && {
@@ -447,9 +450,9 @@ export default async function ModelProfilePage({ params }: Props) {
                   title={`Confirmed ${eventBadges[0].badges.events.name} Model`}
                 >
                   <div className={`w-48 h-48 md:w-56 md:h-56 rounded-full overflow-hidden ring-[4px] ring-amber-400 ${isOwner ? 'profile-pic-breathing' : ''}`}>
-                    {model.profile_photo_url ? (
+                    {profilePhotoUrl ? (
                       <Image
-                        src={model.profile_photo_url}
+                        src={profilePhotoUrl}
                         alt={displayName}
                         width={224}
                         height={224}
@@ -482,9 +485,9 @@ export default async function ModelProfilePage({ params }: Props) {
                 </Link>
               ) : (
                 <div className={`w-48 h-48 md:w-56 md:h-56 rounded-full overflow-hidden ${isOwner ? 'profile-pic-breathing' : 'ring-2 ring-white/30 shadow-[0_0_30px_rgba(255,105,180,0.3),0_0_60px_rgba(0,191,255,0.2)]'}`}>
-                  {model.profile_photo_url ? (
+                  {profilePhotoUrl ? (
                     <Image
-                      src={model.profile_photo_url}
+                      src={profilePhotoUrl}
                       alt={displayName}
                       width={224}
                       height={224}
