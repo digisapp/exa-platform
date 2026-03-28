@@ -12,7 +12,6 @@ import {
   Sparkles,
   Check,
   ArrowRight,
-  Star,
   Mail,
   ShoppingBag,
   Building2,
@@ -139,28 +138,6 @@ const PACKAGES = [
 ];
 
 
-const FAQS = [
-  {
-    q: "What's included with my show package?",
-    a: "Each package includes 15 professional models and a full runway presentation. You can upgrade to 20 models for an additional $500, and add full photo & video documentation for $700. Opening Show and Day 2 designers hand-pick their models from our full roster.",
-  },
-  {
-    q: "How many models walk in each show?",
-    a: "Every package includes 15 models. You can upgrade to 20 models for an additional $500 — just select the upgrade at checkout. Opening Show and Day 2 bookings include model selection from our full roster.",
-  },
-  {
-    q: "Can I choose which models walk for my brand?",
-    a: "Model selection is available for Opening Show and Day 2 bookings. Once booked, we send you our full roster with profile photos and measurements so you can choose your 15 (or 20). For the Emerging Designers Show, Day 4 through Day 6, and the Daytime Show, our team curates and assigns your model lineup.",
-  },
-  {
-    q: "What's the deadline to book?",
-    a: "Show slots are limited and selling fast. We recommend booking as soon as possible to secure your preferred date.",
-  },
-  {
-    q: "I can't make it to Miami in person — can I still participate?",
-    a: "Absolutely. Ship your collection to us ahead of show week and our team handles everything — receiving, steaming, dressing the models, and running your full runway presentation. Email nathan@examodels.com to discuss shipping timelines and logistics.",
-  },
-];
 
 export default async function MswBrandPage() {
   // Fetch confirmed models (same query as the main show page)
@@ -449,81 +426,10 @@ export default async function MswBrandPage() {
           </div>
         )}
 
-        {/* EXA TV Section */}
-        <div className="mb-20">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-violet-500/20 to-pink-500/20">
-              <svg className="h-6 w-6 text-violet-400" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold">EXA TV</h2>
-              <p className="text-sm text-muted-foreground">Watch our past runway shows &amp; events</p>
-            </div>
-          </div>
-
-          <a
-            href="https://examodels.com/tv"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group block rounded-2xl overflow-hidden border border-violet-500/20 hover:border-violet-500/50 transition-all shadow-xl hover:shadow-violet-500/10"
-          >
-            {/* Thumbnail — YouTube video iframe preview */}
-            <div className="relative aspect-video bg-black">
-              <iframe
-                src="https://www.youtube.com/embed/Iu68o0MCuvw?mute=1&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1"
-                title="EXA TV — Past Runway Shows"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="absolute inset-0 w-full h-full pointer-events-none"
-              />
-              {/* Dark overlay with centered play button */}
-              <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                <div className="w-16 h-16 rounded-full bg-white/15 backdrop-blur-sm border border-white/30 flex items-center justify-center group-hover:scale-110 group-hover:bg-white/25 transition-all shadow-2xl">
-                  <svg className="w-7 h-7 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            {/* Card Footer */}
-            <div className="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-violet-500/10 to-pink-500/10">
-              <div>
-                <p className="font-bold text-sm">Watch on EXA TV</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Past runway shows, backstage, and more</p>
-              </div>
-              <ArrowRight className="h-5 w-5 text-violet-400 group-hover:translate-x-1 transition-transform" />
-            </div>
-          </a>
-        </div>
-
-        {/* FAQ */}
-        <div className="max-w-2xl mx-auto mb-20">
-          <h2 className="text-2xl font-bold text-center mb-8">Frequently Asked Questions</h2>
-          <div className="space-y-4">
-            {FAQS.map((item) => (
-              <div
-                key={item.q}
-                className="p-5 rounded-xl bg-muted/30 border border-white/5"
-              >
-                <p className="font-semibold mb-2 flex items-start gap-2 text-sm">
-                  <Star className="h-4 w-4 text-pink-500 flex-shrink-0 mt-0.5" />
-                  {item.q}
-                </p>
-                <p className="text-muted-foreground text-sm leading-relaxed pl-6">{item.a}</p>
-              </div>
-            ))}
-          </div>
-        </div>
 
         {/* Bottom CTA */}
         <div className="text-center p-10 md:p-14 rounded-3xl bg-gradient-to-r from-pink-500/10 via-violet-500/10 to-cyan-500/10 border border-pink-500/20">
           <h2 className="text-2xl md:text-3xl font-bold mb-3">Questions? Let&apos;s Talk.</h2>
-          <p className="text-muted-foreground mb-8 max-w-md mx-auto leading-relaxed">
-            Email us directly for custom packages or any questions about showcasing your collection at Miami Swim Week 2026.
-          </p>
           <a
             href="mailto:nathan@examodels.com"
             className="inline-flex items-center gap-2 bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white font-semibold px-8 py-4 rounded-xl transition-all hover:shadow-lg hover:shadow-pink-500/25 hover:scale-[1.02]"
