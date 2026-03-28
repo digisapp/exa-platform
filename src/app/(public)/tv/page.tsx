@@ -13,6 +13,23 @@ export const metadata: Metadata = {
   title: "EXA TV | EXA Models",
   description:
     "Watch runway shows, backstage footage, and highlights from Miami Swim Week, New York Fashion Week, Miami Art Week and more.",
+  alternates: {
+    canonical: "https://www.examodels.com/tv",
+  },
+  openGraph: {
+    title: "EXA TV | EXA Models",
+    description:
+      "Watch runway shows, backstage footage, and highlights from Miami Swim Week, New York Fashion Week, and more.",
+    url: "https://www.examodels.com/tv",
+    type: "website",
+    siteName: "EXA Models",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "EXA TV | EXA Models",
+    description:
+      "Watch runway shows, backstage footage, and highlights from Miami Swim Week, New York Fashion Week, and more.",
+  },
 };
 
 export default async function TVPage() {

@@ -12,6 +12,23 @@ export const metadata: Metadata = {
   title: "Enter SwimCrown | EXA",
   description:
     "Enter the SwimCrown global swim model competition. Choose your tier and compete for the crown at Miami Swim Week 2026.",
+  alternates: {
+    canonical: "https://www.examodels.com/swimcrown/enter",
+  },
+  openGraph: {
+    title: "Enter SwimCrown | EXA",
+    description:
+      "Enter the SwimCrown global swim model competition. Choose your tier and compete for the crown at Miami Swim Week 2026.",
+    url: "https://www.examodels.com/swimcrown/enter",
+    type: "website",
+    siteName: "EXA Models",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Enter SwimCrown | EXA",
+    description:
+      "Enter the SwimCrown global swim model competition. Compete for the crown at Miami Swim Week 2026.",
+  },
 };
 
 export default async function SwimCrownEntryPage() {

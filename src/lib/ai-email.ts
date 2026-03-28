@@ -83,7 +83,7 @@ ${emailContent.slice(0, 3000)}`;
 
   try {
     const response = await xai.chat.completions.create({
-      model: "grok-3-mini",
+      model: "grok-4-1-fast-non-reasoning",
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: userPrompt },

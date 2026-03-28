@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
@@ -25,6 +26,15 @@ import { UpcomingEventsCarousel } from "@/components/home/UpcomingEventsCarousel
 import { formatCoins, coinsToFanUsd, formatUsd } from "@/lib/coin-config";
 import { format } from "date-fns";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+
+export const metadata: Metadata = {
+  title: "EXA Models – Global Model Community",
+  description:
+    "Book professional models for photoshoots, events, and brand collaborations. Connect directly with verified models worldwide. The premier model booking platform.",
+  alternates: {
+    canonical: "https://www.examodels.com",
+  },
+};
 
 // Cache homepage for 60 seconds so bid counts stay reasonably fresh
 export const revalidate = 60;

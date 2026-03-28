@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { Suspense } from "react";
 import "./globals.css";
@@ -10,6 +10,13 @@ import { GoogleTranslate } from "@/components/GoogleTranslate";
 import { SpanishBanner } from "@/components/SpanishBanner";
 
 const inter = Inter({ subsets: ["latin"] });
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: "#FF69B4",
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.examodels.com"),

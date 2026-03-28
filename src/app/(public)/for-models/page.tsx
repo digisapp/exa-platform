@@ -17,7 +17,25 @@ export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "For Models | EXA",
-  description: "Turn your influence into income. EXA is where your content, your time, and your personality actually pay you.",
+  description:
+    "Turn your influence into income. EXA is where your content, your time, and your personality actually pay you.",
+  alternates: {
+    canonical: "https://www.examodels.com/for-models",
+  },
+  openGraph: {
+    title: "For Models | EXA",
+    description:
+      "Turn your influence into income. EXA is where your content, your time, and your personality actually pay you.",
+    url: "https://www.examodels.com/for-models",
+    type: "website",
+    siteName: "EXA Models",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "For Models | EXA",
+    description:
+      "Turn your influence into income. EXA is where your content, your time, and your personality actually pay you.",
+  },
 };
 
 export default async function ForModelsPage() {

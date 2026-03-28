@@ -9,6 +9,13 @@ export const metadata: Metadata = {
     description:
       "Professional digitals + 20 printed comp cards for Miami Swim Week castings. Sunday, May 24th.",
     type: "website",
+    siteName: "EXA Models",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "EXA Digitals — Miami Beach | May 24th",
+    description:
+      "Professional digitals + 20 printed comp cards for Miami Swim Week castings. Sunday, May 24th.",
   },
 };
 

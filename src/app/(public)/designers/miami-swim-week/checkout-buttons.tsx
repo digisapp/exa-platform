@@ -8,15 +8,11 @@ import { toast } from "sonner";
 type PackageId = "opening-show" | "day-2" | "day-3" | "day-4" | "day-5" | "day-6" | "daytime-show" | "swim-shop" | "showroom-halfday" | "showroom-fullday" | "lobby-display" | "beach-shoot-halfday" | "afterparty-standard" | "afterparty-premier" | "afterparty-presenting";
 
 const PHOTO_VIDEO_PRICE = 700;
-const PHOTO_VIDEO_INSTALLMENT = 234; // $234 × 3 = $702 ≈ $700
-
 const EXTRA_MODELS_PRICE = 500;
-const EXTRA_MODELS_INSTALLMENT = 167; // $167 × 3 = $501 ≈ $500
 
 interface CheckoutButtonsProps {
   pkg: PackageId;
   fullPrice: number;
-  installmentPrice: number;
 }
 
 interface AddOnToggleProps {
@@ -286,8 +282,8 @@ export function AfterPartyButton() {
   );
 }
 
-export function CheckoutButtons({ pkg, fullPrice, installmentPrice }: CheckoutButtonsProps) {
-  const [loading, setLoading] = useState<"full" | "installment" | null>(null);
+export function CheckoutButtons({ pkg, fullPrice }: CheckoutButtonsProps) {
+  const [loading, setLoading] = useState(false);
   const [addPhotoVideo, setAddPhotoVideo] = useState(false);
   const [addExtraModels, setAddExtraModels] = useState(false);
 
@@ -296,47 +292,32 @@ export function CheckoutButtons({ pkg, fullPrice, installmentPrice }: CheckoutBu
     (addPhotoVideo ? PHOTO_VIDEO_PRICE : 0) +
     (addExtraModels ? EXTRA_MODELS_PRICE : 0);
 
-  const totalInstallment =
-    installmentPrice +
-    (addPhotoVideo ? PHOTO_VIDEO_INSTALLMENT : 0) +
-    (addExtraModels ? EXTRA_MODELS_INSTALLMENT : 0);
-
-  async function handleCheckout(paymentType: "full" | "installment") {
-    setLoading(paymentType);
+  async function handleCheckout() {
+    setLoading(true);
     try {
       const res = await fetch("/api/brands/msw-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ package: pkg, paymentType, addPhotoVideo, addExtraModels }),
+        body: JSON.stringify({ package: pkg, paymentType: "full", addPhotoVideo, addExtraModels }),
       });
       const data = await res.json();
       if (data.url) {
         window.location.href = data.url;
       } else {
         toast.error(data.error || "Failed to start checkout. Please try again.");
-        setLoading(null);
+        setLoading(false);
       }
     } catch {
       toast.error("Something went wrong. Please try again.");
-      setLoading(null);
+      setLoading(false);
     }
   }
 
   return (
     <div className="space-y-3">
       {/* Pricing Display */}
-      <div className="flex items-end justify-between mb-4 pb-4 border-b border-white/10">
-        <div>
-          <p className="text-4xl font-bold">${totalFull.toLocaleString()}</p>
-          <p className="text-sm text-muted-foreground mt-0.5">Pay in full</p>
-        </div>
-        <div className="text-right">
-          <p className="text-2xl font-semibold text-pink-400">
-            ${totalInstallment.toLocaleString()}
-            <span className="text-base font-normal text-muted-foreground">/mo</span>
-          </p>
-          <p className="text-sm text-muted-foreground">× 3 months</p>
-        </div>
+      <div className="mb-4 pb-4 border-b border-white/10">
+        <p className="text-4xl font-bold">${totalFull.toLocaleString()}</p>
       </div>
 
       {/* Add-ons */}
@@ -362,25 +343,14 @@ export function CheckoutButtons({ pkg, fullPrice, installmentPrice }: CheckoutBu
         priceLabel="+$700"
       />
 
-      {/* Full Payment Button */}
+      {/* Checkout Button */}
       <Button
         className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white font-semibold py-6 rounded-xl text-base shadow-lg shadow-pink-500/20 transition-all hover:shadow-pink-500/30 hover:scale-[1.01] mt-1"
-        onClick={() => handleCheckout("full")}
-        disabled={loading !== null}
+        onClick={handleCheckout}
+        disabled={loading}
       >
-        {loading === "full" && <Loader2 className="h-5 w-5 animate-spin mr-2" />}
-        Book Now — Pay in Full
-      </Button>
-
-      {/* Installment Button */}
-      <Button
-        variant="outline"
-        className="w-full border-pink-500/30 hover:border-pink-500 hover:bg-pink-500/5 hover:text-pink-400 font-semibold py-6 rounded-xl text-base transition-all"
-        onClick={() => handleCheckout("installment")}
-        disabled={loading !== null}
-      >
-        {loading === "installment" && <Loader2 className="h-5 w-5 animate-spin mr-2" />}
-        3-Month Plan — ${totalInstallment.toLocaleString()}/mo
+        {loading && <Loader2 className="h-5 w-5 animate-spin mr-2" />}
+        Book Now — ${totalFull.toLocaleString()}
       </Button>
     </div>
   );

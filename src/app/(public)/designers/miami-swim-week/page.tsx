@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Designers — Miami Swim Week 2026 | EXA Models",
     description:
-      "Secure your runway show slot at Miami Swim Week 2026. Opening Night ($3,500), Day 2 ($2,500), Day 3–6 ($1,500 each), Daytime Show ($1,000). Pay in full or 3-month plan.",
+      "Secure your runway show slot at Miami Swim Week 2026. Opening Night ($3,500), Day 2 ($2,500), Day 3–6 ($1,500 each), Daytime Show ($1,000).",
   },
 };
 
@@ -41,7 +41,6 @@ const PACKAGES = [
     name: "Opening Show",
     date: "Tuesday, May 26",
     price: 3500,
-    installment: 1167,
     badge: "Most Prestigious",
     badgeGradient: "from-yellow-500 to-amber-500",
     borderColor: "border-yellow-500/30",
@@ -58,7 +57,6 @@ const PACKAGES = [
     name: "Day 2 Show",
     date: "Wednesday, May 27",
     price: 2500,
-    installment: 834,
     badge: null,
     badgeGradient: "",
     borderColor: "border-pink-500/20",
@@ -74,7 +72,6 @@ const PACKAGES = [
     name: "Emerging Designers Show",
     date: "Thursday, May 28",
     price: 1000,
-    installment: 334,
     badge: "Emerging Designers",
     badgeGradient: "from-teal-500 to-cyan-500",
     borderColor: "border-teal-500/20",
@@ -90,7 +87,6 @@ const PACKAGES = [
     name: "Day 4 Show",
     date: "Friday, May 29",
     price: 1500,
-    installment: 500,
     badge: null,
     badgeGradient: "",
     borderColor: "border-pink-500/20",
@@ -104,7 +100,6 @@ const PACKAGES = [
     name: "Day 5 Show",
     date: "Saturday, May 30",
     price: 1500,
-    installment: 500,
     badge: null,
     badgeGradient: "",
     borderColor: "border-pink-500/20",
@@ -118,7 +113,6 @@ const PACKAGES = [
     name: "Day 6 Show",
     date: "Sunday, May 31",
     price: 1500,
-    installment: 500,
     badge: null,
     badgeGradient: "",
     borderColor: "border-pink-500/20",
@@ -132,7 +126,6 @@ const PACKAGES = [
     name: "Daytime Show",
     date: "Thursday, May 28",
     price: 1000,
-    installment: 334,
     badge: null,
     badgeGradient: "",
     borderColor: "border-cyan-500/20",
@@ -150,10 +143,6 @@ const FAQS = [
   {
     q: "What's included with my show package?",
     a: "Each package includes 15 professional models and a full runway presentation. You can upgrade to 20 models for an additional $500, and add full photo & video documentation for $700. Opening Show and Day 2 designers hand-pick their models from our full roster.",
-  },
-  {
-    q: "How does the 3-month payment plan work?",
-    a: "Your cost is split into 3 equal monthly installments billed automatically to your card. Your show slot is fully secured from the moment your first payment clears.",
   },
   {
     q: "How many models walk in each show?",
@@ -261,9 +250,6 @@ export default async function MswBrandPage() {
 
         {/* Pitch Section */}
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <Badge className="mb-4 bg-pink-500/10 text-pink-400 border-pink-500/20 px-4 py-1">
-            Designer Opportunity
-          </Badge>
           <h2 className="text-3xl md:text-4xl font-bold mb-5">
             Showcase Your Collection on the Runway
           </h2>
@@ -273,12 +259,6 @@ export default async function MswBrandPage() {
         <div className="mb-20">
           <div className="text-center mb-10">
             <h2 className="text-3xl font-bold mb-3">Choose Your Show</h2>
-            <p className="text-muted-foreground">
-              Pay in full or split your investment over 3 months
-            </p>
-            <p className="text-sm text-pink-400 font-medium mt-2">
-              Limited slots available — book early to secure your preferred date.
-            </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
@@ -321,7 +301,6 @@ export default async function MswBrandPage() {
                   <CheckoutButtons
                     pkg={pkg.id}
                     fullPrice={pkg.price}
-                    installmentPrice={pkg.installment}
                   />
                 </CardContent>
               </Card>

@@ -24,6 +24,23 @@ export const metadata: Metadata = {
   title: "EXA Travel — Influencer Content for Destinations",
   description:
     "500+ vetted U.S.-based content creators ready to fly to your destination and produce high-engagement content that drives bookings, traffic, and brand exposure.",
+  alternates: {
+    canonical: "https://www.examodels.com/travel",
+  },
+  openGraph: {
+    title: "EXA Travel — Influencer Content for Destinations",
+    description:
+      "500+ vetted U.S.-based content creators producing high-engagement content across Instagram, TikTok, and YouTube — ready to fly to your destination.",
+    url: "https://www.examodels.com/travel",
+    type: "website",
+    siteName: "EXA Models",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "EXA Travel — Influencer Content for Destinations",
+    description:
+      "500+ vetted U.S.-based content creators producing high-engagement content — ready to fly to your destination.",
+  },
   robots: { index: true, follow: true },
 };
 

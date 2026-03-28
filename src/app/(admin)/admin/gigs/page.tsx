@@ -206,6 +206,39 @@ export default function AdminGigsPage() {
           }
         }
       }
+
+      // Third fallback: check media_assets for models still without a photo
+      const stillNoPhoto = apps
+        .filter((a: any) => a.model && !a.model.profile_photo_url)
+        .map((a: any) => a.model.id);
+
+      if (stillNoPhoto.length > 0) {
+        const { data: legacyPhotos } = await (supabase
+          .from("media_assets") as any)
+          .select("model_id, storage_path, url, photo_url")
+          .in("model_id", stillNoPhoto)
+          .eq("asset_type", "portfolio")
+          .order("created_at", { ascending: false });
+
+        if (legacyPhotos && legacyPhotos.length > 0) {
+          const legacyByModel: Record<string, string> = {};
+          for (const photo of legacyPhotos) {
+            if (!legacyByModel[photo.model_id]) {
+              const raw = photo.storage_path || photo.url || photo.photo_url;
+              if (raw) {
+                legacyByModel[photo.model_id] = raw.startsWith("http")
+                  ? raw
+                  : `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/portfolio/${raw}`;
+              }
+            }
+          }
+          for (const app of apps) {
+            if (app.model && !app.model.profile_photo_url && legacyByModel[app.model.id]) {
+              app.model.profile_photo_url = legacyByModel[app.model.id];
+            }
+          }
+        }
+      }
     }
 
     setApplications(apps);
