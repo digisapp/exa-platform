@@ -303,7 +303,7 @@ export default async function MswBrandPage() {
             </Badge>
 
             <h2 className="text-2xl md:text-3xl font-bold mb-3">
-              Full Production Show
+              Solo Show — Full Production
             </h2>
             <p className="text-muted-foreground text-lg leading-relaxed mb-8 max-w-2xl">
               Your brand. Your runway. Your guests. A single-brand runway show with full production — no sharing the stage. We provide all the models, styling, and end-to-end production. Plus a dedicated live shopping space during your show.
