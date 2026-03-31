@@ -260,7 +260,7 @@ export default async function MswBrandPage() {
               {[
                 "Private single-brand runway show — the full stage is yours",
                 "Full production included — lighting, sound, staging, show direction",
-                "All models provided from our professional roster",
+                "Up to 50 models included from our professional roster",
                 "Invite your own guest list — VIPs, buyers, press, influencers",
                 "Dedicated live shopping space during your show",
                 "Priority scheduling — choose your preferred show date",
@@ -276,9 +276,11 @@ export default async function MswBrandPage() {
               ))}
             </div>
 
-            <CheckoutButtons
-              pkg="full-production"
-              fullPrice={23500}
+            <SimpleCheckoutButton
+              packageId="full-production"
+              price={23500}
+              label="Book Now"
+              colorClass="from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 shadow-yellow-500/20 hover:shadow-yellow-500/30"
             />
           </div>
         </div>
