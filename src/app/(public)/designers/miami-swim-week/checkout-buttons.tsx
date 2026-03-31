@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Camera, Users, ShoppingBag, Building2 } from "lucide-react";
 import { toast } from "sonner";
 
-type PackageId = "opening-show" | "day-2" | "day-3" | "day-4" | "day-5" | "day-6" | "daytime-show" | "swim-shop" | "showroom-halfday" | "showroom-fullday" | "lobby-display" | "beach-shoot-halfday" | "afterparty-standard" | "afterparty-premier" | "afterparty-presenting";
+type PackageId = "opening-show" | "day-2" | "day-3" | "day-4" | "day-5" | "day-6" | "daytime-show" | "full-production" | "swim-shop" | "showroom-halfday" | "showroom-fullday" | "lobby-display" | "beach-shoot-halfday" | "afterparty-standard" | "afterparty-premier" | "afterparty-presenting";
 
 const PHOTO_VIDEO_PRICE = 700;
 const EXTRA_MODELS_PRICE = 500;

@@ -49,6 +49,12 @@ const PACKAGES = {
     installmentPrice: 33400, // $334.00/month in cents
     description: "Boutique daytime runway showcase on Thursday May 28, 2026",
   },
+  "full-production": {
+    name: "Full Production Show — Miami Swim Week 2026",
+    fullPrice: 2350000, // $23,500.00 in cents
+    installmentPrice: 783400, // $7,834.00/month in cents
+    description: "Exclusive single-brand runway show with full production, all models, styling, show direction, and a dedicated live shopping space. Your brand owns the entire show.",
+  },
   "showroom-halfday": {
     name: "Private Showroom — Half Day (4 hrs)",
     fullPrice: 120000, // $1,200.00 in cents
