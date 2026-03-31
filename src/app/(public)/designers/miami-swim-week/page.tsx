@@ -234,57 +234,6 @@ export default async function MswBrandPage() {
           </h2>
         </div>
 
-        {/* Full Production Show — Premium Tier */}
-        <div className="mb-14">
-          <div className="relative overflow-hidden rounded-3xl border-2 border-yellow-500/40 bg-gradient-to-br from-yellow-500/5 via-amber-500/5 to-pink-500/5 p-8 md:p-12 shadow-2xl shadow-yellow-500/10">
-            {/* Decorative */}
-            <div className="absolute top-6 right-6 z-10">
-              <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold bg-gradient-to-r from-yellow-500 to-amber-500 text-black shadow-md">
-                <Crown className="h-3.5 w-3.5" />
-                Exclusive
-              </span>
-            </div>
-
-            <Badge className="mb-5 bg-yellow-500/10 text-yellow-400 border-yellow-500/20 px-4 py-1">
-              Premium Package
-            </Badge>
-
-            <h2 className="text-2xl md:text-3xl font-bold mb-3">
-              Full Production Show
-            </h2>
-            <p className="text-muted-foreground text-lg leading-relaxed mb-8 max-w-2xl">
-              Your brand. Your runway. Your guests. A single-brand runway show with full production — no sharing the stage. We provide all the models, styling, and end-to-end production. Plus a dedicated live shopping space during your show.
-            </p>
-
-            <div className="grid sm:grid-cols-2 gap-3 mb-8">
-              {[
-                "Private single-brand runway show — the full stage is yours",
-                "Full production included — lighting, sound, staging, show direction",
-                "Up to 50 models included from our professional roster",
-                "Invite your own guest list — VIPs, buyers, press, influencers",
-                "Dedicated live shopping space during your show",
-                "Priority scheduling — choose your preferred show date",
-                "Photo & video documentation included",
-                "Backstage & dressing coordination handled by our team",
-              ].map((feature) => (
-                <div key={feature} className="flex items-start gap-3 text-sm">
-                  <div className="flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br from-yellow-500/20 to-amber-500/20 flex items-center justify-center mt-0.5">
-                    <Star className="h-3 w-3 text-yellow-400" />
-                  </div>
-                  <span className="text-muted-foreground">{feature}</span>
-                </div>
-              ))}
-            </div>
-
-            <SimpleCheckoutButton
-              packageId="full-production"
-              price={23500}
-              label="Book Now"
-              colorClass="from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 shadow-yellow-500/20 hover:shadow-yellow-500/30"
-            />
-          </div>
-        </div>
-
         {/* Show Packages */}
         <div className="mb-20">
           <div className="text-center mb-10">
@@ -335,6 +284,58 @@ export default async function MswBrandPage() {
                 </CardContent>
               </Card>
             ))}
+          </div>
+        </div>
+
+        {/* Full Production Show — Premium Tier */}
+        <div className="mb-20">
+          <div className="relative overflow-hidden rounded-3xl border-2 border-yellow-500/40 bg-gradient-to-br from-yellow-500/5 via-amber-500/5 to-pink-500/5 p-8 md:p-12 shadow-2xl shadow-yellow-500/10">
+            {/* Decorative */}
+            <div className="absolute top-6 right-6 z-10">
+              <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold bg-gradient-to-r from-yellow-500 to-amber-500 text-black shadow-md">
+                <Crown className="h-3.5 w-3.5" />
+                Exclusive
+              </span>
+            </div>
+
+            <Badge className="mb-5 bg-yellow-500/10 text-yellow-400 border-yellow-500/20 px-4 py-1">
+              Premium Package
+            </Badge>
+
+            <h2 className="text-2xl md:text-3xl font-bold mb-3">
+              Full Production Show
+            </h2>
+            <p className="text-muted-foreground text-lg leading-relaxed mb-8 max-w-2xl">
+              Your brand. Your runway. Your guests. A single-brand runway show with full production — no sharing the stage. We provide all the models, styling, and end-to-end production. Plus a dedicated live shopping space during your show.
+            </p>
+
+            <div className="grid sm:grid-cols-2 gap-3 mb-8">
+              {[
+                "Private single-brand runway show — the full stage is yours",
+                "Full production included — lighting, sound, staging, show direction",
+                "Up to 50 models included from our professional roster",
+                "Invite your own guest list — VIPs, buyers, press, influencers",
+                "We can fill your audience with influencers & VIP guests if needed",
+                "Dedicated live shopping space during your show",
+                "Priority scheduling — choose your preferred show date",
+                "Photo & video documentation included",
+                "Backstage & dressing coordination handled by our team",
+              ].map((feature) => (
+                <div key={feature} className="flex items-start gap-3 text-sm">
+                  <div className="flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br from-yellow-500/20 to-amber-500/20 flex items-center justify-center mt-0.5">
+                    <Star className="h-3 w-3 text-yellow-400" />
+                  </div>
+                  <span className="text-muted-foreground">{feature}</span>
+                </div>
+              ))}
+            </div>
+
+            <SimpleCheckoutButton
+              packageId="full-production"
+              price={23500}
+              label="Book Now"
+              colorClass="from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 shadow-yellow-500/20 hover:shadow-yellow-500/30"
+            />
           </div>
         </div>
 
