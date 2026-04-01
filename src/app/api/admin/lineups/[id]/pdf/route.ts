@@ -12,7 +12,6 @@ export async function GET(
   const { data: lineup, error } = await supabase.from("show_lineups")
     .select(`
       *,
-      designer:designers(id, first_name, last_name, brand_name),
       event:events(id, name, year, start_date, end_date),
       models:show_lineup_models(
         id,
@@ -30,14 +29,12 @@ export async function GET(
     return NextResponse.json({ error: "Lineup not found" }, { status: 404 });
   }
 
-  // Sort models by walk_order
   const models = (lineup.models || []).sort(
     (a: any, b: any) => a.walk_order - b.walk_order
   );
 
-  const designer = lineup.designer as any;
   const event = lineup.event as any;
-  const designerName = designer?.brand_name || `${designer?.first_name || ""} ${designer?.last_name || ""}`;
+  const designerName = lineup.designer_name || "Designer";
   const showDate = lineup.show_date
     ? new Date(lineup.show_date + "T00:00:00").toLocaleDateString("en-US", {
         weekday: "long",

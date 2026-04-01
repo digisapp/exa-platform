@@ -10,11 +10,9 @@ export async function GET(req: NextRequest) {
 
   const supabase: any = createServiceRoleClient();
 
-  // Tables not yet in generated types — cast to any
   const { data: lineups, error } = await supabase.from("show_lineups")
     .select(`
       *,
-      designer:designers(id, first_name, last_name, brand_name, instagram_url),
       models:show_lineup_models(
         id,
         model_id,
@@ -44,11 +42,11 @@ export async function GET(req: NextRequest) {
 // POST /api/admin/lineups — create a new lineup
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { event_id, designer_id, name, show_date, show_time, show_order, notes } = body;
+  const { event_id, designer_name, name, show_date, show_time, show_order, notes } = body;
 
-  if (!event_id || !designer_id || !name) {
+  if (!event_id || !designer_name || !name) {
     return NextResponse.json(
-      { error: "event_id, designer_id, and name are required" },
+      { error: "event_id, designer_name, and name are required" },
       { status: 400 }
     );
   }
@@ -58,17 +56,14 @@ export async function POST(req: NextRequest) {
   const { data, error } = await supabase.from("show_lineups")
     .insert({
       event_id,
-      designer_id,
+      designer_name,
       name,
       show_date: show_date || null,
       show_time: show_time || null,
       show_order: show_order || 0,
       notes: notes || null,
     })
-    .select(`
-      *,
-      designer:designers(id, first_name, last_name, brand_name, instagram_url)
-    `)
+    .select("*")
     .single();
 
   if (error) {

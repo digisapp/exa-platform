@@ -66,14 +66,6 @@ interface Event {
   status: string | null;
 }
 
-interface Designer {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
-  brand_name: string | null;
-  instagram_url: string | null;
-}
-
 interface ModelInfo {
   id: string;
   username: string | null;
@@ -96,14 +88,13 @@ interface LineupModel {
 interface Lineup {
   id: string;
   event_id: string;
-  designer_id: string;
+  designer_name: string | null;
   name: string;
   show_date: string | null;
   show_time: string | null;
   show_order: number;
   status: string;
   notes: string | null;
-  designer: Designer;
   models: LineupModel[];
 }
 
@@ -429,9 +420,7 @@ function DesignerLineupPanel({
     ? lineup.models.find((m) => m.model_id === activeId)
     : null;
 
-  const displayName =
-    lineup.designer.brand_name ||
-    `${lineup.designer.first_name} ${lineup.designer.last_name}`;
+  const displayName = lineup.designer_name || "Designer";
 
   const statusColor =
     lineup.status === "confirmed"
@@ -590,7 +579,6 @@ export default function AdminLineupsPage() {
   const [selectedEventId, setSelectedEventId] = useState<string>("");
   const [lineups, setLineups] = useState<Lineup[]>([]);
   const [allModels, setAllModels] = useState<ModelInfo[]>([]);
-  const [designers, setDesigners] = useState<Designer[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingModels, setLoadingModels] = useState(false);
 
@@ -599,10 +587,11 @@ export default function AdminLineupsPage() {
   const [selectedModelIds, setSelectedModelIds] = useState<Set<string>>(new Set());
   const [expandedLineupId, setExpandedLineupId] = useState<string | null>(null);
   const [showAddDesigner, setShowAddDesigner] = useState(false);
-  const [filterAssigned, setFilterAssigned] = useState<"all" | "unassigned" | "assigned">("all");
+  const [filterAssigned, setFilterAssigned] = useState<"all" | "unassigned" | "assigned" | "event">("all");
+  const [eventModelIds, setEventModelIds] = useState<Set<string>>(new Set());
 
   // New lineup form
-  const [newLineupDesignerId, setNewLineupDesignerId] = useState("");
+  const [newLineupDesignerName, setNewLineupDesignerName] = useState("");
   const [newLineupName, setNewLineupName] = useState("");
   const [newLineupDate, setNewLineupDate] = useState("");
   const [newLineupTime, setNewLineupTime] = useState("");
@@ -611,7 +600,7 @@ export default function AdminLineupsPage() {
   // Copy lineup dialog
   const [showCopyDialog, setShowCopyDialog] = useState(false);
   const [copySourceLineup, setCopySourceLineup] = useState<Lineup | null>(null);
-  const [copyTargetDesignerId, setCopyTargetDesignerId] = useState("");
+  const [copyTargetDesignerName, setCopyTargetDesignerName] = useState("");
   const [copyTargetName, setCopyTargetName] = useState("");
 
   const supabase = createClient();
@@ -637,12 +626,12 @@ export default function AdminLineupsPage() {
   useEffect(() => {
     if (!selectedEventId) return;
     loadLineups();
+    loadEventModels();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedEventId]);
 
   useEffect(() => {
     loadModels();
-    loadDesigners();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -669,13 +658,27 @@ export default function AdminLineupsPage() {
     setLoadingModels(false);
   }
 
-  async function loadDesigners() {
-    const { data } = await supabase
-      .from("designers")
-      .select("id, first_name, last_name, brand_name, instagram_url")
-      .eq("is_approved", true)
-      .order("brand_name", { ascending: true });
-    setDesigners(data || []);
+  async function loadEventModels() {
+    if (!selectedEventId) return;
+    // Find models who applied to gigs linked to this event (accepted status)
+    const { data: gigs } = await supabase
+      .from("gigs")
+      .select("id")
+      .eq("event_id", selectedEventId);
+
+    if (!gigs?.length) {
+      setEventModelIds(new Set());
+      return;
+    }
+
+    const gigIds = gigs.map((g) => g.id);
+    const { data: apps } = await supabase
+      .from("gig_applications")
+      .select("model_id")
+      .in("gig_id", gigIds)
+      .eq("status", "accepted");
+
+    setEventModelIds(new Set((apps || []).map((a) => a.model_id)));
   }
 
   // ─── Computed ────────────────────────────────────────────────────────────
@@ -696,7 +699,7 @@ export default function AdminLineupsPage() {
     const dayWalks: Record<string, Record<string, string[]>> = {}; // modelId -> date -> designerNames[]
     lineups.forEach((l) => {
       const day = l.show_date || "unscheduled";
-      const dn = l.designer.brand_name || `${l.designer.first_name} ${l.designer.last_name}`;
+      const dn = l.designer_name || "Designer";
       l.models.forEach((m) => {
         if (!dayWalks[m.model_id]) dayWalks[m.model_id] = {};
         if (!dayWalks[m.model_id][day]) dayWalks[m.model_id][day] = [];
@@ -735,14 +738,11 @@ export default function AdminLineupsPage() {
       list = list.filter((m) => !modelAssignmentCounts[m.id]);
     } else if (filterAssigned === "assigned") {
       list = list.filter((m) => !!modelAssignmentCounts[m.id]);
+    } else if (filterAssigned === "event") {
+      list = list.filter((m) => eventModelIds.has(m.id));
     }
     return list;
-  }, [allModels, modelSearch, filterAssigned, modelAssignmentCounts]);
-
-  const availableDesigners = useMemo(() => {
-    const usedIds = new Set(lineups.map((l) => l.designer_id));
-    return designers.filter((d) => !usedIds.has(d.id));
-  }, [designers, lineups]);
+  }, [allModels, modelSearch, filterAssigned, modelAssignmentCounts, eventModelIds]);
 
   const dayOverview = useMemo(() => {
     const days: Record<string, { lineups: Lineup[]; totalModels: number }> = {};
@@ -758,7 +758,7 @@ export default function AdminLineupsPage() {
   // ─── Actions ─────────────────────────────────────────────────────────────
 
   async function addDesignerLineup() {
-    if (!newLineupDesignerId || !newLineupName) return;
+    if (!newLineupDesignerName || !newLineupName) return;
     setSavingLineup(true);
 
     const res = await fetch("/api/admin/lineups", {
@@ -766,7 +766,7 @@ export default function AdminLineupsPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         event_id: selectedEventId,
-        designer_id: newLineupDesignerId,
+        designer_name: newLineupDesignerName.trim(),
         name: newLineupName,
         show_date: newLineupDate || null,
         show_time: newLineupTime || null,
@@ -779,7 +779,7 @@ export default function AdminLineupsPage() {
       setLineups((prev) => [...prev, data]);
       setExpandedLineupId(data.id);
       setShowAddDesigner(false);
-      setNewLineupDesignerId("");
+      setNewLineupDesignerName("");
       setNewLineupName("");
       setNewLineupDate("");
       setNewLineupTime("");
@@ -947,7 +947,7 @@ export default function AdminLineupsPage() {
 
   // Copy lineup: create new lineup for a different designer, then assign same models
   async function copyLineup() {
-    if (!copySourceLineup || !copyTargetDesignerId || !copyTargetName) return;
+    if (!copySourceLineup || !copyTargetDesignerName || !copyTargetName) return;
     setSavingLineup(true);
 
     // Create the new lineup
@@ -956,7 +956,7 @@ export default function AdminLineupsPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         event_id: selectedEventId,
-        designer_id: copyTargetDesignerId,
+        designer_name: copyTargetDesignerName.trim(),
         name: copyTargetName,
         show_date: copySourceLineup.show_date,
         show_time: copySourceLineup.show_time,
@@ -992,7 +992,7 @@ export default function AdminLineupsPage() {
     setExpandedLineupId(newLineup.id);
     setShowCopyDialog(false);
     setCopySourceLineup(null);
-    setCopyTargetDesignerId("");
+    setCopyTargetDesignerName("");
     setCopyTargetName("");
     setSavingLineup(false);
     toast.success(`Lineup copied with ${modelIds.length} models`);
@@ -1000,8 +1000,7 @@ export default function AdminLineupsPage() {
 
   function openCopyDialog(lineup: Lineup) {
     setCopySourceLineup(lineup);
-    const dn = lineup.designer.brand_name || `${lineup.designer.first_name} ${lineup.designer.last_name}`;
-    setCopyTargetName(`${lineup.name} (copy from ${dn})`);
+    setCopyTargetName(`${lineup.name} (copy from ${lineup.designer_name || "Designer"})`);
     setShowCopyDialog(true);
   }
 
@@ -1122,6 +1121,16 @@ export default function AdminLineupsPage() {
               >
                 Assigned
               </Button>
+              {eventModelIds.size > 0 && (
+                <Button
+                  variant={filterAssigned === "event" ? "default" : "ghost"}
+                  size="sm"
+                  className="h-7 text-xs flex-1"
+                  onClick={() => setFilterAssigned("event")}
+                >
+                  Event ({eventModelIds.size})
+                </Button>
+              )}
             </div>
           </div>
 
@@ -1256,9 +1265,7 @@ export default function AdminLineupsPage() {
                         {info.lineups
                           .sort((a, b) => a.show_order - b.show_order)
                           .map((l) => {
-                            const dn =
-                              l.designer.brand_name ||
-                              `${l.designer.first_name} ${l.designer.last_name}`;
+                            const dn = l.designer_name || "Designer";
                             const statusDot =
                               l.status === "confirmed"
                                 ? "bg-green-500"
@@ -1327,23 +1334,11 @@ export default function AdminLineupsPage() {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Designer</Label>
-              <Select value={newLineupDesignerId} onValueChange={setNewLineupDesignerId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a designer" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableDesigners.map((d) => (
-                    <SelectItem key={d.id} value={d.id}>
-                      {d.brand_name || `${d.first_name} ${d.last_name}`}
-                    </SelectItem>
-                  ))}
-                  {availableDesigners.length === 0 && (
-                    <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                      All approved designers already added
-                    </div>
-                  )}
-                </SelectContent>
-              </Select>
+              <Input
+                placeholder="e.g. Brand Name or Designer Name"
+                value={newLineupDesignerName}
+                onChange={(e) => setNewLineupDesignerName(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label>Lineup Name</Label>
@@ -1373,7 +1368,7 @@ export default function AdminLineupsPage() {
             </div>
             <Button
               onClick={addDesignerLineup}
-              disabled={!newLineupDesignerId || !newLineupName || savingLineup}
+              disabled={!newLineupDesignerName || !newLineupName || savingLineup}
               className="w-full"
             >
               {savingLineup ? (
@@ -1397,30 +1392,15 @@ export default function AdminLineupsPage() {
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
                 Copying {copySourceLineup.models.length} models from{" "}
-                <strong>
-                  {copySourceLineup.designer.brand_name ||
-                    `${copySourceLineup.designer.first_name} ${copySourceLineup.designer.last_name}`}
-                </strong>
+                <strong>{copySourceLineup.designer_name || "Designer"}</strong>
               </p>
               <div className="space-y-2">
                 <Label>Target Designer</Label>
-                <Select value={copyTargetDesignerId} onValueChange={setCopyTargetDesignerId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a designer" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableDesigners.map((d) => (
-                      <SelectItem key={d.id} value={d.id}>
-                        {d.brand_name || `${d.first_name} ${d.last_name}`}
-                      </SelectItem>
-                    ))}
-                    {availableDesigners.length === 0 && (
-                      <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                        All approved designers already added
-                      </div>
-                    )}
-                  </SelectContent>
-                </Select>
+                <Input
+                  placeholder="e.g. Brand Name or Designer Name"
+                  value={copyTargetDesignerName}
+                  onChange={(e) => setCopyTargetDesignerName(e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Lineup Name</Label>
@@ -1431,7 +1411,7 @@ export default function AdminLineupsPage() {
               </div>
               <Button
                 onClick={copyLineup}
-                disabled={!copyTargetDesignerId || !copyTargetName || savingLineup}
+                disabled={!copyTargetDesignerName || !copyTargetName || savingLineup}
                 className="w-full"
               >
                 {savingLineup ? (

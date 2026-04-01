@@ -22,7 +22,6 @@ export async function GET(req: NextRequest) {
     .from("show_lineups")
     .select(`
       *,
-      designer:designers(id, first_name, last_name, brand_name),
       models:show_lineup_models(
         id,
         model_id,
@@ -68,8 +67,7 @@ export async function GET(req: NextRequest) {
         });
 
     const lineupBlocks = dayLineups.map((l: any) => {
-      const designer = l.designer;
-      const designerName = designer?.brand_name || `${designer?.first_name || ""} ${designer?.last_name || ""}`;
+      const designerName = l.designer_name || "Designer";
       const modelRows = (l.models || []).map((lm: any, i: number) => {
         const m = lm.model;
         const measurements = [m?.bust, m?.hips].filter(Boolean).join(" / ") || "\u2014";
