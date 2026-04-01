@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 
-// GET /api/admin/lineups/[id]/pdf — generate a printable HTML for a lineup
+// GET /api/admin/lineups/[id]/pdf — generate printable HTML for a single show
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -9,127 +9,106 @@ export async function GET(
   const { id } = await params;
   const supabase: any = createServiceRoleClient();
 
-  const { data: lineup, error } = await supabase.from("show_lineups")
+  const { data: show, error } = await supabase.from("event_shows")
     .select(`
       *,
-      event:events(id, name, year, start_date, end_date),
-      models:show_lineup_models(
+      event:events(id, name, year),
+      designers:event_show_designers(
         id,
-        model_id,
-        walk_order,
-        outfit_notes,
-        status,
-        model:models(id, username, first_name, last_name, profile_photo_url, height, bust, hips, dress_size, shoe_size, instagram_url)
+        designer_name,
+        designer_order,
+        models:event_show_models(
+          id, model_id, walk_order, outfit_notes, status,
+          model:models(id, username, first_name, last_name, height, bust, hips, dress_size, shoe_size, instagram_url)
+        )
       )
     `)
     .eq("id", id)
     .single();
 
-  if (error || !lineup) {
-    return NextResponse.json({ error: "Lineup not found" }, { status: 404 });
+  if (error || !show) {
+    return NextResponse.json({ error: "Show not found" }, { status: 404 });
   }
 
-  const models = (lineup.models || []).sort(
-    (a: any, b: any) => a.walk_order - b.walk_order
-  );
-
-  const event = lineup.event as any;
-  const designerName = lineup.designer_name || "Designer";
-  const showDate = lineup.show_date
-    ? new Date(lineup.show_date + "T00:00:00").toLocaleDateString("en-US", {
-        weekday: "long",
-        month: "long",
-        day: "numeric",
-        year: "numeric",
-      })
+  const event = show.event as any;
+  const showDate = show.show_date
+    ? new Date(show.show_date + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })
     : "TBD";
 
-  const html = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>${designerName} - Show Lineup</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #111; padding: 40px; max-width: 800px; margin: 0 auto; }
-    .header { text-align: center; margin-bottom: 32px; border-bottom: 2px solid #111; padding-bottom: 20px; }
-    .header h1 { font-size: 28px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
-    .header h2 { font-size: 18px; font-weight: 400; color: #555; margin-top: 4px; }
-    .meta { display: flex; justify-content: space-between; margin-top: 12px; font-size: 13px; color: #666; }
-    .models-table { width: 100%; border-collapse: collapse; margin-top: 24px; }
-    .models-table th { text-align: left; padding: 8px 12px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #888; border-bottom: 1px solid #ddd; }
-    .models-table td { padding: 10px 12px; border-bottom: 1px solid #eee; font-size: 13px; vertical-align: middle; }
-    .models-table tr:hover { background: #f9f9f9; }
-    .walk-num { font-weight: 700; font-size: 16px; color: #333; text-align: center; width: 40px; }
-    .model-name { font-weight: 600; }
-    .model-username { color: #888; font-size: 12px; }
-    .notes { font-style: italic; color: #666; font-size: 12px; }
-    .footer { margin-top: 32px; text-align: center; font-size: 11px; color: #aaa; border-top: 1px solid #ddd; padding-top: 16px; }
-    .total { margin-top: 16px; text-align: right; font-size: 13px; color: #666; }
-    @media print { body { padding: 20px; } }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <h1>${designerName}</h1>
-    <h2>${lineup.name}</h2>
-    <div class="meta">
-      <span>${event?.name || "Event"} ${event?.year || ""}</span>
-      <span>${showDate}${lineup.show_time ? " at " + lineup.show_time : ""}</span>
-      <span>Status: ${lineup.status.toUpperCase()}</span>
-    </div>
-  </div>
+  const designers = (show.designers || [])
+    .sort((a: any, b: any) => a.designer_order - b.designer_order);
 
-  <table class="models-table">
-    <thead>
-      <tr>
-        <th style="width:40px">#</th>
-        <th>Model</th>
-        <th>Height</th>
-        <th>Measurements</th>
-        <th>Shoe</th>
-        <th>Instagram</th>
-        <th>Notes</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${models
-        .map((lm: any, i: number) => {
-          const m = lm.model;
-          const measurements = [m?.bust, m?.hips].filter(Boolean).join(" / ") || "\u2014";
-          const ig = m?.instagram_url
-            ? m.instagram_url.replace(/https?:\/\/(www\.)?instagram\.com\//, "@").replace(/\/$/, "")
-            : "\u2014";
-          return `
-      <tr>
+  const designerBlocks = designers.map((d: any) => {
+    const models = (d.models || []).sort((a: any, b: any) => a.walk_order - b.walk_order);
+    const rows = models.map((lm: any, i: number) => {
+      const m = lm.model;
+      const measurements = [m?.bust, m?.hips].filter(Boolean).join(" / ") || "\u2014";
+      const ig = m?.instagram_url
+        ? m.instagram_url.replace(/https?:\/\/(www\.)?instagram\.com\//, "@").replace(/\/$/, "")
+        : "\u2014";
+      return `<tr>
         <td class="walk-num">${i + 1}</td>
-        <td>
-          <div class="model-name">${m?.first_name || ""} ${m?.last_name || ""}</div>
-          <div class="model-username">@${m?.username || "\u2014"}</div>
-        </td>
+        <td><div class="model-name">${m?.first_name || ""} ${m?.last_name || ""}</div><div class="model-username">@${m?.username || "\u2014"}</div></td>
         <td>${m?.height || "\u2014"}</td>
         <td>${measurements}</td>
         <td>${m?.shoe_size || "\u2014"}</td>
         <td>${ig}</td>
         <td class="notes">${lm.outfit_notes || ""}</td>
       </tr>`;
-        })
-        .join("")}
-    </tbody>
-  </table>
+    }).join("");
 
-  <div class="total">${models.length} models in lineup</div>
+    return `<div class="designer-block">
+      <h2>${d.designer_name}</h2>
+      <p class="designer-meta">${models.length} models</p>
+      <table class="models-table">
+        <thead><tr><th style="width:35px">#</th><th>Model</th><th>Height</th><th>Measurements</th><th>Shoe</th><th>Instagram</th><th>Notes</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  }).join("");
 
-  <div class="footer">
-    Generated by EXA Platform \u00b7 ${new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+  const totalModels = designers.reduce((s: number, d: any) => s + (d.models?.length || 0), 0);
+
+  const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>${show.name} - Show Lineup</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #111; padding: 40px; max-width: 850px; margin: 0 auto; }
+  .header { text-align: center; margin-bottom: 28px; border-bottom: 2px solid #111; padding-bottom: 16px; }
+  .header h1 { font-size: 28px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+  .header p { font-size: 14px; color: #555; margin-top: 4px; }
+  .meta { display: flex; justify-content: center; gap: 24px; margin-top: 10px; font-size: 13px; color: #666; }
+  .designer-block { margin-bottom: 28px; page-break-inside: avoid; }
+  .designer-block h2 { font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #ccc; padding-bottom: 4px; margin-bottom: 4px; }
+  .designer-meta { font-size: 12px; color: #888; margin-bottom: 8px; }
+  .models-table { width: 100%; border-collapse: collapse; }
+  .models-table th { text-align: left; padding: 5px 10px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #999; border-bottom: 1px solid #ddd; }
+  .models-table td { padding: 7px 10px; border-bottom: 1px solid #eee; font-size: 12px; }
+  .walk-num { font-weight: 700; text-align: center; color: #333; }
+  .model-name { font-weight: 600; }
+  .model-username { color: #888; font-size: 11px; }
+  .notes { font-style: italic; color: #666; font-size: 11px; }
+  .footer { margin-top: 28px; text-align: center; font-size: 10px; color: #aaa; border-top: 1px solid #ddd; padding-top: 12px; }
+  @media print { body { padding: 20px; } .designer-block { page-break-inside: avoid; } }
+</style></head>
+<body>
+  <div class="header">
+    <h1>${show.name}</h1>
+    <p>${event?.name || "Event"} ${event?.year || ""}</p>
+    <div class="meta">
+      <span>${showDate}${show.show_time ? " at " + show.show_time : ""}</span>
+      <span>${designers.length} designers</span>
+      <span>${totalModels} models</span>
+    </div>
   </div>
-</body>
-</html>`;
+  ${designerBlocks}
+  <div class="footer">Generated by EXA Platform \u00b7 ${new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</div>
+</body></html>`;
 
   return new NextResponse(html, {
     headers: {
       "Content-Type": "text/html; charset=utf-8",
-      "Content-Disposition": `inline; filename="lineup-${designerName.replace(/\s+/g, "-").toLowerCase()}.html"`,
+      "Content-Disposition": `inline; filename="show-${show.name.replace(/\s+/g, "-").toLowerCase()}.html"`,
     },
   });
 }

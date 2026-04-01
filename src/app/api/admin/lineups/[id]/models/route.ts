@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 
-// POST /api/admin/lineups/[id]/models — assign models to a lineup
+// Note: [id] here is the designer_entry_id (event_show_designers.id)
+
+// POST /api/admin/lineups/[id]/models — assign models to a designer entry
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id: lineupId } = await params;
+  const { id: designerEntryId } = await params;
   const body = await req.json();
   const { model_ids } = body as { model_ids: string[] };
 
@@ -17,22 +19,24 @@ export async function POST(
   const supabase: any = createServiceRoleClient();
 
   // Get current max walk_order
-  const { data: existing } = await supabase.from("show_lineup_models")
+  const { data: existing } = await supabase
+    .from("event_show_models")
     .select("walk_order")
-    .eq("lineup_id", lineupId)
+    .eq("designer_entry_id", designerEntryId)
     .order("walk_order", { ascending: false })
     .limit(1);
 
   let nextOrder = (existing?.[0]?.walk_order ?? -1) + 1;
 
   const inserts = model_ids.map((model_id) => ({
-    lineup_id: lineupId,
+    designer_entry_id: designerEntryId,
     model_id,
     walk_order: nextOrder++,
   }));
 
-  const { data, error } = await supabase.from("show_lineup_models")
-    .upsert(inserts, { onConflict: "lineup_id,model_id", ignoreDuplicates: true })
+  const { data, error } = await supabase
+    .from("event_show_models")
+    .upsert(inserts, { onConflict: "designer_entry_id,model_id", ignoreDuplicates: true })
     .select(`
       id,
       model_id,
@@ -49,12 +53,12 @@ export async function POST(
   return NextResponse.json(data, { status: 201 });
 }
 
-// DELETE /api/admin/lineups/[id]/models — remove models from a lineup
+// DELETE /api/admin/lineups/[id]/models — remove models from a designer entry
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id: lineupId } = await params;
+  const { id: designerEntryId } = await params;
   const body = await req.json();
   const { model_ids } = body as { model_ids: string[] };
 
@@ -64,9 +68,10 @@ export async function DELETE(
 
   const supabase: any = createServiceRoleClient();
 
-  const { error } = await supabase.from("show_lineup_models")
+  const { error } = await supabase
+    .from("event_show_models")
     .delete()
-    .eq("lineup_id", lineupId)
+    .eq("designer_entry_id", designerEntryId)
     .in("model_id", model_ids);
 
   if (error) {
@@ -76,12 +81,12 @@ export async function DELETE(
   return NextResponse.json({ success: true });
 }
 
-// PATCH /api/admin/lineups/[id]/models — reorder models in a lineup
+// PATCH /api/admin/lineups/[id]/models — reorder models within a designer entry
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id: lineupId } = await params;
+  const { id: designerEntryId } = await params;
   const body = await req.json();
   const { ordered_model_ids } = body as { ordered_model_ids: string[] };
 
@@ -91,11 +96,11 @@ export async function PATCH(
 
   const supabase: any = createServiceRoleClient();
 
-  // Update walk_order for each model
   const updates = ordered_model_ids.map((model_id, index) =>
-    supabase.from("show_lineup_models")
+    supabase
+      .from("event_show_models")
       .update({ walk_order: index })
-      .eq("lineup_id", lineupId)
+      .eq("designer_entry_id", designerEntryId)
       .eq("model_id", model_id)
   );
 

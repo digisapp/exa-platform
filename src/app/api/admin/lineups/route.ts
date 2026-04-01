@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 
-// GET /api/admin/lineups?event_id=xxx — list all lineups for an event with model counts
+// GET /api/admin/lineups?event_id=xxx — list all shows for an event with designers and models
 export async function GET(req: NextRequest) {
   const eventId = req.nextUrl.searchParams.get("event_id");
   if (!eventId) {
@@ -10,16 +10,22 @@ export async function GET(req: NextRequest) {
 
   const supabase: any = createServiceRoleClient();
 
-  const { data: lineups, error } = await supabase.from("show_lineups")
+  const { data: shows, error } = await supabase.from("event_shows")
     .select(`
       *,
-      models:show_lineup_models(
+      designers:event_show_designers(
         id,
-        model_id,
-        walk_order,
-        outfit_notes,
-        status,
-        model:models(id, username, first_name, last_name, profile_photo_url, height, instagram_followers)
+        designer_name,
+        designer_order,
+        notes,
+        models:event_show_models(
+          id,
+          model_id,
+          walk_order,
+          outfit_notes,
+          status,
+          model:models(id, username, first_name, last_name, profile_photo_url, height, instagram_followers)
+        )
       )
     `)
     .eq("event_id", eventId)
@@ -30,33 +36,37 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Sort models within each lineup by walk_order
-  const sorted = (lineups || []).map((lineup: any) => ({
-    ...lineup,
-    models: (lineup.models || []).sort((a: any, b: any) => a.walk_order - b.walk_order),
+  // Sort designers by designer_order, models by walk_order
+  const sorted = (shows || []).map((show: any) => ({
+    ...show,
+    designers: (show.designers || [])
+      .sort((a: any, b: any) => a.designer_order - b.designer_order)
+      .map((d: any) => ({
+        ...d,
+        models: (d.models || []).sort((a: any, b: any) => a.walk_order - b.walk_order),
+      })),
   }));
 
   return NextResponse.json(sorted);
 }
 
-// POST /api/admin/lineups — create a new lineup
+// POST /api/admin/lineups — create a new show
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { event_id, designer_name, name, show_date, show_time, show_order, notes } = body;
+  const { event_id, name, show_date, show_time, show_order, notes } = body;
 
-  if (!event_id || !designer_name || !name) {
+  if (!event_id || !name) {
     return NextResponse.json(
-      { error: "event_id, designer_name, and name are required" },
+      { error: "event_id and name are required" },
       { status: 400 }
     );
   }
 
   const supabase: any = createServiceRoleClient();
 
-  const { data, error } = await supabase.from("show_lineups")
+  const { data, error } = await supabase.from("event_shows")
     .insert({
       event_id,
-      designer_name,
       name,
       show_date: show_date || null,
       show_time: show_time || null,
@@ -67,14 +77,8 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (error) {
-    if (error.code === "23505") {
-      return NextResponse.json(
-        { error: "This designer already has a lineup for this event" },
-        { status: 409 }
-      );
-    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ ...data, models: [] }, { status: 201 });
+  return NextResponse.json({ ...data, designers: [] }, { status: 201 });
 }
