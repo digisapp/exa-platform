@@ -27,6 +27,7 @@ import {
   Plane,
   Megaphone,
   Mail,
+  ListOrdered,
 } from "lucide-react";
 
 export default async function AdminPage() {
@@ -47,7 +48,7 @@ export default async function AdminPage() {
   }
 
   // Get stats
-  const { count: totalModels } = await supabase.from("models").select("*", { count: "exact", head: true });
+  const { count: totalModels } = await (supabase.from("models") as any).select("*", { count: "exact", head: true }).not("user_id", "is", null);
   const { count: totalFans } = await supabase.from("fans").select("*", { count: "exact", head: true });
   const { count: totalTransactions } = await supabase.from("coin_transactions").select("*", { count: "exact", head: true });
   const { count: pendingModelApps } = await (supabase.from("model_applications") as any).select("*", { count: "exact", head: true }).eq("status", "pending");
@@ -167,6 +168,13 @@ export default async function AdminPage() {
           <Link href="/admin/gigs">
             <Sparkles className="h-6 w-6 text-violet-500" />
             <span>Manage Gigs</span>
+          </Link>
+        </Button>
+
+        <Button variant="outline" asChild className="h-auto py-4 flex-col gap-2 border-pink-500/30 hover:border-pink-500/50">
+          <Link href="/admin/lineups">
+            <ListOrdered className="h-6 w-6 text-pink-500" />
+            <span className="bg-gradient-to-r from-pink-400 to-violet-400 text-transparent bg-clip-text">Show Lineups</span>
           </Link>
         </Button>
 
