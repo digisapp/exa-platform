@@ -54,7 +54,24 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id: showId } = await params;
   const body = await req.json();
+  const supabase: any = createServiceRoleClient();
+
+  // Reorder designers
+  if (body.ordered_designer_ids) {
+    const { ordered_designer_ids } = body as { ordered_designer_ids: string[] };
+    const updates = ordered_designer_ids.map((designerId, index) =>
+      supabase.from("event_show_designers").update({ designer_order: index }).eq("id", designerId).eq("show_id", showId)
+    );
+    const results = await Promise.all(updates);
+    const failed = results.find((r: any) => r.error);
+    if (failed?.error) {
+      return NextResponse.json({ error: failed.error.message }, { status: 500 });
+    }
+    return NextResponse.json({ success: true });
+  }
+
   const { designer_id, designer_name, move_to_show_id } = body as {
     designer_id: string;
     designer_name?: string;
@@ -64,8 +81,6 @@ export async function PATCH(
   if (!designer_id) {
     return NextResponse.json({ error: "designer_id required" }, { status: 400 });
   }
-
-  const supabase: any = createServiceRoleClient();
 
   if (move_to_show_id) {
     // Get next designer_order in target show

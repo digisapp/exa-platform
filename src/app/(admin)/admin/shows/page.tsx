@@ -79,13 +79,23 @@ interface Show {
   designers: DesignerEntry[];
 }
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function parseTimeToMinutes(time: string | null): number | null {
+  if (!time) return null;
+  const parts = time.split(":");
+  if (parts.length < 2) return null;
+  return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+}
+
 // ─── Sortable Model Card ─────────────────────────────────────────────────────
 
 function SortableModelCard({
-  showModel, onRemove, walkNumber, onUpdateNotes, conflictWarning,
+  showModel, onRemove, walkNumber, onUpdateNotes, conflictWarning, isBulkSelected, onBulkToggle,
 }: {
   showModel: ShowModel; onRemove: () => void; walkNumber: number;
   onUpdateNotes: (notes: string) => void; conflictWarning: string | null;
+  isBulkSelected: boolean; onBulkToggle: () => void;
 }) {
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesValue, setNotesValue] = useState(showModel.outfit_notes || "");
@@ -97,8 +107,11 @@ function SortableModelCard({
   function saveNotes() { onUpdateNotes(notesValue); setEditingNotes(false); }
 
   return (
-    <div ref={setNodeRef} style={style} className="rounded-lg bg-card border hover:border-pink-500/30 transition-colors group">
+    <div ref={setNodeRef} style={style} className={`rounded-lg bg-card border transition-colors group ${isBulkSelected ? "border-pink-500 bg-pink-500/5" : "hover:border-pink-500/30"}`}>
       <div className="flex items-center gap-3 p-2">
+        <input type="checkbox" checked={isBulkSelected} onChange={onBulkToggle}
+          onClick={(e) => e.stopPropagation()}
+          className="h-3.5 w-3.5 rounded border-gray-300 text-pink-500 focus:ring-pink-500 shrink-0 cursor-pointer" />
         <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground shrink-0">
           <GripVertical className="h-4 w-4" />
         </button>
@@ -126,7 +139,7 @@ function SortableModelCard({
         </div>
       </div>
       {(editingNotes || showModel.outfit_notes) && (
-        <div className="px-2 pb-2 pl-[72px]">
+        <div className="px-2 pb-2 pl-[88px]">
           {editingNotes ? (
             <div className="flex gap-1">
               <Textarea value={notesValue} onChange={(e) => setNotesValue(e.target.value)} placeholder="Outfit description, look number, etc."
@@ -196,10 +209,12 @@ function ModelPoolCard({ model, assignedCount, isSelected, onToggle }: {
   );
 }
 
-// ─── Designer Panel (within a show) ──────────────────────────────────────────
+// ─── Sortable Designer Panel ─────────────────────────────────────────────────
 
-function DesignerPanel({
-  designer, showId, onRemoveModel, onReorder, onDeleteDesigner, onUpdateOutfitNotes, onRenameDesigner, onMoveDesigner, modelConflicts, isActive, onActivate, otherShows,
+function SortableDesignerPanel({
+  designer, showId, onRemoveModel, onReorder, onDeleteDesigner, onUpdateOutfitNotes,
+  onRenameDesigner, onMoveDesigner, onBulkRemove, onBulkMove,
+  modelConflicts, isActive, onActivate, otherShows, allDesigners,
 }: {
   designer: DesignerEntry; showId: string;
   onRemoveModel: (designerEntryId: string, modelId: string) => void;
@@ -208,15 +223,32 @@ function DesignerPanel({
   onUpdateOutfitNotes: (designerEntryId: string, modelId: string, notes: string) => void;
   onRenameDesigner: (designerEntryId: string, showId: string, newName: string) => void;
   onMoveDesigner: (designerEntryId: string, fromShowId: string, toShowId: string) => void;
+  onBulkRemove: (designerEntryId: string, modelIds: string[]) => void;
+  onBulkMove: (fromDesignerEntryId: string, toDesignerEntryId: string, modelIds: string[]) => void;
   modelConflicts: Record<string, string>;
   isActive: boolean; onActivate: () => void;
   otherShows: { id: string; name: string }[];
+  allDesigners: { id: string; designerName: string; showName: string }[];
 }) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState(false);
   const [nameValue, setNameValue] = useState(designer.designer_name);
   const [showMoveMenu, setShowMoveMenu] = useState(false);
-  const sensors = useSensors(
+  const [bulkSelected, setBulkSelected] = useState<Set<string>>(new Set());
+  const [showBulkMoveMenu, setShowBulkMoveMenu] = useState(false);
+
+  const {
+    attributes: sortableAttributes, listeners: sortableListeners,
+    setNodeRef, transform, transition, isDragging,
+  } = useSortable({ id: designer.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+  };
+
+  const modelSensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
@@ -238,12 +270,39 @@ function DesignerPanel({
     setEditingName(false);
   }
 
+  function toggleBulkSelect(modelId: string) {
+    setBulkSelected((prev) => {
+      const next = new Set(prev);
+      next.has(modelId) ? next.delete(modelId) : next.add(modelId);
+      return next;
+    });
+  }
+
+  function handleBulkRemove() {
+    if (bulkSelected.size === 0) return;
+    onBulkRemove(designer.id, Array.from(bulkSelected));
+    setBulkSelected(new Set());
+  }
+
+  function handleBulkMove(targetDesignerId: string) {
+    if (bulkSelected.size === 0) return;
+    onBulkMove(designer.id, targetDesignerId, Array.from(bulkSelected));
+    setBulkSelected(new Set());
+    setShowBulkMoveMenu(false);
+  }
+
   const activeModel = activeId ? designer.models.find((m) => m.model_id === activeId) : null;
+  const moveTargetDesigners = allDesigners.filter((d) => d.id !== designer.id);
 
   return (
-    <div className={`border rounded-lg ${isActive ? "border-pink-500/50 bg-pink-500/5" : "border-border"}`}>
+    <div ref={setNodeRef} style={style} className={`border rounded-lg ${isActive ? "border-pink-500/50 bg-pink-500/5" : "border-border"}`}>
       <div className="flex items-center justify-between p-2 cursor-pointer group" onClick={onActivate}>
         <div className="flex items-center gap-2 min-w-0">
+          <button {...sortableAttributes} {...sortableListeners}
+            onClick={(e) => e.stopPropagation()}
+            className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground shrink-0">
+            <GripVertical className="h-4 w-4" />
+          </button>
           {editingName ? (
             <Input value={nameValue} onChange={(e) => setNameValue(e.target.value)}
               className="h-7 text-sm font-semibold w-[200px]" autoFocus
@@ -288,17 +347,47 @@ function DesignerPanel({
       </div>
       {isActive && (
         <div className="px-2 pb-2 space-y-1">
+          {/* Bulk action bar */}
+          {bulkSelected.size > 0 && (
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-pink-500/10 border border-pink-500/20 mb-1">
+              <span className="text-xs font-medium">{bulkSelected.size} selected</span>
+              <Button size="sm" variant="destructive" className="h-6 text-xs px-2" onClick={handleBulkRemove}>
+                <Trash2 className="h-3 w-3 mr-1" />Remove
+              </Button>
+              <div className="relative">
+                <Button size="sm" variant="outline" className="h-6 text-xs px-2" onClick={() => setShowBulkMoveMenu(!showBulkMoveMenu)}>
+                  <ArrowRightLeft className="h-3 w-3 mr-1" />Move to...
+                </Button>
+                {showBulkMoveMenu && (
+                  <div className="absolute left-0 top-full mt-1 z-50 bg-popover border rounded-lg shadow-lg py-1 min-w-[220px] max-h-[200px] overflow-y-auto">
+                    {moveTargetDesigners.length === 0 ? (
+                      <p className="text-xs text-muted-foreground px-3 py-2">No other designers to move to</p>
+                    ) : moveTargetDesigners.map((d) => (
+                      <button key={d.id} onClick={() => handleBulkMove(d.id)}
+                        className="w-full text-left text-xs px-3 py-1.5 hover:bg-accent transition-colors">
+                        {d.designerName} <span className="text-muted-foreground">({d.showName})</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <Button size="sm" variant="ghost" className="h-6 text-xs px-2 ml-auto" onClick={() => setBulkSelected(new Set())}>Clear</Button>
+            </div>
+          )}
+
           {designer.models.length === 0 ? (
             <p className="text-xs text-muted-foreground text-center py-3">Select models from the pool and click &quot;Add to Lineup&quot;</p>
           ) : (
-            <DndContext sensors={sensors} collisionDetection={closestCenter}
+            <DndContext sensors={modelSensors} collisionDetection={closestCenter}
               onDragStart={(e: DragStartEvent) => setActiveId(e.active.id as string)} onDragEnd={handleDragEnd}>
               <SortableContext items={modelIds} strategy={verticalListSortingStrategy}>
                 {designer.models.map((sm, i) => (
                   <SortableModelCard key={sm.model_id} showModel={sm} walkNumber={i + 1}
                     onRemove={() => onRemoveModel(designer.id, sm.model_id)}
                     onUpdateNotes={(notes) => onUpdateOutfitNotes(designer.id, sm.model_id, notes)}
-                    conflictWarning={modelConflicts[sm.model_id] || null} />
+                    conflictWarning={modelConflicts[sm.model_id] || null}
+                    isBulkSelected={bulkSelected.has(sm.model_id)}
+                    onBulkToggle={() => toggleBulkSelect(sm.model_id)} />
                 ))}
               </SortableContext>
               <DragOverlay>
@@ -323,7 +412,7 @@ function DesignerPanel({
 
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
-export default function AdminLineupsPage() {
+export default function AdminShowsPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string>("");
   const [shows, setShows] = useState<Show[]>([]);
@@ -351,6 +440,12 @@ export default function AdminLineupsPage() {
   const [newDesignerName, setNewDesignerName] = useState("");
 
   const supabase = createClient();
+
+  // Designer DnD sensors (separate from model sensors)
+  const designerSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   // ─── Data Fetching ───────────────────────────────────────────────────────
 
@@ -408,32 +503,76 @@ export default function AdminLineupsPage() {
     return counts;
   }, [shows]);
 
-  // Conflict detection: 4+ walks on same day
+  // Enhanced conflict detection: overlapping/back-to-back shows + 4+ walks/day
   const modelConflictsByDesigner = useMemo(() => {
-    const dayWalks: Record<string, Record<string, string[]>> = {};
+    // Build a map: modelId -> [{showId, showName, showDate, showTime, designerName}]
+    const modelAssignments: Record<string, { showId: string; showName: string; showDate: string | null; showTime: string | null; designerName: string }[]> = {};
     shows.forEach((s) => {
-      const day = s.show_date || "unscheduled";
       s.designers.forEach((d) => d.models.forEach((m) => {
-        if (!dayWalks[m.model_id]) dayWalks[m.model_id] = {};
-        if (!dayWalks[m.model_id][day]) dayWalks[m.model_id][day] = [];
-        dayWalks[m.model_id][day].push(`${d.designer_name} (${s.name})`);
+        if (!modelAssignments[m.model_id]) modelAssignments[m.model_id] = [];
+        modelAssignments[m.model_id].push({ showId: s.id, showName: s.name, showDate: s.show_date, showTime: s.show_time, designerName: d.designer_name });
       }));
     });
+
     const result: Record<string, Record<string, string>> = {};
     shows.forEach((s) => {
-      const day = s.show_date || "unscheduled";
       s.designers.forEach((d) => {
         const conflicts: Record<string, string> = {};
         d.models.forEach((m) => {
-          const walks = dayWalks[m.model_id]?.[day];
-          if (walks && walks.length >= 4) {
-            conflicts[m.model_id] = `${walks.length} walks on ${day === "unscheduled" ? "unscheduled" : new Date(day + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}: ${walks.join(", ")}`;
+          const assignments = modelAssignments[m.model_id] || [];
+          const warnings: string[] = [];
+
+          // Group by date
+          const byDate: Record<string, typeof assignments> = {};
+          assignments.forEach((a) => { const key = a.showDate || "unscheduled"; if (!byDate[key]) byDate[key] = []; byDate[key].push(a); });
+
+          for (const [date, dateAssignments] of Object.entries(byDate)) {
+            if (dateAssignments.length < 2) continue;
+
+            // 4+ walks same day
+            if (dateAssignments.length >= 4) {
+              const dateLabel = date === "unscheduled" ? "unscheduled" : new Date(date + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+              warnings.push(`${dateAssignments.length} walks on ${dateLabel}`);
+            }
+
+            // Time overlap / back-to-back detection
+            const withTimes = dateAssignments.filter((a) => a.showTime).map((a) => ({ ...a, minutes: parseTimeToMinutes(a.showTime)! }));
+            if (withTimes.length >= 2) {
+              withTimes.sort((a, b) => a.minutes - b.minutes);
+              for (let i = 0; i < withTimes.length; i++) {
+                for (let j = i + 1; j < withTimes.length; j++) {
+                  if (withTimes[i].showId === withTimes[j].showId) continue;
+                  const diff = withTimes[j].minutes - withTimes[i].minutes;
+                  if (diff === 0) {
+                    warnings.push(`Time conflict: ${withTimes[i].showName} and ${withTimes[j].showName} at same time`);
+                  } else if (diff <= 60) {
+                    warnings.push(`Back-to-back: ${withTimes[i].showName} (${withTimes[i].showTime}) → ${withTimes[j].showName} (${withTimes[j].showTime})`);
+                  }
+                }
+              }
+            }
+
+            // Multiple shows same day, no times set
+            const withoutTimes = dateAssignments.filter((a) => !a.showTime);
+            const uniqueShowsNoTime = new Set(withoutTimes.map((a) => a.showId));
+            if (uniqueShowsNoTime.size >= 2 && withTimes.length === 0) {
+              warnings.push(`${dateAssignments.length} shows on same day (no times set)`);
+            }
+          }
+
+          if (warnings.length > 0) {
+            conflicts[m.model_id] = [...new Set(warnings)].join(" · ");
           }
         });
         result[d.id] = conflicts;
       });
     });
     return result;
+  }, [shows]);
+
+  // All designers across all shows (for bulk move targets)
+  const allDesignersList = useMemo(() => {
+    return shows.flatMap((s) => s.designers.map((d) => ({ id: d.id, designerName: d.designer_name, showName: s.name })));
   }, [shows]);
 
   const filteredModels = useMemo(() => {
@@ -480,6 +619,16 @@ export default function AdminLineupsPage() {
     setSavingShow(false);
   }
 
+  async function duplicateShow(showId: string) {
+    const res = await fetch(`/api/admin/lineups/${showId}/duplicate`, { method: "POST" });
+    if (res.ok) {
+      const data = await res.json();
+      setShows((prev) => [...prev, data]);
+      setExpandedShowId(data.id);
+      toast.success("Show duplicated");
+    } else { const err = await res.json(); toast.error(err.error || "Failed to duplicate"); }
+  }
+
   async function deleteShow(showId: string) {
     const res = await fetch(`/api/admin/lineups/${showId}`, { method: "DELETE" });
     if (res.ok) {
@@ -511,8 +660,6 @@ export default function AdminLineupsPage() {
   }
 
   async function renameDesigner(designerEntryId: string, showId: string, newName: string) {
-    const show = shows.find((s) => s.id === showId);
-    if (!show) return;
     const res = await fetch(`/api/admin/lineups/${showId}/designers`, {
       method: "PATCH", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ designer_id: designerEntryId, designer_name: newName }),
@@ -531,7 +678,6 @@ export default function AdminLineupsPage() {
       body: JSON.stringify({ designer_id: designerEntryId, move_to_show_id: toShowId }),
     });
     if (res.ok) {
-      // Move the designer entry (with its models) from source to target show
       const movedDesigner = shows.flatMap((s) => s.designers).find((d) => d.id === designerEntryId);
       if (movedDesigner) {
         setShows((prev) => prev.map((s) => {
@@ -558,6 +704,24 @@ export default function AdminLineupsPage() {
       toast.success("Designer removed");
     }
   }
+
+  const reorderDesigners = useCallback(async (showId: string, orderedDesignerIds: string[]) => {
+    setShows((prev) => prev.map((s) => {
+      if (s.id !== showId) return s;
+      const designerMap = new Map(s.designers.map((d) => [d.id, d]));
+      return {
+        ...s,
+        designers: orderedDesignerIds.map((id, i) => {
+          const d = designerMap.get(id);
+          return d ? { ...d, designer_order: i } : null;
+        }).filter(Boolean) as DesignerEntry[],
+      };
+    }));
+    await fetch(`/api/admin/lineups/${showId}/designers`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ordered_designer_ids: orderedDesignerIds }),
+    });
+  }, []);
 
   async function addModelsToDesigner() {
     if (!activeDesignerEntryId || selectedModelIds.size === 0) return;
@@ -589,6 +753,46 @@ export default function AdminLineupsPage() {
       })));
       toast.success("Model removed");
     }
+  }
+
+  async function bulkRemoveModels(designerEntryId: string, modelIds: string[]) {
+    const res = await fetch(`/api/admin/lineups/${designerEntryId}/models`, {
+      method: "DELETE", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ model_ids: modelIds }),
+    });
+    if (res.ok) {
+      setShows((prev) => prev.map((s) => ({
+        ...s, designers: s.designers.map((d) => d.id === designerEntryId ? { ...d, models: d.models.filter((m) => !modelIds.includes(m.model_id)) } : d),
+      })));
+      toast.success(`${modelIds.length} model(s) removed`);
+    }
+  }
+
+  async function bulkMoveModels(fromDesignerEntryId: string, toDesignerEntryId: string, modelIds: string[]) {
+    // Remove from source
+    const delRes = await fetch(`/api/admin/lineups/${fromDesignerEntryId}/models`, {
+      method: "DELETE", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ model_ids: modelIds }),
+    });
+    if (!delRes.ok) { toast.error("Failed to remove models"); return; }
+
+    // Add to target
+    const addRes = await fetch(`/api/admin/lineups/${toDesignerEntryId}/models`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ model_ids: modelIds }),
+    });
+    if (addRes.ok) {
+      const newModels = await addRes.json();
+      setShows((prev) => prev.map((s) => ({
+        ...s,
+        designers: s.designers.map((d) => {
+          if (d.id === fromDesignerEntryId) return { ...d, models: d.models.filter((m) => !modelIds.includes(m.model_id)) };
+          if (d.id === toDesignerEntryId) return { ...d, models: [...d.models, ...newModels].sort((a, b) => a.walk_order - b.walk_order) };
+          return d;
+        }),
+      })));
+      toast.success(`${modelIds.length} model(s) moved`);
+    } else { toast.error("Failed to add models to target"); }
   }
 
   const reorderModels = useCallback(async (designerEntryId: string, orderedModelIds: string[]) => {
@@ -623,6 +827,20 @@ export default function AdminLineupsPage() {
 
   function toggleModelSelection(modelId: string) {
     setSelectedModelIds((prev) => { const next = new Set(prev); next.has(modelId) ? next.delete(modelId) : next.add(modelId); return next; });
+  }
+
+  // Designer drag within a show
+  function handleDesignerDragEnd(showId: string) {
+    return (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+      const show = shows.find((s) => s.id === showId);
+      if (!show) return;
+      const ids = show.designers.map((d) => d.id);
+      const oldIndex = ids.indexOf(active.id as string);
+      const newIndex = ids.indexOf(over.id as string);
+      reorderDesigners(showId, arrayMove(ids, oldIndex, newIndex));
+    };
   }
 
   // ─── Render ──────────────────────────────────────────────────────────────
@@ -720,6 +938,7 @@ export default function AdminLineupsPage() {
               const isExpanded = expandedShowId === show.id;
               const statusColor = show.status === "confirmed" ? "bg-green-500/10 text-green-500" : show.status === "completed" ? "bg-blue-500/10 text-blue-500" : "bg-yellow-500/10 text-yellow-500";
               const showModelCount = show.designers.reduce((s, d) => s + d.models.length, 0);
+              const designerIds = show.designers.map((d) => d.id);
 
               return (
                 <Card key={show.id} className="border-border">
@@ -754,6 +973,9 @@ export default function AdminLineupsPage() {
                             <SelectItem value="completed">Completed</SelectItem>
                           </SelectContent>
                         </Select>
+                        <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => duplicateShow(show.id)}>
+                          <Copy className="h-3 w-3 mr-1" /> Duplicate
+                        </Button>
                         <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => exportShowPdf(show.id)}>
                           <Download className="h-3 w-3 mr-1" /> PDF
                         </Button>
@@ -787,17 +1009,24 @@ export default function AdminLineupsPage() {
                         {show.designers.length === 0 ? (
                           <p className="text-xs text-muted-foreground text-center py-4">No designers yet. Click &quot;Add Designer&quot; above.</p>
                         ) : (
-                          <div className="space-y-1.5">
-                            {show.designers.map((d) => (
-                              <DesignerPanel key={d.id} designer={d} showId={show.id}
-                                isActive={activeDesignerEntryId === d.id}
-                                onActivate={() => setActiveDesignerEntryId(activeDesignerEntryId === d.id ? null : d.id)}
-                                onRemoveModel={removeModel} onReorder={reorderModels} onDeleteDesigner={deleteDesigner}
-                                onRenameDesigner={renameDesigner} onMoveDesigner={moveDesigner}
-                                onUpdateOutfitNotes={updateOutfitNotes} modelConflicts={modelConflictsByDesigner[d.id] || {}}
-                                otherShows={shows.filter((s) => s.id !== show.id).map((s) => ({ id: s.id, name: s.name }))} />
-                            ))}
-                          </div>
+                          <DndContext sensors={designerSensors} collisionDetection={closestCenter}
+                            onDragEnd={handleDesignerDragEnd(show.id)}>
+                            <SortableContext items={designerIds} strategy={verticalListSortingStrategy}>
+                              <div className="space-y-1.5">
+                                {show.designers.map((d) => (
+                                  <SortableDesignerPanel key={d.id} designer={d} showId={show.id}
+                                    isActive={activeDesignerEntryId === d.id}
+                                    onActivate={() => setActiveDesignerEntryId(activeDesignerEntryId === d.id ? null : d.id)}
+                                    onRemoveModel={removeModel} onReorder={reorderModels} onDeleteDesigner={deleteDesigner}
+                                    onRenameDesigner={renameDesigner} onMoveDesigner={moveDesigner}
+                                    onBulkRemove={bulkRemoveModels} onBulkMove={bulkMoveModels}
+                                    onUpdateOutfitNotes={updateOutfitNotes} modelConflicts={modelConflictsByDesigner[d.id] || {}}
+                                    otherShows={shows.filter((s) => s.id !== show.id).map((s) => ({ id: s.id, name: s.name }))}
+                                    allDesigners={allDesignersList} />
+                                ))}
+                              </div>
+                            </SortableContext>
+                          </DndContext>
                         )}
                       </div>
                     </CardContent>
