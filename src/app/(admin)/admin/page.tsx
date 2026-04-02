@@ -172,7 +172,7 @@ export default async function AdminPage() {
         </Button>
 
         <Button variant="outline" asChild className="h-auto py-4 flex-col gap-2 border-pink-500/30 hover:border-pink-500/50">
-          <Link href="/admin/lineups">
+          <Link href="/admin/shows">
             <ListOrdered className="h-6 w-6 text-pink-500" />
             <span className="bg-gradient-to-r from-pink-400 to-violet-400 text-transparent bg-clip-text">Show Lineups</span>
           </Link>

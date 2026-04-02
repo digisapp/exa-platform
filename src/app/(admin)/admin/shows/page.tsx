@@ -25,7 +25,7 @@ import { CSS } from "@dnd-kit/utilities";
 import {
   ArrowLeft, Plus, Search, X, GripVertical, Users, Calendar, Clock,
   Download, Trash2, ChevronDown, ChevronUp, Check, UserPlus, Loader2,
-  Copy, AlertTriangle, FileText, Pencil,
+  Copy, AlertTriangle, FileText, Pencil, ArrowRightLeft,
 } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -199,17 +199,23 @@ function ModelPoolCard({ model, assignedCount, isSelected, onToggle }: {
 // ─── Designer Panel (within a show) ──────────────────────────────────────────
 
 function DesignerPanel({
-  designer, showId, onRemoveModel, onReorder, onDeleteDesigner, onUpdateOutfitNotes, modelConflicts, isActive, onActivate,
+  designer, showId, onRemoveModel, onReorder, onDeleteDesigner, onUpdateOutfitNotes, onRenameDesigner, onMoveDesigner, modelConflicts, isActive, onActivate, otherShows,
 }: {
   designer: DesignerEntry; showId: string;
   onRemoveModel: (designerEntryId: string, modelId: string) => void;
   onReorder: (designerEntryId: string, modelIds: string[]) => void;
   onDeleteDesigner: (designerEntryId: string) => void;
   onUpdateOutfitNotes: (designerEntryId: string, modelId: string, notes: string) => void;
+  onRenameDesigner: (designerEntryId: string, showId: string, newName: string) => void;
+  onMoveDesigner: (designerEntryId: string, fromShowId: string, toShowId: string) => void;
   modelConflicts: Record<string, string>;
   isActive: boolean; onActivate: () => void;
+  otherShows: { id: string; name: string }[];
 }) {
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState(false);
+  const [nameValue, setNameValue] = useState(designer.designer_name);
+  const [showMoveMenu, setShowMoveMenu] = useState(false);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -225,19 +231,60 @@ function DesignerPanel({
     onReorder(designer.id, arrayMove(modelIds, oldIndex, newIndex));
   }
 
+  function saveName() {
+    if (nameValue.trim() && nameValue.trim() !== designer.designer_name) {
+      onRenameDesigner(designer.id, showId, nameValue.trim());
+    }
+    setEditingName(false);
+  }
+
   const activeModel = activeId ? designer.models.find((m) => m.model_id === activeId) : null;
 
   return (
     <div className={`border rounded-lg ${isActive ? "border-pink-500/50 bg-pink-500/5" : "border-border"}`}>
-      <div className="flex items-center justify-between p-2 cursor-pointer" onClick={onActivate}>
+      <div className="flex items-center justify-between p-2 cursor-pointer group" onClick={onActivate}>
         <div className="flex items-center gap-2 min-w-0">
-          <span className="text-sm font-semibold truncate">{designer.designer_name}</span>
+          {editingName ? (
+            <Input value={nameValue} onChange={(e) => setNameValue(e.target.value)}
+              className="h-7 text-sm font-semibold w-[200px]" autoFocus
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => { if (e.key === "Enter") saveName(); if (e.key === "Escape") { setEditingName(false); setNameValue(designer.designer_name); } }}
+              onBlur={saveName} />
+          ) : (
+            <span className="text-sm font-semibold truncate">{designer.designer_name}</span>
+          )}
           <Badge variant="outline" className="text-xs shrink-0">{designer.models.length}</Badge>
         </div>
-        <button onClick={(e) => { e.stopPropagation(); if (confirm(`Remove ${designer.designer_name}?`)) onDeleteDesigner(designer.id); }}
-          className="opacity-0 group-hover:opacity-100 hover:opacity-100 text-muted-foreground hover:text-destructive transition-all">
-          <Trash2 className="h-3.5 w-3.5" />
-        </button>
+        <div className="flex items-center gap-1 shrink-0">
+          {!editingName && (
+            <button onClick={(e) => { e.stopPropagation(); setNameValue(designer.designer_name); setEditingName(true); }}
+              className="opacity-0 group-hover:opacity-100 hover:opacity-100 text-muted-foreground hover:text-foreground transition-all" title="Rename designer">
+              <Pencil className="h-3.5 w-3.5" />
+            </button>
+          )}
+          {otherShows.length > 0 && (
+            <div className="relative">
+              <button onClick={(e) => { e.stopPropagation(); setShowMoveMenu(!showMoveMenu); }}
+                className="opacity-0 group-hover:opacity-100 hover:opacity-100 text-muted-foreground hover:text-foreground transition-all" title="Move to another show">
+                <ArrowRightLeft className="h-3.5 w-3.5" />
+              </button>
+              {showMoveMenu && (
+                <div className="absolute right-0 top-full mt-1 z-50 bg-popover border rounded-lg shadow-lg py-1 min-w-[180px]"
+                  onClick={(e) => e.stopPropagation()}>
+                  <p className="text-xs text-muted-foreground px-3 py-1">Move to:</p>
+                  {otherShows.map((s) => (
+                    <button key={s.id} onClick={() => { onMoveDesigner(designer.id, showId, s.id); setShowMoveMenu(false); }}
+                      className="w-full text-left text-xs px-3 py-1.5 hover:bg-accent transition-colors">{s.name}</button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+          <button onClick={(e) => { e.stopPropagation(); if (confirm(`Remove ${designer.designer_name}?`)) onDeleteDesigner(designer.id); }}
+            className="opacity-0 group-hover:opacity-100 hover:opacity-100 text-muted-foreground hover:text-destructive transition-all">
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
       </div>
       {isActive && (
         <div className="px-2 pb-2 space-y-1">
@@ -461,6 +508,41 @@ export default function AdminLineupsPage() {
       setAddDesignerShowId(null);
       toast.success("Designer added");
     } else { const err = await res.json(); toast.error(err.error || "Failed"); }
+  }
+
+  async function renameDesigner(designerEntryId: string, showId: string, newName: string) {
+    const show = shows.find((s) => s.id === showId);
+    if (!show) return;
+    const res = await fetch(`/api/admin/lineups/${showId}/designers`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ designer_id: designerEntryId, designer_name: newName }),
+    });
+    if (res.ok) {
+      setShows((prev) => prev.map((s) => ({
+        ...s, designers: s.designers.map((d) => d.id === designerEntryId ? { ...d, designer_name: newName } : d),
+      })));
+      toast.success("Designer renamed");
+    } else { const err = await res.json(); toast.error(err.error || "Failed to rename"); }
+  }
+
+  async function moveDesigner(designerEntryId: string, fromShowId: string, toShowId: string) {
+    const res = await fetch(`/api/admin/lineups/${fromShowId}/designers`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ designer_id: designerEntryId, move_to_show_id: toShowId }),
+    });
+    if (res.ok) {
+      // Move the designer entry (with its models) from source to target show
+      const movedDesigner = shows.flatMap((s) => s.designers).find((d) => d.id === designerEntryId);
+      if (movedDesigner) {
+        setShows((prev) => prev.map((s) => {
+          if (s.id === fromShowId) return { ...s, designers: s.designers.filter((d) => d.id !== designerEntryId) };
+          if (s.id === toShowId) return { ...s, designers: [...s.designers, movedDesigner] };
+          return s;
+        }));
+      }
+      if (activeDesignerEntryId === designerEntryId) setActiveDesignerEntryId(null);
+      toast.success("Designer moved");
+    } else { const err = await res.json(); toast.error(err.error || "Failed to move"); }
   }
 
   async function deleteDesigner(designerEntryId: string) {
@@ -711,7 +793,9 @@ export default function AdminLineupsPage() {
                                 isActive={activeDesignerEntryId === d.id}
                                 onActivate={() => setActiveDesignerEntryId(activeDesignerEntryId === d.id ? null : d.id)}
                                 onRemoveModel={removeModel} onReorder={reorderModels} onDeleteDesigner={deleteDesigner}
-                                onUpdateOutfitNotes={updateOutfitNotes} modelConflicts={modelConflictsByDesigner[d.id] || {}} />
+                                onRenameDesigner={renameDesigner} onMoveDesigner={moveDesigner}
+                                onUpdateOutfitNotes={updateOutfitNotes} modelConflicts={modelConflictsByDesigner[d.id] || {}}
+                                otherShows={shows.filter((s) => s.id !== show.id).map((s) => ({ id: s.id, name: s.name }))} />
                             ))}
                           </div>
                         )}
