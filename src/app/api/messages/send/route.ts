@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 import { escapeIlike } from "@/lib/utils";
+import { sendNewMessageNotificationEmail } from "@/lib/email";
 
 const DEFAULT_MESSAGE_COST = 5; // Default coins if model hasn't set a rate
 
@@ -307,6 +308,68 @@ export async function POST(request: NextRequest) {
       .select("id, conversation_id, sender_id, content, media_url, media_type, media_price, media_viewed_by, is_system, created_at")
       .eq("id", result.message_id)
       .single();
+
+    // ─── First-message email notification ───────────────────────────────
+    // Send email only on the FIRST message from this sender in this conversation.
+    // This prevents spam while ensuring neither party misses the initial contact.
+    if (conversationId && recipient?.actors) {
+      try {
+        const { count: senderMessageCount } = await adminClient
+          .from("messages")
+          .select("id", { count: "exact", head: true })
+          .eq("conversation_id", conversationId)
+          .eq("sender_id", sender.id);
+
+        if (senderMessageCount === 1) {
+          // This is the first message from this sender — notify the recipient
+          const recipientUserId = recipient.actors.user_id;
+          if (recipientUserId) {
+            const { data: { user: recipientUser } } = await adminClient.auth.admin.getUserById(recipientUserId);
+            if (recipientUser?.email) {
+              // Get sender display name
+              let senderDisplayName = "Someone";
+              if (sender.type === "model") {
+                const { data: senderModel } = await adminClient.from("models").select("first_name, last_name, username").eq("user_id", user.id).maybeSingle();
+                senderDisplayName = senderModel ? `${senderModel.first_name || ""} ${senderModel.last_name || ""}`.trim() || senderModel.username || "A model" : "A model";
+              } else if (sender.type === "fan") {
+                const { data: senderFan } = await adminClient.from("fans").select("display_name, username").eq("user_id", user.id).maybeSingle();
+                senderDisplayName = senderFan?.display_name || senderFan?.username || "A fan";
+              } else if (sender.type === "brand") {
+                const { data: senderBrand } = await adminClient.from("brands").select("company_name").eq("user_id", user.id).maybeSingle();
+                senderDisplayName = senderBrand?.company_name || "A brand";
+              }
+
+              // Get recipient display name
+              let recipientDisplayName = "there";
+              if (recipient.actors.type === "model") {
+                const { data: recipientModel } = await adminClient.from("models").select("first_name, username").eq("user_id", recipientUserId).maybeSingle();
+                recipientDisplayName = recipientModel?.first_name || recipientModel?.username || "there";
+              } else if (recipient.actors.type === "fan") {
+                const { data: recipientFan } = await adminClient.from("fans").select("display_name, username").eq("user_id", recipientUserId).maybeSingle();
+                recipientDisplayName = recipientFan?.display_name || recipientFan?.username || "there";
+              } else if (recipient.actors.type === "brand") {
+                const { data: recipientBrand } = await adminClient.from("brands").select("company_name").eq("user_id", recipientUserId).maybeSingle();
+                recipientDisplayName = recipientBrand?.company_name || "there";
+              }
+
+              const conversationUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://www.examodels.com"}/messages?c=${conversationId}`;
+
+              sendNewMessageNotificationEmail({
+                to: recipientUser.email,
+                recipientName: recipientDisplayName,
+                senderName: senderDisplayName,
+                senderType: sender.type as "model" | "fan" | "brand",
+                messagePreview: content || "(Media message)",
+                conversationUrl,
+              }).catch((err) => console.error("First message notification email error:", err));
+            }
+          }
+        }
+      } catch (emailErr) {
+        // Don't fail the message send if email notification fails
+        console.error("First message notification check error:", emailErr);
+      }
+    }
 
     return NextResponse.json({
       success: true,

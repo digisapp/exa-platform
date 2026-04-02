@@ -1,7 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { sendNewMessageNotificationEmail } from "@/lib/email";
+
+const adminClient = createServiceRoleClient();
 
 const DEFAULT_MESSAGE_COST = 5; // Default coins if model hasn't set a rate
 
@@ -238,6 +242,60 @@ export async function POST(request: NextRequest) {
         { error: result.error || "Failed to send message" },
         { status: 500 }
       );
+    }
+
+    // ─── First-message email notification for new conversation ──────────
+    try {
+      // Get recipient's user_id via actors table
+      const { data: recipientActor2 } = await adminClient
+        .from("actors")
+        .select("user_id, type")
+        .eq("id", recipientId)
+        .maybeSingle();
+
+      if (recipientActor2?.user_id) {
+        const { data: { user: recipientUser } } = await adminClient.auth.admin.getUserById(recipientActor2.user_id);
+        if (recipientUser?.email) {
+          // Get sender display name
+          let senderDisplayName = "Someone";
+          if (sender.type === "model") {
+            const { data: sm } = await adminClient.from("models").select("first_name, last_name, username").eq("user_id", user.id).maybeSingle();
+            senderDisplayName = sm ? `${sm.first_name || ""} ${sm.last_name || ""}`.trim() || sm.username || "A model" : "A model";
+          } else if (sender.type === "fan") {
+            const { data: sf } = await adminClient.from("fans").select("display_name, username").eq("user_id", user.id).maybeSingle();
+            senderDisplayName = sf?.display_name || sf?.username || "A fan";
+          } else if (sender.type === "brand") {
+            const { data: sb } = await adminClient.from("brands").select("company_name").eq("user_id", user.id).maybeSingle();
+            senderDisplayName = sb?.company_name || "A brand";
+          }
+
+          // Get recipient display name
+          let recipientDisplayName = "there";
+          if (recipientActor2.type === "model") {
+            const { data: rm } = await adminClient.from("models").select("first_name, username").eq("user_id", recipientActor2.user_id).maybeSingle();
+            recipientDisplayName = rm?.first_name || rm?.username || "there";
+          } else if (recipientActor2.type === "fan") {
+            const { data: rf } = await adminClient.from("fans").select("display_name, username").eq("user_id", recipientActor2.user_id).maybeSingle();
+            recipientDisplayName = rf?.display_name || rf?.username || "there";
+          } else if (recipientActor2.type === "brand") {
+            const { data: rb } = await adminClient.from("brands").select("company_name").eq("user_id", recipientActor2.user_id).maybeSingle();
+            recipientDisplayName = rb?.company_name || "there";
+          }
+
+          const conversationUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://www.examodels.com"}/messages?c=${conversation.id}`;
+
+          sendNewMessageNotificationEmail({
+            to: recipientUser.email,
+            recipientName: recipientDisplayName,
+            senderName: senderDisplayName,
+            senderType: sender.type as "model" | "fan" | "brand",
+            messagePreview: initialMessage,
+            conversationUrl,
+          }).catch((err) => console.error("New conversation notification email error:", err));
+        }
+      }
+    } catch (emailErr) {
+      console.error("New conversation notification check error:", emailErr);
     }
 
     return NextResponse.json({
