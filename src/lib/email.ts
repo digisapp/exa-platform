@@ -6022,3 +6022,118 @@ export async function sendNewMessageNotificationEmail({
     return { success: false, error };
   }
 }
+
+/**
+ * Send a nudge email for unread messages (24h+ old).
+ * Reminds the recipient they have an unanswered message.
+ */
+export async function sendUnreadMessageNudgeEmail({
+  to,
+  recipientName,
+  senderName,
+  messagePreview,
+  hoursAgo,
+  conversationUrl,
+}: {
+  to: string;
+  recipientName: string;
+  senderName: string;
+  messagePreview: string;
+  hoursAgo: number;
+  conversationUrl: string;
+}) {
+  try {
+    if (await isEmailUnsubscribed(to, "notification")) {
+      console.log(`Skipping nudge email - ${to} is unsubscribed`);
+      return;
+    }
+    const resend = getResendClient();
+    const unsubscribeToken = await getUnsubscribeToken(to);
+
+    const truncatedPreview = messagePreview.length > 150 ? messagePreview.slice(0, 150) + "..." : messagePreview;
+    const timeLabel = hoursAgo >= 48 ? `${Math.round(hoursAgo / 24)} days ago` : `${hoursAgo} hours ago`;
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
+      to: [to],
+      subject: `You have an unread message from ${senderName}`,
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%); padding: 30px; text-align: center;">
+              <p style="margin: 0; font-size: 40px;">📩</p>
+              <h1 style="margin: 10px 0 0; color: white; font-size: 22px; font-weight: bold;">
+                Unread Message
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 18px;">
+                Hey ${escapeHtml(recipientName)}!
+              </p>
+              <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                <strong style="color: #ffffff;">${escapeHtml(senderName)}</strong> sent you a message <strong style="color: #ec4899;">${timeLabel}</strong> and is still waiting for a reply.
+              </p>
+
+              <!-- Message Preview -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+                <tr>
+                  <td style="padding: 15px; background-color: #262626; border-radius: 8px; border-left: 3px solid #8b5cf6;">
+                    <p style="margin: 0 0 5px; color: #71717a; font-size: 12px;">Their message:</p>
+                    <p style="margin: 0; color: #ffffff; font-size: 14px; font-style: italic;">"${escapeHtml(truncatedPreview)}"</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
+                <tr>
+                  <td align="center">
+                    <a href="${conversationUrl}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+                      Reply Now
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0; color: #71717a; font-size: 13px; text-align: center;">
+                A quick reply goes a long way!
+              </p>
+            </td>
+          </tr>
+
+          ${generateEmailFooter(unsubscribeToken)}
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`,
+    });
+
+    if (error) {
+      console.error("Resend error:", error);
+      return { success: false, error };
+    }
+    return { success: true, data };
+  } catch (error) {
+    console.error("Unread message nudge email error:", error);
+    return { success: false, error };
+  }
+}
