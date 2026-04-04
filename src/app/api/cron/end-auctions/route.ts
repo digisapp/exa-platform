@@ -135,12 +135,11 @@ export async function GET(request: NextRequest) {
 
     console.log(`End auctions cron: ${succeeded} ended, ${failed} failed out of ${results.length}`);
 
-    // Auto-restart auctions that ended with no bids (no_sale with bid_count = 0)
+    // Auto-restart auctions that ended without a sale (no bids or reserve not met)
     const { data: noSaleAuctions, error: noSaleError } = await supabase
       .from("auctions")
       .select("id, title, model_id, created_at, original_end_at, starting_price, reserve_price, buy_now_price, category, description, deliverables, cover_image_url, allow_auto_bid, anti_snipe_minutes")
-      .eq("status", "no_sale")
-      .eq("bid_count", 0);
+      .eq("status", "no_sale");
 
     let restarted = 0;
 
