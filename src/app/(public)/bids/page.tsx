@@ -4,6 +4,7 @@ import { Navbar } from "@/components/layout/navbar";
 import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 import { BidsCategoryFilter } from "@/components/auctions/BidsCategoryFilter";
 import { CreateListingButton } from "@/components/auctions/CreateListingButton";
+import { HowItWorksModal } from "@/components/auctions/HowItWorksModal";
 import { Zap } from "lucide-react";
 
 import type { AuctionWithModel } from "@/types/auctions";
@@ -125,7 +126,10 @@ export default async function BidsPage() {
         <main className="container px-8 md:px-16 py-8">
           {/* Header */}
           <div className="flex items-center justify-between gap-4 mb-3">
-            <h1 className="text-4xl md:text-3xl font-extrabold bg-gradient-to-r from-pink-400 to-violet-400 bg-clip-text text-transparent">Bids</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-4xl md:text-3xl font-extrabold bg-gradient-to-r from-pink-400 to-violet-400 bg-clip-text text-transparent">Bids</h1>
+              <HowItWorksModal variant="icon" isModel={actorType === "model" || actorType === "admin"} />
+            </div>
             <CreateListingButton
               isLoggedIn={!!user}
               actorType={actorType}

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Info } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -11,19 +12,30 @@ import {
 
 interface HowItWorksModalProps {
   isModel?: boolean;
+  variant?: "link" | "icon";
 }
 
-export function HowItWorksModal({ isModel }: HowItWorksModalProps) {
+export function HowItWorksModal({ isModel, variant = "link" }: HowItWorksModalProps) {
   const [open, setOpen] = useState(false);
 
   return (
     <>
-      <button
-        onClick={() => setOpen(true)}
-        className="text-sm text-zinc-400 hover:text-white transition-colors underline underline-offset-4 decoration-zinc-600 hover:decoration-zinc-400"
-      >
-        How it works
-      </button>
+      {variant === "icon" ? (
+        <button
+          onClick={() => setOpen(true)}
+          aria-label="How EXA Bids works"
+          className="inline-flex items-center justify-center h-7 w-7 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-800/60 transition-colors"
+        >
+          <Info className="h-4 w-4" />
+        </button>
+      ) : (
+        <button
+          onClick={() => setOpen(true)}
+          className="text-sm text-zinc-400 hover:text-white transition-colors underline underline-offset-4 decoration-zinc-600 hover:decoration-zinc-400"
+        >
+          How it works
+        </button>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md bg-zinc-900 border-zinc-800">
