@@ -102,10 +102,26 @@ export default function AdminFansPage() {
       .from("fans") as any)
       .select("*", { count: "exact", head: true });
 
-    const { count: active } = await (supabase
-      .from("fans") as any)
-      .select("*", { count: "exact", head: true })
-      .eq("is_suspended", false);
+    // Active fans = fans who have had coin activity in the last 30 days
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: recentTx } = await (supabase
+      .from("coin_transactions") as any)
+      .select("actor_id")
+      .gte("created_at", thirtyDaysAgo);
+
+    const recentActorIds = Array.from(
+      new Set((recentTx || []).map((t: any) => t.actor_id).filter(Boolean))
+    ) as string[];
+
+    let active = 0;
+    if (recentActorIds.length > 0) {
+      const { data: fanActors } = await (supabase
+        .from("actors") as any)
+        .select("id")
+        .eq("type", "fan")
+        .in("id", recentActorIds);
+      active = fanActors?.length || 0;
+    }
 
     // Get total coins spent (negative transactions = spending)
     const { data: spentData } = await (supabase
@@ -330,7 +346,7 @@ export default function AdminFansPage() {
               <TrendingUp className="h-8 w-8 text-green-500" />
               <div>
                 <p className="text-2xl font-bold">{stats.activeFans.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Active</p>
+                <p className="text-xs text-muted-foreground">Active (30d)</p>
               </div>
             </div>
           </CardContent>
