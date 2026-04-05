@@ -8,6 +8,10 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   ArrowLeft,
   User,
@@ -30,6 +34,7 @@ import {
   Loader2,
   Copy,
   Check,
+  Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -184,6 +189,9 @@ export default function AdminModelDetailPage() {
 
   const [loading, setLoading] = useState(true);
   const [model, setModel] = useState<ModelDetails | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState<Partial<ModelDetails>>({});
   const [application, setApplication] = useState<ModelApplication | null>(null);
   const [stats, setStats] = useState<ModelStats>({
     followers_count: 0,
@@ -341,6 +349,76 @@ export default function AdminModelDetailPage() {
 
   const instagramHandle = model.instagram_name;
 
+  const openEdit = () => {
+    setForm({
+      first_name: model.first_name,
+      last_name: model.last_name,
+      email: model.email,
+      phone: model.phone,
+      bio: model.bio,
+      city: model.city,
+      state: model.state,
+      country_code: model.country_code,
+      height: model.height,
+      dob: model.dob ? model.dob.slice(0, 10) : null,
+      bust: model.bust,
+      waist: model.waist,
+      hips: model.hips,
+      dress_size: model.dress_size,
+      shoe_size: model.shoe_size,
+      hair_color: model.hair_color,
+      eye_color: model.eye_color,
+      instagram_name: model.instagram_name,
+      instagram_followers: model.instagram_followers,
+      tiktok_username: model.tiktok_username,
+      tiktok_followers: model.tiktok_followers,
+      availability_status: model.availability_status,
+    });
+    setEditOpen(true);
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const payload: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(form)) {
+        // Send as-is; API normalizes "" to null
+        payload[key] = value ?? null;
+      }
+
+      const res = await fetch(`/api/admin/models/${model.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to update");
+      }
+
+      // Refetch model
+      const { data: updated } = await (supabase
+        .from("models") as any)
+        .select("*")
+        .eq("id", model.id)
+        .single();
+      if (updated) setModel(updated);
+
+      toast.success("Model updated");
+      setEditOpen(false);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Failed to update";
+      toast.error(message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const setField = <K extends keyof ModelDetails>(key: K, value: ModelDetails[K]) => {
+    setForm((f) => ({ ...f, [key]: value }));
+  };
+
   return (
     <div className="container px-8 md:px-16 py-8 space-y-6 max-w-6xl">
       {/* Header */}
@@ -371,6 +449,10 @@ export default function AdminModelDetailPage() {
           </div>
           <p className="text-muted-foreground">@{model.username}</p>
         </div>
+        <Button variant="outline" onClick={openEdit}>
+          <Pencil className="h-4 w-4 mr-2" />
+          Edit
+        </Button>
         <Button asChild>
           <a href={`/${model.username}`} target="_blank" rel="noopener noreferrer">
             <ExternalLink className="h-4 w-4 mr-2" />
@@ -691,6 +773,216 @@ export default function AdminModelDetailPage() {
           </Card>
         </div>
       </div>
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Model Details</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="first_name">First Name</Label>
+              <Input
+                id="first_name"
+                value={form.first_name ?? ""}
+                onChange={(e) => setField("first_name", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="last_name">Last Name</Label>
+              <Input
+                id="last_name"
+                value={form.last_name ?? ""}
+                onChange={(e) => setField("last_name", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={form.email ?? ""}
+                onChange={(e) => setField("email", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone</Label>
+              <Input
+                id="phone"
+                value={form.phone ?? ""}
+                onChange={(e) => setField("phone", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="city">City</Label>
+              <Input
+                id="city"
+                value={form.city ?? ""}
+                onChange={(e) => setField("city", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="state">State</Label>
+              <Input
+                id="state"
+                value={form.state ?? ""}
+                onChange={(e) => setField("state", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="country_code">Country Code</Label>
+              <Input
+                id="country_code"
+                value={form.country_code ?? ""}
+                onChange={(e) => setField("country_code", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="availability_status">Availability</Label>
+              <Input
+                id="availability_status"
+                value={form.availability_status ?? ""}
+                onChange={(e) => setField("availability_status", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="dob">Date of Birth</Label>
+              <Input
+                id="dob"
+                type="date"
+                value={form.dob ?? ""}
+                onChange={(e) => setField("dob", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="height">Height</Label>
+              <Input
+                id="height"
+                value={form.height ?? ""}
+                onChange={(e) => setField("height", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="hair_color">Hair Color</Label>
+              <Input
+                id="hair_color"
+                value={form.hair_color ?? ""}
+                onChange={(e) => setField("hair_color", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="eye_color">Eye Color</Label>
+              <Input
+                id="eye_color"
+                value={form.eye_color ?? ""}
+                onChange={(e) => setField("eye_color", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bust">Bust</Label>
+              <Input
+                id="bust"
+                value={form.bust ?? ""}
+                onChange={(e) => setField("bust", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="waist">Waist</Label>
+              <Input
+                id="waist"
+                value={form.waist ?? ""}
+                onChange={(e) => setField("waist", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="hips">Hips</Label>
+              <Input
+                id="hips"
+                value={form.hips ?? ""}
+                onChange={(e) => setField("hips", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="dress_size">Dress Size</Label>
+              <Input
+                id="dress_size"
+                value={form.dress_size ?? ""}
+                onChange={(e) => setField("dress_size", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="shoe_size">Shoe Size</Label>
+              <Input
+                id="shoe_size"
+                value={form.shoe_size ?? ""}
+                onChange={(e) => setField("shoe_size", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="instagram_name">Instagram Handle</Label>
+              <Input
+                id="instagram_name"
+                value={form.instagram_name ?? ""}
+                onChange={(e) => setField("instagram_name", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="instagram_followers">Instagram Followers</Label>
+              <Input
+                id="instagram_followers"
+                type="number"
+                value={form.instagram_followers ?? ""}
+                onChange={(e) =>
+                  setField(
+                    "instagram_followers",
+                    e.target.value === "" ? null : Number(e.target.value)
+                  )
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="tiktok_username">TikTok Handle</Label>
+              <Input
+                id="tiktok_username"
+                value={form.tiktok_username ?? ""}
+                onChange={(e) => setField("tiktok_username", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="tiktok_followers">TikTok Followers</Label>
+              <Input
+                id="tiktok_followers"
+                type="number"
+                value={form.tiktok_followers ?? ""}
+                onChange={(e) =>
+                  setField(
+                    "tiktok_followers",
+                    e.target.value === "" ? null : Number(e.target.value)
+                  )
+                }
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="bio">Bio</Label>
+              <Textarea
+                id="bio"
+                rows={4}
+                value={form.bio ?? ""}
+                onChange={(e) => setField("bio", e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditOpen(false)} disabled={saving}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
