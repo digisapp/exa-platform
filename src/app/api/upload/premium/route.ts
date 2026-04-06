@@ -92,17 +92,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Store the storage path (not a public URL) - media_url will be served via signed URLs
+    // Return storage path — callers should store this in the DB, not a signed URL.
+    // Signed URLs expire; storage paths can be re-signed on demand at render time.
     // IMPORTANT: The 'portfolio' bucket should be set to PRIVATE in the Supabase dashboard
     // to prevent direct URL access to premium content
     const { data: signedUrlData } = await supabase.storage
       .from("portfolio")
-      .createSignedUrl(storagePath, 60 * 60); // 1 hour expiry
+      .createSignedUrl(storagePath, 60 * 60); // 1 hour expiry for immediate preview
 
     return NextResponse.json({
       success: true,
-      url: signedUrlData?.signedUrl || storagePath,
-      storagePath, // Store this in the DB for generating signed URLs later
+      url: storagePath, // Storage path for DB storage (won't expire)
+      signedUrl: signedUrlData?.signedUrl || null, // Temporary URL for immediate preview
+      storagePath, // Explicit storage path
       mediaType: isImage ? "image" : "video",
     });
   } catch (error) {

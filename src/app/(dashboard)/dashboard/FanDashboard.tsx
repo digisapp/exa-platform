@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import Link from "next/link";
 import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +12,22 @@ import {
 } from "lucide-react";
 import { ModelCard } from "@/components/models/model-card";
 import { ForYouFeed, type FeedItem } from "./ForYouFeed";
+
+// Re-sign a storage path or expired signed URL to get a fresh 1-hour signed URL
+function extractStoragePath(url: string): string | null {
+  if (!url) return null;
+  if (!url.startsWith("http")) return url; // already a storage path
+  const match = url.match(/\/object\/(?:sign|public)\/[^/]+\/(.+?)(?:\?|$)/);
+  return match ? match[1] : null;
+}
+
+async function toSignedUrl(rawUrl: string | null | undefined, service: ReturnType<typeof createServiceRoleClient>): Promise<string | null> {
+  if (!rawUrl) return null;
+  const path = extractStoragePath(rawUrl);
+  if (!path) return rawUrl; // not a storage path, return as-is (e.g. public URL)
+  const { data } = await service.storage.from("portfolio").createSignedUrl(path, 3600);
+  return data?.signedUrl ?? rawUrl;
+}
 
 function seededShuffle<T>(array: T[], seed: number): T[] {
   const result = [...array];
@@ -215,6 +232,21 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
       isFollowed: false,
     });
   }
+
+  // Re-sign any storage paths / expired signed URLs for feed content
+  const service = createServiceRoleClient();
+  await Promise.all(
+    feedItems.map(async (item) => {
+      if (item.type === "content") {
+        const [freshPreview, freshMedia] = await Promise.all([
+          toSignedUrl(item.preview_url, service),
+          item.isUnlocked ? toSignedUrl(item.mediaUrl, service) : Promise.resolve(null),
+        ]);
+        item.preview_url = freshPreview;
+        if (item.isUnlocked) item.mediaUrl = freshMedia;
+      }
+    })
+  );
 
   // Interleave: followed content first, then alternate auction/trending
   // Sort followed content by date, keep auctions interspersed
