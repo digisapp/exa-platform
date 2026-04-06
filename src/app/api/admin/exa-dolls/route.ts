@@ -40,6 +40,8 @@ export async function GET(request: NextRequest) {
         { count: "exact" }
       )
       .eq("is_approved", true)
+      .not("profile_photo_url", "is", null)
+      .neq("profile_photo_url", "")
       .order("created_at", { ascending: false });
 
     if (filter === "generated") {
