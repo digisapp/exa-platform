@@ -59,14 +59,14 @@ export async function GET(request: NextRequest) {
     }
 
     // Verify user is a participant
-    const { data: participation } = await supabase
+    const { data: participation, error: partError } = await supabase
       .from("conversation_participants")
       .select("conversation_id")
       .eq("conversation_id", conversationId)
       .eq("actor_id", sender.id)
-      .single();
+      .maybeSingle();
 
-    if (!participation) {
+    if (partError || !participation) {
       return NextResponse.json(
         { error: "Not a participant in this conversation" },
         { status: 403 }
@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
     // Build query - filter out soft-deleted messages
     let query = supabase
       .from("messages")
-      .select("id, conversation_id, sender_id, content, media_url, media_type, media_price, media_viewed_by, is_system, deleted_at, created_at")
+      .select("id, conversation_id, sender_id, content, media_url, media_type, media_price, media_viewed_by, is_system, deleted_at, created_at, reply_to_id")
       .eq("conversation_id", conversationId)
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
@@ -142,9 +142,31 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Batch-fetch replied-to message snippets
+    const replyToIds = [...new Set(
+      sanitizedMessages
+        .map((m: any) => m.reply_to_id)
+        .filter(Boolean)
+    )];
+    const repliedMessagesMap: Record<string, { id: string; content: string | null; sender_id: string; media_type: string | null }> = {};
+
+    if (replyToIds.length > 0) {
+      const { data: repliedMessages } = await supabase
+        .from("messages")
+        .select("id, content, sender_id, media_type")
+        .in("id", replyToIds);
+
+      if (repliedMessages) {
+        for (const msg of repliedMessages) {
+          repliedMessagesMap[msg.id] = msg;
+        }
+      }
+    }
+
     return NextResponse.json({
       messages: sanitizedMessages,
       reactions: reactionsMap,
+      repliedMessages: repliedMessagesMap,
       hasMore,
     }, {
       headers: { "Cache-Control": "private, no-cache" },

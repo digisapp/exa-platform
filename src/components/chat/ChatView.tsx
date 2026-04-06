@@ -40,6 +40,8 @@ export function ChatView({
 }: ChatViewProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [reactionsMap, setReactionsMap] = useState<Record<string, { emoji: string; actor_id: string }[]>>({});
+  const [repliedMessagesMap, setRepliedMessagesMap] = useState<Record<string, { id: string; content: string | null; sender_id: string; media_type: string | null }>>({});
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(hasMoreMessages);
@@ -162,6 +164,10 @@ export function ChatView({
           setReactionsMap((prev) => ({ ...prev, ...data.reactions }));
         }
 
+        if (data.repliedMessages) {
+          setRepliedMessagesMap((prev) => ({ ...prev, ...data.repliedMessages }));
+        }
+
         requestAnimationFrame(() => {
           if (container) {
             const newScrollHeight = container.scrollHeight;
@@ -232,15 +238,15 @@ export function ChatView({
     };
   }, [conversation.id, supabase, currentActor.id, otherName]);
 
-  // Mark messages as read
+  // Mark messages as read (uses API to reset unread_count atomically)
   useEffect(() => {
     async function markAsRead() {
       try {
-        await (supabase
-          .from("conversation_participants") as any)
-          .update({ last_read_at: new Date().toISOString() })
-          .eq("conversation_id", conversation.id)
-          .eq("actor_id", currentActor.id);
+        await fetch("/api/messages/mark-read", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ conversationId: conversation.id }),
+        });
       } catch (err) {
         console.error("Failed to mark messages as read:", err);
       }
@@ -370,6 +376,48 @@ export function ChatView({
     }
   };
 
+  // Refetch coin balance from server (used after errors to correct optimistic state)
+  const refetchCoinBalance = useCallback(async () => {
+    try {
+      const { data: actor } = await supabase
+        .from("actors")
+        .select("id, type")
+        .eq("id", currentActor.id)
+        .single();
+
+      if (!actor) return;
+
+      let balance = 0;
+      if (actor.type === "fan") {
+        const { data: fan } = await supabase
+          .from("fans")
+          .select("coin_balance")
+          .eq("id", actor.id)
+          .single();
+        balance = fan?.coin_balance ?? 0;
+      } else if (actor.type === "brand") {
+        const { data: brand } = await (supabase
+          .from("brands") as any)
+          .select("coin_balance")
+          .eq("id", actor.id)
+          .single();
+        balance = brand?.coin_balance ?? 0;
+      } else if (actor.type === "model") {
+        const { data: model } = await supabase
+          .from("models")
+          .select("coin_balance")
+          .eq("id", actor.id)
+          .single();
+        balance = (model as any)?.coin_balance ?? 0;
+      }
+
+      setLocalCoinBalance(balance);
+      coinBalanceContext?.setBalance(balance);
+    } catch {
+      // Silent fail - balance will self-correct on next page load
+    }
+  }, [currentActor.id, supabase, coinBalanceContext]);
+
   const handleSendMessage = async (
     content: string,
     mediaUrl?: string,
@@ -377,6 +425,8 @@ export function ChatView({
     mediaPrice?: number,
   ) => {
     setLoading(true);
+    const currentReplyToId = replyingTo?.id || undefined;
+    setReplyingTo(null);
 
     try {
       const response = await fetch("/api/messages/send", {
@@ -388,6 +438,7 @@ export function ChatView({
           mediaUrl,
           mediaType,
           mediaPrice: mediaPrice || undefined,
+          replyToId: currentReplyToId,
         }),
       });
 
@@ -398,9 +449,16 @@ export function ChatView({
           toast.error(
             `Insufficient coins. Need ${data.required}, have ${data.balance}`
           );
+          // Server returned actual balance — use it
+          if (typeof data.balance === "number") {
+            setLocalCoinBalance(data.balance);
+            coinBalanceContext?.setBalance(data.balance);
+          }
         } else {
           toast.error(data.error || "Failed to send message");
         }
+        // Refetch balance on any send failure to correct optimistic state
+        refetchCoinBalance();
         throw new Error(data.error);
       }
 
@@ -462,6 +520,7 @@ export function ChatView({
         ref={chatMessagesRef}
         messages={messages}
         reactionsMap={reactionsMap}
+        repliedMessagesMap={repliedMessagesMap}
         currentActor={currentActor}
         currentModel={currentModel}
         otherInfo={otherInfo}
@@ -475,6 +534,7 @@ export function ChatView({
         onLoadMore={loadMoreMessages}
         onUnlockMedia={handleUnlockMedia}
         onScrollStateChange={handleScrollStateChange}
+        onReply={setReplyingTo}
       />
 
       {/* Input */}
@@ -489,6 +549,8 @@ export function ChatView({
         conversationId={conversation.id}
         onTyping={broadcastTyping}
         onStopTyping={stopTyping}
+        replyingTo={replyingTo}
+        onCancelReply={() => setReplyingTo(null)}
       />
     </div>
   );

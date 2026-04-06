@@ -4,7 +4,8 @@ import { useState, useRef, useEffect, useCallback, KeyboardEvent } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Loader2, Coins, X, Video, Mic, Camera, Lock } from "lucide-react";
+import { Send, Loader2, Coins, X, Video, Mic, Camera, Lock, Reply } from "lucide-react";
+import type { Message } from "@/types/database";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { AttachmentMenu } from "./AttachmentMenu";
@@ -25,6 +26,8 @@ interface MessageInputProps {
   conversationId?: string;
   onTyping?: () => void;
   onStopTyping?: () => void;
+  replyingTo?: Message | null;
+  onCancelReply?: () => void;
 }
 
 export function MessageInput({
@@ -38,6 +41,8 @@ export function MessageInput({
   conversationId,
   onTyping,
   onStopTyping,
+  replyingTo,
+  onCancelReply,
 }: MessageInputProps) {
   const [content, setContent] = useState("");
   const [sending, setSending] = useState(false);
@@ -373,6 +378,27 @@ export function MessageInput({
               ? `${coinCost} coins per message`
               : `Insufficient coins (need ${coinCost}, have ${coinBalance})`}
           </span>
+        </div>
+      )}
+
+      {/* Reply-to bar */}
+      {replyingTo && (
+        <div className="flex items-center gap-2 mb-2 px-3 py-2 rounded-lg bg-muted/50 border-l-2 border-pink-500">
+          <Reply className="h-4 w-4 text-pink-500 flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-medium text-pink-500">Replying to message</p>
+            <p className="text-xs text-muted-foreground truncate">
+              {replyingTo.content || (replyingTo.media_url ? "Media" : "Message")}
+            </p>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 flex-shrink-0"
+            onClick={onCancelReply}
+          >
+            <X className="h-3.5 w-3.5" />
+          </Button>
         </div>
       )}
 

@@ -23,7 +23,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { VideoCallButton } from "@/components/video";
 import { TipDialog } from "./TipDialog";
-import { ArrowLeft, MoreVertical, Ban, Circle, Gift, Users, Building2 } from "lucide-react";
+import { ArrowLeft, MoreVertical, Ban, Circle, Gift, Users, Building2, Search } from "lucide-react";
+import { ChatSearch } from "./ChatSearch";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -66,6 +67,7 @@ export function ChatHeader({
   const [showTipDialog, setShowTipDialog] = useState(false);
   const [showBlockDialog, setShowBlockDialog] = useState(false);
   const [isBlocking, setIsBlocking] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
 
   const otherName = otherInfo.name;
   const otherAvatar = otherInfo.avatar;
@@ -161,6 +163,16 @@ export function ChatHeader({
             </Link>
           ) : null}
         </div>
+
+        {/* Search in conversation */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 text-muted-foreground hover:text-foreground"
+          onClick={() => setShowSearch(!showSearch)}
+        >
+          <Search className="h-5 w-5" />
+        </Button>
 
         {/* Voice Call button */}
         <VideoCallButton
@@ -259,6 +271,16 @@ export function ChatHeader({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Search overlay */}
+      {showSearch && (
+        <div className="absolute inset-0 z-50 bg-background flex flex-col">
+          <ChatSearch
+            conversationId={conversation.id}
+            onClose={() => setShowSearch(false)}
+          />
+        </div>
+      )}
     </>
   );
 }

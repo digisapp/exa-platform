@@ -61,8 +61,8 @@ export async function GET(request: NextRequest) {
 
     // Find participants who need a nudge:
     // - They are NOT the sender of the latest message
-    // - Their last_read_at is before the message (or null)
-    // - Their nudge_sent_at is null or older than 72h (don't spam nudges)
+    // - They have unread messages (unread_count > 0 OR last_read_at before the message)
+    // - They haven't been nudged for this conversation recently (dedup via chat_nudges_sent)
     const nudgeCandidates: {
       conversationId: string;
       actorId: string;
@@ -70,17 +70,33 @@ export async function GET(request: NextRequest) {
       senderId: string;
     }[] = [];
 
+    // Batch-check existing nudges for dedup
+    const { data: existingNudges } = await adminClient
+      .from("chat_nudges_sent")
+      .select("conversation_id, recipient_id, nudge_type")
+      .eq("nudge_type", "unread_reminder")
+      .in("conversation_id", conversationIds);
+
+    const nudgeSentSet = new Set(
+      (existingNudges || []).map((n: any) => `${n.conversation_id}:${n.recipient_id}`)
+    );
+
     for (const [convId, latestMsg] of latestByConversation) {
       const convParticipants = (participants || []).filter((p: any) => p.conversation_id === convId);
       for (const p of convParticipants) {
         // Skip the sender
         if (p.actor_id === latestMsg.sender_id) continue;
 
-        // Check if unread
-        const isUnread = !p.last_read_at || new Date(p.last_read_at) < new Date(latestMsg.created_at);
+        // Check if unread (prefer DB count, fall back to timestamp)
+        const isUnread = (p.unread_count != null && p.unread_count > 0)
+          || !p.last_read_at
+          || new Date(p.last_read_at) < new Date(latestMsg.created_at);
         if (!isUnread) continue;
 
-        // Check if already nudged recently (within 72h)
+        // Check dedup: skip if already nudged for this conversation
+        if (nudgeSentSet.has(`${convId}:${p.actor_id}`)) continue;
+
+        // Also check legacy nudge_sent_at (within 72h)
         if (p.nudge_sent_at && new Date(p.nudge_sent_at) > seventyTwoHoursAgo) continue;
 
         nudgeCandidates.push({
@@ -202,12 +218,22 @@ export async function GET(request: NextRequest) {
           conversationUrl,
         });
 
-        // Mark nudge as sent
-        await adminClient
-          .from("conversation_participants")
-          .update({ nudge_sent_at: now.toISOString() })
-          .eq("conversation_id", candidate.conversationId)
-          .eq("actor_id", candidate.actorId);
+        // Mark nudge as sent (both legacy column and new dedup table)
+        await Promise.all([
+          adminClient
+            .from("conversation_participants")
+            .update({ nudge_sent_at: now.toISOString() })
+            .eq("conversation_id", candidate.conversationId)
+            .eq("actor_id", candidate.actorId),
+          adminClient
+            .from("chat_nudges_sent")
+            .upsert({
+              conversation_id: candidate.conversationId,
+              recipient_id: candidate.actorId,
+              nudge_type: "unread_reminder",
+              created_at: now.toISOString(),
+            }, { onConflict: "conversation_id,recipient_id,nudge_type" }),
+        ]);
 
         sentCount++;
       } catch (err) {

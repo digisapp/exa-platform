@@ -17,8 +17,12 @@ const sendMessageSchema = z.object({
   targetModelUsername: z.string().min(1).max(100).optional().nullable(),
   content: z.string().max(5000, "Message is too long").optional().nullable(),
   mediaUrl: z.string().url("Invalid media URL").max(2048, "URL is too long").optional().nullable(),
-  mediaType: z.enum(["image", "video", "audio"]).optional().nullable(),
+  mediaType: z.string().refine(
+    (val) => /^(image|video|audio)(\/[\w.+-]+)?$/.test(val),
+    { message: "Invalid media type" }
+  ).optional().nullable(),
   mediaPrice: z.number().int().min(10, "Minimum price is 10 coins").max(10000, "Maximum price is 10,000 coins").optional().nullable(),
+  replyToId: z.string().uuid("Invalid reply message ID").optional().nullable(),
 }).refine(
   (data) => data.content?.trim() || data.mediaUrl,
   { message: "Message content or media required", path: ["content"] }
@@ -57,7 +61,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { conversationId: providedConversationId, targetModelUsername, content, mediaUrl, mediaType, mediaPrice } = validationResult.data;
+    const { conversationId: providedConversationId, targetModelUsername, content, mediaUrl, mediaType, mediaPrice, replyToId } = validationResult.data;
     let conversationId = providedConversationId || null;
 
     // Get sender's actor info
@@ -260,17 +264,18 @@ export async function POST(request: NextRequest) {
 
     // Use atomic function for message sending with coin transfer
     // Pass the actual model ID (not actor ID) for coin crediting
-    const { data: rpcData, error: rpcError } = await supabase.rpc(
+    const { data: rpcData, error: rpcError } = await (supabase.rpc as any)(
       "send_message_with_coins",
       {
         p_conversation_id: conversationId,
         p_sender_id: sender.id,
-        p_recipient_id: (recipientModelId || null) as unknown as string,
+        p_recipient_id: recipientModelId ?? null,
         p_content: content || "",
-        p_media_url: mediaUrl || undefined,
-        p_media_type: mediaType || undefined,
+        p_media_url: mediaUrl ?? null,
+        p_media_type: mediaType ?? null,
         p_coin_amount: coinsRequired,
-        p_media_price: mediaPrice || undefined,
+        p_media_price: mediaPrice ?? null,
+        p_reply_to_id: replyToId ?? null,
       }
     );
     if (rpcError) {
@@ -302,8 +307,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch the created message for response
-    const { data: message } = await supabase
+    // Fetch the created message for response (use admin client to avoid replication lag)
+    const { data: message } = await adminClient
       .from("messages")
       .select("id, conversation_id, sender_id, content, media_url, media_type, media_price, media_viewed_by, is_system, created_at")
       .eq("id", result.message_id)
@@ -320,7 +325,7 @@ export async function POST(request: NextRequest) {
           .eq("conversation_id", conversationId)
           .eq("sender_id", sender.id);
 
-        if (senderMessageCount === 1) {
+        if (senderMessageCount !== null && senderMessageCount <= 1) {
           // This is the first message from this sender — notify the recipient
           const recipientUserId = recipient.actors.user_id;
           if (recipientUserId) {

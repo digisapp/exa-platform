@@ -24,6 +24,7 @@ export interface ChatMessagesHandle {
 interface ChatMessagesProps {
   messages: Message[];
   reactionsMap: Record<string, { emoji: string; actor_id: string }[]>;
+  repliedMessagesMap?: Record<string, { id: string; content: string | null; sender_id: string; media_type: string | null }>;
   currentActor: Actor;
   currentModel?: Model | null;
   otherInfo: OtherParticipantInfo;
@@ -37,6 +38,7 @@ interface ChatMessagesProps {
   onLoadMore: () => void;
   onUnlockMedia: (messageId: string) => Promise<void>;
   onScrollStateChange: (isNearBottom: boolean, showScrollBtn: boolean) => void;
+  onReply?: (message: Message) => void;
 }
 
 export const ChatMessages = forwardRef<ChatMessagesHandle, ChatMessagesProps>(
@@ -44,6 +46,7 @@ export const ChatMessages = forwardRef<ChatMessagesHandle, ChatMessagesProps>(
     {
       messages,
       reactionsMap,
+      repliedMessagesMap = {},
       currentActor,
       currentModel,
       otherInfo,
@@ -57,6 +60,7 @@ export const ChatMessages = forwardRef<ChatMessagesHandle, ChatMessagesProps>(
       onLoadMore,
       onUnlockMedia,
       onScrollStateChange,
+      onReply,
     },
     ref
   ) {
@@ -242,6 +246,19 @@ export const ChatMessages = forwardRef<ChatMessagesHandle, ChatMessagesProps>(
                       currentActorId={currentActor.id}
                       reactions={reactions}
                       onUnlock={onUnlockMedia}
+                      repliedMessage={
+                        (message as any).reply_to_id
+                          ? repliedMessagesMap[(message as any).reply_to_id] || null
+                          : null
+                      }
+                      repliedMessageSenderName={
+                        (message as any).reply_to_id && repliedMessagesMap[(message as any).reply_to_id]
+                          ? repliedMessagesMap[(message as any).reply_to_id].sender_id === currentActor.id
+                            ? "You"
+                            : otherName
+                          : undefined
+                      }
+                      onReply={onReply ? () => onReply(message) : undefined}
                     />
                     {showSeen && (
                       <div className="flex justify-end pr-2 mt-1 mb-1">

@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow, format, isToday, isYesterday } from "date-fns";
-import { MoreVertical, Trash2, Lock, Coins, Loader2 as Spinner } from "lucide-react";
+import { MoreVertical, Trash2, Lock, Coins, Loader2 as Spinner, Reply } from "lucide-react";
 import { toast } from "sonner";
 import { ImageLightbox } from "./ImageLightbox";
 import { MessageReactions } from "./MessageReactions";
@@ -47,6 +47,9 @@ interface MessageBubbleProps {
   currentActorId?: string;
   onReactionChange?: () => void;
   onUnlock?: (messageId: string, price: number) => Promise<void>;
+  repliedMessage?: { id: string; content: string | null; sender_id: string; media_type: string | null } | null;
+  repliedMessageSenderName?: string;
+  onReply?: () => void;
 }
 
 export const MessageBubble = memo(function MessageBubble({
@@ -61,6 +64,9 @@ export const MessageBubble = memo(function MessageBubble({
   currentActorId,
   onReactionChange,
   onUnlock,
+  repliedMessage,
+  repliedMessageSenderName,
+  onReply,
 }: MessageBubbleProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -191,12 +197,23 @@ export const MessageBubble = memo(function MessageBubble({
       )}
 
       <div className={cn("relative", isOwn ? "items-end" : "items-start")}>
-        {/* Delete menu for own messages */}
-        {isOwn && (
-          <div className={cn(
-            "absolute -left-8 top-1 opacity-0 group-hover:opacity-100 transition-opacity",
-            isDeleting && "opacity-50 pointer-events-none"
-          )}>
+        {/* Action menu (delete + reply) */}
+        <div className={cn(
+          "absolute top-1 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5",
+          isOwn ? "-left-16" : "-right-16",
+          isDeleting && "opacity-50 pointer-events-none"
+        )}>
+          {onReply && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 text-muted-foreground hover:text-foreground"
+              onClick={onReply}
+            >
+              <Reply className="h-4 w-4" />
+            </Button>
+          )}
+          {isOwn && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -217,8 +234,8 @@ export const MessageBubble = memo(function MessageBubble({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
-        )}
+          )}
+        </div>
 
         <div
           className={cn(
@@ -228,6 +245,30 @@ export const MessageBubble = memo(function MessageBubble({
               : "bg-muted"
           )}
         >
+          {/* Reply snippet */}
+          {repliedMessage && (
+            <div className={cn(
+              "mb-2 px-3 py-1.5 rounded-lg border-l-2 text-xs",
+              isOwn
+                ? "bg-white/10 border-white/40"
+                : "bg-background/60 border-pink-500/40"
+            )}>
+              <p className={cn(
+                "font-medium mb-0.5",
+                isOwn ? "text-white/80" : "text-pink-500"
+              )}>
+                {repliedMessageSenderName || "User"}
+              </p>
+              <p className={cn(
+                "truncate",
+                isOwn ? "text-white/60" : "text-muted-foreground"
+              )}>
+                {repliedMessage.content
+                  || (repliedMessage.media_type?.startsWith("image") ? "Photo" : "Media")}
+              </p>
+            </div>
+          )}
+
           {message.content && (
             <p className="text-sm whitespace-pre-wrap break-words">
               {message.content}

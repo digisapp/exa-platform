@@ -9,13 +9,24 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageCircle, Search, MessageSquare, Sparkles, Users, Building2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { MessageCircle, Search, MessageSquare, Sparkles, Users, Building2, Pin, Archive, ArchiveRestore, MoreVertical } from "lucide-react";
 import { format, isToday, isYesterday, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface Conversation {
   conversation_id: string;
   last_read_at: string | null;
+  is_pinned?: boolean;
+  is_archived?: boolean;
+  unread_count?: number;
   lastMessage: {
     content: string | null;
     created_at: string;
@@ -52,7 +63,7 @@ interface ConversationListProps {
   currentActorId?: string;
 }
 
-type FilterType = "all" | "fans" | "brands";
+type FilterType = "all" | "fans" | "brands" | "archived";
 
 // Helper to format time nicely (Yesterday, Tuesday, etc.)
 function formatMessageTime(dateStr: string): string {
@@ -84,57 +95,100 @@ export function ConversationList({ conversations: initialConversations, actorTyp
     setConversations(initialConversations);
   }, [initialConversations]);
 
+  // Get stable conversation IDs for subscription filter
+  const conversationIds = useMemo(
+    () => conversations.map((c) => c.conversation_id),
+    // Only recompute when the set of IDs actually changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [conversations.map((c) => c.conversation_id).join(",")]
+  );
+
   // Real-time subscription: update last message + sort order when new messages arrive
   useEffect(() => {
-    if (!currentActorId) return;
+    if (!currentActorId || conversationIds.length === 0) return;
 
     const supabase = createClient();
 
-    const channel = supabase
-      .channel("conversation-list-updates")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-        },
-        (payload) => {
-          const msg = payload.new as any;
+    // Subscribe per-conversation (filtered server-side) to avoid receiving all messages system-wide.
+    // Supabase postgres_changes only supports eq filters, so we subscribe to each conversation.
+    // Cap at 50 to avoid too many channels; beyond that, fall back to unfiltered.
+    const useFiltered = conversationIds.length <= 50;
 
-          setConversations((prev) => {
-            // Only update if this message belongs to one of our conversations
-            if (!prev.some((c) => c.conversation_id === msg.conversation_id)) return prev;
+    const handleNewMessage = (payload: any) => {
+      const msg = payload.new as any;
 
-            const updated = prev.map((conv) => {
-              if (conv.conversation_id !== msg.conversation_id) return conv;
-              return {
-                ...conv,
-                lastMessage: {
-                  content: msg.content,
-                  created_at: msg.created_at,
-                  sender_id: msg.sender_id,
-                  media_url: msg.media_url,
-                  media_type: msg.media_type,
-                  is_system: msg.is_system,
-                },
-              };
-            });
-            // Re-sort by latest message
-            return [...updated].sort((a, b) => {
-              const aTime = a.lastMessage?.created_at || "";
-              const bTime = b.lastMessage?.created_at || "";
-              return bTime.localeCompare(aTime);
-            });
-          });
-        }
-      )
-      .subscribe();
+      setConversations((prev) => {
+        if (!prev.some((c) => c.conversation_id === msg.conversation_id)) return prev;
 
-    return () => {
-      channel.unsubscribe();
+        const updated = prev.map((conv) => {
+          if (conv.conversation_id !== msg.conversation_id) return conv;
+          // Increment unread count for messages from others (not our own sends)
+          const isOwnMessage = msg.sender_id === currentActorId;
+          return {
+            ...conv,
+            lastMessage: {
+              content: msg.content,
+              created_at: msg.created_at,
+              sender_id: msg.sender_id,
+              media_url: msg.media_url,
+              media_type: msg.media_type,
+              is_system: msg.is_system,
+            },
+            // Only increment unread for other people's messages, and not for the currently open conversation
+            unread_count: !isOwnMessage && conv.conversation_id !== selectedId
+              ? (conv.unread_count || 0) + 1
+              : conv.unread_count,
+          };
+        });
+        // Re-sort by latest message
+        return [...updated].sort((a, b) => {
+          const aTime = a.lastMessage?.created_at || "";
+          const bTime = b.lastMessage?.created_at || "";
+          return bTime.localeCompare(aTime);
+        });
+      });
     };
-  }, [currentActorId]);
+
+    if (useFiltered) {
+      const channels = conversationIds.map((convId) =>
+        supabase
+          .channel(`conv-list:${convId}`)
+          .on(
+            "postgres_changes",
+            {
+              event: "INSERT",
+              schema: "public",
+              table: "messages",
+              filter: `conversation_id=eq.${convId}`,
+            },
+            handleNewMessage
+          )
+          .subscribe()
+      );
+
+      return () => {
+        channels.forEach((ch) => ch.unsubscribe());
+      };
+    } else {
+      // Fallback: unfiltered subscription for users with many conversations
+      const channel = supabase
+        .channel("conversation-list-updates")
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "messages",
+          },
+          handleNewMessage
+        )
+        .subscribe();
+
+      return () => {
+        channel.unsubscribe();
+      };
+    }
+  }, [currentActorId, conversationIds]);
 
   // Helper to get message preview text
   const getMessagePreview = (message: Conversation["lastMessage"]) => {
@@ -211,18 +265,67 @@ export function ConversationList({ conversations: initialConversations, actorTyp
     };
   };
 
+  // Pin/archive actions
+  const handlePin = async (conversationId: string, pinned: boolean) => {
+    setConversations((prev) =>
+      prev.map((c) => c.conversation_id === conversationId ? { ...c, is_pinned: pinned } : c)
+    );
+    try {
+      const res = await fetch("/api/conversations/pin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ conversationId, pinned }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success(pinned ? "Conversation pinned" : "Conversation unpinned");
+    } catch {
+      setConversations((prev) =>
+        prev.map((c) => c.conversation_id === conversationId ? { ...c, is_pinned: !pinned } : c)
+      );
+      toast.error("Failed to update pin");
+    }
+  };
+
+  const handleArchive = async (conversationId: string, archived: boolean) => {
+    setConversations((prev) =>
+      prev.map((c) => c.conversation_id === conversationId ? { ...c, is_archived: archived } : c)
+    );
+    try {
+      const res = await fetch("/api/conversations/archive", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ conversationId, archived }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success(archived ? "Conversation archived" : "Conversation unarchived");
+    } catch {
+      setConversations((prev) =>
+        prev.map((c) => c.conversation_id === conversationId ? { ...c, is_archived: !archived } : c)
+      );
+      toast.error("Failed to update archive");
+    }
+  };
+
   const filteredConversations = useMemo(() => {
     let filtered = conversations;
 
-    // Apply type filter (only for models)
-    if (filter !== "all" && actorType === "model") {
-      filtered = filtered.filter((conv) => {
-        const participant = conv.otherParticipants[0];
-        const info = getParticipantInfo(participant);
-        if (filter === "fans") return info.type === "fan";
-        if (filter === "brands") return info.type === "brand";
-        return true;
-      });
+    // Archive filter
+    if (filter === "archived") {
+      filtered = filtered.filter((conv) => conv.is_archived);
+    } else {
+      // Hide archived by default
+      filtered = filtered.filter((conv) => !conv.is_archived);
+
+      // Apply type filter (only for models)
+      if (filter !== "all" && actorType === "model") {
+        filtered = filtered.filter((conv) => {
+          const participant = conv.otherParticipants[0];
+          const info = getParticipantInfo(participant);
+          if (filter === "fans") return info.type === "fan";
+          if (filter === "brands") return info.type === "brand";
+          return true;
+        });
+      }
     }
 
     // Apply search filter
@@ -238,24 +341,31 @@ export function ConversationList({ conversations: initialConversations, actorTyp
       });
     }
 
-    return filtered;
+    // Sort: pinned first, then by latest message
+    return filtered.sort((a, b) => {
+      if (a.is_pinned && !b.is_pinned) return -1;
+      if (!a.is_pinned && b.is_pinned) return 1;
+      const aTime = a.lastMessage?.created_at || "";
+      const bTime = b.lastMessage?.created_at || "";
+      return bTime.localeCompare(aTime);
+    });
   }, [conversations, searchQuery, filter, actorType]);
 
-  // Count unread messages
+  // Use DB-tracked unread count (more reliable than client-side timestamp comparison)
   const unreadCount = useMemo(() => {
-    return conversations.filter((conv) => {
-      return (
-        conv.lastMessage &&
-        (!conv.last_read_at ||
-          new Date(conv.lastMessage.created_at) > new Date(conv.last_read_at))
-      );
-    }).length;
+    return conversations
+      .filter((conv) => !conv.is_archived)
+      .reduce((sum, conv) => sum + (conv.unread_count || 0), 0);
   }, [conversations]);
 
   // Count by participant type (for model tabs)
+  const archivedCount = useMemo(() => {
+    return conversations.filter((conv) => conv.is_archived).length;
+  }, [conversations]);
+
   const typeCounts = useMemo(() => {
     const counts = { fans: 0, brands: 0 };
-    conversations.forEach((conv) => {
+    conversations.filter((c) => !c.is_archived).forEach((conv) => {
       const participant = conv.otherParticipants[0];
       const info = getParticipantInfo(participant);
       if (info.type === "fan") counts.fans++;
@@ -295,23 +405,29 @@ export function ConversationList({ conversations: initialConversations, actorTyp
       {/* Filter Tabs (only for models) */}
       {actorType === "model" && (
         <Tabs value={filter} onValueChange={(v) => setFilter(v as FilterType)}>
-          <TabsList className={cn("w-full grid grid-cols-3", compact && "mx-3 w-[calc(100%-1.5rem)]")}>
-            <TabsTrigger value="all" className="gap-2">
+          <TabsList className={cn("w-full grid grid-cols-4", compact && "mx-3 w-[calc(100%-1.5rem)]")}>
+            <TabsTrigger value="all" className="gap-1.5">
               <MessageSquare className="h-4 w-4" />
               All
             </TabsTrigger>
-            <TabsTrigger value="fans" className="gap-2">
+            <TabsTrigger value="fans" className="gap-1.5">
               <Users className="h-4 w-4" />
               Fans
               {typeCounts.fans > 0 && (
-                <span className="ml-1 text-xs text-muted-foreground">({typeCounts.fans})</span>
+                <span className="ml-0.5 text-xs text-muted-foreground">({typeCounts.fans})</span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="brands" className="gap-2">
+            <TabsTrigger value="brands" className="gap-1.5">
               <Building2 className="h-4 w-4" />
               Brands
               {typeCounts.brands > 0 && (
-                <span className="ml-1 text-xs text-muted-foreground">({typeCounts.brands})</span>
+                <span className="ml-0.5 text-xs text-muted-foreground">({typeCounts.brands})</span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="archived" className="gap-1.5">
+              <Archive className="h-4 w-4" />
+              {archivedCount > 0 && (
+                <span className="text-xs text-muted-foreground">({archivedCount})</span>
               )}
             </TabsTrigger>
           </TabsList>
@@ -324,76 +440,114 @@ export function ConversationList({ conversations: initialConversations, actorTyp
           {filteredConversations.map((conv) => {
             const participant = conv.otherParticipants[0];
             const { displayName, avatarUrl, type } = getParticipantInfo(participant);
-            const isUnread =
-              conv.lastMessage &&
-              (!conv.last_read_at ||
-                new Date(conv.lastMessage.created_at) > new Date(conv.last_read_at));
+            const convUnread = conv.unread_count || 0;
+            const isUnread = convUnread > 0;
             const isSelected = conv.conversation_id === selectedId;
 
             return (
-              <Link
-                key={conv.conversation_id}
-                href={`/chats/${conv.conversation_id}`}
-                className={cn(
-                  "flex items-center gap-4 p-4 rounded-xl border transition-all hover:shadow-md active:scale-[0.98] active:opacity-90",
-                  isSelected
-                    ? "bg-pink-500/10 border-pink-500/30 ring-1 ring-pink-500/20"
-                    : isUnread
-                      ? "bg-pink-500/5 border-pink-500/20 hover:border-pink-500/30"
-                      : "bg-card hover:bg-muted/50 border-border",
-                  compact && "p-3 rounded-lg gap-3"
-                )}
-              >
-                <div className="relative">
-                  <Avatar className={cn("h-12 w-12 ring-2 ring-background", compact && "h-10 w-10")}>
-                    <AvatarImage src={avatarUrl || undefined} />
-                    <AvatarFallback className={cn(
-                      "text-white font-semibold",
-                      type === "admin" ? "bg-gradient-to-br from-violet-500 to-purple-600" :
-                      type === "model" ? "bg-gradient-to-br from-pink-500 to-rose-600" :
-                      type === "brand" ? "bg-gradient-to-br from-amber-500 to-orange-600" :
-                      "bg-gradient-to-br from-blue-500 to-cyan-600"
-                    )}>
-                      {type === "admin" ? "EXA" : displayName.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  {isUnread && !isSelected && (
-                    <div className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-pink-500 border-2 border-background" />
+              <div key={conv.conversation_id} className="relative group/conv">
+                <Link
+                  href={`/chats/${conv.conversation_id}`}
+                  className={cn(
+                    "flex items-center gap-4 p-4 rounded-xl border transition-all hover:shadow-md active:scale-[0.98] active:opacity-90",
+                    isSelected
+                      ? "bg-pink-500/10 border-pink-500/30 ring-1 ring-pink-500/20"
+                      : isUnread
+                        ? "bg-pink-500/5 border-pink-500/20 hover:border-pink-500/30"
+                        : "bg-card hover:bg-muted/50 border-border",
+                    compact && "p-3 rounded-lg gap-3"
                   )}
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <p className={cn(
-                        "font-semibold truncate",
-                        isUnread && "text-foreground"
+                >
+                  <div className="relative">
+                    <Avatar className={cn("h-12 w-12 ring-2 ring-background", compact && "h-10 w-10")}>
+                      <AvatarImage src={avatarUrl || undefined} />
+                      <AvatarFallback className={cn(
+                        "text-white font-semibold",
+                        type === "admin" ? "bg-gradient-to-br from-violet-500 to-purple-600" :
+                        type === "model" ? "bg-gradient-to-br from-pink-500 to-rose-600" :
+                        type === "brand" ? "bg-gradient-to-br from-amber-500 to-orange-600" :
+                        "bg-gradient-to-br from-blue-500 to-cyan-600"
                       )}>
-                        {displayName}
-                      </p>
-                      {type === "admin" && (
-                        <Sparkles className="h-3.5 w-3.5 text-violet-500 flex-shrink-0" />
-                      )}
-                      {type === "brand" && (
-                        <Building2 className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
-                      )}
-                    </div>
-                    {conv.lastMessage && (
-                      <span className="text-xs text-muted-foreground flex-shrink-0">
-                        {formatMessageTime(conv.lastMessage.created_at)}
-                      </span>
+                        {type === "admin" ? "EXA" : displayName.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    {isUnread && !isSelected && (
+                      <div className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-pink-500 border-2 border-background" />
                     )}
                   </div>
-                  <p
-                    className={cn(
-                      "text-sm truncate mt-0.5",
-                      isUnread ? "text-foreground" : "text-muted-foreground"
-                    )}
-                  >
-                    {getMessagePreview(conv.lastMessage)}
-                  </p>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        {conv.is_pinned && (
+                          <Pin className="h-3 w-3 text-pink-500 flex-shrink-0 -rotate-45" />
+                        )}
+                        <p className={cn(
+                          "font-semibold truncate",
+                          isUnread && "text-foreground"
+                        )}>
+                          {displayName}
+                        </p>
+                        {type === "admin" && (
+                          <Sparkles className="h-3.5 w-3.5 text-violet-500 flex-shrink-0" />
+                        )}
+                        {type === "brand" && (
+                          <Building2 className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {convUnread > 0 && !isSelected && (
+                          <Badge variant="secondary" className="bg-pink-500 text-white text-[10px] h-5 min-w-5 px-1.5 justify-center">
+                            {convUnread > 99 ? "99+" : convUnread}
+                          </Badge>
+                        )}
+                        {conv.lastMessage && (
+                          <span className="text-xs text-muted-foreground">
+                            {formatMessageTime(conv.lastMessage.created_at)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <p
+                      className={cn(
+                        "text-sm truncate mt-0.5",
+                        isUnread ? "text-foreground font-medium" : "text-muted-foreground"
+                      )}
+                    >
+                      {getMessagePreview(conv.lastMessage)}
+                    </p>
+                  </div>
+                </Link>
+
+                {/* Pin / Archive context menu */}
+                <div className="absolute top-2 right-2 opacity-0 group-hover/conv:opacity-100 transition-opacity z-10">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 bg-background/80 backdrop-blur-sm shadow-sm border"
+                        onClick={(e) => e.preventDefault()}
+                      >
+                        <MoreVertical className="h-3.5 w-3.5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" onClick={(e) => e.preventDefault()}>
+                      <DropdownMenuItem onClick={() => handlePin(conv.conversation_id, !conv.is_pinned)}>
+                        <Pin className="h-4 w-4 mr-2" />
+                        {conv.is_pinned ? "Unpin" : "Pin conversation"}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleArchive(conv.conversation_id, !conv.is_archived)}>
+                        {conv.is_archived ? (
+                          <><ArchiveRestore className="h-4 w-4 mr-2" /> Unarchive</>
+                        ) : (
+                          <><Archive className="h-4 w-4 mr-2" /> Archive</>
+                        )}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
-              </Link>
+              </div>
             );
           })}
         </div>
