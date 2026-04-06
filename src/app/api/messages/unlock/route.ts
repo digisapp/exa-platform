@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
@@ -51,6 +52,28 @@ export async function POST(request: NextRequest) {
         { error: "Actor not found" },
         { status: 400 }
       );
+    }
+
+    // Admins can unlock any media for free
+    if (buyer.type === "admin") {
+      const adminDb = createServiceRoleClient();
+      const { data: msg } = await adminDb
+        .from("messages")
+        .select("media_url, media_price")
+        .eq("id", messageId)
+        .single();
+
+      if (!msg?.media_url) {
+        return NextResponse.json({ error: "Message not found" }, { status: 404 });
+      }
+
+      return NextResponse.json({
+        success: true,
+        mediaUrl: msg.media_url,
+        amountPaid: 0,
+        newBalance: 0,
+        alreadyUnlocked: false,
+      });
     }
 
     // Call atomic unlock RPC
