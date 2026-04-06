@@ -20,6 +20,11 @@ interface CoinBalanceProviderProps {
 export function CoinBalanceProvider({ children, initialBalance }: CoinBalanceProviderProps) {
   const [balance, setBalance] = useState(initialBalance);
 
+  // Sync when server passes a new initialBalance (e.g. layout re-render on navigation)
+  useEffect(() => {
+    setBalance(initialBalance);
+  }, [initialBalance]);
+
   const deductCoins = useCallback((amount: number) => {
     setBalance((prev) => Math.max(0, prev - amount));
   }, []);
