@@ -23,6 +23,7 @@ interface ModelCardProps {
   isLoggedIn?: boolean;
   isFavorited?: boolean;
   onAuthRequired?: () => void;
+  priority?: boolean;
 }
 
 export const ModelCard = memo(function ModelCard({
@@ -33,6 +34,7 @@ export const ModelCard = memo(function ModelCard({
   isLoggedIn = false,
   isFavorited: initialFavorited = false,
   onAuthRequired,
+  priority = false,
 }: ModelCardProps) {
   const [isFavorited, setIsFavorited] = useState(initialFavorited);
   const [loading, setLoading] = useState(false);
@@ -81,7 +83,7 @@ export const ModelCard = memo(function ModelCard({
 
   if (variant === "compact") {
     return (
-      <Link href={`/${model.username}`} target="_blank">
+      <Link href={`/${model.username}`}>
         <div className="glass-card rounded-xl p-4 hover:scale-105 transition-transform group">
           <div className="flex items-center gap-3">
             <div className="profile-image-container !p-[2px]">
@@ -117,7 +119,7 @@ export const ModelCard = memo(function ModelCard({
   };
 
   return (
-    <Link href={`/${model.username}`} target="_blank">
+    <Link href={`/${model.username}`}>
       <div className="glass-card rounded-2xl overflow-hidden hover:scale-[1.02] transition-all h-full group">
         {/* Image with Hover Overlay */}
         <div className="aspect-[3/4] relative bg-gradient-to-br from-[#FF69B4]/20 to-[#9400D3]/20 overflow-hidden">
@@ -126,7 +128,8 @@ export const ModelCard = memo(function ModelCard({
               src={model.profile_photo_url}
               alt={displayName}
               fill
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
+              priority={priority}
               className="object-cover group-hover:scale-110 transition-transform duration-300"
             />
           ) : (

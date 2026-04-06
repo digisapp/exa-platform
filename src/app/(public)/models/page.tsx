@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Navbar } from "@/components/layout/navbar";
 import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
@@ -23,6 +24,13 @@ export const metadata: Metadata = {
 
 // Cache model list for 2 minutes - balance between freshness and performance
 export const revalidate = 120;
+
+// Only select fields needed for model cards
+const MODEL_CARD_FIELDS = `
+  id, username, first_name, profile_photo_url, is_verified, is_featured,
+  last_active_at, reliability_score, show_location, city, state, height,
+  show_measurements, instagram_followers, tiktok_followers, focus_tags
+`;
 
 interface SearchParams {
   q?: string;
@@ -126,106 +134,96 @@ export default async function ModelsPage({
     return q;
   }
 
-  // Build query - only show models with profile pictures
-  let query = applyFilters(
-    supabase.from("models").select("*").eq("is_approved", true).is("deleted_at", null).not("profile_photo_url", "is", null)
-  );
-
-  // Sort
-  switch (params.sort) {
-    case "followers":
-      query = query.order("instagram_followers", { ascending: false, nullsFirst: false });
-      break;
-    case "cpm_low":
-      query = query.order(params.platform === "tiktok" ? "tiktok_cpm" : "instagram_cpm", { ascending: true, nullsFirst: false });
-      break;
-    case "cpm_high":
-      query = query.order(params.platform === "tiktok" ? "tiktok_cpm" : "instagram_cpm", { ascending: false, nullsFirst: false });
-      break;
-    case "name":
-      query = query.order("first_name", { ascending: true });
-      break;
-    default:
-      query = query.order("created_at", { ascending: false });
-  }
-
   // Pagination
   const PAGE_SIZE = 40;
   const currentPage = Math.max(1, parseInt(params.page || "1", 10) || 1);
   const offset = (currentPage - 1) * PAGE_SIZE;
 
-  // Count query — same filters, no range/sort
-  const { count: totalCount } = await applyFilters(
-    supabase.from("models").select("*", { count: "exact", head: true }).eq("is_approved", true).not("profile_photo_url", "is", null)
+  // Build models query with specific fields instead of SELECT *
+  let modelsQuery = applyFilters(
+    supabase.from("models").select(MODEL_CARD_FIELDS).eq("is_approved", true).is("deleted_at", null).not("profile_photo_url", "is", null)
   );
 
-  query = query.range(offset, offset + PAGE_SIZE - 1);
+  // Sort
+  switch (params.sort) {
+    case "followers":
+      modelsQuery = modelsQuery.order("instagram_followers", { ascending: false, nullsFirst: false });
+      break;
+    case "cpm_low":
+      modelsQuery = modelsQuery.order(params.platform === "tiktok" ? "tiktok_cpm" : "instagram_cpm", { ascending: true, nullsFirst: false });
+      break;
+    case "cpm_high":
+      modelsQuery = modelsQuery.order(params.platform === "tiktok" ? "tiktok_cpm" : "instagram_cpm", { ascending: false, nullsFirst: false });
+      break;
+    case "name":
+      modelsQuery = modelsQuery.order("first_name", { ascending: true });
+      break;
+    default:
+      modelsQuery = modelsQuery.order("created_at", { ascending: false });
+  }
 
-  const { data: models } = await query as { data: any[] | null; error: any };
+  modelsQuery = modelsQuery.range(offset, offset + PAGE_SIZE - 1);
+
+  // Run independent queries in parallel (#1: parallelize DB queries)
+  const [
+    { data: models },
+    { count: totalCount },
+    { data: featured },
+    { data: actor },
+  ] = await Promise.all([
+    // Models for current page
+    modelsQuery as Promise<{ data: any[] | null; error: any }>,
+    // Count query — same filters, no range/sort
+    applyFilters(
+      supabase.from("models").select("*", { count: "exact", head: true }).eq("is_approved", true).is("deleted_at", null).not("profile_photo_url", "is", null)
+    ) as Promise<{ count: number | null }>,
+    // Featured models
+    supabase
+      .from("models")
+      .select("id, username, first_name, profile_photo_url")
+      .eq("is_featured", true)
+      .eq("is_approved", true)
+      .not("profile_photo_url", "is", null)
+      .limit(5) as Promise<{ data: any[] | null }>,
+    // Actor info
+    supabase
+      .from("actors")
+      .select("id, type")
+      .eq("user_id", user.id)
+      .single() as Promise<{ data: { id: string; type: "admin" | "model" | "brand" | "fan" } | null }>,
+  ]);
+
   const totalPages = Math.ceil((totalCount || 0) / PAGE_SIZE);
   const hasNextPage = currentPage < totalPages;
   const hasPrevPage = currentPage > 1;
 
-  // Get featured models (only with profile pictures)
-  const { data: featured } = await supabase
-    .from("models")
-    .select("*")
-    .eq("is_featured", true)
-    .eq("is_approved", true)
-    .not("profile_photo_url", "is", null)
-    .limit(5) as { data: any[] | null };
-
-  // Get current user info for favorites and navbar
+  // Now run actor-dependent queries in parallel
   let favoriteModelIds: string[] = [];
-  let actorType: "model" | "fan" | "brand" | "admin" | null = null;
+  let actorType: "model" | "fan" | "brand" | "admin" | null = actor?.type || null;
   let profileData: any = null;
   let coinBalance = 0;
 
-  // Get actor ID and type
-  const { data: actor } = await supabase
-    .from("actors")
-    .select("id, type")
-    .eq("user_id", user.id)
-    .single() as { data: { id: string; type: "admin" | "model" | "brand" | "fan" } | null };
-
-  actorType = actor?.type || null;
-
   if (actor) {
-    // Get profile info based on actor type
-    if (actor.type === "model" || actor.type === "admin") {
-      const { data } = await supabase
-        .from("models")
-        .select("username, first_name, last_name, profile_photo_url, coin_balance")
-        .eq("user_id", user.id)
-        .single() as { data: any };
-      profileData = data;
-      coinBalance = data?.coin_balance ?? 0;
-    } else if (actor.type === "fan") {
-      const { data } = await supabase
-        .from("fans")
-        .select("display_name, avatar_url, coin_balance")
-        .eq("id", actor.id)
-        .single() as { data: any };
-      profileData = data;
-      coinBalance = data?.coin_balance ?? 0;
-    } else if (actor.type === "brand") {
-      const { data } = await (supabase
-        .from("brands") as any)
-        .select("company_name, logo_url, coin_balance, subscription_tier, subscription_status")
-        .eq("id", actor.id)
-        .single() as { data: any };
-      profileData = data;
-      coinBalance = data?.coin_balance ?? 0;
-    }
+    // Profile query and favorites query are independent — run in parallel
+    const [profileResult, favoritesResult] = await Promise.all([
+      // Profile info based on actor type
+      actor.type === "model" || actor.type === "admin"
+        ? supabase.from("models").select("username, first_name, last_name, profile_photo_url, coin_balance").eq("user_id", user.id).single() as Promise<{ data: any }>
+        : actor.type === "fan"
+          ? supabase.from("fans").select("display_name, avatar_url, coin_balance").eq("id", actor.id).single() as Promise<{ data: any }>
+          : (supabase.from("brands") as any).select("company_name, logo_url, coin_balance, subscription_tier, subscription_status").eq("id", actor.id).single() as Promise<{ data: any }>,
+      // Favorites
+      (supabase.from("follows") as any)
+        .select("following_id, actor:actors!follows_following_id_fkey(user_id)")
+        .eq("follower_id", actor.id) as Promise<{ data: { following_id: string; actor: { user_id: string } | null }[] | null }>,
+    ]);
 
-    // Get favorites with actor info in single query (optimized from 3 queries to 2)
-    const { data: favorites } = await (supabase
-      .from("follows") as any)
-      .select("following_id, actor:actors!follows_following_id_fkey(user_id)")
-      .eq("follower_id", actor.id) as { data: { following_id: string; actor: { user_id: string } | null }[] | null };
+    profileData = profileResult.data;
+    coinBalance = profileData?.coin_balance ?? 0;
 
-    if (favorites && favorites.length > 0) {
-      const userIds = favorites
+    // Resolve favorite model IDs
+    if (favoritesResult.data && favoritesResult.data.length > 0) {
+      const userIds = favoritesResult.data
         .map((f) => f.actor?.user_id)
         .filter(Boolean) as string[];
 
@@ -256,6 +254,17 @@ export default async function ModelsPage({
   // Check if fan has minimum coin balance (50 coins required)
   const MIN_FAN_COINS = 50;
   const isFanWithoutCoins = actorType === "fan" && coinBalance < MIN_FAN_COINS;
+
+  // Build pagination URL helper
+  const buildPageUrl = (page: number) => {
+    const p = new URLSearchParams(
+      Object.fromEntries(
+        Object.entries(params).filter(([, v]) => v !== undefined) as [string, string][]
+      )
+    );
+    p.set("page", String(page));
+    return `/models?${p.toString()}`;
+  };
 
   return (
     <CoinBalanceProvider initialBalance={coinBalance}>
@@ -325,21 +334,16 @@ export default async function ModelsPage({
             actorType={actorType}
           />
 
-          {/* Pagination */}
+          {/* Pagination — uses Next.js Link for client-side navigation */}
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-3 mt-8">
               {hasPrevPage && (
-                <a
-                  href={`/models?${new URLSearchParams({
-                    ...Object.fromEntries(
-                      Object.entries(params).filter(([, v]) => v !== undefined) as [string, string][]
-                    ),
-                    page: String(currentPage - 1),
-                  }).toString()}`}
+                <Link
+                  href={buildPageUrl(currentPage - 1)}
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border bg-background hover:bg-muted transition-colors text-sm font-medium"
                 >
                   Previous
-                </a>
+                </Link>
               )}
               <div className="flex items-center gap-1">
                 {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
@@ -354,14 +358,9 @@ export default async function ModelsPage({
                     pageNum = currentPage - 3 + i;
                   }
                   return (
-                    <a
+                    <Link
                       key={pageNum}
-                      href={`/models?${new URLSearchParams({
-                        ...Object.fromEntries(
-                          Object.entries(params).filter(([, v]) => v !== undefined) as [string, string][]
-                        ),
-                        page: String(pageNum),
-                      }).toString()}`}
+                      href={buildPageUrl(pageNum)}
                       className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${
                         pageNum === currentPage
                           ? "bg-pink-500 text-white"
@@ -369,22 +368,17 @@ export default async function ModelsPage({
                       }`}
                     >
                       {pageNum}
-                    </a>
+                    </Link>
                   );
                 })}
               </div>
               {hasNextPage && (
-                <a
-                  href={`/models?${new URLSearchParams({
-                    ...Object.fromEntries(
-                      Object.entries(params).filter(([, v]) => v !== undefined) as [string, string][]
-                    ),
-                    page: String(currentPage + 1),
-                  }).toString()}`}
+                <Link
+                  href={buildPageUrl(currentPage + 1)}
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border bg-background hover:bg-muted transition-colors text-sm font-medium"
                 >
                   Next
-                </a>
+                </Link>
               )}
             </div>
           )}

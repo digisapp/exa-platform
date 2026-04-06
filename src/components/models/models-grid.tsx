@@ -14,12 +14,8 @@ interface ModelsGridProps {
 
 function ModelCardSkeleton() {
   return (
-    <div className="rounded-xl overflow-hidden border bg-card">
+    <div className="glass-card rounded-2xl overflow-hidden">
       <div className="aspect-[3/4] bg-muted animate-pulse" />
-      <div className="p-2 space-y-2">
-        <div className="h-3 bg-muted animate-pulse rounded w-3/4" />
-        <div className="h-3 bg-muted animate-pulse rounded w-1/2" />
-      </div>
     </div>
   );
 }
@@ -63,7 +59,7 @@ export function ModelsGrid({ models, isLoggedIn, favoriteModelIds, actorType }: 
   return (
     <>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-        {models.map((model) => (
+        {models.map((model, index) => (
           <ModelCard
             key={model.id}
             model={model}
@@ -72,13 +68,16 @@ export function ModelsGrid({ models, isLoggedIn, favoriteModelIds, actorType }: 
             isLoggedIn={isLoggedIn}
             isFavorited={favoriteSet.has(model.id)}
             onAuthRequired={handleAuthRequired}
+            priority={index < 10}
           />
         ))}
       </div>
 
       {models.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">No models found matching your criteria.</p>
+        <div className="text-center py-16">
+          <p className="text-4xl mb-3">🔍</p>
+          <p className="text-lg font-medium mb-1">No models found</p>
+          <p className="text-muted-foreground text-sm">Try adjusting your filters or search terms.</p>
         </div>
       )}
 
