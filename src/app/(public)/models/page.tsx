@@ -209,9 +209,9 @@ export default async function ModelsPage({
     const [profileResult, favoritesResult] = await Promise.all([
       // Profile info based on actor type
       actor.type === "model" || actor.type === "admin"
-        ? supabase.from("models").select("username, first_name, last_name, profile_photo_url, coin_balance").eq("user_id", user.id).single() as Promise<{ data: any }>
+        ? (supabase.from("models") as any).select("username, first_name, last_name, profile_photo_url, coin_balance").eq("user_id", user.id).single() as Promise<{ data: any }>
         : actor.type === "fan"
-          ? supabase.from("fans").select("display_name, avatar_url, coin_balance").eq("id", actor.id).single() as Promise<{ data: any }>
+          ? (supabase.from("fans") as any).select("display_name, avatar_url, coin_balance").eq("id", actor.id).single() as Promise<{ data: any }>
           : (supabase.from("brands") as any).select("company_name, logo_url, coin_balance, subscription_tier, subscription_status").eq("id", actor.id).single() as Promise<{ data: any }>,
       // Favorites
       (supabase.from("follows") as any)
