@@ -178,11 +178,12 @@ export default async function ModelsPage({
       supabase.from("models").select("*", { count: "exact", head: true }).eq("is_approved", true).is("deleted_at", null).not("profile_photo_url", "is", null)
     ) as Promise<{ count: number | null }>,
     // Featured models
-    supabase
-      .from("models")
+    (supabase
+      .from("models") as any)
       .select("id, username, first_name, profile_photo_url")
       .eq("is_featured", true)
       .eq("is_approved", true)
+      .is("deleted_at", null)
       .not("profile_photo_url", "is", null)
       .limit(5) as Promise<{ data: any[] | null }>,
     // Actor info
