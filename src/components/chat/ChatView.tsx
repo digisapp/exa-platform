@@ -132,7 +132,7 @@ export function ChatView({
   const isModelToModel =
     currentActor.type === "model" && otherParticipant.actor.type === "model";
   const modelMessageRate = otherParticipant.model?.message_rate || 10;
-  const coinCost = isModelToModel || currentActor.type === "model" ? 0 : Math.max(10, modelMessageRate);
+  const coinCost = isModelToModel || currentActor.type === "model" || currentActor.type === "admin" ? 0 : Math.max(10, modelMessageRate);
 
   // Can tip if the other participant is a model and we're not a model
   const canTip = otherParticipant.actor.type === "model" && currentActor.type !== "model";
