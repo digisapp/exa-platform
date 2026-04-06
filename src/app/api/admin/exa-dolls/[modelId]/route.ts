@@ -6,6 +6,7 @@ import {
   generateExaDollBase,
   startFaceSwap,
   checkFaceSwapStatus,
+  detectSkinTone,
   type ExaDollModelInput,
 } from "@/lib/exa-dolls";
 
@@ -56,6 +57,18 @@ export async function POST(
         { error: "Model has no profile photo — needed for face swap" },
         { status: 400 }
       );
+    }
+
+    // Auto-detect skin tone if not set
+    if (!model.skin_tone && model.profile_photo_url) {
+      const detectedTone = await detectSkinTone(model.profile_photo_url);
+      if (detectedTone) {
+        model.skin_tone = detectedTone;
+        await admin
+          .from("models")
+          .update({ skin_tone: detectedTone })
+          .eq("id", modelId);
+      }
     }
 
     // Allow custom prompt override from request body

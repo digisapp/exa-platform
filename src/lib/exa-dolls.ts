@@ -328,6 +328,92 @@ export async function checkFaceSwapStatus(
 }
 
 /**
+ * Auto-detect skin tone from a profile photo using Replicate vision model
+ */
+export async function detectSkinTone(
+  photoUrl: string
+): Promise<string | null> {
+  if (!REPLICATE_API_TOKEN) {
+    console.error("[ExaDolls] REPLICATE_API_TOKEN not configured");
+    return null;
+  }
+
+  const validTones = Object.keys(SKIN_TONE_DESCRIPTIONS);
+
+  try {
+    console.log("[ExaDolls] Auto-detecting skin tone");
+
+    // Start prediction
+    const response = await fetch(
+      "https://api.replicate.com/v1/models/meta/llama-4-scout-17b-16e-instruct/predictions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${REPLICATE_API_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          input: {
+            prompt: `Look at this person's photo. Classify their skin tone as exactly one of these options: ${validTones.join(", ")}. Reply with ONLY the skin tone label, nothing else.`,
+            image: photoUrl,
+            max_tokens: 10,
+          },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      console.error("[ExaDolls] Skin tone detection start error:", response.status);
+      return null;
+    }
+
+    const prediction = await response.json();
+
+    // Poll for result
+    for (let i = 0; i < 15; i++) {
+      await new Promise((r) => setTimeout(r, 2000));
+
+      const pollRes = await fetch(
+        `https://api.replicate.com/v1/predictions/${prediction.id}`,
+        {
+          headers: { Authorization: `Bearer ${REPLICATE_API_TOKEN}` },
+        }
+      );
+
+      if (!pollRes.ok) continue;
+
+      const result = await pollRes.json();
+
+      if (result.status === "succeeded") {
+        const output = Array.isArray(result.output)
+          ? result.output.join("").trim().toLowerCase()
+          : String(result.output || "").trim().toLowerCase();
+
+        // Match to valid skin tone
+        const matched = validTones.find((tone) => output.includes(tone));
+        if (matched) {
+          console.log("[ExaDolls] Detected skin tone:", matched);
+          return matched;
+        }
+        console.warn("[ExaDolls] Could not match skin tone from output:", output);
+        return null;
+      }
+
+      if (result.status === "failed" || result.status === "canceled") {
+        console.error("[ExaDolls] Skin tone detection failed:", result.error);
+        return null;
+      }
+    }
+
+    console.warn("[ExaDolls] Skin tone detection timed out");
+    return null;
+  } catch (error) {
+    console.error("[ExaDolls] Skin tone detection error:", error);
+    return null;
+  }
+}
+
+/**
  * Simple hash function for deterministic style selection
  */
 function simpleHash(str: string): number {

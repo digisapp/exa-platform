@@ -369,33 +369,21 @@ export default function ExaDollsPage() {
                   {/* Attributes */}
                   <div className="flex flex-wrap gap-1">
                     {model.hair_color && (
-                      <span className="text-[10px] bg-gray-100 px-1.5 py-0.5 rounded">
+                      <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded">
                         {model.hair_color}
                       </span>
                     )}
                     {model.eye_color && (
-                      <span className="text-[10px] bg-gray-100 px-1.5 py-0.5 rounded">
+                      <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded">
                         {model.eye_color}
                       </span>
                     )}
+                    {model.skin_tone && (
+                      <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded">
+                        {model.skin_tone}
+                      </span>
+                    )}
                   </div>
-
-                  {/* Skin tone selector */}
-                  <Select
-                    value={model.skin_tone || ""}
-                    onValueChange={(v) => updateSkinTone(model.id, v)}
-                  >
-                    <SelectTrigger className="h-7 text-xs">
-                      <SelectValue placeholder="Set skin tone..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SKIN_TONES.map((tone) => (
-                        <SelectItem key={tone} value={tone} className="text-xs">
-                          {tone}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
 
                   {/* Generate button */}
                   <Button
@@ -530,7 +518,28 @@ export default function ExaDollsPage() {
                   </p>
                 </div>
               )}
-              <div className="flex gap-2 mt-2">
+              <div className="flex items-center gap-3 mt-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Skin tone:</span>
+                  <Select
+                    value={previewModel.skin_tone || ""}
+                    onValueChange={(v) => {
+                      updateSkinTone(previewModel.id, v);
+                      setPreviewModel({ ...previewModel, skin_tone: v });
+                    }}
+                  >
+                    <SelectTrigger className="h-7 text-xs w-[130px]">
+                      <SelectValue placeholder="Auto-detected" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SKIN_TONES.map((tone) => (
+                        <SelectItem key={tone} value={tone} className="text-xs">
+                          {tone}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <Button
                   variant="outline"
                   size="sm"
