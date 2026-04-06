@@ -230,25 +230,11 @@ export default function ExaDollsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="flex">
         <Card>
-          <CardContent className="pt-4 pb-3 text-center">
-            <p className="text-2xl font-bold">{total}</p>
-            <p className="text-xs text-muted-foreground">Total Models</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 pb-3 text-center">
+          <CardContent className="pt-4 pb-3 px-6 text-center">
             <p className="text-2xl font-bold text-green-600">{generatedTotal}</p>
             <p className="text-xs text-muted-foreground">Dolls Generated</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 pb-3 text-center">
-            <p className="text-2xl font-bold text-amber-600">
-              {total - generatedTotal}
-            </p>
-            <p className="text-xs text-muted-foreground">Pending</p>
           </CardContent>
         </Card>
       </div>
