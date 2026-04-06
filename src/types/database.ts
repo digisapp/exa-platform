@@ -3999,6 +3999,9 @@ export type Database = {
           dob: string | null
           dress_size: string | null
           email: string
+          exa_doll_generated_at: string | null
+          exa_doll_image_url: string | null
+          exa_doll_prompt: string | null
           eye_color: string | null
           first_name: string | null
           focus_tags: string[] | null
@@ -4052,6 +4055,7 @@ export type Database = {
           show_measurements: boolean | null
           show_on_rates_page: boolean | null
           show_social_media: boolean | null
+          skin_tone: string | null
           sms_opt_out: boolean | null
           snapchat_followers: number | null
           snapchat_username: string | null
@@ -4097,6 +4101,9 @@ export type Database = {
           dob?: string | null
           dress_size?: string | null
           email: string
+          exa_doll_generated_at?: string | null
+          exa_doll_image_url?: string | null
+          exa_doll_prompt?: string | null
           eye_color?: string | null
           first_name?: string | null
           focus_tags?: string[] | null
@@ -4150,6 +4157,7 @@ export type Database = {
           show_measurements?: boolean | null
           show_on_rates_page?: boolean | null
           show_social_media?: boolean | null
+          skin_tone?: string | null
           sms_opt_out?: boolean | null
           snapchat_followers?: number | null
           snapchat_username?: string | null
@@ -4195,6 +4203,9 @@ export type Database = {
           dob?: string | null
           dress_size?: string | null
           email?: string
+          exa_doll_generated_at?: string | null
+          exa_doll_image_url?: string | null
+          exa_doll_prompt?: string | null
           eye_color?: string | null
           first_name?: string | null
           focus_tags?: string[] | null
@@ -4248,6 +4259,7 @@ export type Database = {
           show_measurements?: boolean | null
           show_on_rates_page?: boolean | null
           show_social_media?: boolean | null
+          skin_tone?: string | null
           sms_opt_out?: boolean | null
           snapchat_followers?: number | null
           snapchat_username?: string | null
