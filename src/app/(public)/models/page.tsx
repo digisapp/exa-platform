@@ -187,8 +187,8 @@ export default async function ModelsPage({
       .not("profile_photo_url", "is", null)
       .limit(5) as Promise<{ data: any[] | null }>,
     // Actor info
-    supabase
-      .from("actors")
+    (supabase
+      .from("actors") as any)
       .select("id, type")
       .eq("user_id", user.id)
       .single() as Promise<{ data: { id: string; type: "admin" | "model" | "brand" | "fan" } | null }>,
