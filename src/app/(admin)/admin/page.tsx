@@ -10,7 +10,6 @@ import {
   Coins,
   CreditCard,
   Heart,
-  UserPlus,
   BarChart3,
   Banknote,
   AtSign,
@@ -291,35 +290,6 @@ export default async function AdminPage() {
           </Link>
         </Button>
       </div>
-
-      {/* Pending Items Summary */}
-      {((pendingModelApps || 0) > 0 || (pendingBrands || 0) > 0 || (pendingCalls || 0) > 0) && (
-        <Card className="border-pink-500/30">
-          <CardContent className="pt-6">
-            <div className="flex flex-wrap items-center gap-4">
-              <p className="text-muted-foreground">Pending items:</p>
-              {(pendingModelApps || 0) > 0 && (
-                <Link href="/admin/community" className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-pink-500/10 text-pink-500 hover:bg-pink-500/20 transition-colors">
-                  <UserPlus className="h-4 w-4" />
-                  {pendingModelApps} Model Applications
-                </Link>
-              )}
-              {(pendingBrands || 0) > 0 && (
-                <Link href="/admin/community" className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-500/10 text-cyan-500 hover:bg-cyan-500/20 transition-colors">
-                  <Building2 className="h-4 w-4" />
-                  {pendingBrands} Brand Inquiries
-                </Link>
-              )}
-              {(pendingCalls || 0) > 0 && (
-                <Link href="/admin/crm" className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 text-green-500 hover:bg-green-500/20 transition-colors">
-                  <Phone className="h-4 w-4" />
-                  {pendingCalls} Call Requests
-                </Link>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
