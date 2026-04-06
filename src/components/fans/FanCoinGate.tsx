@@ -15,7 +15,7 @@ export function FanCoinGate({ currentBalance = 0 }: FanCoinGateProps) {
   const coinsNeeded = MIN_COINS_REQUIRED - currentBalance;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+    <div className="fixed inset-0 top-16 z-40 flex items-center justify-center bg-background/80 backdrop-blur-sm">
       <Card className="w-full max-w-md mx-4">
         <CardHeader className="text-center">
           <div className="mx-auto w-16 h-16 rounded-full bg-gradient-to-r from-pink-500/20 to-violet-500/20 flex items-center justify-center mb-4">
