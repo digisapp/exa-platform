@@ -225,7 +225,9 @@ export const ChatMessages = forwardRef<ChatMessagesHandle, ChatMessagesProps>(
                         isOwn
                           ? currentModel?.first_name
                             ? `${currentModel.first_name} ${currentModel.last_name || ""}`.trim()
-                            : "You"
+                            : currentActor.type === "admin"
+                              ? "Admin"
+                              : "You"
                           : otherName
                       }
                       senderAvatar={
@@ -238,7 +240,7 @@ export const ChatMessages = forwardRef<ChatMessagesHandle, ChatMessagesProps>(
                       onUnlock={onUnlockMedia}
                     />
                     {showSeen && (
-                      <div className="flex justify-end pr-2 -mt-1 mb-1">
+                      <div className="flex justify-end pr-2 mt-1 mb-1">
                         <span className="text-xs text-muted-foreground">
                           Seen{otherLastReadAt ? ` · ${formatDistanceToNow(new Date(otherLastReadAt), { addSuffix: true })}` : ""}
                         </span>
