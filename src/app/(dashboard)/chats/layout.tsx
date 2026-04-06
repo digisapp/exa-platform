@@ -187,7 +187,7 @@ export default async function ChatsLayout({ children }: LayoutProps) {
               {actor.type === "model" && (
                 <BlastDialog fanCount={fanCount} brandCount={brandCount} />
               )}
-              {actor.type === "brand" && (
+              {(actor.type === "brand" || actor.type === "admin") && (
                 <NewMessageDialog
                   currentActorType={actor.type}
                   coinBalance={coinBalance}

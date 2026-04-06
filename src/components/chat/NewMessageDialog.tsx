@@ -41,7 +41,7 @@ export function NewMessageDialog({
 
   // Determine if coins are required (use model's rate, minimum 10)
   const modelRate = (selectedModel as any)?.message_rate || 10;
-  const coinCost = currentActorType === "model" ? 0 : Math.max(10, modelRate);
+  const coinCost = currentActorType === "model" || currentActorType === "admin" ? 0 : Math.max(10, modelRate);
   const hasEnoughCoins = coinCost === 0 || coinBalance >= coinCost;
 
   // Search for models
@@ -209,7 +209,7 @@ export function NewMessageDialog({
                             @{model.username}
                           </p>
                         </div>
-                        {currentActorType !== "model" && (
+                        {currentActorType !== "model" && currentActorType !== "admin" && (
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Coins className="h-3 w-3" />
                             <span>{Math.max(10, (model as any).message_rate || 10)}/msg</span>

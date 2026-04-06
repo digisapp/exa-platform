@@ -235,7 +235,7 @@ export default async function MessagesPage({ searchParams }: PageProps) {
             {actor.type === "model" && (
               <BlastDialog fanCount={fanCount} brandCount={brandCount} />
             )}
-            {actor.type === "brand" && (
+            {(actor.type === "brand" || actor.type === "admin") && (
               <NewMessageDialog
                 currentActorType={actor.type}
                 coinBalance={coinBalance}
