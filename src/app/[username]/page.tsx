@@ -140,6 +140,11 @@ export default async function ModelProfilePage({ params }: Props) {
     isAdmin = actor?.type === "admin";
   }
 
+  // Hide deleted models from everyone except admins
+  if (model.deleted_at && !isAdmin) {
+    notFound();
+  }
+
   // Only show 404 if model is not approved AND viewer is not the owner or admin
   if (!model.is_approved && !isOwner && !isAdmin) {
     notFound();

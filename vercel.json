@@ -35,6 +35,10 @@
     {
       "path": "/api/cron/message-nudges",
       "schedule": "0 9,19 * * *"
+    },
+    {
+      "path": "/api/cron/purge-deleted-accounts",
+      "schedule": "0 2 * * *"
     }
   ]
 }

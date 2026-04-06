@@ -126,6 +126,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .from("models")
     .select("username, updated_at")
     .eq("is_approved", true)
+    .is("deleted_at", null)
     .not("username", "is", null);
 
   const modelPages: MetadataRoute.Sitemap = (models || []).map((model) => ({

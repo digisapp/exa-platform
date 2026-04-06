@@ -27,9 +27,15 @@ export default async function DashboardLayout({
   // Get actor info
   const { data: actor } = await supabase
     .from("actors")
-    .select("id, type")
+    .select("id, type, deactivated_at")
     .eq("user_id", user.id)
-    .single() as { data: { id: string; type: "admin" | "model" | "brand" | "fan" } | null };
+    .single() as { data: { id: string; type: "admin" | "model" | "brand" | "fan"; deactivated_at: string | null } | null };
+
+  // If account is deactivated, sign out and redirect
+  if (actor?.deactivated_at) {
+    await supabase.auth.signOut();
+    redirect("/signin");
+  }
 
   // Get profile info based on actor type
   let profileData: any = null;

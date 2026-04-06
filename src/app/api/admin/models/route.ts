@@ -58,6 +58,7 @@ export async function GET(request: NextRequest) {
     const approvalFilter = searchParams.get("approval") || "all";
     const ratingFilter = searchParams.get("rating") || "all";
     const claimFilter = searchParams.get("claim") || "all";
+    const statusFilter = searchParams.get("status") || "active";
     const sortField = searchParams.get("sortField") || "joined_at";
     const sortDirection = searchParams.get("sortDirection") || "desc";
 
@@ -90,6 +91,8 @@ export async function GET(request: NextRequest) {
         if (claimFilter === "claimed") q = q.not("user_id", "is", null);
         else if (claimFilter === "unclaimed") q = q.is("user_id", null);
       }
+      if (statusFilter === "active") q = q.is("deleted_at", null);
+      else if (statusFilter === "deleted") q = q.not("deleted_at", "is", null);
       return q;
     };
 
@@ -289,7 +292,7 @@ export async function GET(request: NextRequest) {
           id, username, first_name, last_name, email, phone, city, state, is_approved,
           profile_photo_url, profile_views, coin_balance, instagram_name,
           instagram_followers, admin_rating, new_face, created_at, user_id, invite_token,
-          claimed_at, last_active_at
+          claimed_at, last_active_at, deleted_at
         `)
         .in("id", paginatedIds);
 
@@ -310,7 +313,7 @@ export async function GET(request: NextRequest) {
           id, username, first_name, last_name, email, phone, city, state, is_approved,
           profile_photo_url, profile_views, coin_balance, instagram_name,
           instagram_followers, admin_rating, new_face, created_at, user_id, invite_token,
-          claimed_at, last_active_at
+          claimed_at, last_active_at, deleted_at
         `, { count: "exact" });
 
       query = applyFilters(query);

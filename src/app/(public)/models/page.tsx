@@ -128,7 +128,7 @@ export default async function ModelsPage({
 
   // Build query - only show models with profile pictures
   let query = applyFilters(
-    supabase.from("models").select("*").eq("is_approved", true).not("profile_photo_url", "is", null)
+    supabase.from("models").select("*").eq("is_approved", true).is("deleted_at", null).not("profile_photo_url", "is", null)
   );
 
   // Sort

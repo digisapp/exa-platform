@@ -77,6 +77,9 @@ interface ModelDetails {
   claimed_at: string | null;
   created_at: string;
   updated_at: string;
+  deleted_at: string | null;
+  deleted_reason: string | null;
+  purged_at: string | null;
 }
 
 interface ModelApplication {
@@ -449,6 +452,28 @@ export default function AdminModelDetailPage() {
           </div>
           <p className="text-muted-foreground">@{model.username}</p>
         </div>
+        {model.deleted_at && (
+          <Button
+            variant="outline"
+            className="border-green-500 text-green-500 hover:bg-green-500/10"
+            onClick={async () => {
+              try {
+                const res = await fetch(`/api/admin/models/${model.id}/restore`, { method: "POST" });
+                if (!res.ok) {
+                  const data = await res.json();
+                  throw new Error(data.error || "Failed to restore");
+                }
+                toast.success("Account restored successfully");
+                window.location.reload();
+              } catch (err: any) {
+                toast.error(err.message || "Failed to restore account");
+              }
+            }}
+            disabled={!!model.purged_at}
+          >
+            Restore Account
+          </Button>
+        )}
         <Button variant="outline" onClick={openEdit}>
           <Pencil className="h-4 w-4 mr-2" />
           Edit
@@ -460,6 +485,25 @@ export default function AdminModelDetailPage() {
           </a>
         </Button>
       </div>
+
+      {/* Deleted account banner */}
+      {model.deleted_at && (
+        <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-4 space-y-1">
+          <p className="font-semibold text-red-500">Account Deleted</p>
+          <p className="text-sm text-muted-foreground">
+            Deleted on {new Date(model.deleted_at).toLocaleDateString()}
+            {model.deleted_reason && <> — Reason: {model.deleted_reason}</>}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Recovery window expires: {new Date(new Date(model.deleted_at).getTime() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString()}
+            {" | "}
+            Hard purge scheduled: {new Date(new Date(model.deleted_at).getTime() + 90 * 24 * 60 * 60 * 1000).toLocaleDateString()}
+          </p>
+          {model.purged_at && (
+            <p className="text-sm font-medium text-red-500">Personal data was purged on {new Date(model.purged_at).toLocaleDateString()}</p>
+          )}
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

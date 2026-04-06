@@ -500,7 +500,7 @@ export default function ProfilePage() {
         throw new Error(data.error || "Failed to delete account");
       }
 
-      toast.success("Account deleted successfully");
+      toast.success("Account deactivated. You have 30 days to contact support to recover it.");
       router.push("/");
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to delete account";
@@ -843,8 +843,9 @@ export default function ProfilePage() {
                         <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                         <AlertDialogDescription className="space-y-3">
                           <span className="block">
-                            This action cannot be undone. This will permanently delete your
-                            account, all your data, coin balance, and remove your access to EXA.
+                            Your account will be deactivated immediately and hidden from all public pages.
+                            You have 30 days to contact support to recover your account.
+                            After 90 days, your personal data will be permanently deleted.
                           </span>
                           <span className="block font-medium text-foreground">
                             Type DELETE to confirm:

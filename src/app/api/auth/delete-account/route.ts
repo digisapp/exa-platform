@@ -55,32 +55,84 @@ export async function DELETE(request: Request) {
       );
     }
 
-    // Delete type-specific record
-    if (actor.type === "fan") {
-      await supabase.from("fans").delete().eq("id", actor.id);
-    } else if (actor.type === "model") {
-      await supabase.from("models").delete().eq("user_id", user.id);
-    } else if (actor.type === "brand") {
-      await supabase.from("brands").delete().eq("id", actor.id);
-    }
-
-    // Delete actor record
-    await supabase.from("actors").delete().eq("id", actor.id);
-
-    // Delete auth user using admin API (requires service role key)
     const serviceClient = createServiceRoleClient();
-    const { error: deleteError } = await serviceClient.auth.admin.deleteUser(user.id);
+    const now = new Date().toISOString();
 
-    if (deleteError) {
-      // If admin delete fails, try signing out at least
-      await supabase.auth.signOut();
-      return NextResponse.json(
-        { error: "Account partially deleted. Please contact support." },
-        { status: 500 }
-      );
+    // Parse optional reason from request body
+    let reason: string | null = null;
+    try {
+      const body = await request.json();
+      reason = body?.reason || null;
+    } catch {
+      // No body or invalid JSON — that's fine
     }
 
-    return NextResponse.json({ success: true });
+    if (actor.type === "model") {
+      // Soft delete: mark as deleted, hide from public, but preserve data
+      // 30-day recovery window, 90-day auto-purge of personal data
+      const { error: modelError } = await (serviceClient
+        .from("models") as any)
+        .update({
+          deleted_at: now,
+          deleted_reason: reason,
+          is_approved: false,
+        })
+        .eq("user_id", user.id);
+
+      if (modelError) throw new Error(`Failed to deactivate model: ${modelError.message}`);
+
+      // Deactivate actor (prevents dashboard access)
+      await (serviceClient
+        .from("actors") as any)
+        .update({ deactivated_at: now })
+        .eq("id", actor.id);
+
+      // Sign the user out
+      await supabase.auth.signOut();
+
+      return NextResponse.json({
+        success: true,
+        message: "Account deactivated. You have 30 days to contact support to recover your account.",
+      });
+    } else if (actor.type === "fan") {
+      // Hard delete fans (no recovery needed)
+      const { error } = await serviceClient.from("fans").delete().eq("id", actor.id);
+      if (error) throw new Error(`Failed to delete fan record: ${error.message}`);
+
+      const { error: actorError } = await serviceClient.from("actors").delete().eq("id", actor.id);
+      if (actorError) throw new Error(`Failed to delete actor record: ${actorError.message}`);
+
+      const { error: authError } = await serviceClient.auth.admin.deleteUser(user.id);
+      if (authError) {
+        await supabase.auth.signOut();
+        return NextResponse.json(
+          { error: "Account partially deleted. Please contact support." },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json({ success: true });
+    } else if (actor.type === "brand") {
+      // Hard delete brands
+      const { error } = await serviceClient.from("brands").delete().eq("id", actor.id);
+      if (error) throw new Error(`Failed to delete brand record: ${error.message}`);
+
+      const { error: actorError } = await serviceClient.from("actors").delete().eq("id", actor.id);
+      if (actorError) throw new Error(`Failed to delete actor record: ${actorError.message}`);
+
+      const { error: authError } = await serviceClient.auth.admin.deleteUser(user.id);
+      if (authError) {
+        await supabase.auth.signOut();
+        return NextResponse.json(
+          { error: "Account partially deleted. Please contact support." },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json({ success: true });
+    }
+
+    return NextResponse.json({ error: "Unknown account type" }, { status: 400 });
   } catch (error) {
     console.error("Delete account error:", error);
     return NextResponse.json(

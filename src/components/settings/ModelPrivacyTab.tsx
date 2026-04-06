@@ -176,8 +176,9 @@ export function ModelPrivacyTab({ model, onChange, onDeleteAccount, deleting }: 
                   <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                   <AlertDialogDescription className="space-y-3">
                     <span className="block">
-                      This action cannot be undone. This will permanently delete your
-                      account, all your data, content, coin balance, and remove your profile from EXA.
+                      Your account will be deactivated immediately and hidden from all public pages.
+                      You have 30 days to contact support to recover your account.
+                      After 90 days, your personal data will be permanently deleted.
                     </span>
                     <span className="block font-medium text-foreground">
                       Type DELETE to confirm:

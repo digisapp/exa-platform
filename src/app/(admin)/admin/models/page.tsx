@@ -187,6 +187,7 @@ interface Model {
   referral_count: number;
   last_seen: string | null;
   joined_at: string | null;
+  deleted_at: string | null;
 }
 
 type ModelSortField = "profile_views" | "coin_balance" | "followers_count" | "instagram_followers" | "admin_rating" | "created_at" | "joined_at" | "total_earned" | "content_count" | "image_count" | "video_count" | "ppv_count" | "last_post" | "last_seen" | "message_count" | "referral_count";
@@ -225,6 +226,7 @@ export default function AdminModelsPage() {
   const [stateFilter, setStateFilter] = useState<string>("all");
   const [approvalFilter, setApprovalFilter] = useState<string>("all");
   const [ratingFilter, setRatingFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("active");
   const [sortField, setSortField] = useState<ModelSortField>("joined_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
@@ -384,6 +386,7 @@ export default function AdminModelsPage() {
         approval: approvalFilter,
         rating: ratingFilter,
         claim: "claimed",
+        status: statusFilter,
         sortField,
         sortDirection,
       });
@@ -400,7 +403,7 @@ export default function AdminModelsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, debouncedSearch, stateFilter, approvalFilter, ratingFilter, sortField, sortDirection]);
+  }, [page, debouncedSearch, stateFilter, approvalFilter, ratingFilter, statusFilter, sortField, sortDirection]);
 
   useEffect(() => {
     loadModels();
@@ -492,6 +495,14 @@ export default function AdminModelsPage() {
                 <SelectItem value="3">3+ stars</SelectItem>
                 <SelectItem value="rated">Rated Only</SelectItem>
                 <SelectItem value="unrated">Unrated Only</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
+              <SelectTrigger className="w-[180px]"><SelectValue placeholder="Filter by status" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="deleted">Deleted</SelectItem>
+                <SelectItem value="all">All</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -644,8 +655,11 @@ export default function AdminModelsPage() {
                             )}
                           </div>
                           <div className="min-w-0">
-                            <p className="font-medium truncate text-pink-500 hover:text-pink-400">{model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username}</p>
-                            <p className="text-sm text-muted-foreground truncate">@{model.username}</p>
+                            <p className={`font-medium truncate ${model.deleted_at ? "text-red-500 line-through" : "text-pink-500 hover:text-pink-400"}`}>{model.first_name ? `${model.first_name} ${model.last_name || ''}`.trim() : model.username}</p>
+                            <p className="text-sm text-muted-foreground truncate">
+                              @{model.username}
+                              {model.deleted_at && <span className="ml-1 text-red-500 text-xs font-medium">(deleted {new Date(model.deleted_at).toLocaleDateString()})</span>}
+                            </p>
                           </div>
                         </Link>
                       </TableCell>
