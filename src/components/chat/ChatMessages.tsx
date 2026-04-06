@@ -231,7 +231,11 @@ export const ChatMessages = forwardRef<ChatMessagesHandle, ChatMessagesProps>(
                           : otherName
                       }
                       senderAvatar={
-                        isOwn ? currentModel?.profile_photo_url : otherAvatar
+                        isOwn
+                          ? currentActor.type === "admin"
+                            ? "/exa-logo-black.png"
+                            : currentModel?.profile_photo_url
+                          : otherAvatar
                       }
                       showAvatar={showAvatar}
                       showTimestamp={showTimestamp && !showSeen}
