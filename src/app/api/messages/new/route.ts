@@ -188,7 +188,7 @@ export async function POST(request: NextRequest) {
     let coinsRequired = 0;
     let recipientModelId: string | null = null;
 
-    if (sender.type !== "model" && recipient.type === "model") {
+    if (sender.type !== "model" && sender.type !== "admin" && recipient.type === "model") {
       const { data: recipientActor } = await supabase
         .from("actors")
         .select("user_id")
