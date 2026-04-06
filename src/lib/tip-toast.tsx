@@ -32,22 +32,18 @@ export function showTipSuccessToast({ amount, recipientName }: TipToastProps) {
               <Sparkles className="h-4 w-4 text-yellow-300 animate-pulse delay-150" />
             </div>
 
-            {/* Icon */}
-            <div className="flex justify-center mb-3">
-              <div className="p-3 rounded-full bg-white/20 ring-4 ring-white/10">
-                <Gift className="h-8 w-8 text-white" />
+            {/* Row 1: Icon + Tip Sent */}
+            <div className="flex items-center justify-center gap-2.5">
+              <div className="p-2 rounded-full bg-white/20 ring-2 ring-white/10">
+                <Gift className="h-6 w-6 text-white" />
               </div>
+              <p className="text-2xl font-bold">Tip Sent!</p>
             </div>
 
-            {/* Text */}
-            <div className="text-center">
-              <p className="text-2xl font-bold mb-1">
-                Tip Sent!
-              </p>
-              <p className="text-white/90 text-lg">
-                <span className="font-semibold text-yellow-300">{amount} coins</span> to {recipientName}
-              </p>
-            </div>
+            {/* Row 2: Amount + recipient */}
+            <p className="text-center text-white/90 text-lg mt-1.5">
+              <span className="font-semibold text-yellow-300">{amount} coins</span> to {recipientName}
+            </p>
           </div>
         </div>
       </div>
