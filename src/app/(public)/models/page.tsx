@@ -199,7 +199,7 @@ export default async function ModelsPage({
 
   // Now run actor-dependent queries in parallel
   let favoriteModelIds: string[] = [];
-  let actorType: "model" | "fan" | "brand" | "admin" | null = actor?.type || null;
+  const actorType: "model" | "fan" | "brand" | "admin" | null = actor?.type || null;
   let profileData: any = null;
   let coinBalance = 0;
 
