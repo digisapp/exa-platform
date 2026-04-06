@@ -295,7 +295,8 @@ export default function ExaDollsPage() {
             return (
               <Card
                 key={model.id}
-                className="overflow-hidden group relative"
+                className={`overflow-hidden group relative${hasDoll ? " cursor-pointer" : ""}`}
+                onClick={hasDoll ? () => setPreviewModel(model) : undefined}
               >
                 {/* Status badge */}
                 {hasDoll && (
@@ -305,7 +306,7 @@ export default function ExaDollsPage() {
                 )}
 
                 {/* Images: Original + Doll side by side */}
-                <div className="aspect-[3/4] relative bg-gray-100">
+                <div className="aspect-[3/4] relative bg-muted">
                   {hasDoll ? (
                     <div className="grid grid-cols-2 h-full">
                       {/* Original */}
@@ -319,16 +320,13 @@ export default function ExaDollsPage() {
                             sizes="120px"
                           />
                         ) : (
-                          <div className="flex items-center justify-center h-full bg-gray-200">
-                            <ImageIcon className="h-6 w-6 text-gray-400" />
+                          <div className="flex items-center justify-center h-full bg-muted">
+                            <ImageIcon className="h-6 w-6 text-muted-foreground" />
                           </div>
                         )}
                       </div>
                       {/* Doll */}
-                      <div
-                        className="relative cursor-pointer"
-                        onClick={() => setPreviewModel(model)}
-                      >
+                      <div className="relative">
                         <Image
                           src={model.exa_doll_image_url!}
                           alt={`${name} Exa Doll`}
@@ -351,7 +349,7 @@ export default function ExaDollsPage() {
                     />
                   ) : (
                     <div className="flex items-center justify-center h-full">
-                      <ImageIcon className="h-10 w-10 text-gray-300" />
+                      <ImageIcon className="h-10 w-10 text-muted-foreground" />
                     </div>
                   )}
                 </div>
@@ -391,7 +389,7 @@ export default function ExaDollsPage() {
                     className="w-full text-xs h-8"
                     variant={hasDoll ? "outline" : "default"}
                     disabled={isGenerating || !model.profile_photo_url}
-                    onClick={() => generateDoll(model.id)}
+                    onClick={(e) => { e.stopPropagation(); generateDoll(model.id); }}
                   >
                     {isGenerating ? (
                       <>
@@ -469,7 +467,7 @@ export default function ExaDollsPage() {
                 {/* Original photo */}
                 <div>
                   <p className="text-xs text-muted-foreground mb-2">Original</p>
-                  <div className="aspect-[3/4] relative rounded-lg overflow-hidden bg-gray-100">
+                  <div className="aspect-[3/4] relative rounded-lg overflow-hidden bg-muted">
                     {previewModel.profile_photo_url ? (
                       <Image
                         src={previewModel.profile_photo_url}
@@ -480,7 +478,7 @@ export default function ExaDollsPage() {
                       />
                     ) : (
                       <div className="flex items-center justify-center h-full">
-                        <ImageIcon className="h-10 w-10 text-gray-300" />
+                        <ImageIcon className="h-10 w-10 text-muted-foreground" />
                       </div>
                     )}
                   </div>
@@ -490,7 +488,7 @@ export default function ExaDollsPage() {
                   <p className="text-xs text-muted-foreground mb-2">
                     Exa Doll
                   </p>
-                  <div className="aspect-[3/4] relative rounded-lg overflow-hidden bg-gray-100">
+                  <div className="aspect-[3/4] relative rounded-lg overflow-hidden bg-muted">
                     {previewModel.exa_doll_image_url ? (
                       <Image
                         src={previewModel.exa_doll_image_url}
@@ -501,7 +499,7 @@ export default function ExaDollsPage() {
                       />
                     ) : (
                       <div className="flex items-center justify-center h-full">
-                        <Sparkles className="h-10 w-10 text-gray-300" />
+                        <Sparkles className="h-10 w-10 text-muted-foreground" />
                       </div>
                     )}
                   </div>
@@ -513,7 +511,7 @@ export default function ExaDollsPage() {
                   <p className="text-xs text-muted-foreground mb-1">
                     Prompt used:
                   </p>
-                  <p className="text-xs bg-gray-50 p-3 rounded-lg font-mono break-words max-h-32 overflow-y-auto">
+                  <p className="text-xs bg-muted p-3 rounded-lg font-mono break-words max-h-32 overflow-y-auto">
                     {previewModel.exa_doll_prompt}
                   </p>
                 </div>
