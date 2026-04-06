@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { MapPin, Heart, Star } from "lucide-react";
+import { MapPin, Star } from "lucide-react";
 
 function formatFollowers(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -71,11 +71,7 @@ export const ModelCard = memo(function ModelCard({
       }
 
       setIsFavorited(!isFavorited);
-      toast.success(
-        isFavorited
-          ? `Unfollowed`
-          : `Following`
-      );
+      toast.success(isFavorited ? "Removed from favs" : "Added to favs");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to update");
     } finally {
@@ -145,15 +141,15 @@ export const ModelCard = memo(function ModelCard({
               onClick={handleFavorite}
               disabled={loading}
               className={cn(
-                "absolute top-3 right-3 z-10 p-2 rounded-full transition-all",
+                "absolute top-3 right-3 z-10 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide transition-all",
                 isFavorited
-                  ? "bg-red-500 text-white"
+                  ? "bg-pink-500 text-white shadow-lg shadow-pink-500/30"
                   : "bg-black/50 backdrop-blur-sm text-white hover:bg-black/70",
                 loading && "opacity-50 cursor-not-allowed"
               )}
-              aria-label={isFavorited ? "Unfollow" : "Follow"}
+              aria-label={isFavorited ? "Unfavorite" : "Favorite"}
             >
-              <Heart className={cn("h-5 w-5", isFavorited && "fill-current")} />
+              {isFavorited ? "Fav'd" : "Fav"}
             </button>
           )}
 
