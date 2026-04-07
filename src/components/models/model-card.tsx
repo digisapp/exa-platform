@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { MapPin, Star } from "lucide-react";
+import { Heart, MapPin, Star } from "lucide-react";
 
 function formatFollowers(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -10,7 +10,7 @@ function formatFollowers(n: number): string {
   return n.toLocaleString();
 }
 import { cn } from "@/lib/utils";
-import { useState, memo } from "react";
+import { useState, useRef, memo } from "react";
 import { toast } from "sonner";
 import { AddToCampaignButton } from "@/components/ui/add-to-campaign-button";
 import { ModelNotesDialog } from "@/components/brands/ModelNotesDialog";
@@ -38,6 +38,9 @@ export const ModelCard = memo(function ModelCard({
 }: ModelCardProps) {
   const [isFavorited, setIsFavorited] = useState(initialFavorited);
   const [loading, setLoading] = useState(false);
+  const [showTooltip, setShowTooltip] = useState<string | null>(null);
+  const [bouncing, setBouncing] = useState(false);
+  const tooltipTimeout = useRef<NodeJS.Timeout | null>(null);
 
   // Display first name only (not full name for privacy)
   const displayName = model.first_name || model.username;
@@ -72,8 +75,19 @@ export const ModelCard = memo(function ModelCard({
         throw new Error(data.error || "Failed to update favorite");
       }
 
-      setIsFavorited(!isFavorited);
-      toast.success(isFavorited ? "Removed from favs" : "Added to favs");
+      const newState = !isFavorited;
+      setIsFavorited(newState);
+
+      // Bounce animation
+      setBouncing(true);
+      setTimeout(() => setBouncing(false), 300);
+
+      // Show floating tooltip + toast fallback
+      const msg = newState ? "Added to favorites" : "Removed from favorites";
+      setShowTooltip(msg);
+      if (tooltipTimeout.current) clearTimeout(tooltipTimeout.current);
+      tooltipTimeout.current = setTimeout(() => setShowTooltip(null), 1500);
+      toast.success(msg);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to update");
     } finally {
@@ -140,20 +154,43 @@ export const ModelCard = memo(function ModelCard({
 
           {/* Favorite Button */}
           {showFavorite && (
-            <button
-              onClick={handleFavorite}
-              disabled={loading}
-              className={cn(
-                "absolute top-3 right-3 z-10 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide transition-all",
-                isFavorited
-                  ? "bg-pink-500 text-white shadow-lg shadow-pink-500/30"
-                  : "bg-black/50 backdrop-blur-sm text-white hover:bg-black/70",
-                loading && "opacity-50 cursor-not-allowed"
-              )}
-              aria-label={isFavorited ? "Unfavorite" : "Favorite"}
+            <div
+              className="absolute top-3 right-3 z-10 group/fav"
+              onMouseEnter={() => {
+                if (!showTooltip) setShowTooltip(isFavorited ? "Remove from favorites" : "Add to favorites");
+              }}
+              onMouseLeave={() => {
+                if (showTooltip === "Remove from favorites" || showTooltip === "Add to favorites") {
+                  setShowTooltip(null);
+                }
+              }}
             >
-              {isFavorited ? "Fav'd" : "Fav"}
-            </button>
+              {showTooltip && (
+                <div className="absolute bottom-full right-0 mb-2 px-2.5 py-1 rounded-lg bg-black/80 backdrop-blur-sm text-white text-xs font-medium whitespace-nowrap animate-in fade-in slide-in-from-bottom-1 duration-200">
+                  {showTooltip}
+                </div>
+              )}
+              <button
+                onClick={handleFavorite}
+                disabled={loading}
+                className={cn(
+                  "w-9 h-9 flex items-center justify-center rounded-full transition-all",
+                  isFavorited
+                    ? "bg-pink-500 text-white shadow-lg shadow-pink-500/30"
+                    : "bg-black/50 backdrop-blur-sm text-white hover:bg-black/70",
+                  loading && "opacity-50 cursor-not-allowed"
+                )}
+                aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
+              >
+                <Heart
+                  className={cn(
+                    "h-4 w-4 transition-transform",
+                    isFavorited && "fill-current",
+                    bouncing && "scale-125"
+                  )}
+                />
+              </button>
+            </div>
           )}
 
           {/* Brand Actions (Campaign + Notes) */}
