@@ -3,10 +3,11 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Coins, Gavel, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Coins, Gavel, Sparkles, ChevronDown, Heart } from "lucide-react";
 import { formatCoins } from "@/lib/coin-config";
 import { PremiumContentCard } from "@/components/content/PremiumContentCard";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 export type FeedItem =
   | {
@@ -55,43 +56,77 @@ interface ForYouFeedProps {
   coinBalance: number;
 }
 
-function getTimeAgo(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
+const PAGE_SIZE = 8;
 
-  if (diffMins < 1) return "Just now";
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) return `${diffDays}d ago`;
-  return date.toLocaleDateString();
-}
+function useAuctionCountdowns(items: FeedItem[]) {
+  const getTimeLeft = useCallback((endsAt: string): string => {
+    const end = new Date(endsAt);
+    const now = new Date();
+    const diffMs = end.getTime() - now.getTime();
+    if (diffMs <= 0) return "Ended";
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
 
-function getTimeLeft(endsAt: string): string {
-  const end = new Date(endsAt);
-  const now = new Date();
-  const diffMs = end.getTime() - now.getTime();
-  if (diffMs <= 0) return "Ended";
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
+    if (diffMins < 60) return `${diffMins}m left`;
+    if (diffHours < 24) return `${diffHours}h left`;
+    return `${diffDays}d left`;
+  }, []);
 
-  if (diffMins < 60) return `${diffMins}m left`;
-  if (diffHours < 24) return `${diffHours}h left`;
-  return `${diffDays}d left`;
+  const buildMap = useCallback(() => {
+    const map: Record<string, string> = {};
+    for (const item of items) {
+      if (item.type === "auction") {
+        map[item.id] = getTimeLeft(item.ends_at);
+      }
+    }
+    return map;
+  }, [items, getTimeLeft]);
+
+  const [countdowns, setCountdowns] = useState(buildMap);
+
+  useEffect(() => {
+    setCountdowns(buildMap());
+    const interval = setInterval(() => setCountdowns(buildMap()), 30_000);
+    return () => clearInterval(interval);
+  }, [buildMap]);
+
+  return countdowns;
 }
 
 export function ForYouFeed({ items, coinBalance }: ForYouFeedProps) {
+  // Sync balance when prop changes (e.g. navigation back to page)
   const [balance, setBalance] = useState(coinBalance);
+  useEffect(() => {
+    setBalance(coinBalance);
+  }, [coinBalance]);
+
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const countdowns = useAuctionCountdowns(items);
 
   const handleUnlock = (_contentId: string, newBalance: number) => {
     setBalance(newBalance);
   };
 
-  if (items.length === 0) return null;
+  const visibleItems = items.slice(0, visibleCount);
+  const hasMore = visibleCount < items.length;
+
+  if (items.length === 0) {
+    return (
+      <div className="text-center py-10">
+        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-pink-500/10 mb-4">
+          <Heart className="h-7 w-7 text-pink-500" />
+        </div>
+        <h3 className="text-lg font-semibold mb-1">Your feed is empty</h3>
+        <p className="text-sm text-muted-foreground mb-4">
+          Follow models to see their latest content here
+        </p>
+        <Button asChild size="sm" className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600">
+          <Link href="/models">Discover Models</Link>
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -100,7 +135,7 @@ export function ForYouFeed({ items, coinBalance }: ForYouFeedProps) {
         For You
       </h3>
       <div className="space-y-4">
-        {items.map((item) => {
+        {visibleItems.map((item) => {
           if (item.type === "content") {
             const modelName = `${item.model.first_name || ""} ${item.model.last_name || ""}`.trim() || item.model.username;
             return (
@@ -125,10 +160,9 @@ export function ForYouFeed({ items, coinBalance }: ForYouFeedProps) {
                         </svg>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      {getTimeAgo(item.created_at)}
-                      {item.isFollowed && " · Following"}
-                    </p>
+                    {item.isFollowed && (
+                      <p className="text-xs text-muted-foreground">Following</p>
+                    )}
                   </div>
                   {item.coin_price > 0 && !item.isUnlocked && (
                     <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/10 border border-amber-500/20">
@@ -171,6 +205,8 @@ export function ForYouFeed({ items, coinBalance }: ForYouFeedProps) {
             const price = item.current_bid || item.starting_price;
             const isWinning = item.myBidStatus === "winning";
             const isOutbid = item.myBidStatus === "outbid";
+            const timeLeft = countdowns[item.id] || "…";
+            const hasEnded = timeLeft === "Ended";
             return (
               <Link
                 key={`auction-${item.id}`}
@@ -188,7 +224,7 @@ export function ForYouFeed({ items, coinBalance }: ForYouFeedProps) {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                     <div className="absolute bottom-2 left-3 flex items-center gap-1 text-white/90">
                       <Gavel className="h-3.5 w-3.5" />
-                      <span className="text-xs font-medium">Live Bid</span>
+                      <span className="text-xs font-medium">{hasEnded ? "Auction Ended" : "Live Bid"}</span>
                     </div>
                   </div>
                 )}
@@ -202,7 +238,7 @@ export function ForYouFeed({ items, coinBalance }: ForYouFeedProps) {
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm truncate">{item.title}</p>
                     <p className="text-xs text-muted-foreground truncate">
-                      {modelName} · {item.bid_count} {item.bid_count === 1 ? "bid" : "bids"} · {getTimeLeft(item.ends_at)}
+                      {modelName} · {item.bid_count} {item.bid_count === 1 ? "bid" : "bids"} · {timeLeft}
                     </p>
                   </div>
                   <div className="text-right shrink-0">
@@ -220,6 +256,21 @@ export function ForYouFeed({ items, coinBalance }: ForYouFeedProps) {
           return null;
         })}
       </div>
+
+      {/* Load More */}
+      {hasMore && (
+        <div className="flex justify-center pt-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+            className="gap-1.5"
+          >
+            <ChevronDown className="h-4 w-4" />
+            Show More
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

@@ -64,7 +64,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
       `)
       .eq("follower_id", actorId)
       .order("created_at", { ascending: false })
-      .limit(20),
+      .limit(50),
     (supabase.from("models") as any)
       .select(`
         id, username, first_name, last_name, profile_photo_url,
@@ -116,7 +116,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
       .eq("is_active", true)
       .gt("unlock_count", 0)
       .order("unlock_count", { ascending: false })
-      .limit(20),
+      .limit(30),
     // Fan's already-unlocked content
     (supabase.from("content_unlocks") as any)
       .select("content_id")
@@ -211,7 +211,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
     ...(recentContent || []),
   ];
   for (const content of allNonFollowed) {
-    if (feedItems.length >= 20) break;
+    if (feedItems.length >= 40) break;
     if (!content.model || seenContentIds.has(content.id)) continue;
     if (followedModelIds.has(content.model.id)) continue; // already added above
     seenContentIds.add(content.id);
