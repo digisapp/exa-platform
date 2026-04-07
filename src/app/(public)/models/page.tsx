@@ -308,17 +308,6 @@ export default async function ModelsPage({
 
         {/* Results */}
         <div className="mt-6">
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-muted-foreground">
-              {totalCount || 0} models found
-              {totalPages > 1 && (
-                <span className="ml-1">
-                  (page {currentPage} of {totalPages})
-                </span>
-              )}
-            </p>
-          </div>
-
           <ModelsGrid
             models={models || []}
             isLoggedIn={!!user}
