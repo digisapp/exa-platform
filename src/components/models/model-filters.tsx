@@ -72,9 +72,6 @@ const US_STATES = [
 const SORT_OPTIONS = [
   { value: "newest", label: "Newest" },
   { value: "followers", label: "Most Followers" },
-  { value: "name", label: "Name A-Z" },
-  { value: "cpm_low", label: "Lowest CPM" },
-  { value: "cpm_high", label: "Highest CPM" },
 ];
 
 const FOLLOWER_TIERS = [
@@ -162,6 +159,7 @@ export function ModelFilters() {
     searchParams.get("collabs") ||
     searchParams.get("platform") ||
     searchParams.get("cpm") ||
+    searchParams.get("cpm_sort") ||
     searchParams.get("engagement") ||
     searchParams.get("ig_followers") ||
     searchParams.get("tt_followers")
@@ -277,6 +275,7 @@ export function ModelFilters() {
             params.delete("collabs");
             params.delete("platform");
             params.delete("cpm");
+            params.delete("cpm_sort");
             params.delete("engagement");
           } else {
             params.set("collabs", "1");
@@ -346,6 +345,20 @@ export function ModelFilters() {
           <SelectItem value="3">3%+ Engagement</SelectItem>
           <SelectItem value="5">5%+ Engagement</SelectItem>
           <SelectItem value="10">10%+ Engagement</SelectItem>
+        </SelectContent>
+      </Select>
+
+      <Select
+        value={searchParams.get("cpm_sort") || "none"}
+        onValueChange={(v) => updateParams("cpm_sort", v === "none" ? null : v)}
+      >
+        <SelectTrigger className="w-[160px] h-8 text-sm">
+          <SelectValue placeholder="Sort by CPM" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="none">Sort by CPM</SelectItem>
+          <SelectItem value="cpm_low">Lowest CPM</SelectItem>
+          <SelectItem value="cpm_high">Highest CPM</SelectItem>
         </SelectContent>
       </Select>
     </div>

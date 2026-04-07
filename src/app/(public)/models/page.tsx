@@ -41,6 +41,7 @@ interface SearchParams {
   collabs?: string;
   platform?: string;
   cpm?: string;
+  cpm_sort?: string;
   engagement?: string;
   ig_followers?: string;
   tt_followers?: string;
@@ -143,17 +144,18 @@ export default async function ModelsPage({
     case "followers":
       modelsQuery = modelsQuery.order("instagram_followers", { ascending: false, nullsFirst: false });
       break;
-    case "cpm_low":
-      modelsQuery = modelsQuery.order(params.platform === "tiktok" ? "tiktok_cpm" : "instagram_cpm", { ascending: true, nullsFirst: false });
-      break;
-    case "cpm_high":
-      modelsQuery = modelsQuery.order(params.platform === "tiktok" ? "tiktok_cpm" : "instagram_cpm", { ascending: false, nullsFirst: false });
-      break;
-    case "name":
-      modelsQuery = modelsQuery.order("first_name", { ascending: true });
-      break;
     default:
       modelsQuery = modelsQuery.order("created_at", { ascending: false });
+  }
+
+  // CPM sort — only applies when collabs filter is active
+  if (params.collabs === "1") {
+    const cpmCol = params.platform === "tiktok" ? "tiktok_cpm" : "instagram_cpm";
+    if (params.cpm_sort === "cpm_low") {
+      modelsQuery = modelsQuery.order(cpmCol, { ascending: true, nullsFirst: false });
+    } else if (params.cpm_sort === "cpm_high") {
+      modelsQuery = modelsQuery.order(cpmCol, { ascending: false, nullsFirst: false });
+    }
   }
 
   modelsQuery = modelsQuery.range(offset, offset + PAGE_SIZE - 1);
