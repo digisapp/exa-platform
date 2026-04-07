@@ -205,11 +205,6 @@ export function ForYouFeed({ items, coinBalance }: ForYouFeedProps) {
                     coinBalance={balance}
                     onUnlock={handleUnlock}
                   />
-                  {item.unlock_count > 0 && (
-                    <p className="text-xs text-muted-foreground mt-2 px-0.5">
-                      {item.unlock_count} {item.unlock_count === 1 ? "unlock" : "unlocks"}
-                    </p>
-                  )}
                 </div>
               </div>
             );
