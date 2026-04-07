@@ -8,7 +8,6 @@ import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
 import { ModelFilters } from "@/components/models/model-filters";
 import { ModelCard } from "@/components/models/model-card";
 import { ModelsGrid } from "@/components/models/models-grid";
-import { LiveNowTabs } from "@/components/models/live-now-tabs";
 import { BrandPaywallWrapper } from "@/components/brands/BrandPaywallWrapper";
 import { FanCoinGateWrapper } from "@/components/fans/FanCoinGate";
 import { escapeIlike } from "@/lib/utils";
@@ -45,7 +44,6 @@ interface SearchParams {
   engagement?: string;
   ig_followers?: string;
   tt_followers?: string;
-  live?: string;
   page?: string;
 }
 
@@ -74,14 +72,8 @@ export default async function ModelsPage({
     redirect("/dashboard");
   }
 
-  const isLiveNow = params.live === "1";
-
   // Helper to apply all active filters to a query
   function applyFilters(q: any): any {
-    if (isLiveNow) {
-      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-      q = q.gte("last_active_at", fiveMinutesAgo);
-    }
     if (params.q) {
       q = q.or(`username.ilike.%${escapeIlike(params.q)}%,first_name.ilike.%${escapeIlike(params.q)}%,last_name.ilike.%${escapeIlike(params.q)}%`);
     }
@@ -144,7 +136,9 @@ export default async function ModelsPage({
     supabase.from("models").select(MODEL_CARD_FIELDS).eq("is_approved", true).is("deleted_at", null).not("profile_photo_url", "is", null)
   );
 
-  // Sort
+  // Sort — always prioritize live models (active in last 5 min) at the top
+  modelsQuery = modelsQuery.order("last_active_at", { ascending: false, nullsFirst: true });
+
   switch (params.sort) {
     case "followers":
       modelsQuery = modelsQuery.order("instagram_followers", { ascending: false, nullsFirst: false });
@@ -293,11 +287,8 @@ export default async function ModelsPage({
           <h1 className="text-3xl font-bold">Models</h1>
         </div>
 
-        {/* Live Now / All Models Tabs */}
-        <LiveNowTabs isLive={isLiveNow} />
-
-        {/* Featured Models (hidden in Live Now view) */}
-        {!isLiveNow && featured && featured.length > 0 && (
+        {/* Featured Models */}
+        {featured && featured.length > 0 && (
           <div className="mb-8">
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
               <span className="text-2xl">✨</span> Featured Models
@@ -319,7 +310,7 @@ export default async function ModelsPage({
         <div className="mt-6">
           <div className="flex items-center justify-between mb-4">
             <p className="text-muted-foreground">
-              {totalCount || 0} {isLiveNow ? "models live now" : "models found"}
+              {totalCount || 0} models found
               {totalPages > 1 && (
                 <span className="ml-1">
                   (page {currentPage} of {totalPages})

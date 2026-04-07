@@ -185,10 +185,10 @@ export function ModelFilters() {
         onValueChange={(v) => updateParams("focus", v === "all" ? null : v)}
       >
         <SelectTrigger className="w-[150px]">
-          <SelectValue placeholder="All Focus" />
+          <SelectValue placeholder="Focus" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All Focus</SelectItem>
+          <SelectItem value="all">Focus</SelectItem>
           {FOCUS_OPTIONS.map((focus) => (
             <SelectItem key={focus.value} value={focus.value}>{focus.label}</SelectItem>
           ))}
@@ -200,10 +200,10 @@ export function ModelFilters() {
         onValueChange={(v) => updateParams("state", v === "all" ? null : v)}
       >
         <SelectTrigger className="w-[150px]">
-          <SelectValue placeholder="All States" />
+          <SelectValue placeholder="States" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All States</SelectItem>
+          <SelectItem value="all">States</SelectItem>
           {US_STATES.map((state) => (
             <SelectItem key={state.value} value={state.value}>{state.label}</SelectItem>
           ))}
@@ -215,10 +215,10 @@ export function ModelFilters() {
         onValueChange={(v) => updateParams("height", v === "all" ? null : v)}
       >
         <SelectTrigger className="w-[150px]">
-          <SelectValue placeholder="All Heights" />
+          <SelectValue placeholder="Heights" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All Heights</SelectItem>
+          <SelectItem value="all">Heights</SelectItem>
           {HEIGHT_RANGES.map((range) => (
             <SelectItem key={range.value} value={range.value}>{range.label}</SelectItem>
           ))}
@@ -247,7 +247,7 @@ export function ModelFilters() {
           <SelectValue placeholder="IG Followers" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">Any IG Followers</SelectItem>
+          <SelectItem value="all">IG Followers</SelectItem>
           {FOLLOWER_TIERS.map((tier) => (
             <SelectItem key={tier.value} value={tier.value}>IG {tier.label}</SelectItem>
           ))}
@@ -262,7 +262,7 @@ export function ModelFilters() {
           <SelectValue placeholder="TT Followers" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">Any TT Followers</SelectItem>
+          <SelectItem value="all">TT Followers</SelectItem>
           {FOLLOWER_TIERS.map((tier) => (
             <SelectItem key={tier.value} value={tier.value}>TT {tier.label}</SelectItem>
           ))}
