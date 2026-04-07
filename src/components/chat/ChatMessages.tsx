@@ -6,12 +6,13 @@ import { TypingIndicator } from "./TypingIndicator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Coins, ChevronDown } from "lucide-react";
+import { Loader2, Coins, ChevronDown, RefreshCw, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
-import type { Message, Actor, Model } from "@/types/database";
+import type { Actor, Model } from "@/types/database";
 import type { OtherParticipantInfo } from "./ChatHeader";
+import type { OptimisticMessage } from "./ChatView";
 
 interface TypingUser {
   name: string;
@@ -22,7 +23,7 @@ export interface ChatMessagesHandle {
 }
 
 interface ChatMessagesProps {
-  messages: Message[];
+  messages: OptimisticMessage[];
   reactionsMap: Record<string, { emoji: string; actor_id: string }[]>;
   repliedMessagesMap?: Record<string, { id: string; content: string | null; sender_id: string; media_type: string | null }>;
   currentActor: Actor;
@@ -38,7 +39,9 @@ interface ChatMessagesProps {
   onLoadMore: () => void;
   onUnlockMedia: (messageId: string) => Promise<void>;
   onScrollStateChange: (isNearBottom: boolean, showScrollBtn: boolean) => void;
-  onReply?: (message: Message) => void;
+  onReply?: (message: OptimisticMessage) => void;
+  onRetryMessage?: (tempId: string) => void;
+  onDismissFailedMessage?: (tempId: string) => void;
 }
 
 export const ChatMessages = forwardRef<ChatMessagesHandle, ChatMessagesProps>(
@@ -61,6 +64,8 @@ export const ChatMessages = forwardRef<ChatMessagesHandle, ChatMessagesProps>(
       onUnlockMedia,
       onScrollStateChange,
       onReply,
+      onRetryMessage,
+      onDismissFailedMessage,
     },
     ref
   ) {
@@ -109,6 +114,7 @@ export const ChatMessages = forwardRef<ChatMessagesHandle, ChatMessagesProps>(
           if (
             msg.sender_id === currentActor.id &&
             msg.created_at &&
+            !msg._tempId &&
             new Date(msg.created_at) <= new Date(otherLastReadAt)
           ) {
             return msg.id;
@@ -123,6 +129,9 @@ export const ChatMessages = forwardRef<ChatMessagesHandle, ChatMessagesProps>(
           <div
             ref={messagesContainerRef}
             onScroll={handleScroll}
+            role="log"
+            aria-label="Chat messages"
+            aria-live="polite"
             className="flex-1 overflow-y-auto p-4 space-y-4"
           >
             {/* Load more indicator */}
@@ -220,46 +229,91 @@ export const ChatMessages = forwardRef<ChatMessagesHandle, ChatMessagesProps>(
                   hasReacted: info.hasReacted,
                 }));
 
+                // Optimistic message status
+                const messageStatus = message._status;
+                const isFailed = messageStatus === "failed";
+                const isSending = messageStatus === "sending";
+
                 return (
-                  <div key={message.id}>
-                    <MessageBubble
-                      message={message}
-                      isOwn={isOwn}
-                      senderName={
-                        isOwn
-                          ? currentModel?.first_name
-                            ? `${currentModel.first_name} ${currentModel.last_name || ""}`.trim()
-                            : currentActor.type === "admin"
-                              ? "Admin"
-                              : "You"
-                          : otherName
-                      }
-                      senderAvatar={
-                        isOwn
-                          ? currentActor.type === "admin"
-                            ? "/exa-logo-black.png"
-                            : currentModel?.profile_photo_url
-                          : otherAvatar
-                      }
-                      showAvatar={showAvatar}
-                      showTimestamp={showTimestamp && !showSeen}
-                      currentActorId={currentActor.id}
-                      reactions={reactions}
-                      onUnlock={onUnlockMedia}
-                      repliedMessage={
-                        (message as any).reply_to_id
-                          ? repliedMessagesMap[(message as any).reply_to_id] || null
-                          : null
-                      }
-                      repliedMessageSenderName={
-                        (message as any).reply_to_id && repliedMessagesMap[(message as any).reply_to_id]
-                          ? repliedMessagesMap[(message as any).reply_to_id].sender_id === currentActor.id
-                            ? "You"
+                  <div key={message._tempId || message.id}>
+                    <div className={cn(isSending && "opacity-70", isFailed && "opacity-50")}>
+                      <MessageBubble
+                        message={message}
+                        isOwn={isOwn}
+                        senderName={
+                          isOwn
+                            ? currentModel?.first_name
+                              ? `${currentModel.first_name} ${currentModel.last_name || ""}`.trim()
+                              : currentActor.type === "admin"
+                                ? "Admin"
+                                : "You"
                             : otherName
-                          : undefined
-                      }
-                      onReply={onReply ? () => onReply(message) : undefined}
-                    />
+                        }
+                        senderAvatar={
+                          isOwn
+                            ? currentActor.type === "admin"
+                              ? "/exa-logo-black.png"
+                              : currentModel?.profile_photo_url
+                            : otherAvatar
+                        }
+                        showAvatar={showAvatar}
+                        showTimestamp={showTimestamp && !showSeen && !isSending && !isFailed}
+                        currentActorId={currentActor.id}
+                        reactions={reactions}
+                        onUnlock={onUnlockMedia}
+                        repliedMessage={
+                          (message as any).reply_to_id
+                            ? repliedMessagesMap[(message as any).reply_to_id] || null
+                            : null
+                        }
+                        repliedMessageSenderName={
+                          (message as any).reply_to_id && repliedMessagesMap[(message as any).reply_to_id]
+                            ? repliedMessagesMap[(message as any).reply_to_id].sender_id === currentActor.id
+                              ? "You"
+                              : otherName
+                            : undefined
+                        }
+                        onReply={onReply && !isSending && !isFailed ? () => onReply(message) : undefined}
+                      />
+                    </div>
+
+                    {/* Sending indicator */}
+                    {isSending && (
+                      <div className="flex justify-end pr-2 mt-1">
+                        <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          Sending
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Failed message actions */}
+                    {isFailed && message._tempId && (
+                      <div className="flex justify-end pr-2 mt-1 gap-2">
+                        <span className="text-[10px] text-destructive">Failed to send</span>
+                        {onRetryMessage && (
+                          <button
+                            onClick={() => onRetryMessage(message._tempId!)}
+                            className="text-[10px] text-pink-500 hover:text-pink-600 flex items-center gap-0.5"
+                            aria-label="Retry sending message"
+                          >
+                            <RefreshCw className="h-3 w-3" />
+                            Retry
+                          </button>
+                        )}
+                        {onDismissFailedMessage && (
+                          <button
+                            onClick={() => onDismissFailedMessage(message._tempId!)}
+                            className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-0.5"
+                            aria-label="Dismiss failed message"
+                          >
+                            <X className="h-3 w-3" />
+                            Dismiss
+                          </button>
+                        )}
+                      </div>
+                    )}
+
                     {showSeen && (
                       <div className="flex justify-end pr-2 mt-1 mb-1">
                         <span className="text-xs text-muted-foreground">

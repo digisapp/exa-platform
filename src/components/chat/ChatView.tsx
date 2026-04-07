@@ -7,6 +7,9 @@ import { ChatHeader } from "./ChatHeader";
 import { ChatMessages, ChatMessagesHandle } from "./ChatMessages";
 import { IncomingCallDialog } from "@/components/video";
 import { useTypingIndicator } from "@/hooks/useTypingIndicator";
+import { useRealtimeMessages } from "@/hooks/useRealtimeMessages";
+import { useReadReceipts } from "@/hooks/useReadReceipts";
+import { useIncomingCalls } from "@/hooks/useIncomingCalls";
 import { toast } from "sonner";
 import type { Message, Actor, Model, Conversation, Fan, Brand } from "@/types/database";
 import { useCoinBalanceOptional } from "@/contexts/CoinBalanceContext";
@@ -29,6 +32,20 @@ interface ChatViewProps {
   hasMoreMessages?: boolean;
 }
 
+// Optimistic message status
+export type MessageStatus = "sending" | "sent" | "failed";
+
+// Extended message type with optimistic fields
+export interface OptimisticMessage extends Message {
+  _status?: MessageStatus;
+  _tempId?: string;
+}
+
+let tempIdCounter = 0;
+function generateTempId() {
+  return `temp_${Date.now()}_${++tempIdCounter}`;
+}
+
 export function ChatView({
   conversation,
   initialMessages,
@@ -38,26 +55,18 @@ export function ChatView({
   otherParticipant,
   hasMoreMessages = false,
 }: ChatViewProps) {
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [messages, setMessages] = useState<OptimisticMessage[]>(initialMessages);
   const [reactionsMap, setReactionsMap] = useState<Record<string, { emoji: string; actor_id: string }[]>>({});
   const [repliedMessagesMap, setRepliedMessagesMap] = useState<Record<string, { id: string; content: string | null; sender_id: string; media_type: string | null }>>({});
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
-  const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(hasMoreMessages);
   const coinBalanceContext = useCoinBalanceOptional();
   const [localCoinBalance, setLocalCoinBalance] = useState(
     coinBalanceContext?.balance ?? currentFan?.coin_balance ?? currentModel?.coin_balance ?? 0
   );
-  const [incomingCall, setIncomingCall] = useState<{
-    sessionId: string;
-    callerName: string;
-    callerAvatar?: string;
-    callType?: "video" | "voice";
-  } | null>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [isNearBottom, setIsNearBottom] = useState(true);
-  const [otherLastReadAt, setOtherLastReadAt] = useState<string | null>(null);
   const chatMessagesRef = useRef<ChatMessagesHandle>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
@@ -139,6 +148,72 @@ export function ChatView({
   // Can tip if the other participant is a model and we're not a model
   const canTip = otherParticipant.actor.type === "model" && currentActor.type !== "model";
 
+  // --- Extracted hooks ---
+
+  // Real-time messages
+  useRealtimeMessages({
+    conversationId: conversation.id,
+    currentActorId: currentActor.id,
+    onNewMessage: useCallback((newMessage: Message) => {
+      setMessages((prev) => {
+        // Replace optimistic message if this is our own message coming back
+        const optimisticIdx = prev.findIndex(
+          (m) => m._tempId && m.sender_id === newMessage.sender_id && m._status === "sending"
+        );
+        if (optimisticIdx !== -1) {
+          const updated = [...prev];
+          updated[optimisticIdx] = { ...newMessage, _status: "sent" as const };
+          return updated;
+        }
+        // Deduplicate
+        if (prev.some((m) => m.id === newMessage.id)) {
+          return prev;
+        }
+        return [...prev, newMessage];
+      });
+    }, []),
+    onSystemTip: useCallback(() => {
+      toast.success(`${otherName} sent you a tip!`, {
+        icon: "🎁",
+        duration: 5000,
+      });
+    }, [otherName]),
+  });
+
+  // Read receipts
+  const otherLastReadAt = useReadReceipts({
+    conversationId: conversation.id,
+    otherActorId: otherParticipant.actor_id,
+  });
+
+  // Incoming calls
+  const { incomingCall, dismissCall } = useIncomingCalls({
+    currentActorId: currentActor.id,
+    conversationId: conversation.id,
+    callerName: otherName,
+    callerAvatar: otherAvatar,
+    onCallReceived: useCallback((callType: "video" | "voice") => {
+      const callTypeLabel = callType === "voice" ? "voice" : "video";
+      toast.info(`${otherName} is ${callTypeLabel} calling you...`);
+    }, [otherName]),
+  });
+
+  // Mark messages as read (uses API to reset unread_count atomically)
+  useEffect(() => {
+    async function markAsRead() {
+      try {
+        await fetch("/api/messages/mark-read", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ conversationId: conversation.id }),
+        });
+      } catch (err) {
+        console.error("Failed to mark messages as read:", err);
+      }
+    }
+    markAsRead();
+  }, [conversation.id]);
+
   // Load older messages
   const loadMoreMessages = useCallback(async () => {
     if (loadingMore || !hasMore || messages.length === 0) return;
@@ -189,143 +264,6 @@ export function ChatView({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages.length]);
-
-  // Subscribe to real-time messages
-  useEffect(() => {
-    const channel = supabase
-      .channel(`messages:${conversation.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-          filter: `conversation_id=eq.${conversation.id}`,
-        },
-        (payload) => {
-          let newMessage = payload.new as Message & { is_system?: boolean };
-          // Strip media_url from locked PPV messages
-          if (
-            (newMessage.media_price ?? 0) > 0 &&
-            newMessage.sender_id !== currentActor.id &&
-            !(newMessage.media_viewed_by ?? []).includes(currentActor.id)
-          ) {
-            newMessage = { ...newMessage, media_url: null };
-          }
-          setMessages((prev) => {
-            if (prev.some((m) => m.id === newMessage.id)) {
-              return prev;
-            }
-            return [...prev, newMessage];
-          });
-
-          if (
-            newMessage.is_system &&
-            newMessage.content?.includes("tip") &&
-            newMessage.sender_id !== currentActor.id
-          ) {
-            toast.success(`${otherName} sent you a tip!`, {
-              icon: "🎁",
-              duration: 5000,
-            });
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      channel.unsubscribe();
-    };
-  }, [conversation.id, supabase, currentActor.id, otherName]);
-
-  // Mark messages as read (uses API to reset unread_count atomically)
-  useEffect(() => {
-    async function markAsRead() {
-      try {
-        await fetch("/api/messages/mark-read", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ conversationId: conversation.id }),
-        });
-      } catch (err) {
-        console.error("Failed to mark messages as read:", err);
-      }
-    }
-    markAsRead();
-  }, [conversation.id, currentActor.id, supabase]);
-
-  // Fetch and subscribe to other participant's last_read_at for read receipts
-  useEffect(() => {
-    (supabase
-      .from("conversation_participants") as any)
-      .select("last_read_at")
-      .eq("conversation_id", conversation.id)
-      .eq("actor_id", otherParticipant.actor_id)
-      .single()
-      .then(({ data }: { data: { last_read_at: string | null } | null }) => {
-        if (data?.last_read_at) setOtherLastReadAt(data.last_read_at);
-      });
-
-    const readChannel = supabase
-      .channel(`read:${conversation.id}:${otherParticipant.actor_id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "conversation_participants",
-          filter: `conversation_id=eq.${conversation.id}`,
-        },
-        (payload) => {
-          const updated = payload.new as { actor_id: string; last_read_at: string | null };
-          if (updated.actor_id === otherParticipant.actor_id && updated.last_read_at) {
-            setOtherLastReadAt(updated.last_read_at);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      readChannel.unsubscribe();
-    };
-  }, [conversation.id, otherParticipant.actor_id, supabase]);
-
-  // Subscribe to incoming video calls
-  useEffect(() => {
-    const callChannel = supabase
-      .channel(`calls:${currentActor.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "video_call_sessions",
-          filter: `recipient_id=eq.${currentActor.id}`,
-        },
-        (payload) => {
-          const callSession = payload.new as any;
-          if (
-            callSession.conversation_id === conversation.id &&
-            callSession.status === "pending"
-          ) {
-            const callType = callSession.call_type || "video";
-            setIncomingCall({
-              sessionId: callSession.id,
-              callerName: otherName,
-              callerAvatar: otherAvatar || undefined,
-              callType,
-            });
-            const callTypeLabel = callType === "voice" ? "voice" : "video";
-            toast.info(`${otherName} is ${callTypeLabel} calling you...`);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      callChannel.unsubscribe();
-    };
-  }, [currentActor.id, conversation.id, otherName, otherAvatar, supabase]);
 
   const handleUnlockMedia = async (messageId: string) => {
     try {
@@ -418,15 +356,54 @@ export function ChatView({
     }
   }, [currentActor.id, supabase, coinBalanceContext]);
 
+  // Optimistic message sending
   const handleSendMessage = async (
     content: string,
     mediaUrl?: string,
     mediaType?: string,
     mediaPrice?: number,
   ) => {
-    setLoading(true);
     const currentReplyToId = replyingTo?.id || undefined;
     setReplyingTo(null);
+
+    // Create optimistic message and show it immediately
+    const tempId = generateTempId();
+    const optimisticMessage: OptimisticMessage = {
+      id: tempId,
+      conversation_id: conversation.id,
+      sender_id: currentActor.id,
+      content: content || null,
+      media_url: mediaUrl || null,
+      media_type: mediaType || null,
+      media_price: mediaPrice || null,
+      media_viewed_by: null,
+      created_at: new Date().toISOString(),
+      flagged_at: null,
+      flagged_by: null,
+      flagged_reason: null,
+      is_flagged: null,
+      is_system: null,
+      media_duration: null,
+      media_expires_at: null,
+      media_file_size: null,
+      media_thumbnail_url: null,
+      media_view_mode: null,
+      read_at: null,
+      recipient_id: null,
+      recipient_instagram: null,
+      sender_type: currentActor.type,
+      transaction_id: null,
+      _status: "sending",
+      _tempId: tempId,
+    };
+
+    setMessages((prev) => [...prev, optimisticMessage]);
+
+    // Optimistically deduct coins
+    if (coinCost > 0) {
+      setLocalCoinBalance((prev) => Math.max(0, prev - coinCost));
+      coinBalanceContext?.deductCoins(coinCost);
+    }
 
     try {
       const response = await fetch("/api/messages/send", {
@@ -445,11 +422,21 @@ export function ChatView({
       const data = await response.json();
 
       if (!response.ok) {
+        // Mark optimistic message as failed
+        setMessages((prev) =>
+          prev.map((m) => m._tempId === tempId ? { ...m, _status: "failed" as const } : m)
+        );
+
+        // Reverse optimistic coin deduction
+        if (coinCost > 0) {
+          setLocalCoinBalance((prev) => prev + coinCost);
+          coinBalanceContext?.setBalance(localCoinBalance);
+        }
+
         if (response.status === 402) {
           toast.error(
             `Insufficient coins. Need ${data.required}, have ${data.balance}`
           );
-          // Server returned actual balance — use it
           if (typeof data.balance === "number") {
             setLocalCoinBalance(data.balance);
             coinBalanceContext?.setBalance(data.balance);
@@ -457,28 +444,60 @@ export function ChatView({
         } else {
           toast.error(data.error || "Failed to send message");
         }
-        // Refetch balance on any send failure to correct optimistic state
         refetchCoinBalance();
-        throw new Error(data.error);
+        return;
       }
 
+      // Replace optimistic message with real one from server
       if (data.message) {
-        setMessages((prev) => {
-          if (prev.some((m) => m.id === data.message.id)) {
-            return prev;
-          }
-          return [...prev, data.message];
-        });
+        setMessages((prev) =>
+          prev.map((m) =>
+            m._tempId === tempId
+              ? { ...data.message, _status: "sent" as const }
+              : m
+          )
+        );
       }
 
-      if (data.coinsDeducted > 0) {
-        setLocalCoinBalance((prev) => Math.max(0, prev - data.coinsDeducted));
-        coinBalanceContext?.deductCoins(data.coinsDeducted);
+      // Use server-reported coin deduction (may differ from our estimate)
+      if (data.coinsDeducted > 0 && data.coinsDeducted !== coinCost) {
+        const diff = data.coinsDeducted - coinCost;
+        setLocalCoinBalance((prev) => Math.max(0, prev - diff));
+        coinBalanceContext?.deductCoins(diff);
       }
-    } finally {
-      setLoading(false);
+    } catch {
+      // Network error - mark as failed
+      setMessages((prev) =>
+        prev.map((m) => m._tempId === tempId ? { ...m, _status: "failed" as const } : m)
+      );
+      if (coinCost > 0) {
+        setLocalCoinBalance((prev) => prev + coinCost);
+        coinBalanceContext?.setBalance(localCoinBalance);
+      }
+      toast.error("Failed to send message. Check your connection.");
     }
   };
+
+  // Retry a failed optimistic message
+  const handleRetryMessage = useCallback(async (tempId: string) => {
+    const failedMsg = messages.find((m) => m._tempId === tempId && m._status === "failed");
+    if (!failedMsg) return;
+
+    // Remove the failed message and re-send
+    setMessages((prev) => prev.filter((m) => m._tempId !== tempId));
+    await handleSendMessage(
+      failedMsg.content || "",
+      failedMsg.media_url || undefined,
+      failedMsg.media_type || undefined,
+      failedMsg.media_price || undefined,
+    );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages]);
+
+  // Dismiss a failed message
+  const handleDismissFailedMessage = useCallback((tempId: string) => {
+    setMessages((prev) => prev.filter((m) => m._tempId !== tempId));
+  }, []);
 
   const handleBalanceChange = useCallback((newBalance: number) => {
     setLocalCoinBalance(newBalance);
@@ -512,7 +531,7 @@ export function ChatView({
           callerName={incomingCall.callerName}
           callerAvatar={incomingCall.callerAvatar}
           callType={incomingCall.callType}
-          onClose={() => setIncomingCall(null)}
+          onClose={dismissCall}
         />
       )}
 
@@ -535,12 +554,13 @@ export function ChatView({
         onUnlockMedia={handleUnlockMedia}
         onScrollStateChange={handleScrollStateChange}
         onReply={setReplyingTo}
+        onRetryMessage={handleRetryMessage}
+        onDismissFailedMessage={handleDismissFailedMessage}
       />
 
       {/* Input */}
       <MessageInput
         onSend={handleSendMessage}
-        disabled={loading}
         coinCost={coinCost}
         coinBalance={localCoinBalance}
         placeholder="Type a message..."

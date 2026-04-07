@@ -47,6 +47,7 @@ export function MessageInput({
   const [content, setContent] = useState("");
   const [sending, setSending] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [attachedMedia, setAttachedMedia] = useState<{
@@ -193,14 +194,27 @@ export function MessageInput({
     const signedData = await safeJsonParse(signedResponse);
     if (!signedResponse.ok) throw new Error(signedData.error || "Failed to get upload URL");
 
-    // Step 2: Upload directly to Supabase Storage
-    const uploadResponse = await fetch(signedData.signedUrl, {
-      method: "PUT",
-      headers: { "Content-Type": file.type },
-      body: file,
+    // Step 2: Upload directly to Supabase Storage with progress tracking
+    await new Promise<void>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("PUT", signedData.signedUrl);
+      xhr.setRequestHeader("Content-Type", file.type);
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          // Scale to 10-90% (10% for getting signed URL, 90% for upload, 10% for completing)
+          setUploadProgress(Math.round(10 + (e.loaded / e.total) * 80));
+        }
+      };
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve();
+        } else {
+          reject(new Error("Upload to storage failed"));
+        }
+      };
+      xhr.onerror = () => reject(new Error("Upload to storage failed"));
+      xhr.send(file);
     });
-
-    if (!uploadResponse.ok) throw new Error("Upload to storage failed");
 
     // Step 3: Complete the upload
     const completeResponse = await fetch("/api/upload/complete", {
@@ -242,6 +256,7 @@ export function MessageInput({
     }
 
     setUploading(true);
+    setUploadProgress(0);
     const preview = type !== "audio" ? URL.createObjectURL(file) : undefined;
 
     try {
@@ -312,6 +327,7 @@ export function MessageInput({
       if (preview) URL.revokeObjectURL(preview);
     } finally {
       setUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -445,6 +461,27 @@ export function MessageInput({
           >
             <X className="h-3 w-3" />
           </button>
+        </div>
+      )}
+
+      {/* Upload progress bar */}
+      {uploading && uploadProgress > 0 && (
+        <div className="mb-3 px-1">
+          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+            <span>Uploading...</span>
+            <span>{uploadProgress}%</span>
+          </div>
+          <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-pink-500 to-violet-500 transition-all duration-300 ease-out"
+              style={{ width: `${uploadProgress}%` }}
+              role="progressbar"
+              aria-valuenow={uploadProgress}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label="Upload progress"
+            />
+          </div>
         </div>
       )}
 
