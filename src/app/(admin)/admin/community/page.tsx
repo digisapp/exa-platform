@@ -212,7 +212,7 @@ export default function AdminCommunityPage() {
       (supabase.from("models") as any).select("*", { count: "exact", head: true }).not("user_id", "is", null),
       (supabase.from("models") as any).select("*", { count: "exact", head: true }).eq("is_approved", true).not("user_id", "is", null),
       (supabase.from("fans") as any).select("*", { count: "exact", head: true }),
-      (supabase.from("fans") as any).select("*", { count: "exact", head: true }).eq("is_suspended", false),
+      (supabase.from("fans") as any).select("*", { count: "exact", head: true }).gte("updated_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
       (supabase.from("brands") as any).select("*", { count: "exact", head: true }).eq("is_verified", false),
       (supabase.from("model_applications") as any).select("*", { count: "exact", head: true }).eq("status", "pending"),
     ]);

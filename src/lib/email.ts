@@ -3236,12 +3236,12 @@ export async function sendMiamiSwimWeekProfileReminderEmail({
   try {
     // Check if unsubscribed
     if (await isEmailUnsubscribed(to, "marketing")) {
-      // Email is unsubscribed, skipping
       return { success: true, skipped: true };
     }
 
     const resend = getResendClient();
-    const dashboardUrl = `${BASE_URL}/dashboard`;
+    const settingsUrl = `${BASE_URL}/dashboard/settings`;
+    const portfolioUrl = `${BASE_URL}/dashboard/portfolio`;
     const unsubscribeToken = await getUnsubscribeToken(to);
 
     const greeting = modelName ? `Hey ${escapeHtml(modelName)}!` : "Hey!";
@@ -3250,7 +3250,7 @@ export async function sendMiamiSwimWeekProfileReminderEmail({
       from: FROM_EMAIL,
       replyTo: REPLY_TO_EMAIL,
       to: [to],
-      subject: "Quick Tip to Stand Out for Miami Swim Week 2026",
+      subject: "Reminder: Upload Your Profile Pic to EXA Profile",
       html: `
 <!DOCTYPE html>
 <html>
@@ -3264,15 +3264,14 @@ export async function sendMiamiSwimWeekProfileReminderEmail({
       <td align="center">
         <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
 
-          <!-- Header with Beach/Swim Vibes -->
+          <!-- Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, #06b6d4 0%, #ec4899 50%, #f97316 100%); padding: 50px 30px; text-align: center;">
-              <p style="margin: 0 0 10px; font-size: 40px;">🌴👙✨</p>
-              <h1 style="margin: 0; color: white; font-size: 28px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">
-                Miami Swim Week 2026
+            <td style="background: linear-gradient(135deg, #06b6d4 0%, #8b5cf6 100%); padding: 40px 30px; text-align: center;">
+              <h1 style="margin: 0; color: white; font-size: 28px; font-weight: bold;">
+                ${greeting}
               </h1>
-              <p style="margin: 15px 0 0; color: rgba(255,255,255,0.95); font-size: 16px; font-weight: 500;">
-                Help designers find you!
+              <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
+                We need your face on your profile
               </p>
             </td>
           </tr>
@@ -3280,51 +3279,35 @@ export async function sendMiamiSwimWeekProfileReminderEmail({
           <!-- Body -->
           <tr>
             <td style="padding: 40px 30px;">
-              <p style="margin: 0 0 20px; color: #ffffff; font-size: 20px; font-weight: 500;">
-                ${greeting}
-              </p>
-              <p style="margin: 0 0 25px; color: #a1a1aa; font-size: 16px; line-height: 1.7;">
-                We're so excited that you applied for <strong style="color: #ec4899;">Miami Swim Week 2026</strong>!
-                Designers are starting to browse model profiles to find talent for their shows, and we'd love to help you stand out.
-              </p>
-              <p style="margin: 0 0 25px; color: #a1a1aa; font-size: 16px; line-height: 1.7;">
-                We noticed your profile is missing a couple of things that would really help designers discover you:
+              <p style="margin: 0 0 25px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                Your profile is missing a face photo and designers need to see who you are before they can consider you for <strong style="color: #ffffff;">Miami Swim Week</strong>. Upload your profile picture now so you don't miss out.
               </p>
 
-              <!-- What's Missing -->
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px; background: linear-gradient(135deg, rgba(249, 115, 22, 0.15) 0%, rgba(236, 72, 153, 0.15) 100%); border-radius: 12px; border: 1px solid rgba(236, 72, 153, 0.3);">
+              <!-- Upload Photo CTA -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 35px;">
                 <tr>
-                  <td style="padding: 25px;">
-                    <p style="margin: 0 0 15px; color: #f97316; font-size: 16px; font-weight: 600;">
-                      Quick Profile Tips
-                    </p>
-                    <table width="100%" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="padding: 10px 0; color: #a1a1aa; font-size: 15px;">
-                          <span style="color: #ec4899; margin-right: 10px;">1.</span>
-                          <strong style="color: #fff;">Add a Profile Image</strong> - A great headshot or full body shot helps designers put a face to your name
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 10px 0; color: #a1a1aa; font-size: 15px;">
-                          <span style="color: #06b6d4; margin-right: 10px;">2.</span>
-                          <strong style="color: #fff;">Add Portfolio Content</strong> - Upload your best photos and videos so designers can get a feel for your look and style
-                        </td>
-                      </tr>
-                    </table>
-                    <p style="margin: 20px 0 0; color: #a1a1aa; font-size: 14px; line-height: 1.6;">
-                      Profiles with photos and portfolio content get way more attention from designers — it only takes a few minutes!
-                    </p>
+                  <td align="center">
+                    <a href="${settingsUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                      Upload My Photo
+                    </a>
                   </td>
                 </tr>
               </table>
 
-              <!-- CTA Button -->
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+              <!-- Stand out section -->
+              <p style="margin: 0 0 15px; color: #ffffff; font-size: 18px; font-weight: 600;">
+                Want to stand out even more?
+              </p>
+              <p style="margin: 0 0 25px; color: #a1a1aa; font-size: 16px; line-height: 1.6;">
+                Add swim and swimwear photos to your portfolio for extra exposure with Swim Week designers.
+              </p>
+
+              <!-- Portfolio CTA -->
+              <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center">
-                    <a href="${dashboardUrl}" style="display: inline-block; background: linear-gradient(135deg, #06b6d4 0%, #ec4899 100%); color: white; text-decoration: none; padding: 16px 40px; border-radius: 30px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 15px rgba(236, 72, 153, 0.4);">
-                      Update My Profile
+                    <a href="${portfolioUrl}" style="display: inline-block; background-color: #262626; color: white; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 500; font-size: 14px; border: 1px solid #404040;">
+                      Update My Portfolio
                     </a>
                   </td>
                 </tr>
@@ -6137,3 +6120,4 @@ export async function sendUnreadMessageNudgeEmail({
     return { success: false, error };
   }
 }
+

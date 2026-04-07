@@ -60,11 +60,10 @@ export async function POST(request: NextRequest) {
     // Default mode: all approved models without profile photos
     let query = adminClient
       .from("models")
-      .select("id, first_name, last_name, username, user_id, claimed_at")
-      .is("profile_photo_url", null)
-      .eq("is_approved", true)
+      .select("id, first_name, last_name, username, email, user_id, claimed_at")
+      .or("profile_photo_url.is.null,profile_photo_url.eq.")
       .not("user_id", "is", null)
-      .not("claimed_at", "is", null);
+      .is("deleted_at", null);
 
     if (days) {
       const cutoffDate = new Date();
@@ -73,7 +72,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { data: models, error } = await query
-      .order("claimed_at", { ascending: false })
+      .order("created_at", { ascending: false })
       .limit(limit);
 
     if (error) throw error;
@@ -81,7 +80,7 @@ export async function POST(request: NextRequest) {
     if (!models || models.length === 0) {
       return NextResponse.json({
         message: days
-          ? `No models without profile photos found (approved in last ${days} days)`
+          ? `No models without profile photos found (last ${days} days)`
           : "No models without profile photos found",
         sent: 0,
         total: 0,
@@ -89,22 +88,13 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Get user emails from auth
-    const userIds = models.map((m) => m.user_id).filter(Boolean);
-    const { data: users } = await adminClient.auth.admin.listUsers();
-    const userEmails = new Map(
-      users?.users
-        ?.filter((u: any) => userIds.includes(u.id))
-        .map((u: any) => [u.id, u.email]) || []
-    );
-
     let sentCount = 0;
     let skippedCount = 0;
     const errors: string[] = [];
     const sentTo: string[] = [];
 
     for (const model of models) {
-      const email = model.user_id ? userEmails.get(model.user_id) : null;
+      const email = model.email;
 
       if (!email) {
         skippedCount++;
