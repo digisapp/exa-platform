@@ -69,11 +69,6 @@ const US_STATES = [
   { value: "WY", label: "Wyoming" },
 ];
 
-const SORT_OPTIONS = [
-  { value: "newest", label: "Newest" },
-  { value: "followers", label: "Most Followers" },
-];
-
 const FOLLOWER_TIERS = [
   { value: "1k",   label: "1K+ followers" },
   { value: "10k",  label: "10K+ followers" },
@@ -219,20 +214,6 @@ export function ModelFilters() {
           <SelectItem value="all">Heights</SelectItem>
           {HEIGHT_RANGES.map((range) => (
             <SelectItem key={range.value} value={range.value}>{range.label}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
-      <Select
-        value={searchParams.get("sort") || "newest"}
-        onValueChange={(v) => updateParams("sort", v)}
-      >
-        <SelectTrigger className="w-[150px]">
-          <SelectValue placeholder="Sort by" />
-        </SelectTrigger>
-        <SelectContent>
-          {SORT_OPTIONS.map((option) => (
-            <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
           ))}
         </SelectContent>
       </Select>

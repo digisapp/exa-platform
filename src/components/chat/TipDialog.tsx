@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 import { hapticFeedback } from "@/hooks/useHapticFeedback";
 import { showTipSuccessToast } from "@/lib/tip-toast";
 
-const TIP_AMOUNTS = [1, 5, 10, 25, 50, 100];
+const TIP_AMOUNTS = [5, 10, 25, 50, 100, 500];
 
 interface TipDialogProps {
   recipientId: string;

@@ -40,7 +40,7 @@ const VideoRoom = dynamic(() => import("@/components/video").then(mod => mod.Vid
   ),
 });
 
-const TIP_AMOUNTS = [1, 5, 10, 25, 50, 100];
+const TIP_AMOUNTS = [5, 10, 25, 50, 100, 500];
 const RING_TIMEOUT = 120;
 
 interface ProfileActionButtonsProps {
