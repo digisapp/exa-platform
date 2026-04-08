@@ -165,6 +165,12 @@ function ModelOnboardingContent() {
                 onboarding — it ensures you&apos;re fully prepared for the
                 runway and castings.
               </p>
+              <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                <CheckCircle className="h-5 w-5 text-emerald-400 shrink-0" />
+                <p className="text-sm font-semibold text-emerald-400">
+                  Guaranteed to walk in at least 1 show for Miami Swim Week
+                </p>
+              </div>
             </div>
 
             {/* Steps */}
