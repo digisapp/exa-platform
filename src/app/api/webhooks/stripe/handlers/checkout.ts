@@ -66,6 +66,12 @@ export async function handleCheckoutSessionCompleted(
     return;
   }
 
+  // Check if this is a model onboarding booking (Runway Workshop + Swimwear Digitals)
+  if (session.metadata?.type === "model_onboarding") {
+    await handleModelOnboardingPayment(session, supabaseAdmin);
+    return;
+  }
+
   // Check if this is a comp card print order
   if (session.metadata?.type === "comp_card_print") {
     await handleCompCardPrintPayment(session, supabaseAdmin);
@@ -597,6 +603,28 @@ async function handleMiamiDigitalsPayment(session: Stripe.Checkout.Session, supa
 
   if (updateError) {
     console.error("Error updating Miami Digitals booking:", updateError);
+  }
+}
+
+async function handleModelOnboardingPayment(session: Stripe.Checkout.Session, supabaseAdmin: SupabaseClient) {
+  const stripeSessionId = session.id;
+  const paymentIntentId =
+    typeof session.payment_intent === "string"
+      ? session.payment_intent
+      : session.payment_intent?.id;
+
+  const { error: updateError } = await (supabaseAdmin as any)
+    .from("model_onboarding_bookings")
+    .update({
+      status: "paid",
+      stripe_payment_intent_id: paymentIntentId || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("stripe_session_id", stripeSessionId)
+    .eq("status", "pending");
+
+  if (updateError) {
+    console.error("Error updating model onboarding booking:", updateError);
   }
 }
 
