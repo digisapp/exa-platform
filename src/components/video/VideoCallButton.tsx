@@ -145,6 +145,7 @@ export function VideoCallButton({
       <Button
         variant="ghost"
         size="icon"
+        className="h-9 w-9"
         onClick={handleButtonClick}
         disabled={disabled || isStarting || (requiresCoins && !hasEnoughCoins)}
         title={

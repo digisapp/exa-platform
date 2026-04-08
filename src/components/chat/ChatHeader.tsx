@@ -8,6 +8,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -164,43 +165,33 @@ export function ChatHeader({
           ) : null}
         </div>
 
-        {/* Search in conversation */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-9 w-9 text-muted-foreground hover:text-foreground"
-          onClick={() => setShowSearch(!showSearch)}
-        >
-          <Search className="h-5 w-5" />
-        </Button>
-
-        {/* Voice Call button */}
-        <VideoCallButton
-          conversationId={conversation.id}
-          coinBalance={localCoinBalance}
-          isModel={currentActor.type === "model"}
-          recipientIsModel={otherParticipantActorType === "model"}
-          recipientActorId={otherParticipantActorId}
-          recipientName={otherName}
-          recipientAvatar={otherAvatar}
-          videoCallRate={otherParticipantModel?.voice_call_rate || 5}
-          callType="voice"
-          onBalanceChange={onBalanceChange}
-        />
-
-        {/* Video Call button */}
-        <VideoCallButton
-          conversationId={conversation.id}
-          coinBalance={localCoinBalance}
-          isModel={currentActor.type === "model"}
-          recipientIsModel={otherParticipantActorType === "model"}
-          recipientActorId={otherParticipantActorId}
-          recipientName={otherName}
-          recipientAvatar={otherAvatar}
-          videoCallRate={otherParticipantModel?.video_call_rate || 5}
-          callType="video"
-          onBalanceChange={onBalanceChange}
-        />
+        {/* Call buttons grouped */}
+        <div className="flex items-center gap-0.5 bg-muted/50 rounded-lg p-0.5">
+          <VideoCallButton
+            conversationId={conversation.id}
+            coinBalance={localCoinBalance}
+            isModel={currentActor.type === "model"}
+            recipientIsModel={otherParticipantActorType === "model"}
+            recipientActorId={otherParticipantActorId}
+            recipientName={otherName}
+            recipientAvatar={otherAvatar}
+            videoCallRate={otherParticipantModel?.voice_call_rate || 5}
+            callType="voice"
+            onBalanceChange={onBalanceChange}
+          />
+          <VideoCallButton
+            conversationId={conversation.id}
+            coinBalance={localCoinBalance}
+            isModel={currentActor.type === "model"}
+            recipientIsModel={otherParticipantActorType === "model"}
+            recipientActorId={otherParticipantActorId}
+            recipientName={otherName}
+            recipientAvatar={otherAvatar}
+            videoCallRate={otherParticipantModel?.video_call_rate || 5}
+            callType="video"
+            onBalanceChange={onBalanceChange}
+          />
+        </div>
 
         {/* Tip button */}
         {canTip && (
@@ -209,7 +200,7 @@ export function ChatHeader({
             size="icon"
             onClick={() => setShowTipDialog(true)}
             title="Send a tip"
-            className="text-pink-500 hover:text-pink-600 hover:bg-pink-500/10"
+            className="h-9 w-9 text-pink-500 hover:text-pink-600 hover:bg-pink-500/10"
           >
             <Gift className="h-5 w-5" />
           </Button>
@@ -218,11 +209,16 @@ export function ChatHeader({
         {/* More options menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label="More options">
+            <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="More options">
               <MoreVertical className="h-5 w-5" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => setShowSearch(!showSearch)}>
+              <Search className="h-4 w-4 mr-2" />
+              Search messages
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => setShowBlockDialog(true)}
               className="text-destructive focus:text-destructive"
