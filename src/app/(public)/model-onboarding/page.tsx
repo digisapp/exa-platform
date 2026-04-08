@@ -195,6 +195,9 @@ function ModelOnboardingContent() {
                       posture, turns, pacing, and stage presence. Required
                       before your first show.
                     </p>
+                    <p className="text-xs text-pink-400 mt-1.5 font-medium">
+                      Sunday, May 24th in Miami Beach
+                    </p>
                   </div>
                 </div>
               </div>
@@ -213,6 +216,9 @@ function ModelOnboardingContent() {
                     <p className="text-sm text-muted-foreground mt-1">
                       Professional swimwear photos shot by an EXA photographer.
                       Used for castings, your portfolio, and show placements.
+                    </p>
+                    <p className="text-xs text-pink-400 mt-1.5 font-medium">
+                      May 22–25 in Miami Beach (pick a day that works best for you)
                     </p>
                   </div>
                 </div>
