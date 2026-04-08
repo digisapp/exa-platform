@@ -6121,3 +6121,150 @@ export async function sendUnreadMessageNudgeEmail({
   }
 }
 
+export async function sendModelOnboardingInviteEmail({
+  to,
+  name,
+}: {
+  to: string;
+  name?: string;
+}) {
+  try {
+    const resend = getResendClient();
+    const onboardingUrl = `${BASE_URL}/model-onboarding`;
+
+    const greeting = name ? `Hi ${escapeHtml(name)},` : "Hi there,";
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
+      to: [to],
+      subject: "You're Pre-Approved for Miami Swim Week — Complete Your Onboarding",
+      html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #1a1a1a; border-radius: 16px; overflow: hidden;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 50px 30px; text-align: center;">
+              <p style="margin: 0 0 10px; font-size: 40px;">👠🌊✨</p>
+              <h1 style="margin: 0; color: white; font-size: 28px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">
+                You're Pre-Approved
+              </h1>
+              <p style="margin: 15px 0 0; color: rgba(255,255,255,0.95); font-size: 18px; font-weight: 500;">
+                Miami Swim Week 2026
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px; color: #ffffff; font-size: 20px; font-weight: 500;">
+                ${greeting}
+              </p>
+              <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 16px; line-height: 1.7;">
+                We reviewed your application and we'd love to have you walk in <strong style="color: #ec4899;">Miami Swim Week 2026</strong>. You are <strong style="color: #ffffff;">pre-approved to walk in at least one show</strong>.
+              </p>
+              <p style="margin: 0 0 25px; color: #a1a1aa; font-size: 16px; line-height: 1.7;">
+                Since we haven't worked together yet, our standard procedure for all new models is to complete two onboarding steps before your first show — a <strong style="color: #ffffff;">Runway Workshop</strong> to perfect your walk and <strong style="color: #ffffff;">Swimwear Digitals</strong> so we have professional photos on file. This ensures every model who walks our runway is fully prepared and confident.
+              </p>
+
+              <!-- What's Included -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px; background-color: #262626; border-radius: 12px; padding: 20px;">
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 15px; color: #ffffff; font-size: 16px; font-weight: 600;">
+                      Your onboarding includes:
+                    </p>
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding: 10px 0; color: #a1a1aa; font-size: 15px; border-bottom: 1px solid #333;">
+                          <strong style="color: #8b5cf6;">1. Runway Workshop</strong> — $350
+                          <br><span style="font-size: 13px;">Sunday, May 24th in Miami Beach. Posture, turns, pacing & stage presence.</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 10px 0; color: #a1a1aa; font-size: 15px;">
+                          <strong style="color: #ec4899;">2. Swimwear Digitals</strong> — $200
+                          <br><span style="font-size: 13px;">May 22–25 in Miami Beach. Pick a day that works for you. Shot by an EXA photographer.</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Guarantee -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 12px; padding: 16px 20px;">
+                <tr>
+                  <td style="text-align: center;">
+                    <p style="margin: 0; color: #10b981; font-size: 15px; font-weight: 600;">
+                      &#10003; Guaranteed to walk in at least 1 show for Miami Swim Week
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+                <tr>
+                  <td align="center">
+                    <a href="${onboardingUrl}" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 16px 40px; border-radius: 30px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 15px rgba(236, 72, 153, 0.4);">
+                      Complete Onboarding — $550
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0; color: #71717a; font-size: 14px; line-height: 1.6; text-align: center;">
+                Questions? DM us on <a href="https://instagram.com/examodels" style="color: #ec4899; text-decoration: none;">@examodels</a> or reply to this email.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 25px 30px; border-top: 1px solid #262626; text-align: center;">
+              <p style="margin: 0 0 15px; color: #a1a1aa; font-size: 14px;">
+                <a href="${BASE_URL}" style="color: #ec4899; text-decoration: none;">Visit EXA Models</a> |
+                <a href="https://instagram.com/examodels" style="color: #ec4899; text-decoration: none;">Follow us on Instagram</a>
+              </p>
+              <p style="margin: 0; color: #71717a; font-size: 12px;">
+                See you on the runway! &#x2728;
+              </p>
+              <p style="margin: 10px 0 0; color: #525252; font-size: 11px;">
+                EXA Models - Top Models Worldwide
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    });
+
+    if (error) {
+      console.error("Resend error:", error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error("Model onboarding invite email error:", error);
+    return { success: false, error };
+  }
+}
+
