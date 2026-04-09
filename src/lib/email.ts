@@ -6138,7 +6138,7 @@ export async function sendModelOnboardingInviteEmail({
       from: FROM_EMAIL,
       replyTo: REPLY_TO_EMAIL,
       to: [to],
-      subject: "You're Pre-Approved for Miami Swim Week — Complete Your Onboarding",
+      subject: "Model Update! Miami Swim Week 2026",
       html: `
 <!DOCTYPE html>
 <html>
@@ -6155,13 +6155,9 @@ export async function sendModelOnboardingInviteEmail({
           <!-- Header -->
           <tr>
             <td style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 50px 30px; text-align: center;">
-              <p style="margin: 0 0 10px; font-size: 40px;">👠🌊✨</p>
               <h1 style="margin: 0; color: white; font-size: 28px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">
-                You're Pre-Approved
-              </h1>
-              <p style="margin: 15px 0 0; color: rgba(255,255,255,0.95); font-size: 18px; font-weight: 500;">
                 Miami Swim Week 2026
-              </p>
+              </h1>
             </td>
           </tr>
 
@@ -6172,33 +6168,28 @@ export async function sendModelOnboardingInviteEmail({
                 ${greeting}
               </p>
               <p style="margin: 0 0 20px; color: #a1a1aa; font-size: 16px; line-height: 1.7;">
-                We reviewed your application and we'd love to have you walk in <strong style="color: #ec4899;">Miami Swim Week 2026</strong>. You are <strong style="color: #ffffff;">pre-approved to walk in at least one show</strong>.
+                We reviewed your application. We can approve you to walk in at least one Swim Week show, but you would need to complete a <strong style="color: #ffffff;">Runway Workshop</strong> and get your <strong style="color: #ffffff;">Digitals</strong> done.
               </p>
               <p style="margin: 0 0 25px; color: #a1a1aa; font-size: 16px; line-height: 1.7;">
-                Since we haven't worked together yet, our standard procedure for all new models is to complete two onboarding steps before your first show — a <strong style="color: #ffffff;">Runway Workshop</strong> to perfect your walk and <strong style="color: #ffffff;">Swimwear Digitals</strong> so we have professional photos on file. This ensures every model who walks our runway is fully prepared and confident.
+                This is standard procedure since we haven't worked together yet — for all new models, we require two onboarding steps before your first show. A Runway Workshop to perfect your walk and Swimwear Digitals so we have professional photos on file. This ensures every model who walks our runway is fully prepared and confident.
               </p>
 
-              <!-- What's Included -->
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px; background-color: #262626; border-radius: 12px; padding: 20px;">
+              <!-- Onboarding Cost -->
+              <p style="margin: 0 0 15px; color: #ffffff; font-size: 16px; font-weight: 600;">
+                Onboarding cost:
+              </p>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 25px;">
                 <tr>
-                  <td>
-                    <p style="margin: 0 0 15px; color: #ffffff; font-size: 16px; font-weight: 600;">
-                      Your onboarding includes:
-                    </p>
-                    <table width="100%" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="padding: 10px 0; color: #a1a1aa; font-size: 15px; border-bottom: 1px solid #333;">
-                          <strong style="color: #8b5cf6;">1. Runway Workshop</strong> — $350
-                          <br><span style="font-size: 13px;">Sunday, May 24th in Miami Beach. Posture, turns, pacing & stage presence.</span>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 10px 0; color: #a1a1aa; font-size: 15px;">
-                          <strong style="color: #ec4899;">2. Swimwear Digitals</strong> — $200
-                          <br><span style="font-size: 13px;">May 22–25 in Miami Beach. Pick a day that works for you. Shot by an EXA photographer.</span>
-                        </td>
-                      </tr>
-                    </table>
+                  <td style="padding: 12px 0; color: #a1a1aa; font-size: 15px; border-bottom: 1px solid #333;">
+                    <strong style="color: #8b5cf6;">1. Runway Workshop</strong> <span style="color: #ffffff;">— $350</span>
+                    <br><span style="font-size: 13px;">Sunday, May 24th in Miami Beach. Posture, turns, pacing &amp; stage presence.</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 12px 0; color: #a1a1aa; font-size: 15px;">
+                    <strong style="color: #ec4899;">2. Swimwear Digitals</strong> <span style="color: #ffffff;">— $200</span>
+                    <br><span style="font-size: 13px;">May 22–25 in Miami Beach. Pick a day that works for you. Shot by an EXA photographer.</span>
                   </td>
                 </tr>
               </table>
@@ -6206,9 +6197,9 @@ export async function sendModelOnboardingInviteEmail({
               <!-- Guarantee -->
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 12px; padding: 16px 20px;">
                 <tr>
-                  <td style="text-align: center;">
+                  <td>
                     <p style="margin: 0; color: #10b981; font-size: 15px; font-weight: 600;">
-                      &#10003; Guaranteed to walk in at least 1 show for Miami Swim Week
+                      &#10003; This does guarantee you walk in at least 1 show for Miami Swim Week, with the opportunity to walk in more shows.
                     </p>
                   </td>
                 </tr>
