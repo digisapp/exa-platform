@@ -490,7 +490,7 @@ export default async function ModelProfilePage({ params }: Props) {
                   </div>
                 </Link>
               ) : (
-                <div className={`w-48 h-48 md:w-56 md:h-56 rounded-full overflow-hidden ring-2 ring-white/30 ${isOwner ? 'profile-pic-breathing' : ''}`}>
+                <div className={`w-48 h-48 md:w-56 md:h-56 rounded-full overflow-hidden ${isOwner ? 'profile-pic-breathing' : 'ring-2 ring-white/30 shadow-[0_0_30px_rgba(255,105,180,0.3),0_0_60px_rgba(0,191,255,0.2)]'}`}>
                   {profilePhotoUrl ? (
                     <Image
                       src={profilePhotoUrl}
