@@ -2,6 +2,13 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import localFont from "next/font/local";
+
+const glacialIndifference = localFont({
+  src: "../../../public/fonts/GlacialIndifference-Bold.woff2",
+  display: "swap",
+  weight: "700",
+});
 import {
   MapPin,
   Instagram,
@@ -369,14 +376,12 @@ export default async function ModelProfilePage({ params }: Props) {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               {user && <BackButton />}
-              <Link href={user ? "/dashboard" : "/"}>
-                <Image
-                  src="/exa-models-logo-white.png"
-                  alt="EXA Models"
-                  width={90}
-                  height={24}
-                  className="h-6 w-auto opacity-80 hover:opacity-100 transition-opacity"
-                />
+              <Link
+                href={user ? "/dashboard" : "/"}
+                aria-label="EXA Models home"
+                className={`${glacialIndifference.className} text-white text-xl leading-none tracking-[0.18em] opacity-80 hover:opacity-100 transition-opacity`}
+              >
+                EXA MODELS
               </Link>
             </div>
             <div className="flex items-center gap-2">
