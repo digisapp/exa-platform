@@ -378,10 +378,10 @@ export default async function ModelProfilePage({ params }: Props) {
               {user && <BackButton />}
               <Link
                 href={user ? "/dashboard" : "/"}
-                aria-label="EXA Models home"
-                className={`${glacialIndifference.className} text-white text-xl leading-none tracking-[0.18em] opacity-80 hover:opacity-100 transition-opacity`}
+                aria-label="exa models home"
+                className={`${glacialIndifference.className} text-white text-xl leading-none tracking-[0.08em] lowercase opacity-80 hover:opacity-100 transition-opacity`}
               >
-                EXA MODELS
+                exa models
               </Link>
             </div>
             <div className="flex items-center gap-2">
