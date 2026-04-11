@@ -28,7 +28,6 @@ import { ShareButton } from "@/components/ui/share-button";
 import { AddToCampaignButton } from "@/components/ui/add-to-campaign-button";
 import { BioExpand } from "@/components/model/BioExpand";
 import { ModelNotesDialog } from "@/components/brands/ModelNotesDialog";
-import { BackButton } from "@/components/ui/back-button";
 import { ProfileActionButtons } from "@/components/profile/ProfileActionButtons";
 import { ProfileContentTabs } from "@/components/profile/ProfileContentTabs";
 import { ViewTracker } from "@/components/profile/ViewTracker";
@@ -372,19 +371,16 @@ export default async function ModelProfilePage({ params }: Props) {
       <div className="relative z-10 container max-w-lg md:max-w-3xl mx-auto py-6 px-4">
         {/* Main Profile Card */}
         <div className="profile-card rounded-3xl p-6 text-center relative">
-          {/* Header Row: Back/Logo and Share */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              {user && <BackButton />}
-              <Link
-                href={user ? "/dashboard" : "/"}
-                aria-label="exa models home"
-                className={`${glacialIndifference.className} text-white text-xl leading-none tracking-[0.01em] lowercase opacity-80 hover:opacity-100 transition-opacity`}
-              >
-                exa models
-              </Link>
-            </div>
-            <div className="flex items-center gap-2">
+          {/* Header Row: centered wordmark with floating actions on the right */}
+          <div className="relative flex items-center justify-center mb-6 min-h-8">
+            <Link
+              href={user ? "/dashboard" : "/"}
+              aria-label="exa models home"
+              className={`${glacialIndifference.className} text-white text-base leading-none tracking-[0.01em] lowercase opacity-80 hover:opacity-100 transition-opacity`}
+            >
+              exa models
+            </Link>
+            <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-2">
               {isBrand && !isOwner && (
                 <>
                   <ModelNotesDialog
