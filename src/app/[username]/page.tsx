@@ -376,7 +376,7 @@ export default async function ModelProfilePage({ params }: Props) {
             <Link
               href={user ? "/dashboard" : "/"}
               aria-label="exa models home"
-              className={`${glacialIndifference.className} text-white text-base leading-none tracking-[0.01em] lowercase opacity-80 hover:opacity-100 transition-opacity`}
+              className={`${glacialIndifference.className} wordmark-glimmer text-2xl md:text-3xl leading-none tracking-[0.01em] lowercase hover:opacity-90 transition-opacity`}
             >
               exa models
             </Link>
