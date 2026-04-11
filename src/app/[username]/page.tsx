@@ -3,18 +3,11 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import localFont from "next/font/local";
-import { Playfair_Display } from "next/font/google";
 
 const glacialIndifference = localFont({
   src: "../../../public/fonts/GlacialIndifference-Regular.woff2",
   display: "swap",
   weight: "400",
-});
-
-const playfairDisplay = Playfair_Display({
-  subsets: ["latin"],
-  weight: ["600", "700"],
-  display: "swap",
 });
 import {
   MapPin,
@@ -520,7 +513,7 @@ export default async function ModelProfilePage({ params }: Props) {
           </div>
 
           {/* Name */}
-          <h1 className={`${playfairDisplay.className} text-4xl md:text-5xl font-semibold text-white mb-2 tracking-tight`}>
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-2 tracking-tight">
             {displayName}
           </h1>
 
