@@ -513,7 +513,7 @@ export default async function ModelProfilePage({ params }: Props) {
           </div>
 
           {/* Name */}
-          <h1 className="text-2xl font-bold text-white mb-1">
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-2 tracking-tight">
             {displayName}
           </h1>
 
