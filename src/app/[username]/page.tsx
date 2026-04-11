@@ -371,9 +371,9 @@ export default async function ModelProfilePage({ params }: Props) {
               {user && <BackButton />}
               <Link href={user ? "/dashboard" : "/"}>
                 <Image
-                  src="/exa-logo-white.png"
-                  alt="EXA"
-                  width={60}
+                  src="/exa-models-logo-white.png"
+                  alt="EXA Models"
+                  width={90}
                   height={24}
                   className="h-6 w-auto opacity-80 hover:opacity-100 transition-opacity"
                 />
