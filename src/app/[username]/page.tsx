@@ -5,9 +5,9 @@ import Image from "next/image";
 import localFont from "next/font/local";
 
 const glacialIndifference = localFont({
-  src: "../../../public/fonts/GlacialIndifference-Bold.woff2",
+  src: "../../../public/fonts/GlacialIndifference-Regular.woff2",
   display: "swap",
-  weight: "700",
+  weight: "400",
 });
 import {
   MapPin,
