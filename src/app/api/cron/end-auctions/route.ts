@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     // Find active auctions that have expired
     const { data: expiredAuctions, error: fetchError } = await supabase
       .from("auctions")
-      .select("id, title, model_id")
+      .select("id, title, model_id, bid_count, created_at, original_end_at")
       .eq("status", "active")
       .lt("ends_at", new Date().toISOString());
 
@@ -31,12 +31,66 @@ export async function GET(request: NextRequest) {
     }
 
     if (!expiredAuctions?.length) {
-      return NextResponse.json({ message: "No expired auctions", ended: 0 });
+      return NextResponse.json({ message: "No expired auctions", ended: 0, restarted: 0 });
     }
 
-    // End each auction using the RPC function
+    // Auto-restart 0-bid expired auctions in place (keep status=active, just
+    // extend ends_at). Bypasses the end_auction RPC, which is the only way
+    // expired zero-bid auctions would otherwise get stuck — they should never
+    // end without receiving a bid.
+    const zeroBidExpired = expiredAuctions.filter(
+      (a: { bid_count: number }) => (a.bid_count ?? 0) === 0
+    );
+    let autoExtended = 0;
+    for (const auction of zeroBidExpired as Array<{
+      id: string;
+      title: string;
+      created_at: string;
+      original_end_at: string;
+    }>) {
+      // Use original duration, min 1 hour, max 7 days
+      const originalDuration =
+        new Date(auction.original_end_at).getTime() - new Date(auction.created_at).getTime();
+      const duration = Math.min(
+        Math.max(originalDuration, 60 * 60 * 1000),
+        7 * 24 * 60 * 60 * 1000
+      );
+      const newEndsAt = new Date(Date.now() + duration).toISOString();
+
+      const { error: extendError } = await supabase
+        .from("auctions")
+        .update({
+          ends_at: newEndsAt,
+          original_end_at: newEndsAt,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", auction.id);
+
+      if (extendError) {
+        console.error(`Failed to auto-extend 0-bid auction ${auction.id}:`, extendError);
+      } else {
+        autoExtended++;
+        console.log(`Auto-extended 0-bid auction ${auction.id} (${auction.title}) — new end: ${newEndsAt}`);
+      }
+    }
+
+    // Any expired auctions that actually received bids go through the
+    // end_auction RPC for the sold/no_sale path (escrow transfer, refunds).
+    const biddedExpired = expiredAuctions.filter(
+      (a: { bid_count: number }) => (a.bid_count ?? 0) > 0
+    );
+
+    if (!biddedExpired.length) {
+      return NextResponse.json({
+        message: `Auto-extended ${autoExtended} zero-bid auctions`,
+        ended: 0,
+        restarted: autoExtended,
+      });
+    }
+
+    // End each bidded auction using the RPC function
     const results = await Promise.all(
-      expiredAuctions.map(async (auction: { id: string; title: string; model_id: string }) => {
+      biddedExpired.map(async (auction: { id: string; title: string; model_id: string }) => {
         try {
           const { data, error } = await supabase.rpc("end_auction", {
             p_auction_id: auction.id,
@@ -181,10 +235,10 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      message: `Processed ${results.length} expired auctions`,
+      message: `Processed ${results.length} expired bidded auctions, auto-extended ${autoExtended} zero-bid auctions`,
       ended: succeeded,
       failed,
-      restarted,
+      restarted: restarted + autoExtended,
     });
   } catch (error) {
     console.error("End auctions cron error:", error);

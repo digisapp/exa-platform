@@ -384,6 +384,48 @@ export default async function EventPage({ params, searchParams }: Props) {
           {/* Description - always first */}
           <div className="lg:col-span-2 order-1">
             <div className="glass-card rounded-2xl p-6 md:p-8">
+              {/* Ticket Button with Popup */}
+              <div className="mb-6">
+                {hasInternalTickets ? (
+                  <TicketCheckout
+                    tiers={ticketTiers}
+                    eventName={event.name}
+                    eventDate={dateDisplay}
+                    eventLocation={
+                      event.location_city && event.location_state
+                        ? `${event.location_city}, ${event.location_state}`
+                        : event.location_city || event.location_state || undefined
+                    }
+                    referringModelName={
+                      referringModel
+                        ? referringModel.first_name || referringModel.username
+                        : undefined
+                    }
+                  />
+                ) : ticketUrl ? (
+                  <Button
+                    asChild
+                    size="lg"
+                    className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-lg py-6 rounded-xl shadow-lg shadow-pink-500/25"
+                  >
+                    <a href={ticketUrl} target="_blank" rel="noopener noreferrer">
+                      <Ticket className="h-6 w-6 mr-2" />
+                      Get Tickets
+                      <ExternalLink className="h-4 w-4 ml-2" />
+                    </a>
+                  </Button>
+                ) : (
+                  <Button
+                    disabled
+                    size="lg"
+                    className="w-full text-lg py-6 rounded-xl"
+                  >
+                    <Ticket className="h-6 w-6 mr-2" />
+                    Tickets Coming Soon
+                  </Button>
+                )}
+              </div>
+
               <h2 className="hidden md:block text-2xl font-bold mb-1">{event.name}</h2>
               <p className="hidden md:block text-pink-500 font-medium mb-4 text-sm">
                 {dateDisplay}
@@ -430,47 +472,6 @@ export default async function EventPage({ params, searchParams }: Props) {
                   <p className="text-green-400 font-bold text-sm">🎉 Happening Now</p>
                 </div>
               )}
-
-              {/* Ticket Button with Popup */}
-              {hasInternalTickets ? (
-                <TicketCheckout
-                  tiers={ticketTiers}
-                  eventName={event.name}
-                  eventDate={dateDisplay}
-                  eventLocation={
-                    event.location_city && event.location_state
-                      ? `${event.location_city}, ${event.location_state}`
-                      : event.location_city || event.location_state || undefined
-                  }
-                  referringModelName={
-                    referringModel
-                      ? referringModel.first_name || referringModel.username
-                      : undefined
-                  }
-                />
-              ) : ticketUrl ? (
-                <Button
-                  asChild
-                  size="lg"
-                  className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-lg py-6 rounded-xl shadow-lg shadow-pink-500/25"
-                >
-                  <a href={ticketUrl} target="_blank" rel="noopener noreferrer">
-                    <Ticket className="h-6 w-6 mr-2" />
-                    Get Tickets
-                    <ExternalLink className="h-4 w-4 ml-2" />
-                  </a>
-                </Button>
-              ) : (
-                <Button
-                  disabled
-                  size="lg"
-                  className="w-full text-lg py-6 rounded-xl"
-                >
-                  <Ticket className="h-6 w-6 mr-2" />
-                  Tickets Coming Soon
-                </Button>
-              )}
-
 
               {/* Sign Up Buttons */}
               <div className="space-y-2">
