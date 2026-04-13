@@ -477,15 +477,12 @@ export default async function SwimCrownPage() {
                 <tbody className="divide-y divide-white/5">
                   {[
                     { feature: "Walk the runway at Miami Swim Week", entry: true, full: true },
-                    { feature: "Official contestant profile + fan voting", entry: true, full: true },
                     { feature: "Compete for Miss SwimCrown 2026", entry: true, full: true },
-                    { feature: "Scored equally by judges", entry: true, full: true },
                     { feature: "Designer swimwear gifted ($100+ value)", entry: false, full: true },
                     { feature: "Hair & makeup", entry: false, full: true },
                     { feature: "Official SwimCrown robe", entry: false, full: true },
                     { feature: "Sponsored gift bag", entry: false, full: true },
                     { feature: "Professional photos & video", entry: false, full: true },
-                    { feature: "Featured on EXA social channels", entry: false, full: true },
                   ].map((row) => (
                     <tr key={row.feature} className="hover:bg-white/[0.02] transition-colors">
                       <td className="py-3 px-5 text-white/70">{row.feature}</td>
