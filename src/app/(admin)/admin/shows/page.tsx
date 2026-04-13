@@ -1071,19 +1071,19 @@ export default function AdminShowsPage() {
                       {modelMapShowId === show.id && show.designers.length > 0 && (() => {
                         const walkMap = showModelWalkMaps[show.id] || {};
                         // Build full model list with details
-                        const modelDetails: { modelId: string; model: ModelInfo; walks: { designerName: string; designerIdx: number; walkOrder: number }[]; hasBackToBack: boolean }[] = [];
+                        const modelDetails: { modelId: string; model: ModelInfo; walks: { designerName: string; designerIdx: number; walkPosition: number }[]; hasBackToBack: boolean }[] = [];
                         const seen = new Set<string>();
                         show.designers.forEach((d, dIdx) => {
-                          d.models.forEach((sm) => {
+                          d.models.forEach((sm, mIdx) => {
                             if (seen.has(sm.model_id)) {
                               const existing = modelDetails.find((x) => x.modelId === sm.model_id);
-                              if (existing) existing.walks.push({ designerName: d.designer_name, designerIdx: dIdx, walkOrder: sm.walk_order });
+                              if (existing) existing.walks.push({ designerName: d.designer_name, designerIdx: dIdx, walkPosition: mIdx + 1 });
                               return;
                             }
                             seen.add(sm.model_id);
                             modelDetails.push({
                               modelId: sm.model_id, model: sm.model,
-                              walks: [{ designerName: d.designer_name, designerIdx: dIdx, walkOrder: sm.walk_order }],
+                              walks: [{ designerName: d.designer_name, designerIdx: dIdx, walkPosition: mIdx + 1 }],
                               hasBackToBack: walkMap[sm.model_id]?.hasBackToBack || false,
                             });
                           });
@@ -1115,20 +1115,21 @@ export default function AdminShowsPage() {
                                 <Input placeholder="Find model..." value={modelMapSearch} onChange={(e) => setModelMapSearch(e.target.value)} className="h-7 text-xs pl-7" />
                               </div>
                             </div>
-                            {/* Designer column headers */}
-                            <div className="flex items-center gap-1 text-[10px] text-muted-foreground uppercase tracking-wider pl-[140px]">
-                              {show.designers.map((d, i) => (
-                                <div key={d.id} className="flex-1 min-w-0 truncate text-center" title={d.designer_name}>
-                                  {d.designer_name.length > 12 ? d.designer_name.slice(0, 10) + "…" : d.designer_name}
-                                </div>
-                              ))}
-                            </div>
-                            {/* Model rows */}
-                            <div className="max-h-[320px] overflow-y-auto space-y-0.5">
-                              {filtered.map((entry) => {
-                                const walkByDesigner = new Map(entry.walks.map((w) => [w.designerIdx, w]));
-                                return (
-                                  <div key={entry.modelId} className={`flex items-center gap-1 rounded px-1.5 py-1 text-xs ${entry.hasBackToBack ? "bg-red-500/10 border border-red-500/20" : entry.walks.length > 1 ? "bg-blue-500/5 border border-blue-500/10" : "hover:bg-muted/50"}`}>
+                            {/* Designer column headers + model rows — horizontally scrollable for many designers */}
+                            <div className="overflow-x-auto">
+                              <div className="flex items-center gap-1 text-[10px] text-muted-foreground uppercase tracking-wider pl-[140px] min-w-fit">
+                                {show.designers.map((d) => (
+                                  <div key={d.id} className="w-[60px] shrink-0 truncate text-center" title={d.designer_name}>
+                                    {d.designer_name.length > 8 ? d.designer_name.slice(0, 6) + "…" : d.designer_name}
+                                  </div>
+                                ))}
+                              </div>
+                              {/* Model rows */}
+                              <div className="max-h-[400px] overflow-y-auto space-y-0.5">
+                                {filtered.map((entry) => {
+                                  const walkByDesigner = new Map(entry.walks.map((w) => [w.designerIdx, w]));
+                                  return (
+                                    <div key={entry.modelId} className={`flex items-center gap-1 rounded px-1.5 py-1 text-xs min-w-fit ${entry.hasBackToBack ? "bg-red-500/10 border border-red-500/20" : entry.walks.length > 1 ? "bg-blue-500/5 border border-blue-500/10" : "hover:bg-muted/50"}`}>
                                     <div className="flex items-center gap-2 w-[130px] shrink-0 min-w-0">
                                       <div className="relative h-6 w-6 rounded-full overflow-hidden bg-muted shrink-0">
                                         {entry.model.profile_photo_url ? <Image src={entry.model.profile_photo_url} alt="" fill className="object-cover" />
@@ -1143,14 +1144,12 @@ export default function AdminShowsPage() {
                                     </div>
                                     {show.designers.map((d, dIdx) => {
                                       const walk = walkByDesigner.get(dIdx);
+                                      const isB2bColumn = walk && entry.hasBackToBack && entry.walks.some((ow) => ow.designerIdx !== dIdx && Math.abs(ow.designerIdx - dIdx) === 1);
                                       return (
-                                        <div key={d.id} className="flex-1 text-center">
+                                        <div key={d.id} className="w-[60px] shrink-0 text-center">
                                           {walk ? (
-                                            <span className={`inline-flex items-center justify-center h-5 w-5 rounded-full text-[10px] font-bold ${entry.hasBackToBack && entry.walks.some((w, wi) => {
-                                              const otherWalk = entry.walks.find((ow, oi) => oi !== wi && Math.abs(ow.designerIdx - w.designerIdx) === 1);
-                                              return otherWalk && w.designerIdx === dIdx;
-                                            }) ? "bg-red-500 text-white" : "bg-pink-500 text-white"}`}>
-                                              {walk.walkOrder + 1}
+                                            <span className={`inline-flex items-center justify-center h-5 w-5 rounded-full text-[10px] font-bold ${isB2bColumn ? "bg-red-500 text-white" : "bg-pink-500 text-white"}`}>
+                                              {walk.walkPosition}
                                             </span>
                                           ) : (
                                             <span className="text-muted-foreground/30">—</span>
@@ -1161,6 +1160,7 @@ export default function AdminShowsPage() {
                                   </div>
                                 );
                               })}
+                              </div>
                             </div>
                           </div>
                         );
