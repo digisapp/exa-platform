@@ -28,6 +28,7 @@ export default async function BidsPage() {
   let coinBalance = 0;
   let actorId: string | null = null;
   let watchedAuctionIds: string[] = [];
+  const myBidMap: Record<string, { amount: number; status: string }> = {};
 
   if (user) {
     const { data: actor } = await supabase
@@ -58,11 +59,22 @@ export default async function BidsPage() {
     }
 
     if (actorId) {
-      const { data: watchlist } = await (supabase as any)
-        .from("auction_watchlist")
-        .select("auction_id")
-        .eq("actor_id", actorId);
+      const [{ data: watchlist }, { data: myBids }] = await Promise.all([
+        (supabase as any)
+          .from("auction_watchlist")
+          .select("auction_id")
+          .eq("actor_id", actorId),
+        (supabase as any)
+          .from("auction_bids")
+          .select("auction_id, amount, status")
+          .eq("bidder_id", actorId)
+          .in("status", ["winning", "active", "outbid"]),
+      ]);
       watchedAuctionIds = (watchlist || []).map((w: any) => w.auction_id);
+      // Build a map of auction_id → { amount, status } for the fan's active bids
+      for (const bid of myBids || []) {
+        myBidMap[bid.auction_id] = { amount: bid.amount, status: bid.status };
+      }
     }
   }
 
@@ -167,6 +179,7 @@ export default async function BidsPage() {
           <BidsCategoryFilter
             auctions={formattedAuctions}
             watchedIds={watchedAuctionIds}
+            myBids={myBidMap}
           />
         </main>
       </div>

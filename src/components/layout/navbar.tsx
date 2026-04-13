@@ -74,7 +74,7 @@ export function Navbar({ user, actorType, unreadCount = 0 }: NavbarProps) {
     { href: "/dashboard", label: t.nav.home, icon: Home },
     { href: "/models", label: t.nav.explore, icon: Users },
     { href: "/chats", label: t.nav.chats, icon: MessageCircle },
-    { href: "/my-bids", label: t.nav.myBids, icon: Gavel },
+    { href: "/bids", label: t.nav.bids, icon: Gavel },
   ];
   const translatedBrandLinks = [
     { href: "/dashboard", label: t.nav.home, icon: Home },
@@ -258,9 +258,9 @@ export function Navbar({ user, actorType, unreadCount = 0 }: NavbarProps) {
                   {actorType === "fan" && (
                     <>
                       <DropdownMenuItem asChild>
-                        <Link href="/my-bids" className="cursor-pointer">
+                        <Link href="/bids" className="cursor-pointer">
                           <Gavel className="mr-2 h-4 w-4" />
-                          {t.nav.myBids}
+                          {t.nav.bids}
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>

@@ -22,9 +22,10 @@ interface AuctionCardProps {
   auction: AuctionWithModel;
   isWatching?: boolean;
   onAuctionEnd?: () => void;
+  myBid?: { amount: number; status: string };
 }
 
-export function AuctionCard({ auction, isWatching, onAuctionEnd }: AuctionCardProps) {
+export function AuctionCard({ auction, isWatching, onAuctionEnd, myBid }: AuctionCardProps) {
   const currentPrice = auction.current_bid || auction.starting_price;
   const usdPrice = coinsToFanUsd(currentPrice);
   const hasEnded = new Date(auction.ends_at) <= new Date() || auction.status !== "active";
@@ -91,6 +92,14 @@ export function AuctionCard({ auction, isWatching, onAuctionEnd }: AuctionCardPr
                 </Badge>
               );
             })()}
+
+            {/* Your bid indicator */}
+            {myBid && (
+              <Badge className={`border-0 text-[11px] ${myBid.status === "winning" ? "bg-violet-500/90 text-white" : myBid.status === "outbid" ? "bg-red-500/90 text-white" : "bg-zinc-600 text-white"}`}>
+                <Gavel className="h-3 w-3 mr-1" />
+                {myBid.status === "winning" ? "Winning" : myBid.status === "outbid" ? "Outbid" : "Your Bid"}
+              </Badge>
+            )}
 
             {/* Watching indicator */}
             {isWatching && (

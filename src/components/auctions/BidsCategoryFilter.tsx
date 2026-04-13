@@ -7,9 +7,10 @@ import type { AuctionWithModel } from "@/types/auctions";
 interface BidsCategoryFilterProps {
   auctions: AuctionWithModel[];
   watchedIds: string[];
+  myBids?: Record<string, { amount: number; status: string }>;
 }
 
-export function BidsCategoryFilter({ auctions, watchedIds }: BidsCategoryFilterProps) {
+export function BidsCategoryFilter({ auctions, watchedIds, myBids = {} }: BidsCategoryFilterProps) {
   // Sort by ending soonest
   const sorted = [...auctions].sort(
     (a, b) => new Date(a.ends_at).getTime() - new Date(b.ends_at).getTime()
@@ -48,7 +49,7 @@ export function BidsCategoryFilter({ auctions, watchedIds }: BidsCategoryFilterP
                 <Link
                   key={auction.id}
                   href={`/bids/${auction.id}`}
-                  className="flex items-center gap-4 p-4 rounded-2xl bg-zinc-800/60 hover:bg-zinc-800 transition-colors"
+                  className={`flex items-center gap-4 p-4 rounded-2xl bg-zinc-800/60 hover:bg-zinc-800 transition-colors ${myBids[auction.id] ? "ring-1 ring-violet-500/40" : ""}`}
                 >
                   <Avatar className="h-16 w-16 shrink-0 border border-zinc-700">
                     <AvatarImage src={auction.model?.profile_image_url || undefined} />
@@ -61,6 +62,11 @@ export function BidsCategoryFilter({ auctions, watchedIds }: BidsCategoryFilterP
                     <p className="text-sm text-zinc-400 truncate mt-0.5">
                       @{auction.model?.slug || auction.model?.display_name}
                     </p>
+                    {myBids[auction.id] && (
+                      <p className={`text-xs font-medium mt-0.5 ${myBids[auction.id].status === "winning" ? "text-violet-400" : myBids[auction.id].status === "outbid" ? "text-red-400" : "text-zinc-400"}`}>
+                        {myBids[auction.id].status === "winning" ? "Winning" : myBids[auction.id].status === "outbid" ? "Outbid" : "Your Bid"} · {formatCoins(myBids[auction.id].amount)}
+                      </p>
+                    )}
                   </div>
                   <div className="text-right shrink-0">
                     <p className="text-base font-bold text-white">{formatCoins(price)} coins</p>
@@ -78,6 +84,7 @@ export function BidsCategoryFilter({ auctions, watchedIds }: BidsCategoryFilterP
                 key={auction.id}
                 auction={auction}
                 isWatching={watchedIds.includes(auction.id)}
+                myBid={myBids[auction.id]}
               />
             ))}
           </div>
