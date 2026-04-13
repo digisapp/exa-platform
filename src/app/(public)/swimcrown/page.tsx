@@ -131,25 +131,9 @@ export default async function SwimCrownPage() {
               </span>
             </h1>
 
-            <p className="mt-4 text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-white">
-              Walk. Get Seen. Get Crowned.
+            <p className="mt-4 text-base sm:text-lg text-white/50 font-medium tracking-wide">
+              World&apos;s #1 Swim Model of the Year Competition
             </p>
-            <p className="mt-2 text-base sm:text-lg text-white/50 font-medium max-w-lg mx-auto">
-              Miami Swim Week &middot; May 30, 2026
-            </p>
-
-            {/* Scarcity badge */}
-            {contestantCount !== null && (
-              <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-teal-500/30 bg-teal-500/10 px-4 py-2">
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-teal-400 opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-teal-400" />
-                </span>
-                <span className="text-xs font-semibold text-teal-300">
-                  {contestantCount} model{contestantCount === 1 ? "" : "s"} entered &middot; Limited to 100 spots
-                </span>
-              </div>
-            )}
           </div>
         </section>
 
