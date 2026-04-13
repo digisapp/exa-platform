@@ -243,6 +243,15 @@ export default async function SwimCrownPage() {
                         Enter the Competition
                       </Button>
                     </Link>
+                    <a href="mailto:team@examodels.com?subject=SwimCrown%20Sponsorship%20Inquiry">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full text-white/40 hover:text-white/70 text-xs"
+                      >
+                        Become a Sponsor
+                      </Button>
+                    </a>
                   </div>
                 </div>
               </div>
@@ -423,18 +432,6 @@ export default async function SwimCrownPage() {
           </div>
         </section>
 
-
-        {/* ─── Sponsors ─── */}
-        <section className="py-16 sm:py-20">
-          <div className="container mx-auto px-4 text-center">
-            <p className="text-sm text-muted-foreground">
-              Interested in sponsoring SwimCrown?{" "}
-              <a href="mailto:team@examodels.com" className="text-teal-400 hover:underline">
-                Contact us — team@examodels.com
-              </a>
-            </p>
-          </div>
-        </section>
 
         {/* ─── Final CTA ─── */}
         <section className="py-24 sm:py-32">
