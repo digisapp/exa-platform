@@ -12,7 +12,6 @@ import {
   Sparkles,
   Trophy,
   CheckCircle2,
-  Instagram,
   UserCircle,
   Camera,
   Gift,
@@ -442,73 +441,14 @@ export default async function SwimCrownPage() {
 
 
         {/* ─── Sponsors ─── */}
-        <section className="py-20 sm:py-24">
-          <div className="container mx-auto px-4">
-            <h2 className="text-center text-3xl sm:text-4xl font-bold mb-4">
-              <span className="bg-gradient-to-r from-teal-300 to-cyan-400 bg-clip-text text-transparent">
-                Our Sponsors & Partners
-              </span>
-            </h2>
-            <p className="text-center text-white/40 mb-12 max-w-lg mx-auto text-sm">
-              Models receive gifted products from these brands
+        <section className="py-16 sm:py-20">
+          <div className="container mx-auto px-4 text-center">
+            <p className="text-sm text-muted-foreground">
+              Interested in sponsoring SwimCrown?{" "}
+              <a href="mailto:team@examodels.com" className="text-teal-400 hover:underline">
+                Contact us — team@examodels.com
+              </a>
             </p>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-4xl mx-auto items-center">
-              {[
-                { name: "TRIANGL", category: "Swimwear" },
-                { name: "FRANKIES BIKINIS", category: "Swimwear" },
-                { name: "SUPERGOOP!", category: "Sunscreen" },
-                { name: "SUN BUM", category: "Sun Care" },
-                { name: "COPA CABANA", category: "Resort Wear" },
-                { name: "SOHO HOUSE", category: "Beach Club" },
-                { name: "TARTE", category: "Beauty" },
-                { name: "CELSIUS", category: "Beverage" },
-              ].map((brand) => (
-                <div
-                  key={brand.name}
-                  className="flex h-20 flex-col items-center justify-center rounded-xl border border-teal-500/10 bg-[#0d1f35]/80 px-4 hover:border-teal-500/30 transition-colors"
-                >
-                  <span className="text-xs sm:text-sm font-bold tracking-widest text-zinc-400 text-center">
-                    {brand.name}
-                  </span>
-                  <span className="text-[10px] text-zinc-600 mt-1">{brand.category}</span>
-                </div>
-              ))}
-            </div>
-            <p className="text-center text-xs text-muted-foreground/50 mt-6">
-              Sponsor lineup subject to change. Interested in sponsoring?{" "}
-              <Link href="/contact" className="text-teal-400 hover:underline">
-                Contact us
-              </Link>
-            </p>
-          </div>
-        </section>
-
-        {/* ─── Follow Along ─── */}
-        <section className="py-16 sm:py-20 bg-gradient-to-b from-transparent via-teal-950/10 to-transparent">
-          <div className="container mx-auto px-4 text-center max-w-2xl">
-            <Instagram className="mx-auto h-10 w-10 text-rose-400 mb-4" />
-            <h2 className="text-2xl sm:text-3xl font-bold mb-3 text-white">
-              Follow the Journey
-            </h2>
-            <p className="text-muted-foreground mb-6">
-              Go behind the scenes, watch contestant highlights, and stay updated
-              on all things SwimCrown.
-            </p>
-            <a
-              href="https://instagram.com/swimcrown"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Button
-                variant="outline"
-                size="lg"
-                className="border-rose-500/30 text-rose-300 hover:bg-rose-500/10 rounded-full px-8"
-              >
-                <Instagram className="mr-2 h-5 w-5" />
-                @swimcrown
-              </Button>
-            </a>
           </div>
         </section>
 
