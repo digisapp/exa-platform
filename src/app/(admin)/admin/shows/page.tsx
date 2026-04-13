@@ -227,7 +227,7 @@ function SortableDesignerPanel({
   onBulkMove: (fromDesignerEntryId: string, toDesignerEntryId: string, modelIds: string[]) => void;
   modelConflicts: Record<string, string>;
   isActive: boolean; onActivate: () => void;
-  otherShows: { id: string; name: string }[];
+  otherShows: { id: string; name: string; show_date: string | null }[];
   allDesigners: { id: string; designerName: string; showName: string }[];
 }) {
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -324,7 +324,7 @@ function SortableDesignerPanel({
           {otherShows.length > 0 && (
             <div className="relative">
               <button onClick={(e) => { e.stopPropagation(); setShowMoveMenu(!showMoveMenu); }}
-                className="opacity-0 group-hover:opacity-100 hover:opacity-100 text-muted-foreground hover:text-foreground transition-all" title="Move to another show">
+                className="text-muted-foreground hover:text-foreground transition-all" title="Move to another show">
                 <ArrowRightLeft className="h-3.5 w-3.5" />
               </button>
               {showMoveMenu && (
@@ -333,7 +333,10 @@ function SortableDesignerPanel({
                   <p className="text-xs text-muted-foreground px-3 py-1">Move to:</p>
                   {otherShows.map((s) => (
                     <button key={s.id} onClick={() => { onMoveDesigner(designer.id, showId, s.id); setShowMoveMenu(false); }}
-                      className="w-full text-left text-xs px-3 py-1.5 hover:bg-accent transition-colors">{s.name}</button>
+                      className="w-full text-left text-xs px-3 py-1.5 hover:bg-accent transition-colors">
+                      {s.name}
+                      {s.show_date && <span className="text-muted-foreground ml-1">({new Date(s.show_date + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })})</span>}
+                    </button>
                   ))}
                 </div>
               )}
@@ -643,6 +646,13 @@ export default function AdminShowsPage() {
     if (res.ok) { setShows((prev) => prev.map((s) => s.id === showId ? { ...s, status } : s)); toast.success(`Status: ${status}`); }
   }
 
+  async function updateShowDateTime(showId: string, field: "show_date" | "show_time", value: string) {
+    const payload = { [field]: value || null };
+    const res = await fetch(`/api/admin/lineups/${showId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    if (res.ok) { setShows((prev) => prev.map((s) => s.id === showId ? { ...s, [field]: value || null } : s)); toast.success("Updated"); }
+    else { toast.error("Failed to update"); }
+  }
+
   async function addDesigner(showId: string) {
     if (!newDesignerName.trim()) return;
     const res = await fetch(`/api/admin/lineups/${showId}/designers`, {
@@ -925,7 +935,15 @@ export default function AdminShowsPage() {
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="p-3 border-b flex items-center justify-between">
             <h2 className="text-sm font-semibold">Shows ({shows.length})</h2>
-            <Button size="sm" className="h-8 text-xs" onClick={() => setShowCreateShow(true)}><Plus className="h-3 w-3 mr-1" /> Create Show</Button>
+            <div className="flex items-center gap-2">
+              {shows.length > 1 && (
+                <Button variant="ghost" size="sm" className="h-8 text-xs"
+                  onClick={() => setExpandedShowId(expandedShowId ? null : shows[0]?.id || null)}>
+                  {expandedShowId ? "Collapse" : "Expand"}
+                </Button>
+              )}
+              <Button size="sm" className="h-8 text-xs" onClick={() => setShowCreateShow(true)}><Plus className="h-3 w-3 mr-1" /> Create Show</Button>
+            </div>
           </div>
           <div className="flex-1 overflow-y-auto p-3 space-y-3">
             {shows.length === 0 ? (
@@ -973,6 +991,10 @@ export default function AdminShowsPage() {
                             <SelectItem value="completed">Completed</SelectItem>
                           </SelectContent>
                         </Select>
+                        <Input type="date" value={show.show_date || ""} className="h-8 text-xs w-[150px]"
+                          onChange={(e) => updateShowDateTime(show.id, "show_date", e.target.value)} />
+                        <Input type="time" value={show.show_time || ""} className="h-8 text-xs w-[120px]"
+                          onChange={(e) => updateShowDateTime(show.id, "show_time", e.target.value)} />
                         <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => duplicateShow(show.id)}>
                           <Copy className="h-3 w-3 mr-1" /> Duplicate
                         </Button>
@@ -1021,7 +1043,7 @@ export default function AdminShowsPage() {
                                     onRenameDesigner={renameDesigner} onMoveDesigner={moveDesigner}
                                     onBulkRemove={bulkRemoveModels} onBulkMove={bulkMoveModels}
                                     onUpdateOutfitNotes={updateOutfitNotes} modelConflicts={modelConflictsByDesigner[d.id] || {}}
-                                    otherShows={shows.filter((s) => s.id !== show.id).map((s) => ({ id: s.id, name: s.name }))}
+                                    otherShows={shows.filter((s) => s.id !== show.id).map((s) => ({ id: s.id, name: s.name, show_date: s.show_date }))}
                                     allDesigners={allDesignersList} />
                                 ))}
                               </div>
