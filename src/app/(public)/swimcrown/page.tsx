@@ -16,6 +16,7 @@ import {
   Camera,
   Gift,
   Waves,
+  ChevronRight,
 } from "lucide-react";
 import { CountdownTimer } from "@/components/swimcrown/CountdownTimer";
 
@@ -210,9 +211,10 @@ export default async function SwimCrownPage() {
                     <p className="text-muted-foreground text-sm leading-relaxed">
                       SwimCrown competition debuts live at{" "}
                       <span className="text-teal-300 font-semibold">Miami Swim Week</span>.
-                      Models walk the runway before a live audience, scored by an
-                      elite panel of judges. The evening culminates with the
-                      crowning ceremony! The winner receives the{" "}
+                      Every model walks the runway in Round 1, scored by an elite
+                      panel of judges. Top models advance through Semifinals and
+                      Finals, culminating with the crowning ceremony! The winner
+                      receives the{" "}
                       <span className="text-white font-semibold">official crown and sash on stage</span>,
                       earning the title of{" "}
                       <span className="text-amber-300 font-semibold">Miss SwimCrown 2026</span>{" "}
@@ -387,6 +389,77 @@ export default async function SwimCrownPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        </section>
+
+        {/* ─── Competition Format ─── */}
+        <section className="py-20 sm:py-24">
+          <div className="container mx-auto px-4">
+            <h2 className="text-center text-3xl sm:text-4xl font-bold mb-4">
+              <span className="bg-gradient-to-r from-teal-300 to-cyan-400 bg-clip-text text-transparent">
+                Competition Format
+              </span>
+            </h2>
+            <p className="text-center text-muted-foreground mb-12 max-w-lg mx-auto text-sm">
+              Three rounds. One crown. Every model walks the runway.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto items-stretch">
+              {/* Round 1 */}
+              <div className="relative rounded-2xl border border-teal-500/20 bg-[#0d1f35]/80 p-6 text-center">
+                <span className="text-xs font-bold tracking-widest uppercase text-teal-500/60">Round 1</span>
+                <h3 className="mt-2 text-xl font-bold text-white">The Runway</h3>
+                <p className="mt-1 text-3xl font-black text-teal-300">All Models</p>
+                <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+                  Every model walks the runway. This is your moment — the full experience, the audience, the stage. Judges score every walk.
+                </p>
+                {/* Arrow connector (visible on md+) */}
+                <div className="hidden md:flex absolute -right-3 top-1/2 -translate-y-1/2 z-10">
+                  <ChevronRight className="h-6 w-6 text-teal-500/40" />
+                </div>
+              </div>
+
+              {/* Semifinals */}
+              <div className="relative rounded-2xl border border-cyan-500/20 bg-gradient-to-b from-cyan-500/5 to-[#0d1f35]/80 p-6 text-center">
+                <span className="text-xs font-bold tracking-widest uppercase text-cyan-500/60">Semifinals</span>
+                <h3 className="mt-2 text-xl font-bold text-white">Top 30</h3>
+                <p className="mt-1 text-3xl font-black text-cyan-300">Advance</p>
+                <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+                  The top-scoring models return to the runway for a second walk. Higher stakes, closer judging — proving they belong in the Finals.
+                </p>
+                <div className="hidden md:flex absolute -right-3 top-1/2 -translate-y-1/2 z-10">
+                  <ChevronRight className="h-6 w-6 text-cyan-500/40" />
+                </div>
+              </div>
+
+              {/* Finals */}
+              <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-b from-amber-500/10 to-[#0d1f35]/80 p-6 text-center">
+                <span className="text-xs font-bold tracking-widest uppercase text-amber-500/60">Finals</span>
+                <h3 className="mt-2 text-xl font-bold text-white">Top 10</h3>
+                <p className="mt-1 text-3xl font-black text-amber-300">The Showdown</p>
+                <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+                  The final 10 compete for the crown. Judges make their decision. The Top 3 are announced — and Miss SwimCrown 2026 is crowned live on stage.
+                </p>
+              </div>
+            </div>
+
+            {/* Top 3 callout */}
+            <div className="mt-10 max-w-2xl mx-auto text-center">
+              <div className="inline-flex items-center gap-6 rounded-2xl border border-amber-500/20 bg-amber-500/5 px-8 py-5">
+                <div>
+                  <Crown className="h-8 w-8 text-amber-400 mx-auto mb-1" />
+                  <p className="text-xs font-bold text-amber-300">Miss SwimCrown</p>
+                </div>
+                <div>
+                  <Trophy className="h-7 w-7 text-zinc-300 mx-auto mb-1" />
+                  <p className="text-xs font-bold text-zinc-300">1st Runner-Up</p>
+                </div>
+                <div>
+                  <Trophy className="h-6 w-6 text-amber-600 mx-auto mb-1" />
+                  <p className="text-xs font-bold text-amber-600">2nd Runner-Up</p>
+                </div>
+              </div>
             </div>
           </div>
         </section>
