@@ -12,8 +12,6 @@ import {
   Sparkles,
   Trophy,
   CheckCircle2,
-  Vote,
-  Gem,
   Instagram,
   UserCircle,
   Camera,
@@ -269,112 +267,6 @@ export default async function SwimCrownPage() {
           </div>
         </section>
 
-        {/* ─── What Every Model Gets ─── */}
-        <section className="py-20 sm:py-24 bg-gradient-to-b from-transparent via-teal-950/10 to-transparent">
-          <div className="container mx-auto px-4">
-            <h2 className="text-center text-3xl sm:text-4xl font-bold mb-4">
-              <Gift className="inline-block mr-2 h-8 w-8 text-rose-400" />
-              <span className="bg-gradient-to-r from-teal-300 to-cyan-400 bg-clip-text text-transparent">
-                What Every Model Gets
-              </span>
-            </h2>
-            <p className="text-center text-white/50 mb-12 max-w-xl mx-auto text-sm">
-              Every competitor walks away with more than a runway moment
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
-              {[
-                { icon: Crown, label: "Walk the Runway", desc: "Compete at Miami Swim Week in front of a live audience and elite judges", color: "teal" },
-                { icon: Camera, label: "Contestant Profile", desc: "Your official SwimCrown profile goes live on EXA with public fan voting", color: "cyan" },
-              ].map((item) => (
-                <Card key={item.label} className={`relative overflow-hidden border-${item.color}-500/30 bg-gradient-to-b from-${item.color}-500/10 to-transparent p-6 text-center`}>
-                  <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-${item.color}-400 to-${item.color}-500`} />
-                  <item.icon className={`mx-auto h-10 w-10 text-${item.color}-400 mb-3`} />
-                  <h3 className={`text-lg font-bold text-${item.color}-300`}>{item.label}</h3>
-                  <p className="mt-3 text-sm text-muted-foreground">{item.desc}</p>
-                </Card>
-              ))}
-            </div>
-
-            {/* The Crown */}
-            <div className="mt-12 max-w-2xl mx-auto">
-              <Card className="relative overflow-hidden border-amber-500/30 bg-gradient-to-b from-amber-500/10 to-transparent p-8 text-center">
-                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-400 to-yellow-500" />
-                <Crown className="mx-auto h-12 w-12 text-amber-400 mb-3" />
-                <h3 className="text-2xl font-black text-amber-300">
-                  Miss SwimCrown 2026
-                </h3>
-                <p className="text-sm text-white/50 mt-1 mb-4">The winner takes it all</p>
-                <div className="grid grid-cols-2 gap-3 text-left">
-                  {[
-                    "Crowned live on stage with official sash",
-                    "Title held for the full year",
-                    "Featured across EXA homepage & socials",
-                    "Priority access to brand bookings",
-                  ].map((item) => (
-                    <div key={item} className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
-                      <span className="text-sm text-muted-foreground">{item}</span>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            </div>
-          </div>
-        </section>
-
-        {/* ─── How It Works ─── */}
-        <section className="py-20 sm:py-24">
-          <div className="container mx-auto px-4">
-            <h2 className="text-center text-3xl sm:text-4xl font-bold mb-12">
-              <span className="bg-gradient-to-r from-teal-300 to-cyan-400 bg-clip-text text-transparent">
-                How It Works
-              </span>
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-              {[
-                {
-                  step: "01",
-                  icon: Gem,
-                  title: "Enter & Pay",
-                  description:
-                    "Choose your entry tier, complete your profile, and secure your spot. You'll be matched with gifted designer swimwear from our sponsors.",
-                },
-                {
-                  step: "02",
-                  icon: Vote,
-                  title: "Get Votes",
-                  description:
-                    "Share your contestant page with your audience. Fans vote using EXA coins — rally your supporters and rise in the rankings!",
-                },
-                {
-                  step: "03",
-                  icon: Crown,
-                  title: "Walk & Win",
-                  description:
-                    "Compete on the runway at Miami Swim Week in your gifted swimwear. Judges score live, and the winner is crowned on stage.",
-                },
-              ].map((item) => (
-                <div key={item.step} className="text-center">
-                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-500/20 to-cyan-500/10 border border-teal-500/20">
-                    <item.icon className="h-8 w-8 text-teal-400" />
-                  </div>
-                  <span className="text-xs font-bold text-teal-500/60 tracking-widest uppercase">
-                    Step {item.step}
-                  </span>
-                  <h3 className="mt-1 text-xl font-bold text-white">
-                    {item.title}
-                  </h3>
-                  <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                    {item.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* ─── Entry Tiers ─── */}
         <section className="py-20 sm:py-24 bg-gradient-to-b from-transparent via-teal-950/10 to-transparent">
           <div className="container mx-auto px-4">
@@ -399,13 +291,12 @@ export default async function SwimCrownPage() {
                   $175
                 </p>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Get on the runway and compete. Your contestant profile goes live for fan voting — the rest is up to you. Arrive hair & makeup ready.
+                  Get on the runway and compete. Your contestant profile goes live on EXA. Arrive hair & makeup ready.
                 </p>
                 <ul className="mt-6 space-y-3 text-sm text-muted-foreground">
                   {[
                     "Walk the runway at Miami Swim Week",
                     "Official SwimCrown contestant profile",
-                    "Online public fan voting",
                     "Compete for Miss SwimCrown 2026",
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-2">

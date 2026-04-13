@@ -44,7 +44,6 @@ const tiers: Tier[] = [
     features: [
       "Walk the runway at Miami Swim Week",
       "Official SwimCrown contestant profile",
-      "Online public fan voting",
       "Compete for Miss SwimCrown 2026",
       "Arrive hair & makeup ready",
     ],
