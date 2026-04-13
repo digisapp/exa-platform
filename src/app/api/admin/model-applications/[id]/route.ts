@@ -115,7 +115,7 @@ export async function PATCH(
         await adminClient.from("fans").delete().eq("user_id", application.user_id);
       } else if (!existingModel) {
         // No existing model found - create new one
-        const looksLikeEmail = (s: string) => s.includes("@") || /\.(com|net|org|io|co)$/i.test(s);
+        const looksLikeEmail = (s: string) => s.includes("@") || /\.(com|net|org|io|co|edu|gov|me|info|biz)$/i.test(s) || /[a-z0-9](gmail|yahoo|hotmail|outlook|icloud|aol|protonmail|mail)/i.test(s);
         const igUsername = application.instagram_username && !looksLikeEmail(application.instagram_username)
           ? application.instagram_username : null;
         const ttUsername = application.tiktok_username && !looksLikeEmail(application.tiktok_username)
