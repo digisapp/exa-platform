@@ -12,12 +12,11 @@ import {
   CheckCircle2,
   Loader2,
   Sparkles,
-  Star,
-  Gem,
+  Waves,
 } from "lucide-react";
 
 interface Tier {
-  id: "standard" | "crown" | "elite";
+  id: "standard" | "vip";
   name: string;
   price: number;
   icon: typeof Crown;
@@ -26,6 +25,7 @@ interface Tier {
   borderClass: string;
   bgClass: string;
   iconColor: string;
+  checkColor: string;
   features: string[];
 }
 
@@ -33,60 +33,48 @@ const tiers: Tier[] = [
   {
     id: "standard",
     name: "Standard",
-    price: 299,
-    icon: Star,
+    price: 150,
+    icon: Waves,
     featured: false,
     badge: null,
-    borderClass: "border-zinc-700",
-    bgClass: "bg-zinc-900/50",
-    iconColor: "text-zinc-400",
+    borderClass: "border-teal-500/20",
+    bgClass: "bg-[#0d1f35]/80",
+    iconColor: "text-teal-400",
+    checkColor: "text-teal-400",
     features: [
-      "SwimCrown contestant profile",
-      "Online public voting",
-      "Official contestant badge",
+      "Walk the runway at Miami Swim Week",
+      "Gifted designer swimwear ($100+ value)",
+      "Sponsor goodie bag",
+      "Official SwimCrown contestant profile",
+      "Online public fan voting",
+      "Professional runway content",
     ],
   },
   {
-    id: "crown",
-    name: "Crown Package",
-    price: 549,
+    id: "vip",
+    name: "VIP Entry",
+    price: 250,
     icon: Crown,
     featured: true,
-    badge: "Most Popular",
-    borderClass: "border-amber-500/40 ring-1 ring-amber-500/20",
-    bgClass: "bg-gradient-to-b from-amber-500/10 to-zinc-900/50",
-    iconColor: "text-amber-400",
+    badge: "Recommended",
+    borderClass: "border-rose-500/40 ring-1 ring-rose-500/20",
+    bgClass: "bg-gradient-to-b from-rose-500/10 to-[#0d1f35]/80",
+    iconColor: "text-rose-400",
+    checkColor: "text-rose-400",
     features: [
       "Everything in Standard",
-      "Runway training session",
-      "Professional swim photoshoot",
-      "Digital comp card",
-    ],
-  },
-  {
-    id: "elite",
-    name: "Elite Package",
-    price: 799,
-    icon: Gem,
-    featured: false,
-    badge: "Premium",
-    borderClass: "border-violet-500/30",
-    bgClass: "bg-gradient-to-b from-violet-500/5 to-zinc-900/50",
-    iconColor: "text-violet-400",
-    features: [
-      "Everything in Crown",
-      "Priority placement in gallery",
-      "Social media feature on EXA",
-      "Exclusive video interview",
+      "Skip to the finals — bypass preliminary rounds",
+      "Runway coaching to perfect your walk",
+      "Priority placement — seen first by judges",
+      "Featured across EXA social channels",
+      "Higher visibility with designers & brands",
     ],
   },
 ];
 
 export function EntryForm() {
   const router = useRouter();
-  const [selectedTier, setSelectedTier] = useState<
-    "standard" | "crown" | "elite"
-  >("crown");
+  const [selectedTier, setSelectedTier] = useState<"standard" | "vip">("vip");
   const [tagline, setTagline] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -127,9 +115,9 @@ export function EntryForm() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-3xl mx-auto">
       {/* Tier Selection */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-8">
         {tiers.map((tier) => {
           const isSelected = selectedTier === tier.id;
           return (
@@ -137,18 +125,16 @@ export function EntryForm() {
               key={tier.id}
               className={`relative cursor-pointer p-6 transition-all duration-200 ${tier.bgClass} ${
                 isSelected
-                  ? "border-amber-500 ring-2 ring-amber-500/30 scale-[1.02]"
-                  : `${tier.borderClass} hover:border-amber-500/30`
+                  ? tier.id === "vip"
+                    ? "border-rose-500 ring-2 ring-rose-500/30 scale-[1.02]"
+                    : "border-teal-500 ring-2 ring-teal-500/30 scale-[1.02]"
+                  : `${tier.borderClass} hover:border-teal-500/30`
               }`}
               onClick={() => setSelectedTier(tier.id)}
             >
               {tier.badge && (
                 <Badge
-                  className={`absolute -top-3 left-1/2 -translate-x-1/2 font-bold px-3 text-xs ${
-                    tier.id === "crown"
-                      ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-black"
-                      : "bg-gradient-to-r from-pink-500 to-violet-500 text-white"
-                  }`}
+                  className="absolute -top-3 left-1/2 -translate-x-1/2 font-bold px-3 text-xs bg-gradient-to-r from-rose-500 to-pink-500 text-white"
                 >
                   {tier.badge}
                 </Badge>
@@ -157,7 +143,7 @@ export function EntryForm() {
               {/* Selected indicator */}
               {isSelected && (
                 <div className="absolute top-3 right-3">
-                  <CheckCircle2 className="h-5 w-5 text-amber-400" />
+                  <CheckCircle2 className={`h-5 w-5 ${tier.id === "vip" ? "text-rose-400" : "text-teal-400"}`} />
                 </div>
               )}
 
@@ -166,11 +152,7 @@ export function EntryForm() {
               />
               <h3
                 className={`text-lg font-bold ${
-                  tier.id === "crown"
-                    ? "text-amber-300"
-                    : tier.id === "elite"
-                      ? "text-violet-300"
-                      : "text-white"
+                  tier.id === "vip" ? "text-rose-300" : "text-white"
                 } ${tier.badge ? "mt-1" : ""}`}
               >
                 {tier.name}
@@ -183,13 +165,7 @@ export function EntryForm() {
                 {tier.features.map((feature) => (
                   <li key={feature} className="flex items-start gap-2">
                     <CheckCircle2
-                      className={`h-4 w-4 mt-0.5 shrink-0 ${
-                        tier.id === "crown"
-                          ? "text-amber-400"
-                          : tier.id === "elite"
-                            ? "text-violet-400"
-                            : "text-zinc-500"
-                      }`}
+                      className={`h-4 w-4 mt-0.5 shrink-0 ${tier.checkColor}`}
                     />
                     {feature}
                   </li>
@@ -213,7 +189,7 @@ export function EntryForm() {
             placeholder="Your swimwear motto or tagline"
             value={tagline}
             onChange={(e) => setTagline(e.target.value.slice(0, 200))}
-            className="bg-zinc-900/50 border-zinc-700 text-white"
+            className="bg-[#0d1f35]/80 border-teal-500/20 text-white"
             maxLength={200}
           />
           <p className="mt-1 text-xs text-muted-foreground text-right">
@@ -225,7 +201,11 @@ export function EntryForm() {
         <Button
           onClick={handleSubmit}
           disabled={loading}
-          className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-bold py-6 text-lg rounded-full shadow-lg shadow-amber-500/25"
+          className={`w-full font-bold py-6 text-lg rounded-full shadow-lg ${
+            selectedTier === "vip"
+              ? "bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white shadow-rose-500/25"
+              : "bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white shadow-teal-500/25"
+          }`}
           size="lg"
         >
           {loading ? (

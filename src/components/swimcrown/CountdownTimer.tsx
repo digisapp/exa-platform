@@ -38,17 +38,17 @@ export function CountdownTimer() {
       {blocks.map((block, i) => (
         <div key={block.label} className="flex items-center gap-3 sm:gap-4">
           <div className="flex flex-col items-center">
-            <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-xl bg-zinc-900/80 border border-amber-500/20 shadow-lg shadow-amber-500/5">
+            <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-xl bg-[#0d1f35]/80 border border-teal-500/20 shadow-lg shadow-teal-500/5">
               <span className="text-2xl sm:text-3xl font-black text-white tabular-nums">
                 {String(block.value).padStart(2, "0")}
               </span>
             </div>
-            <span className="mt-2 text-[10px] sm:text-xs font-semibold uppercase tracking-widest text-amber-400/70">
+            <span className="mt-2 text-[10px] sm:text-xs font-semibold uppercase tracking-widest text-teal-400/70">
               {block.label}
             </span>
           </div>
           {i < blocks.length - 1 && (
-            <span className="text-2xl font-bold text-amber-500/40 -mt-5">:</span>
+            <span className="text-2xl font-bold text-teal-500/40 -mt-5">:</span>
           )}
         </div>
       ))}

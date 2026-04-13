@@ -135,8 +135,8 @@ export default async function SwimCrownEntryPage() {
   const renderContent = () => {
     if (notLoggedIn) {
       return (
-        <Card className="max-w-lg mx-auto p-8 border-zinc-800 bg-zinc-900/50 text-center">
-          <LogIn className="mx-auto h-12 w-12 text-amber-400 mb-4" />
+        <Card className="max-w-lg mx-auto p-8 border-teal-500/20 bg-[#0d1f35]/80 text-center">
+          <LogIn className="mx-auto h-12 w-12 text-teal-400 mb-4" />
           <h2 className="text-xl font-bold text-white mb-2">
             Sign In Required
           </h2>
@@ -144,7 +144,7 @@ export default async function SwimCrownEntryPage() {
             You need to be signed in as a model to enter SwimCrown.
           </p>
           <Link href="/sign-in">
-            <Button className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-bold">
+            <Button className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white font-bold">
               Sign In
             </Button>
           </Link>
@@ -154,8 +154,8 @@ export default async function SwimCrownEntryPage() {
 
     if (!isModel) {
       return (
-        <Card className="max-w-lg mx-auto p-8 border-zinc-800 bg-zinc-900/50 text-center">
-          <UserX className="mx-auto h-12 w-12 text-amber-400 mb-4" />
+        <Card className="max-w-lg mx-auto p-8 border-teal-500/20 bg-[#0d1f35]/80 text-center">
+          <UserX className="mx-auto h-12 w-12 text-teal-400 mb-4" />
           <h2 className="text-xl font-bold text-white mb-2">
             Models Only
           </h2>
@@ -174,8 +174,8 @@ export default async function SwimCrownEntryPage() {
 
     if (alreadyEntered) {
       return (
-        <Card className="max-w-lg mx-auto p-8 border-amber-500/30 bg-amber-500/5 text-center">
-          <CheckCircle2 className="mx-auto h-12 w-12 text-amber-400 mb-4" />
+        <Card className="max-w-lg mx-auto p-8 border-teal-500/30 bg-teal-500/5 text-center">
+          <CheckCircle2 className="mx-auto h-12 w-12 text-teal-400 mb-4" />
           <h2 className="text-xl font-bold text-white mb-2">
             You&apos;re Already In!
           </h2>
@@ -186,7 +186,7 @@ export default async function SwimCrownEntryPage() {
           <Link href="/swimcrown/contestants">
             <Button
               variant="outline"
-              className="border-amber-500/30 text-amber-300 hover:bg-amber-500/10"
+              className="border-teal-500/30 text-teal-300 hover:bg-teal-500/10"
             >
               View Contestants
             </Button>
@@ -199,7 +199,7 @@ export default async function SwimCrownEntryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-black/40">
+    <div className="min-h-screen bg-gradient-to-b from-[#0a1628] via-[#0d1f35] to-[#0a1628]">
       <Navbar user={navbarUser} actorType={actorType} />
 
       <main className="container mx-auto px-4 py-8 pb-24 md:pb-8">
@@ -207,7 +207,7 @@ export default async function SwimCrownEntryPage() {
         <div className="text-center mb-10">
           <h1 className="relative inline-flex items-center justify-center gap-2">
             <Crown className="h-7 w-7 text-amber-400" />
-            <span className="text-3xl sm:text-4xl font-black tracking-tight bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent">
+            <span className="text-3xl sm:text-4xl font-black tracking-tight bg-gradient-to-r from-teal-300 via-cyan-400 to-teal-400 bg-clip-text text-transparent">
               Enter SwimCrown
             </span>
           </h1>

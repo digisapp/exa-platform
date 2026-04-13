@@ -122,7 +122,7 @@ export default async function SwimCrownContestantsPage() {
 
   return (
     <CoinBalanceProvider initialBalance={coinBalance}>
-      <div className="min-h-screen bg-gradient-to-b from-background via-background to-black/40">
+      <div className="min-h-screen bg-gradient-to-b from-[#0a1628] via-[#0d1f35] to-[#0a1628]">
         <Navbar user={navbarUser} actorType={actorType} />
 
         <main className="container mx-auto px-4 py-8 pb-24 md:pb-8">
@@ -130,7 +130,7 @@ export default async function SwimCrownContestantsPage() {
           <div className="text-center mb-8">
             <h1 className="relative inline-flex items-center justify-center gap-2">
               <Crown className="h-7 w-7 text-amber-400" />
-              <span className="text-3xl sm:text-4xl font-black tracking-tight bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent">
+              <span className="text-3xl sm:text-4xl font-black tracking-tight bg-gradient-to-r from-teal-300 via-cyan-400 to-teal-400 bg-clip-text text-transparent">
                 SwimCrown Contestants
               </span>
               <Crown className="h-7 w-7 text-amber-400" />

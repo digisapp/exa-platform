@@ -68,26 +68,26 @@ export default async function SwimCrownEntrySuccessPage() {
   const votingUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://exa.ai"}/swimcrown/contestants`;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-black/40">
+    <div className="min-h-screen bg-gradient-to-b from-[#0a1628] via-[#0d1f35] to-[#0a1628]">
       <Navbar user={navbarUser} actorType={actorType} />
 
       <main className="container mx-auto px-4 py-16 pb-24 md:pb-16">
-        <Card className="max-w-xl mx-auto p-8 sm:p-10 border-amber-500/20 bg-gradient-to-b from-amber-500/5 to-zinc-900/50 text-center relative overflow-hidden">
+        <Card className="max-w-xl mx-auto p-8 sm:p-10 border-teal-500/20 bg-gradient-to-b from-teal-500/5 to-[#0d1f35]/80 text-center relative overflow-hidden">
           {/* Decorative glow */}
           <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute left-1/2 top-0 -translate-x-1/2 h-[300px] w-[400px] rounded-full bg-gradient-to-br from-amber-500/10 to-transparent blur-3xl" />
+            <div className="absolute left-1/2 top-0 -translate-x-1/2 h-[300px] w-[400px] rounded-full bg-gradient-to-br from-teal-500/10 to-transparent blur-3xl" />
           </div>
 
           <div className="relative">
             {/* Celebration icons */}
             <div className="flex items-center justify-center gap-3 mb-4">
-              <Sparkles className="h-6 w-6 text-amber-400 animate-pulse" />
-              <PartyPopper className="h-10 w-10 text-amber-400" />
-              <Sparkles className="h-6 w-6 text-amber-400 animate-pulse" />
+              <Sparkles className="h-6 w-6 text-teal-400 animate-pulse" />
+              <PartyPopper className="h-10 w-10 text-teal-400" />
+              <Sparkles className="h-6 w-6 text-teal-400 animate-pulse" />
             </div>
 
             <h1 className="text-4xl sm:text-5xl font-black mb-3">
-              <span className="bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-teal-300 via-cyan-400 to-teal-400 bg-clip-text text-transparent">
                 You&apos;re In!
               </span>
             </h1>
@@ -106,6 +106,8 @@ export default async function SwimCrownEntrySuccessPage() {
               <Crown className="h-10 w-10 text-amber-400" />
             </div>
 
+
+
             {/* Action buttons */}
             <div className="space-y-3">
               <SuccessActions votingUrl={votingUrl} />
@@ -113,7 +115,7 @@ export default async function SwimCrownEntrySuccessPage() {
               <Link href="/swimcrown/contestants" className="block">
                 <Button
                   variant="outline"
-                  className="w-full border-amber-500/30 text-amber-300 hover:bg-amber-500/10 py-5"
+                  className="w-full border-teal-500/30 text-teal-300 hover:bg-teal-500/10 py-5"
                   size="lg"
                 >
                   <Users className="mr-2 h-5 w-5" />
@@ -135,20 +137,20 @@ export default async function SwimCrownEntrySuccessPage() {
 
             {/* Tips */}
             <div className="mt-8 p-4 rounded-lg bg-zinc-800/50 border border-zinc-700 text-left">
-              <h3 className="text-sm font-bold text-amber-300 mb-2">
+              <h3 className="text-sm font-bold text-teal-300 mb-2">
                 Tips to win votes:
               </h3>
               <ul className="space-y-1.5 text-xs text-muted-foreground">
                 <li className="flex items-start gap-2">
-                  <Sparkles className="h-3 w-3 text-amber-400 mt-0.5 shrink-0" />
+                  <Sparkles className="h-3 w-3 text-teal-400 mt-0.5 shrink-0" />
                   Share your voting link on Instagram, TikTok, and Twitter
                 </li>
                 <li className="flex items-start gap-2">
-                  <Sparkles className="h-3 w-3 text-amber-400 mt-0.5 shrink-0" />
+                  <Sparkles className="h-3 w-3 text-teal-400 mt-0.5 shrink-0" />
                   Ask friends and family to create EXA accounts and vote
                 </li>
                 <li className="flex items-start gap-2">
-                  <Sparkles className="h-3 w-3 text-amber-400 mt-0.5 shrink-0" />
+                  <Sparkles className="h-3 w-3 text-teal-400 mt-0.5 shrink-0" />
                   Post daily updates to keep your supporters engaged
                 </li>
               </ul>
