@@ -18,7 +18,6 @@ import {
   UserCircle,
   Camera,
   Gift,
-  Shirt,
   Waves,
 } from "lucide-react";
 import { CountdownTimer } from "@/components/swimcrown/CountdownTimer";
@@ -41,6 +40,12 @@ export default async function SwimCrownPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // Fetch contestant count for scarcity display
+  const { count: contestantCount } = await (supabase as any)
+    .from("swimcrown_contestants")
+    .select("id", { count: "exact", head: true })
+    .in("payment_status", ["paid", "pending"]);
 
   let navbarUser = null;
   let actorType: "model" | "fan" | "brand" | "admin" | null = null;
@@ -130,15 +135,24 @@ export default async function SwimCrownPage() {
             </h1>
 
             <p className="mt-4 text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-white">
-              The Search for the World&apos;s #1
+              Walk. Get Seen. Get Crowned.
             </p>
-            <p className="text-2xl sm:text-3xl md:text-4xl font-black bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-300 bg-clip-text text-transparent">
-              Swim Model of the Year
+            <p className="mt-2 text-base sm:text-lg text-white/50 font-medium max-w-lg mx-auto">
+              Miami Swim Week &middot; May 30, 2026
             </p>
 
-            <p className="mt-4 text-sm sm:text-base text-white/60 font-medium tracking-wide">
-              One Crown. One Title. One Year of Reign.
-            </p>
+            {/* Scarcity badge */}
+            {contestantCount !== null && (
+              <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-teal-500/30 bg-teal-500/10 px-4 py-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-teal-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-teal-400" />
+                </span>
+                <span className="text-xs font-semibold text-teal-300">
+                  {contestantCount} model{contestantCount === 1 ? "" : "s"} entered &middot; Limited to 100 spots
+                </span>
+              </div>
+            )}
           </div>
         </section>
 
@@ -213,20 +227,16 @@ export default async function SwimCrownPage() {
                     <div className="w-12 h-px bg-gradient-to-r from-teal-500/50 to-transparent" />
 
                     <p className="text-muted-foreground text-sm leading-relaxed">
-                      The 1st Annual SwimCrown competition debuts live at{" "}
+                      The inaugural SwimCrown competition debuts live at{" "}
                       <span className="text-teal-300 font-semibold">Miami Swim Week</span>.
-                      Each selected model walks the runway before a live audience,
-                      styled in{" "}
-                      <span className="text-rose-300 font-semibold">gifted designer swimwear ($100+ value)</span>{" "}
-                      from our featured sponsors. Scored live by an elite panel of
-                      judges, the evening culminates with the crowning ceremony — the
-                      winner receives the{" "}
+                      Selected models walk the runway before a live audience,
+                      scored by an elite panel of judges. The evening culminates
+                      with the crowning ceremony — the winner receives the{" "}
                       <span className="text-white font-semibold">official crown and sash on stage</span>,
                       earning the title of{" "}
                       <span className="text-amber-300 font-semibold">Miss SwimCrown 2026</span>{" "}
-                      and holding the distinction of{" "}
-                      <span className="text-white font-semibold">World&apos;s #1 Swim Model of the Year</span>{" "}
-                      for the entire year.
+                      and the distinction of{" "}
+                      <span className="text-white font-semibold">World&apos;s #1 Swim Model of the Year</span>.
                     </p>
 
                     <div className="grid grid-cols-1 gap-2">
@@ -259,7 +269,7 @@ export default async function SwimCrownPage() {
           </div>
         </section>
 
-        {/* ─── What You Get ─── */}
+        {/* ─── What Every Model Gets ─── */}
         <section className="py-20 sm:py-24 bg-gradient-to-b from-transparent via-teal-950/10 to-transparent">
           <div className="container mx-auto px-4">
             <h2 className="text-center text-3xl sm:text-4xl font-bold mb-4">
@@ -272,61 +282,43 @@ export default async function SwimCrownPage() {
               Every competitor walks away with more than a runway moment
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
-              {/* Designer Swimwear */}
-              <Card className="relative overflow-hidden border-teal-500/30 bg-gradient-to-b from-teal-500/10 to-transparent p-6 text-center">
-                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-teal-400 to-cyan-500" />
-                <Shirt className="mx-auto h-10 w-10 text-teal-400 mb-3" />
-                <h3 className="text-lg font-bold text-teal-300">
-                  Designer Swimwear
-                </h3>
-                <p className="text-2xl font-black text-white mt-2">$100+ Value</p>
-                <p className="mt-3 text-sm text-muted-foreground">
-                  Every model is gifted designer swimwear from our featured sponsors — yours to keep and wear on the runway.
-                </p>
-              </Card>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
+              {[
+                { icon: Crown, label: "Walk the Runway", desc: "Compete at Miami Swim Week in front of a live audience and elite judges", color: "teal" },
+                { icon: Camera, label: "Contestant Profile", desc: "Your official SwimCrown profile goes live on EXA with public fan voting", color: "cyan" },
+              ].map((item) => (
+                <Card key={item.label} className={`relative overflow-hidden border-${item.color}-500/30 bg-gradient-to-b from-${item.color}-500/10 to-transparent p-6 text-center`}>
+                  <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-${item.color}-400 to-${item.color}-500`} />
+                  <item.icon className={`mx-auto h-10 w-10 text-${item.color}-400 mb-3`} />
+                  <h3 className={`text-lg font-bold text-${item.color}-300`}>{item.label}</h3>
+                  <p className="mt-3 text-sm text-muted-foreground">{item.desc}</p>
+                </Card>
+              ))}
+            </div>
 
-              {/* Goodie Bag */}
-              <Card className="relative overflow-hidden border-rose-500/30 bg-gradient-to-b from-rose-500/10 to-transparent p-6 text-center">
-                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-rose-400 to-pink-500" />
-                <Gift className="mx-auto h-10 w-10 text-rose-400 mb-3" />
-                <h3 className="text-lg font-bold text-rose-300">
-                  Sponsor Goodie Bag
-                </h3>
-                <p className="text-2xl font-black text-white mt-2">Exclusive</p>
-                <p className="mt-3 text-sm text-muted-foreground">
-                  Beauty, sun care, and lifestyle products from our sponsors — curated exclusively for SwimCrown competitors.
-                </p>
-              </Card>
-
-              {/* The Crown */}
-              <Card className="relative overflow-hidden border-amber-500/30 bg-gradient-to-b from-amber-500/10 to-transparent p-6 text-center">
+            {/* The Crown */}
+            <div className="mt-12 max-w-2xl mx-auto">
+              <Card className="relative overflow-hidden border-amber-500/30 bg-gradient-to-b from-amber-500/10 to-transparent p-8 text-center">
                 <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-400 to-yellow-500" />
-                <Crown className="mx-auto h-10 w-10 text-amber-400 mb-3" />
-                <h3 className="text-lg font-bold text-amber-300">
+                <Crown className="mx-auto h-12 w-12 text-amber-400 mb-3" />
+                <h3 className="text-2xl font-black text-amber-300">
                   Miss SwimCrown 2026
                 </h3>
-                <p className="text-2xl font-black text-white mt-2">The Title</p>
-                <ul className="mt-3 space-y-2 text-sm text-muted-foreground text-left">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
-                    Official crown & sash on stage
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
-                    Hold the title for the entire year
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
-                    Featured on EXA homepage & socials
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
-                    Priority booking with partner brands
-                  </li>
-                </ul>
+                <p className="text-sm text-white/50 mt-1 mb-4">The winner takes it all</p>
+                <div className="grid grid-cols-2 gap-3 text-left">
+                  {[
+                    "Crowned live on stage with official sash",
+                    "Title held for the full year",
+                    "Featured across EXA homepage & socials",
+                    "Priority access to brand bookings",
+                  ].map((item) => (
+                    <div key={item} className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
+                      <span className="text-sm text-muted-foreground">{item}</span>
+                    </div>
+                  ))}
+                </div>
               </Card>
-
             </div>
           </div>
         </section>
@@ -388,32 +380,33 @@ export default async function SwimCrownPage() {
           <div className="container mx-auto px-4">
             <h2 className="text-center text-3xl sm:text-4xl font-bold mb-4">
               <span className="bg-gradient-to-r from-teal-300 to-cyan-400 bg-clip-text text-transparent">
-                Compete Your Way
+                Choose Your Entry
               </span>
             </h2>
-            <p className="text-center text-muted-foreground mb-12 max-w-xl mx-auto">
-              Both tiers get you on the runway in gifted designer swimwear — pick the one that matches your ambition
+            <p className="text-center text-muted-foreground mb-4 max-w-xl mx-auto">
+              Both tiers include a runway walk and compete equally for the crown — your tier determines your experience, not your outcome
+            </p>
+            <p className="text-center text-xs text-amber-300/70 mb-12 max-w-md mx-auto font-medium">
+              All models are scored equally by our judges regardless of entry tier
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-              {/* Standard */}
+              {/* Entry */}
               <Card className="relative border-teal-500/20 bg-[#0d1f35]/80 p-6 flex flex-col">
                 <Waves className="h-8 w-8 text-teal-400 mb-3" />
-                <h3 className="text-lg font-bold text-white">Standard Entry</h3>
+                <h3 className="text-lg font-bold text-white">Entry</h3>
                 <p className="mt-1 text-3xl font-black text-white">
-                  $150
+                  $175
                 </p>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Walk the runway, compete for the crown, and take home gifted designer swimwear and a sponsor goodie bag. Your profile goes live for fan voting.
+                  Get on the runway and compete. Your contestant profile goes live for fan voting — the rest is up to you.
                 </p>
                 <ul className="mt-6 space-y-3 text-sm text-muted-foreground">
                   {[
                     "Walk the runway at Miami Swim Week",
-                    "Gifted designer swimwear ($100+ value)",
-                    "Sponsor goodie bag",
                     "Official SwimCrown contestant profile",
                     "Online public fan voting",
-                    "Professional runway content",
+                    "Compete for Miss SwimCrown 2026",
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-teal-400 mt-0.5 shrink-0" />
@@ -424,35 +417,35 @@ export default async function SwimCrownPage() {
                 <div className="mt-auto pt-8">
                   <Link href="/swimcrown/enter" className="block">
                     <Button className="w-full border-teal-500/30 text-teal-300 hover:bg-teal-500/10" variant="outline">
-                      Enter Standard — $150
+                      Enter — $175
                     </Button>
                   </Link>
                 </div>
               </Card>
 
-              {/* VIP */}
+              {/* Full Package */}
               <Card className="relative border-rose-500/40 bg-gradient-to-b from-rose-500/10 to-[#0d1f35]/80 p-6 ring-1 ring-rose-500/20 scale-[1.02] flex flex-col">
                 <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold px-3">
-                  Recommended
+                  Best Value
                 </Badge>
-                <Crown className="h-8 w-8 text-rose-400 mb-3 mt-2" />
+                <Gift className="h-8 w-8 text-rose-400 mb-3 mt-2" />
                 <h3 className="text-lg font-bold text-rose-300">
-                  VIP Entry
+                  Full Package
                 </h3>
                 <p className="mt-1 text-3xl font-black text-white">
-                  $250
+                  $399
                 </p>
                 <p className="mt-2 text-sm text-rose-300/70">
-                  Skip the prelims and go straight to the finals. Get runway coaching so you shine on stage, plus priority placement in front of judges. This is how serious competitors show up.
+                  Everything you need to arrive prepared and walk away with more. Designer swimwear, professional content, and the full Swim Week experience.
                 </p>
                 <ul className="mt-6 space-y-3 text-sm text-muted-foreground">
                   {[
-                    "Everything in Standard",
-                    "Skip to the finals — bypass preliminary rounds",
-                    "Runway coaching to perfect your walk",
-                    "Priority placement — seen first by judges",
+                    "Everything in Entry",
+                    "Designer swimwear gifted ($100+ value) — yours to keep",
+                    "Official SwimCrown robe",
+                    "Sponsored gift bag (beauty, sun care & lifestyle)",
+                    "Professional photos & video of your runway walk",
                     "Featured across EXA social channels",
-                    "Higher visibility with designers & brands",
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-rose-400 mt-0.5 shrink-0" />
@@ -463,7 +456,7 @@ export default async function SwimCrownPage() {
                 <div className="mt-auto pt-8">
                   <Link href="/swimcrown/enter" className="block">
                     <Button className="w-full bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white font-bold">
-                      Enter VIP — $250
+                      Enter Full Package — $399
                     </Button>
                   </Link>
                 </div>
@@ -591,12 +584,14 @@ export default async function SwimCrownPage() {
             <div className="mx-auto max-w-2xl">
               <Crown className="mx-auto h-12 w-12 text-amber-400 mb-6" />
               <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-white">
-                Will You Be Miss SwimCrown 2026?
+                Will You Be Crowned?
               </h2>
-              <p className="text-muted-foreground mb-8">
-                Models from around the world are entering for their chance to walk the runway
-                in gifted designer swimwear and be crowned the World&apos;s #1 Swim Model of the Year
-                at Miami Swim Week 2026. Don&apos;t miss your shot.
+              <p className="text-muted-foreground mb-3">
+                Models from around the world are entering for their chance to step onto the
+                runway at Miami Swim Week — and earn the title of Miss SwimCrown 2026.
+              </p>
+              <p className="text-sm text-amber-300/70 font-medium mb-8">
+                Limited to 100 selected models. Applications reviewed and approved.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link href="/swimcrown/enter">

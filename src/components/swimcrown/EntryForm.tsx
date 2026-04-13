@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 
 interface Tier {
-  id: "standard" | "vip";
+  id: "standard" | "full_package";
   name: string;
   price: number;
   icon: typeof Crown;
@@ -32,8 +32,8 @@ interface Tier {
 const tiers: Tier[] = [
   {
     id: "standard",
-    name: "Standard",
-    price: 150,
+    name: "Entry",
+    price: 175,
     icon: Waves,
     featured: false,
     badge: null,
@@ -43,38 +43,36 @@ const tiers: Tier[] = [
     checkColor: "text-teal-400",
     features: [
       "Walk the runway at Miami Swim Week",
-      "Gifted designer swimwear ($100+ value)",
-      "Sponsor goodie bag",
       "Official SwimCrown contestant profile",
       "Online public fan voting",
-      "Professional runway content",
+      "Compete for Miss SwimCrown 2026",
     ],
   },
   {
-    id: "vip",
-    name: "VIP Entry",
-    price: 250,
+    id: "full_package",
+    name: "Full Package",
+    price: 399,
     icon: Crown,
     featured: true,
-    badge: "Recommended",
+    badge: "Best Value",
     borderClass: "border-rose-500/40 ring-1 ring-rose-500/20",
     bgClass: "bg-gradient-to-b from-rose-500/10 to-[#0d1f35]/80",
     iconColor: "text-rose-400",
     checkColor: "text-rose-400",
     features: [
-      "Everything in Standard",
-      "Skip to the finals — bypass preliminary rounds",
-      "Runway coaching to perfect your walk",
-      "Priority placement — seen first by judges",
+      "Everything in Entry",
+      "Designer swimwear gifted ($100+ value) — yours to keep",
+      "Official SwimCrown robe",
+      "Sponsored gift bag (beauty, sun care & lifestyle)",
+      "Professional photos & video of your runway walk",
       "Featured across EXA social channels",
-      "Higher visibility with designers & brands",
     ],
   },
 ];
 
 export function EntryForm() {
   const router = useRouter();
-  const [selectedTier, setSelectedTier] = useState<"standard" | "vip">("vip");
+  const [selectedTier, setSelectedTier] = useState<"standard" | "full_package">("full_package");
   const [tagline, setTagline] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -125,7 +123,7 @@ export function EntryForm() {
               key={tier.id}
               className={`relative cursor-pointer p-6 transition-all duration-200 ${tier.bgClass} ${
                 isSelected
-                  ? tier.id === "vip"
+                  ? tier.id === "full_package"
                     ? "border-rose-500 ring-2 ring-rose-500/30 scale-[1.02]"
                     : "border-teal-500 ring-2 ring-teal-500/30 scale-[1.02]"
                   : `${tier.borderClass} hover:border-teal-500/30`
@@ -143,7 +141,7 @@ export function EntryForm() {
               {/* Selected indicator */}
               {isSelected && (
                 <div className="absolute top-3 right-3">
-                  <CheckCircle2 className={`h-5 w-5 ${tier.id === "vip" ? "text-rose-400" : "text-teal-400"}`} />
+                  <CheckCircle2 className={`h-5 w-5 ${tier.id === "full_package" ? "text-rose-400" : "text-teal-400"}`} />
                 </div>
               )}
 
@@ -152,7 +150,7 @@ export function EntryForm() {
               />
               <h3
                 className={`text-lg font-bold ${
-                  tier.id === "vip" ? "text-rose-300" : "text-white"
+                  tier.id === "full_package" ? "text-rose-300" : "text-white"
                 } ${tier.badge ? "mt-1" : ""}`}
               >
                 {tier.name}
@@ -202,7 +200,7 @@ export function EntryForm() {
           onClick={handleSubmit}
           disabled={loading}
           className={`w-full font-bold py-6 text-lg rounded-full shadow-lg ${
-            selectedTier === "vip"
+            selectedTier === "full_package"
               ? "bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white shadow-rose-500/25"
               : "bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white shadow-teal-500/25"
           }`}
@@ -221,6 +219,9 @@ export function EntryForm() {
         <p className="text-center text-xs text-muted-foreground">
           You will be redirected to Stripe for secure payment. Entry fee is
           non-refundable.
+        </p>
+        <p className="text-center text-xs text-amber-300/60 mt-2">
+          All models are scored equally by our judges regardless of entry tier.
         </p>
       </div>
     </div>

@@ -121,8 +121,9 @@ export async function GET(request: NextRequest) {
     // Entries by tier
     const entriesByTier = {
       standard: (paidContestants || []).filter((c: any) => c.tier === "standard").length,
-      vip: (paidContestants || []).filter((c: any) => c.tier === "vip").length,
+      full_package: (paidContestants || []).filter((c: any) => c.tier === "full_package").length,
       // Legacy tiers (existing entries before pricing update)
+      vip: (paidContestants || []).filter((c: any) => c.tier === "vip").length,
       crown: (paidContestants || []).filter((c: any) => c.tier === "crown").length,
       elite: (paidContestants || []).filter((c: any) => c.tier === "elite").length,
     };

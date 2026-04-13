@@ -5,18 +5,18 @@ import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 
 const enterSchema = z.object({
-  tier: z.enum(["standard", "vip"]),
+  tier: z.enum(["standard", "full_package"]),
   tagline: z.string().max(200, "Tagline must be 200 characters or less").optional(),
 });
 
 const TIER_PRICING: Record<string, number> = {
-  standard: 15000,
-  vip: 25000,
+  standard: 17500,
+  full_package: 39900,
 };
 
 const TIER_LABELS: Record<string, string> = {
-  standard: "Standard",
-  vip: "VIP",
+  standard: "Entry",
+  full_package: "Full Package",
 };
 
 // POST - Enter SwimCrown competition
