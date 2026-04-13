@@ -99,67 +99,67 @@ export function AttachmentMenu({
             size="icon"
             disabled={uploading || disabled}
             className={cn(
-              "shrink-0 text-muted-foreground hover:text-primary transition-transform",
-              open && "rotate-45"
+              "shrink-0 h-12 w-12 rounded-2xl text-muted-foreground hover:text-primary hover:bg-muted transition-all",
+              open && "rotate-45 bg-muted text-primary"
             )}
           >
             {uploading ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
+              <Loader2 className="h-6 w-6 animate-spin" />
             ) : (
-              <Plus className="h-5 w-5" />
+              <Plus className="h-6 w-6" />
             )}
           </Button>
         </PopoverTrigger>
         <PopoverContent
           side="top"
           align="start"
-          className="w-auto p-2"
+          className="w-auto p-3 rounded-2xl"
           sideOffset={8}
         >
-          <div className="flex gap-1">
+          <div className="flex gap-2">
             {/* Photo */}
             <button
               onClick={handlePhotoClick}
-              className="flex flex-col items-center gap-1.5 p-3 rounded-xl transition-colors hover:bg-muted min-w-[64px]"
+              className="flex flex-col items-center gap-2 p-3 rounded-2xl transition-colors hover:bg-muted active:scale-95 min-w-[72px]"
             >
-              <div className="w-10 h-10 rounded-full flex items-center justify-center bg-pink-500/10">
-                <Camera className="h-5 w-5 text-pink-500" />
+              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-pink-500/10">
+                <Camera className="h-6 w-6 text-pink-500" />
               </div>
-              <span className="text-xs font-medium text-muted-foreground">Photo</span>
+              <span className="text-xs font-semibold text-muted-foreground">Photo</span>
             </button>
 
             {/* Video */}
             <button
               onClick={handleVideoClick}
-              className="flex flex-col items-center gap-1.5 p-3 rounded-xl transition-colors hover:bg-muted min-w-[64px]"
+              className="flex flex-col items-center gap-2 p-3 rounded-2xl transition-colors hover:bg-muted active:scale-95 min-w-[72px]"
             >
-              <div className="w-10 h-10 rounded-full flex items-center justify-center bg-blue-500/10">
-                <Video className="h-5 w-5 text-blue-500" />
+              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-blue-500/10">
+                <Video className="h-6 w-6 text-blue-500" />
               </div>
-              <span className="text-xs font-medium text-muted-foreground">Video</span>
+              <span className="text-xs font-semibold text-muted-foreground">Video</span>
             </button>
 
             {/* Voice */}
             <button
               onClick={handleVoiceClick}
-              className="flex flex-col items-center gap-1.5 p-3 rounded-xl transition-colors hover:bg-muted min-w-[64px]"
+              className="flex flex-col items-center gap-2 p-3 rounded-2xl transition-colors hover:bg-muted active:scale-95 min-w-[72px]"
             >
-              <div className="w-10 h-10 rounded-full flex items-center justify-center bg-amber-500/10">
-                <Mic className="h-5 w-5 text-amber-500" />
+              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-amber-500/10">
+                <Mic className="h-6 w-6 text-amber-500" />
               </div>
-              <span className="text-xs font-medium text-muted-foreground">Voice</span>
+              <span className="text-xs font-semibold text-muted-foreground">Voice</span>
             </button>
 
             {/* Library - only for models */}
             {isModel && (
               <button
                 onClick={handleLibraryClick}
-                className="flex flex-col items-center gap-1.5 p-3 rounded-xl transition-colors hover:bg-muted min-w-[64px]"
+                className="flex flex-col items-center gap-2 p-3 rounded-2xl transition-colors hover:bg-muted active:scale-95 min-w-[72px]"
               >
-                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-violet-500/10">
-                  <FolderOpen className="h-5 w-5 text-violet-500" />
+                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-violet-500/10">
+                  <FolderOpen className="h-6 w-6 text-violet-500" />
                 </div>
-                <span className="text-xs font-medium text-muted-foreground">Library</span>
+                <span className="text-xs font-semibold text-muted-foreground">Library</span>
               </button>
             )}
           </div>

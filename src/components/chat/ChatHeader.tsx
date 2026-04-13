@@ -108,16 +108,16 @@ export function ChatHeader({
 
   return (
     <>
-      <div className="flex items-center gap-4 p-4 border-b">
+      <div className="flex items-center gap-3 p-4 border-b">
         <Link href="/chats" className="lg:hidden" aria-label="Back to chats">
-          <Button variant="ghost" size="icon" aria-label="Back to chats">
+          <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl" aria-label="Back to chats">
             <ArrowLeft className="h-5 w-5" />
           </Button>
         </Link>
 
         <div className="relative">
           <Avatar className={cn(
-            "h-10 w-10 ring-2 ring-background",
+            "h-11 w-11 ring-2 ring-background",
             otherInfo.type === "brand" && "ring-amber-500/30",
             otherInfo.type === "fan" && "ring-blue-500/30",
             otherInfo.type === "model" && "ring-pink-500/30"
@@ -140,11 +140,11 @@ export function ChatHeader({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             {otherInfo.username ? (
-              <Link href={`/${otherInfo.username}`} className="font-semibold truncate hover:text-primary transition-colors">
+              <Link href={`/${otherInfo.username}`} className="font-bold text-[15px] truncate hover:text-primary transition-colors">
                 {otherName}
               </Link>
             ) : (
-              <h2 className="font-semibold truncate">{otherName}</h2>
+              <h2 className="font-bold text-[15px] truncate">{otherName}</h2>
             )}
             {otherInfo.type === "fan" && (
               <Badge variant="secondary" className="text-xs px-1.5 py-0 h-5 bg-blue-500/10 text-blue-500 border-blue-500/20">
@@ -179,7 +179,7 @@ export function ChatHeader({
         </div>
 
         {/* Call buttons grouped */}
-        <div className="flex items-center gap-0.5 bg-muted/50 rounded-lg p-0.5">
+        <div className="flex items-center gap-1 bg-muted/50 rounded-xl p-1">
           <VideoCallButton
             conversationId={conversation.id}
             coinBalance={localCoinBalance}
@@ -213,16 +213,16 @@ export function ChatHeader({
             size="icon"
             onClick={() => setShowTipDialog(true)}
             title="Send a tip"
-            className="h-9 w-9 text-pink-500 hover:text-pink-600 hover:bg-pink-500/10"
+            className="h-11 w-11 rounded-xl text-pink-500 hover:text-pink-600 bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/20"
           >
-            <Gift className="h-5 w-5" />
+            <Gift className="h-6 w-6" />
           </Button>
         )}
 
         {/* More options menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="More options">
+            <Button variant="ghost" size="icon" className="h-11 w-11 rounded-xl" aria-label="More options">
               <MoreVertical className="h-5 w-5" />
             </Button>
           </DropdownMenuTrigger>

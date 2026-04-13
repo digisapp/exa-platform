@@ -146,9 +146,8 @@ export const ChatMessages = forwardRef<ChatMessagesHandle, ChatMessagesProps>(
               <div className="flex justify-center">
                 <Button
                   variant="ghost"
-                  size="sm"
                   onClick={onLoadMore}
-                  className="text-muted-foreground"
+                  className="text-muted-foreground rounded-full px-6 h-10"
                 >
                   Load earlier messages
                 </Button>
@@ -188,12 +187,12 @@ export const ChatMessages = forwardRef<ChatMessagesHandle, ChatMessagesProps>(
                     </Badge>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Start your conversation
+                <p className="text-muted-foreground">
+                  Say hi! Start your conversation
                 </p>
                 {coinCost > 0 && (
-                  <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-                    <Coins className="h-3 w-3 text-yellow-500" />
+                  <p className="text-sm text-muted-foreground mt-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/50">
+                    <Coins className="h-3.5 w-3.5 text-yellow-500" />
                     {coinCost} coins per message
                   </p>
                 )}
@@ -291,26 +290,26 @@ export const ChatMessages = forwardRef<ChatMessagesHandle, ChatMessagesProps>(
 
                     {/* Failed message actions */}
                     {isFailed && message._tempId && (
-                      <div className="flex justify-end pr-2 mt-1 gap-2">
-                        <span className="text-[10px] text-destructive">Failed to send</span>
+                      <div className="flex justify-end pr-2 mt-2 gap-2 items-center">
+                        <span className="text-xs text-destructive font-medium">Couldn&apos;t send</span>
                         {onRetryMessage && (
                           <button
                             onClick={() => onRetryMessage(message._tempId!)}
-                            className="text-[10px] text-pink-500 hover:text-pink-600 flex items-center gap-0.5"
+                            className="text-xs font-medium text-pink-500 hover:text-pink-600 flex items-center gap-1 px-3 py-1.5 rounded-full bg-pink-500/10 hover:bg-pink-500/20 active:scale-95 transition-all"
                             aria-label="Retry sending message"
                           >
-                            <RefreshCw className="h-3 w-3" />
+                            <RefreshCw className="h-3.5 w-3.5" />
                             Retry
                           </button>
                         )}
                         {onDismissFailedMessage && (
                           <button
                             onClick={() => onDismissFailedMessage(message._tempId!)}
-                            className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-0.5"
+                            className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 px-3 py-1.5 rounded-full hover:bg-muted active:scale-95 transition-all"
                             aria-label="Dismiss failed message"
                           >
-                            <X className="h-3 w-3" />
-                            Dismiss
+                            <X className="h-3.5 w-3.5" />
+                            Remove
                           </button>
                         )}
                       </div>
@@ -346,11 +345,11 @@ export const ChatMessages = forwardRef<ChatMessagesHandle, ChatMessagesProps>(
               onClick={() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })}
               size="icon"
               aria-label="Scroll to latest messages"
-              className="h-10 w-10 rounded-full shadow-lg bg-background border hover:bg-muted relative"
+              className="h-12 w-12 rounded-full shadow-xl bg-background border-2 hover:bg-muted active:scale-95 transition-transform relative"
             >
-              <ChevronDown className="h-5 w-5" />
+              <ChevronDown className="h-6 w-6" />
               {newMessageCount > 0 && (
-                <span className="absolute -top-2 -right-1 min-w-5 h-5 px-1 rounded-full bg-pink-500 text-white text-[10px] font-semibold flex items-center justify-center shadow-sm">
+                <span className="absolute -top-2 -right-1 min-w-6 h-6 px-1.5 rounded-full bg-pink-500 text-white text-xs font-bold flex items-center justify-center shadow-md">
                   {newMessageCount > 99 ? "99+" : newMessageCount}
                 </span>
               )}

@@ -199,26 +199,26 @@ export const MessageBubble = memo(function MessageBubble({
       )}
     >
       {showAvatar ? (
-        <Avatar className="h-8 w-8 shrink-0">
+        <Avatar className="h-9 w-9 shrink-0">
           <AvatarImage src={senderAvatar || undefined} />
           <AvatarFallback className="text-xs">{initials}</AvatarFallback>
         </Avatar>
       ) : (
-        <div className="w-8 shrink-0" />
+        <div className="w-9 shrink-0" />
       )}
 
       <div className={cn("relative", isOwn ? "items-end" : "items-start")}>
         {/* Action menu (delete + reply) */}
         <div className={cn(
-          "absolute top-1 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5",
-          isOwn ? "-left-16" : "-right-16",
+          "absolute top-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5",
+          isOwn ? "-left-20" : "-right-20",
           isDeleting && "opacity-50 pointer-events-none"
         )}>
           {onReply && (
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 text-muted-foreground hover:text-foreground"
+              className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted"
               onClick={onReply}
             >
               <Reply className="h-4 w-4" />
@@ -230,7 +230,7 @@ export const MessageBubble = memo(function MessageBubble({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                  className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted"
                 >
                   <MoreVertical className="h-4 w-4" />
                 </Button>
@@ -250,7 +250,7 @@ export const MessageBubble = memo(function MessageBubble({
 
         <div
           className={cn(
-            "rounded-2xl px-4 py-2",
+            "rounded-2xl px-4 py-3",
             isOwn
               ? "bg-gradient-to-r from-pink-500 to-violet-500 text-white"
               : "bg-muted"
@@ -281,7 +281,7 @@ export const MessageBubble = memo(function MessageBubble({
           )}
 
           {message.content && (
-            <p className="text-sm whitespace-pre-wrap break-words">
+            <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">
               {message.content}
             </p>
           )}
@@ -306,23 +306,25 @@ export const MessageBubble = memo(function MessageBubble({
                       : "bg-gradient-to-br from-gray-800 to-gray-900"
                   )} />
                   {/* Overlay */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/30 rounded-lg">
-                    <Lock className="h-8 w-8 text-white/80 mb-2" />
-                    <p className="text-white/90 text-sm font-medium mb-3">
-                      {message.media_type?.startsWith("video/") ? "Locked Video" : "Locked Photo"}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[2px] rounded-lg">
+                    <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center mb-3">
+                      <Lock className="h-7 w-7 text-white" />
+                    </div>
+                    <p className="text-white font-medium mb-1">
+                      {message.media_type?.startsWith("video/") ? "Exclusive Video" : "Exclusive Photo"}
                     </p>
+                    <p className="text-white/60 text-sm mb-4">Tap to unlock</p>
                     <Button
                       onClick={handleUnlock}
                       disabled={isUnlocking}
-                      size="sm"
-                      className="bg-gradient-to-r from-pink-500 to-violet-500 text-white gap-1.5"
+                      className="h-11 px-6 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 text-white gap-2 shadow-lg shadow-pink-500/30 active:scale-95 transition-transform"
                     >
                       {isUnlocking ? (
-                        <Spinner className="h-4 w-4 animate-spin" />
+                        <Spinner className="h-5 w-5 animate-spin" />
                       ) : (
                         <>
-                          <Coins className="h-3.5 w-3.5" />
-                          Unlock for {message.media_price} coins
+                          <Coins className="h-4 w-4" />
+                          <span className="font-semibold">Unlock · {message.media_price} coins</span>
                         </>
                       )}
                     </Button>

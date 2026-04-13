@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, KeyboardEvent } from "react";
+import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -385,36 +386,41 @@ export function MessageInput({
       {coinCost > 0 && (
         <div
           className={cn(
-            "flex items-center gap-2 text-sm mb-2 px-1",
-            hasEnoughCoins ? "text-muted-foreground" : "text-destructive"
+            "flex items-center gap-2 text-sm mb-2 px-2 py-1.5 rounded-lg",
+            hasEnoughCoins ? "text-muted-foreground bg-muted/30" : "text-destructive bg-destructive/10"
           )}
         >
-          <Coins className="h-4 w-4" />
+          <Coins className="h-4 w-4 text-yellow-500" />
           <span>
             {hasEnoughCoins
               ? `${coinCost} coins per message`
-              : `Insufficient coins (need ${coinCost}, have ${coinBalance})`}
+              : `Not enough coins — need ${coinCost}, you have ${coinBalance}`}
           </span>
+          {!hasEnoughCoins && (
+            <Link href="/coins" className="ml-auto text-xs font-medium text-pink-500 hover:underline whitespace-nowrap">
+              Get coins
+            </Link>
+          )}
         </div>
       )}
 
       {/* Reply-to bar */}
       {replyingTo && (
-        <div className="flex items-center gap-2 mb-2 px-3 py-2 rounded-lg bg-muted/50 border-l-2 border-pink-500">
+        <div className="flex items-center gap-2 mb-2 px-3 py-2.5 rounded-xl bg-muted/50 border-l-3 border-pink-500">
           <Reply className="h-4 w-4 text-pink-500 flex-shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-pink-500">Replying to message</p>
-            <p className="text-xs text-muted-foreground truncate">
-              {replyingTo.content || (replyingTo.media_url ? "Media" : "Message")}
+            <p className="text-xs font-medium text-pink-500">Replying</p>
+            <p className="text-sm text-muted-foreground truncate">
+              {replyingTo.content || (replyingTo.media_url ? "Photo/Video" : "Message")}
             </p>
           </div>
           <Button
             variant="ghost"
             size="icon"
-            className="h-6 w-6 flex-shrink-0"
+            className="h-8 w-8 flex-shrink-0 rounded-full hover:bg-destructive/10 hover:text-destructive"
             onClick={onCancelReply}
           >
-            <X className="h-3.5 w-3.5" />
+            <X className="h-4 w-4" />
           </Button>
         </div>
       )}
@@ -573,7 +579,7 @@ export function MessageInput({
           placeholder={placeholder}
           disabled={disabled || sending || uploading}
           maxLength={5000}
-          className="min-h-[44px] max-h-32 resize-none"
+          className="min-h-[48px] max-h-32 resize-none text-[15px] rounded-2xl"
           rows={1}
         />
 
@@ -582,20 +588,19 @@ export function MessageInput({
           onClick={handleSend}
           disabled={!canSend || !hasEnoughCoins}
           className={cn(
-            "shrink-0 bg-gradient-to-r from-pink-500 to-violet-500 gap-1.5",
-            coinCost > 0 && "pr-3"
+            "shrink-0 h-12 bg-gradient-to-r from-pink-500 to-violet-500 gap-1.5 rounded-2xl shadow-lg shadow-pink-500/20 active:scale-95 transition-transform",
+            coinCost > 0 ? "px-4" : "w-12"
           )}
         >
           {sending || uploading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="h-5 w-5 animate-spin" />
           ) : (
             <>
-              <Send className="h-4 w-4" />
+              <Send className="h-5 w-5" />
               {coinCost > 0 && (
-                <span className="flex items-center gap-0.5 text-xs">
-                  <span className="opacity-70">·</span>
+                <span className="flex items-center gap-0.5 text-sm font-medium">
                   {coinCost}
-                  <Coins className="h-3 w-3" />
+                  <Coins className="h-3.5 w-3.5" />
                 </span>
               )}
             </>

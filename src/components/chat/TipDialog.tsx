@@ -103,24 +103,26 @@ export function TipDialog({
       )}
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Gift className="h-5 w-5 text-pink-500" />
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <div className="w-10 h-10 rounded-full bg-pink-500/10 flex items-center justify-center">
+              <Gift className="h-5 w-5 text-pink-500" />
+            </div>
             Send a Tip
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="space-y-5 py-4">
           {/* Current balance */}
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Your balance:</span>
-            <span className="flex items-center gap-1 font-medium">
-              <Coins className="h-4 w-4 text-pink-500" />
+          <div className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-muted/50">
+            <span className="text-sm text-muted-foreground">Your balance</span>
+            <span className="flex items-center gap-1.5 font-semibold">
+              <Coins className="h-4 w-4 text-yellow-500" />
               {coinBalance} coins
             </span>
           </div>
 
           {/* Tip amounts */}
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-3">
             {TIP_AMOUNTS.map((amount) => {
               const canAfford = coinBalance >= amount;
               const isSelected = selectedAmount === amount;
@@ -136,16 +138,16 @@ export function TipDialog({
                   }}
                   disabled={!canAfford || loading}
                   className={cn(
-                    "py-3 px-4 rounded-lg border text-center transition-all active:scale-95",
+                    "py-4 px-4 rounded-2xl border-2 text-center transition-all active:scale-95",
                     isSelected
-                      ? "border-pink-500 bg-pink-500/10 text-pink-500"
+                      ? "border-pink-500 bg-pink-500/10 text-pink-500 shadow-lg shadow-pink-500/10"
                       : canAfford
                         ? "border-border hover:border-pink-500/50 hover:bg-pink-500/5"
-                        : "border-border/50 text-muted-foreground opacity-50 cursor-not-allowed"
+                        : "border-border/50 text-muted-foreground opacity-40 cursor-not-allowed"
                   )}
                 >
-                  <div className="text-lg font-semibold">{amount}</div>
-                  <div className="text-xs text-muted-foreground">coins</div>
+                  <div className="text-2xl font-bold">{amount}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">coins</div>
                 </button>
               );
             })}
@@ -155,20 +157,20 @@ export function TipDialog({
           <Button
             onClick={handleTip}
             disabled={!selectedAmount || loading}
-            className="w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
+            className="w-full h-12 text-base rounded-2xl bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 shadow-lg shadow-pink-500/20 active:scale-[0.98] transition-transform"
           >
             {loading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                 Sending...
               </>
             ) : selectedAmount ? (
               <>
-                <Gift className="mr-2 h-4 w-4" />
+                <Gift className="mr-2 h-5 w-5" />
                 Send {selectedAmount} Coins
               </>
             ) : (
-              "Select an amount"
+              "Pick an amount"
             )}
           </Button>
 
@@ -176,8 +178,8 @@ export function TipDialog({
           {coinBalance < 100 && (
             <p className="text-center text-sm text-muted-foreground">
               Need more coins?{" "}
-              <Link href="/coins" className="text-pink-500 hover:underline">
-                Buy coins
+              <Link href="/coins" className="text-pink-500 font-medium hover:underline">
+                Get coins
               </Link>
             </p>
           )}
