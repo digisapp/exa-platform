@@ -46,6 +46,7 @@ const tiers: Tier[] = [
       "Official SwimCrown contestant profile",
       "Online public fan voting",
       "Compete for Miss SwimCrown 2026",
+      "Arrive hair & makeup ready",
     ],
   },
   {
@@ -62,6 +63,7 @@ const tiers: Tier[] = [
     features: [
       "Everything in Entry",
       "Designer swimwear gifted ($100+ value) — yours to keep",
+      "Hair & makeup included",
       "Official SwimCrown robe",
       "Sponsored gift bag (beauty, sun care & lifestyle)",
       "Professional photos & video of your runway walk",

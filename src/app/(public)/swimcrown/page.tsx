@@ -399,7 +399,7 @@ export default async function SwimCrownPage() {
                   $175
                 </p>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Get on the runway and compete. Your contestant profile goes live for fan voting — the rest is up to you.
+                  Get on the runway and compete. Your contestant profile goes live for fan voting — the rest is up to you. Arrive hair & makeup ready.
                 </p>
                 <ul className="mt-6 space-y-3 text-sm text-muted-foreground">
                   {[
@@ -442,6 +442,7 @@ export default async function SwimCrownPage() {
                   {[
                     "Everything in Entry",
                     "Designer swimwear gifted ($100+ value) — yours to keep",
+                    "Hair & makeup included",
                     "Official SwimCrown robe",
                     "Sponsored gift bag (beauty, sun care & lifestyle)",
                     "Professional photos & video of your runway walk",
