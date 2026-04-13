@@ -445,9 +445,6 @@ export default async function SwimCrownPage() {
                 Models from around the world are entering for their chance to step onto the
                 runway at Miami Swim Week — and earn the title of Miss SwimCrown 2026.
               </p>
-              <p className="text-sm text-amber-300/70 font-medium mb-8">
-                Limited to 100 selected models. Applications reviewed and approved.
-              </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link href="/swimcrown/enter">
                   <Button
