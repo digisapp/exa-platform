@@ -9,6 +9,7 @@ import type { Message } from "@/types/database";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { AttachmentMenu } from "./AttachmentMenu";
+import { EmojiPicker } from "./EmojiPicker";
 import { VoiceRecorder } from "./VoiceRecorder";
 import { LibraryPicker } from "./LibraryPicker";
 import { hapticFeedback } from "@/hooks/useHapticFeedback";
@@ -539,6 +540,28 @@ export function MessageInput({
           uploading={uploading}
           disabled={disabled || sending}
           isModel={isModel}
+        />
+
+        {/* Emoji picker (desktop only) */}
+        <EmojiPicker
+          onEmojiSelect={(emoji) => {
+            const textarea = textareaRef.current;
+            if (textarea) {
+              const start = textarea.selectionStart ?? content.length;
+              const end = textarea.selectionEnd ?? content.length;
+              const newContent = content.slice(0, start) + emoji + content.slice(end);
+              setContent(newContent);
+              // Restore cursor position after the inserted emoji
+              requestAnimationFrame(() => {
+                textarea.focus();
+                const newPos = start + emoji.length;
+                textarea.setSelectionRange(newPos, newPos);
+              });
+            } else {
+              setContent((prev) => prev + emoji);
+            }
+          }}
+          disabled={disabled || sending || uploading}
         />
 
         {/* Message input */}

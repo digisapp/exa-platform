@@ -296,6 +296,9 @@ export function ProfileActionButtons({
       showTipSuccessToast({ amount: selectedTipAmount, recipientName: data.recipientName });
       setShowTipDialog(false);
       setSelectedTipAmount(null);
+      if (data.conversationId) {
+        router.push(`/chats/${data.conversationId}`);
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to send tip");
     } finally {

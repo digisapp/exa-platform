@@ -16,10 +16,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Search, MessageSquare, Sparkles, Users, Building2, Pin, Archive, ArchiveRestore, MoreVertical } from "lucide-react";
+import { MessageCircle, Search, MessageSquare, Sparkles, Users, Building2, Pin, Archive, ArchiveRestore, MoreVertical, Coins, Camera, Video, Mic } from "lucide-react";
 import { format, isToday, isYesterday, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { SwipeableConversationItem } from "./SwipeableConversationItem";
 
 interface Conversation {
   conversation_id: string;
@@ -189,6 +190,11 @@ export function ConversationList({ conversations: initialConversations, actorTyp
       };
     }
   }, [currentActorId, conversationIds]);
+
+  // Helper to detect tip system messages
+  const isTipMessage = (message: Conversation["lastMessage"]) => {
+    return message?.is_system && message.content?.includes("coin tip");
+  };
 
   // Helper to get message preview text
   const getMessagePreview = (message: Conversation["lastMessage"]) => {
@@ -445,7 +451,14 @@ export function ConversationList({ conversations: initialConversations, actorTyp
             const isSelected = conv.conversation_id === selectedId;
 
             return (
-              <div key={conv.conversation_id} className="relative group/conv">
+              <SwipeableConversationItem
+                key={conv.conversation_id}
+                isPinned={conv.is_pinned}
+                isArchived={conv.is_archived}
+                onPin={() => handlePin(conv.conversation_id, !conv.is_pinned)}
+                onArchive={() => handleArchive(conv.conversation_id, !conv.is_archived)}
+              >
+              <div className="relative group/conv">
                 <Link
                   href={`/chats/${conv.conversation_id}`}
                   className={cn(
@@ -510,11 +523,23 @@ export function ConversationList({ conversations: initialConversations, actorTyp
                     </div>
                     <p
                       className={cn(
-                        "text-sm truncate mt-0.5",
+                        "text-sm truncate mt-0.5 flex items-center gap-1",
                         isUnread ? "text-foreground font-medium" : "text-muted-foreground"
                       )}
                     >
-                      {getMessagePreview(conv.lastMessage)}
+                      {isTipMessage(conv.lastMessage) && (
+                        <Coins className="h-3 w-3 text-amber-500 flex-shrink-0" />
+                      )}
+                      {!conv.lastMessage?.is_system && conv.lastMessage?.media_url && !conv.lastMessage?.content && (
+                        conv.lastMessage.media_type?.startsWith("image/") ? (
+                          <Camera className="h-3 w-3 text-pink-500 flex-shrink-0" />
+                        ) : conv.lastMessage.media_type?.startsWith("video/") ? (
+                          <Video className="h-3 w-3 text-blue-500 flex-shrink-0" />
+                        ) : conv.lastMessage.media_type?.startsWith("audio/") ? (
+                          <Mic className="h-3 w-3 text-amber-500 flex-shrink-0" />
+                        ) : null
+                      )}
+                      <span className="truncate">{getMessagePreview(conv.lastMessage)}</span>
                     </p>
                   </div>
                 </Link>
@@ -548,6 +573,7 @@ export function ConversationList({ conversations: initialConversations, actorTyp
                   </DropdownMenu>
                 </div>
               </div>
+              </SwipeableConversationItem>
             );
           })}
         </div>

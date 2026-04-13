@@ -8,10 +8,16 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { SmilePlus } from "lucide-react";
+import { SmilePlus, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 
 const REACTION_EMOJIS = ["❤️", "😂", "😮", "😢", "😡", "👍"];
+const EXTENDED_EMOJIS = [
+  "🔥", "💯", "🙌", "👏", "🥰", "😍",
+  "😘", "🤩", "😎", "🤭", "😏", "🥺",
+  "💀", "🤣", "😭", "🙏", "💕", "✨",
+  "🎉", "💪", "👀", "🤔", "😈", "💋",
+];
 
 interface Reaction {
   emoji: string;
@@ -35,14 +41,13 @@ export function MessageReactions({
   isOwn = false,
 }: MessageReactionsProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [showMore, setShowMore] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [localReactions, setLocalReactions] = useState<Reaction[]>(reactions);
 
   // Sync from props when they change (batch-fetched from parent)
   useEffect(() => {
-    if (reactions.length > 0) {
-      setLocalReactions(reactions);
-    }
+    setLocalReactions(reactions);
   }, [reactions]);
 
   const handleReact = async (emoji: string) => {
@@ -148,7 +153,7 @@ export function MessageReactions({
       ))}
 
       {/* Add reaction button */}
-      <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <Popover open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) setShowMore(false); }}>
         <PopoverTrigger asChild>
           <Button
             variant="ghost"
@@ -167,17 +172,43 @@ export function MessageReactions({
           className="w-auto p-2"
           align="center"
         >
-          <div className="flex gap-1">
-            {REACTION_EMOJIS.map((emoji) => (
-              <button
-                key={emoji}
-                onClick={() => handleReact(emoji)}
-                aria-label={`React with ${emoji}`}
-                className="p-2 hover:bg-muted rounded-lg transition-colors text-lg"
-              >
-                {emoji}
-              </button>
-            ))}
+          <div className="flex flex-col gap-1">
+            <div className="flex gap-1">
+              {REACTION_EMOJIS.map((emoji) => (
+                <button
+                  key={emoji}
+                  onClick={() => handleReact(emoji)}
+                  aria-label={`React with ${emoji}`}
+                  className="p-2 hover:bg-muted rounded-lg transition-colors text-lg"
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+            {showMore && (
+              <div className="grid grid-cols-6 gap-1 pt-1 border-t border-border/50">
+                {EXTENDED_EMOJIS.map((emoji) => (
+                  <button
+                    key={emoji}
+                    onClick={() => handleReact(emoji)}
+                    aria-label={`React with ${emoji}`}
+                    className="p-2 hover:bg-muted rounded-lg transition-colors text-lg text-center"
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            )}
+            <button
+              onClick={() => setShowMore(!showMore)}
+              className="flex items-center justify-center gap-1 text-xs text-muted-foreground hover:text-foreground py-1 transition-colors"
+            >
+              {showMore ? (
+                <><ChevronUp className="h-3 w-3" /> Less</>
+              ) : (
+                <><ChevronDown className="h-3 w-3" /> More</>
+              )}
+            </button>
           </div>
         </PopoverContent>
       </Popover>

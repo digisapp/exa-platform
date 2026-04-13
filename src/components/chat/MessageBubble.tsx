@@ -15,8 +15,19 @@ import { formatDistanceToNow, format, isToday, isYesterday } from "date-fns";
 import { MoreVertical, Trash2, Lock, Coins, Loader2 as Spinner, Reply } from "lucide-react";
 import { toast } from "sonner";
 import { ImageLightbox } from "./ImageLightbox";
+import { LinkPreview } from "./LinkPreview";
 import { MessageReactions } from "./MessageReactions";
 import type { Message } from "@/types/database";
+
+// Match URLs in text (http/https only), strip trailing punctuation
+const URL_REGEX = /https?:\/\/[^\s<>"{}|\\^`[\]]+/gi;
+
+function extractFirstUrl(text: string): string | null {
+  const match = text.match(URL_REGEX);
+  if (!match) return null;
+  // Strip trailing punctuation that's likely not part of the URL
+  return match[0].replace(/[.,;:!?)]+$/, "");
+}
 
 function formatMessageTimestamp(dateStr: string): string {
   const date = new Date(dateStr);
@@ -273,6 +284,14 @@ export const MessageBubble = memo(function MessageBubble({
             <p className="text-sm whitespace-pre-wrap break-words">
               {message.content}
             </p>
+          )}
+
+          {/* Link preview for first URL in message */}
+          {message.content && extractFirstUrl(message.content) && (
+            <LinkPreview
+              url={extractFirstUrl(message.content)!}
+              isOwn={isOwn}
+            />
           )}
 
           {message.media_url && (

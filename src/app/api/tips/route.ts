@@ -233,6 +233,7 @@ export async function POST(request: NextRequest) {
       amount: result.amount,
       newBalance: result.sender_new_balance,
       recipientName,
+      conversationId: finalConversationId || null,
     });
   } catch (error) {
     console.error("Tip error:", error);

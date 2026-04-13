@@ -67,6 +67,8 @@ export function ChatView({
   );
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [isNearBottom, setIsNearBottom] = useState(true);
+  const isNearBottomRef = useRef(true);
+  const [newMessageCount, setNewMessageCount] = useState(0);
   const chatMessagesRef = useRef<ChatMessagesHandle>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
@@ -171,7 +173,11 @@ export function ChatView({
         }
         return [...prev, newMessage];
       });
-    }, []),
+      // Track unread count only when scrolled away from bottom
+      if (newMessage.sender_id !== currentActor.id && !isNearBottomRef.current) {
+        setNewMessageCount((prev) => prev + 1);
+      }
+    }, [currentActor.id]),
     onSystemTip: useCallback(() => {
       toast.success(`${otherName} sent you a tip!`, {
         icon: "🎁",
@@ -506,7 +512,12 @@ export function ChatView({
 
   const handleScrollStateChange = useCallback((nearBottom: boolean, showBtn: boolean) => {
     setIsNearBottom(nearBottom);
+    isNearBottomRef.current = nearBottom;
     setShowScrollButton(showBtn);
+    // Reset new message count when user scrolls to bottom
+    if (nearBottom) {
+      setNewMessageCount(0);
+    }
   }, []);
 
   return (
@@ -550,6 +561,7 @@ export function ChatView({
         coinCost={coinCost}
         typingUsers={typingUsers}
         showScrollButton={showScrollButton}
+        newMessageCount={newMessageCount}
         onLoadMore={loadMoreMessages}
         onUnlockMedia={handleUnlockMedia}
         onScrollStateChange={handleScrollStateChange}

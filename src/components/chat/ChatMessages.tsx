@@ -36,6 +36,7 @@ interface ChatMessagesProps {
   coinCost: number;
   typingUsers: TypingUser[];
   showScrollButton: boolean;
+  newMessageCount?: number;
   onLoadMore: () => void;
   onUnlockMedia: (messageId: string) => Promise<void>;
   onScrollStateChange: (isNearBottom: boolean, showScrollBtn: boolean) => void;
@@ -60,6 +61,7 @@ export const ChatMessages = forwardRef<ChatMessagesHandle, ChatMessagesProps>(
       coinCost,
       typingUsers,
       showScrollButton,
+      newMessageCount = 0,
       onLoadMore,
       onUnlockMedia,
       onScrollStateChange,
@@ -344,9 +346,14 @@ export const ChatMessages = forwardRef<ChatMessagesHandle, ChatMessagesProps>(
               onClick={() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })}
               size="icon"
               aria-label="Scroll to latest messages"
-              className="h-10 w-10 rounded-full shadow-lg bg-background border hover:bg-muted"
+              className="h-10 w-10 rounded-full shadow-lg bg-background border hover:bg-muted relative"
             >
               <ChevronDown className="h-5 w-5" />
+              {newMessageCount > 0 && (
+                <span className="absolute -top-2 -right-1 min-w-5 h-5 px-1 rounded-full bg-pink-500 text-white text-[10px] font-semibold flex items-center justify-center shadow-sm">
+                  {newMessageCount > 99 ? "99+" : newMessageCount}
+                </span>
+              )}
             </Button>
           </div>
         )}
