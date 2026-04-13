@@ -463,6 +463,51 @@ export default async function SwimCrownPage() {
                 </div>
               </Card>
             </div>
+
+            {/* ─── Comparison Table ─── */}
+            <div className="mt-16 max-w-2xl mx-auto overflow-hidden rounded-2xl border border-teal-500/20">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-teal-500/10">
+                    <th className="text-left py-4 px-5 text-white/70 font-semibold">What&apos;s Included</th>
+                    <th className="py-4 px-4 text-center text-teal-300 font-bold">Entry<br /><span className="text-white/50 text-xs font-normal">$175</span></th>
+                    <th className="py-4 px-4 text-center text-rose-300 font-bold">Full Package<br /><span className="text-white/50 text-xs font-normal">$399</span></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {[
+                    { feature: "Walk the runway at Miami Swim Week", entry: true, full: true },
+                    { feature: "Official contestant profile + fan voting", entry: true, full: true },
+                    { feature: "Compete for Miss SwimCrown 2026", entry: true, full: true },
+                    { feature: "Scored equally by judges", entry: true, full: true },
+                    { feature: "Designer swimwear gifted ($100+ value)", entry: false, full: true },
+                    { feature: "Hair & makeup", entry: false, full: true },
+                    { feature: "Official SwimCrown robe", entry: false, full: true },
+                    { feature: "Sponsored gift bag", entry: false, full: true },
+                    { feature: "Professional photos & video", entry: false, full: true },
+                    { feature: "Featured on EXA social channels", entry: false, full: true },
+                  ].map((row) => (
+                    <tr key={row.feature} className="hover:bg-white/[0.02] transition-colors">
+                      <td className="py-3 px-5 text-white/70">{row.feature}</td>
+                      <td className="py-3 px-4 text-center">
+                        {row.entry ? (
+                          <CheckCircle2 className="h-5 w-5 text-teal-400 mx-auto" />
+                        ) : (
+                          <span className="text-white/20">—</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        {row.full ? (
+                          <CheckCircle2 className="h-5 w-5 text-rose-400 mx-auto" />
+                        ) : (
+                          <span className="text-white/20">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
 
