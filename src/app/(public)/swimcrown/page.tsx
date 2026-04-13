@@ -208,11 +208,11 @@ export default async function SwimCrownPage() {
                     <div className="w-12 h-px bg-gradient-to-r from-teal-500/50 to-transparent" />
 
                     <p className="text-muted-foreground text-sm leading-relaxed">
-                      The inaugural SwimCrown competition debuts live at{" "}
+                      SwimCrown competition debuts live at{" "}
                       <span className="text-teal-300 font-semibold">Miami Swim Week</span>.
-                      Selected models walk the runway before a live audience,
-                      scored by an elite panel of judges. The evening culminates
-                      with the crowning ceremony — the winner receives the{" "}
+                      Models walk the runway before a live audience, scored by an
+                      elite panel of judges. The evening culminates with the
+                      crowning ceremony! The winner receives the{" "}
                       <span className="text-white font-semibold">official crown and sash on stage</span>,
                       earning the title of{" "}
                       <span className="text-amber-300 font-semibold">Miss SwimCrown 2026</span>{" "}
