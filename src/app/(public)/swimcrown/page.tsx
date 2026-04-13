@@ -101,51 +101,51 @@ export default async function SwimCrownPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0a1628] via-[#0d1f35] to-[#0a1628]">
+    <div className="min-h-screen bg-gradient-to-b from-[#0a0a1a] via-[#0f1628] to-[#0a0a1a]">
       <Navbar user={navbarUser} actorType={actorType} />
 
       <main>
         {/* ─── Hero ─── */}
-        <section className="pt-12 sm:pt-16 pb-6">
+        <section className="pt-14 sm:pt-20 pb-8">
           <div className="container mx-auto px-4 text-center">
-            <p className="text-xs sm:text-sm font-bold tracking-[0.3em] uppercase text-teal-400/80 mb-4">
+            <p className="text-sm sm:text-base font-bold tracking-[0.3em] uppercase text-pink-400/90 mb-5">
               EXA Presents
             </p>
 
-            <div className="relative mb-3 inline-flex items-center justify-center">
-              <Crown className="h-12 sm:h-14 w-12 sm:w-14 text-amber-400 drop-shadow-[0_0_15px_rgba(251,191,36,0.4)]" />
-              <Sparkles className="absolute -top-2 -right-4 h-5 w-5 text-teal-300 animate-ping [animation-duration:2s]" />
-              <Sparkles className="absolute -top-1 -left-4 h-4 w-4 text-cyan-300 animate-ping [animation-duration:2.5s] [animation-delay:0.5s]" />
-              <Sparkles className="absolute -bottom-1 right-0 h-3 w-3 text-teal-400 animate-ping [animation-duration:3s] [animation-delay:1s]" />
+            <div className="relative mb-4 inline-flex items-center justify-center">
+              <Crown className="h-14 sm:h-16 w-14 sm:w-16 text-amber-400 drop-shadow-[0_0_20px_rgba(251,191,36,0.5)]" />
+              <Sparkles className="absolute -top-2 -right-5 h-6 w-6 text-pink-300 animate-ping [animation-duration:2s]" />
+              <Sparkles className="absolute -top-1 -left-5 h-5 w-5 text-cyan-300 animate-ping [animation-duration:2.5s] [animation-delay:0.5s]" />
+              <Sparkles className="absolute -bottom-1 right-0 h-4 w-4 text-amber-300 animate-ping [animation-duration:3s] [animation-delay:1s]" />
             </div>
 
-            <p className="text-[10px] sm:text-xs font-semibold tracking-[0.25em] uppercase text-white/50 mb-1">
+            <p className="text-xs sm:text-sm font-semibold tracking-[0.25em] uppercase text-white/40 mb-2">
               The 1st Annual
             </p>
 
-            <h1 className="mx-auto max-w-4xl text-5xl sm:text-6xl md:text-7xl font-black tracking-tighter">
-              <span className="bg-gradient-to-r from-teal-300 via-cyan-400 to-teal-400 bg-clip-text text-transparent">
+            <h1 className="mx-auto max-w-4xl text-6xl sm:text-7xl md:text-8xl font-black tracking-tighter">
+              <span className="bg-gradient-to-r from-pink-300 via-rose-400 to-pink-400 bg-clip-text text-transparent">
                 SWIM
               </span>
-              <span className="bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-amber-300 via-yellow-300 to-amber-400 bg-clip-text text-transparent">
                 CROWN
               </span>
             </h1>
 
-            <p className="mt-4 text-base sm:text-lg text-white/50 font-medium tracking-wide">
+            <p className="mt-5 text-lg sm:text-xl text-white/60 font-medium tracking-wide">
               World&apos;s #1 Swim Model of the Year Competition
             </p>
           </div>
         </section>
 
         {/* ─── Video + Competition Details — Split Layout ─── */}
-        <section className="relative pb-10">
+        <section className="relative pb-14">
           <div className="container mx-auto px-4">
             <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start max-w-6xl mx-auto">
 
               {/* Left — Portrait Video with Overlay */}
               <div className="max-w-sm mx-auto lg:max-w-none">
-                <div className="relative aspect-[9/16] rounded-2xl overflow-hidden border border-teal-500/20 shadow-2xl shadow-teal-500/10">
+                <div className="relative aspect-[9/16] rounded-3xl overflow-hidden border border-pink-500/20 shadow-2xl shadow-pink-500/10">
                   <video
                     autoPlay
                     muted
@@ -157,18 +157,18 @@ export default async function SwimCrownPage() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
 
                   <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8 text-center">
-                    <p className="text-white text-lg sm:text-xl font-bold leading-snug mb-2">
+                    <p className="text-white text-xl sm:text-2xl font-bold leading-snug mb-3">
                       Who Will Be Crowned Miss SwimCrown 2026?
                     </p>
-                    <p className="text-white/70 text-sm leading-relaxed mb-6">
-                      Walk the runway at Miami Swim Week in gifted designer swimwear.
+                    <p className="text-white/70 text-base leading-relaxed mb-6">
+                      Walk the runway at Miami Swim Week.
                       Compete before a live audience and an elite panel of judges for
                       the title of World&apos;s #1 Swim Model.
                     </p>
                     <Link href="/swimcrown/enter" className="lg:hidden">
                       <Button
                         size="lg"
-                        className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white font-bold px-6 py-5 text-base rounded-full shadow-lg shadow-teal-500/25"
+                        className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-bold px-8 py-5 text-base rounded-full shadow-lg shadow-pink-500/30"
                       >
                         <Crown className="mr-2 h-5 w-5" />
                         Enter the Competition
@@ -188,29 +188,29 @@ export default async function SwimCrownPage() {
                 </div>
 
                 {/* Competition Card */}
-                <div className="relative overflow-hidden rounded-2xl border border-teal-500/30 bg-gradient-to-b from-teal-500/10 via-[#0d1f35]/90 to-[#0d1f35]/90 p-8">
-                  <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-teal-400 via-cyan-500 to-teal-400" />
+                <div className="relative overflow-hidden rounded-3xl border border-pink-500/20 bg-gradient-to-b from-pink-500/5 via-[#0f1628]/90 to-[#0f1628]/90 p-8">
+                  <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-pink-400 via-rose-500 to-amber-400" />
 
                   <div className="flex flex-col gap-5">
-                    <div className="flex items-center gap-2 text-teal-400">
+                    <div className="flex items-center gap-2 text-pink-400">
                       <Waves className="h-4 w-4" />
-                      <span className="text-xs font-bold tracking-widest uppercase">1st Annual SwimCrown</span>
+                      <span className="text-sm font-bold tracking-widest uppercase">1st Annual SwimCrown</span>
                       <Waves className="h-4 w-4" />
                     </div>
 
                     <h2 className="text-3xl sm:text-4xl font-black text-white">
-                      EXA Presents: SwimCrown 2026
+                      SwimCrown 2026
                     </h2>
 
-                    <p className="text-base font-semibold text-teal-300">
+                    <p className="text-lg font-semibold text-pink-300">
                       Saturday, May 30, 2026 &middot; Miami Beach, FL
                     </p>
 
-                    <div className="w-12 h-px bg-gradient-to-r from-teal-500/50 to-transparent" />
+                    <div className="w-12 h-px bg-gradient-to-r from-pink-500/50 to-transparent" />
 
-                    <p className="text-muted-foreground text-sm leading-relaxed">
+                    <p className="text-white/70 text-base leading-relaxed">
                       SwimCrown competition debuts live at{" "}
-                      <span className="text-teal-300 font-semibold">Miami Swim Week</span>.
+                      <span className="text-pink-300 font-semibold">Miami Swim Week</span>.
                       Every model walks the runway in Round 1, scored by an elite
                       panel of judges. Top models advance through Semifinals and
                       Finals, culminating with the crowning ceremony! The winner
@@ -222,16 +222,16 @@ export default async function SwimCrownPage() {
                       <span className="text-white font-semibold">World&apos;s #1 Swim Model of the Year</span>.
                     </p>
 
-                    <div className="grid grid-cols-1 gap-2">
+                    <div className="grid grid-cols-1 gap-3">
                       {[
                         { icon: Crown, text: "Walk the Runway at Miami Swim Week" },
                         { icon: Gift, text: "Gifted Designer Swimwear + Goodie Bag" },
                         { icon: Camera, text: "Professional Runway Content for Your Portfolio" },
                         { icon: Trophy, text: "Compete for Miss SwimCrown 2026" },
                       ].map((item) => (
-                        <div key={item.text} className="flex items-center justify-center gap-2 rounded-xl border border-teal-500/20 bg-teal-500/5 px-3 py-2.5">
-                          <item.icon className="h-4 w-4 text-teal-400 shrink-0" />
-                          <span className="text-xs font-medium text-white">{item.text}</span>
+                        <div key={item.text} className="flex items-center gap-3 rounded-xl border border-pink-500/15 bg-pink-500/5 px-4 py-3">
+                          <item.icon className="h-5 w-5 text-pink-400 shrink-0" />
+                          <span className="text-sm font-medium text-white">{item.text}</span>
                         </div>
                       ))}
                     </div>
@@ -239,7 +239,7 @@ export default async function SwimCrownPage() {
                     <Link href="/swimcrown/enter">
                       <Button
                         size="lg"
-                        className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white font-bold px-8 py-5 text-base rounded-full shadow-lg shadow-teal-500/25"
+                        className="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-bold px-8 py-6 text-lg rounded-full shadow-lg shadow-pink-500/30"
                       >
                         <Crown className="mr-2 h-5 w-5" />
                         Enter the Competition
@@ -249,7 +249,7 @@ export default async function SwimCrownPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="w-full text-white/40 hover:text-white/70 text-xs"
+                        className="w-full text-white/40 hover:text-pink-300 text-sm"
                       >
                         Become a Sponsor
                       </Button>
@@ -262,46 +262,46 @@ export default async function SwimCrownPage() {
         </section>
 
         {/* ─── Entry Tiers ─── */}
-        <section className="py-20 sm:py-24 bg-gradient-to-b from-transparent via-teal-950/10 to-transparent">
+        <section className="py-20 sm:py-24 bg-gradient-to-b from-transparent via-pink-950/10 to-transparent">
           <div className="container mx-auto px-4">
-            <h2 className="text-center text-3xl sm:text-4xl font-bold mb-4">
-              <span className="bg-gradient-to-r from-teal-300 to-cyan-400 bg-clip-text text-transparent">
+            <h2 className="text-center text-4xl sm:text-5xl font-black mb-5">
+              <span className="bg-gradient-to-r from-pink-300 via-rose-400 to-pink-300 bg-clip-text text-transparent">
                 Choose Your Entry
               </span>
             </h2>
-            <p className="text-center text-muted-foreground mb-4 max-w-xl mx-auto">
+            <p className="text-center text-white/60 mb-5 max-w-xl mx-auto text-base">
               Both tiers include a runway walk and compete equally for the crown — your tier determines your experience, not your outcome
             </p>
-            <p className="text-center text-xs text-amber-300/70 mb-12 max-w-md mx-auto font-medium">
+            <p className="text-center text-sm text-amber-300/80 mb-14 max-w-md mx-auto font-medium">
               All models are scored equally by our judges regardless of entry tier
             </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
               {/* Entry */}
-              <Card className="relative border-teal-500/20 bg-[#0d1f35]/80 p-6 flex flex-col">
-                <Waves className="h-8 w-8 text-teal-400 mb-3" />
-                <h3 className="text-lg font-bold text-white">Entry</h3>
-                <p className="mt-1 text-3xl font-black text-white">
+              <Card className="relative border-white/10 bg-white/[0.03] backdrop-blur-sm p-8 flex flex-col rounded-3xl">
+                <Waves className="h-9 w-9 text-pink-400 mb-4" />
+                <h3 className="text-xl font-bold text-white">Entry</h3>
+                <p className="mt-2 text-4xl font-black text-white">
                   $175
                 </p>
-                <p className="mt-2 text-sm text-muted-foreground">
+                <p className="mt-3 text-base text-white/60 leading-relaxed">
                   Get on the runway and compete. Your contestant profile goes live on EXA. Arrive hair & makeup ready.
                 </p>
-                <ul className="mt-6 space-y-3 text-sm text-muted-foreground">
+                <ul className="mt-6 space-y-4 text-base text-white/70">
                   {[
                     "Walk the runway at Miami Swim Week",
                     "Official SwimCrown contestant profile",
                     "Compete for Miss SwimCrown 2026",
                   ].map((item) => (
-                    <li key={item} className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-teal-400 mt-0.5 shrink-0" />
+                    <li key={item} className="flex items-start gap-3">
+                      <CheckCircle2 className="h-5 w-5 text-pink-400 mt-0.5 shrink-0" />
                       {item}
                     </li>
                   ))}
                 </ul>
-                <div className="mt-auto pt-8">
+                <div className="mt-auto pt-10">
                   <Link href="/swimcrown/enter" className="block">
-                    <Button className="w-full border-teal-500/30 text-teal-300 hover:bg-teal-500/10" variant="outline">
+                    <Button className="w-full border-pink-500/30 text-pink-300 hover:bg-pink-500/10 py-6 text-base rounded-full" variant="outline">
                       Enter — $175
                     </Button>
                   </Link>
@@ -309,21 +309,21 @@ export default async function SwimCrownPage() {
               </Card>
 
               {/* Full Package */}
-              <Card className="relative border-rose-500/40 bg-gradient-to-b from-rose-500/10 to-[#0d1f35]/80 p-6 ring-1 ring-rose-500/20 scale-[1.02] flex flex-col">
-                <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold px-3">
+              <Card className="relative border-rose-500/30 bg-gradient-to-b from-rose-500/10 to-white/[0.03] backdrop-blur-sm p-8 ring-1 ring-rose-500/20 scale-[1.02] flex flex-col rounded-3xl">
+                <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold px-4 py-1 text-sm">
                   Best Value
                 </Badge>
-                <Gift className="h-8 w-8 text-rose-400 mb-3 mt-2" />
-                <h3 className="text-lg font-bold text-rose-300">
+                <Gift className="h-9 w-9 text-rose-400 mb-4 mt-2" />
+                <h3 className="text-xl font-bold text-rose-300">
                   Full Package
                 </h3>
-                <p className="mt-1 text-3xl font-black text-white">
+                <p className="mt-2 text-4xl font-black text-white">
                   $399
                 </p>
-                <p className="mt-2 text-sm text-rose-300/70">
+                <p className="mt-3 text-base text-rose-300/70 leading-relaxed">
                   Everything you need to arrive prepared and walk away with more. Designer swimwear, professional content, and the full Swim Week experience.
                 </p>
-                <ul className="mt-6 space-y-3 text-sm text-muted-foreground">
+                <ul className="mt-6 space-y-4 text-base text-white/70">
                   {[
                     "Everything in Entry",
                     "Designer swimwear gifted ($100+ value) — yours to keep",
@@ -333,15 +333,15 @@ export default async function SwimCrownPage() {
                     "Professional photos & video of your runway walk",
                     "Featured across EXA social channels",
                   ].map((item) => (
-                    <li key={item} className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-rose-400 mt-0.5 shrink-0" />
+                    <li key={item} className="flex items-start gap-3">
+                      <CheckCircle2 className="h-5 w-5 text-rose-400 mt-0.5 shrink-0" />
                       {item}
                     </li>
                   ))}
                 </ul>
-                <div className="mt-auto pt-8">
+                <div className="mt-auto pt-10">
                   <Link href="/swimcrown/enter" className="block">
-                    <Button className="w-full bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white font-bold">
+                    <Button className="w-full bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white font-bold py-6 text-base rounded-full shadow-lg shadow-rose-500/20">
                       Enter Full Package — $399
                     </Button>
                   </Link>
@@ -350,13 +350,13 @@ export default async function SwimCrownPage() {
             </div>
 
             {/* ─── Comparison Table ─── */}
-            <div className="mt-16 max-w-2xl mx-auto overflow-hidden rounded-2xl border border-teal-500/20">
-              <table className="w-full text-sm">
+            <div className="mt-16 max-w-2xl mx-auto overflow-hidden rounded-3xl border border-white/10 bg-white/[0.02]">
+              <table className="w-full">
                 <thead>
-                  <tr className="bg-teal-500/10">
-                    <th className="text-left py-4 px-5 text-white/70 font-semibold">What&apos;s Included</th>
-                    <th className="py-4 px-4 text-center text-teal-300 font-bold">Entry<br /><span className="text-white/50 text-xs font-normal">$175</span></th>
-                    <th className="py-4 px-4 text-center text-rose-300 font-bold">Full Package<br /><span className="text-white/50 text-xs font-normal">$399</span></th>
+                  <tr className="bg-pink-500/10">
+                    <th className="text-left py-5 px-6 text-white/80 font-semibold text-base">What&apos;s Included</th>
+                    <th className="py-5 px-5 text-center text-pink-300 font-bold text-base">Entry<br /><span className="text-white/40 text-sm font-normal">$175</span></th>
+                    <th className="py-5 px-5 text-center text-rose-300 font-bold text-base">Full Package<br /><span className="text-white/40 text-sm font-normal">$399</span></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
@@ -370,19 +370,19 @@ export default async function SwimCrownPage() {
                     { feature: "Professional photos & video", entry: false, full: true },
                   ].map((row) => (
                     <tr key={row.feature} className="hover:bg-white/[0.02] transition-colors">
-                      <td className="py-3 px-5 text-white/70">{row.feature}</td>
-                      <td className="py-3 px-4 text-center">
+                      <td className="py-4 px-6 text-white/70 text-base">{row.feature}</td>
+                      <td className="py-4 px-5 text-center">
                         {row.entry ? (
-                          <CheckCircle2 className="h-5 w-5 text-teal-400 mx-auto" />
+                          <CheckCircle2 className="h-6 w-6 text-pink-400 mx-auto" />
                         ) : (
-                          <span className="text-white/20">—</span>
+                          <span className="text-white/15 text-lg">—</span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-center">
+                      <td className="py-4 px-5 text-center">
                         {row.full ? (
-                          <CheckCircle2 className="h-5 w-5 text-rose-400 mx-auto" />
+                          <CheckCircle2 className="h-6 w-6 text-rose-400 mx-auto" />
                         ) : (
-                          <span className="text-white/20">—</span>
+                          <span className="text-white/15 text-lg">—</span>
                         )}
                       </td>
                     </tr>
@@ -396,68 +396,67 @@ export default async function SwimCrownPage() {
         {/* ─── Competition Format ─── */}
         <section className="py-20 sm:py-24">
           <div className="container mx-auto px-4">
-            <h2 className="text-center text-3xl sm:text-4xl font-bold mb-4">
-              <span className="bg-gradient-to-r from-teal-300 to-cyan-400 bg-clip-text text-transparent">
+            <h2 className="text-center text-4xl sm:text-5xl font-black mb-5">
+              <span className="bg-gradient-to-r from-pink-300 via-rose-400 to-amber-300 bg-clip-text text-transparent">
                 Competition Format
               </span>
             </h2>
-            <p className="text-center text-muted-foreground mb-12 max-w-lg mx-auto text-sm">
+            <p className="text-center text-white/60 mb-14 max-w-lg mx-auto text-lg">
               Three rounds. One crown. Every model walks the runway.
             </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto items-stretch">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-4xl mx-auto items-stretch">
               {/* Round 1 */}
-              <div className="relative rounded-2xl border border-teal-500/20 bg-[#0d1f35]/80 p-6 text-center">
-                <span className="text-xs font-bold tracking-widest uppercase text-teal-500/60">Round 1</span>
-                <h3 className="mt-2 text-xl font-bold text-white">The Runway</h3>
-                <p className="mt-1 text-3xl font-black text-teal-300">All Models</p>
-                <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+              <div className="relative rounded-3xl border border-pink-500/15 bg-white/[0.03] p-7 text-center">
+                <span className="text-sm font-bold tracking-widest uppercase text-pink-400/70">Round 1</span>
+                <h3 className="mt-2 text-2xl font-bold text-white">The Runway</h3>
+                <p className="mt-2 text-3xl font-black text-pink-300">All Models</p>
+                <p className="mt-4 text-base text-white/60 leading-relaxed">
                   Every model walks the runway. This is your moment — the full experience, the audience, the stage. Judges score every walk.
                 </p>
-                {/* Arrow connector (visible on md+) */}
-                <div className="hidden md:flex absolute -right-3 top-1/2 -translate-y-1/2 z-10">
-                  <ChevronRight className="h-6 w-6 text-teal-500/40" />
+                <div className="hidden md:flex absolute -right-3.5 top-1/2 -translate-y-1/2 z-10">
+                  <ChevronRight className="h-7 w-7 text-pink-500/40" />
                 </div>
               </div>
 
               {/* Semifinals */}
-              <div className="relative rounded-2xl border border-cyan-500/20 bg-gradient-to-b from-cyan-500/5 to-[#0d1f35]/80 p-6 text-center">
-                <span className="text-xs font-bold tracking-widest uppercase text-cyan-500/60">Semifinals</span>
-                <h3 className="mt-2 text-xl font-bold text-white">Top 30</h3>
-                <p className="mt-1 text-3xl font-black text-cyan-300">Advance</p>
-                <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+              <div className="relative rounded-3xl border border-rose-500/15 bg-gradient-to-b from-rose-500/5 to-white/[0.03] p-7 text-center">
+                <span className="text-sm font-bold tracking-widest uppercase text-rose-400/70">Semifinals</span>
+                <h3 className="mt-2 text-2xl font-bold text-white">Top 30</h3>
+                <p className="mt-2 text-3xl font-black text-rose-300">Advance</p>
+                <p className="mt-4 text-base text-white/60 leading-relaxed">
                   The top-scoring models return to the runway for a second walk. Higher stakes, closer judging — proving they belong in the Finals.
                 </p>
-                <div className="hidden md:flex absolute -right-3 top-1/2 -translate-y-1/2 z-10">
-                  <ChevronRight className="h-6 w-6 text-cyan-500/40" />
+                <div className="hidden md:flex absolute -right-3.5 top-1/2 -translate-y-1/2 z-10">
+                  <ChevronRight className="h-7 w-7 text-rose-500/40" />
                 </div>
               </div>
 
               {/* Finals */}
-              <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-b from-amber-500/10 to-[#0d1f35]/80 p-6 text-center">
-                <span className="text-xs font-bold tracking-widest uppercase text-amber-500/60">Finals</span>
-                <h3 className="mt-2 text-xl font-bold text-white">Top 10</h3>
-                <p className="mt-1 text-3xl font-black text-amber-300">The Showdown</p>
-                <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+              <div className="rounded-3xl border border-amber-500/20 bg-gradient-to-b from-amber-500/10 to-white/[0.03] p-7 text-center">
+                <span className="text-sm font-bold tracking-widest uppercase text-amber-400/70">Finals</span>
+                <h3 className="mt-2 text-2xl font-bold text-white">Top 10</h3>
+                <p className="mt-2 text-3xl font-black text-amber-300">The Showdown</p>
+                <p className="mt-4 text-base text-white/60 leading-relaxed">
                   The final 10 compete for the crown. Judges make their decision. The Top 3 are announced — and Miss SwimCrown 2026 is crowned live on stage.
                 </p>
               </div>
             </div>
 
             {/* Top 3 callout */}
-            <div className="mt-10 max-w-2xl mx-auto text-center">
-              <div className="inline-flex items-center gap-6 rounded-2xl border border-amber-500/20 bg-amber-500/5 px-8 py-5">
+            <div className="mt-12 max-w-2xl mx-auto text-center">
+              <div className="inline-flex items-center gap-8 sm:gap-10 rounded-3xl border border-amber-500/20 bg-amber-500/5 px-10 py-7">
                 <div>
-                  <Crown className="h-8 w-8 text-amber-400 mx-auto mb-1" />
-                  <p className="text-xs font-bold text-amber-300">Miss SwimCrown</p>
+                  <Crown className="h-10 w-10 text-amber-400 mx-auto mb-2" />
+                  <p className="text-sm font-bold text-amber-300">Miss SwimCrown</p>
                 </div>
                 <div>
-                  <Trophy className="h-7 w-7 text-zinc-300 mx-auto mb-1" />
-                  <p className="text-xs font-bold text-zinc-300">1st Runner-Up</p>
+                  <Trophy className="h-9 w-9 text-zinc-300 mx-auto mb-2" />
+                  <p className="text-sm font-bold text-zinc-300">1st Runner-Up</p>
                 </div>
                 <div>
-                  <Trophy className="h-6 w-6 text-amber-600 mx-auto mb-1" />
-                  <p className="text-xs font-bold text-amber-600">2nd Runner-Up</p>
+                  <Trophy className="h-8 w-8 text-amber-600 mx-auto mb-2" />
+                  <p className="text-sm font-bold text-amber-600">2nd Runner-Up</p>
                 </div>
               </div>
             </div>
@@ -465,14 +464,13 @@ export default async function SwimCrownPage() {
         </section>
 
         {/* ─── Judges Panel ─── */}
-        <section className="py-20 sm:py-24">
+        <section className="py-20 sm:py-24 bg-gradient-to-b from-transparent via-pink-950/10 to-transparent">
           <div className="container mx-auto px-4">
-            <h2 className="text-center text-3xl sm:text-4xl font-bold mb-4">
-              <span className="bg-gradient-to-r from-teal-300 to-cyan-400 bg-clip-text text-transparent">
+            <h2 className="text-center text-4xl sm:text-5xl font-black mb-14">
+              <span className="bg-gradient-to-r from-pink-300 to-rose-400 bg-clip-text text-transparent">
                 Meet the Judges
               </span>
             </h2>
-            <div className="mb-12" />
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
               {[
@@ -481,24 +479,24 @@ export default async function SwimCrownPage() {
                 { name: "Coming Soon", role: "Celebrity Judge", image: null },
                 { name: "Coming Soon", role: "Industry Expert", image: null },
               ].map((judge, i) => (
-                <Card key={i} className="border-teal-500/10 bg-[#0d1f35]/80 p-6 text-center">
-                  <div className="mx-auto mb-4 relative h-20 w-20 rounded-full overflow-hidden border border-teal-500/20">
+                <Card key={i} className="border-white/10 bg-white/[0.03] p-6 text-center rounded-3xl">
+                  <div className="mx-auto mb-4 relative h-24 w-24 rounded-full overflow-hidden border-2 border-pink-500/20">
                     {judge.image ? (
                       <Image
                         src={judge.image}
                         alt={judge.name}
                         fill
                         className="object-cover"
-                        sizes="80px"
+                        sizes="96px"
                       />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-teal-500/20 to-cyan-500/10">
-                        <UserCircle className="h-10 w-10 text-teal-400/50" />
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-pink-500/20 to-rose-500/10">
+                        <UserCircle className="h-12 w-12 text-pink-400/40" />
                       </div>
                     )}
                   </div>
-                  <h3 className="text-sm font-bold text-white">{judge.name}</h3>
-                  <p className="mt-1 text-xs text-muted-foreground">{judge.role}</p>
+                  <h3 className="text-base font-bold text-white">{judge.name}</h3>
+                  <p className="mt-1 text-sm text-white/50">{judge.role}</p>
                 </Card>
               ))}
             </div>
@@ -510,11 +508,11 @@ export default async function SwimCrownPage() {
         <section className="py-24 sm:py-32">
           <div className="container mx-auto px-4 text-center">
             <div className="mx-auto max-w-2xl">
-              <Crown className="mx-auto h-12 w-12 text-amber-400 mb-6" />
-              <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-white">
+              <Crown className="mx-auto h-14 w-14 text-amber-400 mb-6 drop-shadow-[0_0_20px_rgba(251,191,36,0.4)]" />
+              <h2 className="text-4xl sm:text-5xl font-black mb-5 text-white">
                 Will You Be Crowned?
               </h2>
-              <p className="text-muted-foreground mb-3">
+              <p className="text-white/60 mb-8 text-lg leading-relaxed">
                 Models from around the world are entering for their chance to step onto the
                 runway at Miami Swim Week — and earn the title of Miss SwimCrown 2026.
               </p>
@@ -522,9 +520,9 @@ export default async function SwimCrownPage() {
                 <Link href="/swimcrown/enter">
                   <Button
                     size="lg"
-                    className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white font-bold px-8 py-6 text-lg rounded-full shadow-lg shadow-teal-500/25"
+                    className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-bold px-10 py-7 text-xl rounded-full shadow-lg shadow-pink-500/30"
                   >
-                    <Crown className="mr-2 h-5 w-5" />
+                    <Crown className="mr-2 h-6 w-6" />
                     Enter Now
                   </Button>
                 </Link>
