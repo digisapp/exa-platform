@@ -25,7 +25,7 @@ import { CSS } from "@dnd-kit/utilities";
 import {
   ArrowLeft, Plus, Search, X, GripVertical, Users, Calendar, Clock,
   Download, Trash2, ChevronDown, ChevronUp, Check, UserPlus, Loader2,
-  Copy, AlertTriangle, FileText, Pencil, ArrowRightLeft,
+  Copy, AlertTriangle, FileText, Pencil, ArrowRightLeft, Eye, Repeat,
 } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -91,11 +91,12 @@ function parseTimeToMinutes(time: string | null): number | null {
 // ─── Sortable Model Card ─────────────────────────────────────────────────────
 
 function SortableModelCard({
-  showModel, onRemove, walkNumber, onUpdateNotes, conflictWarning, isBulkSelected, onBulkToggle,
+  showModel, onRemove, walkNumber, onUpdateNotes, conflictWarning, isBulkSelected, onBulkToggle, multiWalkInfo,
 }: {
   showModel: ShowModel; onRemove: () => void; walkNumber: number;
   onUpdateNotes: (notes: string) => void; conflictWarning: string | null;
   isBulkSelected: boolean; onBulkToggle: () => void;
+  multiWalkInfo?: { count: number; designers: string[]; hasBackToBack: boolean } | null;
 }) {
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesValue, setNotesValue] = useState(showModel.outfit_notes || "");
@@ -128,6 +129,12 @@ function SortableModelCard({
           <p className="text-xs text-muted-foreground truncate">@{m.username}{m.height ? ` · ${m.height}` : ""}</p>
         </div>
         <div className="flex items-center gap-1 shrink-0">
+          {multiWalkInfo && multiWalkInfo.count > 1 && (
+            <span title={`${multiWalkInfo.count} walks: ${multiWalkInfo.designers.join(", ")}${multiWalkInfo.hasBackToBack ? " ⚠ BACK-TO-BACK — may not have time to change" : ""}`}
+              className={multiWalkInfo.hasBackToBack ? "text-red-500" : "text-blue-500"}>
+              <Repeat className="h-3.5 w-3.5" />
+            </span>
+          )}
           {conflictWarning && <span title={conflictWarning} className="text-amber-500"><AlertTriangle className="h-3.5 w-3.5" /></span>}
           <button onClick={() => { setEditingNotes(!editingNotes); setNotesValue(showModel.outfit_notes || ""); }}
             className={`text-muted-foreground hover:text-foreground transition-all shrink-0 ${showModel.outfit_notes ? "opacity-100 text-pink-500" : "opacity-0 group-hover:opacity-100"}`} title="Outfit notes">
@@ -214,7 +221,7 @@ function ModelPoolCard({ model, assignedCount, isSelected, onToggle }: {
 function SortableDesignerPanel({
   designer, showId, onRemoveModel, onReorder, onDeleteDesigner, onUpdateOutfitNotes,
   onRenameDesigner, onMoveDesigner, onBulkRemove, onBulkMove,
-  modelConflicts, isActive, onActivate, otherShows, allDesigners,
+  modelConflicts, isActive, onActivate, otherShows, allDesigners, showModelWalkMap,
 }: {
   designer: DesignerEntry; showId: string;
   onRemoveModel: (designerEntryId: string, modelId: string) => void;
@@ -229,6 +236,7 @@ function SortableDesignerPanel({
   isActive: boolean; onActivate: () => void;
   otherShows: { id: string; name: string; show_date: string | null }[];
   allDesigners: { id: string; designerName: string; showName: string }[];
+  showModelWalkMap: Record<string, { count: number; designers: string[]; hasBackToBack: boolean }>;
 }) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState(false);
@@ -390,7 +398,8 @@ function SortableDesignerPanel({
                     onUpdateNotes={(notes) => onUpdateOutfitNotes(designer.id, sm.model_id, notes)}
                     conflictWarning={modelConflicts[sm.model_id] || null}
                     isBulkSelected={bulkSelected.has(sm.model_id)}
-                    onBulkToggle={() => toggleBulkSelect(sm.model_id)} />
+                    onBulkToggle={() => toggleBulkSelect(sm.model_id)}
+                    multiWalkInfo={showModelWalkMap[sm.model_id]} />
                 ))}
               </SortableContext>
               <DragOverlay>
@@ -430,6 +439,8 @@ export default function AdminShowsPage() {
   const [activeDesignerEntryId, setActiveDesignerEntryId] = useState<string | null>(null);
   const [filterAssigned, setFilterAssigned] = useState<"all" | "unassigned" | "assigned" | "event">("all");
   const [eventModelIds, setEventModelIds] = useState<Set<string>>(new Set());
+  const [modelMapShowId, setModelMapShowId] = useState<string | null>(null);
+  const [modelMapSearch, setModelMapSearch] = useState("");
 
   // Create show dialog
   const [showCreateShow, setShowCreateShow] = useState(false);
@@ -576,6 +587,51 @@ export default function AdminShowsPage() {
   // All designers across all shows (for bulk move targets)
   const allDesignersList = useMemo(() => {
     return shows.flatMap((s) => s.designers.map((d) => ({ id: d.id, designerName: d.designer_name, showName: s.name })));
+  }, [shows]);
+
+  // Per-show model walk map: modelId -> { count, designers[], hasBackToBack }
+  const showModelWalkMaps = useMemo(() => {
+    const maps: Record<string, Record<string, { count: number; designers: string[]; hasBackToBack: boolean }>> = {};
+    shows.forEach((show) => {
+      const walkMap: Record<string, { count: number; designers: string[]; designerIndices: number[] }> = {};
+      show.designers.forEach((d, dIdx) => {
+        d.models.forEach((m) => {
+          if (!walkMap[m.model_id]) walkMap[m.model_id] = { count: 0, designers: [], designerIndices: [] };
+          walkMap[m.model_id].count++;
+          walkMap[m.model_id].designers.push(d.designer_name);
+          walkMap[m.model_id].designerIndices.push(dIdx);
+        });
+      });
+      // Detect back-to-back: model appears in consecutive designer slots
+      const result: Record<string, { count: number; designers: string[]; hasBackToBack: boolean }> = {};
+      for (const [modelId, info] of Object.entries(walkMap)) {
+        let hasBackToBack = false;
+        if (info.designerIndices.length > 1) {
+          const sorted = [...info.designerIndices].sort((a, b) => a - b);
+          for (let i = 0; i < sorted.length - 1; i++) {
+            // Check if this model is near the end of one designer and near the start of the next
+            const currDesigner = show.designers[sorted[i]];
+            const nextDesigner = show.designers[sorted[i + 1]];
+            if (!currDesigner || !nextDesigner) continue;
+            const posInCurr = currDesigner.models.findIndex((m) => m.model_id === modelId);
+            const posInNext = nextDesigner.models.findIndex((m) => m.model_id === modelId);
+            const totalInCurr = currDesigner.models.length;
+            // Back-to-back if in last 3 of current designer AND first 3 of next designer
+            // OR consecutive designer slots (any position)
+            if (sorted[i + 1] - sorted[i] === 1) {
+              // Consecutive designers — always a concern
+              const fromEnd = totalInCurr - 1 - posInCurr;
+              if (fromEnd <= 2 && posInNext <= 2) {
+                hasBackToBack = true; break;
+              }
+            }
+          }
+        }
+        result[modelId] = { count: info.count, designers: info.designers, hasBackToBack };
+      }
+      maps[show.id] = result;
+    });
+    return maps;
   }, [shows]);
 
   const filteredModels = useMemo(() => {
@@ -1005,7 +1061,110 @@ export default function AdminShowsPage() {
                           onClick={() => { if (confirm(`Delete "${show.name}"?`)) deleteShow(show.id); }}>
                           <Trash2 className="h-3 w-3 mr-1" /> Delete Show
                         </Button>
+                        <Button variant={modelMapShowId === show.id ? "default" : "outline"} size="sm" className="h-8 text-xs ml-auto"
+                          onClick={() => { setModelMapShowId(modelMapShowId === show.id ? null : show.id); setModelMapSearch(""); }}>
+                          <Eye className="h-3 w-3 mr-1" /> Model Map
+                        </Button>
                       </div>
+
+                      {/* Model Map Panel */}
+                      {modelMapShowId === show.id && show.designers.length > 0 && (() => {
+                        const walkMap = showModelWalkMaps[show.id] || {};
+                        // Build full model list with details
+                        const modelDetails: { modelId: string; model: ModelInfo; walks: { designerName: string; designerIdx: number; walkOrder: number }[]; hasBackToBack: boolean }[] = [];
+                        const seen = new Set<string>();
+                        show.designers.forEach((d, dIdx) => {
+                          d.models.forEach((sm) => {
+                            if (seen.has(sm.model_id)) {
+                              const existing = modelDetails.find((x) => x.modelId === sm.model_id);
+                              if (existing) existing.walks.push({ designerName: d.designer_name, designerIdx: dIdx, walkOrder: sm.walk_order });
+                              return;
+                            }
+                            seen.add(sm.model_id);
+                            modelDetails.push({
+                              modelId: sm.model_id, model: sm.model,
+                              walks: [{ designerName: d.designer_name, designerIdx: dIdx, walkOrder: sm.walk_order }],
+                              hasBackToBack: walkMap[sm.model_id]?.hasBackToBack || false,
+                            });
+                          });
+                        });
+                        // Sort: back-to-back first, then multi-walk, then single
+                        modelDetails.sort((a, b) => {
+                          if (a.hasBackToBack !== b.hasBackToBack) return a.hasBackToBack ? -1 : 1;
+                          if (a.walks.length !== b.walks.length) return b.walks.length - a.walks.length;
+                          return (a.model.first_name || "").localeCompare(b.model.first_name || "");
+                        });
+                        const q = modelMapSearch.toLowerCase();
+                        const filtered = q ? modelDetails.filter((x) =>
+                          x.model.first_name?.toLowerCase().includes(q) || x.model.last_name?.toLowerCase().includes(q) || x.model.username?.toLowerCase().includes(q)
+                        ) : modelDetails;
+                        const multiWalkCount = modelDetails.filter((x) => x.walks.length > 1).length;
+                        const backToBackCount = modelDetails.filter((x) => x.hasBackToBack).length;
+
+                        return (
+                          <div className="border rounded-lg bg-muted/30 p-3 space-y-2">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-3">
+                                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Model Map</p>
+                                <span className="text-xs text-muted-foreground">{modelDetails.length} models</span>
+                                {multiWalkCount > 0 && <Badge variant="secondary" className="text-xs"><Repeat className="h-2.5 w-2.5 mr-1" />{multiWalkCount} multi-walk</Badge>}
+                                {backToBackCount > 0 && <Badge variant="destructive" className="text-xs"><AlertTriangle className="h-2.5 w-2.5 mr-1" />{backToBackCount} back-to-back</Badge>}
+                              </div>
+                              <div className="relative w-[180px]">
+                                <Search className="absolute left-2 top-1.5 h-3.5 w-3.5 text-muted-foreground" />
+                                <Input placeholder="Find model..." value={modelMapSearch} onChange={(e) => setModelMapSearch(e.target.value)} className="h-7 text-xs pl-7" />
+                              </div>
+                            </div>
+                            {/* Designer column headers */}
+                            <div className="flex items-center gap-1 text-[10px] text-muted-foreground uppercase tracking-wider pl-[140px]">
+                              {show.designers.map((d, i) => (
+                                <div key={d.id} className="flex-1 min-w-0 truncate text-center" title={d.designer_name}>
+                                  {d.designer_name.length > 12 ? d.designer_name.slice(0, 10) + "…" : d.designer_name}
+                                </div>
+                              ))}
+                            </div>
+                            {/* Model rows */}
+                            <div className="max-h-[320px] overflow-y-auto space-y-0.5">
+                              {filtered.map((entry) => {
+                                const walkByDesigner = new Map(entry.walks.map((w) => [w.designerIdx, w]));
+                                return (
+                                  <div key={entry.modelId} className={`flex items-center gap-1 rounded px-1.5 py-1 text-xs ${entry.hasBackToBack ? "bg-red-500/10 border border-red-500/20" : entry.walks.length > 1 ? "bg-blue-500/5 border border-blue-500/10" : "hover:bg-muted/50"}`}>
+                                    <div className="flex items-center gap-2 w-[130px] shrink-0 min-w-0">
+                                      <div className="relative h-6 w-6 rounded-full overflow-hidden bg-muted shrink-0">
+                                        {entry.model.profile_photo_url ? <Image src={entry.model.profile_photo_url} alt="" fill className="object-cover" />
+                                          : <div className="h-full w-full flex items-center justify-center text-[8px] text-muted-foreground">{entry.model.first_name?.[0]}{entry.model.last_name?.[0]}</div>}
+                                      </div>
+                                      <div className="min-w-0">
+                                        <p className="truncate font-medium leading-tight">{entry.model.first_name} {entry.model.last_name}</p>
+                                        {entry.walks.length > 1 && (
+                                          <p className="text-[10px] text-muted-foreground leading-tight">{entry.walks.length} walks{entry.hasBackToBack ? " · B2B" : ""}</p>
+                                        )}
+                                      </div>
+                                    </div>
+                                    {show.designers.map((d, dIdx) => {
+                                      const walk = walkByDesigner.get(dIdx);
+                                      return (
+                                        <div key={d.id} className="flex-1 text-center">
+                                          {walk ? (
+                                            <span className={`inline-flex items-center justify-center h-5 w-5 rounded-full text-[10px] font-bold ${entry.hasBackToBack && entry.walks.some((w, wi) => {
+                                              const otherWalk = entry.walks.find((ow, oi) => oi !== wi && Math.abs(ow.designerIdx - w.designerIdx) === 1);
+                                              return otherWalk && w.designerIdx === dIdx;
+                                            }) ? "bg-red-500 text-white" : "bg-pink-500 text-white"}`}>
+                                              {walk.walkOrder + 1}
+                                            </span>
+                                          ) : (
+                                            <span className="text-muted-foreground/30">—</span>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })()}
 
                       {/* Designers list */}
                       <div className="space-y-2">
@@ -1044,7 +1203,8 @@ export default function AdminShowsPage() {
                                     onBulkRemove={bulkRemoveModels} onBulkMove={bulkMoveModels}
                                     onUpdateOutfitNotes={updateOutfitNotes} modelConflicts={modelConflictsByDesigner[d.id] || {}}
                                     otherShows={shows.filter((s) => s.id !== show.id).map((s) => ({ id: s.id, name: s.name, show_date: s.show_date }))}
-                                    allDesigners={allDesignersList} />
+                                    allDesigners={allDesignersList}
+                                    showModelWalkMap={showModelWalkMaps[show.id] || {}} />
                                 ))}
                               </div>
                             </SortableContext>
