@@ -426,37 +426,12 @@ export default async function EventPage({ params, searchParams }: Props) {
                 )}
               </div>
 
-              <h2 className="hidden md:block text-2xl font-bold mb-1">{event.name}</h2>
-              <p className="hidden md:block text-pink-500 font-medium mb-4 text-sm">
-                {dateDisplay}
-                {(event.location_city || event.location_state) && (
-                  <span className="text-muted-foreground">
-                    {" · "}
-                    {event.location_city && event.location_state
-                      ? `${event.location_city}, ${event.location_state}`
-                      : event.location_city || event.location_state}
-                  </span>
-                )}
-              </p>
               {event.description && (
                 <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed text-lg mb-6">
                   {event.description}
                 </p>
               )}
 
-              {/* Official Spotify Playlist */}
-              <div>
-                <p className="text-[11px] uppercase tracking-widest text-pink-400 font-bold mb-3">🎵 Official Playlist</p>
-                <iframe
-                  src="https://open.spotify.com/embed/playlist/2ECDbEnuIzJYlQMrxnimay?utm_source=generator&theme=0"
-                  width="100%"
-                  height="152"
-                  frameBorder="0"
-                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                  loading="lazy"
-                  className="rounded-xl"
-                />
-              </div>
             </div>
           </div>
 
@@ -487,6 +462,13 @@ export default async function EventPage({ params, searchParams }: Props) {
                   <span className="flex items-center gap-2">
                     <Sparkles className="h-4 w-4" />
                     Designers — Show Your Collection
+                  </span>
+                  <ArrowRight className="h-4 w-4 opacity-70" />
+                </a>
+                <a href="mailto:nathan@examodels.com?subject=Sponsorship%20Inquiry%20%E2%80%94%20Miami%20Swim%20Week%202026" className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/40 hover:border-cyan-500/70 text-cyan-300 font-semibold transition-all">
+                  <span className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4" />
+                    Sponsors — Partner With Us
                   </span>
                   <ArrowRight className="h-4 w-4 opacity-70" />
                 </a>
@@ -535,95 +517,14 @@ export default async function EventPage({ params, searchParams }: Props) {
                   <p className="text-sm text-muted-foreground">{eventModels.length} models walking the runway</p>
                 </div>
               </div>
-              {user ? (
-                <ModelsGrid
-                  models={eventModels}
-                  isLoggedIn={!!user}
-                  favoriteModelIds={favoriteModelIds}
-                  actorType={actorType}
-                />
-              ) : (
-                <div className="relative">
-                  {/* Show first row of models unblurred as a teaser */}
-                  <ModelsGrid
-                    models={eventModels.slice(0, 4)}
-                    isLoggedIn={false}
-                    favoriteModelIds={[]}
-                    actorType={null}
-                  />
-                  {/* Blurred remaining models + overlay */}
-                  {eventModels.length > 4 && (
-                    <div className="relative mt-4 overflow-hidden rounded-2xl">
-                      <div className="blur-lg pointer-events-none select-none" aria-hidden="true">
-                        <ModelsGrid
-                          models={eventModels.slice(4, 12)}
-                          isLoggedIn={false}
-                          favoriteModelIds={[]}
-                          actorType={null}
-                        />
-                      </div>
-                      <div className="absolute inset-0 bg-background/60 backdrop-blur-sm flex flex-col items-center justify-center text-center p-8">
-                        <Users className="h-10 w-10 text-pink-500 mb-3" />
-                        <h3 className="text-xl font-bold mb-2">
-                          +{eventModels.length - 4} More Confirmed Models
-                        </h3>
-                        <p className="text-muted-foreground mb-5 max-w-md">
-                          Sign in to view all confirmed models for this show
-                        </p>
-                        <div className="flex gap-3">
-                          <Button asChild variant="outline" className="rounded-xl">
-                            <Link href="/signin">Sign In</Link>
-                          </Button>
-                          <Button asChild className="rounded-xl bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600">
-                            <Link href="/signup">Sign Up Free</Link>
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {/* Overlay for when there are 4 or fewer models */}
-                  {eventModels.length <= 4 && (
-                    <div className="mt-6 text-center p-6 rounded-2xl bg-gradient-to-r from-pink-500/10 to-violet-500/10 border border-pink-500/20">
-                      <p className="text-muted-foreground mb-4">Sign in to follow models and get updates</p>
-                      <div className="flex gap-3 justify-center">
-                        <Button asChild variant="outline" className="rounded-xl">
-                          <Link href="/signin">Sign In</Link>
-                        </Button>
-                        <Button asChild className="rounded-xl bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600">
-                          <Link href="/signup">Sign Up Free</Link>
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
+              <ModelsGrid
+                models={eventModels}
+                isLoggedIn={!!user}
+                favoriteModelIds={favoriteModelIds}
+                actorType={actorType}
+              />
             </div>
           )}
-        </div>
-        {/* Sponsor / Designer CTA */}
-        <div className="mt-16 grid sm:grid-cols-2 gap-4">
-          <a
-            href="mailto:nathan@examodels.com?subject=Sponsorship%20Inquiry%20%E2%80%94%20Miami%20Swim%20Week%202026"
-            className="group relative overflow-hidden rounded-2xl border border-pink-500/20 bg-gradient-to-br from-pink-500/10 to-pink-500/5 p-6 hover:border-pink-500/50 transition-all hover:scale-[1.02]"
-          >
-            <p className="text-xs uppercase tracking-widest text-pink-400 font-semibold mb-2">Brands & Companies</p>
-            <h3 className="text-xl font-bold mb-2">Become a Sponsor</h3>
-            <p className="text-sm text-muted-foreground mb-4">Get your brand in front of 300+ guests, 100+ media, and a global live stream audience.</p>
-            <div className="flex items-center gap-1 text-pink-400 text-sm font-medium group-hover:gap-2 transition-all">
-              Get in Touch <ArrowRight className="h-4 w-4" />
-            </div>
-          </a>
-          <a
-            href="mailto:nathan@examodels.com?subject=Designer%20Inquiry%20%E2%80%94%20Miami%20Swim%20Week%202026"
-            className="group relative overflow-hidden rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/10 to-violet-500/5 p-6 hover:border-violet-500/50 transition-all hover:scale-[1.02]"
-          >
-            <p className="text-xs uppercase tracking-widest text-violet-400 font-semibold mb-2">Fashion Designers</p>
-            <h3 className="text-xl font-bold mb-2">Show Your Collection</h3>
-            <p className="text-sm text-muted-foreground mb-4">Book a runway slot and showcase your swimwear, resortwear, or lingerie collection.</p>
-            <div className="flex items-center gap-1 text-violet-400 text-sm font-medium group-hover:gap-2 transition-all">
-              Get in Touch <ArrowRight className="h-4 w-4" />
-            </div>
-          </a>
         </div>
       </main>
 
