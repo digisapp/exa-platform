@@ -118,10 +118,6 @@ export default async function SwimCrownPage() {
               <Sparkles className="absolute -bottom-1 right-0 h-4 w-4 text-amber-300 animate-ping [animation-duration:3s] [animation-delay:1s]" />
             </div>
 
-            <p className="text-xs sm:text-sm font-semibold tracking-[0.25em] uppercase text-white/40 mb-2">
-              The 1st Annual
-            </p>
-
             <h1 className="mx-auto max-w-4xl text-6xl sm:text-7xl md:text-8xl font-black tracking-tighter">
               <span className="bg-gradient-to-r from-pink-300 via-rose-400 to-pink-400 bg-clip-text text-transparent">
                 SWIM
