@@ -253,7 +253,6 @@ export default async function SwimCrownPage() {
                   {[
                     "Walk the runway at Miami Swim Week",
                     "Compete for Miss SwimCrown 2026",
-                    "Official contestant profile",
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-3">
                       <CheckCircle2 className="h-5 w-5 text-pink-400 mt-0.5 shrink-0" />
