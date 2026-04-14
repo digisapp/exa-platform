@@ -229,10 +229,11 @@ export default async function SwimCrownPage() {
                     </Link>
                     <a href="mailto:team@examodels.com?subject=SwimCrown%20Sponsorship%20Inquiry">
                       <Button
-                        variant="ghost"
-                        size="sm"
-                        className="w-full text-white/40 hover:text-pink-300 text-sm"
+                        variant="outline"
+                        size="lg"
+                        className="w-full border-amber-400/40 text-amber-300 hover:bg-amber-500/10 hover:border-amber-400/60 py-5 text-base rounded-full font-bold"
                       >
+                        <Sparkles className="mr-2 h-5 w-5" />
                         Become a Sponsor
                       </Button>
                     </a>
