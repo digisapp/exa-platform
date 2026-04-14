@@ -466,12 +466,14 @@ export default async function SwimCrownPage() {
               </span>
             </h2>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-3xl mx-auto">
               {[
                 { name: "Miriam", role: "Founder, EXA Models", image: "https://nanftzomzluetblqgrvo.supabase.co/storage/v1/object/public/avatars/172bac94-7d23-43de-8b55-aad09c3115ef/1767135037631.jpg" },
-                { name: "Coming Soon", role: "Swimwear Designer", image: null },
-                { name: "Coming Soon", role: "Celebrity Judge", image: null },
-                { name: "Coming Soon", role: "Industry Expert", image: null },
+                { name: "TBA", role: "Swimwear Designer", image: null },
+                { name: "TBA", role: "Swimwear Designer", image: null },
+                { name: "TBA", role: "Swimwear Designer", image: null },
+                { name: "TBA", role: "Celebrity Judge", image: null },
+                { name: "TBA", role: "Industry Expert", image: null },
               ].map((judge, i) => (
                 <Card key={i} className="border-white/10 bg-white/[0.03] p-6 text-center rounded-3xl">
                   <div className="mx-auto mb-4 relative h-24 w-24 rounded-full overflow-hidden border-2 border-pink-500/20">
