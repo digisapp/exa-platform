@@ -281,11 +281,11 @@ export default async function SwimCrownPage() {
                 </p>
                 <ul className="mt-6 space-y-4 text-base text-white">
                   {[
-                    "Everything in Runway",
-                    "Designer swimwear gifted (yours to keep)",
-                    "Hair, makeup & SwimCrown robe",
-                    "Pro photos & video of your walk",
-                    "Sponsored gift bag",
+                    "Walk the Runway at Miami Swim Week",
+                    "Pre-Show Hair and Makeup",
+                    "Professional Photos & Video of your Walk",
+                    "Official EXA Models Robe",
+                    "Gifted Designer Swimwear + Sponsored Goodies",
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-3">
                       <CheckCircle2 className="h-5 w-5 text-rose-400 mt-0.5 shrink-0" />
@@ -315,13 +315,12 @@ export default async function SwimCrownPage() {
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {[
-                    { feature: "Walk the runway at Miami Swim Week", entry: true, full: true },
+                    { feature: "Walk the Runway at Miami Swim Week", entry: true, full: true },
                     { feature: "Compete for Miss SwimCrown 2026", entry: true, full: true },
-                    { feature: "Official contestant profile", entry: true, full: true },
-                    { feature: "Designer swimwear gifted (yours to keep)", entry: false, full: true },
-                    { feature: "Hair, makeup & SwimCrown robe", entry: false, full: true },
-                    { feature: "Pro photos & video of your walk", entry: false, full: true },
-                    { feature: "Sponsored gift bag", entry: false, full: true },
+                    { feature: "Pre-Show Hair and Makeup", entry: false, full: true },
+                    { feature: "Professional Photos & Video of your Walk", entry: false, full: true },
+                    { feature: "Official EXA Models Robe", entry: false, full: true },
+                    { feature: "Gifted Designer Swimwear + Sponsored Goodies", entry: false, full: true },
                   ].map((row) => (
                     <tr key={row.feature} className="hover:bg-white/[0.02] transition-colors">
                       <td className="py-4 px-6 text-white text-base">{row.feature}</td>

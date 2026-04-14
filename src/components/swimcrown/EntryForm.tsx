@@ -59,11 +59,11 @@ const tiers: Tier[] = [
     iconColor: "text-rose-400",
     checkColor: "text-rose-400",
     features: [
-      "Everything in Runway",
-      "Designer swimwear gifted (yours to keep)",
-      "Hair, makeup & SwimCrown robe",
-      "Pro photos & video of your walk",
-      "Sponsored gift bag",
+      "Walk the Runway at Miami Swim Week",
+      "Pre-Show Hair and Makeup",
+      "Professional Photos & Video of your Walk",
+      "Official EXA Models Robe",
+      "Gifted Designer Swimwear + Sponsored Goodies",
     ],
   },
 ];
