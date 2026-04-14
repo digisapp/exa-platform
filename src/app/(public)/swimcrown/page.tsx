@@ -17,7 +17,6 @@ import {
   Waves,
   ChevronRight,
 } from "lucide-react";
-import { CountdownTimer } from "@/components/swimcrown/CountdownTimer";
 
 export const metadata: Metadata = {
   title: "SwimCrown - Global Swim Model Competition | EXA",
@@ -175,13 +174,6 @@ export default async function SwimCrownPage() {
 
               {/* Right — Competition Details */}
               <div className="flex flex-col gap-8 lg:sticky lg:top-24">
-                {/* Countdown */}
-                <div className="text-center lg:text-left">
-                  <div className="scale-75 sm:scale-85 lg:scale-90 origin-top lg:origin-top-left">
-                    <CountdownTimer />
-                  </div>
-                </div>
-
                 {/* Competition Card */}
                 <div className="relative overflow-hidden rounded-3xl border border-pink-500/20 bg-gradient-to-b from-pink-500/5 via-[#0f1628]/90 to-[#0f1628]/90 p-8">
                   <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-pink-400 via-rose-500 to-amber-400" />
@@ -280,9 +272,6 @@ export default async function SwimCrownPage() {
 
               {/* Runway + Glam */}
               <Card className="relative border-rose-500/30 bg-gradient-to-b from-rose-500/10 to-white/[0.03] backdrop-blur-sm p-8 ring-1 ring-rose-500/20 scale-[1.02] flex flex-col rounded-3xl">
-                <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold px-4 py-1 text-sm">
-                  Best Value
-                </Badge>
                 <Gift className="h-9 w-9 text-rose-400 mb-4 mt-2" />
                 <h3 className="text-xl font-bold text-rose-300">
                   Runway + Glam
