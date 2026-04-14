@@ -266,11 +266,8 @@ export default async function SwimCrownPage() {
                 Choose Your Entry
               </span>
             </h2>
-            <p className="text-center text-white mb-5 max-w-xl mx-auto text-base">
-              Both tiers include a runway walk and compete equally for the crown — your tier determines your experience, not your outcome
-            </p>
-            <p className="text-center text-sm text-amber-300/80 mb-14 max-w-md mx-auto font-medium">
-              All models are scored equally by our judges regardless of entry tier
+            <p className="text-center text-white mb-14 max-w-xl mx-auto text-base">
+              Both tiers include a Runway Walk and compete for the Crown!
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
