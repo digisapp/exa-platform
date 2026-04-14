@@ -8,11 +8,13 @@ import { z } from "zod";
 const adminClient = createServiceRoleClient();
 
 const postSchema = z.object({
-  content: z
-    .string()
-    .min(1, "Message cannot be empty")
-    .max(280, "Message is too long (280 char max)"),
-});
+  content: z.string().max(280, "Message is too long (280 char max)").optional().default(""),
+  imageUrl: z.string().url().optional(),
+  imageType: z.enum(["upload", "gif"]).optional(),
+}).refine(
+  (data) => (data.content && data.content.trim().length > 0) || data.imageUrl,
+  { message: "Message or image required" }
+);
 
 /** POST - Send a live wall message */
 export async function POST(request: NextRequest) {
@@ -42,7 +44,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const content = cleanMessage(validation.data.content.trim());
+    const content = validation.data.content ? cleanMessage(validation.data.content.trim()) : "";
+    const imageUrl = validation.data.imageUrl || null;
+    const imageType = validation.data.imageType || null;
 
     // Look up actor
     const { data: actor } = await supabase
@@ -55,9 +59,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Actor not found" }, { status: 400 });
     }
 
-    // Get display name + avatar based on actor type
+    // Get display name, avatar, and profile slug based on actor type
     let displayName = "Anonymous";
     let avatarUrl: string | null = null;
+    let profileSlug: string | null = null;
 
     if (actor.type === "model") {
       const { data: model } = await supabase
@@ -71,6 +76,7 @@ export async function POST(request: NextRequest) {
           model.username ||
           "Model";
         avatarUrl = model.profile_photo_url;
+        profileSlug = model.username;
       }
     } else if (actor.type === "fan") {
       const { data: fan } = await supabase
@@ -81,6 +87,7 @@ export async function POST(request: NextRequest) {
       if (fan) {
         displayName = fan.display_name || fan.username || "Fan";
         avatarUrl = fan.avatar_url;
+        profileSlug = fan.username;
       }
     } else if (actor.type === "brand") {
       const { data: brand } = await supabase
@@ -103,7 +110,10 @@ export async function POST(request: NextRequest) {
         actor_type: actor.type,
         display_name: displayName,
         avatar_url: avatarUrl,
+        profile_slug: profileSlug,
         content,
+        image_url: imageUrl,
+        image_type: imageType,
         message_type: "chat",
       })
       .select()
@@ -139,7 +149,6 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Verify admin
     const { data: actor } = await supabase
       .from("actors")
       .select("id, type")

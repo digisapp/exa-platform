@@ -55,14 +55,27 @@ export default async function HomePage() {
 
   // Check if user is logged in (for Live Wall + nav)
   const { data: { user } } = await supabase.auth.getUser();
-  let currentActor: { id: string; type: string } | null = null;
+  let currentActor: { id: string; type: string; coinBalance: number } | null = null;
   if (user) {
     const { data: actor } = await supabase
       .from("actors")
       .select("id, type")
       .eq("user_id", user.id)
       .single() as { data: { id: string; type: string } | null };
-    currentActor = actor;
+    if (actor) {
+      let coinBalance = 0;
+      if (actor.type === "model") {
+        const { data } = await supabase.from("models").select("coin_balance").eq("user_id", user.id).maybeSingle();
+        coinBalance = data?.coin_balance ?? 0;
+      } else if (actor.type === "fan") {
+        const { data } = await supabase.from("fans").select("coin_balance").eq("user_id", user.id).maybeSingle();
+        coinBalance = data?.coin_balance ?? 0;
+      } else if (actor.type === "brand") {
+        const { data } = await supabase.from("brands").select("coin_balance").eq("user_id", user.id).maybeSingle();
+        coinBalance = data?.coin_balance ?? 0;
+      }
+      currentActor = { ...actor, coinBalance };
+    }
   }
 
   // Fetch top 50 models with 4-5 star admin rating (signed-in models with self-uploaded photos)
@@ -122,7 +135,7 @@ export default async function HomePage() {
   // Fetch live wall messages (last 50, newest last)
   const { data: liveWallMessages } = await (supabase as any)
     .from("live_wall_messages")
-    .select("id, actor_id, actor_type, display_name, avatar_url, content, message_type, reactions, created_at")
+    .select("id, actor_id, actor_type, display_name, avatar_url, profile_slug, content, message_type, reactions, image_url, image_type, is_pinned, tip_total, created_at")
     .eq("is_deleted", false)
     .order("created_at", { ascending: true })
     .limit(50);
@@ -298,7 +311,7 @@ export default async function HomePage() {
             initialMessages={liveWallMessages || []}
             currentUser={
               currentActor
-                ? { actorId: currentActor.id, actorType: currentActor.type }
+                ? { actorId: currentActor.id, actorType: currentActor.type, coinBalance: currentActor.coinBalance }
                 : null
             }
           />
