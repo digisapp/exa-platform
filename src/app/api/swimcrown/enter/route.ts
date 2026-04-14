@@ -15,8 +15,8 @@ const TIER_PRICING: Record<string, number> = {
 };
 
 const TIER_LABELS: Record<string, string> = {
-  standard: "Entry",
-  full_package: "Full Package",
+  standard: "Runway",
+  full_package: "Runway + Glam",
 };
 
 // POST - Enter SwimCrown competition

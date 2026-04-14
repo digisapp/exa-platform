@@ -254,18 +254,18 @@ export default async function SwimCrownPage() {
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
-              {/* Entry */}
+              {/* Runway */}
               <Card className="relative border-white/10 bg-white/[0.03] backdrop-blur-sm p-8 flex flex-col rounded-3xl">
                 <Waves className="h-9 w-9 text-pink-400 mb-4" />
-                <h3 className="text-xl font-bold text-white">Entry</h3>
+                <h3 className="text-xl font-bold text-white">Runway</h3>
                 <p className="mt-2 text-4xl font-black text-white">
                   $175
                 </p>
                 <ul className="mt-6 space-y-4 text-base text-white">
                   {[
                     "Walk the runway at Miami Swim Week",
-                    "Official SwimCrown contestant profile",
                     "Compete for Miss SwimCrown 2026",
+                    "Official contestant profile",
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-3">
                       <CheckCircle2 className="h-5 w-5 text-pink-400 mt-0.5 shrink-0" />
@@ -276,33 +276,32 @@ export default async function SwimCrownPage() {
                 <div className="mt-auto pt-10">
                   <Link href="/swimcrown/enter" className="block">
                     <Button className="w-full border-pink-500/30 text-pink-300 hover:bg-pink-500/10 py-6 text-base rounded-full" variant="outline">
-                      Enter — $175
+                      Enter Runway — $175
                     </Button>
                   </Link>
                 </div>
               </Card>
 
-              {/* Full Package */}
+              {/* Runway + Glam */}
               <Card className="relative border-rose-500/30 bg-gradient-to-b from-rose-500/10 to-white/[0.03] backdrop-blur-sm p-8 ring-1 ring-rose-500/20 scale-[1.02] flex flex-col rounded-3xl">
                 <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold px-4 py-1 text-sm">
                   Best Value
                 </Badge>
                 <Gift className="h-9 w-9 text-rose-400 mb-4 mt-2" />
                 <h3 className="text-xl font-bold text-rose-300">
-                  Full Package
+                  Runway + Glam
                 </h3>
                 <p className="mt-2 text-4xl font-black text-white">
                   $399
                 </p>
                 <ul className="mt-6 space-y-4 text-base text-white">
                   {[
-                    "Everything in Entry",
-                    "Designer swimwear gifted ($100+ value) — yours to keep",
-                    "Hair & makeup included",
-                    "Official SwimCrown robe",
-                    "Sponsored gift bag (beauty, sun care & lifestyle)",
-                    "Professional photos & video of your runway walk",
-                    "Featured across EXA social channels",
+                    "Everything in Runway",
+                    "Designer swimwear gifted (yours to keep)",
+                    "Hair, makeup & SwimCrown robe",
+                    "Pro photos & video of your walk",
+                    "Featured on EXA socials",
+                    "Sponsored gift bag",
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-3">
                       <CheckCircle2 className="h-5 w-5 text-rose-400 mt-0.5 shrink-0" />
@@ -313,7 +312,7 @@ export default async function SwimCrownPage() {
                 <div className="mt-auto pt-10">
                   <Link href="/swimcrown/enter" className="block">
                     <Button className="w-full bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white font-bold py-6 text-base rounded-full shadow-lg shadow-rose-500/20">
-                      Enter Full Package — $399
+                      Enter Runway + Glam — $399
                     </Button>
                   </Link>
                 </div>
@@ -326,19 +325,20 @@ export default async function SwimCrownPage() {
                 <thead>
                   <tr className="bg-pink-500/10">
                     <th className="text-left py-5 px-6 text-white/80 font-semibold text-base">What&apos;s Included</th>
-                    <th className="py-5 px-5 text-center text-pink-300 font-bold text-base">Entry<br /><span className="text-white/80 text-sm font-normal">$175</span></th>
-                    <th className="py-5 px-5 text-center text-rose-300 font-bold text-base">Full Package<br /><span className="text-white/80 text-sm font-normal">$399</span></th>
+                    <th className="py-5 px-5 text-center text-pink-300 font-bold text-base">Runway<br /><span className="text-white/80 text-sm font-normal">$175</span></th>
+                    <th className="py-5 px-5 text-center text-rose-300 font-bold text-base">Runway + Glam<br /><span className="text-white/80 text-sm font-normal">$399</span></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {[
                     { feature: "Walk the runway at Miami Swim Week", entry: true, full: true },
                     { feature: "Compete for Miss SwimCrown 2026", entry: true, full: true },
-                    { feature: "Designer swimwear gifted ($100+ value)", entry: false, full: true },
-                    { feature: "Hair & makeup", entry: false, full: true },
-                    { feature: "Official SwimCrown robe", entry: false, full: true },
+                    { feature: "Official contestant profile", entry: true, full: true },
+                    { feature: "Designer swimwear gifted (yours to keep)", entry: false, full: true },
+                    { feature: "Hair, makeup & SwimCrown robe", entry: false, full: true },
+                    { feature: "Pro photos & video of your walk", entry: false, full: true },
+                    { feature: "Featured on EXA socials", entry: false, full: true },
                     { feature: "Sponsored gift bag", entry: false, full: true },
-                    { feature: "Professional photos & video", entry: false, full: true },
                   ].map((row) => (
                     <tr key={row.feature} className="hover:bg-white/[0.02] transition-colors">
                       <td className="py-4 px-6 text-white text-base">{row.feature}</td>
