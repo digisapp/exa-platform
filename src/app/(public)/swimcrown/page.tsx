@@ -285,7 +285,6 @@ export default async function SwimCrownPage() {
                     "Designer swimwear gifted (yours to keep)",
                     "Hair, makeup & SwimCrown robe",
                     "Pro photos & video of your walk",
-                    "Featured on EXA socials",
                     "Sponsored gift bag",
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-3">
@@ -322,7 +321,6 @@ export default async function SwimCrownPage() {
                     { feature: "Designer swimwear gifted (yours to keep)", entry: false, full: true },
                     { feature: "Hair, makeup & SwimCrown robe", entry: false, full: true },
                     { feature: "Pro photos & video of your walk", entry: false, full: true },
-                    { feature: "Featured on EXA socials", entry: false, full: true },
                     { feature: "Sponsored gift bag", entry: false, full: true },
                   ].map((row) => (
                     <tr key={row.feature} className="hover:bg-white/[0.02] transition-colors">

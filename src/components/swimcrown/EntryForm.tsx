@@ -63,7 +63,6 @@ const tiers: Tier[] = [
       "Designer swimwear gifted (yours to keep)",
       "Hair, makeup & SwimCrown robe",
       "Pro photos & video of your walk",
-      "Featured on EXA socials",
       "Sponsored gift bag",
     ],
   },
