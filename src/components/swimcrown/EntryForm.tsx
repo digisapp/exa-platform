@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,7 @@ import {
   Loader2,
   Sparkles,
   Waves,
+  Gift,
 } from "lucide-react";
 
 interface Tier {
@@ -51,7 +51,7 @@ const tiers: Tier[] = [
     id: "full_package",
     name: "Runway + Glam",
     price: 399,
-    icon: Crown,
+    icon: Gift,
     featured: true,
     badge: "Best Value",
     borderClass: "border-rose-500/40 ring-1 ring-rose-500/20",
@@ -70,14 +70,33 @@ const tiers: Tier[] = [
 ];
 
 export function EntryForm() {
-  const router = useRouter();
   const [selectedTier, setSelectedTier] = useState<"standard" | "full_package">("full_package");
-  const [tagline, setTagline] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [instagram, setInstagram] = useState("");
+  const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
 
   const currentTier = tiers.find((t) => t.id === selectedTier)!;
 
   const handleSubmit = async () => {
+    if (!fullName.trim()) {
+      toast.error("Please enter your full name");
+      return;
+    }
+    if (!email.trim() || !email.includes("@")) {
+      toast.error("Please enter a valid email");
+      return;
+    }
+    if (!instagram.trim()) {
+      toast.error("Please enter your Instagram handle");
+      return;
+    }
+    if (!phone.trim()) {
+      toast.error("Please enter your phone number");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -86,7 +105,10 @@ export function EntryForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tier: selectedTier,
-          tagline: tagline.trim() || null,
+          fullName: fullName.trim(),
+          email: email.trim().toLowerCase(),
+          instagram: instagram.trim().replace(/^@/, ""),
+          phone: phone.trim(),
         }),
       });
 
@@ -98,11 +120,9 @@ export function EntryForm() {
       const data = await res.json();
 
       if (data.url) {
-        // Redirect to Stripe checkout
         window.location.href = data.url;
       } else {
         toast.success("Entry submitted!");
-        router.push("/swimcrown/enter/success");
       }
     } catch (err: any) {
       toast.error(err.message || "Something went wrong");
@@ -113,6 +133,56 @@ export function EntryForm() {
 
   return (
     <div className="max-w-3xl mx-auto">
+      {/* Contact Info */}
+      <div className="max-w-md mx-auto mb-10 space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-white mb-1.5">
+            Full Name
+          </label>
+          <Input
+            placeholder="Your full name"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            className="bg-white/[0.05] border-white/10 text-white placeholder:text-white/30 py-5"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-white mb-1.5">
+            Email
+          </label>
+          <Input
+            type="email"
+            placeholder="you@email.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="bg-white/[0.05] border-white/10 text-white placeholder:text-white/30 py-5"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-white mb-1.5">
+            Instagram
+          </label>
+          <Input
+            placeholder="@yourhandle"
+            value={instagram}
+            onChange={(e) => setInstagram(e.target.value)}
+            className="bg-white/[0.05] border-white/10 text-white placeholder:text-white/30 py-5"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-white mb-1.5">
+            Phone Number
+          </label>
+          <Input
+            type="tel"
+            placeholder="+1 (555) 000-0000"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            className="bg-white/[0.05] border-white/10 text-white placeholder:text-white/30 py-5"
+          />
+        </div>
+      </div>
+
       {/* Tier Selection */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-8">
         {tiers.map((tier) => {
@@ -120,12 +190,12 @@ export function EntryForm() {
           return (
             <Card
               key={tier.id}
-              className={`relative cursor-pointer p-6 transition-all duration-200 ${tier.bgClass} ${
+              className={`relative cursor-pointer p-6 transition-all duration-200 rounded-3xl ${tier.bgClass} ${
                 isSelected
                   ? tier.id === "full_package"
                     ? "border-rose-500 ring-2 ring-rose-500/30 scale-[1.02]"
-                    : "border-teal-500 ring-2 ring-teal-500/30 scale-[1.02]"
-                  : `${tier.borderClass} hover:border-teal-500/30`
+                    : "border-pink-500 ring-2 ring-pink-500/30 scale-[1.02]"
+                  : `${tier.borderClass} hover:border-pink-500/30`
               }`}
               onClick={() => setSelectedTier(tier.id)}
             >
@@ -137,10 +207,9 @@ export function EntryForm() {
                 </Badge>
               )}
 
-              {/* Selected indicator */}
               {isSelected && (
                 <div className="absolute top-3 right-3">
-                  <CheckCircle2 className={`h-5 w-5 ${tier.id === "full_package" ? "text-rose-400" : "text-teal-400"}`} />
+                  <CheckCircle2 className={`h-5 w-5 ${tier.id === "full_package" ? "text-rose-400" : "text-pink-400"}`} />
                 </div>
               )}
 
@@ -158,7 +227,7 @@ export function EntryForm() {
                 ${tier.price}
               </p>
 
-              <ul className="mt-4 space-y-2.5 text-sm text-muted-foreground">
+              <ul className="mt-4 space-y-2.5 text-sm text-white">
                 {tier.features.map((feature) => (
                   <li key={feature} className="flex items-start gap-2">
                     <CheckCircle2
@@ -173,35 +242,15 @@ export function EntryForm() {
         })}
       </div>
 
-      {/* Tagline */}
-      <div className="max-w-xl mx-auto space-y-6">
-        <div>
-          <label className="block text-sm font-medium text-white mb-2">
-            Tagline{" "}
-            <span className="text-muted-foreground font-normal">
-              (optional)
-            </span>
-          </label>
-          <Input
-            placeholder="Your swimwear motto or tagline"
-            value={tagline}
-            onChange={(e) => setTagline(e.target.value.slice(0, 200))}
-            className="bg-[#0d1f35]/80 border-teal-500/20 text-white"
-            maxLength={200}
-          />
-          <p className="mt-1 text-xs text-muted-foreground text-right">
-            {tagline.length}/200
-          </p>
-        </div>
-
-        {/* Submit */}
+      {/* Submit */}
+      <div className="max-w-md mx-auto">
         <Button
           onClick={handleSubmit}
           disabled={loading}
           className={`w-full font-bold py-6 text-lg rounded-full shadow-lg ${
             selectedTier === "full_package"
               ? "bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white shadow-rose-500/25"
-              : "bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white shadow-teal-500/25"
+              : "bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white shadow-pink-500/25"
           }`}
           size="lg"
         >
@@ -212,15 +261,12 @@ export function EntryForm() {
           )}
           {loading
             ? "Processing..."
-            : `Enter SwimCrown — $${currentTier.price}`}
+            : `Enter ${currentTier.name} — $${currentTier.price}`}
         </Button>
 
-        <p className="text-center text-xs text-muted-foreground">
+        <p className="text-center text-xs text-white/80 mt-4">
           You will be redirected to Stripe for secure payment. Entry fee is
           non-refundable.
-        </p>
-        <p className="text-center text-xs text-amber-300/60 mt-2">
-          All models are scored equally by our judges regardless of entry tier.
         </p>
       </div>
     </div>

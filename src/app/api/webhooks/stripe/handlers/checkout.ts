@@ -680,11 +680,10 @@ async function handleCompCardPrintPayment(session: Stripe.Checkout.Session, supa
 }
 
 async function handleSwimCrownEntry(session: Stripe.Checkout.Session, supabaseAdmin: SupabaseClient) {
-  const modelId = session.metadata?.model_id;
   const competitionId = session.metadata?.competition_id;
-  const tier = session.metadata?.tier;
+  const email = session.metadata?.email;
 
-  if (!modelId || !competitionId || !tier) {
+  if (!competitionId || !email) {
     console.error("Missing SwimCrown entry metadata:", session.id);
     return;
   }
@@ -698,7 +697,7 @@ async function handleSwimCrownEntry(session: Stripe.Checkout.Session, supabaseAd
       stripe_session_id: session.id,
     })
     .eq("competition_id", competitionId)
-    .eq("model_id", modelId);
+    .eq("email", email);
 
   if (updateError) {
     console.error("Error updating SwimCrown contestant:", updateError);

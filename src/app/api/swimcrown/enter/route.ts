@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { stripe } from "@/lib/stripe";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 
 const enterSchema = z.object({
   tier: z.enum(["standard", "full_package"]),
-  tagline: z.string().max(200, "Tagline must be 200 characters or less").optional(),
+  fullName: z.string().min(1, "Name is required").max(200),
+  email: z.string().email("Invalid email"),
+  instagram: z.string().min(1, "Instagram is required").max(200),
+  phone: z.string().min(1, "Phone is required").max(50),
 });
 
 const TIER_PRICING: Record<string, number> = {
@@ -19,24 +22,15 @@ const TIER_LABELS: Record<string, string> = {
   full_package: "Runway + Glam",
 };
 
-// POST - Enter SwimCrown competition
+// POST - Enter SwimCrown competition (no auth required)
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const rateLimitResponse = await checkEndpointRateLimit(request, "financial", user.id);
+    // Rate limit by IP since there's no user
+    const rateLimitResponse = await checkEndpointRateLimit(request, "financial");
     if (rateLimitResponse) return rateLimitResponse;
 
     const body = await request.json();
 
-    // Validate input
     const validationResult = enterSchema.safeParse(body);
     if (!validationResult.success) {
       const firstError = validationResult.error.issues[0];
@@ -46,38 +40,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { tier, tagline } = validationResult.data;
+    const { tier, fullName, email, instagram, phone } = validationResult.data;
 
-    // Get actor and verify type is model
-    const { data: actor } = await supabase
-      .from("actors")
-      .select("id, type")
-      .eq("user_id", user.id)
-      .single();
-
-    if (!actor || actor.type !== "model") {
-      return NextResponse.json(
-        { error: "Only models can enter SwimCrown" },
-        { status: 403 }
-      );
-    }
-
-    // Get model_id
-    const { data: model } = await supabase
-      .from("models")
-      .select("id, first_name, username")
-      .eq("user_id", user.id)
-      .single();
-
-    if (!model) {
-      return NextResponse.json(
-        { error: "Model profile not found" },
-        { status: 400 }
-      );
-    }
+    const adminClient = createServiceRoleClient();
 
     // Get current competition
-    const { data: competition } = await (supabase as any)
+    const { data: competition } = await (adminClient as any)
       .from("swimcrown_competitions")
       .select("id, status, year, title")
       .order("year", { ascending: false })
@@ -98,17 +66,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check for duplicate entry
-    const { data: existingEntry } = await (supabase as any)
+    // Check for duplicate entry by email
+    const { data: existingEntry } = await (adminClient as any)
       .from("swimcrown_contestants")
       .select("id")
       .eq("competition_id", competition.id)
-      .eq("model_id", model.id)
+      .eq("email", email)
       .maybeSingle();
 
     if (existingEntry) {
       return NextResponse.json(
-        { error: "You have already entered this competition" },
+        { error: "This email has already been used to enter the competition" },
         { status: 409 }
       );
     }
@@ -124,8 +92,8 @@ export async function POST(request: NextRequest) {
           price_data: {
             currency: "usd",
             product_data: {
-              name: `SwimCrown ${competition.year} - ${TIER_LABELS[tier]} Entry`,
-              description: `${TIER_LABELS[tier]} tier entry into ${competition.title || "SwimCrown " + competition.year}`,
+              name: `SwimCrown ${competition.year} — ${TIER_LABELS[tier]}`,
+              description: `${TIER_LABELS[tier]} entry into SwimCrown ${competition.year} at Miami Swim Week`,
             },
             unit_amount: amountCents,
           },
@@ -137,22 +105,27 @@ export async function POST(request: NextRequest) {
       cancel_url: `${baseUrl}/swimcrown/enter`,
       metadata: {
         type: "swimcrown_entry",
-        model_id: model.id,
         competition_id: competition.id,
         tier,
+        full_name: fullName,
+        email,
+        instagram,
+        phone,
         amount_cents: amountCents.toString(),
       },
-      customer_email: user.email,
+      customer_email: email,
     });
 
     // Insert contestant row with pending status
-    const { error: insertError } = await (supabase as any)
+    const { error: insertError } = await (adminClient as any)
       .from("swimcrown_contestants")
       .insert({
         competition_id: competition.id,
-        model_id: model.id,
         tier,
-        tagline: tagline || null,
+        full_name: fullName,
+        email,
+        instagram,
+        phone,
         stripe_session_id: session.id,
         payment_status: "pending",
         amount_cents: amountCents,
@@ -162,10 +135,9 @@ export async function POST(request: NextRequest) {
 
     if (insertError) {
       console.error("SwimCrown entry insert error:", insertError);
-      // Handle race condition: UNIQUE constraint violation means duplicate entry
       if (insertError.code === "23505") {
         return NextResponse.json(
-          { error: "You have already entered this competition" },
+          { error: "This email has already been used to enter the competition" },
           { status: 409 }
         );
       }
