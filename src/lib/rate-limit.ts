@@ -247,6 +247,9 @@ export const EndpointLimits = {
 
   // Analytics tracking - 60 per minute (generous but prevents abuse)
   analytics: { limit: 60, windowSeconds: 60 },
+
+  // Live wall posts - 10 per minute (prevents spam without limiting conversation)
+  liveWall: { limit: 10, windowSeconds: 60 },
 } as const;
 
 export type EndpointType = keyof typeof EndpointLimits;

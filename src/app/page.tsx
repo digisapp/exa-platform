@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { TopModelsCarousel } from "@/components/home/TopModelsCarousel";
 import { UpcomingEventsCarousel } from "@/components/home/UpcomingEventsCarousel";
+import { LiveWall } from "@/components/live-wall/LiveWall";
 import { formatCoins, coinsToFanUsd, formatUsd } from "@/lib/coin-config";
 import { format } from "date-fns";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -52,20 +53,16 @@ function shuffleArray<T>(array: T[]): T[] {
 export default async function HomePage() {
   const supabase = await createClient();
 
-  // If user is already logged in, redirect to appropriate dashboard
+  // Check if user is logged in (for Live Wall + nav)
   const { data: { user } } = await supabase.auth.getUser();
+  let currentActor: { id: string; type: string } | null = null;
   if (user) {
-    // Check if admin
     const { data: actor } = await supabase
       .from("actors")
-      .select("type")
+      .select("id, type")
       .eq("user_id", user.id)
-      .single() as { data: { type: string } | null };
-
-    if (actor?.type === "admin") {
-      redirect("/admin");
-    }
-    redirect("/dashboard");
+      .single() as { data: { id: string; type: string } | null };
+    currentActor = actor;
   }
 
   // Fetch top 50 models with 4-5 star admin rating (signed-in models with self-uploaded photos)
@@ -121,6 +118,14 @@ export default async function HomePage() {
     .order("date", { ascending: true })
     .limit(1)
     .single();
+
+  // Fetch live wall messages (last 50, newest last)
+  const { data: liveWallMessages } = await (supabase as any)
+    .from("live_wall_messages")
+    .select("id, actor_id, actor_type, display_name, avatar_url, content, message_type, reactions, created_at")
+    .eq("is_deleted", false)
+    .order("created_at", { ascending: true })
+    .limit(50);
 
   // Get actual EXA Boost leaderboard from top_model_leaderboard table
   const { data: leaderboardModels } = await (supabase as any)
@@ -183,11 +188,19 @@ export default async function HomePage() {
                 className="h-10 w-auto"
               />
             </Link>
-            <Link href="/signin">
-              <Button variant="outline" className="border-[#FF69B4]/50 hover:border-[#FF69B4] hover:bg-[#FF69B4]/10">
-                Sign In
-              </Button>
-            </Link>
+            {user ? (
+              <Link href={currentActor?.type === "admin" ? "/admin" : "/dashboard"}>
+                <Button variant="outline" className="border-[#FF69B4]/50 hover:border-[#FF69B4] hover:bg-[#FF69B4]/10">
+                  Dashboard
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/signin">
+                <Button variant="outline" className="border-[#FF69B4]/50 hover:border-[#FF69B4] hover:bg-[#FF69B4]/10">
+                  Sign In
+                </Button>
+              </Link>
+            )}
           </div>
         </nav>
 
@@ -200,10 +213,6 @@ export default async function HomePage() {
               <div className="absolute -top-20 -left-20 w-40 h-40 bg-pink-500/20 rounded-full blur-3xl opacity-50 group-hover:opacity-70 transition-opacity" />
 
               <div className="relative z-10">
-                <span className="inline-block px-3 py-1 md:px-4 md:py-1.5 rounded-full text-xs md:text-sm font-semibold bg-gradient-to-r from-pink-500 to-violet-500 text-white mb-4 md:mb-6">
-                  For Models
-                </span>
-
                 <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-4">
                   Gigs. Bookings.
                   <br />
@@ -225,10 +234,6 @@ export default async function HomePage() {
               <div className="absolute -top-20 -left-10 w-40 h-40 bg-amber-500/20 rounded-full blur-3xl opacity-50 group-hover:opacity-70 transition-opacity" />
 
               <div className="relative z-10">
-                <span className="inline-block px-3 py-1 md:px-4 md:py-1.5 rounded-full text-xs md:text-sm font-semibold bg-gradient-to-r from-amber-500 to-orange-500 text-white mb-3 md:mb-6">
-                  For Fans
-                </span>
-
                 <h2 className="text-lg md:text-3xl lg:text-4xl font-bold tracking-tight mb-3 md:mb-4">
                   Call, Chat,
                   <br />
@@ -250,10 +255,6 @@ export default async function HomePage() {
               <div className="absolute -top-20 -right-20 w-40 h-40 bg-cyan-500/20 rounded-full blur-3xl opacity-50 group-hover:opacity-70 transition-opacity" />
 
               <div className="relative z-10">
-                <span className="inline-block px-3 py-1 md:px-4 md:py-1.5 rounded-full text-xs md:text-sm font-semibold bg-gradient-to-r from-cyan-500 to-blue-500 text-white mb-3 md:mb-6">
-                  For Brands
-                </span>
-
                 <h2 className="text-lg md:text-3xl lg:text-4xl font-bold tracking-tight mb-3 md:mb-4">
                   Book Models.
                   <br />
@@ -274,10 +275,6 @@ export default async function HomePage() {
               <div className="absolute -top-20 -right-10 w-40 h-40 bg-violet-500/20 rounded-full blur-3xl opacity-50 group-hover:opacity-70 transition-opacity" />
 
               <div className="relative z-10">
-                <span className="inline-block px-3 py-1 md:px-4 md:py-1.5 rounded-full text-xs md:text-sm font-semibold bg-gradient-to-r from-violet-500 to-purple-500 text-white mb-3 md:mb-6">
-                  For Media
-                </span>
-
                 <h2 className="text-lg md:text-3xl lg:text-4xl font-bold tracking-tight mb-3 md:mb-4">
                   Press. Media.
                   <br />
@@ -293,6 +290,18 @@ export default async function HomePage() {
               </div>
             </div>
           </div>
+        </section>
+
+        {/* EXA Live Wall */}
+        <section className="container px-8 md:px-16 py-6">
+          <LiveWall
+            initialMessages={liveWallMessages || []}
+            currentUser={
+              currentActor
+                ? { actorId: currentActor.id, actorType: currentActor.type }
+                : null
+            }
+          />
         </section>
 
         {/* Upcoming Shows Section */}
