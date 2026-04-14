@@ -13,7 +13,6 @@ import {
   Trophy,
   CheckCircle2,
   UserCircle,
-  Camera,
   Gift,
   Waves,
   ChevronRight,
@@ -218,20 +217,6 @@ export default async function SwimCrownPage() {
                       and the distinction of{" "}
                       <span className="text-white font-semibold">World&apos;s #1 Swim Model of the Year</span>.
                     </p>
-
-                    <div className="grid grid-cols-1 gap-3">
-                      {[
-                        { icon: Crown, text: "Walk the Runway at Miami Swim Week" },
-                        { icon: Gift, text: "Gifted Designer Swimwear + Goodie Bag" },
-                        { icon: Camera, text: "Professional Runway Content for Your Portfolio" },
-                        { icon: Trophy, text: "Compete for Miss SwimCrown 2026" },
-                      ].map((item) => (
-                        <div key={item.text} className="flex items-center gap-3 rounded-xl border border-pink-500/15 bg-pink-500/5 px-4 py-3">
-                          <item.icon className="h-5 w-5 text-pink-400 shrink-0" />
-                          <span className="text-sm font-medium text-white">{item.text}</span>
-                        </div>
-                      ))}
-                    </div>
 
                     <Link href="/swimcrown/enter">
                       <Button
