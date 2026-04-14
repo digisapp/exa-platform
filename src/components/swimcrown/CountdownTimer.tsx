@@ -28,30 +28,33 @@ export function CountdownTimer() {
 
   const blocks = [
     { label: "Days", value: timeLeft.days },
-    { label: "Hours", value: timeLeft.hours },
-    { label: "Minutes", value: timeLeft.minutes },
-    { label: "Seconds", value: timeLeft.seconds },
+    { label: "Hrs", value: timeLeft.hours },
+    { label: "Min", value: timeLeft.minutes },
+    { label: "Sec", value: timeLeft.seconds },
   ];
 
   return (
-    <div className="flex items-center justify-center gap-3 sm:gap-4">
-      {blocks.map((block, i) => (
-        <div key={block.label} className="flex items-center gap-3 sm:gap-4">
-          <div className="flex flex-col items-center">
-            <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-xl bg-[#0d1f35]/80 border border-teal-500/20 shadow-lg shadow-teal-500/5">
-              <span className="text-2xl sm:text-3xl font-black text-white tabular-nums">
+    <div className="text-center">
+      <p className="text-sm font-bold tracking-widest uppercase text-pink-400 mb-4">
+        Countdown to Crowning
+      </p>
+      <div className="inline-flex items-center gap-2 sm:gap-3 rounded-2xl bg-white/[0.04] border border-pink-500/15 px-5 sm:px-7 py-4 sm:py-5">
+        {blocks.map((block, i) => (
+          <div key={block.label} className="flex items-center gap-2 sm:gap-3">
+            <div className="flex flex-col items-center min-w-[3.2rem] sm:min-w-[4rem]">
+              <span className="text-3xl sm:text-4xl font-black text-white tabular-nums leading-none bg-gradient-to-b from-white to-white/80 bg-clip-text text-transparent">
                 {String(block.value).padStart(2, "0")}
               </span>
+              <span className="mt-1.5 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-pink-300/80">
+                {block.label}
+              </span>
             </div>
-            <span className="mt-2 text-[10px] sm:text-xs font-semibold uppercase tracking-widest text-teal-400/70">
-              {block.label}
-            </span>
+            {i < blocks.length - 1 && (
+              <span className="text-2xl font-bold text-pink-500/30 -mt-4">:</span>
+            )}
           </div>
-          {i < blocks.length - 1 && (
-            <span className="text-2xl font-bold text-teal-500/40 -mt-5">:</span>
-          )}
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
