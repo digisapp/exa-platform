@@ -261,9 +261,6 @@ export default async function SwimCrownPage() {
                 <p className="mt-2 text-4xl font-black text-white">
                   $175
                 </p>
-                <p className="mt-3 text-base text-white leading-relaxed">
-                  Get on the runway and compete. Your contestant profile goes live on EXA. Arrive hair & makeup ready.
-                </p>
                 <ul className="mt-6 space-y-4 text-base text-white">
                   {[
                     "Walk the runway at Miami Swim Week",
@@ -296,9 +293,6 @@ export default async function SwimCrownPage() {
                 </h3>
                 <p className="mt-2 text-4xl font-black text-white">
                   $399
-                </p>
-                <p className="mt-3 text-base text-rose-300/70 leading-relaxed">
-                  Everything you need to arrive prepared and walk away with more. Designer swimwear, professional content, and the full Swim Week experience.
                 </p>
                 <ul className="mt-6 space-y-4 text-base text-white">
                   {[
