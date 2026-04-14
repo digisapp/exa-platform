@@ -132,7 +132,7 @@ export default async function SwimCrownPage() {
               </span>
             </h1>
 
-            <p className="mt-5 text-lg sm:text-xl text-white/60 font-medium tracking-wide">
+            <p className="mt-5 text-lg sm:text-xl text-white font-medium tracking-wide">
               World&apos;s #1 Swim Model of the Year Competition
             </p>
           </div>
@@ -160,7 +160,7 @@ export default async function SwimCrownPage() {
                     <p className="text-white text-xl sm:text-2xl font-bold leading-snug mb-3">
                       Who Will Be Crowned Miss SwimCrown 2026?
                     </p>
-                    <p className="text-white/70 text-base leading-relaxed mb-6">
+                    <p className="text-white text-base leading-relaxed mb-6">
                       Walk the runway at Miami Swim Week.
                       Compete before a live audience and an elite panel of judges for
                       the title of World&apos;s #1 Swim Model.
@@ -208,13 +208,10 @@ export default async function SwimCrownPage() {
 
                     <div className="w-12 h-px bg-gradient-to-r from-pink-500/50 to-transparent" />
 
-                    <p className="text-white/70 text-base leading-relaxed">
+                    <p className="text-white text-base leading-relaxed">
                       SwimCrown competition debuts live at{" "}
                       <span className="text-pink-300 font-semibold">Miami Swim Week</span>.
-                      Every model walks the runway in Round 1, scored by an elite
-                      panel of judges. Top models advance through Semifinals and
-                      Finals, culminating with the crowning ceremony! The winner
-                      receives the{" "}
+                      The winner receives the{" "}
                       <span className="text-white font-semibold">official crown and sash on stage</span>,
                       earning the title of{" "}
                       <span className="text-amber-300 font-semibold">Miss SwimCrown 2026</span>{" "}
@@ -269,7 +266,7 @@ export default async function SwimCrownPage() {
                 Choose Your Entry
               </span>
             </h2>
-            <p className="text-center text-white/60 mb-5 max-w-xl mx-auto text-base">
+            <p className="text-center text-white mb-5 max-w-xl mx-auto text-base">
               Both tiers include a runway walk and compete equally for the crown — your tier determines your experience, not your outcome
             </p>
             <p className="text-center text-sm text-amber-300/80 mb-14 max-w-md mx-auto font-medium">
@@ -284,10 +281,10 @@ export default async function SwimCrownPage() {
                 <p className="mt-2 text-4xl font-black text-white">
                   $175
                 </p>
-                <p className="mt-3 text-base text-white/60 leading-relaxed">
+                <p className="mt-3 text-base text-white leading-relaxed">
                   Get on the runway and compete. Your contestant profile goes live on EXA. Arrive hair & makeup ready.
                 </p>
-                <ul className="mt-6 space-y-4 text-base text-white/70">
+                <ul className="mt-6 space-y-4 text-base text-white">
                   {[
                     "Walk the runway at Miami Swim Week",
                     "Official SwimCrown contestant profile",
@@ -323,7 +320,7 @@ export default async function SwimCrownPage() {
                 <p className="mt-3 text-base text-rose-300/70 leading-relaxed">
                   Everything you need to arrive prepared and walk away with more. Designer swimwear, professional content, and the full Swim Week experience.
                 </p>
-                <ul className="mt-6 space-y-4 text-base text-white/70">
+                <ul className="mt-6 space-y-4 text-base text-white">
                   {[
                     "Everything in Entry",
                     "Designer swimwear gifted ($100+ value) — yours to keep",
@@ -355,8 +352,8 @@ export default async function SwimCrownPage() {
                 <thead>
                   <tr className="bg-pink-500/10">
                     <th className="text-left py-5 px-6 text-white/80 font-semibold text-base">What&apos;s Included</th>
-                    <th className="py-5 px-5 text-center text-pink-300 font-bold text-base">Entry<br /><span className="text-white/40 text-sm font-normal">$175</span></th>
-                    <th className="py-5 px-5 text-center text-rose-300 font-bold text-base">Full Package<br /><span className="text-white/40 text-sm font-normal">$399</span></th>
+                    <th className="py-5 px-5 text-center text-pink-300 font-bold text-base">Entry<br /><span className="text-white/80 text-sm font-normal">$175</span></th>
+                    <th className="py-5 px-5 text-center text-rose-300 font-bold text-base">Full Package<br /><span className="text-white/80 text-sm font-normal">$399</span></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
@@ -370,7 +367,7 @@ export default async function SwimCrownPage() {
                     { feature: "Professional photos & video", entry: false, full: true },
                   ].map((row) => (
                     <tr key={row.feature} className="hover:bg-white/[0.02] transition-colors">
-                      <td className="py-4 px-6 text-white/70 text-base">{row.feature}</td>
+                      <td className="py-4 px-6 text-white text-base">{row.feature}</td>
                       <td className="py-4 px-5 text-center">
                         {row.entry ? (
                           <CheckCircle2 className="h-6 w-6 text-pink-400 mx-auto" />
@@ -401,7 +398,7 @@ export default async function SwimCrownPage() {
                 Competition Format
               </span>
             </h2>
-            <p className="text-center text-white/60 mb-14 max-w-lg mx-auto text-lg">
+            <p className="text-center text-white mb-14 max-w-lg mx-auto text-lg">
               Three rounds. One crown. Every model walks the runway.
             </p>
 
@@ -411,7 +408,7 @@ export default async function SwimCrownPage() {
                 <span className="text-sm font-bold tracking-widest uppercase text-pink-400/70">Round 1</span>
                 <h3 className="mt-2 text-2xl font-bold text-white">The Runway</h3>
                 <p className="mt-2 text-3xl font-black text-pink-300">All Models</p>
-                <p className="mt-4 text-base text-white/60 leading-relaxed">
+                <p className="mt-4 text-base text-white leading-relaxed">
                   Every model walks the runway. This is your moment — the full experience, the audience, the stage. Judges score every walk.
                 </p>
                 <div className="hidden md:flex absolute -right-3.5 top-1/2 -translate-y-1/2 z-10">
@@ -424,7 +421,7 @@ export default async function SwimCrownPage() {
                 <span className="text-sm font-bold tracking-widest uppercase text-rose-400/70">Semifinals</span>
                 <h3 className="mt-2 text-2xl font-bold text-white">Top 30</h3>
                 <p className="mt-2 text-3xl font-black text-rose-300">Advance</p>
-                <p className="mt-4 text-base text-white/60 leading-relaxed">
+                <p className="mt-4 text-base text-white leading-relaxed">
                   The top-scoring models return to the runway for a second walk. Higher stakes, closer judging — proving they belong in the Finals.
                 </p>
                 <div className="hidden md:flex absolute -right-3.5 top-1/2 -translate-y-1/2 z-10">
@@ -437,7 +434,7 @@ export default async function SwimCrownPage() {
                 <span className="text-sm font-bold tracking-widest uppercase text-amber-400/70">Finals</span>
                 <h3 className="mt-2 text-2xl font-bold text-white">Top 10</h3>
                 <p className="mt-2 text-3xl font-black text-amber-300">The Showdown</p>
-                <p className="mt-4 text-base text-white/60 leading-relaxed">
+                <p className="mt-4 text-base text-white leading-relaxed">
                   The final 10 compete for the crown. Judges make their decision. The Top 3 are announced — and Miss SwimCrown 2026 is crowned live on stage.
                 </p>
               </div>
@@ -496,7 +493,7 @@ export default async function SwimCrownPage() {
                     )}
                   </div>
                   <h3 className="text-base font-bold text-white">{judge.name}</h3>
-                  <p className="mt-1 text-sm text-white/50">{judge.role}</p>
+                  <p className="mt-1 text-sm text-white/80">{judge.role}</p>
                 </Card>
               ))}
             </div>
@@ -512,7 +509,7 @@ export default async function SwimCrownPage() {
               <h2 className="text-4xl sm:text-5xl font-black mb-5 text-white">
                 Will You Be Crowned?
               </h2>
-              <p className="text-white/60 mb-8 text-lg leading-relaxed">
+              <p className="text-white mb-8 text-lg leading-relaxed">
                 Models from around the world are entering for their chance to step onto the
                 runway at Miami Swim Week — and earn the title of Miss SwimCrown 2026.
               </p>
