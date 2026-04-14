@@ -115,15 +115,18 @@ BEGIN
     UPDATE brands SET coin_balance = coin_balance - p_amount WHERE user_id = v_tipper.user_id;
   END IF;
 
-  -- Credit recipient
+  -- Credit recipient (lock row first, then update)
   IF v_recipient.type = 'model' THEN
-    UPDATE models SET coin_balance = coin_balance + p_amount WHERE user_id = v_recipient.user_id FOR UPDATE;
+    PERFORM 1 FROM models WHERE user_id = v_recipient.user_id FOR UPDATE;
+    UPDATE models SET coin_balance = coin_balance + p_amount WHERE user_id = v_recipient.user_id;
     SELECT COALESCE(first_name, username, 'someone') INTO v_recipient_display FROM models WHERE user_id = v_recipient.user_id;
   ELSIF v_recipient.type = 'fan' THEN
-    UPDATE fans SET coin_balance = coin_balance + p_amount WHERE user_id = v_recipient.user_id FOR UPDATE;
+    PERFORM 1 FROM fans WHERE user_id = v_recipient.user_id FOR UPDATE;
+    UPDATE fans SET coin_balance = coin_balance + p_amount WHERE user_id = v_recipient.user_id;
     SELECT COALESCE(display_name, username, 'someone') INTO v_recipient_display FROM fans WHERE user_id = v_recipient.user_id;
   ELSIF v_recipient.type = 'brand' THEN
-    UPDATE brands SET coin_balance = coin_balance + p_amount WHERE user_id = v_recipient.user_id FOR UPDATE;
+    PERFORM 1 FROM brands WHERE user_id = v_recipient.user_id FOR UPDATE;
+    UPDATE brands SET coin_balance = coin_balance + p_amount WHERE user_id = v_recipient.user_id;
     SELECT COALESCE(company_name, 'someone') INTO v_recipient_display FROM brands WHERE user_id = v_recipient.user_id;
   END IF;
 
