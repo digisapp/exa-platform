@@ -4,16 +4,13 @@ import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { Navbar } from "@/components/layout/navbar";
 import { BottomNav } from "@/components/layout/BottomNav";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
   Crown,
   Sparkles,
   Trophy,
-  CheckCircle2,
   UserCircle,
-  Gift,
   Waves,
   ChevronRight,
 } from "lucide-react";
@@ -232,119 +229,6 @@ export default async function SwimCrownPage() {
           </div>
         </section>
 
-        {/* ─── Entry Tiers ─── */}
-        <section className="py-20 sm:py-24 bg-gradient-to-b from-transparent via-pink-950/10 to-transparent">
-          <div className="container mx-auto px-4">
-            <h2 className="text-center text-4xl sm:text-5xl font-black mb-5">
-              <span className="bg-gradient-to-r from-pink-300 via-rose-400 to-pink-300 bg-clip-text text-transparent">
-                Choose Your Entry
-              </span>
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
-              {/* Runway */}
-              <Card className="relative border-white/10 bg-white/[0.03] backdrop-blur-sm p-8 flex flex-col rounded-3xl">
-                <Waves className="h-9 w-9 text-pink-400 mb-4" />
-                <h3 className="text-xl font-bold text-white">Runway</h3>
-                <p className="mt-2 text-4xl font-black text-white">
-                  $175
-                </p>
-                <ul className="mt-6 space-y-4 text-base text-white">
-                  {[
-                    "Walk the runway at Miami Swim Week",
-                    "Compete for Miss SwimCrown 2026",
-                  ].map((item) => (
-                    <li key={item} className="flex items-start gap-3">
-                      <CheckCircle2 className="h-5 w-5 text-pink-400 mt-0.5 shrink-0" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-auto pt-10">
-                  <Link href="/swimcrown/enter" className="block">
-                    <Button className="w-full border-pink-500/30 text-pink-300 hover:bg-pink-500/10 py-6 text-base rounded-full" variant="outline">
-                      Enter Runway — $175
-                    </Button>
-                  </Link>
-                </div>
-              </Card>
-
-              {/* Runway + Glam */}
-              <Card className="relative border-rose-500/30 bg-gradient-to-b from-rose-500/10 to-white/[0.03] backdrop-blur-sm p-8 ring-1 ring-rose-500/20 scale-[1.02] flex flex-col rounded-3xl">
-                <Gift className="h-9 w-9 text-rose-400 mb-4 mt-2" />
-                <h3 className="text-xl font-bold text-rose-300">
-                  Runway + Glam
-                </h3>
-                <p className="mt-2 text-4xl font-black text-white">
-                  $399
-                </p>
-                <ul className="mt-6 space-y-4 text-base text-white">
-                  {[
-                    "Walk the Runway at Miami Swim Week",
-                    "Pre-Show Hair and Makeup",
-                    "Professional Photos & Video of your Walk",
-                    "Official EXA Models Robe",
-                    "Gifted Designer Swimwear + Sponsored Goodies",
-                  ].map((item) => (
-                    <li key={item} className="flex items-start gap-3">
-                      <CheckCircle2 className="h-5 w-5 text-rose-400 mt-0.5 shrink-0" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-auto pt-10">
-                  <Link href="/swimcrown/enter" className="block">
-                    <Button className="w-full bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white font-bold py-6 text-base rounded-full shadow-lg shadow-rose-500/20">
-                      Enter Runway + Glam — $399
-                    </Button>
-                  </Link>
-                </div>
-              </Card>
-            </div>
-
-            {/* ─── Comparison Table ─── */}
-            <div className="mt-16 max-w-2xl mx-auto overflow-hidden rounded-3xl border border-white/10 bg-white/[0.02]">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-pink-500/10">
-                    <th className="text-left py-5 px-6 text-white/80 font-semibold text-base">What&apos;s Included</th>
-                    <th className="py-5 px-5 text-center text-pink-300 font-bold text-base">Runway<br /><span className="text-white/80 text-sm font-normal">$175</span></th>
-                    <th className="py-5 px-5 text-center text-rose-300 font-bold text-base">Runway + Glam<br /><span className="text-white/80 text-sm font-normal">$399</span></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {[
-                    { feature: "Walk the Runway at Miami Swim Week", entry: true, full: true },
-                    { feature: "Compete for Miss SwimCrown 2026", entry: true, full: true },
-                    { feature: "Pre-Show Hair and Makeup", entry: false, full: true },
-                    { feature: "Professional Photos & Video of your Walk", entry: false, full: true },
-                    { feature: "Official EXA Models Robe", entry: false, full: true },
-                    { feature: "Gifted Designer Swimwear + Sponsored Goodies", entry: false, full: true },
-                  ].map((row) => (
-                    <tr key={row.feature} className="hover:bg-white/[0.02] transition-colors">
-                      <td className="py-4 px-6 text-white text-base">{row.feature}</td>
-                      <td className="py-4 px-5 text-center">
-                        {row.entry ? (
-                          <CheckCircle2 className="h-6 w-6 text-pink-400 mx-auto" />
-                        ) : (
-                          <span className="text-white/15 text-lg">—</span>
-                        )}
-                      </td>
-                      <td className="py-4 px-5 text-center">
-                        {row.full ? (
-                          <CheckCircle2 className="h-6 w-6 text-rose-400 mx-auto" />
-                        ) : (
-                          <span className="text-white/15 text-lg">—</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
-
         {/* ─── Competition Format ─── */}
         <section className="py-20 sm:py-24">
           <div className="container mx-auto px-4">
@@ -354,7 +238,7 @@ export default async function SwimCrownPage() {
               </span>
             </h2>
             <p className="text-center text-white mb-14 max-w-lg mx-auto text-lg">
-              Three rounds. One crown. Every model walks the runway.
+              Every model walks the runway. Three rounds. One crown.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-4xl mx-auto items-stretch">
@@ -364,7 +248,7 @@ export default async function SwimCrownPage() {
                 <h3 className="mt-2 text-2xl font-bold text-white">The Runway</h3>
                 <p className="mt-2 text-3xl font-black text-pink-300">All Models</p>
                 <p className="mt-4 text-base text-white leading-relaxed">
-                  Every model walks the runway. This is your moment — the full experience, the audience, the stage. Judges score every walk.
+                  Every model walks the runway. This is your moment — the full experience, the audience, the stage, the glamourous shots.
                 </p>
                 <div className="hidden md:flex absolute -right-3.5 top-1/2 -translate-y-1/2 z-10">
                   <ChevronRight className="h-7 w-7 text-pink-500/40" />

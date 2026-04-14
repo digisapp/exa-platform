@@ -240,6 +240,47 @@ export function EntryForm() {
         })}
       </div>
 
+      {/* Comparison Table */}
+      <div className="mb-10 max-w-2xl mx-auto overflow-hidden rounded-3xl border border-white/10 bg-white/[0.02]">
+        <table className="w-full">
+          <thead>
+            <tr className="bg-pink-500/10">
+              <th className="text-left py-4 px-5 text-white/80 font-semibold text-sm">What&apos;s Included</th>
+              <th className="py-4 px-4 text-center text-pink-300 font-bold text-sm">Runway<br /><span className="text-white/80 text-xs font-normal">$175</span></th>
+              <th className="py-4 px-4 text-center text-rose-300 font-bold text-sm">Runway + Glam<br /><span className="text-white/80 text-xs font-normal">$399</span></th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/5">
+            {[
+              { feature: "Walk the Runway at Miami Swim Week", entry: true, full: true },
+              { feature: "Compete for Miss SwimCrown 2026", entry: true, full: true },
+              { feature: "Pre-Show Hair and Makeup", entry: false, full: true },
+              { feature: "Professional Photos & Video of your Walk", entry: false, full: true },
+              { feature: "Official EXA Models Robe", entry: false, full: true },
+              { feature: "Gifted Designer Swimwear + Sponsored Goodies", entry: false, full: true },
+            ].map((row) => (
+              <tr key={row.feature} className="hover:bg-white/[0.02] transition-colors">
+                <td className="py-3 px-5 text-white text-sm">{row.feature}</td>
+                <td className="py-3 px-4 text-center">
+                  {row.entry ? (
+                    <CheckCircle2 className="h-5 w-5 text-pink-400 mx-auto" />
+                  ) : (
+                    <span className="text-white/15">—</span>
+                  )}
+                </td>
+                <td className="py-3 px-4 text-center">
+                  {row.full ? (
+                    <CheckCircle2 className="h-5 w-5 text-rose-400 mx-auto" />
+                  ) : (
+                    <span className="text-white/15">—</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
       {/* Submit */}
       <div className="max-w-md mx-auto">
         <Button
