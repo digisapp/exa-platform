@@ -252,9 +252,6 @@ export default async function SwimCrownPage() {
                 Choose Your Entry
               </span>
             </h2>
-            <p className="text-center text-white mb-14 max-w-xl mx-auto text-base">
-              Both tiers include a Runway Walk and compete for the Crown!
-            </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
               {/* Entry */}
