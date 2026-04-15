@@ -440,9 +440,9 @@ export function HotelFloorPlan() {
             <polygon points="93.0,12 87.0,27 89.0,27" fill="rgba(255,255,255,0.03)" />
             <polygon points="97.0,12 101.0,27 103.0,27" fill="rgba(255,255,255,0.03)" />
             {/* Runway glow */}
-            <rect x={93.0} y={13} width={4} height={35} rx={0.5} fill="rgba(255,255,255,0.08)" />
+            <rect x={93.0} y={13} width={4} height={31} rx={0.5} fill="rgba(255,255,255,0.08)" />
             {/* Runway surface — WHITE */}
-            <rect x={93.5} y={14} width={3} height={34} rx={0.4} fill="rgba(255,255,255,0.55)" stroke="rgba(255,255,255,0.7)" strokeWidth={0.15} />
+            <rect x={93.5} y={14} width={3} height={30} rx={0.4} fill="rgba(255,255,255,0.55)" stroke="rgba(255,255,255,0.7)" strokeWidth={0.15} />
             {/* Runway edge lights */}
             {Array.from({ length: 11 }).map((_, i) => (
               <g key={`rl-${i}`}>
@@ -451,7 +451,7 @@ export function HotelFloorPlan() {
               </g>
             ))}
             {/* Center line */}
-            <line x1={95.0} y1={15} x2={95.0} y2={47} stroke="rgba(200,200,200,0.3)" strokeWidth={0.1} strokeDasharray="1 0.8" />
+            <line x1={95.0} y1={15} x2={95.0} y2={43} stroke="rgba(200,200,200,0.3)" strokeWidth={0.1} strokeDasharray="1 0.8" />
             {/* Stage platform — WHITE */}
             <rect x={92.0} y={11.5} width={6} height={3.5} rx={0.5} fill="rgba(255,255,255,0.6)" stroke="rgba(255,255,255,0.8)" strokeWidth={0.15} />
             <text x={95.0} y={33} textAnchor="middle" fill="rgba(100,100,100,0.7)" fontSize={0.6} fontWeight="700" letterSpacing={0.2} transform="rotate(90, 95.0, 33)">EXA Swim Shows Runway</text>
