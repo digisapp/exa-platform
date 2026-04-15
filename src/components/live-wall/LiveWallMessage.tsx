@@ -150,12 +150,14 @@ export function LiveWallMessage({
       )}
     >
       {/* Avatar */}
-      <Avatar className="h-9 w-9 shrink-0 mt-0.5 border border-white/10">
-        <AvatarImage src={message.avatar_url || undefined} />
-        <AvatarFallback className="bg-white/10 text-white/60 text-xs">
-          {message.display_name.replace("@", "")[0]?.toUpperCase()}
-        </AvatarFallback>
-      </Avatar>
+      <div className="shrink-0 mt-0.5 rounded-full bg-gradient-to-br from-pink-500 via-violet-500 to-cyan-500 p-[2px]">
+        <Avatar className="h-10 w-10">
+          <AvatarImage src={message.avatar_url || undefined} />
+          <AvatarFallback className="bg-black text-white/70 text-sm font-bold">
+            {message.display_name.replace("@", "")[0]?.toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+      </div>
 
       {/* Content */}
       <div className="flex-1 min-w-0">
