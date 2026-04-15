@@ -185,7 +185,7 @@ export function HotelFloorPlan() {
         </div>
         <div>
           <h2 className="text-2xl font-bold bg-gradient-to-r from-pink-400 via-violet-400 to-cyan-400 bg-clip-text text-transparent">
-            Official Venue: Hotel Alexander Miami Beach
+            EXA Venue: Hotel Alexander Miami Beach
           </h2>
           <p className="text-sm text-zinc-500">5225 Collins Ave, Miami Beach, FL 33140</p>
         </div>
