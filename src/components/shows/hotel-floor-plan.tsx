@@ -249,9 +249,9 @@ export function HotelFloorPlan() {
               <stop offset="100%" stopColor="rgba(255,80,0,0.4)" />
             </linearGradient>
             <linearGradient id="showsGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="rgba(255,50,130,0.3)" />
-              <stop offset="50%" stopColor="rgba(255,30,100,0.2)" />
-              <stop offset="100%" stopColor="rgba(255,50,130,0.3)" />
+              <stop offset="0%" stopColor="rgba(255,50,130,0.12)" />
+              <stop offset="50%" stopColor="rgba(255,30,100,0.06)" />
+              <stop offset="100%" stopColor="rgba(255,50,130,0.12)" />
             </linearGradient>
             <linearGradient id="boardwalkGrad" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="rgba(200,180,150,0.35)" />
@@ -380,25 +380,22 @@ export function HotelFloorPlan() {
             );
           })}
 
-          {/* === PHOTO WALL === */}
+          {/* === RED CARPET + PHOTO WALL (same width as Grand Entrance) === */}
           <g style={{ pointerEvents: "none" }}>
-            <rect x={14.0} y={5} width={7} height={5} rx={0.5} fill="rgba(255,50,130,0.2)" stroke="rgba(255,50,130,0.35)" strokeWidth={0.1} />
-            <text x={17.5} y={7} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.65)" fontSize={0.65} fontWeight="700">📸 Photo Wall</text>
-            <text x={17.5} y={8.5} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.4)" fontSize={0.5}>Paparazzi</text>
-          </g>
-
-          {/* === RED CARPET with glow === */}
-          <g style={{ pointerEvents: "none" }}>
-            {/* Glow underneath */}
-            <rect x={13.5} y={12.5} width={8} height={5} rx={8.0} fill="rgba(220,20,20,0.08)" filter="url(#spotGlow)" />
-            <rect x={14.0} y={13} width={7} height={4} rx={0.4} fill="rgba(200,20,20,0.5)" stroke="rgba(255,80,80,0.4)" strokeWidth={0.12} />
+            {/* Photo Wall section */}
+            <rect x={7} y={4} width={14} height={6} rx={0.5} fill="rgba(255,50,130,0.2)" stroke="rgba(255,50,130,0.35)" strokeWidth={0.1} />
+            <text x={14} y={6} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.7)" fontSize={0.75} fontWeight="700">📸 Photo Wall & Paparazzi</text>
+            <text x={14} y={8} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.4)" fontSize={0.5}>Step & Repeat • Media Photographers</text>
+            {/* Red Carpet section */}
+            <rect x={6.5} y={12} width={15} height={6} rx={1} fill="rgba(220,20,20,0.06)" filter="url(#spotGlow)" />
+            <rect x={7} y={13} width={14} height={4} rx={0.4} fill="rgba(200,20,20,0.5)" stroke="rgba(255,80,80,0.4)" strokeWidth={0.12} />
             {/* Gold trim */}
-            <line x1={14.0} y1={13} x2={21.0} y2={13} stroke="rgba(255,200,50,0.6)" strokeWidth={0.15} />
-            <line x1={14.0} y1={17} x2={21.0} y2={17} stroke="rgba(255,200,50,0.6)" strokeWidth={0.15} />
+            <line x1={7} y1={13} x2={21} y2={13} stroke="rgba(255,200,50,0.6)" strokeWidth={0.15} />
+            <line x1={7} y1={17} x2={21} y2={17} stroke="rgba(255,200,50,0.6)" strokeWidth={0.15} />
             {/* Arrow */}
-            <path d="M 12.5 15 L 13.5 15 M 13 14.3 L 13.5 15 L 13 15.7" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth={0.12} strokeLinecap="round" />
-            <text x={17.5} y={14.6} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.8)" fontSize={0.6} fontWeight="800" letterSpacing={0.15}>RED CARPET — 20ft</text>
-            <text x={17.5} y={15.9} textAnchor="middle" dominantBaseline="central" fill="rgba(255,200,50,0.5)" fontSize={0.45} fontWeight="600">W → E</text>
+            <path d="M 19 15 L 20.5 15 M 20 14.3 L 20.5 15 L 20 15.7" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth={0.12} strokeLinecap="round" />
+            <text x={14} y={14.6} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.8)" fontSize={0.7} fontWeight="800" letterSpacing={0.15}>RED CARPET — 20ft</text>
+            <text x={14} y={15.9} textAnchor="middle" dominantBaseline="central" fill="rgba(255,200,50,0.5)" fontSize={0.45} fontWeight="600">W → E</text>
           </g>
 
           {/* === 50ft RUNWAY with stage lights === */}
@@ -413,12 +410,8 @@ export function HotelFloorPlan() {
             {/* Runway edge lights (animated) */}
             {Array.from({ length: 11 }).map((_, i) => (
               <g key={`rl-${i}`}>
-                <circle cx={100.5} cy={8 + i * 3} r={0.2} fill="rgba(255,50,130,0.6)">
-                  <animate attributeName="opacity" values="0.3;1;0.3" dur="1.5s" begin={`${i * 0.1}s`} repeatCount="indefinite" />
-                </circle>
-                <circle cx={103.5} cy={8 + i * 3} r={0.2} fill="rgba(0,210,255,0.6)">
-                  <animate attributeName="opacity" values="0.3;1;0.3" dur="1.5s" begin={`${i * 0.1 + 0.75}s`} repeatCount="indefinite" />
-                </circle>
+                <circle cx={93.5} cy={8 + i * 3} r={0.15} fill="rgba(255,50,130,0.4)" />
+                <circle cx={96.5} cy={8 + i * 3} r={0.15} fill="rgba(0,210,255,0.4)" />
               </g>
             ))}
             {/* Center line */}
