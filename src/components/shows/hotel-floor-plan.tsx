@@ -203,75 +203,76 @@ export function HotelFloorPlan() {
         <svg viewBox="0 0 127 58" className="w-full h-auto relative">
           <defs>
             {/* === GRADIENTS === */}
+            {/* MIAMI BEACH COLORS — bright, sexy, pop */}
             <linearGradient id="roadGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="rgba(80,80,90,0.35)" />
-              <stop offset="100%" stopColor="rgba(60,60,70,0.25)" />
+              <stop offset="0%" stopColor="rgba(100,100,110,0.5)" />
+              <stop offset="100%" stopColor="rgba(80,80,90,0.4)" />
             </linearGradient>
             <linearGradient id="valetGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="rgba(255,200,50,0.3)" />
-              <stop offset="100%" stopColor="rgba(255,160,30,0.2)" />
+              <stop offset="0%" stopColor="rgba(255,210,0,0.5)" />
+              <stop offset="100%" stopColor="rgba(255,180,0,0.4)" />
             </linearGradient>
             <linearGradient id="entranceGrad" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="rgba(168,85,247,0.2)" />
-              <stop offset="100%" stopColor="rgba(236,72,153,0.15)" />
+              <stop offset="0%" stopColor="rgba(200,50,255,0.35)" />
+              <stop offset="100%" stopColor="rgba(255,50,150,0.3)" />
             </linearGradient>
             <linearGradient id="cabanasGrad" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="rgba(255,180,50,0.4)" />
-              <stop offset="100%" stopColor="rgba(255,130,30,0.3)" />
+              <stop offset="0%" stopColor="rgba(255,160,0,0.6)" />
+              <stop offset="100%" stopColor="rgba(255,100,0,0.5)" />
             </linearGradient>
             <linearGradient id="mezzGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="rgba(168,85,247,0.5)" />
-              <stop offset="100%" stopColor="rgba(139,92,246,0.35)" />
+              <stop offset="0%" stopColor="rgba(180,60,255,0.65)" />
+              <stop offset="100%" stopColor="rgba(140,40,220,0.5)" />
             </linearGradient>
             <linearGradient id="restaurantGrad" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="rgba(255,210,60,0.45)" />
-              <stop offset="100%" stopColor="rgba(245,180,40,0.3)" />
+              <stop offset="0%" stopColor="rgba(255,200,0,0.6)" />
+              <stop offset="100%" stopColor="rgba(255,170,0,0.5)" />
             </linearGradient>
             <linearGradient id="hqGrad" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="rgba(0,220,255,0.45)" />
-              <stop offset="100%" stopColor="rgba(0,180,230,0.3)" />
+              <stop offset="0%" stopColor="rgba(0,220,255,0.6)" />
+              <stop offset="100%" stopColor="rgba(0,180,240,0.5)" />
             </linearGradient>
             <linearGradient id="ballroomGrad" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="rgba(255,50,130,0.45)" />
-              <stop offset="100%" stopColor="rgba(220,40,110,0.3)" />
+              <stop offset="0%" stopColor="rgba(255,30,120,0.6)" />
+              <stop offset="100%" stopColor="rgba(255,0,90,0.45)" />
             </linearGradient>
             <linearGradient id="wellnessGrad" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="rgba(0,240,130,0.4)" />
-              <stop offset="100%" stopColor="rgba(0,200,100,0.25)" />
+              <stop offset="0%" stopColor="rgba(0,255,130,0.55)" />
+              <stop offset="100%" stopColor="rgba(0,220,100,0.4)" />
             </linearGradient>
             <linearGradient id="poolGrad" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="rgba(0,200,255,0.55)" />
-              <stop offset="50%" stopColor="rgba(0,160,240,0.45)" />
-              <stop offset="100%" stopColor="rgba(0,140,220,0.5)" />
+              <stop offset="0%" stopColor="rgba(0,200,255,0.7)" />
+              <stop offset="50%" stopColor="rgba(0,170,250,0.6)" />
+              <stop offset="100%" stopColor="rgba(0,150,230,0.65)" />
             </linearGradient>
             <linearGradient id="barGrad" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="rgba(255,120,20,0.55)" />
-              <stop offset="100%" stopColor="rgba(255,80,0,0.4)" />
+              <stop offset="0%" stopColor="rgba(255,100,0,0.7)" />
+              <stop offset="100%" stopColor="rgba(255,60,0,0.55)" />
             </linearGradient>
             <linearGradient id="showsGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="rgba(255,50,130,0.12)" />
-              <stop offset="50%" stopColor="rgba(255,30,100,0.06)" />
-              <stop offset="100%" stopColor="rgba(255,50,130,0.12)" />
+              <stop offset="0%" stopColor="rgba(255,50,130,0.15)" />
+              <stop offset="50%" stopColor="rgba(255,30,100,0.08)" />
+              <stop offset="100%" stopColor="rgba(255,50,130,0.15)" />
             </linearGradient>
             <linearGradient id="boardwalkGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="rgba(210,190,160,0.6)" />
-              <stop offset="100%" stopColor="rgba(190,170,140,0.5)" />
+              <stop offset="0%" stopColor="rgba(220,200,170,0.7)" />
+              <stop offset="100%" stopColor="rgba(200,180,150,0.6)" />
             </linearGradient>
             <linearGradient id="palmsGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="rgba(0,200,80,0.55)" />
-              <stop offset="100%" stopColor="rgba(0,160,60,0.45)" />
+              <stop offset="0%" stopColor="rgba(0,220,80,0.65)" />
+              <stop offset="100%" stopColor="rgba(0,180,60,0.55)" />
             </linearGradient>
             <linearGradient id="sandGrad" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="rgba(255,220,140,0.5)" />
-              <stop offset="100%" stopColor="rgba(245,200,110,0.4)" />
+              <stop offset="0%" stopColor="rgba(255,220,120,0.65)" />
+              <stop offset="100%" stopColor="rgba(245,200,100,0.55)" />
             </linearGradient>
             <linearGradient id="pinkNeon" x1="0" y1="0" x2="1" y2="1">
               <stop offset="0%" stopColor="rgba(255,50,130,1)" />
               <stop offset="100%" stopColor="rgba(0,210,255,1)" />
             </linearGradient>
             <linearGradient id="oceanGrad" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="rgba(0,180,255,0.2)" />
-              <stop offset="100%" stopColor="rgba(0,140,200,0.4)" />
+              <stop offset="0%" stopColor="rgba(0,180,255,0.35)" />
+              <stop offset="100%" stopColor="rgba(0,120,200,0.55)" />
             </linearGradient>
 
             {/* === FILTERS === */}
