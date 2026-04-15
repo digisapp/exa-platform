@@ -16,7 +16,6 @@ import {
   Volume2,
   VolumeX,
   ArrowDown,
-  Coins,
 } from "lucide-react";
 import {
   Dialog,
@@ -648,18 +647,11 @@ export function LiveWall({ initialMessages, currentUser }: Props) {
             </div>
 
             {isFan ? (
-              <div className="border-t border-white/10 px-4 py-3 flex items-center justify-between">
+              <div className="border-t border-white/10 px-4 py-3 flex items-center">
                 <div className="flex items-center gap-2 text-white/40 text-sm">
                   <Eye className="h-4 w-4" />
                   <span>React & tip to support your favorite models</span>
                 </div>
-                <Link
-                  href="/coins"
-                  className="flex items-center gap-1 text-xs text-amber-400/70 hover:text-amber-400 transition-colors shrink-0"
-                >
-                  <Coins className="h-3 w-3" />
-                  <span>{coinBalance.toLocaleString()}</span>
-                </Link>
               </div>
             ) : (
               <LiveWallInput
