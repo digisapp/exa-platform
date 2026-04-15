@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { X, MapPin, Sparkles } from "lucide-react";
+import { X, MapPin, Sparkles, Maximize2, Minimize2 } from "lucide-react";
 
 interface Room {
   id: string;
@@ -47,8 +47,8 @@ const ROOMS: Room[] = [
     sponsorNote: "Sponsor opportunity: Branded valet tickets, welcome gift bags, or a featured luxury vehicle display.",
   },
   {
-    id: "grand-entrance", name: "Grand Entrance — Outdoor Arrival Area", shortName: "Grand\nEntrance",
-    x: 11, y: 1, width: 10, height: 24, gradient: "entranceGrad", labelSize: "lg", icon: "🎪",
+    id: "grand-entrance", name: "Grand Entrance — Outdoor Arrival Area", shortName: " ",
+    x: 11, y: 1, width: 10, height: 55, gradient: "entranceGrad", labelSize: "lg", icon: "🎪",
     description: "A show-stopping outdoor arrival experience. Guests walk the 20ft red carpet past a photo wall lined with paparazzi and media photographers. This is where the magic begins — every arrival is a moment.",
     sponsorNote: "Sponsor opportunity: Step-and-repeat branding, red carpet naming rights, branded photo moments shared across social media by 150+ models and influencers.",
   },
@@ -135,6 +135,7 @@ interface HotelFloorPlanProps {
 export function HotelFloorPlan({ onTicketsClick }: HotelFloorPlanProps) {
   const [selected, setSelected] = useState<Room | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const goToTickets = () => {
     if (onTicketsClick) {
       onTicketsClick();
@@ -198,14 +199,32 @@ export function HotelFloorPlan({ onTicketsClick }: HotelFloorPlanProps) {
         </div>
       </div>
 
+      {/* Fullscreen overlay */}
+      {isFullscreen && (
+        <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm" onClick={() => setIsFullscreen(false)} />
+      )}
+
       {/* Map Container with neon border */}
-      <div className="relative rounded-2xl overflow-hidden bg-zinc-950/90 backdrop-blur-sm"
+      <div className={`relative rounded-2xl overflow-hidden bg-zinc-950/90 backdrop-blur-sm ${isFullscreen ? "fixed inset-4 z-50 overflow-y-auto" : ""}`}
         style={{ boxShadow: "0 0 40px rgba(255,50,130,0.08), 0 0 80px rgba(0,210,255,0.05), inset 0 1px 0 rgba(255,255,255,0.05)" }}
       >
         {/* Animated gradient border */}
         <div className="absolute inset-0 rounded-2xl p-[1px] pointer-events-none"
           style={{ background: "linear-gradient(135deg, rgba(255,50,130,0.3), rgba(168,85,247,0.2), rgba(0,210,255,0.3), rgba(0,230,118,0.2), rgba(255,50,130,0.3))", backgroundSize: "300% 300%", animation: "gradientBorder 8s ease infinite" }}
         />
+
+        {/* Expand / Collapse button */}
+        <button
+          onClick={() => setIsFullscreen(!isFullscreen)}
+          className="absolute top-3 right-3 z-10 p-2 rounded-lg bg-black/60 hover:bg-black/80 border border-white/10 hover:border-pink-500/40 transition-all"
+          title={isFullscreen ? "Exit fullscreen" : "Enlarge map"}
+        >
+          {isFullscreen ? (
+            <Minimize2 className="h-4 w-4 text-white/70" />
+          ) : (
+            <Maximize2 className="h-4 w-4 text-white/70" />
+          )}
+        </button>
 
         <svg viewBox="-12 0 139 58" className="w-full h-auto relative">
           <defs>
@@ -433,61 +452,73 @@ export function HotelFloorPlan({ onTicketsClick }: HotelFloorPlanProps) {
           {/* === CORAL STONE OVERLAY on boardwalk === */}
           <rect x={103.5} y={1} width={3} height={55} fill="url(#coralStones)" style={{ pointerEvents: "none" }} />
 
-          {/* === RED CARPET (combined with photo wall) === */}
+          {/* === RED CARPET — top 40% of Grand Entrance (y:1 to y:23) === */}
           <g style={{ pointerEvents: "none" }}>
             {/* Glow behind */}
-            <rect x={10.5} y={3.5} width={11} height={15} rx={1} fill="rgba(220,20,20,0.05)" filter="url(#spotGlow)" />
-            {/* Red carpet surface — full block */}
-            <rect x={11} y={4} width={10} height={14} rx={0.5} fill="rgba(200,20,20,0.5)" stroke="rgba(255,60,60,0.5)" strokeWidth={0.12} />
+            <rect x={10.5} y={0.5} width={11} height={23} rx={1} fill="rgba(220,20,20,0.05)" filter="url(#spotGlow)" />
+            {/* Red carpet surface — top 40% */}
+            <rect x={11} y={1} width={10} height={22} rx={0.5} fill="rgba(200,20,20,0.5)" stroke="rgba(255,60,60,0.5)" strokeWidth={0.12} />
             {/* Gold trim top & bottom */}
-            <line x1={11} y1={4} x2={21} y2={4} stroke="rgba(255,200,50,0.7)" strokeWidth={0.18} />
-            <line x1={11} y1={18} x2={21} y2={18} stroke="rgba(255,200,50,0.7)" strokeWidth={0.18} />
+            <line x1={11} y1={1} x2={21} y2={1} stroke="rgba(255,200,50,0.7)" strokeWidth={0.18} />
+            <line x1={11} y1={23} x2={21} y2={23} stroke="rgba(255,200,50,0.7)" strokeWidth={0.18} />
             {/* Gold trim sides */}
-            <line x1={11} y1={4} x2={11} y2={18} stroke="rgba(255,200,50,0.5)" strokeWidth={0.12} />
-            <line x1={21} y1={4} x2={21} y2={18} stroke="rgba(255,200,50,0.5)" strokeWidth={0.12} />
+            <line x1={11} y1={1} x2={11} y2={23} stroke="rgba(255,200,50,0.5)" strokeWidth={0.12} />
+            <line x1={21} y1={1} x2={21} y2={23} stroke="rgba(255,200,50,0.5)" strokeWidth={0.12} />
             {/* Camera flash bursts */}
-            <circle cx={13} cy={6} r={0.5} fill="rgba(255,255,255,0.15)">
+            <circle cx={13} cy={5} r={0.5} fill="rgba(255,255,255,0.15)">
               <animate attributeName="opacity" values="0;0.6;0" dur="2s" begin="0s" repeatCount="indefinite" />
             </circle>
             <circle cx={19} cy={7} r={0.4} fill="rgba(255,255,255,0.15)">
               <animate attributeName="opacity" values="0;0.5;0" dur="2.5s" begin="0.7s" repeatCount="indefinite" />
             </circle>
-            <circle cx={14} cy={15} r={0.45} fill="rgba(255,255,255,0.15)">
+            <circle cx={14} cy={18} r={0.45} fill="rgba(255,255,255,0.15)">
               <animate attributeName="opacity" values="0;0.5;0" dur="1.8s" begin="1.2s" repeatCount="indefinite" />
             </circle>
-            <circle cx={18} cy={13} r={0.35} fill="rgba(255,255,255,0.15)">
+            <circle cx={18} cy={15} r={0.35} fill="rgba(255,255,255,0.15)">
               <animate attributeName="opacity" values="0;0.4;0" dur="2.2s" begin="0.3s" repeatCount="indefinite" />
             </circle>
             {/* Animated sparkles */}
             <text x={12.5} y={9} textAnchor="middle" fill="rgba(255,255,255,0.5)" fontSize={0.8}>✦
               <animate attributeName="opacity" values="0.2;0.8;0.2" dur="1.5s" repeatCount="indefinite" />
             </text>
-            <text x={19.5} y={11} textAnchor="middle" fill="rgba(255,255,255,0.5)" fontSize={0.7}>✦
+            <text x={19.5} y={13} textAnchor="middle" fill="rgba(255,255,255,0.5)" fontSize={0.7}>✦
               <animate attributeName="opacity" values="0.1;0.7;0.1" dur="2s" begin="0.5s" repeatCount="indefinite" />
             </text>
-            <text x={13} y={16.5} textAnchor="middle" fill="rgba(255,255,255,0.5)" fontSize={0.6}>✦
+            <text x={13} y={20} textAnchor="middle" fill="rgba(255,255,255,0.5)" fontSize={0.6}>✦
               <animate attributeName="opacity" values="0.15;0.6;0.15" dur="1.8s" begin="1s" repeatCount="indefinite" />
             </text>
-            <text x={18.5} y={6} textAnchor="middle" fill="rgba(255,200,50,0.5)" fontSize={0.7}>✨
+            <text x={18.5} y={4} textAnchor="middle" fill="rgba(255,200,50,0.5)" fontSize={0.7}>✨
               <animate attributeName="opacity" values="0.1;0.9;0.1" dur="2.5s" begin="0.3s" repeatCount="indefinite" />
             </text>
-            <text x={14} y={14} textAnchor="middle" fill="rgba(255,200,50,0.5)" fontSize={0.6}>✨
+            <text x={14} y={16} textAnchor="middle" fill="rgba(255,200,50,0.5)" fontSize={0.6}>✨
               <animate attributeName="opacity" values="0.2;0.8;0.2" dur="2s" begin="1.2s" repeatCount="indefinite" />
             </text>
             {/* Shimmer overlay */}
-            <rect x={11} y={4} width={10} height={14} rx={0.5} fill="rgba(255,255,255,0.05)">
+            <rect x={11} y={1} width={10} height={22} rx={0.5} fill="rgba(255,255,255,0.05)">
               <animate attributeName="opacity" values="0;0.12;0" dur="3s" repeatCount="indefinite" />
             </rect>
             {/* Main label */}
-            <text x={16} y={9.5} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.95)" fontSize={1.1} fontWeight="900" letterSpacing={0.2}>
+            <text x={16} y={10} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.95)" fontSize={1.1} fontWeight="900" letterSpacing={0.2}>
               RED CARPET
             </text>
-            <text x={16} y={11.5} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.6)" fontSize={0.6} fontWeight="600">
+            <text x={16} y={12.5} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.6)" fontSize={0.6} fontWeight="600">
               📸 Photo Wall • Glamour
             </text>
             {/* Arrow W→E */}
-            <path d="M 19 14 L 20.5 14 M 20 13.3 L 20.5 14 L 20 14.7" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth={0.12} strokeLinecap="round" />
-            <text x={16} y={14} textAnchor="middle" dominantBaseline="central" fill="rgba(255,200,50,0.6)" fontSize={0.45} fontWeight="600">20ft wide • W → E</text>
+            <path d="M 19 16 L 20.5 16 M 20 15.3 L 20.5 16 L 20 16.7" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth={0.12} strokeLinecap="round" />
+            <text x={16} y={16} textAnchor="middle" dominantBaseline="central" fill="rgba(255,200,50,0.6)" fontSize={0.45} fontWeight="600">20ft wide • W → E</text>
+          </g>
+
+          {/* === "Grand Entrance" label — bottom 60% of entrance, below red carpet === */}
+          <g style={{ pointerEvents: "none" }}>
+            <text x={16} y={38} textAnchor="middle" dominantBaseline="central" fill="white" fontSize={1.6} fontWeight="700"
+              style={{ textShadow: "0 0 6px rgba(0,0,0,1), 0 0 12px rgba(0,0,0,0.5)" }}>
+              Grand
+            </text>
+            <text x={16} y={40.5} textAnchor="middle" dominantBaseline="central" fill="white" fontSize={1.6} fontWeight="700"
+              style={{ textShadow: "0 0 6px rgba(0,0,0,1), 0 0 12px rgba(0,0,0,0.5)" }}>
+              Entrance
+            </text>
           </g>
 
           {/* === MODEL TOUCH-UP TENT — north of stage === */}
