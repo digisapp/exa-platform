@@ -113,7 +113,7 @@ const ROOMS: Room[] = [
     sponsorNote: "Sponsor opportunity: Evening pool party sponsor, underwater lighting branding, branded robes, or a sunset cocktail hour activation.",
   },
   {
-    id: "exa-swim-shows", name: "EXA Swim Shows", shortName: "EXA\nSwim Shows",
+    id: "exa-swim-shows", name: "EXA Swim Shows", shortName: "",
     x: 87, y: 1, width: 16, height: 55, gradient: "showsGrad", labelSize: "lg", icon: "👙",
     description: "The main event. A 50ft oceanfront runway with a full stage, professional lighting, and seating for 120+ guests. 30+ global designers showcase their collections worn by 150+ of the world's top models — steps from the Atlantic Ocean. VIP booths, front-row seating, and a dedicated media pit for press coverage.",
     sponsorNote: "Sponsor opportunity: Runway title sponsor, seat branding, VIP booth naming, stage backdrop, branded show programs, or a designer show co-presentation.",
@@ -456,7 +456,7 @@ export function HotelFloorPlan() {
             <line x1={95.0} y1={15} x2={95.0} y2={47} stroke="rgba(200,200,200,0.3)" strokeWidth={0.1} strokeDasharray="1 0.8" />
             {/* Stage platform — WHITE */}
             <rect x={92.0} y={11.5} width={6} height={3.5} rx={0.5} fill="rgba(255,255,255,0.6)" stroke="rgba(255,255,255,0.8)" strokeWidth={0.15} />
-            <text x={95.0} y={33} textAnchor="middle" fill="rgba(100,100,100,0.7)" fontSize={0.7} fontWeight="700" letterSpacing={0.3} transform="rotate(90, 95.0, 33)">50ft RUNWAY</text>
+            <text x={95.0} y={33} textAnchor="middle" fill="rgba(100,100,100,0.7)" fontSize={0.6} fontWeight="700" letterSpacing={0.2} transform="rotate(90, 95.0, 33)">EXA Swim Shows Runway</text>
             <text x={95.0} y={13.3} textAnchor="middle" dominantBaseline="central" fill="rgba(60,60,60,0.9)" fontSize={0.7} fontWeight="800">STAGE</text>
           </g>
 
