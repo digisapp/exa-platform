@@ -28,33 +28,108 @@ interface Room {
   shape?: "rect" | "pool";
   verticalLabel?: boolean;
   icon?: string;
+  description?: string;
+  sponsorNote?: string;
 }
 
 const ROOMS: Room[] = [
-  // === COLLINS AVE ===
-  { id: "collins-ave", name: "Collins Ave", shortName: "Collins Ave — 5225 Collins Ave, Miami Beach, FL", x: 0, y: 1, width: 3, height: 55, gradient: "roadGrad", labelSize: "xs", verticalLabel: true },
-  // === VALET ===
-  { id: "valet", name: "Valet Drop-Off", shortName: "Valet 🚗", x: 3.5, y: 1, width: 3, height: 55, gradient: "valetGrad", labelSize: "xs", verticalLabel: true },
-  // === GRAND ENTRANCE ===
-  { id: "grand-entrance", name: "Grand Entrance — Outdoor Arrival Area", shortName: "Grand\nEntrance", x: 7, y: 1, width: 14, height: 55, gradient: "entranceGrad", labelSize: "lg", icon: "🎪" },
-  // === CABANAS ===
-  { id: "cabanas", name: "Cabanas", shortName: "☀️ Cabanas", x: 67, y: 1, width: 20, height: 9, gradient: "cabanasGrad", labelSize: "sm" },
-  // === INDOOR ROOMS ===
-  { id: "mezzanine", name: "Mezzanine (Upstairs)", shortName: "Mezzanine\n⬆ Upstairs", dimensions: "24' × 68'", sqft: 1632, ceilingHeight: "9'", capacity: { reception: 200 }, x: 22, y: 3, width: 8, height: 22, gradient: "mezzGrad", labelSize: "sm" },
-  { id: "silan-restaurant", name: "Silan Restaurant", shortName: "Silan\nRestaurant 🍽️", dimensions: "39' × 63'8\"", sqft: 1233, ceilingHeight: "8'", capacity: { reception: 90, rounds: 76, theatre: 95, school: 60, uShape: 45, hollowSquare: 55, conference: 48 }, x: 32, y: 3, width: 16, height: 14, gradient: "restaurantGrad" },
-  { id: "exa-hq", name: "EXA Models HQ — Check-In", shortName: "EXA Models HQ\nCheck-In ✨", dimensions: "35' × 39'", sqft: 1365, x: 50, y: 3, width: 14, height: 14, gradient: "hqGrad" },
-  // === LOWER ===
-  { id: "backstage-digis", name: "Shows Backstage + Digis Media", shortName: "Shows Backstage\n+ Digis Media 🎬", dimensions: "58' × 84'", sqft: 4872, ceilingHeight: "12' / 11.5'", capacity: { reception: 400, rounds: 300, theatre: 420, school: 250 }, x: 22, y: 28, width: 16, height: 24, gradient: "ballroomGrad", labelSize: "lg" },
-  { id: "wellness-activation", name: "Wellness Activation Space", shortName: "Wellness\nActivation 🧘", sqft: 3690, capacity: { reception: 400, rounds: 260, theatre: 300, school: 200 }, x: 40, y: 30, width: 29, height: 16, gradient: "wellnessGrad" },
-  // === POOLS ===
-  { id: "lower-pool", name: "Lower Pool", shortName: "Lower\nPool 💦", x: 70, y: 12, width: 12, height: 12, gradient: "poolGrad", labelSize: "sm", shape: "pool" },
-  { id: "exa-bar", name: "EXA Tiki Bar", shortName: "🍹 EXA Tiki Bar 🌴", x: 70, y: 26, width: 14, height: 6, gradient: "barGrad", labelSize: "sm" },
-  { id: "heated-pool", name: "Heated Adult Saltwater Pool", shortName: "Heated\nSaltwater Pool 🌊", x: 69, y: 36, width: 18, height: 18, gradient: "poolGrad", shape: "pool" },
-  // === EXA SWIM SHOWS ===
-  { id: "exa-swim-shows", name: "EXA Swim Shows", shortName: "EXA\nSwim Shows", x: 87, y: 1, width: 16, height: 55, gradient: "showsGrad", labelSize: "lg", icon: "👙" },
-  // === BOARDWALK / SAND ===
-  { id: "boardwalk", name: "Miami Beach Boardwalk", x: 103.5, y: 1, width: 3, height: 55, gradient: "boardwalkGrad", labelSize: "xs", verticalLabel: true },
-  { id: "sand-beach", name: "Sand Beach", shortName: "🌴 Sand & Palms 🏖️", x: 107, y: 1, width: 7.5, height: 55, gradient: "sandGrad", labelSize: "xs", verticalLabel: true },
+  {
+    id: "collins-ave", name: "Collins Ave", shortName: "Collins Ave — 5225 Collins Ave, Miami Beach, FL",
+    x: 0, y: 1, width: 3, height: 55, gradient: "roadGrad", labelSize: "xs", verticalLabel: true,
+    description: "The iconic Collins Avenue — Miami Beach's most famous boulevard. Guests arrive by luxury vehicles, rideshare, and limousine directly to the hotel's front entrance.",
+    sponsorNote: "Sponsor opportunity: Branded rideshare codes, vehicle wraps, or arrival lounge signage visible to all guests.",
+  },
+  {
+    id: "valet", name: "Valet Drop-Off", shortName: "Valet 🚗",
+    x: 3.5, y: 1, width: 3, height: 55, gradient: "valetGrad", labelSize: "xs", verticalLabel: true,
+    description: "White-glove valet service where every guest gets the VIP treatment from the moment they step out of their vehicle. First impressions start here.",
+    sponsorNote: "Sponsor opportunity: Branded valet tickets, welcome gift bags, or a featured luxury vehicle display.",
+  },
+  {
+    id: "grand-entrance", name: "Grand Entrance — Outdoor Arrival Area", shortName: "Grand\nEntrance",
+    x: 7, y: 1, width: 14, height: 55, gradient: "entranceGrad", labelSize: "lg", icon: "🎪",
+    description: "A show-stopping outdoor arrival experience. Guests walk the 20ft red carpet past a photo wall lined with paparazzi and media photographers. This is where the magic begins — every arrival is a moment.",
+    sponsorNote: "Sponsor opportunity: Step-and-repeat branding, red carpet naming rights, branded photo moments shared across social media by 150+ models and influencers.",
+  },
+  {
+    id: "cabanas", name: "Cabanas", shortName: "☀️ Cabanas",
+    x: 67, y: 1, width: 20, height: 9, gradient: "cabanasGrad", labelSize: "sm",
+    description: "Private poolside cabanas offering shade, bottle service, and an exclusive retreat for VIP guests, designers, and talent between shows.",
+    sponsorNote: "Sponsor opportunity: Branded cabana takeover with custom décor, product sampling, or an exclusive gifting suite for top-tier guests.",
+  },
+  {
+    id: "mezzanine", name: "Mezzanine (Upstairs)", shortName: "Mezzanine\n⬆ Upstairs",
+    dimensions: "24' × 68'", sqft: 1632, ceilingHeight: "9'", capacity: { reception: 200 },
+    x: 22, y: 3, width: 8, height: 22, gradient: "mezzGrad", labelSize: "sm",
+    description: "An elevated indoor lounge overlooking the property. The Mezzanine hosts VIP receptions, designer meet-and-greets, and intimate pre-show cocktail hours for up to 200 guests.",
+    sponsorNote: "Sponsor opportunity: Exclusive naming rights, branded cocktail menu, or a VIP lounge takeover with your brand front and center.",
+  },
+  {
+    id: "silan-restaurant", name: "Silan Restaurant", shortName: "Silan\nRestaurant 🍽️",
+    dimensions: "39' × 63'8\"", sqft: 1233, ceilingHeight: "8'",
+    capacity: { reception: 90, rounds: 76, theatre: 95, school: 60, uShape: 45, hollowSquare: 55, conference: 48 },
+    x: 32, y: 3, width: 16, height: 14, gradient: "restaurantGrad",
+    description: "The hotel's signature restaurant transformed into an exclusive dining experience during Swim Week. Host a private dinner for designers, buyers, or press — where deals are made over world-class cuisine.",
+    sponsorNote: "Sponsor opportunity: Branded dinner series, menu integration, table centerpiece branding, or a full restaurant buyout for an invite-only event.",
+  },
+  {
+    id: "exa-hq", name: "EXA Models HQ — Check-In", shortName: "EXA Models HQ\nCheck-In ✨",
+    dimensions: "35' × 39'", sqft: 1365,
+    x: 50, y: 3, width: 14, height: 14, gradient: "hqGrad",
+    description: "The nerve center of operations. Every model, designer, and VIP checks in here. High foot traffic from 150+ models, 30+ designers, and production staff throughout the week.",
+    sponsorNote: "Sponsor opportunity: Welcome gift bags for every model, branded check-in experience, digital signage, or a beauty touch-up station where your products are the star.",
+  },
+  {
+    id: "backstage-digis", name: "Shows Backstage + Digis Media", shortName: "Shows Backstage\n+ Digis Media 🎬",
+    dimensions: "58' × 84'", sqft: 4872, ceilingHeight: "12' / 11.5'",
+    capacity: { reception: 400, rounds: 300, theatre: 420, school: 250 },
+    x: 22, y: 28, width: 16, height: 24, gradient: "ballroomGrad", labelSize: "lg",
+    description: "The heartbeat behind every runway show. Hair, makeup, styling, and last-minute fittings happen here while Digis Media captures exclusive behind-the-scenes content — the footage brands dream of being part of.",
+    sponsorNote: "Sponsor opportunity: Official hair/makeup/skincare sponsor station, branded styling mirrors, product placement in all BTS content reaching 1M+ social impressions.",
+  },
+  {
+    id: "wellness-activation", name: "Wellness Activation Space", shortName: "Wellness\nActivation 🧘",
+    sqft: 3690, capacity: { reception: 400, rounds: 260, theatre: 300, school: 200 },
+    x: 40, y: 30, width: 29, height: 16, gradient: "wellnessGrad",
+    description: "A 3,690 sq ft open-air activation zone designed for wellness, beauty, and lifestyle brands to create immersive experiences. Think: yoga sessions at sunrise, IV drip lounges, skincare demos, smoothie bars, and interactive brand pop-ups — all attended by models, influencers, and Swim Week's most stylish crowd.",
+    sponsorNote: "Sponsor opportunity: Full activation buildout, branded experiences, product launches, sampling stations, or a multi-day pop-up shop. This is your canvas.",
+  },
+  {
+    id: "lower-pool", name: "Lower Pool", shortName: "Lower\nPool 💦",
+    x: 70, y: 12, width: 12, height: 12, gradient: "poolGrad", labelSize: "sm", shape: "pool",
+    description: "A stunning resort-style pool surrounded by lounge chairs and tropical landscaping. The daytime social hub where models, guests, and influencers gather between shows.",
+    sponsorNote: "Sponsor opportunity: Branded pool floats, towel wraps, poolside sampling, or a sponsored pool party with DJ and branded wristbands.",
+  },
+  {
+    id: "exa-bar", name: "EXA Tiki Bar", shortName: "🍹 EXA Tiki Bar 🌴",
+    x: 70, y: 26, width: 14, height: 6, gradient: "barGrad", labelSize: "sm",
+    description: "The EXA Tiki Bar — a tropical open-air bar serving handcrafted cocktails, cold brews, and island vibes. Steps from both pools, this is where everyone ends up. The perfect spot for a signature cocktail collab.",
+    sponsorNote: "Sponsor opportunity: Signature branded cocktail, bar naming rights, custom branded cups, or a liquor/beverage brand takeover for the full week.",
+  },
+  {
+    id: "heated-pool", name: "Heated Adult Saltwater Pool", shortName: "Heated\nSaltwater Pool 🌊",
+    x: 69, y: 36, width: 18, height: 18, gradient: "poolGrad", shape: "pool",
+    description: "A heated saltwater pool perfect for evening soirées and sunset gatherings. The warm, luxurious water and ambient lighting create an unforgettable atmosphere after dark.",
+    sponsorNote: "Sponsor opportunity: Evening pool party sponsor, underwater lighting branding, branded robes, or a sunset cocktail hour activation.",
+  },
+  {
+    id: "exa-swim-shows", name: "EXA Swim Shows", shortName: "EXA\nSwim Shows",
+    x: 87, y: 1, width: 16, height: 55, gradient: "showsGrad", labelSize: "lg", icon: "👙",
+    description: "The main event. A 50ft oceanfront runway with a full stage, professional lighting, and seating for 120+ guests. 30+ global designers showcase their collections worn by 150+ of the world's top models — steps from the Atlantic Ocean. VIP booths, front-row seating, and a dedicated media pit for press coverage.",
+    sponsorNote: "Sponsor opportunity: Runway title sponsor, seat branding, VIP booth naming, stage backdrop, branded show programs, or a designer show co-presentation.",
+  },
+  {
+    id: "boardwalk", name: "Miami Beach Boardwalk",
+    x: 103.5, y: 1, width: 3, height: 55, gradient: "boardwalkGrad", labelSize: "xs", verticalLabel: true,
+    description: "The famous Miami Beach Boardwalk running along the oceanfront. Thousands of beachgoers and tourists walk past daily — organic exposure for any activation visible from this path.",
+    sponsorNote: "Sponsor opportunity: Branded signage, banners, or a sampling station catching high foot traffic from the public boardwalk.",
+  },
+  {
+    id: "sand-beach", name: "Sand Beach", shortName: "🌴 Sand & Palms 🏖️",
+    x: 107, y: 1, width: 7.5, height: 55, gradient: "sandGrad", labelSize: "xs", verticalLabel: true,
+    description: "White sand beach and swaying palm trees with the Atlantic Ocean as the backdrop. The ultimate setting for content creation, lifestyle photography, and brand storytelling that screams Miami.",
+    sponsorNote: "Sponsor opportunity: Beach activation zone, branded beach chairs/umbrellas, sand sculptures, or a sunrise yoga session presented by your brand.",
+  },
 ];
 
 export function HotelFloorPlan() {
@@ -449,19 +524,28 @@ export function HotelFloorPlan() {
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-bold text-white">{selected.name}</h3>
-                <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-zinc-400 mt-1">
+                {selected.description && (
+                  <p className="text-sm text-zinc-300 mt-2 leading-relaxed">{selected.description}</p>
+                )}
+                <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-zinc-400 mt-3">
                   {selected.dimensions && <span>📐 <span className="text-white">{selected.dimensions}</span></span>}
                   {selected.sqft && <span>📏 <span className="text-white">{selected.sqft.toLocaleString()} sq ft</span></span>}
                   {selected.ceilingHeight && <span>📐 Ceiling: <span className="text-white">{selected.ceilingHeight}</span></span>}
                 </div>
                 {selected.capacity && (
-                  <div className="mt-3 flex flex-wrap gap-1.5">
+                  <div className="mt-2 flex flex-wrap gap-1.5">
                     {selected.capacity.reception && <span className="px-2 py-0.5 rounded-full bg-pink-500/15 border border-pink-500/30 text-pink-300 text-xs font-medium">Reception: {selected.capacity.reception}</span>}
                     {selected.capacity.theatre && <span className="px-2 py-0.5 rounded-full bg-violet-500/15 border border-violet-500/30 text-violet-300 text-xs font-medium">Theatre: {selected.capacity.theatre}</span>}
                     {selected.capacity.rounds && <span className="px-2 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 text-xs font-medium">Rounds: {selected.capacity.rounds}</span>}
                     {selected.capacity.school && <span className="px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-medium">School: {selected.capacity.school}</span>}
                     {selected.capacity.uShape && <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-medium">U-Shape: {selected.capacity.uShape}</span>}
                     {selected.capacity.conference && <span className="px-2 py-0.5 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-300 text-xs font-medium">Conference: {selected.capacity.conference}</span>}
+                  </div>
+                )}
+                {selected.sponsorNote && (
+                  <div className="mt-3 px-3 py-2 rounded-lg bg-gradient-to-r from-pink-500/10 to-violet-500/10 border border-pink-500/20">
+                    <p className="text-xs text-pink-300 font-semibold mb-0.5">💡 Brand & Sponsor Opportunity</p>
+                    <p className="text-xs text-zinc-400 leading-relaxed">{selected.sponsorNote}</p>
                   </div>
                 )}
               </div>
