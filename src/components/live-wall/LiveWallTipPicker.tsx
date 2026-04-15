@@ -5,7 +5,7 @@ import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
-const SUPER_TIP_AMOUNTS = [100, 250, 500, 1000] as const;
+const SUPER_TIP_AMOUNTS = [50, 100, 250, 500, 1000] as const;
 
 interface Props {
   recipientName: string;

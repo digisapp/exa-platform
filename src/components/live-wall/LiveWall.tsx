@@ -381,6 +381,11 @@ export function LiveWall({ initialMessages, currentUser }: Props) {
 
         if (amount >= 10) {
           toast.success(`Tipped ${amount} coins!`);
+        } else {
+          toast(`Tipped ${amount} coin`, {
+            description: "Hold 💰 for Super Tip",
+            duration: 2000,
+          });
         }
 
         // Play coin sound (short chirp for micro, ascending for big)
@@ -462,6 +467,7 @@ export function LiveWall({ initialMessages, currentUser }: Props) {
   const handleSuperTipSend = useCallback(
     async (amount: number) => {
       if (!tippingMessageId) return;
+      setCoinBalance((b) => b - amount);
       await sendTip(tippingMessageId, amount);
       setTippingMessageId(null);
     },
@@ -577,18 +583,28 @@ export function LiveWall({ initialMessages, currentUser }: Props) {
           <>
             {/* Pinned message (above scroll) */}
             {pinnedMessage && (
-              <LiveWallMessage
-                message={pinnedMessage}
-                currentActorId={currentUser?.actorId}
-                isAdmin={isAdmin}
-                onReact={handleReact}
-                onDelete={handleDelete}
-                onPin={handlePin}
-                onTip={handleMicroTip}
-                onSuperTip={handleSuperTipClick}
-                isTipping={isMicroTipping}
-                isPinnedDisplay
-              />
+              <div className="relative">
+                <LiveWallMessage
+                  message={pinnedMessage}
+                  currentActorId={currentUser?.actorId}
+                  isAdmin={isAdmin}
+                  onReact={handleReact}
+                  onDelete={handleDelete}
+                  onPin={handlePin}
+                  onTip={handleMicroTip}
+                  onSuperTip={handleSuperTipClick}
+                  isTipping={isMicroTipping}
+                  isPinnedDisplay
+                />
+                {tippingMessageId === pinnedMessage.id && (
+                  <LiveWallTipPicker
+                    recipientName={pinnedMessage.display_name}
+                    coinBalance={coinBalance}
+                    onTip={handleSuperTipSend}
+                    onClose={() => setTippingMessageId(null)}
+                  />
+                )}
+              </div>
             )}
 
             {/* Scrollable message area */}

@@ -89,7 +89,15 @@ function CoinTipButton({
   const didLongPress = useRef(false);
   const [isPressed, setIsPressed] = useState(false);
 
-  const handlePointerDown = useCallback(() => {
+  const cancelLongPress = useCallback(() => {
+    setIsPressed(false);
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  }, []);
+
+  const startLongPress = useCallback(() => {
     if (disabled) return;
     didLongPress.current = false;
     setIsPressed(true);
@@ -100,7 +108,7 @@ function CoinTipButton({
     }, 500);
   }, [onSuperTip, disabled]);
 
-  const handlePointerUp = useCallback(() => {
+  const endPress = useCallback(() => {
     setIsPressed(false);
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
@@ -111,21 +119,17 @@ function CoinTipButton({
     }
   }, [onTip, disabled]);
 
-  const handlePointerLeave = useCallback(() => {
-    setIsPressed(false);
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current);
-      longPressTimer.current = null;
-    }
-  }, []);
-
   return (
     <button
-      onPointerDown={handlePointerDown}
-      onPointerUp={handlePointerUp}
-      onPointerLeave={handlePointerLeave}
+      onTouchStart={startLongPress}
+      onTouchEnd={(e) => { e.preventDefault(); endPress(); }}
+      onTouchCancel={cancelLongPress}
+      onMouseDown={startLongPress}
+      onMouseUp={endPress}
+      onMouseLeave={cancelLongPress}
       onContextMenu={(e) => e.preventDefault()}
       disabled={disabled}
+      style={{ touchAction: "manipulation", WebkitTouchCallout: "none" }}
       className={cn(
         "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs select-none",
         "transition-all duration-200",
@@ -257,20 +261,6 @@ export function LiveWallMessage({
               )}
             >
               {message.actor_type}
-            </span>
-          )}
-          {/* Tip badge */}
-          {message.tip_total > 0 && (
-            <span
-              className={cn(
-                "inline-flex items-center gap-0.5 px-1.5 py-0 rounded-full text-[10px] font-bold leading-4 border",
-                tipTier === "amber" && "bg-amber-500/20 text-amber-400 border-amber-500/30",
-                tipTier === "gradient" && "bg-gradient-to-r from-amber-500/20 to-pink-500/20 text-amber-300 border-amber-500/30",
-                tipTier === "animated" && "bg-gradient-to-r from-amber-400/30 via-pink-500/30 to-violet-500/30 text-amber-300 border-amber-400/40 animate-pulse"
-              )}
-            >
-              <Coins className="h-2.5 w-2.5" />
-              {message.tip_total.toLocaleString()}
             </span>
           )}
           <span className="text-[10px] text-white/30">{timeAgo}</span>
