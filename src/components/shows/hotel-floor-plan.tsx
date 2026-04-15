@@ -471,14 +471,14 @@ export function HotelFloorPlan() {
           {/* === VIP BOOTHS === */}
           <g style={{ pointerEvents: "none" }}>
             {[0, 1, 2, 3].map((i) => {
-              const by = 17 + i * 9.5;
+              const by = 18 + i * 7;
               return (
                 <g key={`v-${i}`}>
-                  <rect x={87.5} y={by} width={4.2} height={7.5} rx={0.5} fill="rgba(255,50,130,0.1)" stroke="rgba(255,200,50,0.25)" strokeWidth={0.08} />
-                  <rect x={88.8} y={by + 1.8} width={2} height={3.5} rx={0.3} fill="rgba(255,200,50,0.15)" stroke="rgba(255,200,50,0.3)" strokeWidth={0.06} />
-                  <rect x={87.8} y={by + 1.5} width={0.7} height={4} rx={0.2} fill="rgba(168,85,247,0.2)" stroke="rgba(168,85,247,0.3)" strokeWidth={0.05} />
-                  <rect x={91.1} y={by + 1.5} width={0.4} height={4} rx={0.2} fill="rgba(168,85,247,0.15)" stroke="rgba(168,85,247,0.25)" strokeWidth={0.04} />
-                  <text x={89.6} y={by + 0.7} textAnchor="middle" dominantBaseline="central" fill="rgba(255,200,50,0.7)" fontSize={0.45} fontWeight="800">VIP {i + 1}</text>
+                  <rect x={88} y={by} width={3.5} height={5.5} rx={0.4} fill="rgba(255,50,130,0.1)" stroke="rgba(255,200,50,0.25)" strokeWidth={0.08} />
+                  <rect x={89} y={by + 1.2} width={1.6} height={2.5} rx={0.25} fill="rgba(255,200,50,0.15)" stroke="rgba(255,200,50,0.3)" strokeWidth={0.06} />
+                  <rect x={88.2} y={by + 1} width={0.5} height={3} rx={0.15} fill="rgba(168,85,247,0.2)" stroke="rgba(168,85,247,0.3)" strokeWidth={0.05} />
+                  <rect x={91} y={by + 1} width={0.3} height={3} rx={0.1} fill="rgba(168,85,247,0.15)" stroke="rgba(168,85,247,0.25)" strokeWidth={0.04} />
+                  <text x={89.8} y={by + 0.5} textAnchor="middle" dominantBaseline="central" fill="rgba(255,200,50,0.7)" fontSize={0.4} fontWeight="800">VIP {i + 1}</text>
                 </g>
               );
             })}
