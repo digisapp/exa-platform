@@ -142,28 +142,16 @@ const ROOMS: Room[] = [
     labelSize: "lg",
   },
   {
-    id: "orchid-terrace",
-    name: "Orchid Terrace",
-    dimensions: "44' × 55'",
-    sqft: 1845,
-    capacity: { reception: 200, rounds: 130, theatre: 150, school: 100 },
+    id: "wellness-activation",
+    name: "Wellness Activation Space",
+    shortName: "Wellness\nActivation Space",
+    sqft: 3690,
+    capacity: { reception: 400, rounds: 260, theatre: 300, school: 200 },
     x: 33,
     y: 30,
-    width: 16,
-    height: 15,
-    color: "rgba(0,230,118,0.35)",
-  },
-  {
-    id: "sky-deck",
-    name: "Sky Deck",
-    dimensions: "44' × 55'",
-    sqft: 1845,
-    capacity: { reception: 200, rounds: 130, theatre: 150, school: 100 },
-    x: 51,
-    y: 30,
-    width: 11,
+    width: 29,
     height: 16,
-    color: "rgba(0,210,255,0.3)",
+    color: "rgba(0,230,118,0.35)",
   },
 
   // === POOLS ===
@@ -201,11 +189,24 @@ const ROOMS: Room[] = [
     shape: "pool",
   },
 
-  // === MIAMI BEACH BOARDWALK (between pools and beach) ===
+  // === EXA SWIM SHOWS ===
+  {
+    id: "exa-swim-shows",
+    name: "EXA Swim Shows",
+    shortName: "EXA\nSwim Shows",
+    x: 80,
+    y: 1,
+    width: 16,
+    height: 55,
+    color: "rgba(255,50,130,0.25)",
+    labelSize: "lg",
+  },
+
+  // === MIAMI BEACH BOARDWALK (right of show area) ===
   {
     id: "boardwalk",
     name: "Miami Beach Boardwalk",
-    x: 80,
+    x: 96.5,
     y: 1,
     width: 3,
     height: 55,
@@ -219,26 +220,13 @@ const ROOMS: Room[] = [
     id: "palms",
     name: "Palm Trees & Vegetation",
     shortName: "🌴",
-    x: 83.5,
+    x: 100,
     y: 1,
     width: 3,
     height: 55,
     color: "rgba(0,180,80,0.25)",
     labelSize: "xs",
     verticalLabel: true,
-  },
-
-  // === EXA SWIM SHOWS ===
-  {
-    id: "exa-swim-shows",
-    name: "EXA Swim Shows",
-    shortName: "EXA\nSwim Shows",
-    x: 87,
-    y: 1,
-    width: 16,
-    height: 55,
-    color: "rgba(255,50,130,0.25)",
-    labelSize: "lg",
   },
 
   // === SAND BEACH ===
@@ -562,7 +550,7 @@ export function HotelFloorPlan() {
           <g style={{ pointerEvents: "none" }}>
             {/* Runway shadow/glow */}
             <rect
-              x={93.5}
+              x={86.5}
               y={6}
               width={3}
               height={44}
@@ -571,7 +559,7 @@ export function HotelFloorPlan() {
             />
             {/* Runway surface */}
             <rect
-              x={94}
+              x={87}
               y={7}
               width={2}
               height={42}
@@ -582,9 +570,9 @@ export function HotelFloorPlan() {
             />
             {/* Center line */}
             <line
-              x1={95}
+              x1={88}
               y1={8}
-              x2={95}
+              x2={88}
               y2={48}
               stroke="rgba(255,255,255,0.15)"
               strokeWidth={0.1}
@@ -592,7 +580,7 @@ export function HotelFloorPlan() {
             />
             {/* Stage end (wider platform at top) */}
             <rect
-              x={92.5}
+              x={85.5}
               y={5}
               width={5}
               height={3}
@@ -603,20 +591,20 @@ export function HotelFloorPlan() {
             />
             {/* Label */}
             <text
-              x={95}
+              x={88}
               y={29}
               textAnchor="middle"
               fill="rgba(255,255,255,0.45)"
               fontSize={0.7}
               fontWeight="700"
               letterSpacing={0.3}
-              transform="rotate(90, 95, 29)"
+              transform="rotate(90, 88, 29)"
             >
               50ft RUNWAY
             </text>
             {/* Stage label */}
             <text
-              x={95}
+              x={88}
               y={6.5}
               textAnchor="middle"
               dominantBaseline="central"
@@ -631,7 +619,7 @@ export function HotelFloorPlan() {
           {/* === MEDIA PIT — 15ft × 15ft at end of runway === */}
           <g style={{ pointerEvents: "none" }}>
             <rect
-              x={91.5}
+              x={84.5}
               y={49.5}
               width={7}
               height={6}
@@ -646,7 +634,7 @@ export function HotelFloorPlan() {
               [0, 1, 2, 3].map((col) => (
                 <rect
                   key={`media-${row}-${col}`}
-                  x={92.2 + col * 1.4}
+                  x={85.2 + col * 1.4}
                   y={50.3 + row * 1.6}
                   width={0.8}
                   height={0.8}
@@ -658,7 +646,7 @@ export function HotelFloorPlan() {
               ))
             )}
             <text
-              x={95}
+              x={88}
               y={50}
               textAnchor="middle"
               dominantBaseline="central"
@@ -669,7 +657,7 @@ export function HotelFloorPlan() {
               📸 MEDIA PIT
             </text>
             <text
-              x={95}
+              x={88}
               y={54.5}
               textAnchor="middle"
               dominantBaseline="central"
@@ -687,7 +675,7 @@ export function HotelFloorPlan() {
               <g key={`east-row-${row}`}>
                 {/* Row background */}
                 <rect
-                  x={96.5 + row * 1.8}
+                  x={89.5 + row * 1.8}
                   y={8}
                   width={1.4}
                   height={40}
@@ -698,7 +686,7 @@ export function HotelFloorPlan() {
                 {Array.from({ length: 30 }).map((_, i) => (
                   <rect
                     key={`east-${row}-${i}`}
-                    x={96.7 + row * 1.8}
+                    x={89.7 + row * 1.8}
                     y={8.4 + i * 1.32}
                     width={1.0}
                     height={0.9}
@@ -712,7 +700,7 @@ export function HotelFloorPlan() {
             ))}
             {/* East label */}
             <text
-              x={99}
+              x={92}
               y={50}
               textAnchor="middle"
               fill="rgba(255,255,255,0.35)"
@@ -727,7 +715,7 @@ export function HotelFloorPlan() {
           <g style={{ pointerEvents: "none" }}>
             {/* Row background */}
             <rect
-              x={92.3}
+              x={85.3}
               y={8}
               width={1.4}
               height={40}
@@ -738,7 +726,7 @@ export function HotelFloorPlan() {
             {Array.from({ length: 30 }).map((_, i) => (
               <rect
                 key={`west-${i}`}
-                x={92.5}
+                x={85.5}
                 y={8.4 + i * 1.32}
                 width={1.0}
                 height={0.9}
@@ -750,7 +738,7 @@ export function HotelFloorPlan() {
             ))}
             {/* West chairs label */}
             <text
-              x={93}
+              x={86}
               y={50}
               textAnchor="middle"
               fill="rgba(255,255,255,0.35)"
@@ -769,7 +757,7 @@ export function HotelFloorPlan() {
                 <g key={`vip-${i}`}>
                   {/* Booth background */}
                   <rect
-                    x={87.5}
+                    x={80.5}
                     y={boothY}
                     width={4.2}
                     height={7.5}
@@ -780,7 +768,7 @@ export function HotelFloorPlan() {
                   />
                   {/* Table */}
                   <rect
-                    x={88.8}
+                    x={81.8}
                     y={boothY + 1.8}
                     width={2}
                     height={3.5}
@@ -791,7 +779,7 @@ export function HotelFloorPlan() {
                   />
                   {/* Left bench */}
                   <rect
-                    x={87.8}
+                    x={80.8}
                     y={boothY + 1.5}
                     width={0.7}
                     height={4}
@@ -802,7 +790,7 @@ export function HotelFloorPlan() {
                   />
                   {/* Right bench (against the chairs) */}
                   <rect
-                    x={91.1}
+                    x={84.1}
                     y={boothY + 1.5}
                     width={0.4}
                     height={4}
@@ -813,7 +801,7 @@ export function HotelFloorPlan() {
                   />
                   {/* VIP label */}
                   <text
-                    x={89.6}
+                    x={82.6}
                     y={boothY + 0.7}
                     textAnchor="middle"
                     dominantBaseline="central"
@@ -828,7 +816,7 @@ export function HotelFloorPlan() {
             })}
             {/* VIP section label */}
             <text
-              x={89.6}
+              x={82.6}
               y={50}
               textAnchor="middle"
               fill="rgba(255,200,50,0.4)"
