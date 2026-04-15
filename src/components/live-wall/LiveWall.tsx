@@ -378,31 +378,31 @@ export function LiveWall({ initialMessages, currentUser }: Props) {
     <>
       {/* Auth prompt dialog */}
       <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
-        <DialogContent className="sm:max-w-md bg-gradient-to-b from-pink-50/95 via-white/95 to-fuchsia-50/95 border-pink-200/60 shadow-xl shadow-pink-200/20 backdrop-blur-xl">
+        <DialogContent className="sm:max-w-md border-violet-500/20 shadow-xl shadow-violet-500/10 bg-gradient-to-b from-[#1a1025] to-[#0f0a18] backdrop-blur-xl">
           <DialogHeader>
-            <DialogTitle className="text-center text-lg font-bold bg-gradient-to-r from-pink-500 to-fuchsia-500 bg-clip-text text-transparent">
-              Join the conversation 💬
+            <DialogTitle className="text-white text-center flex items-center justify-center gap-2">
+              <MessageSquare className="h-5 w-5 text-pink-500" /> Join the conversation
             </DialogTitle>
-            <DialogDescription className="text-pink-400/70 text-center text-sm">
-              Sign in or create an account to chat on EXA Live ✨
+            <DialogDescription className="text-muted-foreground text-center">
+              Sign in or create an account to chat on EXA Live Chat
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-3 pt-2">
             <Link href="/signin" className="w-full">
-              <Button className="w-full rounded-full h-11 bg-gradient-to-r from-pink-400 to-fuchsia-500 hover:from-pink-500 hover:to-fuchsia-600 text-white font-semibold shadow-lg shadow-pink-300/30 transition-all hover:shadow-pink-400/40 hover:scale-[1.02]">
+              <Button className="w-full rounded-full h-11 bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white font-semibold shadow-lg shadow-pink-500/20 transition-all hover:shadow-pink-500/30">
                 Sign In
               </Button>
             </Link>
             <div className="flex items-center gap-3">
-              <div className="h-px flex-1 bg-pink-200/50" />
-              <span className="text-xs text-pink-300/70">or sign up as</span>
-              <div className="h-px flex-1 bg-pink-200/50" />
+              <div className="h-px flex-1 bg-violet-500/15" />
+              <span className="text-xs text-muted-foreground">or sign up as</span>
+              <div className="h-px flex-1 bg-violet-500/15" />
             </div>
             <div className="grid grid-cols-2 gap-2">
               <ModelSignupDialog>
                 <Button
                   variant="outline"
-                  className="w-full rounded-full border-pink-300/50 text-pink-500 bg-pink-50/50 hover:bg-pink-100/70 hover:border-pink-400/60 hover:text-pink-600 font-medium transition-all hover:scale-[1.02]"
+                  className="w-full rounded-full border-pink-500/30 text-pink-400 hover:bg-pink-500/10 hover:border-pink-500/50 transition-all"
                 >
                   Model
                 </Button>
@@ -410,7 +410,7 @@ export function LiveWall({ initialMessages, currentUser }: Props) {
               <FanSignupDialog>
                 <Button
                   variant="outline"
-                  className="w-full rounded-full border-fuchsia-300/50 text-fuchsia-500 bg-fuchsia-50/50 hover:bg-fuchsia-100/70 hover:border-fuchsia-400/60 hover:text-fuchsia-600 font-medium transition-all hover:scale-[1.02]"
+                  className="w-full rounded-full border-violet-500/30 text-violet-400 hover:bg-violet-500/10 hover:border-violet-500/50 transition-all"
                 >
                   Fan
                 </Button>
@@ -429,7 +429,7 @@ export function LiveWall({ initialMessages, currentUser }: Props) {
             className="flex items-center gap-2.5 md:cursor-default"
           >
             <MessageSquare className="h-5 w-5 text-pink-400" />
-            <span className="text-base font-bold text-white">EXA Live</span>
+            <span className="text-base font-bold text-white">EXA Live Chat</span>
             {isConnected && (
               <span className="h-2.5 w-2.5 rounded-full bg-green-400 animate-pulse" />
             )}

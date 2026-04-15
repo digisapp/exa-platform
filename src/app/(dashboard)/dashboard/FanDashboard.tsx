@@ -290,7 +290,7 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
         </Card>
       )}
 
-      {/* EXA Live */}
+      {/* EXA Live Chat */}
       <LiveWallServer actorId={actorId} actorType="fan" />
 
       {/* Favorites */}

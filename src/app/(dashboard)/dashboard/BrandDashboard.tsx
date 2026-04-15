@@ -244,7 +244,7 @@ export async function BrandDashboard({ actorId }: { actorId: string }) {
         </Card>
       </div>
 
-      {/* EXA Live */}
+      {/* EXA Live Chat */}
       <LiveWallServer actorId={actorId} actorType="brand" />
 
       {/* Pending Approval Notice */}

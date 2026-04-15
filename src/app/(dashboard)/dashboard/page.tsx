@@ -442,7 +442,7 @@ export default async function DashboardPage() {
         </Link>
       </div>
 
-      {/* EXA Live */}
+      {/* EXA Live Chat */}
       <LiveWallServer actorId={actor.id} actorType={actor.type} />
 
       {/* Offers */}

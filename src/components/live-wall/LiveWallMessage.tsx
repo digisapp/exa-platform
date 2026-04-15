@@ -187,18 +187,8 @@ export function LiveWallMessage({
           )}
           <span className="text-[10px] text-white/30">{timeAgo}</span>
 
-          {/* Actions: tip + admin */}
+          {/* Actions: admin only (tip moved to reactions row) */}
           <div className="opacity-100 md:opacity-0 md:group-hover:opacity-100 ml-auto flex items-center gap-1 transition-all">
-            {/* Tip button */}
-            {canTip && (
-              <button
-                onClick={() => onTip?.(message.id)}
-                className="text-white/20 hover:text-amber-400 transition-colors"
-                title="Send a tip"
-              >
-                <Coins className="h-3 w-3" />
-              </button>
-            )}
             {/* Admin pin */}
             {isAdmin && (
               <button
@@ -208,6 +198,7 @@ export function LiveWallMessage({
                   message.is_pinned && "text-amber-400 opacity-100"
                 )}
                 title={message.is_pinned ? "Unpin" : "Pin"}
+                aria-label={message.is_pinned ? "Unpin message" : "Pin message"}
               >
                 <Pin className="h-3 w-3" />
               </button>
@@ -218,6 +209,7 @@ export function LiveWallMessage({
                 onClick={() => onDelete?.(message.id)}
                 className="text-white/20 hover:text-red-400 transition-colors"
                 title="Delete message"
+                aria-label="Delete message"
               >
                 <Trash2 className="h-3 w-3" />
               </button>
@@ -245,7 +237,7 @@ export function LiveWallMessage({
           </div>
         )}
 
-        {/* Reactions */}
+        {/* Reactions + Tip */}
         <div className="flex items-center gap-1.5 mt-1.5">
           {ALLOWED_EMOJIS.map((emoji) => {
             const actors = message.reactions?.[emoji] || [];
@@ -256,6 +248,7 @@ export function LiveWallMessage({
               <button
                 key={emoji}
                 onClick={() => onReact?.(message.id, emoji)}
+                aria-label={`React with ${emoji}`}
                 className={cn(
                   "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs transition-all",
                   actors.length > 0
@@ -279,6 +272,18 @@ export function LiveWallMessage({
               </button>
             );
           })}
+          {/* Tip coin button — always visible for fans */}
+          {canTip && (
+            <button
+              onClick={() => onTip?.(message.id)}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs transition-all bg-amber-500/10 border border-amber-500/25 text-amber-400 hover:bg-amber-500/20 hover:border-amber-500/40 hover:scale-105"
+              title="Send a tip"
+              aria-label={`Tip ${message.display_name}`}
+            >
+              <Coins className="h-3.5 w-3.5" />
+              <span className="text-[10px] font-medium">Tip</span>
+            </button>
+          )}
         </div>
       </div>
     </div>
