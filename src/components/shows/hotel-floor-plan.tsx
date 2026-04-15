@@ -588,6 +588,59 @@ export function HotelFloorPlan() {
             </text>
           </g>
 
+          {/* === MEDIA PIT — 15ft × 15ft at end of runway === */}
+          <g style={{ pointerEvents: "none" }}>
+            <rect
+              x={84.5}
+              y={49.5}
+              width={7}
+              height={6}
+              rx={0.4}
+              fill="rgba(255,50,130,0.2)"
+              stroke="rgba(255,50,130,0.45)"
+              strokeWidth={0.15}
+              strokeDasharray="0.5 0.3"
+            />
+            {/* Camera icons (small rects representing photographers) */}
+            {[0, 1, 2].map((row) =>
+              [0, 1, 2, 3].map((col) => (
+                <rect
+                  key={`media-${row}-${col}`}
+                  x={85.2 + col * 1.4}
+                  y={50.3 + row * 1.6}
+                  width={0.8}
+                  height={0.8}
+                  rx={0.15}
+                  fill="rgba(255,255,255,0.1)"
+                  stroke="rgba(255,255,255,0.2)"
+                  strokeWidth={0.04}
+                />
+              ))
+            )}
+            <text
+              x={88}
+              y={50}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fill="rgba(255,255,255,0.5)"
+              fontSize={0.55}
+              fontWeight="700"
+            >
+              📸 MEDIA PIT
+            </text>
+            <text
+              x={88}
+              y={54.5}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fill="rgba(255,255,255,0.3)"
+              fontSize={0.45}
+              fontWeight="500"
+            >
+              15ft × 15ft
+            </text>
+          </g>
+
           {/* === SEATING — East side of runway (3 rows × 30 chairs) === */}
           <g style={{ pointerEvents: "none" }}>
             {[0, 1, 2].map((row) => (
