@@ -59,6 +59,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Actor not found" }, { status: 400 });
     }
 
+    // Fans can react and tip but not post messages
+    if (actor.type === "fan") {
+      return NextResponse.json(
+        { error: "Fans cannot post messages on the live wall" },
+        { status: 403 }
+      );
+    }
+
     // Get display name, avatar, and profile slug based on actor type
     let displayName = "Anonymous";
     let avatarUrl: string | null = null;

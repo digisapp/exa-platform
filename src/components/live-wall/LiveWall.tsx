@@ -16,6 +16,7 @@ import {
   Volume2,
   VolumeX,
   ArrowDown,
+  Coins,
 } from "lucide-react";
 import {
   Dialog,
@@ -324,6 +325,10 @@ export function LiveWall({ initialMessages, currentUser }: Props) {
           if (res.status === 402) {
             toast.error("Not enough coins", {
               description: `You need ${data.required} coins but only have ${data.balance}`,
+              action: {
+                label: "Get Coins",
+                onClick: () => window.location.href = "/coins",
+              },
             });
           } else {
             toast.error(data.error || "Failed to send tip");
@@ -363,6 +368,7 @@ export function LiveWall({ initialMessages, currentUser }: Props) {
   );
 
   const isAdmin = currentUser?.actorType === "admin";
+  const isFan = currentUser?.actorType === "fan";
   const pinnedMessage = messages.find((m) => m.is_pinned);
   const tippingMessage = tippingMessageId
     ? messages.find((m) => m.id === tippingMessageId)
@@ -535,11 +541,27 @@ export function LiveWall({ initialMessages, currentUser }: Props) {
               )}
             </div>
 
-            <LiveWallInput
-              isLoggedIn={!!currentUser}
-              onSend={handleSend}
-              onAuthPrompt={() => setShowAuthDialog(true)}
-            />
+            {isFan ? (
+              <div className="border-t border-white/10 px-4 py-3 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-white/40 text-sm">
+                  <Eye className="h-4 w-4" />
+                  <span>React & tip to support your favorite models</span>
+                </div>
+                <Link
+                  href="/coins"
+                  className="flex items-center gap-1 text-xs text-amber-400/70 hover:text-amber-400 transition-colors shrink-0"
+                >
+                  <Coins className="h-3 w-3" />
+                  <span>{coinBalance.toLocaleString()}</span>
+                </Link>
+              </div>
+            ) : (
+              <LiveWallInput
+                isLoggedIn={!!currentUser}
+                onSend={handleSend}
+                onAuthPrompt={() => setShowAuthDialog(true)}
+              />
+            )}
           </>
         )}
       </div>
