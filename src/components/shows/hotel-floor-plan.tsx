@@ -53,7 +53,7 @@ const ROOMS: Room[] = [
   },
   {
     id: "cabanas", name: "Cabanas", shortName: "☀️ Cabanas",
-    x: 67, y: 1, width: 20, height: 9, gradient: "cabanasGrad", labelSize: "sm",
+    x: 67, y: 1, width: 20, height: 6, gradient: "cabanasGrad", labelSize: "sm",
     description: "Private poolside cabanas offering shade, bottle service, and an exclusive retreat for VIP guests, designers, and talent between shows.",
     sponsorNote: "Sponsor opportunity: Branded cabana takeover with custom décor, product sampling, or an exclusive gifting suite for top-tier guests.",
   },
@@ -96,7 +96,7 @@ const ROOMS: Room[] = [
   },
   {
     id: "lower-pool", name: "Lower Pool", shortName: "Lower\nPool 💦",
-    x: 70, y: 12, width: 12, height: 12, gradient: "poolGrad", labelSize: "sm", shape: "pool",
+    x: 68, y: 9, width: 16, height: 16, gradient: "poolGrad", labelSize: "sm", shape: "pool",
     description: "A stunning resort-style pool surrounded by lounge chairs and tropical landscaping. The daytime social hub where models, guests, and influencers gather between shows.",
     sponsorNote: "Sponsor opportunity: Branded pool floats, towel wraps, poolside sampling, or a sponsored pool party with DJ and branded wristbands.",
   },
