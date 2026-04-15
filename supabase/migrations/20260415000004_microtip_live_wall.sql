@@ -27,6 +27,8 @@ DECLARE
   v_tipper_balance INT;
   v_tipper_display TEXT;
   v_recipient_display TEXT;
+  v_old_tip_total INT;
+  v_new_tip_total INT;
 BEGIN
   -- Validate amount
   IF p_amount < 1 THEN
@@ -120,19 +122,34 @@ BEGIN
   VALUES (p_message_id, p_tipper_actor_id, v_message.actor_id, p_amount);
 
   -- Update denormalized tip total (triggers Realtime UPDATE broadcast)
+  -- Capture old total for milestone detection
+  SELECT tip_total INTO v_old_tip_total FROM live_wall_messages WHERE id = p_message_id;
   UPDATE live_wall_messages SET tip_total = tip_total + p_amount WHERE id = p_message_id;
+  v_new_tip_total := v_old_tip_total + p_amount;
 
-  -- Only announce big tips (>= 100 coins) as system messages
+  -- Announce big tips (>= 100 coins) — fan gets named in chat
   IF p_amount >= 100 THEN
     INSERT INTO live_wall_messages (actor_type, display_name, content, message_type)
     VALUES ('system', 'EXA', v_tipper_display || ' tipped ' || v_recipient_display || ' ' || p_amount || ' coins!', 'system');
+  END IF;
+
+  -- Milestone announcements when message crosses glow tier thresholds
+  IF v_old_tip_total < 10 AND v_new_tip_total >= 10 THEN
+    INSERT INTO live_wall_messages (actor_type, display_name, content, message_type)
+    VALUES ('system', 'EXA', v_recipient_display || '''s message is heating up! 🔥 ' || v_new_tip_total || ' coins received', 'system');
+  ELSIF v_old_tip_total < 50 AND v_new_tip_total >= 50 THEN
+    INSERT INTO live_wall_messages (actor_type, display_name, content, message_type)
+    VALUES ('system', 'EXA', v_recipient_display || '''s message is on fire! 🔥🔥 ' || v_new_tip_total || ' coins received', 'system');
+  ELSIF v_old_tip_total < 100 AND v_new_tip_total >= 100 THEN
+    INSERT INTO live_wall_messages (actor_type, display_name, content, message_type)
+    VALUES ('system', 'EXA', v_recipient_display || '''s message is legendary! 👑 ' || v_new_tip_total || ' coins received', 'system');
   END IF;
 
   RETURN jsonb_build_object(
     'success', true,
     'amount', p_amount,
     'new_balance', v_tipper_balance - p_amount,
-    'tip_total', (SELECT tip_total FROM live_wall_messages WHERE id = p_message_id)
+    'tip_total', v_new_tip_total
   );
 
 EXCEPTION WHEN OTHERS THEN

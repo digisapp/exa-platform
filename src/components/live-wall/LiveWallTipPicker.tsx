@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 const SUPER_TIP_AMOUNTS = [100, 250, 500, 1000] as const;
 
@@ -80,11 +81,20 @@ export function LiveWallTipPicker({
         ))}
       </div>
 
-      {/* Balance hint */}
+      {/* Balance + Get Coins CTA */}
       <div className="px-3 pb-2 text-center">
-        <span className="text-[9px] text-white/25">
-          Balance: {coinBalance.toLocaleString()} coins
-        </span>
+        {coinBalance < SUPER_TIP_AMOUNTS[0] ? (
+          <Link
+            href="/coins"
+            className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-400 hover:text-amber-300 transition-colors"
+          >
+            <span>💰</span> Get Coins to Super Tip
+          </Link>
+        ) : (
+          <span className="text-[9px] text-white/25">
+            Balance: {coinBalance.toLocaleString()} coins
+          </span>
+        )}
       </div>
     </div>
   );

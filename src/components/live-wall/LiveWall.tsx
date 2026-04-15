@@ -75,6 +75,7 @@ export function LiveWall({ initialMessages, currentUser }: Props) {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [tippingMessageId, setTippingMessageId] = useState<string | null>(null);
   const [coinBalance, setCoinBalance] = useState(currentUser?.coinBalance ?? 0);
+  const [isMicroTipping, setIsMicroTipping] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const supabaseRef = useRef(createClient());
@@ -182,6 +183,41 @@ export function LiveWall({ initialMessages, currentUser }: Props) {
         { event: "UPDATE", schema: "public", table: "live_wall_messages" },
         (payload) => {
           const updated = payload.new as LiveWallMessageData & { is_deleted: boolean };
+          const old = payload.old as Partial<LiveWallMessageData>;
+
+          // Notify recipient when their message receives a tip
+          if (
+            updated.actor_id === currentUser?.actorId &&
+            updated.tip_total > (old.tip_total ?? 0)
+          ) {
+            const tipAmount = updated.tip_total - (old.tip_total ?? 0);
+            const muted = localStorage.getItem("liveWallSoundMuted") === "true";
+            if (!muted && audioCtxRef.current) {
+              // Play a rewarding coin-drop sound for receiving a tip
+              try {
+                const ctx = audioCtxRef.current;
+                if (ctx.state === "suspended") ctx.resume();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = "sine";
+                osc.frequency.setValueAtTime(1047, ctx.currentTime);       // C6
+                osc.frequency.setValueAtTime(1319, ctx.currentTime + 0.08); // E6
+                osc.frequency.setValueAtTime(1568, ctx.currentTime + 0.16); // G6
+                gain.gain.setValueAtTime(0.15, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.35);
+              } catch {
+                // ignore
+              }
+            }
+            toast("💰 You received a tip!", {
+              description: `+${tipAmount} coin${tipAmount > 1 ? "s" : ""} on your message`,
+            });
+          }
+
           setMessages((prev) =>
             updated.is_deleted
               ? prev.filter((m) => m.id !== updated.id)
@@ -374,13 +410,14 @@ export function LiveWall({ initialMessages, currentUser }: Props) {
     []
   );
 
-  // Micro-tip: 1 coin on tap
+  // Micro-tip: 1 coin on tap (debounced — waits for API before allowing next tap)
   const handleMicroTip = useCallback(
-    (messageId: string) => {
+    async (messageId: string) => {
       if (!currentUser) {
         setShowAuthDialog(true);
         return;
       }
+      if (isMicroTipping) return;
       if (coinBalance < 1) {
         toast.error("Not enough coins", {
           action: {
@@ -390,11 +427,12 @@ export function LiveWall({ initialMessages, currentUser }: Props) {
         });
         return;
       }
-      // Optimistic balance deduct
+      setIsMicroTipping(true);
       setCoinBalance((b) => b - 1);
-      sendTip(messageId, 1);
+      await sendTip(messageId, 1);
+      setIsMicroTipping(false);
     },
-    [currentUser, coinBalance, sendTip]
+    [currentUser, coinBalance, sendTip, isMicroTipping]
   );
 
   // Super tip: open picker
@@ -536,6 +574,7 @@ export function LiveWall({ initialMessages, currentUser }: Props) {
                 onPin={handlePin}
                 onTip={handleMicroTip}
                 onSuperTip={handleSuperTipClick}
+                isTipping={isMicroTipping}
                 isPinnedDisplay
               />
             )}
@@ -567,6 +606,7 @@ export function LiveWall({ initialMessages, currentUser }: Props) {
                           onPin={handlePin}
                           onTip={handleMicroTip}
                           onSuperTip={handleSuperTipClick}
+                          isTipping={isMicroTipping}
                         />
                         {/* Super Tip picker (anchored to message, opens on long-press) */}
                         {tippingMessageId === msg.id && tippingMessage && (

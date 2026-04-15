@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useRef, useCallback } from "react";
+import { Fragment, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -74,34 +74,42 @@ function CoinTipButton({
   onTip,
   onSuperTip,
   displayName,
+  disabled,
 }: {
   tipTotal: number;
   onTip: () => void;
   onSuperTip: () => void;
   displayName: string;
+  disabled?: boolean;
 }) {
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const didLongPress = useRef(false);
+  const [isPressed, setIsPressed] = useState(false);
 
   const handlePointerDown = useCallback(() => {
+    if (disabled) return;
     didLongPress.current = false;
+    setIsPressed(true);
     longPressTimer.current = setTimeout(() => {
       didLongPress.current = true;
+      setIsPressed(false);
       onSuperTip();
     }, 500);
-  }, [onSuperTip]);
+  }, [onSuperTip, disabled]);
 
   const handlePointerUp = useCallback(() => {
+    setIsPressed(false);
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
     }
-    if (!didLongPress.current) {
+    if (!didLongPress.current && !disabled) {
       onTip();
     }
-  }, [onTip]);
+  }, [onTip, disabled]);
 
   const handlePointerLeave = useCallback(() => {
+    setIsPressed(false);
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
@@ -114,16 +122,24 @@ function CoinTipButton({
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerLeave}
       onContextMenu={(e) => e.preventDefault()}
+      disabled={disabled}
       className={cn(
-        "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs transition-all select-none",
-        tipTotal > 0
+        "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs select-none",
+        "transition-all duration-200",
+        disabled && "opacity-40 cursor-not-allowed",
+        !disabled && tipTotal > 0
           ? "bg-amber-500/20 border border-amber-500/30 hover:bg-amber-500/30"
-          : "bg-white/5 border border-white/10 opacity-60 hover:opacity-100"
+          : !disabled
+            ? "bg-white/5 border border-white/10 opacity-60 hover:opacity-100"
+            : "",
+        isPressed && "scale-125 bg-amber-500/40 border-amber-500/50 shadow-lg shadow-amber-500/20 opacity-100"
       )}
       title="Tap to tip 1 coin · Hold for super tip"
       aria-label={`Tip ${displayName}`}
     >
-      <span className="text-sm">💰</span>
+      <span className={cn("text-sm transition-transform duration-200", isPressed && "scale-110")}>
+        💰
+      </span>
       {tipTotal > 0 && (
         <span className="text-[10px] text-amber-400 font-semibold">
           {tipTotal.toLocaleString()}
@@ -142,6 +158,7 @@ interface Props {
   onPin?: (messageId: string, pin: boolean) => void;
   onTip?: (messageId: string) => void;
   onSuperTip?: (messageId: string) => void;
+  isTipping?: boolean;
   isPinnedDisplay?: boolean;
 }
 
@@ -154,6 +171,7 @@ export function LiveWallMessage({
   onPin,
   onTip,
   onSuperTip,
+  isTipping,
   isPinnedDisplay,
 }: Props) {
   // System messages
@@ -346,6 +364,7 @@ export function LiveWallMessage({
               onTip={() => onTip?.(message.id)}
               onSuperTip={() => onSuperTip?.(message.id)}
               displayName={message.display_name}
+              disabled={isTipping}
             />
           )}
         </div>
