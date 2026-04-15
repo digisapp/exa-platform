@@ -124,13 +124,13 @@ export function LiveWallMessage({
   const nameElement = profileHref ? (
     <Link
       href={profileHref}
-      className="text-sm font-semibold text-white truncate max-w-[120px] hover:text-pink-400 transition-colors"
+      className="text-sm font-bold text-white truncate max-w-[140px] hover:text-pink-400 transition-colors"
       onClick={(e) => e.stopPropagation()}
     >
       {message.display_name}
     </Link>
   ) : (
-    <span className="text-sm font-semibold text-white truncate max-w-[120px]">
+    <span className="text-sm font-bold text-white truncate max-w-[140px]">
       {message.display_name}
     </span>
   );
@@ -142,7 +142,7 @@ export function LiveWallMessage({
   const messageInner = (
     <div
       className={cn(
-        "group flex gap-2.5 py-1.5 px-2 rounded-lg transition-colors relative",
+        "group flex gap-3 py-2.5 px-3 rounded-xl transition-colors relative",
         tipTier === "none" && "hover:bg-white/[0.02]",
         tipTier === "amber" && "bg-amber-500/[0.04]",
         tipTier === "gradient" && "bg-gradient-to-r from-amber-500/[0.04] via-pink-500/[0.04] to-amber-500/[0.04]",
@@ -150,10 +150,10 @@ export function LiveWallMessage({
       )}
     >
       {/* Avatar */}
-      <Avatar className="h-7 w-7 shrink-0 mt-0.5">
+      <Avatar className="h-9 w-9 shrink-0 mt-0.5 border border-white/10">
         <AvatarImage src={message.avatar_url || undefined} />
-        <AvatarFallback className="bg-white/10 text-white/60 text-[10px]">
-          {message.display_name[0]?.toUpperCase()}
+        <AvatarFallback className="bg-white/10 text-white/60 text-xs">
+          {message.display_name.replace("@", "")[0]?.toUpperCase()}
         </AvatarFallback>
       </Avatar>
 
@@ -227,7 +227,7 @@ export function LiveWallMessage({
 
         {/* Text with mentions */}
         {message.content && (
-          <p className="text-sm text-white/80 break-words leading-snug">
+          <p className="text-[15px] text-white/85 break-words leading-relaxed mt-0.5">
             {renderContentWithMentions(message.content)}
           </p>
         )}
@@ -246,7 +246,7 @@ export function LiveWallMessage({
         )}
 
         {/* Reactions */}
-        <div className="flex items-center gap-1 mt-1">
+        <div className="flex items-center gap-1.5 mt-1.5">
           {ALLOWED_EMOJIS.map((emoji) => {
             const actors = message.reactions?.[emoji] || [];
             const hasReacted = currentActorId
@@ -265,7 +265,7 @@ export function LiveWallMessage({
                     : "bg-transparent border border-transparent opacity-0 group-hover:opacity-60 hover:!opacity-100"
                 )}
               >
-                <span className="text-[11px]">{emoji}</span>
+                <span className="text-sm">{emoji}</span>
                 {actors.length > 0 && (
                   <span
                     className={cn(

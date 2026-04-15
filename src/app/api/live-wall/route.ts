@@ -71,10 +71,9 @@ export async function POST(request: NextRequest) {
         .eq("user_id", user.id)
         .maybeSingle();
       if (model) {
-        displayName =
-          `${model.first_name || ""} ${model.last_name || ""}`.trim() ||
-          model.username ||
-          "Model";
+        displayName = model.username
+          ? `@${model.username}`
+          : `${model.first_name || ""} ${model.last_name || ""}`.trim() || "Model";
         avatarUrl = model.profile_photo_url;
         profileSlug = model.username;
       }
@@ -85,7 +84,7 @@ export async function POST(request: NextRequest) {
         .eq("user_id", user.id)
         .maybeSingle();
       if (fan) {
-        displayName = fan.display_name || fan.username || "Fan";
+        displayName = fan.username ? `@${fan.username}` : fan.display_name || "Fan";
         avatarUrl = fan.avatar_url;
         profileSlug = fan.username;
       }
@@ -96,7 +95,7 @@ export async function POST(request: NextRequest) {
         .eq("user_id", user.id)
         .maybeSingle();
       if (brand) {
-        displayName = brand.company_name || "Brand";
+        displayName = brand.company_name ? `@${brand.company_name}` : "Brand";
         avatarUrl = brand.logo_url;
       }
     } else if (actor.type === "admin") {

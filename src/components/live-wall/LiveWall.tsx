@@ -417,15 +417,15 @@ export function LiveWall({ initialMessages, currentUser }: Props) {
       {/* ── Inline Live Wall ── */}
       <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-sm overflow-hidden">
         {/* Header */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10 bg-white/[0.02]">
+        <div className="flex items-center gap-2.5 px-4 py-3.5 border-b border-white/10 bg-gradient-to-r from-pink-500/[0.03] to-violet-500/[0.03]">
           <button
             onClick={() => setIsExpanded((prev) => !prev)}
-            className="flex items-center gap-2 md:cursor-default"
+            className="flex items-center gap-2.5 md:cursor-default"
           >
-            <MessageSquare className="h-4 w-4 text-pink-400" />
-            <span className="text-sm font-bold text-white">EXA Live</span>
+            <MessageSquare className="h-5 w-5 text-pink-400" />
+            <span className="text-base font-bold text-white">EXA Live</span>
             {isConnected && (
-              <span className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
+              <span className="h-2.5 w-2.5 rounded-full bg-green-400 animate-pulse" />
             )}
           </button>
 
@@ -487,7 +487,7 @@ export function LiveWall({ initialMessages, currentUser }: Props) {
               <div
                 ref={scrollRef}
                 onScroll={handleScroll}
-                className="overflow-y-auto p-2 space-y-0.5 h-[280px] md:h-[360px]"
+                className="overflow-y-auto p-3 space-y-1 h-[380px] md:h-[480px]"
               >
                 {messages.length === 0 ? (
                   <div className="flex items-center justify-center h-full">

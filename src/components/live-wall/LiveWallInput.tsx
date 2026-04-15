@@ -6,16 +6,19 @@ import { cn } from "@/lib/utils";
 import { LiveWallMentionPopover } from "./LiveWallMentionPopover";
 
 const EMOJI_GRID = [
-  // Row 1: Smileys
+  // Smileys
   "😂", "🤣", "😍", "🥰", "😘", "😎", "🤩", "😏",
-  // Row 2: Expressions
   "🥺", "😭", "😤", "🤔", "😈", "🤭", "😮", "🙄",
-  // Row 3: Gestures & hearts
+  // Hearts & fire
   "❤️", "🔥", "💯", "✨", "👑", "💕", "💪", "🙌",
-  // Row 4: Reactions
-  "👏", "👀", "🎉", "🙏", "💀", "👍", "👎", "🤷",
-  // Row 5: Fun
+  "💖", "🖤", "💜", "🧡", "💛", "💙", "❤️‍🔥", "💗",
+  // Reactions
+  "👏", "👀", "🎉", "🙏", "💀", "👍", "🤝", "🤷",
+  // Fun & vibes
   "💋", "🌹", "⭐", "🎶", "📸", "💎", "🦋", "🌊",
+  "🥂", "🍾", "🎯", "🏆", "🎪", "🪩", "🫶", "🤑",
+  // Animals & nature
+  "🐆", "🦁", "🐍", "🔮", "🌙", "☀️", "🌈", "🫧",
 ];
 
 interface Props {
@@ -173,16 +176,16 @@ export function LiveWallInput({ isLoggedIn, onSend, onAuthPrompt }: Props) {
       />
 
       {/* Input row */}
-      <div className="flex items-center gap-2 p-2">
+      <div className="flex items-center gap-2.5 p-3">
         {/* Image upload button */}
         {isLoggedIn && (
           <>
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-white/5 text-white/40 hover:text-white/70 hover:bg-white/10 transition-colors"
+              className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-white/5 text-white/40 hover:text-white/70 hover:bg-white/10 transition-colors"
               title="Attach image"
             >
-              <ImageIcon className="h-3.5 w-3.5" />
+              <ImageIcon className="h-4 w-4" />
             </button>
             <input
               ref={fileInputRef}
@@ -200,19 +203,19 @@ export function LiveWallInput({ isLoggedIn, onSend, onAuthPrompt }: Props) {
             <button
               onClick={() => setShowEmojis((prev) => !prev)}
               className={cn(
-                "shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors",
+                "shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-colors",
                 showEmojis
                   ? "bg-pink-500/20 text-pink-400"
                   : "bg-white/5 text-white/40 hover:text-white/70 hover:bg-white/10"
               )}
               title="Add emoji"
             >
-              <Smile className="h-3.5 w-3.5" />
+              <Smile className="h-4 w-4" />
             </button>
 
             {showEmojis && (
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-[272px] rounded-xl border border-white/10 bg-black/95 backdrop-blur-xl shadow-2xl z-50 p-2">
-                <div className="grid grid-cols-8 gap-0.5">
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-[320px] rounded-xl border border-white/10 bg-black/95 backdrop-blur-xl shadow-2xl z-50 p-2.5">
+                <div className="grid grid-cols-8 gap-1">
                   {EMOJI_GRID.map((emoji) => (
                     <button
                       key={emoji}
@@ -222,7 +225,7 @@ export function LiveWallInput({ isLoggedIn, onSend, onAuthPrompt }: Props) {
                         setShowEmojis(false);
                         inputRef.current?.focus();
                       }}
-                      className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors text-base"
+                      className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/10 hover:scale-110 transition-all text-lg"
                     >
                       {emoji}
                     </button>
@@ -252,7 +255,7 @@ export function LiveWallInput({ isLoggedIn, onSend, onAuthPrompt }: Props) {
             }
           }}
           placeholder={isLoggedIn ? "Say something... Use @ to mention" : "Sign in to chat..."}
-          className="flex-1 bg-white/5 border border-white/10 rounded-full px-4 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-pink-500/40 transition-colors"
+          className="flex-1 bg-white/5 border border-white/10 rounded-full px-5 py-2.5 text-[15px] text-white placeholder:text-white/30 focus:outline-none focus:border-pink-500/40 transition-colors"
           disabled={isSending}
         />
         {value.length > 0 && (
@@ -264,13 +267,13 @@ export function LiveWallInput({ isLoggedIn, onSend, onAuthPrompt }: Props) {
           onClick={handleSubmit}
           disabled={isSending || (!value.trim() && !imagePreview)}
           className={cn(
-            "shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all",
+            "shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all",
             value.trim() || imagePreview
-              ? "bg-gradient-to-r from-pink-500 to-violet-500 text-white hover:scale-105"
+              ? "bg-gradient-to-r from-pink-500 to-violet-500 text-white hover:scale-110 shadow-lg shadow-pink-500/25"
               : "bg-white/5 text-white/20"
           )}
         >
-          <Send className="h-3.5 w-3.5" />
+          <Send className="h-4 w-4" />
         </button>
       </div>
     </div>
