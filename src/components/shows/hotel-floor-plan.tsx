@@ -398,66 +398,80 @@ export function HotelFloorPlan() {
             <text x={14} y={15.9} textAnchor="middle" dominantBaseline="central" fill="rgba(255,200,50,0.5)" fontSize={0.45} fontWeight="600">W → E</text>
           </g>
 
+          {/* === MODEL TOUCH-UP TENT — north of stage === */}
+          <g style={{ pointerEvents: "none" }}>
+            <rect x={88} y={3} width={14} height={7} rx={0.6}
+              fill="rgba(168,85,247,0.15)" stroke="rgba(168,85,247,0.3)" strokeWidth={0.1} />
+            <text x={95} y={5.5} textAnchor="middle" dominantBaseline="central"
+              fill="rgba(255,255,255,0.6)" fontSize={0.65} fontWeight="700">
+              💄 Model Touch-Up Tent
+            </text>
+            <text x={95} y={7.5} textAnchor="middle" dominantBaseline="central"
+              fill="rgba(255,255,255,0.35)" fontSize={0.45}>
+              Hair • Makeup • Final Fittings
+            </text>
+          </g>
+
           {/* === 50ft RUNWAY with stage lights === */}
           <g style={{ pointerEvents: "none" }}>
             {/* Spotlight cones from stage */}
-            <polygon points="93.0,5 87.0,20 89.0,20" fill="rgba(255,255,255,0.02)" />
-            <polygon points="97.0,5 101.0,20 103.0,20" fill="rgba(255,255,255,0.02)" />
+            <polygon points="93.0,12 87.0,27 89.0,27" fill="rgba(255,255,255,0.02)" />
+            <polygon points="97.0,12 101.0,27 103.0,27" fill="rgba(255,255,255,0.02)" />
             {/* Runway glow */}
-            <rect x={93.0} y={6} width={4} height={35} rx={0.5} fill="rgba(255,255,255,0.04)" />
+            <rect x={93.0} y={13} width={4} height={35} rx={0.5} fill="rgba(255,255,255,0.04)" />
             {/* Runway surface */}
-            <rect x={93.5} y={7} width={3} height={34} rx={0.4} fill="rgba(255,255,255,0.18)" stroke="rgba(255,255,255,0.3)" strokeWidth={0.12} />
-            {/* Runway edge lights (animated) */}
+            <rect x={93.5} y={14} width={3} height={34} rx={0.4} fill="rgba(255,255,255,0.18)" stroke="rgba(255,255,255,0.3)" strokeWidth={0.12} />
+            {/* Runway edge lights */}
             {Array.from({ length: 11 }).map((_, i) => (
               <g key={`rl-${i}`}>
-                <circle cx={93.5} cy={8 + i * 3} r={0.15} fill="rgba(255,50,130,0.4)" />
-                <circle cx={96.5} cy={8 + i * 3} r={0.15} fill="rgba(0,210,255,0.4)" />
+                <circle cx={93.5} cy={15 + i * 3} r={0.15} fill="rgba(255,50,130,0.4)" />
+                <circle cx={96.5} cy={15 + i * 3} r={0.15} fill="rgba(0,210,255,0.4)" />
               </g>
             ))}
             {/* Center line */}
-            <line x1={95.0} y1={8} x2={95.0} y2={40} stroke="rgba(255,255,255,0.12)" strokeWidth={0.08} strokeDasharray="1 0.8" />
+            <line x1={95.0} y1={15} x2={95.0} y2={47} stroke="rgba(255,255,255,0.12)" strokeWidth={0.08} strokeDasharray="1 0.8" />
             {/* Stage platform */}
-            <rect x={92.0} y={4.5} width={6} height={3.5} rx={0.5} fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" strokeWidth={0.12} />
-            <text x={95.0} y={29} textAnchor="middle" fill="rgba(255,255,255,0.35)" fontSize={0.7} fontWeight="700" letterSpacing={0.3} transform="rotate(90, 95.0, 29)">50ft RUNWAY</text>
-            <text x={95.0} y={6.3} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.6)" fontSize={0.7} fontWeight="800">STAGE</text>
+            <rect x={92.0} y={11.5} width={6} height={3.5} rx={0.5} fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" strokeWidth={0.12} />
+            <text x={95.0} y={33} textAnchor="middle" fill="rgba(255,255,255,0.35)" fontSize={0.7} fontWeight="700" letterSpacing={0.3} transform="rotate(90, 95.0, 33)">50ft RUNWAY</text>
+            <text x={95.0} y={13.3} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.6)" fontSize={0.7} fontWeight="800">STAGE</text>
           </g>
 
           {/* === MEDIA PIT === */}
           <g style={{ pointerEvents: "none" }}>
-            <rect x={91.5} y={42} width={7} height={6} rx={0.5} fill="rgba(255,50,130,0.15)" stroke="rgba(255,50,130,0.35)" strokeWidth={0.12} strokeDasharray="0.5 0.3" />
+            <rect x={91.5} y={49} width={7} height={6} rx={0.5} fill="rgba(255,50,130,0.15)" stroke="rgba(255,50,130,0.35)" strokeWidth={0.12} strokeDasharray="0.5 0.3" />
             {[0, 1, 2].map((row) => [0, 1, 2, 3].map((col) => (
-              <rect key={`m-${row}-${col}`} x={92.2 + col * 1.4} y={42.8 + row * 1.6} width={0.8} height={0.8} rx={0.2} fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.15)" strokeWidth={0.04} />
+              <rect key={`m-${row}-${col}`} x={92.2 + col * 1.4} y={49.8 + row * 1.6} width={0.8} height={0.8} rx={0.2} fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.15)" strokeWidth={0.04} />
             )))}
-            <text x={95.0} y={42.5} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.5)" fontSize={0.55} fontWeight="700">📸 MEDIA PIT</text>
-            <text x={95.0} y={47} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.3)" fontSize={0.45}>15ft × 15ft</text>
+            <text x={95.0} y={49.5} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.5)" fontSize={0.55} fontWeight="700">📸 MEDIA PIT</text>
+            <text x={95.0} y={54} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.3)" fontSize={0.45}>15ft × 15ft</text>
           </g>
 
           {/* === SEATING — East (2 rows × 30) === */}
           <g style={{ pointerEvents: "none" }}>
             {[0, 1].map((row) => (
               <g key={`er-${row}`}>
-                <rect x={96.5 + row * 1.8} y={8} width={1.4} height={32} rx={0.2} fill={`rgba(255,255,255,${0.04 + row * 0.02})`} />
+                <rect x={96.5 + row * 1.8} y={15} width={1.4} height={32} rx={0.2} fill={`rgba(255,255,255,${0.04 + row * 0.02})`} />
                 {Array.from({ length: 30 }).map((_, i) => (
-                  <rect key={`e-${row}-${i}`} x={96.7 + row * 1.8} y={8.4 + i * 1.32} width={1.0} height={0.9} rx={0.2} fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.15)" strokeWidth={0.04} />
+                  <rect key={`e-${row}-${i}`} x={96.7 + row * 1.8} y={15.4 + i * 1.05} width={1.0} height={0.7} rx={0.2} fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.15)" strokeWidth={0.04} />
                 ))}
               </g>
             ))}
-            <text x={99.0} y={50} textAnchor="middle" fill="rgba(255,255,255,0.3)" fontSize={0.5} fontWeight="600">2 × 30 seats</text>
+            <text x={99.0} y={49} textAnchor="middle" fill="rgba(255,255,255,0.3)" fontSize={0.5} fontWeight="600">2 × 30 seats</text>
           </g>
 
           {/* === SEATING — West (1 row × 30) === */}
           <g style={{ pointerEvents: "none" }}>
-            <rect x={92.3} y={8} width={1.4} height={32} rx={0.2} fill="rgba(255,255,255,0.04)" />
+            <rect x={92.3} y={15} width={1.4} height={32} rx={0.2} fill="rgba(255,255,255,0.04)" />
             {Array.from({ length: 30 }).map((_, i) => (
-              <rect key={`w-${i}`} x={92.5} y={8.4 + i * 1.32} width={1.0} height={0.9} rx={0.2} fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.15)" strokeWidth={0.04} />
+              <rect key={`w-${i}`} x={92.5} y={15.4 + i * 1.05} width={1.0} height={0.7} rx={0.2} fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.15)" strokeWidth={0.04} />
             ))}
-            <text x={93.0} y={50} textAnchor="middle" fill="rgba(255,255,255,0.3)" fontSize={0.45} fontWeight="600">1 × 30</text>
+            <text x={93.0} y={49} textAnchor="middle" fill="rgba(255,255,255,0.3)" fontSize={0.45} fontWeight="600">1 × 30</text>
           </g>
 
           {/* === VIP BOOTHS === */}
           <g style={{ pointerEvents: "none" }}>
             {[0, 1, 2, 3].map((i) => {
-              const by = 10 + i * 9.5;
+              const by = 17 + i * 9.5;
               return (
                 <g key={`v-${i}`}>
                   <rect x={87.5} y={by} width={4.2} height={7.5} rx={0.5} fill="rgba(255,50,130,0.1)" stroke="rgba(255,200,50,0.25)" strokeWidth={0.08} />
@@ -468,7 +482,7 @@ export function HotelFloorPlan() {
                 </g>
               );
             })}
-            <text x={89.6} y={50} textAnchor="middle" fill="rgba(255,200,50,0.4)" fontSize={0.45} fontWeight="700">VIP Booths</text>
+            <text x={89.6} y={55} textAnchor="middle" fill="rgba(255,200,50,0.4)" fontSize={0.45} fontWeight="700">VIP Booths</text>
           </g>
 
           {/* === BEACH ENTRANCE — small marker at boundary === */}
