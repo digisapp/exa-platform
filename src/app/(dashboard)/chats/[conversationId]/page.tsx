@@ -1,7 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service";
 import { redirect, notFound } from "next/navigation";
 import { ChatView } from "@/components/chat/ChatView";
 import type { Message, Actor, Model, Fan, Brand } from "@/types/database";
+
+// Admin client for fetching participant data (bypasses RLS)
+const adminClient = createServiceRoleClient();
 
 interface PageProps {
   params: Promise<{ conversationId: string }>;
@@ -143,8 +147,8 @@ export default async function ChatPage({ params }: PageProps) {
           .maybeSingle();
         otherModel = data;
       } else if (otherActor.type === "fan") {
-        // Fans use actor.id as their id
-        const { data } = await supabase
+        // Fans use actor.id as their id (use admin client to bypass RLS)
+        const { data } = await adminClient
           .from("fans")
           .select("*")
           .eq("id", otherActorId)
