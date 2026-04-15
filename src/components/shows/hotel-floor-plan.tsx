@@ -184,7 +184,7 @@ const ROOMS: Room[] = [
     shortName: "EXA Bar 🍹",
     x: 63,
     y: 26,
-    width: 12,
+    width: 17,
     height: 8,
     color: "rgba(255,100,0,0.5)",
     labelSize: "sm",
