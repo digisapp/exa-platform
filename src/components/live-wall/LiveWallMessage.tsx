@@ -135,9 +135,9 @@ export function LiveWallMessage({
     </span>
   );
 
-  // Can tip: logged in, not own message, not system
+  const isOwnMessage = currentActorId && message.actor_id === currentActorId;
   const canTip =
-    currentActorId && message.actor_id && message.actor_id !== currentActorId;
+    currentActorId && message.actor_id && !isOwnMessage;
 
   const messageInner = (
     <div
@@ -212,11 +212,12 @@ export function LiveWallMessage({
                 <Pin className="h-3 w-3" />
               </button>
             )}
-            {/* Admin delete */}
-            {isAdmin && (
+            {/* Delete (own message or admin) */}
+            {(isOwnMessage || isAdmin) && (
               <button
                 onClick={() => onDelete?.(message.id)}
                 className="text-white/20 hover:text-red-400 transition-colors"
+                title="Delete message"
               >
                 <Trash2 className="h-3 w-3" />
               </button>

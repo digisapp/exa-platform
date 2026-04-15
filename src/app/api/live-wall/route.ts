@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-/** DELETE - Admin soft-delete a message */
+/** DELETE - Soft-delete a message (own message or admin) */
 export async function DELETE(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -155,8 +155,8 @@ export async function DELETE(request: NextRequest) {
       .eq("user_id", user.id)
       .single();
 
-    if (actor?.type !== "admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (!actor) {
+      return NextResponse.json({ error: "Actor not found" }, { status: 400 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -166,6 +166,19 @@ export async function DELETE(request: NextRequest) {
         { error: "Message ID required" },
         { status: 400 }
       );
+    }
+
+    // Verify: must be admin or the message author
+    if (actor.type !== "admin") {
+      const { data: msg } = await (adminClient as any)
+        .from("live_wall_messages")
+        .select("actor_id")
+        .eq("id", messageId)
+        .single();
+
+      if (!msg || msg.actor_id !== actor.id) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
     }
 
     const { error } = await (adminClient as any)
