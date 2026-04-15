@@ -11,87 +11,75 @@ interface ModelOnlineNotifierProps {
   actorId: string;
 }
 
-interface OnlineModel {
-  id: string;
-  username: string;
-  first_name: string | null;
-  last_name: string | null;
-  profile_photo_url: string;
-  video_call_rate: number | null;
-}
-
-const ONLINE_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
-const POLL_INTERVAL_MS = 30 * 1000; // 30 seconds
-
 export function ModelOnlineNotifier({ actorId }: ModelOnlineNotifierProps) {
   const supabase = createClient();
   const router = useRouter();
-  // Track which models we've already toasted in this session
+  // Track which models we've already toasted in this session (model id → timestamp)
   const notifiedRef = useRef<Map<string, number>>(new Map());
-  const pendingTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
-  const checkOnlineModels = useCallback(async () => {
-    const cutoff = new Date(Date.now() - ONLINE_THRESHOLD_MS).toISOString();
+  const handleModelOnline = useCallback(
+    async (modelRow: {
+      id: string;
+      username: string;
+      first_name: string | null;
+      last_name: string | null;
+      profile_photo_url: string | null;
+      video_call_rate: number | null;
+      video_is_online: boolean;
+    }) => {
+      // Only care about models going online
+      if (!modelRow.video_is_online) return;
+      if (!modelRow.profile_photo_url || !modelRow.username) return;
 
-    const { data: models } = await supabase
-      .from("models")
-      .select(
-        "id, username, first_name, last_name, profile_photo_url, video_call_rate, last_active_at, user_id"
-      )
-      .not("profile_photo_url", "is", null)
-      .not("username", "is", null)
-      .gte("last_active_at", cutoff) as { data: (OnlineModel & { last_active_at: string; user_id: string })[] | null };
+      const now = Date.now();
+      const lastNotified = notifiedRef.current.get(modelRow.id);
+      // Don't re-notify for the same model within 15 minutes
+      if (lastNotified && now - lastNotified < 15 * 60 * 1000) return;
 
-    if (!models || models.length === 0) return;
+      notifiedRef.current.set(modelRow.id, now);
 
-    const now = Date.now();
-    let toastIndex = 0;
+      const displayName = modelRow.first_name
+        ? `${modelRow.first_name} ${modelRow.last_name || ""}`.trim()
+        : modelRow.username;
 
-    for (const model of models) {
-      const lastNotified = notifiedRef.current.get(model.id);
-
-      // If we already notified within the last 15 minutes, skip
-      if (lastNotified && now - lastNotified < 15 * 60 * 1000) continue;
-
-      notifiedRef.current.set(model.id, now);
-
-      const displayName = model.first_name
-        ? `${model.first_name} ${model.last_name || ""}`.trim()
-        : model.username;
-
-      const rate = model.video_call_rate;
+      const rate = modelRow.video_call_rate;
       const rateText = rate ? `${rate} coins/min` : "";
 
-      // Stagger toasts so they don't all appear at once
-      const delay = toastIndex * 1500;
-      toastIndex++;
-
-      const timeoutId = setTimeout(() => {
-        showModelOnlineToast({
-          displayName,
-          photoUrl: model.profile_photo_url,
-          rateText,
-          onCall: () => router.push(`/${model.username}`),
-        });
-      }, delay);
-
-      pendingTimeoutsRef.current.push(timeoutId);
-    }
-  }, [supabase, router]);
+      showModelOnlineToast({
+        displayName,
+        photoUrl: modelRow.profile_photo_url,
+        rateText,
+        profileUrl: `/${modelRow.username}`,
+        onCall: () => router.push(`/${modelRow.username}`),
+      });
+    },
+    [router]
+  );
 
   useEffect(() => {
-    // Initial check after a short delay so the page settles
-    const initialTimeout = setTimeout(checkOnlineModels, 3000);
-    const interval = setInterval(checkOnlineModels, POLL_INTERVAL_MS);
+    if (!actorId) return;
+
+    const channel = supabase
+      .channel("model-online-presence")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "models",
+          filter: "video_is_online=eq.true",
+        },
+        (payload) => {
+          const model = payload.new as any;
+          handleModelOnline(model);
+        }
+      )
+      .subscribe();
 
     return () => {
-      clearTimeout(initialTimeout);
-      clearInterval(interval);
-      // Clear any pending staggered toasts
-      pendingTimeoutsRef.current.forEach(clearTimeout);
-      pendingTimeoutsRef.current = [];
+      channel.unsubscribe();
     };
-  }, [checkOnlineModels]);
+  }, [actorId, supabase, handleModelOnline]);
 
   return null;
 }
@@ -100,18 +88,23 @@ function showModelOnlineToast({
   displayName,
   photoUrl,
   rateText,
+  profileUrl,
   onCall,
 }: {
   displayName: string;
   photoUrl: string;
   rateText: string;
+  profileUrl: string;
   onCall: () => void;
 }) {
   toast.custom(
     (t) => (
       <div
         className="relative animate-in slide-in-from-right-full fade-in duration-500 w-full max-w-sm cursor-pointer"
-        onClick={() => toast.dismiss(t)}
+        onClick={() => {
+          toast.dismiss(t);
+          window.open(profileUrl, "_blank", "noopener,noreferrer");
+        }}
       >
         {/* Glow */}
         <div className="absolute inset-0 blur-xl bg-gradient-to-r from-green-400/40 via-emerald-500/30 to-cyan-400/40 rounded-2xl scale-105" />
@@ -157,7 +150,7 @@ function showModelOnlineToast({
               </div>
             </div>
 
-            {/* CTA Button */}
+            {/* CTA Button — navigates to profile in same tab to start call flow */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -174,7 +167,7 @@ function showModelOnlineToast({
       </div>
     ),
     {
-      duration: 8000,
+      duration: 12000,
       position: "bottom-right",
       unstyled: true,
       style: { width: "100%" },

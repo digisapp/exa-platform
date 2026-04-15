@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     // Only update the relevant table based on actor type
     if (actor.type === "model") {
       await supabase.from("models")
-        .update({ last_active_at: now })
+        .update({ last_active_at: now, video_is_online: true })
         .eq("user_id", user.id);
     } else if (actor.type === "fan") {
       const fansTable = supabase.from("fans") as any;
