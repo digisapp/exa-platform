@@ -20,6 +20,7 @@ import {
   Play,
   Calendar,
   MapPin,
+  Home,
 } from "lucide-react";
 import { TopModelsCarousel } from "@/components/home/TopModelsCarousel";
 import { UpcomingEventsCarousel } from "@/components/home/UpcomingEventsCarousel";
@@ -203,8 +204,8 @@ export default async function HomePage() {
             </Link>
             {user ? (
               <Link href={currentActor?.type === "admin" ? "/admin" : "/dashboard"}>
-                <Button variant="outline" className="border-[#FF69B4]/50 hover:border-[#FF69B4] hover:bg-[#FF69B4]/10">
-                  Dashboard
+                <Button variant="outline" size="icon" className="border-[#FF69B4]/50 hover:border-[#FF69B4] hover:bg-[#FF69B4]/10 h-10 w-10">
+                  <Home className="h-5 w-5" />
                 </Button>
               </Link>
             ) : (
