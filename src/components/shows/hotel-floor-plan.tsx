@@ -470,6 +470,76 @@ export function HotelFloorPlan() {
               </g>
             );
           })}
+
+          {/* === 50ft RUNWAY — white stage down center of EXA Swim Shows === */}
+          <g style={{ pointerEvents: "none" }}>
+            {/* Runway shadow/glow */}
+            <rect
+              x={86.5}
+              y={6}
+              width={3}
+              height={44}
+              rx={0.4}
+              fill="rgba(255,255,255,0.06)"
+            />
+            {/* Runway surface */}
+            <rect
+              x={87}
+              y={7}
+              width={2}
+              height={42}
+              rx={0.3}
+              fill="rgba(255,255,255,0.25)"
+              stroke="rgba(255,255,255,0.4)"
+              strokeWidth={0.15}
+            />
+            {/* Center line */}
+            <line
+              x1={88}
+              y1={8}
+              x2={88}
+              y2={48}
+              stroke="rgba(255,255,255,0.15)"
+              strokeWidth={0.1}
+              strokeDasharray="1 0.8"
+            />
+            {/* Stage end (wider platform at top) */}
+            <rect
+              x={85.5}
+              y={5}
+              width={5}
+              height={3}
+              rx={0.4}
+              fill="rgba(255,255,255,0.2)"
+              stroke="rgba(255,255,255,0.35)"
+              strokeWidth={0.15}
+            />
+            {/* Label */}
+            <text
+              x={88}
+              y={29}
+              textAnchor="middle"
+              fill="rgba(255,255,255,0.45)"
+              fontSize={0.7}
+              fontWeight="700"
+              letterSpacing={0.3}
+              transform="rotate(90, 88, 29)"
+            >
+              50ft RUNWAY
+            </text>
+            {/* Stage label */}
+            <text
+              x={88}
+              y={6.5}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fill="rgba(255,255,255,0.5)"
+              fontSize={0.65}
+              fontWeight="600"
+            >
+              STAGE
+            </text>
+          </g>
         </svg>
 
         {/* Detail panel */}
