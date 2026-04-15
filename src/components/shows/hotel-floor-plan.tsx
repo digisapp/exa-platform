@@ -381,22 +381,45 @@ export function HotelFloorPlan() {
             );
           })}
 
-          {/* === RED CARPET + PHOTO WALL (same width as Grand Entrance) === */}
+          {/* === RED CARPET (combined with photo wall) === */}
           <g style={{ pointerEvents: "none" }}>
-            {/* Photo Wall section */}
-            <rect x={7} y={4} width={14} height={6} rx={0.5} fill="rgba(255,50,130,0.2)" stroke="rgba(255,50,130,0.35)" strokeWidth={0.1} />
-            <text x={14} y={6} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.7)" fontSize={0.75} fontWeight="700">📸 Photo Wall & Paparazzi</text>
-            <text x={14} y={8} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.4)" fontSize={0.5}>Step & Repeat • Media Photographers</text>
-            {/* Red Carpet section */}
-            <rect x={6.5} y={12} width={15} height={6} rx={1} fill="rgba(220,20,20,0.06)" filter="url(#spotGlow)" />
-            <rect x={7} y={13} width={14} height={4} rx={0.4} fill="rgba(200,20,20,0.5)" stroke="rgba(255,80,80,0.4)" strokeWidth={0.12} />
-            {/* Gold trim */}
-            <line x1={7} y1={13} x2={21} y2={13} stroke="rgba(255,200,50,0.6)" strokeWidth={0.15} />
-            <line x1={7} y1={17} x2={21} y2={17} stroke="rgba(255,200,50,0.6)" strokeWidth={0.15} />
-            {/* Arrow */}
-            <path d="M 19 15 L 20.5 15 M 20 14.3 L 20.5 15 L 20 15.7" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth={0.12} strokeLinecap="round" />
-            <text x={14} y={14.6} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.8)" fontSize={0.7} fontWeight="800" letterSpacing={0.15}>RED CARPET — 20ft</text>
-            <text x={14} y={15.9} textAnchor="middle" dominantBaseline="central" fill="rgba(255,200,50,0.5)" fontSize={0.45} fontWeight="600">W → E</text>
+            {/* Glow behind */}
+            <rect x={6.5} y={3.5} width={15} height={15} rx={1} fill="rgba(220,20,20,0.05)" filter="url(#spotGlow)" />
+            {/* Red carpet surface — full block */}
+            <rect x={7} y={4} width={14} height={14} rx={0.5} fill="rgba(200,20,20,0.5)" stroke="rgba(255,60,60,0.5)" strokeWidth={0.12} />
+            {/* Gold trim top & bottom */}
+            <line x1={7} y1={4} x2={21} y2={4} stroke="rgba(255,200,50,0.7)" strokeWidth={0.18} />
+            <line x1={7} y1={18} x2={21} y2={18} stroke="rgba(255,200,50,0.7)" strokeWidth={0.18} />
+            {/* Gold trim sides */}
+            <line x1={7} y1={4} x2={7} y2={18} stroke="rgba(255,200,50,0.5)" strokeWidth={0.12} />
+            <line x1={21} y1={4} x2={21} y2={18} stroke="rgba(255,200,50,0.5)" strokeWidth={0.12} />
+            {/* Camera flash bursts */}
+            <circle cx={9} cy={6} r={0.5} fill="rgba(255,255,255,0.15)">
+              <animate attributeName="opacity" values="0;0.6;0" dur="2s" begin="0s" repeatCount="indefinite" />
+            </circle>
+            <circle cx={18} cy={7} r={0.4} fill="rgba(255,255,255,0.15)">
+              <animate attributeName="opacity" values="0;0.5;0" dur="2.5s" begin="0.7s" repeatCount="indefinite" />
+            </circle>
+            <circle cx={12} cy={15} r={0.45} fill="rgba(255,255,255,0.15)">
+              <animate attributeName="opacity" values="0;0.5;0" dur="1.8s" begin="1.2s" repeatCount="indefinite" />
+            </circle>
+            <circle cx={16} cy={13} r={0.35} fill="rgba(255,255,255,0.15)">
+              <animate attributeName="opacity" values="0;0.4;0" dur="2.2s" begin="0.3s" repeatCount="indefinite" />
+            </circle>
+            {/* Star sparkles */}
+            <text x={8.5} y={9} textAnchor="middle" fill="rgba(255,255,255,0.3)" fontSize={0.8}>✦</text>
+            <text x={19} y={11} textAnchor="middle" fill="rgba(255,255,255,0.25)" fontSize={0.7}>✦</text>
+            <text x={11} y={16.5} textAnchor="middle" fill="rgba(255,255,255,0.2)" fontSize={0.6}>✦</text>
+            {/* Main label */}
+            <text x={14} y={9.5} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.95)" fontSize={1.1} fontWeight="900" letterSpacing={0.2}>
+              RED CARPET
+            </text>
+            <text x={14} y={11.5} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.6)" fontSize={0.6} fontWeight="600">
+              📸 Photo Wall • Paparazzi • Glamour
+            </text>
+            {/* Arrow W→E */}
+            <path d="M 19 14 L 20.5 14 M 20 13.3 L 20.5 14 L 20 14.7" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth={0.12} strokeLinecap="round" />
+            <text x={14} y={14} textAnchor="middle" dominantBaseline="central" fill="rgba(255,200,50,0.6)" fontSize={0.45} fontWeight="600">20ft wide • W → E</text>
           </g>
 
           {/* === MODEL TOUCH-UP TENT — north of stage === */}
