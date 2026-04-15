@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 interface Room {
   id: string;
   name: string;
+  shortName?: string;
   dimensions?: string;
   sqft?: number;
   ceilingHeight?: string;
@@ -18,23 +19,65 @@ interface Room {
     hollowSquare?: number;
     conference?: number;
   };
-  // SVG coordinates (percentage-based for responsiveness)
   x: number;
   y: number;
   width: number;
   height: number;
   color: string;
-  textColor?: string;
-  labelSize?: "sm" | "md" | "lg";
-  // For non-rectangular shapes
-  type?: "rect" | "ellipse" | "path";
-  path?: string;
-  rx?: number;
-  ry?: number;
+  labelSize?: "xs" | "sm" | "md" | "lg";
 }
 
+// Coordinates based on close-up floor plan photo — viewBox 0 0 100 58 (landscape)
+// Layout: building on left/center, pool complex on right, beach far right
 const ROOMS: Room[] = [
-  // === INDOOR SPACES ===
+  // === TOP ROW (indoor, north wall) ===
+  {
+    id: "ladies-room",
+    name: "Ladies Room",
+    shortName: "Ladies\nRoom",
+    x: 16,
+    y: 3,
+    width: 7,
+    height: 6,
+    color: "rgba(168,85,247,0.25)",
+    labelSize: "xs",
+  },
+  {
+    id: "mens-room",
+    name: "Men's Room",
+    shortName: "Men's",
+    x: 16,
+    y: 9.5,
+    width: 5,
+    height: 5,
+    color: "rgba(168,85,247,0.25)",
+    labelSize: "xs",
+  },
+  {
+    id: "orchid-parlor",
+    name: "Orchid Parlor",
+    dimensions: "18' × 35'",
+    sqft: 630,
+    capacity: { reception: 75, uShape: 24, conference: 24 },
+    x: 38,
+    y: 2,
+    width: 12,
+    height: 8,
+    color: "rgba(236,72,153,0.25)",
+    labelSize: "sm",
+  },
+  {
+    id: "cabanas",
+    name: "Cabanas",
+    x: 66,
+    y: 1,
+    width: 14,
+    height: 9,
+    color: "rgba(251,146,60,0.25)",
+    labelSize: "sm",
+  },
+
+  // === SECOND ROW (main indoor rooms) ===
   {
     id: "mezzanine",
     name: "Mezzanine",
@@ -42,22 +85,11 @@ const ROOMS: Room[] = [
     sqft: 1632,
     ceilingHeight: "9'",
     capacity: { reception: 200 },
-    x: 3,
-    y: 12,
-    width: 10,
-    height: 22,
+    x: 5,
+    y: 9,
+    width: 8,
+    height: 16,
     color: "rgba(168,85,247,0.35)",
-    labelSize: "sm",
-  },
-  {
-    id: "ladies-room",
-    name: "Ladies Room",
-    dimensions: undefined,
-    x: 14,
-    y: 8,
-    width: 7,
-    height: 8,
-    color: "rgba(168,85,247,0.2)",
     labelSize: "sm",
   },
   {
@@ -67,26 +99,75 @@ const ROOMS: Room[] = [
     sqft: 525,
     ceilingHeight: "8'6\"",
     capacity: { reception: 40, rounds: 40, theatre: 45, school: 25, uShape: 24, hollowSquare: 30, conference: 16 },
-    x: 22,
-    y: 8,
-    width: 10,
-    height: 10,
+    x: 16,
+    y: 15,
+    width: 9,
+    height: 7,
     color: "rgba(59,130,246,0.35)",
     labelSize: "sm",
   },
   {
     id: "silan-restaurant",
     name: "Silan Kosher Restaurant",
+    shortName: "Silan Kosher\nRestaurant",
     dimensions: "39' × 63'8\"",
     sqft: 1233,
     ceilingHeight: "8'",
     capacity: { reception: 90, rounds: 76, theatre: 95, school: 60, uShape: 45, hollowSquare: 55, conference: 48 },
-    x: 22,
-    y: 19,
-    width: 16,
-    height: 12,
+    x: 26,
+    y: 10,
+    width: 18,
+    height: 14,
     color: "rgba(234,179,8,0.3)",
   },
+  {
+    id: "sky-lounge",
+    name: "Sky Lounge",
+    dimensions: "35' × 39'",
+    sqft: 1365,
+    x: 46,
+    y: 10,
+    width: 14,
+    height: 14,
+    color: "rgba(6,182,212,0.3)",
+  },
+
+  // === ORCHID BALCONY (vertical strip) ===
+  {
+    id: "orchid-balcony",
+    name: "Orchid Balcony",
+    shortName: "Orchid\nBalcony",
+    x: 61,
+    y: 3,
+    width: 3,
+    height: 36,
+    color: "rgba(168,85,247,0.2)",
+    labelSize: "xs",
+  },
+
+  // === OUTDOOR PATIOS (middle band) ===
+  {
+    id: "orchid-patio",
+    name: "Orchid Patio",
+    x: 22,
+    y: 26,
+    width: 14,
+    height: 9,
+    color: "rgba(34,197,94,0.25)",
+    labelSize: "sm",
+  },
+  {
+    id: "sky-patio",
+    name: "Sky Patio",
+    x: 38,
+    y: 26,
+    width: 14,
+    height: 9,
+    color: "rgba(34,197,94,0.25)",
+    labelSize: "sm",
+  },
+
+  // === LOWER SECTION ===
   {
     id: "orchid-ballroom",
     name: "Orchid Ballroom",
@@ -94,59 +175,12 @@ const ROOMS: Room[] = [
     sqft: 4872,
     ceilingHeight: "12' / 11.5'",
     capacity: { reception: 400, rounds: 300, theatre: 420, school: 250 },
-    x: 14,
-    y: 32,
-    width: 24,
+    x: 1,
+    y: 28,
+    width: 16,
     height: 24,
     color: "rgba(236,72,153,0.3)",
     labelSize: "lg",
-  },
-  {
-    id: "orchid-parlor",
-    name: "Orchid Parlor",
-    dimensions: "18' × 35'",
-    sqft: 630,
-    capacity: { reception: 75, uShape: 24, conference: 24 },
-    x: 40,
-    y: 8,
-    width: 12,
-    height: 10,
-    color: "rgba(236,72,153,0.25)",
-    labelSize: "sm",
-  },
-  {
-    id: "sky-lounge",
-    name: "Sky Lounge",
-    dimensions: "35' × 39'",
-    sqft: 1365,
-    x: 42,
-    y: 19,
-    width: 14,
-    height: 12,
-    color: "rgba(6,182,212,0.3)",
-  },
-  // === OUTDOOR SPACES ===
-  {
-    id: "orchid-patio",
-    name: "Orchid Patio",
-    dimensions: undefined,
-    x: 22,
-    y: 57,
-    width: 12,
-    height: 10,
-    color: "rgba(34,197,94,0.25)",
-    labelSize: "sm",
-  },
-  {
-    id: "sky-patio",
-    name: "Sky Patio",
-    dimensions: undefined,
-    x: 36,
-    y: 57,
-    width: 12,
-    height: 10,
-    color: "rgba(34,197,94,0.25)",
-    labelSize: "sm",
   },
   {
     id: "orchid-terrace",
@@ -154,10 +188,10 @@ const ROOMS: Room[] = [
     dimensions: "44' × 55'",
     sqft: 1845,
     capacity: { reception: 200, rounds: 130, theatre: 150, school: 100 },
-    x: 10,
-    y: 68,
-    width: 20,
-    height: 16,
+    x: 18,
+    y: 37,
+    width: 22,
+    height: 15,
     color: "rgba(34,197,94,0.3)",
   },
   {
@@ -166,29 +200,30 @@ const ROOMS: Room[] = [
     dimensions: "44' × 55'",
     sqft: 1845,
     capacity: { reception: 200, rounds: 130, theatre: 150, school: 100 },
-    x: 50,
-    y: 32,
-    width: 14,
+    x: 42,
+    y: 36,
+    width: 16,
     height: 16,
     color: "rgba(6,182,212,0.25)",
   },
-  // === POOL AREA ===
+
+  // === POOL COMPLEX (right side) ===
   {
     id: "lower-pool",
     name: "Lower Pool",
     x: 66,
-    y: 14,
+    y: 12,
     width: 12,
-    height: 14,
+    height: 12,
     color: "rgba(56,189,248,0.35)",
-    type: "rect",
     labelSize: "sm",
   },
   {
     id: "pool-bar",
-    name: "Pool Bar",
+    name: "Top of the Falls\nPool Bar",
+    shortName: "Pool Bar",
     x: 66,
-    y: 30,
+    y: 26,
     width: 12,
     height: 8,
     color: "rgba(249,115,22,0.3)",
@@ -197,48 +232,30 @@ const ROOMS: Room[] = [
   {
     id: "heated-pool",
     name: "Heated Adult Saltwater Pool",
-    x: 66,
-    y: 40,
-    width: 14,
+    shortName: "Heated\nSaltwater Pool",
+    x: 64,
+    y: 36,
+    width: 16,
     height: 18,
     color: "rgba(56,189,248,0.4)",
-    labelSize: "sm",
   },
-  // === CABANAS / BEACH ===
-  {
-    id: "cabanas",
-    name: "Cabanas",
-    x: 58,
-    y: 2,
-    width: 14,
-    height: 10,
-    color: "rgba(251,146,60,0.25)",
-    labelSize: "sm",
-  },
-  {
-    id: "ocean-front-deck",
-    name: "Ocean Front Deck",
-    dimensions: undefined,
-    sqft: 20000,
-    x: 32,
-    y: 70,
-    width: 28,
-    height: 14,
-    color: "rgba(6,182,212,0.2)",
-  },
+
+  // === BEACH (far right strip) ===
   {
     id: "beach",
-    name: "Beach / Oceanfront",
-    x: 32,
-    y: 86,
-    width: 50,
-    height: 10,
-    color: "rgba(251,191,36,0.15)",
+    name: "Beachfront / Oceanfront",
+    shortName: "Beach",
+    x: 82,
+    y: 1,
+    width: 17,
+    height: 55,
+    color: "rgba(251,191,36,0.1)",
+    labelSize: "sm",
   },
 ];
 
-// Lobby / staircase marker
-const LOBBY = { x: 52, y: 8, r: 4 };
+// Lobby / spiral staircase
+const LOBBY = { cx: 11, cy: 5, r: 3 };
 
 export function HotelFloorPlan() {
   const [selected, setSelected] = useState<Room | null>(null);
@@ -259,45 +276,43 @@ export function HotelFloorPlan() {
         </div>
       </div>
 
-      {/* SVG Map */}
+      {/* SVG Map — landscape ratio matching the actual floor plan */}
       <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-zinc-950/80 backdrop-blur-sm">
         <svg
-          viewBox="0 0 100 100"
+          viewBox="0 0 100 58"
           className="w-full h-auto"
-          style={{ aspectRatio: "100/100" }}
         >
-          {/* Background grid pattern */}
           <defs>
             <pattern id="grid" width="5" height="5" patternUnits="userSpaceOnUse">
-              <path d="M 5 0 L 0 0 0 5" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="0.1" />
+              <path d="M 5 0 L 0 0 0 5" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="0.08" />
             </pattern>
-            {/* Glow filter for selected/hovered rooms */}
             <filter id="glow">
-              <feGaussianBlur stdDeviation="0.5" result="blur" />
+              <feGaussianBlur stdDeviation="0.4" result="blur" />
               <feMerge>
                 <feMergeNode in="blur" />
                 <feMergeNode in="SourceGraphic" />
               </feMerge>
             </filter>
           </defs>
-          <rect width="100" height="100" fill="url(#grid)" />
-
-          {/* Ocean / beach gradient at bottom */}
-          <defs>
-            <linearGradient id="ocean" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="rgba(6,182,212,0.1)" />
-              <stop offset="100%" stopColor="rgba(6,182,212,0.02)" />
-            </linearGradient>
-          </defs>
+          <rect width="100" height="58" fill="url(#grid)" />
 
           {/* Rooms */}
           {ROOMS.map((room) => {
             const isHovered = hovered === room.id;
             const isSelected = selected?.id === room.id;
+            const fontSize =
+              room.labelSize === "lg" ? 1.6
+              : room.labelSize === "xs" ? 0.85
+              : room.labelSize === "sm" ? 1.0
+              : 1.2;
+            const label = room.shortName || room.name;
+            const lines = label.split("\n");
+            const hasSqft = !!room.sqft;
+
             return (
               <g
                 key={room.id}
-                className="cursor-pointer transition-all duration-200"
+                className="cursor-pointer"
                 onClick={() => setSelected(isSelected ? null : room)}
                 onMouseEnter={() => setHovered(room.id)}
                 onMouseLeave={() => setHovered(null)}
@@ -307,89 +322,110 @@ export function HotelFloorPlan() {
                   y={room.y}
                   width={room.width}
                   height={room.height}
-                  rx={0.8}
+                  rx={0.6}
                   fill={room.color}
-                  stroke={isSelected ? "rgba(236,72,153,0.8)" : isHovered ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.15)"}
-                  strokeWidth={isSelected ? 0.4 : 0.2}
+                  stroke={
+                    isSelected ? "rgba(236,72,153,0.8)"
+                    : isHovered ? "rgba(255,255,255,0.5)"
+                    : "rgba(255,255,255,0.15)"
+                  }
+                  strokeWidth={isSelected ? 0.35 : 0.15}
                   filter={isSelected || isHovered ? "url(#glow)" : undefined}
                   style={{ transition: "all 0.2s ease" }}
                 />
-                {/* Room label */}
-                <text
-                  x={room.x + room.width / 2}
-                  y={room.y + room.height / 2 - (room.sqft ? 0.8 : 0)}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  fill="white"
-                  fontSize={room.labelSize === "lg" ? 1.8 : room.labelSize === "sm" ? 1.1 : 1.4}
-                  fontWeight="600"
-                  style={{ pointerEvents: "none", textShadow: "0 0 3px rgba(0,0,0,0.8)" }}
-                >
-                  {room.name}
-                </text>
-                {room.sqft && (
+                {/* Room label — multi-line support */}
+                {lines.map((line, i) => {
+                  const totalTextHeight = lines.length * fontSize * 1.3 + (hasSqft ? fontSize * 1.2 : 0);
+                  const startY = room.y + room.height / 2 - totalTextHeight / 2 + fontSize * 0.6;
+                  return (
+                    <text
+                      key={i}
+                      x={room.x + room.width / 2}
+                      y={startY + i * fontSize * 1.3}
+                      textAnchor="middle"
+                      dominantBaseline="central"
+                      fill="white"
+                      fontSize={fontSize}
+                      fontWeight="600"
+                      style={{ pointerEvents: "none", textShadow: "0 0 3px rgba(0,0,0,0.9)" }}
+                    >
+                      {line}
+                    </text>
+                  );
+                })}
+                {hasSqft && (
                   <text
                     x={room.x + room.width / 2}
-                    y={room.y + room.height / 2 + (room.labelSize === "lg" ? 2.2 : 1.6)}
+                    y={room.y + room.height / 2 + lines.length * fontSize * 0.5 + fontSize * 0.5}
                     textAnchor="middle"
                     dominantBaseline="central"
-                    fill="rgba(255,255,255,0.6)"
-                    fontSize={room.labelSize === "lg" ? 1.2 : 0.9}
+                    fill="rgba(255,255,255,0.5)"
+                    fontSize={fontSize * 0.7}
                     style={{ pointerEvents: "none" }}
                   >
-                    {room.sqft.toLocaleString()} sq ft
+                    {room.sqft!.toLocaleString()} sq ft
                   </text>
                 )}
               </g>
             );
           })}
 
-          {/* Lobby / Staircase circle */}
-          <circle
-            cx={LOBBY.x}
-            cy={LOBBY.y}
-            r={LOBBY.r}
-            fill="rgba(168,85,247,0.15)"
-            stroke="rgba(168,85,247,0.3)"
-            strokeWidth={0.2}
-          />
-          <text
-            x={LOBBY.x}
-            y={LOBBY.y - 0.5}
-            textAnchor="middle"
-            dominantBaseline="central"
-            fill="rgba(255,255,255,0.7)"
-            fontSize={1}
-            fontWeight="500"
-          >
-            Lobby
-          </text>
-          <text
-            x={LOBBY.x}
-            y={LOBBY.y + 1}
-            textAnchor="middle"
-            dominantBaseline="central"
-            fill="rgba(255,255,255,0.4)"
-            fontSize={0.7}
-          >
-            Staircase
-          </text>
+          {/* Lobby / Spiral Staircase */}
+          <g>
+            <circle
+              cx={LOBBY.cx}
+              cy={LOBBY.cy}
+              r={LOBBY.r}
+              fill="rgba(168,85,247,0.15)"
+              stroke="rgba(168,85,247,0.3)"
+              strokeWidth={0.15}
+            />
+            {/* Spiral hint */}
+            <path
+              d={`M ${LOBBY.cx} ${LOBBY.cy - 1.2} A 1.2 1.2 0 0 1 ${LOBBY.cx + 1.2} ${LOBBY.cy} A 1.2 1.2 0 0 1 ${LOBBY.cx} ${LOBBY.cy + 0.6}`}
+              fill="none"
+              stroke="rgba(168,85,247,0.4)"
+              strokeWidth={0.15}
+            />
+            <text
+              x={LOBBY.cx}
+              y={LOBBY.cy - 0.3}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fill="rgba(255,255,255,0.6)"
+              fontSize={0.85}
+              fontWeight="500"
+            >
+              Lobby
+            </text>
+            <text
+              x={LOBBY.cx}
+              y={LOBBY.cy + 0.8}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fill="rgba(255,255,255,0.35)"
+              fontSize={0.6}
+            >
+              Staircase
+            </text>
+          </g>
 
-          {/* Compass / Ocean label */}
+          {/* Ocean label on the beach strip */}
           <text
-            x={82}
-            y={92}
+            x={91}
+            y={30}
             textAnchor="middle"
-            fill="rgba(6,182,212,0.4)"
-            fontSize={1.8}
+            fill="rgba(6,182,212,0.3)"
+            fontSize={1.1}
             fontWeight="700"
             letterSpacing={0.3}
+            transform="rotate(90, 91, 30)"
           >
-            ATLANTIC OCEAN →
+            ATLANTIC OCEAN
           </text>
         </svg>
 
-        {/* Detail panel - shown when a room is selected */}
+        {/* Detail panel */}
         {selected && (
           <div className="absolute bottom-0 left-0 right-0 bg-zinc-900/95 backdrop-blur-md border-t border-white/10 p-4 md:p-6 animate-in slide-in-from-bottom-4 duration-300">
             <button
@@ -463,8 +499,8 @@ export function HotelFloorPlan() {
           <span>Pool Area</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-sm" style={{ background: "rgba(6,182,212,0.25)" }} />
-          <span>Oceanfront</span>
+          <div className="w-3 h-3 rounded-sm" style={{ background: "rgba(251,191,36,0.2)" }} />
+          <span>Beachfront</span>
         </div>
       </div>
     </div>
