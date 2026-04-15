@@ -464,8 +464,8 @@ export function HotelFloorPlan() {
             {[0, 1, 2].map((row) => [0, 1, 2, 3].map((col) => (
               <rect key={`m-${row}-${col}`} x={92.2 + col * 1.4} y={49.8 + row * 1.6} width={0.8} height={0.8} rx={0.2} fill="rgba(255,255,255,0.2)" stroke="rgba(255,255,255,0.35)" strokeWidth={0.05} />
             )))}
-            <text x={95.0} y={49.5} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.8)" fontSize={0.55} fontWeight="700">📸 MEDIA PIT</text>
-            <text x={95.0} y={54} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.5)" fontSize={0.45}>15ft × 15ft</text>
+            <text x={95.0} y={50.5} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.95)" fontSize={0.9} fontWeight="900">📸 MEDIA PIT</text>
+            <text x={95.0} y={53.5} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.6)" fontSize={0.55} fontWeight="600">15ft × 15ft</text>
           </g>
 
           {/* === SEATING — East Row 2 (clickable → tickets) === */}
