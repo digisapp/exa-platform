@@ -569,6 +569,164 @@ export function HotelFloorPlan() {
               STAGE
             </text>
           </g>
+
+          {/* === SEATING — East side of runway (3 rows × 30 chairs) === */}
+          <g style={{ pointerEvents: "none" }}>
+            {[0, 1, 2].map((row) => (
+              <g key={`east-row-${row}`}>
+                {/* Row background */}
+                <rect
+                  x={89.5 + row * 1.8}
+                  y={8}
+                  width={1.4}
+                  height={40}
+                  rx={0.2}
+                  fill={`rgba(255,255,255,${0.06 + row * 0.02})`}
+                />
+                {/* Individual chairs */}
+                {Array.from({ length: 30 }).map((_, i) => (
+                  <rect
+                    key={`east-${row}-${i}`}
+                    x={89.7 + row * 1.8}
+                    y={8.4 + i * 1.32}
+                    width={1.0}
+                    height={0.9}
+                    rx={0.15}
+                    fill="rgba(255,255,255,0.12)"
+                    stroke="rgba(255,255,255,0.2)"
+                    strokeWidth={0.05}
+                  />
+                ))}
+              </g>
+            ))}
+            {/* East label */}
+            <text
+              x={92}
+              y={50}
+              textAnchor="middle"
+              fill="rgba(255,255,255,0.35)"
+              fontSize={0.55}
+              fontWeight="600"
+            >
+              3 rows × 30 seats (East)
+            </text>
+          </g>
+
+          {/* === SEATING — West side of runway (1 row × 30 chairs) === */}
+          <g style={{ pointerEvents: "none" }}>
+            {/* Row background */}
+            <rect
+              x={85.3}
+              y={8}
+              width={1.4}
+              height={40}
+              rx={0.2}
+              fill="rgba(255,255,255,0.06)"
+            />
+            {/* Individual chairs */}
+            {Array.from({ length: 30 }).map((_, i) => (
+              <rect
+                key={`west-${i}`}
+                x={85.5}
+                y={8.4 + i * 1.32}
+                width={1.0}
+                height={0.9}
+                rx={0.15}
+                fill="rgba(255,255,255,0.12)"
+                stroke="rgba(255,255,255,0.2)"
+                strokeWidth={0.05}
+              />
+            ))}
+            {/* West chairs label */}
+            <text
+              x={86}
+              y={50}
+              textAnchor="middle"
+              fill="rgba(255,255,255,0.35)"
+              fontSize={0.5}
+              fontWeight="600"
+            >
+              1 row × 30 (West)
+            </text>
+          </g>
+
+          {/* === VIP BOOTHS — West side, behind the chairs (4 tables + benches) === */}
+          <g style={{ pointerEvents: "none" }}>
+            {[0, 1, 2, 3].map((i) => {
+              const boothY = 10 + i * 9.5;
+              return (
+                <g key={`vip-${i}`}>
+                  {/* Booth background */}
+                  <rect
+                    x={80.5}
+                    y={boothY}
+                    width={4.2}
+                    height={7.5}
+                    rx={0.4}
+                    fill="rgba(255,50,130,0.15)"
+                    stroke="rgba(255,50,130,0.3)"
+                    strokeWidth={0.1}
+                  />
+                  {/* Table */}
+                  <rect
+                    x={81.8}
+                    y={boothY + 1.8}
+                    width={2}
+                    height={3.5}
+                    rx={0.3}
+                    fill="rgba(255,200,50,0.2)"
+                    stroke="rgba(255,200,50,0.35)"
+                    strokeWidth={0.08}
+                  />
+                  {/* Left bench */}
+                  <rect
+                    x={80.8}
+                    y={boothY + 1.5}
+                    width={0.7}
+                    height={4}
+                    rx={0.2}
+                    fill="rgba(168,85,247,0.25)"
+                    stroke="rgba(168,85,247,0.35)"
+                    strokeWidth={0.06}
+                  />
+                  {/* Right bench (against the chairs) */}
+                  <rect
+                    x={84.1}
+                    y={boothY + 1.5}
+                    width={0.4}
+                    height={4}
+                    rx={0.15}
+                    fill="rgba(168,85,247,0.2)"
+                    stroke="rgba(168,85,247,0.3)"
+                    strokeWidth={0.06}
+                  />
+                  {/* VIP label */}
+                  <text
+                    x={82.6}
+                    y={boothY + 0.7}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fill="rgba(255,200,50,0.6)"
+                    fontSize={0.5}
+                    fontWeight="700"
+                  >
+                    VIP {i + 1}
+                  </text>
+                </g>
+              );
+            })}
+            {/* VIP section label */}
+            <text
+              x={82.6}
+              y={50}
+              textAnchor="middle"
+              fill="rgba(255,200,50,0.4)"
+              fontSize={0.5}
+              fontWeight="700"
+            >
+              VIP Booths
+            </text>
+          </g>
         </svg>
 
         {/* Detail panel */}
