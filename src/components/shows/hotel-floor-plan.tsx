@@ -440,25 +440,25 @@ export function HotelFloorPlan() {
           {/* === 50ft RUNWAY with stage lights === */}
           <g style={{ pointerEvents: "none" }}>
             {/* Spotlight cones from stage */}
-            <polygon points="93.0,12 87.0,27 89.0,27" fill="rgba(255,255,255,0.03)" />
-            <polygon points="97.0,12 101.0,27 103.0,27" fill="rgba(255,255,255,0.03)" />
+            <polygon points="93.0,14 87.0,29 89.0,29" fill="rgba(255,255,255,0.03)" />
+            <polygon points="97.0,14 101.0,29 103.0,29" fill="rgba(255,255,255,0.03)" />
             {/* Runway glow */}
-            <rect x={93.0} y={13} width={4} height={31} rx={0.5} fill="rgba(255,255,255,0.08)" />
+            <rect x={93.0} y={15} width={4} height={28} rx={0.5} fill="rgba(255,255,255,0.08)" />
             {/* Runway surface — WHITE */}
-            <rect x={93.5} y={14} width={3} height={30} rx={0.4} fill="rgba(255,255,255,0.55)" stroke="rgba(255,255,255,0.7)" strokeWidth={0.15} />
+            <rect x={93.5} y={16} width={3} height={27} rx={0.4} fill="rgba(255,255,255,0.55)" stroke="rgba(255,255,255,0.7)" strokeWidth={0.15} />
             {/* Runway edge lights */}
-            {Array.from({ length: 11 }).map((_, i) => (
+            {Array.from({ length: 9 }).map((_, i) => (
               <g key={`rl-${i}`}>
-                <circle cx={93.5} cy={15 + i * 3} r={0.2} fill="rgba(255,50,130,0.7)" />
-                <circle cx={96.5} cy={15 + i * 3} r={0.2} fill="rgba(0,210,255,0.7)" />
+                <circle cx={93.5} cy={17 + i * 3} r={0.2} fill="rgba(255,50,130,0.7)" />
+                <circle cx={96.5} cy={17 + i * 3} r={0.2} fill="rgba(0,210,255,0.7)" />
               </g>
             ))}
             {/* Center line */}
-            <line x1={95.0} y1={15} x2={95.0} y2={43} stroke="rgba(200,200,200,0.3)" strokeWidth={0.1} strokeDasharray="1 0.8" />
-            {/* Stage platform — WHITE */}
-            <rect x={92.0} y={11.5} width={6} height={3.5} rx={0.5} fill="rgba(255,255,255,0.6)" stroke="rgba(255,255,255,0.8)" strokeWidth={0.15} />
+            <line x1={95.0} y1={17} x2={95.0} y2={42} stroke="rgba(200,200,200,0.3)" strokeWidth={0.1} strokeDasharray="1 0.8" />
+            {/* Stage platform — WHITE, 20% wider */}
+            <rect x={91.4} y={13} width={7.2} height={3.5} rx={0.5} fill="rgba(255,255,255,0.6)" stroke="rgba(255,255,255,0.8)" strokeWidth={0.15} />
             <text x={95.0} y={33} textAnchor="middle" fill="rgba(100,100,100,0.7)" fontSize={0.6} fontWeight="700" letterSpacing={0.2} transform="rotate(90, 95.0, 33)">EXA Swim Shows Runway</text>
-            <text x={95.0} y={13.3} textAnchor="middle" dominantBaseline="central" fill="rgba(60,60,60,0.9)" fontSize={0.7} fontWeight="800">STAGE</text>
+            <text x={95.0} y={14.8} textAnchor="middle" dominantBaseline="central" fill="rgba(60,60,60,0.9)" fontSize={0.7} fontWeight="800">STAGE</text>
           </g>
 
           {/* === MEDIA PIT === */}
