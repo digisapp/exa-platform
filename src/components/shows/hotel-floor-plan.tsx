@@ -429,66 +429,13 @@ export function HotelFloorPlan() {
             );
           })}
 
-          {/* === RED CARPET — 20ft wide, runs west→east through Grand Entrance === */}
-          <g style={{ pointerEvents: "none" }}>
-            {/* Red carpet glow */}
-            <rect
-              x={3.5}
-              y={22}
-              width={11}
-              height={6}
-              rx={0.3}
-              fill="rgba(220,20,20,0.12)"
-            />
-            {/* Red carpet surface */}
-            <rect
-              x={4}
-              y={23}
-              width={10}
-              height={4}
-              rx={0.3}
-              fill="rgba(220,20,20,0.45)"
-              stroke="rgba(255,80,80,0.5)"
-              strokeWidth={0.15}
-            />
-            {/* Gold trim edges */}
-            <line x1={4} y1={23} x2={14} y2={23} stroke="rgba(255,200,50,0.5)" strokeWidth={0.15} />
-            <line x1={4} y1={27} x2={14} y2={27} stroke="rgba(255,200,50,0.5)" strokeWidth={0.15} />
-            {/* Direction arrow (west → east) */}
-            <path d="M 12.5 25 L 13.5 25 L 13 24.3 M 13.5 25 L 13 25.7" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth={0.12} />
-            {/* Red carpet label */}
-            <text
-              x={9}
-              y={24.6}
-              textAnchor="middle"
-              dominantBaseline="central"
-              fill="rgba(255,255,255,0.7)"
-              fontSize={0.7}
-              fontWeight="700"
-              letterSpacing={0.2}
-            >
-              RED CARPET — 20ft
-            </text>
-            <text
-              x={9}
-              y={25.7}
-              textAnchor="middle"
-              dominantBaseline="central"
-              fill="rgba(255,255,255,0.45)"
-              fontSize={0.55}
-              fontWeight="500"
-            >
-              W → E
-            </text>
-          </g>
-
-          {/* === PHOTO WALL — at the entrance === */}
+          {/* === PHOTO WALL / PAPARAZZI — top of Grand Entrance === */}
           <g style={{ pointerEvents: "none" }}>
             <rect
-              x={7.5}
-              y={16}
-              width={6}
-              height={4}
+              x={7}
+              y={5}
+              width={7}
+              height={5}
               rx={0.4}
               fill="rgba(255,50,130,0.25)"
               stroke="rgba(255,50,130,0.4)"
@@ -496,14 +443,78 @@ export function HotelFloorPlan() {
             />
             <text
               x={10.5}
-              y={18}
+              y={7}
               textAnchor="middle"
               dominantBaseline="central"
               fill="rgba(255,255,255,0.6)"
-              fontSize={0.7}
+              fontSize={0.65}
               fontWeight="600"
             >
-              📸 Photo Wall & Photographers
+              📸 Photo Wall
+            </text>
+            <text
+              x={10.5}
+              y={8.5}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fill="rgba(255,255,255,0.4)"
+              fontSize={0.55}
+              fontWeight="500"
+            >
+              Paparazzi
+            </text>
+          </g>
+
+          {/* === RED CARPET — 20ft wide, runs W→E through Grand Entrance === */}
+          <g style={{ pointerEvents: "none" }}>
+            {/* Red carpet glow */}
+            <rect
+              x={7}
+              y={12}
+              width={7}
+              height={6}
+              rx={0.3}
+              fill="rgba(220,20,20,0.12)"
+            />
+            {/* Red carpet surface */}
+            <rect
+              x={7}
+              y={13}
+              width={7}
+              height={4}
+              rx={0.3}
+              fill="rgba(220,20,20,0.45)"
+              stroke="rgba(255,80,80,0.5)"
+              strokeWidth={0.15}
+            />
+            {/* Gold trim edges */}
+            <line x1={7} y1={13} x2={14} y2={13} stroke="rgba(255,200,50,0.5)" strokeWidth={0.15} />
+            <line x1={7} y1={17} x2={14} y2={17} stroke="rgba(255,200,50,0.5)" strokeWidth={0.15} />
+            {/* Direction arrow (west → east) */}
+            <path d="M 12.5 15 L 13.5 15 L 13 14.3 M 13.5 15 L 13 15.7" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth={0.12} />
+            {/* Red carpet label */}
+            <text
+              x={10.5}
+              y={14.6}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fill="rgba(255,255,255,0.7)"
+              fontSize={0.65}
+              fontWeight="700"
+              letterSpacing={0.2}
+            >
+              RED CARPET — 20ft
+            </text>
+            <text
+              x={10.5}
+              y={15.8}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fill="rgba(255,255,255,0.45)"
+              fontSize={0.5}
+              fontWeight="500"
+            >
+              W → E
             </text>
           </g>
 
