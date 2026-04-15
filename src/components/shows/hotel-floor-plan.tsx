@@ -319,7 +319,7 @@ export function HotelFloorPlan() {
             <path d="M 122 0 Q 121.4 4, 122 8 Q 122.6 12, 122 16 Q 121.4 20, 122 24 Q 122.6 28, 122 32 Q 121.4 36, 122 40 Q 122.6 44, 122 48 Q 121.4 52, 122 58" fill="none" stroke="rgba(0,210,255,0.2)" strokeWidth="0.15">
               <animate attributeName="d" dur="4.5s" repeatCount="indefinite" values="M 115 0 Q 114.4 4, 115 8 Q 115.6 12, 115 16 Q 114.4 20, 115 24 Q 115.6 28, 115 32 Q 114.4 36, 115 40 Q 115.6 44, 115 48 Q 114.4 52, 115 58;M 115 0 Q 115.6 4, 115 8 Q 114.4 12, 115 16 Q 115.6 20, 115 24 Q 114.4 28, 115 32 Q 115.6 36, 115 40 Q 114.4 44, 115 48 Q 115.6 52, 115 58;M 115 0 Q 114.4 4, 115 8 Q 115.6 12, 115 16 Q 114.4 20, 115 24 Q 115.6 28, 115 32 Q 114.4 36, 115 40 Q 115.6 44, 115 48 Q 114.4 52, 115 58" />
             </path>
-            <text x="121" y="29" textAnchor="middle" fill="rgba(0,210,255,0.3)" fontSize="1.4" fontWeight="700" letterSpacing="0.5" transform="rotate(90, 121, 29)">ATLANTIC OCEAN</text>
+            <text x="121" y="29" textAnchor="middle" fill="rgba(0,210,255,0.7)" fontSize="1.8" fontWeight="900" letterSpacing="0.5" transform="rotate(90, 121, 29)">ATLANTIC OCEAN</text>
           </g>
 
           {/* === EXA SWIM SHOWS — static background (not clickable, clicks pass to chairs/VIP) === */}
