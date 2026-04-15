@@ -118,12 +118,12 @@ function CoinTipButton({
         "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs transition-all select-none",
         tipTotal > 0
           ? "bg-amber-500/20 border border-amber-500/30 hover:bg-amber-500/30"
-          : "bg-transparent border border-transparent opacity-60 md:opacity-0 md:group-hover:opacity-60 hover:!opacity-100"
+          : "bg-white/5 border border-white/10 opacity-60 hover:opacity-100"
       )}
       title="Tap to tip 1 coin · Hold for super tip"
       aria-label={`Tip ${displayName}`}
     >
-      <span className="text-sm">🪙</span>
+      <span className="text-sm">💰</span>
       {tipTotal > 0 && (
         <span className="text-[10px] text-amber-400 font-semibold">
           {tipTotal.toLocaleString()}
@@ -322,7 +322,7 @@ export function LiveWallMessage({
                     ? hasReacted
                       ? "bg-pink-500/20 border border-pink-500/30"
                       : "bg-white/5 border border-white/10"
-                    : "bg-transparent border border-transparent opacity-60 md:opacity-0 md:group-hover:opacity-60 hover:!opacity-100"
+                    : "bg-white/5 border border-white/10 opacity-60 hover:opacity-100"
                 )}
               >
                 <span className="text-sm">{emoji}</span>

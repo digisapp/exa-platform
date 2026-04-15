@@ -72,7 +72,7 @@ export function LiveWallTipPicker({
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <>
-                <span className="text-base">🪙</span>
+                <span className="text-base">💰</span>
                 <span>{amt}</span>
               </>
             )}
