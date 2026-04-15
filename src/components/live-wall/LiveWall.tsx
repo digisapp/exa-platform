@@ -82,6 +82,7 @@ export function LiveWall({ initialMessages, currentUser }: Props) {
   const isAtBottomRef = useRef(true);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const audioInitRef = useRef(false);
+  const messagesRef = useRef(messages);
 
   // ─── Audio init on first interaction ───────────────────
   useEffect(() => {
@@ -137,6 +138,11 @@ export function LiveWall({ initialMessages, currentUser }: Props) {
     if (atBottom) setNewMsgCount(0);
   }, []);
 
+  // Keep messages ref in sync for Realtime callback
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
   // Auto-scroll when at bottom and new messages arrive
   useEffect(() => {
     if (isExpanded && isAtBottomRef.current) {
@@ -183,14 +189,17 @@ export function LiveWall({ initialMessages, currentUser }: Props) {
         { event: "UPDATE", schema: "public", table: "live_wall_messages" },
         (payload) => {
           const updated = payload.new as LiveWallMessageData & { is_deleted: boolean };
-          const old = payload.old as Partial<LiveWallMessageData>;
 
           // Notify recipient when their message receives a tip
+          // Compare against local state via ref (payload.old only has PK with default replica identity)
+          const localMsg = updated.actor_id === currentUser?.actorId
+            ? messagesRef.current.find((m) => m.id === updated.id)
+            : null;
           if (
-            updated.actor_id === currentUser?.actorId &&
-            updated.tip_total > (old.tip_total ?? 0)
+            localMsg &&
+            updated.tip_total > (localMsg.tip_total || 0)
           ) {
-            const tipAmount = updated.tip_total - (old.tip_total ?? 0);
+            const tipAmount = updated.tip_total - (localMsg.tip_total || 0);
             const muted = localStorage.getItem("liveWallSoundMuted") === "true";
             if (!muted && audioCtxRef.current) {
               // Play a rewarding coin-drop sound for receiving a tip
@@ -346,6 +355,8 @@ export function LiveWall({ initialMessages, currentUser }: Props) {
         const data = await res.json();
 
         if (!res.ok) {
+          // Restore optimistic balance deduction on failure
+          setCoinBalance((b) => b + amount);
           if (res.status === 402) {
             toast.error("Not enough coins", {
               description: `You need ${data.required} coins but only have ${data.balance}`,
@@ -404,6 +415,8 @@ export function LiveWall({ initialMessages, currentUser }: Props) {
           }
         }
       } catch {
+        // Restore optimistic balance deduction on network error
+        setCoinBalance((b) => b + amount);
         toast.error("Failed to send tip");
       }
     },

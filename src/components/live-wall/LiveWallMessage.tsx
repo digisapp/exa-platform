@@ -63,9 +63,12 @@ function renderContentWithMentions(content: string) {
   });
 }
 
-/** Check if system message is a tip event */
+/** Check if system message is a tip or milestone event */
 function isTipSystemMessage(content: string): boolean {
-  return content.includes(" tipped ") && content.includes(" coins!");
+  return (
+    (content.includes(" tipped ") && content.includes(" coins!")) ||
+    content.includes(" coins received")
+  );
 }
 
 /** Coin tip button: tap = 1 coin micro-tip, long-press (500ms) = open super tip picker */
