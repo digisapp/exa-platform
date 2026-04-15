@@ -36,19 +36,19 @@ interface Room {
 const ROOMS: Room[] = [
   {
     id: "collins-ave", name: "Collins Ave", shortName: "Collins Ave — 5225 Collins Ave, Miami Beach, FL",
-    x: 0, y: 1, width: 3, height: 55, gradient: "roadGrad", labelSize: "xs", verticalLabel: true,
+    x: 0, y: 1, width: 5, height: 55, gradient: "roadGrad", labelSize: "xs", verticalLabel: true,
     description: "The iconic Collins Avenue — Miami Beach's most famous boulevard. Guests arrive by luxury vehicles, rideshare, and limousine directly to the hotel's front entrance.",
     sponsorNote: "Sponsor opportunity: Branded rideshare codes, vehicle wraps, or arrival lounge signage visible to all guests.",
   },
   {
     id: "valet", name: "Valet Drop-Off", shortName: "Valet 🚗",
-    x: 3.5, y: 1, width: 3, height: 55, gradient: "valetGrad", labelSize: "xs", verticalLabel: true,
+    x: 5.5, y: 1, width: 5, height: 55, gradient: "valetGrad", labelSize: "xs", verticalLabel: true,
     description: "White-glove valet service where every guest gets the VIP treatment from the moment they step out of their vehicle. First impressions start here.",
     sponsorNote: "Sponsor opportunity: Branded valet tickets, welcome gift bags, or a featured luxury vehicle display.",
   },
   {
     id: "grand-entrance", name: "Grand Entrance — Outdoor Arrival Area", shortName: "Grand\nEntrance",
-    x: 7, y: 1, width: 14, height: 55, gradient: "entranceGrad", labelSize: "lg", icon: "🎪",
+    x: 11, y: 1, width: 10, height: 55, gradient: "entranceGrad", labelSize: "lg", icon: "🎪",
     description: "A show-stopping outdoor arrival experience. Guests walk the 20ft red carpet past a photo wall lined with paparazzi and media photographers. This is where the magic begins — every arrival is a moment.",
     sponsorNote: "Sponsor opportunity: Step-and-repeat branding, red carpet naming rights, branded photo moments shared across social media by 150+ models and influencers.",
   },
@@ -74,29 +74,29 @@ const ROOMS: Room[] = [
     sponsorNote: "Sponsor opportunity: Branded dinner series, menu integration, table centerpiece branding, or a full restaurant buyout for an invite-only event.",
   },
   {
-    id: "exa-hq", name: "EXA Models HQ — Check-In", shortName: "EXA Models HQ\nCheck-In ✨",
+    id: "designer-showroom", name: "Designer Showroom + Live Shopping", shortName: "Designer Showroom\n+ Live Shopping 🛍️",
     dimensions: "35' × 39'", sqft: 1365,
     x: 50, y: 3, width: 14, height: 14, gradient: "hqGrad",
-    description: "The nerve center of operations. Every model, designer, and VIP checks in here. High foot traffic from 150+ models, 30+ designers, and production staff throughout the week.",
-    sponsorNote: "Sponsor opportunity: Welcome gift bags for every model, branded check-in experience, digital signage, or a beauty touch-up station where your products are the star.",
+    description: "An exclusive showroom where designers display their collections and fans can shop live. Browse runway pieces up close, meet the designers, and purchase directly — with live-streamed shopping events throughout the week.",
+    sponsorNote: "Sponsor opportunity: Branded showroom displays, live shopping integrations, product placement, or a pop-up retail activation alongside top designers.",
   },
   {
-    id: "backstage-digis", name: "Shows Backstage + Digis Media", shortName: "Shows Backstage\n+ Digis Media 🎬",
+    id: "backstage-digis", name: "EXA Models HQ — Check-In + Shows Backstage + Digis Media", shortName: "EXA Models HQ Check-In\n+ Shows Backstage\n+ Digis Media 🎬",
     dimensions: "58' × 84'", sqft: 4872, ceilingHeight: "12' / 11.5'",
     capacity: { reception: 400, rounds: 300, theatre: 420, school: 250 },
     x: 22, y: 28, width: 16, height: 24, gradient: "ballroomGrad", labelSize: "lg",
-    description: "The heartbeat behind every runway show. Hair, makeup, styling, and last-minute fittings happen here while Digis Media captures exclusive behind-the-scenes content — the footage brands dream of being part of.",
-    sponsorNote: "Sponsor opportunity: Official hair/makeup/skincare sponsor station, branded styling mirrors, product placement in all BTS content reaching 1M+ social impressions.",
+    description: "The nerve center of EXA operations. Every model, designer, and VIP checks in here. Hair, makeup, styling, and last-minute fittings happen backstage while Digis Media captures exclusive behind-the-scenes content — the footage brands dream of being part of.",
+    sponsorNote: "Sponsor opportunity: Welcome gift bags for every model, branded check-in experience, official hair/makeup/skincare sponsor station, branded styling mirrors, product placement in all BTS content reaching 1M+ social impressions.",
   },
   {
-    id: "wellness-activation", name: "Wellness Activation Space", shortName: "Wellness\nActivation 🧘",
+    id: "wellness-activation", name: "Wellness Activation Space", shortName: "Wellness\nActivation 🧘‍♀️",
     sqft: 3690, capacity: { reception: 400, rounds: 260, theatre: 300, school: 200 },
     x: 40, y: 30, width: 29, height: 16, gradient: "wellnessGrad",
     description: "A 3,690 sq ft open-air activation zone designed for wellness, beauty, and lifestyle brands to create immersive experiences. Think: yoga sessions at sunrise, IV drip lounges, skincare demos, smoothie bars, and interactive brand pop-ups — all attended by models, influencers, and Swim Week's most stylish crowd.",
     sponsorNote: "Sponsor opportunity: Full activation buildout, branded experiences, product launches, sampling stations, or a multi-day pop-up shop. This is your canvas.",
   },
   {
-    id: "lower-pool", name: "Lower Pool", shortName: "Lower\nPool 💦",
+    id: "lower-pool", name: "Lower Pool", shortName: "Lower\nPool 💧",
     x: 68, y: 9, width: 16, height: 16, gradient: "poolGrad", labelSize: "sm", shape: "pool",
     description: "A stunning resort-style pool surrounded by lounge chairs and tropical landscaping. The daytime social hub where models, guests, and influencers gather between shows.",
     sponsorNote: "Sponsor opportunity: Branded pool floats, towel wraps, poolside sampling, or a sponsored pool party with DJ and branded wristbands.",
@@ -108,7 +108,7 @@ const ROOMS: Room[] = [
     sponsorNote: "Sponsor opportunity: Signature branded cocktail, bar naming rights, custom branded cups, or a liquor/beverage brand takeover for the full week.",
   },
   {
-    id: "heated-pool", name: "Heated Adult Saltwater Pool", shortName: "Heated\nSaltwater Pool 🌊",
+    id: "heated-pool", name: "Upper Adult Pool", shortName: "Upper\nAdult Pool 🌊",
     x: 69, y: 36, width: 18, height: 18, gradient: "poolGrad", shape: "pool",
     description: "A heated saltwater pool perfect for evening soirées and sunset gatherings. The warm, luxurious water and ambient lighting create an unforgettable atmosphere after dark.",
     sponsorNote: "Sponsor opportunity: Evening pool party sponsor, underwater lighting branding, branded robes, or a sunset cocktail hour activation.",
@@ -121,7 +121,7 @@ const ROOMS: Room[] = [
     sponsorNote: "Sponsor opportunity: Branded signage, banners, or a sampling station catching high foot traffic from the public boardwalk.",
   },
   {
-    id: "sand-beach", name: "Sand Beach", shortName: "🌴 Sand & Palms 🏖️",
+    id: "sand-beach", name: "Sand Beach", shortName: "Beach",
     x: 107, y: 1, width: 7.5, height: 55, gradient: "sandGrad", labelSize: "xs", verticalLabel: true,
     description: "White sand beach and swaying palm trees with the Atlantic Ocean as the backdrop. The ultimate setting for content creation, lifestyle photography, and brand storytelling that screams Miami.",
     sponsorNote: "Sponsor opportunity: Beach activation zone, branded beach chairs/umbrellas, sand sculptures, or a sunrise yoga session presented by your brand.",
@@ -385,42 +385,42 @@ export function HotelFloorPlan() {
           {/* === RED CARPET (combined with photo wall) === */}
           <g style={{ pointerEvents: "none" }}>
             {/* Glow behind */}
-            <rect x={6.5} y={3.5} width={15} height={15} rx={1} fill="rgba(220,20,20,0.05)" filter="url(#spotGlow)" />
+            <rect x={10.5} y={3.5} width={11} height={15} rx={1} fill="rgba(220,20,20,0.05)" filter="url(#spotGlow)" />
             {/* Red carpet surface — full block */}
-            <rect x={7} y={4} width={14} height={14} rx={0.5} fill="rgba(200,20,20,0.5)" stroke="rgba(255,60,60,0.5)" strokeWidth={0.12} />
+            <rect x={11} y={4} width={10} height={14} rx={0.5} fill="rgba(200,20,20,0.5)" stroke="rgba(255,60,60,0.5)" strokeWidth={0.12} />
             {/* Gold trim top & bottom */}
-            <line x1={7} y1={4} x2={21} y2={4} stroke="rgba(255,200,50,0.7)" strokeWidth={0.18} />
-            <line x1={7} y1={18} x2={21} y2={18} stroke="rgba(255,200,50,0.7)" strokeWidth={0.18} />
+            <line x1={11} y1={4} x2={21} y2={4} stroke="rgba(255,200,50,0.7)" strokeWidth={0.18} />
+            <line x1={11} y1={18} x2={21} y2={18} stroke="rgba(255,200,50,0.7)" strokeWidth={0.18} />
             {/* Gold trim sides */}
-            <line x1={7} y1={4} x2={7} y2={18} stroke="rgba(255,200,50,0.5)" strokeWidth={0.12} />
+            <line x1={11} y1={4} x2={11} y2={18} stroke="rgba(255,200,50,0.5)" strokeWidth={0.12} />
             <line x1={21} y1={4} x2={21} y2={18} stroke="rgba(255,200,50,0.5)" strokeWidth={0.12} />
             {/* Camera flash bursts */}
-            <circle cx={9} cy={6} r={0.5} fill="rgba(255,255,255,0.15)">
+            <circle cx={13} cy={6} r={0.5} fill="rgba(255,255,255,0.15)">
               <animate attributeName="opacity" values="0;0.6;0" dur="2s" begin="0s" repeatCount="indefinite" />
             </circle>
-            <circle cx={18} cy={7} r={0.4} fill="rgba(255,255,255,0.15)">
+            <circle cx={19} cy={7} r={0.4} fill="rgba(255,255,255,0.15)">
               <animate attributeName="opacity" values="0;0.5;0" dur="2.5s" begin="0.7s" repeatCount="indefinite" />
             </circle>
-            <circle cx={12} cy={15} r={0.45} fill="rgba(255,255,255,0.15)">
+            <circle cx={14} cy={15} r={0.45} fill="rgba(255,255,255,0.15)">
               <animate attributeName="opacity" values="0;0.5;0" dur="1.8s" begin="1.2s" repeatCount="indefinite" />
             </circle>
-            <circle cx={16} cy={13} r={0.35} fill="rgba(255,255,255,0.15)">
+            <circle cx={18} cy={13} r={0.35} fill="rgba(255,255,255,0.15)">
               <animate attributeName="opacity" values="0;0.4;0" dur="2.2s" begin="0.3s" repeatCount="indefinite" />
             </circle>
             {/* Star sparkles */}
-            <text x={8.5} y={9} textAnchor="middle" fill="rgba(255,255,255,0.3)" fontSize={0.8}>✦</text>
-            <text x={19} y={11} textAnchor="middle" fill="rgba(255,255,255,0.25)" fontSize={0.7}>✦</text>
-            <text x={11} y={16.5} textAnchor="middle" fill="rgba(255,255,255,0.2)" fontSize={0.6}>✦</text>
+            <text x={12.5} y={9} textAnchor="middle" fill="rgba(255,255,255,0.3)" fontSize={0.8}>✦</text>
+            <text x={19.5} y={11} textAnchor="middle" fill="rgba(255,255,255,0.25)" fontSize={0.7}>✦</text>
+            <text x={13} y={16.5} textAnchor="middle" fill="rgba(255,255,255,0.2)" fontSize={0.6}>✦</text>
             {/* Main label */}
-            <text x={14} y={9.5} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.95)" fontSize={1.1} fontWeight="900" letterSpacing={0.2}>
+            <text x={16} y={9.5} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.95)" fontSize={1.1} fontWeight="900" letterSpacing={0.2}>
               RED CARPET
             </text>
-            <text x={14} y={11.5} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.6)" fontSize={0.6} fontWeight="600">
+            <text x={16} y={11.5} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.6)" fontSize={0.6} fontWeight="600">
               📸 Photo Wall • Paparazzi • Glamour
             </text>
             {/* Arrow W→E */}
             <path d="M 19 14 L 20.5 14 M 20 13.3 L 20.5 14 L 20 14.7" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth={0.12} strokeLinecap="round" />
-            <text x={14} y={14} textAnchor="middle" dominantBaseline="central" fill="rgba(255,200,50,0.6)" fontSize={0.45} fontWeight="600">20ft wide • W → E</text>
+            <text x={16} y={14} textAnchor="middle" dominantBaseline="central" fill="rgba(255,200,50,0.6)" fontSize={0.45} fontWeight="600">20ft wide • W → E</text>
           </g>
 
           {/* === MODEL TOUCH-UP TENT — north of stage === */}
@@ -440,25 +440,25 @@ export function HotelFloorPlan() {
           {/* === 50ft RUNWAY with stage lights === */}
           <g style={{ pointerEvents: "none" }}>
             {/* Spotlight cones from stage */}
-            <polygon points="93.0,14 87.0,29 89.0,29" fill="rgba(255,255,255,0.03)" />
-            <polygon points="97.0,14 101.0,29 103.0,29" fill="rgba(255,255,255,0.03)" />
+            <polygon points="92.0,13 86.0,29 88.0,29" fill="rgba(255,255,255,0.03)" />
+            <polygon points="98.0,13 102.0,29 104.0,29" fill="rgba(255,255,255,0.03)" />
+            {/* Stage platform — wider */}
+            <rect x={89.5} y={12} width={11} height={3.5} rx={0.5} fill="rgba(255,255,255,0.6)" stroke="rgba(255,255,255,0.8)" strokeWidth={0.15} />
+            <text x={95.0} y={13.8} textAnchor="middle" dominantBaseline="central" fill="rgba(60,60,60,0.9)" fontSize={0.7} fontWeight="800">STAGE</text>
             {/* Runway glow */}
-            <rect x={93.0} y={15} width={4} height={28} rx={0.5} fill="rgba(255,255,255,0.08)" />
-            {/* Runway surface — WHITE */}
-            <rect x={93.5} y={16} width={3} height={27} rx={0.4} fill="rgba(255,255,255,0.55)" stroke="rgba(255,255,255,0.7)" strokeWidth={0.15} />
+            <rect x={93.0} y={15} width={4} height={33.5} rx={0.5} fill="rgba(255,255,255,0.08)" />
+            {/* Runway surface — WHITE, attached to stage bottom (15.5) down to media pit (48.5) */}
+            <rect x={93.5} y={15.5} width={3} height={33} rx={0.4} fill="rgba(255,255,255,0.55)" stroke="rgba(255,255,255,0.7)" strokeWidth={0.15} />
             {/* Runway edge lights */}
-            {Array.from({ length: 9 }).map((_, i) => (
+            {Array.from({ length: 10 }).map((_, i) => (
               <g key={`rl-${i}`}>
-                <circle cx={93.5} cy={17 + i * 3} r={0.2} fill="rgba(255,50,130,0.7)" />
-                <circle cx={96.5} cy={17 + i * 3} r={0.2} fill="rgba(0,210,255,0.7)" />
+                <circle cx={93.5} cy={16.5 + i * 3.4} r={0.2} fill="rgba(255,50,130,0.7)" />
+                <circle cx={96.5} cy={16.5 + i * 3.4} r={0.2} fill="rgba(0,210,255,0.7)" />
               </g>
             ))}
             {/* Center line */}
-            <line x1={95.0} y1={17} x2={95.0} y2={42} stroke="rgba(200,200,200,0.3)" strokeWidth={0.1} strokeDasharray="1 0.8" />
-            {/* Stage platform — WHITE, 20% wider */}
-            <rect x={91.4} y={13} width={7.2} height={3.5} rx={0.5} fill="rgba(255,255,255,0.6)" stroke="rgba(255,255,255,0.8)" strokeWidth={0.15} />
+            <line x1={95.0} y1={16.5} x2={95.0} y2={48} stroke="rgba(200,200,200,0.3)" strokeWidth={0.1} strokeDasharray="1 0.8" />
             <text x={95.0} y={33} textAnchor="middle" fill="rgba(100,100,100,0.7)" fontSize={0.6} fontWeight="700" letterSpacing={0.2} transform="rotate(90, 95.0, 33)">EXA Swim Shows Runway</text>
-            <text x={95.0} y={14.8} textAnchor="middle" dominantBaseline="central" fill="rgba(60,60,60,0.9)" fontSize={0.7} fontWeight="800">STAGE</text>
           </g>
 
           {/* === MEDIA PIT === */}
@@ -474,9 +474,9 @@ export function HotelFloorPlan() {
           {/* === SEATING — East Row 2 (clickable → tickets) === */}
           <g className="cursor-pointer" onClick={goToTickets}>
             <g>
-              <rect x={98.3} y={14.5} width={1.6} height={33} rx={0.3} fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.0)" strokeWidth={0} className="hover:fill-[rgba(255,255,255,0.15)] transition-all" />
+              <rect x={98.3} y={15.5} width={1.6} height={33} rx={0.3} fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.0)" strokeWidth={0} className="hover:fill-[rgba(255,255,255,0.15)] transition-all" />
               {Array.from({ length: 30 }).map((_, i) => (
-                <rect key={`e2-${i}`} x={98.5} y={15.4 + i * 1.05} width={1.0} height={0.7} rx={0.15} fill="rgba(255,255,255,0.45)" stroke="rgba(255,255,255,0.6)" strokeWidth={0.05} />
+                <rect key={`e2-${i}`} x={98.5} y={16 + i * 1.07} width={1.0} height={0.7} rx={0.15} fill="rgba(255,255,255,0.45)" stroke="rgba(255,255,255,0.6)" strokeWidth={0.05} />
               ))}
               <text x={99} y={49.5} textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize={0.45} fontWeight="700">2nd Row 🎟️</text>
             </g>
@@ -485,9 +485,9 @@ export function HotelFloorPlan() {
           {/* === SEATING — East Row 1 / Front Row (clickable → tickets) === */}
           <g className="cursor-pointer" onClick={goToTickets}>
             <g>
-              <rect x={96.3} y={14.5} width={1.6} height={33} rx={0.3} fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.0)" strokeWidth={0} className="hover:fill-[rgba(255,255,255,0.15)] transition-all" />
+              <rect x={96.3} y={15.5} width={1.6} height={33} rx={0.3} fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.0)" strokeWidth={0} className="hover:fill-[rgba(255,255,255,0.15)] transition-all" />
               {Array.from({ length: 30 }).map((_, i) => (
-                <rect key={`e1-${i}`} x={96.7} y={15.4 + i * 1.05} width={1.0} height={0.7} rx={0.15} fill="rgba(255,255,255,0.45)" stroke="rgba(255,255,255,0.6)" strokeWidth={0.05} />
+                <rect key={`e1-${i}`} x={96.7} y={16 + i * 1.07} width={1.0} height={0.7} rx={0.15} fill="rgba(255,255,255,0.45)" stroke="rgba(255,255,255,0.6)" strokeWidth={0.05} />
               ))}
               <text x={97.2} y={49.5} textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize={0.45} fontWeight="700">Front Row 🎟️</text>
             </g>
@@ -496,9 +496,9 @@ export function HotelFloorPlan() {
           {/* === SEATING — West / Front Row (clickable → tickets) === */}
           <g className="cursor-pointer" onClick={goToTickets}>
             <g>
-              <rect x={92} y={14.5} width={1.6} height={33} rx={0.3} fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.0)" strokeWidth={0} className="hover:fill-[rgba(255,255,255,0.15)] transition-all" />
+              <rect x={92} y={15.5} width={1.6} height={33} rx={0.3} fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.0)" strokeWidth={0} className="hover:fill-[rgba(255,255,255,0.15)] transition-all" />
               {Array.from({ length: 30 }).map((_, i) => (
-                <rect key={`w-${i}`} x={92.5} y={15.4 + i * 1.05} width={1.0} height={0.7} rx={0.15} fill="rgba(255,255,255,0.45)" stroke="rgba(255,255,255,0.6)" strokeWidth={0.05} />
+                <rect key={`w-${i}`} x={92.5} y={16 + i * 1.07} width={1.0} height={0.7} rx={0.15} fill="rgba(255,255,255,0.45)" stroke="rgba(255,255,255,0.6)" strokeWidth={0.05} />
               ))}
               <text x={93} y={49.5} textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize={0.45} fontWeight="700">Front Row 🎟️</text>
             </g>
@@ -523,34 +523,25 @@ export function HotelFloorPlan() {
 
           {/* === BEACH ENTRANCE === */}
           <g style={{ pointerEvents: "none" }}>
-            {/* Background banner */}
-            <rect x={101} y={21} width={5} height={16} rx={0.6}
-              fill="rgba(255,50,130,0.3)" stroke="rgba(255,50,130,0.7)" strokeWidth={0.15} />
-            {/* Door frame */}
-            <rect x={102} y={25} width={3} height={9} rx={0.4}
+            {/* Palm tree left */}
+            <text x={101.5} y={29} textAnchor="middle" dominantBaseline="central" fontSize={2}>🌴</text>
+            {/* Door */}
+            <rect x={102.8} y={27} width={2.4} height={5} rx={0.3}
               fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.5)" strokeWidth={0.12} />
-            {/* Door arch */}
-            <path d="M 102 26 Q 103.5 23.5 105 26" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.4)" strokeWidth={0.1} />
-            {/* Door panels */}
-            <rect x={102.3} y={26} width={1.1} height={7.5} rx={0.2} fill="rgba(255,255,255,0.2)" stroke="rgba(255,255,255,0.35)" strokeWidth={0.06} />
-            <rect x={103.6} y={26} width={1.1} height={7.5} rx={0.2} fill="rgba(255,255,255,0.2)" stroke="rgba(255,255,255,0.35)" strokeWidth={0.06} />
-            {/* Gold door handles */}
-            <circle cx={103.2} cy={29.5} r={0.2} fill="rgba(255,200,50,0.9)" stroke="rgba(255,180,0,1)" strokeWidth={0.06} />
-            <circle cx={103.8} cy={29.5} r={0.2} fill="rgba(255,200,50,0.9)" stroke="rgba(255,180,0,1)" strokeWidth={0.06} />
-            {/* Label above */}
-            <text x={103.5} y={22.5} textAnchor="middle" dominantBaseline="central"
-              fill="rgba(255,255,255,0.95)" fontSize={0.7} fontWeight="900">
-              BEACH
-            </text>
-            <text x={103.5} y={23.8} textAnchor="middle" dominantBaseline="central"
-              fill="rgba(255,255,255,0.95)" fontSize={0.7} fontWeight="900">
-              ENTRANCE
-            </text>
-            {/* Arrow indicators */}
-            <text x={103.5} y={35.5} textAnchor="middle" dominantBaseline="central"
-              fill="rgba(255,200,50,0.7)" fontSize={0.5} fontWeight="700">
-              🚪 Main Entry
-            </text>
+            <rect x={103.0} y={27.3} width={0.9} height={4.4} rx={0.15} fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" strokeWidth={0.06} />
+            <rect x={104.1} y={27.3} width={0.9} height={4.4} rx={0.15} fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" strokeWidth={0.06} />
+            {/* Door handles */}
+            <circle cx={103.8} cy={29.5} r={0.15} fill="rgba(255,200,50,0.9)" />
+            <circle cx={104.2} cy={29.5} r={0.15} fill="rgba(255,200,50,0.9)" />
+            {/* Palm tree right */}
+            <text x={106.5} y={29} textAnchor="middle" dominantBaseline="central" fontSize={2}>🌴</text>
+            {/* Vertical label: BEACH ENTRANCE (top to bottom) */}
+            {["B","E","A","C","H","","E","N","T","R","A","N","C","E"].map((char, i) => (
+              char ? <text key={i} x={108} y={21 + i * 1.1} textAnchor="middle" dominantBaseline="central"
+                fill="rgba(255,255,255,0.95)" fontSize={0.75} fontWeight="900">
+                {char}
+              </text> : null
+            ))}
           </g>
 
           {/* === COMPASS ROSE === */}
@@ -565,9 +556,9 @@ export function HotelFloorPlan() {
           {/* === GUEST FLOW ARROWS === */}
           <g style={{ pointerEvents: "none" }}>
             {/* Valet → Entrance */}
-            <path d="M 5 28.5 L 7 28.5" fill="none" stroke="rgba(255,200,50,0.3)" strokeWidth={0.15} markerEnd="url(#arrowHead)" />
+            <path d="M 8 28.5 L 11 28.5" fill="none" stroke="rgba(255,200,50,0.3)" strokeWidth={0.15} markerEnd="url(#arrowHead)" />
             {/* Entrance → Building */}
-            <path d="M 14 15 L 15 15" fill="none" stroke="rgba(168,85,247,0.3)" strokeWidth={0.15} />
+            <path d="M 16 15 L 18 15" fill="none" stroke="rgba(168,85,247,0.3)" strokeWidth={0.15} />
           </g>
         </svg>
 
