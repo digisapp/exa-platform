@@ -463,20 +463,20 @@ export default async function EventPage({ params, searchParams }: Props) {
                   </span>
                   <ArrowRight className="h-4 w-4 opacity-70" />
                 </Link>
-                <a href="mailto:nathan@examodels.com?subject=Designer%20Inquiry%20%E2%80%94%20Miami%20Swim%20Week%202026" className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-violet-600/20 hover:bg-violet-600/30 border border-violet-500/40 hover:border-violet-500/70 text-violet-300 font-semibold transition-all">
+                <Link href="/designers/miami-swim-week" className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-violet-600/20 hover:bg-violet-600/30 border border-violet-500/40 hover:border-violet-500/70 text-violet-300 font-semibold transition-all">
                   <span className="flex items-center gap-2">
                     <Sparkles className="h-4 w-4" />
                     Designers — Show Your Collection
                   </span>
                   <ArrowRight className="h-4 w-4 opacity-70" />
-                </a>
-                <a href="mailto:nathan@examodels.com?subject=Sponsorship%20Inquiry%20%E2%80%94%20Miami%20Swim%20Week%202026" className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/40 hover:border-cyan-500/70 text-cyan-300 font-semibold transition-all">
+                </Link>
+                <Link href="/sponsors/miami-swim-week" className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/40 hover:border-cyan-500/70 text-cyan-300 font-semibold transition-all">
                   <span className="flex items-center gap-2">
                     <Sparkles className="h-4 w-4" />
                     Sponsors — Partner With Us
                   </span>
                   <ArrowRight className="h-4 w-4 opacity-70" />
-                </a>
+                </Link>
                 <a href="mailto:nathan@examodels.com?subject=Media%20Inquiry%20%E2%80%94%20Miami%20Swim%20Week%202026" className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 hover:border-amber-500/70 text-amber-300 font-semibold transition-all">
                   <span className="flex items-center gap-2">
                     <Instagram className="h-4 w-4" />
