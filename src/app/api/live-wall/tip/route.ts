@@ -8,7 +8,7 @@ const tipSchema = z.object({
   amount: z
     .number()
     .int()
-    .min(50, "Minimum tip is 50 coins")
+    .min(1, "Minimum tip is 1 coin")
     .max(10000, "Maximum tip is 10,000 coins"),
 });
 

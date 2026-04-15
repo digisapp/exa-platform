@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment } from "react";
+import { Fragment, useRef, useCallback } from "react";
 import Link from "next/link";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -33,11 +33,11 @@ const ACTOR_BADGE_STYLES: Record<string, string> = {
 
 const ALLOWED_EMOJIS = ["🔥", "❤️", "👑"] as const;
 
-/** Tip glow tier */
+/** Tip glow tier — lower thresholds for micro-tip economy */
 function getTipTier(tipTotal: number): "none" | "amber" | "gradient" | "animated" {
-  if (tipTotal >= 500) return "animated";
-  if (tipTotal >= 200) return "gradient";
-  if (tipTotal >= 50) return "amber";
+  if (tipTotal >= 100) return "animated";
+  if (tipTotal >= 50) return "gradient";
+  if (tipTotal >= 10) return "amber";
   return "none";
 }
 
@@ -68,6 +68,71 @@ function isTipSystemMessage(content: string): boolean {
   return content.includes(" tipped ") && content.includes(" coins!");
 }
 
+/** Coin tip button: tap = 1 coin micro-tip, long-press (500ms) = open super tip picker */
+function CoinTipButton({
+  tipTotal,
+  onTip,
+  onSuperTip,
+  displayName,
+}: {
+  tipTotal: number;
+  onTip: () => void;
+  onSuperTip: () => void;
+  displayName: string;
+}) {
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const didLongPress = useRef(false);
+
+  const handlePointerDown = useCallback(() => {
+    didLongPress.current = false;
+    longPressTimer.current = setTimeout(() => {
+      didLongPress.current = true;
+      onSuperTip();
+    }, 500);
+  }, [onSuperTip]);
+
+  const handlePointerUp = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+    if (!didLongPress.current) {
+      onTip();
+    }
+  }, [onTip]);
+
+  const handlePointerLeave = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  }, []);
+
+  return (
+    <button
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      onPointerLeave={handlePointerLeave}
+      onContextMenu={(e) => e.preventDefault()}
+      className={cn(
+        "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs transition-all select-none",
+        tipTotal > 0
+          ? "bg-amber-500/20 border border-amber-500/30 hover:bg-amber-500/30"
+          : "bg-transparent border border-transparent opacity-60 md:opacity-0 md:group-hover:opacity-60 hover:!opacity-100"
+      )}
+      title="Tap to tip 1 coin · Hold for super tip"
+      aria-label={`Tip ${displayName}`}
+    >
+      <span className="text-sm">🪙</span>
+      {tipTotal > 0 && (
+        <span className="text-[10px] text-amber-400 font-semibold">
+          {tipTotal.toLocaleString()}
+        </span>
+      )}
+    </button>
+  );
+}
+
 interface Props {
   message: LiveWallMessageData;
   currentActorId?: string | null;
@@ -76,6 +141,7 @@ interface Props {
   onDelete?: (messageId: string) => void;
   onPin?: (messageId: string, pin: boolean) => void;
   onTip?: (messageId: string) => void;
+  onSuperTip?: (messageId: string) => void;
   isPinnedDisplay?: boolean;
 }
 
@@ -87,6 +153,7 @@ export function LiveWallMessage({
   onDelete,
   onPin,
   onTip,
+  onSuperTip,
   isPinnedDisplay,
 }: Props) {
   // System messages
@@ -272,17 +339,14 @@ export function LiveWallMessage({
               </button>
             );
           })}
-          {/* Tip coin button — always visible for fans */}
+          {/* Coin tip button — tap = 1 coin, long-press = super tip picker */}
           {canTip && (
-            <button
-              onClick={() => onTip?.(message.id)}
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs transition-all bg-amber-500/10 border border-amber-500/25 text-amber-400 hover:bg-amber-500/20 hover:border-amber-500/40 hover:scale-105"
-              title="Send a tip"
-              aria-label={`Tip ${message.display_name}`}
-            >
-              <Coins className="h-3.5 w-3.5" />
-              <span className="text-[10px] font-medium">Tip</span>
-            </button>
+            <CoinTipButton
+              tipTotal={message.tip_total || 0}
+              onTip={() => onTip?.(message.id)}
+              onSuperTip={() => onSuperTip?.(message.id)}
+              displayName={message.display_name}
+            />
           )}
         </div>
       </div>

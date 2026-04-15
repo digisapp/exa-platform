@@ -299,7 +299,106 @@ export function LiveWall({ initialMessages, currentUser }: Props) {
   }, []);
 
   // ─── Tipping ─────────────────────────────────────────
-  const handleTipClick = useCallback(
+  const sendTip = useCallback(
+    async (messageId: string, amount: number) => {
+      try {
+        const res = await fetch("/api/live-wall/tip", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messageId, amount }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          if (res.status === 402) {
+            toast.error("Not enough coins", {
+              description: `You need ${data.required} coins but only have ${data.balance}`,
+              action: {
+                label: "Get Coins",
+                onClick: () => (window.location.href = "/coins"),
+              },
+            });
+          } else {
+            toast.error(data.error || "Failed to send tip");
+          }
+          return;
+        }
+
+        setCoinBalance(data.newBalance);
+
+        // Optimistic: bump tip_total in local state for instant feedback
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === messageId ? { ...m, tip_total: data.tipTotal } : m
+          )
+        );
+
+        if (amount >= 10) {
+          toast.success(`Tipped ${amount} coins!`);
+        }
+
+        // Play coin sound (short chirp for micro, ascending for big)
+        if (audioCtxRef.current) {
+          const ctx = audioCtxRef.current;
+          try {
+            if (ctx.state === "suspended") ctx.resume();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = "sine";
+            if (amount >= 10) {
+              // Big tip: ascending tone
+              osc.frequency.setValueAtTime(880, ctx.currentTime);
+              osc.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.15);
+              gain.gain.setValueAtTime(0.2, ctx.currentTime);
+              gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+              osc.start(ctx.currentTime);
+              osc.stop(ctx.currentTime + 0.3);
+            } else {
+              // Micro tip: quick ping
+              osc.frequency.setValueAtTime(1200, ctx.currentTime);
+              gain.gain.setValueAtTime(0.08, ctx.currentTime);
+              gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+              osc.start(ctx.currentTime);
+              osc.stop(ctx.currentTime + 0.1);
+            }
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+          } catch {
+            // ignore
+          }
+        }
+      } catch {
+        toast.error("Failed to send tip");
+      }
+    },
+    []
+  );
+
+  // Micro-tip: 1 coin on tap
+  const handleMicroTip = useCallback(
+    (messageId: string) => {
+      if (!currentUser) {
+        setShowAuthDialog(true);
+        return;
+      }
+      if (coinBalance < 1) {
+        toast.error("Not enough coins", {
+          action: {
+            label: "Get Coins",
+            onClick: () => (window.location.href = "/coins"),
+          },
+        });
+        return;
+      }
+      // Optimistic balance deduct
+      setCoinBalance((b) => b - 1);
+      sendTip(messageId, 1);
+    },
+    [currentUser, coinBalance, sendTip]
+  );
+
+  // Super tip: open picker
+  const handleSuperTipClick = useCallback(
     (messageId: string) => {
       if (!currentUser) {
         setShowAuthDialog(true);
@@ -310,61 +409,13 @@ export function LiveWall({ initialMessages, currentUser }: Props) {
     [currentUser]
   );
 
-  const handleTipSend = useCallback(
+  const handleSuperTipSend = useCallback(
     async (amount: number) => {
       if (!tippingMessageId) return;
-      try {
-        const res = await fetch("/api/live-wall/tip", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messageId: tippingMessageId, amount }),
-        });
-        const data = await res.json();
-
-        if (!res.ok) {
-          if (res.status === 402) {
-            toast.error("Not enough coins", {
-              description: `You need ${data.required} coins but only have ${data.balance}`,
-              action: {
-                label: "Get Coins",
-                onClick: () => window.location.href = "/coins",
-              },
-            });
-          } else {
-            toast.error(data.error || "Failed to send tip");
-          }
-          return;
-        }
-
-        setCoinBalance(data.newBalance);
-        setTippingMessageId(null);
-        toast.success(`Tipped ${amount} coins!`);
-
-        // Play a special coin sound
-        if (audioCtxRef.current) {
-          const ctx = audioCtxRef.current;
-          try {
-            if (ctx.state === "suspended") ctx.resume();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = "sine";
-            osc.frequency.setValueAtTime(880, ctx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.15);
-            gain.gain.setValueAtTime(0.2, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start(ctx.currentTime);
-            osc.stop(ctx.currentTime + 0.3);
-          } catch {
-            // ignore
-          }
-        }
-      } catch {
-        toast.error("Failed to send tip");
-      }
+      await sendTip(tippingMessageId, amount);
+      setTippingMessageId(null);
     },
-    [tippingMessageId]
+    [tippingMessageId, sendTip]
   );
 
   const isAdmin = currentUser?.actorType === "admin";
@@ -483,7 +534,8 @@ export function LiveWall({ initialMessages, currentUser }: Props) {
                 onReact={handleReact}
                 onDelete={handleDelete}
                 onPin={handlePin}
-                onTip={handleTipClick}
+                onTip={handleMicroTip}
+                onSuperTip={handleSuperTipClick}
                 isPinnedDisplay
               />
             )}
@@ -513,14 +565,15 @@ export function LiveWall({ initialMessages, currentUser }: Props) {
                           onReact={handleReact}
                           onDelete={handleDelete}
                           onPin={handlePin}
-                          onTip={handleTipClick}
+                          onTip={handleMicroTip}
+                          onSuperTip={handleSuperTipClick}
                         />
-                        {/* Tip picker (anchored to message) */}
+                        {/* Super Tip picker (anchored to message, opens on long-press) */}
                         {tippingMessageId === msg.id && tippingMessage && (
                           <LiveWallTipPicker
                             recipientName={tippingMessage.display_name}
                             coinBalance={coinBalance}
-                            onTip={handleTipSend}
+                            onTip={handleSuperTipSend}
                             onClose={() => setTippingMessageId(null)}
                           />
                         )}
