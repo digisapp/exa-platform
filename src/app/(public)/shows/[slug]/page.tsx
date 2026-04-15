@@ -24,6 +24,7 @@ import {
 import { format } from "date-fns";
 import type { Metadata } from "next";
 import { TicketCheckout } from "./ticket-checkout";
+import { HotelFloorPlan } from "@/components/shows/hotel-floor-plan";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -505,9 +506,16 @@ export default async function EventPage({ params, searchParams }: Props) {
             </div>
           </div>
 
+          {/* Venue Map */}
+          {event.slug === "miami-swim-week-2026" && (
+            <div className="lg:col-span-2 order-3">
+              <HotelFloorPlan />
+            </div>
+          )}
+
           {/* Confirmed Models - third on mobile (after sidebar), left column on desktop */}
           {eventModels.length > 0 && (
-            <div className="lg:col-span-2 order-3">
+            <div className="lg:col-span-2 order-4">
               <div className="flex items-center gap-3 mb-6">
                 <div className="p-2 rounded-xl bg-gradient-to-br from-pink-500/20 to-violet-500/20">
                   <Sparkles className="h-6 w-6 text-pink-500" />
