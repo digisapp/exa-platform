@@ -36,25 +36,25 @@ const ROOMS: Room[] = [
   // === VALET ===
   { id: "valet", name: "Valet Drop-Off", shortName: "Valet 🚗", x: 3.5, y: 1, width: 3, height: 55, gradient: "valetGrad", labelSize: "xs", verticalLabel: true },
   // === GRAND ENTRANCE ===
-  { id: "grand-entrance", name: "Grand Entrance — Outdoor Arrival Area", shortName: "Grand\nEntrance", x: 7, y: 1, width: 7, height: 55, gradient: "entranceGrad", labelSize: "md", icon: "🎪" },
+  { id: "grand-entrance", name: "Grand Entrance — Outdoor Arrival Area", shortName: "Grand\nEntrance", x: 7, y: 1, width: 14, height: 55, gradient: "entranceGrad", labelSize: "lg", icon: "🎪" },
   // === CABANAS ===
-  { id: "cabanas", name: "Cabanas", shortName: "☀️ Cabanas", x: 60, y: 1, width: 20, height: 9, gradient: "cabanasGrad", labelSize: "sm" },
+  { id: "cabanas", name: "Cabanas", shortName: "☀️ Cabanas", x: 67, y: 1, width: 20, height: 9, gradient: "cabanasGrad", labelSize: "sm" },
   // === INDOOR ROOMS ===
-  { id: "mezzanine", name: "Mezzanine (Upstairs)", shortName: "Mezzanine\n⬆ Upstairs", dimensions: "24' × 68'", sqft: 1632, ceilingHeight: "9'", capacity: { reception: 200 }, x: 15, y: 3, width: 8, height: 22, gradient: "mezzGrad", labelSize: "sm" },
-  { id: "exa-restaurant", name: "EXA Restaurant", shortName: "EXA\nRestaurant 🍽️", dimensions: "39' × 63'8\"", sqft: 1233, ceilingHeight: "8'", capacity: { reception: 90, rounds: 76, theatre: 95, school: 60, uShape: 45, hollowSquare: 55, conference: 48 }, x: 25, y: 3, width: 16, height: 14, gradient: "restaurantGrad" },
-  { id: "exa-hq", name: "EXA Models HQ — Check-In", shortName: "EXA Models HQ\nCheck-In ✨", dimensions: "35' × 39'", sqft: 1365, x: 43, y: 3, width: 14, height: 14, gradient: "hqGrad" },
+  { id: "mezzanine", name: "Mezzanine (Upstairs)", shortName: "Mezzanine\n⬆ Upstairs", dimensions: "24' × 68'", sqft: 1632, ceilingHeight: "9'", capacity: { reception: 200 }, x: 22, y: 3, width: 8, height: 22, gradient: "mezzGrad", labelSize: "sm" },
+  { id: "silan-restaurant", name: "Silan Restaurant", shortName: "Silan\nRestaurant 🍽️", dimensions: "39' × 63'8\"", sqft: 1233, ceilingHeight: "8'", capacity: { reception: 90, rounds: 76, theatre: 95, school: 60, uShape: 45, hollowSquare: 55, conference: 48 }, x: 32, y: 3, width: 16, height: 14, gradient: "restaurantGrad" },
+  { id: "exa-hq", name: "EXA Models HQ — Check-In", shortName: "EXA Models HQ\nCheck-In ✨", dimensions: "35' × 39'", sqft: 1365, x: 50, y: 3, width: 14, height: 14, gradient: "hqGrad" },
   // === LOWER ===
-  { id: "orchid-ballroom", name: "Orchid Ballroom", shortName: "Orchid\nBallroom 💃", dimensions: "58' × 84'", sqft: 4872, ceilingHeight: "12' / 11.5'", capacity: { reception: 400, rounds: 300, theatre: 420, school: 250 }, x: 15, y: 28, width: 16, height: 24, gradient: "ballroomGrad", labelSize: "lg" },
-  { id: "wellness-activation", name: "Wellness Activation Space", shortName: "Wellness\nActivation 🧘", sqft: 3690, capacity: { reception: 400, rounds: 260, theatre: 300, school: 200 }, x: 33, y: 30, width: 29, height: 16, gradient: "wellnessGrad" },
+  { id: "backstage-digis", name: "Shows Backstage + Digis Media", shortName: "Shows Backstage\n+ Digis Media 🎬", dimensions: "58' × 84'", sqft: 4872, ceilingHeight: "12' / 11.5'", capacity: { reception: 400, rounds: 300, theatre: 420, school: 250 }, x: 22, y: 28, width: 16, height: 24, gradient: "ballroomGrad", labelSize: "lg" },
+  { id: "wellness-activation", name: "Wellness Activation Space", shortName: "Wellness\nActivation 🧘", sqft: 3690, capacity: { reception: 400, rounds: 260, theatre: 300, school: 200 }, x: 40, y: 30, width: 29, height: 16, gradient: "wellnessGrad" },
   // === POOLS ===
-  { id: "lower-pool", name: "Lower Pool", shortName: "Lower\nPool 💦", x: 63, y: 12, width: 12, height: 12, gradient: "poolGrad", labelSize: "sm", shape: "pool" },
-  { id: "exa-bar", name: "EXA Bar", shortName: "EXA Bar 🍹", x: 63, y: 26, width: 17, height: 8, gradient: "barGrad", labelSize: "sm" },
-  { id: "heated-pool", name: "Heated Adult Saltwater Pool", shortName: "Heated\nSaltwater Pool 🌊", x: 62, y: 36, width: 18, height: 18, gradient: "poolGrad", shape: "pool" },
+  { id: "lower-pool", name: "Lower Pool", shortName: "Lower\nPool 💦", x: 70, y: 12, width: 12, height: 12, gradient: "poolGrad", labelSize: "sm", shape: "pool" },
+  { id: "exa-bar", name: "EXA Tiki Bar", shortName: "🌺 EXA Bar 🍹", x: 70, y: 26, width: 14, height: 6, gradient: "barGrad", labelSize: "sm" },
+  { id: "heated-pool", name: "Heated Adult Saltwater Pool", shortName: "Heated\nSaltwater Pool 🌊", x: 69, y: 36, width: 18, height: 18, gradient: "poolGrad", shape: "pool" },
   // === EXA SWIM SHOWS ===
-  { id: "exa-swim-shows", name: "EXA Swim Shows", shortName: "EXA\nSwim Shows", x: 80, y: 1, width: 16, height: 55, gradient: "showsGrad", labelSize: "lg", icon: "👙" },
-  // === BOARDWALK / PALMS / SAND ===
-  { id: "boardwalk", name: "Miami Beach Boardwalk", x: 96.5, y: 1, width: 3, height: 55, gradient: "boardwalkGrad", labelSize: "xs", verticalLabel: true },
-  { id: "sand-beach", name: "Sand Beach", shortName: "🌴 Sand & Palms 🏖️", x: 100, y: 1, width: 7.5, height: 55, gradient: "sandGrad", labelSize: "xs", verticalLabel: true },
+  { id: "exa-swim-shows", name: "EXA Swim Shows", shortName: "EXA\nSwim Shows", x: 87, y: 1, width: 16, height: 55, gradient: "showsGrad", labelSize: "lg", icon: "👙" },
+  // === BOARDWALK / SAND ===
+  { id: "boardwalk", name: "Miami Beach Boardwalk", x: 103.5, y: 1, width: 3, height: 55, gradient: "boardwalkGrad", labelSize: "xs", verticalLabel: true },
+  { id: "sand-beach", name: "Sand Beach", shortName: "🌴 Sand & Palms 🏖️", x: 107, y: 1, width: 7.5, height: 55, gradient: "sandGrad", labelSize: "xs", verticalLabel: true },
 ];
 
 export function HotelFloorPlan() {
@@ -125,7 +125,7 @@ export function HotelFloorPlan() {
           style={{ background: "linear-gradient(135deg, rgba(255,50,130,0.3), rgba(168,85,247,0.2), rgba(0,210,255,0.3), rgba(0,230,118,0.2), rgba(255,50,130,0.3))", backgroundSize: "300% 300%", animation: "gradientBorder 8s ease infinite" }}
         />
 
-        <svg viewBox="0 0 120 58" className="w-full h-auto relative">
+        <svg viewBox="0 0 127 58" className="w-full h-auto relative">
           <defs>
             {/* === GRADIENTS === */}
             <linearGradient id="roadGrad" x1="0" y1="0" x2="0" y2="1">
@@ -226,7 +226,7 @@ export function HotelFloorPlan() {
           </defs>
 
           {/* Background */}
-          <rect width="120" height="58" fill="rgba(15,15,20,1)" />
+          <rect width="127" height="58" fill="rgba(15,15,20,1)" />
 
           {/* Subtle grid */}
           <g opacity="0.4">
@@ -240,15 +240,15 @@ export function HotelFloorPlan() {
 
           {/* === ATLANTIC OCEAN === */}
           <g>
-            <rect x="108" y="0" width="12" height="58" fill="url(#oceanGrad)" />
-            <rect x="108" y="0" width="12" height="58" fill="url(#waves)" opacity="0.9" />
-            <path d="M 111 0 Q 110.4 5, 111 10 Q 111.6 15, 111 20 Q 110.4 25, 111 30 Q 111.6 35, 111 40 Q 110.4 45, 111 50 Q 111.6 55, 111 58" fill="none" stroke="rgba(0,210,255,0.3)" strokeWidth="0.2">
+            <rect x="115" y="0" width="12" height="58" fill="url(#oceanGrad)" />
+            <rect x="115" y="0" width="12" height="58" fill="url(#waves)" opacity="0.9" />
+            <path d="M 118 0 Q 117.4 5, 118 10 Q 118.6 15, 118 20 Q 117.4 25, 118 30 Q 118.6 35, 118 40 Q 117.4 45, 118 50 Q 118.6 55, 118 58" fill="none" stroke="rgba(0,210,255,0.3)" strokeWidth="0.2">
               <animate attributeName="d" dur="3.5s" repeatCount="indefinite" values="M 111 0 Q 110.4 5, 111 10 Q 111.6 15, 111 20 Q 110.4 25, 111 30 Q 111.6 35, 111 40 Q 110.4 45, 111 50 Q 111.6 55, 111 58;M 111 0 Q 111.6 5, 111 10 Q 110.4 15, 111 20 Q 111.6 25, 111 30 Q 110.4 35, 111 40 Q 111.6 45, 111 50 Q 110.4 55, 111 58;M 111 0 Q 110.4 5, 111 10 Q 111.6 15, 111 20 Q 110.4 25, 111 30 Q 111.6 35, 111 40 Q 110.4 45, 111 50 Q 111.6 55, 111 58" />
             </path>
-            <path d="M 115 0 Q 114.4 4, 115 8 Q 115.6 12, 115 16 Q 114.4 20, 115 24 Q 115.6 28, 115 32 Q 114.4 36, 115 40 Q 115.6 44, 115 48 Q 114.4 52, 115 58" fill="none" stroke="rgba(0,210,255,0.2)" strokeWidth="0.15">
+            <path d="M 122 0 Q 121.4 4, 122 8 Q 122.6 12, 122 16 Q 121.4 20, 122 24 Q 122.6 28, 122 32 Q 121.4 36, 122 40 Q 122.6 44, 122 48 Q 121.4 52, 122 58" fill="none" stroke="rgba(0,210,255,0.2)" strokeWidth="0.15">
               <animate attributeName="d" dur="4.5s" repeatCount="indefinite" values="M 115 0 Q 114.4 4, 115 8 Q 115.6 12, 115 16 Q 114.4 20, 115 24 Q 115.6 28, 115 32 Q 114.4 36, 115 40 Q 115.6 44, 115 48 Q 114.4 52, 115 58;M 115 0 Q 115.6 4, 115 8 Q 114.4 12, 115 16 Q 115.6 20, 115 24 Q 114.4 28, 115 32 Q 115.6 36, 115 40 Q 114.4 44, 115 48 Q 115.6 52, 115 58;M 115 0 Q 114.4 4, 115 8 Q 115.6 12, 115 16 Q 114.4 20, 115 24 Q 115.6 28, 115 32 Q 114.4 36, 115 40 Q 115.6 44, 115 48 Q 114.4 52, 115 58" />
             </path>
-            <text x="114" y="29" textAnchor="middle" fill="rgba(0,210,255,0.3)" fontSize="1.4" fontWeight="700" letterSpacing="0.5" transform="rotate(90, 114, 29)">ATLANTIC OCEAN</text>
+            <text x="121" y="29" textAnchor="middle" fill="rgba(0,210,255,0.3)" fontSize="1.4" fontWeight="700" letterSpacing="0.5" transform="rotate(90, 121, 29)">ATLANTIC OCEAN</text>
           </g>
 
           {/* === ROAD LANE MARKINGS on Collins Ave === */}
@@ -307,83 +307,83 @@ export function HotelFloorPlan() {
 
           {/* === PHOTO WALL === */}
           <g style={{ pointerEvents: "none" }}>
-            <rect x={7} y={5} width={7} height={5} rx={0.5} fill="rgba(255,50,130,0.2)" stroke="rgba(255,50,130,0.35)" strokeWidth={0.1} />
-            <text x={10.5} y={7} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.65)" fontSize={0.65} fontWeight="700">📸 Photo Wall</text>
-            <text x={10.5} y={8.5} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.4)" fontSize={0.5}>Paparazzi</text>
+            <rect x={14.0} y={5} width={7} height={5} rx={0.5} fill="rgba(255,50,130,0.2)" stroke="rgba(255,50,130,0.35)" strokeWidth={0.1} />
+            <text x={17.5} y={7} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.65)" fontSize={0.65} fontWeight="700">📸 Photo Wall</text>
+            <text x={17.5} y={8.5} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.4)" fontSize={0.5}>Paparazzi</text>
           </g>
 
           {/* === RED CARPET with glow === */}
           <g style={{ pointerEvents: "none" }}>
             {/* Glow underneath */}
-            <rect x={6.5} y={12.5} width={8} height={5} rx={1} fill="rgba(220,20,20,0.08)" filter="url(#spotGlow)" />
-            <rect x={7} y={13} width={7} height={4} rx={0.4} fill="rgba(200,20,20,0.5)" stroke="rgba(255,80,80,0.4)" strokeWidth={0.12} />
+            <rect x={13.5} y={12.5} width={8} height={5} rx={8.0} fill="rgba(220,20,20,0.08)" filter="url(#spotGlow)" />
+            <rect x={14.0} y={13} width={7} height={4} rx={0.4} fill="rgba(200,20,20,0.5)" stroke="rgba(255,80,80,0.4)" strokeWidth={0.12} />
             {/* Gold trim */}
-            <line x1={7} y1={13} x2={14} y2={13} stroke="rgba(255,200,50,0.6)" strokeWidth={0.15} />
-            <line x1={7} y1={17} x2={14} y2={17} stroke="rgba(255,200,50,0.6)" strokeWidth={0.15} />
+            <line x1={14.0} y1={13} x2={21.0} y2={13} stroke="rgba(255,200,50,0.6)" strokeWidth={0.15} />
+            <line x1={14.0} y1={17} x2={21.0} y2={17} stroke="rgba(255,200,50,0.6)" strokeWidth={0.15} />
             {/* Arrow */}
             <path d="M 12.5 15 L 13.5 15 M 13 14.3 L 13.5 15 L 13 15.7" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth={0.12} strokeLinecap="round" />
-            <text x={10.5} y={14.6} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.8)" fontSize={0.6} fontWeight="800" letterSpacing={0.15}>RED CARPET — 20ft</text>
-            <text x={10.5} y={15.9} textAnchor="middle" dominantBaseline="central" fill="rgba(255,200,50,0.5)" fontSize={0.45} fontWeight="600">W → E</text>
+            <text x={17.5} y={14.6} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.8)" fontSize={0.6} fontWeight="800" letterSpacing={0.15}>RED CARPET — 20ft</text>
+            <text x={17.5} y={15.9} textAnchor="middle" dominantBaseline="central" fill="rgba(255,200,50,0.5)" fontSize={0.45} fontWeight="600">W → E</text>
           </g>
 
           {/* === 50ft RUNWAY with stage lights === */}
           <g style={{ pointerEvents: "none" }}>
             {/* Spotlight cones from stage */}
-            <polygon points="86,5 80,20 82,20" fill="rgba(255,255,255,0.02)" />
-            <polygon points="90,5 94,20 96,20" fill="rgba(255,255,255,0.02)" />
+            <polygon points="93.0,5 87.0,20 89.0,20" fill="rgba(255,255,255,0.02)" />
+            <polygon points="97.0,5 101.0,20 103.0,20" fill="rgba(255,255,255,0.02)" />
             {/* Runway glow */}
-            <rect x={86} y={6} width={4} height={44} rx={0.5} fill="rgba(255,255,255,0.04)" />
+            <rect x={93.0} y={6} width={4} height={35} rx={0.5} fill="rgba(255,255,255,0.04)" />
             {/* Runway surface */}
-            <rect x={86.5} y={7} width={3} height={42} rx={0.4} fill="rgba(255,255,255,0.18)" stroke="rgba(255,255,255,0.3)" strokeWidth={0.12} />
+            <rect x={93.5} y={7} width={3} height={34} rx={0.4} fill="rgba(255,255,255,0.18)" stroke="rgba(255,255,255,0.3)" strokeWidth={0.12} />
             {/* Runway edge lights (animated) */}
-            {Array.from({ length: 14 }).map((_, i) => (
+            {Array.from({ length: 11 }).map((_, i) => (
               <g key={`rl-${i}`}>
-                <circle cx={86.5} cy={8 + i * 3} r={0.2} fill="rgba(255,50,130,0.6)">
+                <circle cx={100.5} cy={8 + i * 3} r={0.2} fill="rgba(255,50,130,0.6)">
                   <animate attributeName="opacity" values="0.3;1;0.3" dur="1.5s" begin={`${i * 0.1}s`} repeatCount="indefinite" />
                 </circle>
-                <circle cx={89.5} cy={8 + i * 3} r={0.2} fill="rgba(0,210,255,0.6)">
+                <circle cx={103.5} cy={8 + i * 3} r={0.2} fill="rgba(0,210,255,0.6)">
                   <animate attributeName="opacity" values="0.3;1;0.3" dur="1.5s" begin={`${i * 0.1 + 0.75}s`} repeatCount="indefinite" />
                 </circle>
               </g>
             ))}
             {/* Center line */}
-            <line x1={88} y1={8} x2={88} y2={48} stroke="rgba(255,255,255,0.12)" strokeWidth={0.08} strokeDasharray="1 0.8" />
+            <line x1={95.0} y1={8} x2={95.0} y2={40} stroke="rgba(255,255,255,0.12)" strokeWidth={0.08} strokeDasharray="1 0.8" />
             {/* Stage platform */}
-            <rect x={85} y={4.5} width={6} height={3.5} rx={0.5} fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" strokeWidth={0.12} />
-            <text x={88} y={29} textAnchor="middle" fill="rgba(255,255,255,0.35)" fontSize={0.7} fontWeight="700" letterSpacing={0.3} transform="rotate(90, 88, 29)">50ft RUNWAY</text>
-            <text x={88} y={6.3} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.6)" fontSize={0.7} fontWeight="800">STAGE</text>
+            <rect x={92.0} y={4.5} width={6} height={3.5} rx={0.5} fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" strokeWidth={0.12} />
+            <text x={95.0} y={29} textAnchor="middle" fill="rgba(255,255,255,0.35)" fontSize={0.7} fontWeight="700" letterSpacing={0.3} transform="rotate(90, 95.0, 29)">50ft RUNWAY</text>
+            <text x={95.0} y={6.3} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.6)" fontSize={0.7} fontWeight="800">STAGE</text>
           </g>
 
           {/* === MEDIA PIT === */}
           <g style={{ pointerEvents: "none" }}>
-            <rect x={84.5} y={49.5} width={7} height={6} rx={0.5} fill="rgba(255,50,130,0.15)" stroke="rgba(255,50,130,0.35)" strokeWidth={0.12} strokeDasharray="0.5 0.3" />
+            <rect x={91.5} y={42} width={7} height={6} rx={0.5} fill="rgba(255,50,130,0.15)" stroke="rgba(255,50,130,0.35)" strokeWidth={0.12} strokeDasharray="0.5 0.3" />
             {[0, 1, 2].map((row) => [0, 1, 2, 3].map((col) => (
-              <rect key={`m-${row}-${col}`} x={85.2 + col * 1.4} y={50.3 + row * 1.6} width={0.8} height={0.8} rx={0.15} fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.15)" strokeWidth={0.04} />
+              <rect key={`m-${row}-${col}`} x={92.2 + col * 1.4} y={42.8 + row * 1.6} width={0.8} height={0.8} rx={0.2} fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.15)" strokeWidth={0.04} />
             )))}
-            <text x={88} y={50} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.5)" fontSize={0.55} fontWeight="700">📸 MEDIA PIT</text>
-            <text x={88} y={54.5} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.3)" fontSize={0.45}>15ft × 15ft</text>
+            <text x={95.0} y={42.5} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.5)" fontSize={0.55} fontWeight="700">📸 MEDIA PIT</text>
+            <text x={95.0} y={47} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.3)" fontSize={0.45}>15ft × 15ft</text>
           </g>
 
           {/* === SEATING — East (2 rows × 30) === */}
           <g style={{ pointerEvents: "none" }}>
             {[0, 1].map((row) => (
               <g key={`er-${row}`}>
-                <rect x={89.5 + row * 1.8} y={8} width={1.4} height={40} rx={0.2} fill={`rgba(255,255,255,${0.04 + row * 0.02})`} />
+                <rect x={96.5 + row * 1.8} y={8} width={1.4} height={32} rx={0.2} fill={`rgba(255,255,255,${0.04 + row * 0.02})`} />
                 {Array.from({ length: 30 }).map((_, i) => (
-                  <rect key={`e-${row}-${i}`} x={89.7 + row * 1.8} y={8.4 + i * 1.32} width={1.0} height={0.9} rx={0.15} fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.15)" strokeWidth={0.04} />
+                  <rect key={`e-${row}-${i}`} x={96.7 + row * 1.8} y={8.4 + i * 1.32} width={1.0} height={0.9} rx={0.2} fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.15)" strokeWidth={0.04} />
                 ))}
               </g>
             ))}
-            <text x={92} y={50} textAnchor="middle" fill="rgba(255,255,255,0.3)" fontSize={0.5} fontWeight="600">2 × 30 seats</text>
+            <text x={99.0} y={50} textAnchor="middle" fill="rgba(255,255,255,0.3)" fontSize={0.5} fontWeight="600">2 × 30 seats</text>
           </g>
 
           {/* === SEATING — West (1 row × 30) === */}
           <g style={{ pointerEvents: "none" }}>
-            <rect x={85.3} y={8} width={1.4} height={40} rx={0.2} fill="rgba(255,255,255,0.04)" />
+            <rect x={92.3} y={8} width={1.4} height={32} rx={0.2} fill="rgba(255,255,255,0.04)" />
             {Array.from({ length: 30 }).map((_, i) => (
-              <rect key={`w-${i}`} x={85.5} y={8.4 + i * 1.32} width={1.0} height={0.9} rx={0.15} fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.15)" strokeWidth={0.04} />
+              <rect key={`w-${i}`} x={92.5} y={8.4 + i * 1.32} width={1.0} height={0.9} rx={0.2} fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.15)" strokeWidth={0.04} />
             ))}
-            <text x={86} y={50} textAnchor="middle" fill="rgba(255,255,255,0.3)" fontSize={0.45} fontWeight="600">1 × 30</text>
+            <text x={93.0} y={50} textAnchor="middle" fill="rgba(255,255,255,0.3)" fontSize={0.45} fontWeight="600">1 × 30</text>
           </g>
 
           {/* === VIP BOOTHS === */}
@@ -392,45 +392,45 @@ export function HotelFloorPlan() {
               const by = 10 + i * 9.5;
               return (
                 <g key={`v-${i}`}>
-                  <rect x={80.5} y={by} width={4.2} height={7.5} rx={0.5} fill="rgba(255,50,130,0.1)" stroke="rgba(255,200,50,0.25)" strokeWidth={0.08} />
-                  <rect x={81.8} y={by + 1.8} width={2} height={3.5} rx={0.3} fill="rgba(255,200,50,0.15)" stroke="rgba(255,200,50,0.3)" strokeWidth={0.06} />
-                  <rect x={80.8} y={by + 1.5} width={0.7} height={4} rx={0.2} fill="rgba(168,85,247,0.2)" stroke="rgba(168,85,247,0.3)" strokeWidth={0.05} />
-                  <rect x={84.1} y={by + 1.5} width={0.4} height={4} rx={0.15} fill="rgba(168,85,247,0.15)" stroke="rgba(168,85,247,0.25)" strokeWidth={0.04} />
-                  <text x={82.6} y={by + 0.7} textAnchor="middle" dominantBaseline="central" fill="rgba(255,200,50,0.7)" fontSize={0.45} fontWeight="800">VIP {i + 1}</text>
+                  <rect x={87.5} y={by} width={4.2} height={7.5} rx={0.5} fill="rgba(255,50,130,0.1)" stroke="rgba(255,200,50,0.25)" strokeWidth={0.08} />
+                  <rect x={88.8} y={by + 1.8} width={2} height={3.5} rx={0.3} fill="rgba(255,200,50,0.15)" stroke="rgba(255,200,50,0.3)" strokeWidth={0.06} />
+                  <rect x={87.8} y={by + 1.5} width={0.7} height={4} rx={0.2} fill="rgba(168,85,247,0.2)" stroke="rgba(168,85,247,0.3)" strokeWidth={0.05} />
+                  <rect x={91.1} y={by + 1.5} width={0.4} height={4} rx={0.2} fill="rgba(168,85,247,0.15)" stroke="rgba(168,85,247,0.25)" strokeWidth={0.04} />
+                  <text x={89.6} y={by + 0.7} textAnchor="middle" dominantBaseline="central" fill="rgba(255,200,50,0.7)" fontSize={0.45} fontWeight="800">VIP {i + 1}</text>
                 </g>
               );
             })}
-            <text x={82.6} y={50} textAnchor="middle" fill="rgba(255,200,50,0.4)" fontSize={0.45} fontWeight="700">VIP Booths</text>
+            <text x={89.6} y={50} textAnchor="middle" fill="rgba(255,200,50,0.4)" fontSize={0.45} fontWeight="700">VIP Booths</text>
           </g>
 
           {/* === BEACH ENTRANCE — between EXA Swim Shows and Boardwalk === */}
           <g style={{ pointerEvents: "none" }}>
             {/* Pulsing glow behind */}
-            <ellipse cx={96.5} cy={28.5} rx={3.5} ry={5} fill="rgba(255,50,130,0.06)" filter="url(#spotGlow)">
+            <ellipse cx={110.5} cy={28.5} rx={10.5} ry={5} fill="rgba(255,50,130,0.06)" filter="url(#spotGlow)">
               <animate attributeName="opacity" values="0.4;1;0.4" dur="2s" repeatCount="indefinite" />
             </ellipse>
             {/* Door frame */}
-            <rect x={94.5} y={23} width={4} height={11} rx={0.6}
+            <rect x={101.5} y={23} width={4} height={11} rx={0.6}
               fill="rgba(255,50,130,0.25)" stroke="rgba(255,50,130,0.7)" strokeWidth={0.2} />
             {/* Door arch top */}
             <path d="M 94.5 25 Q 96.5 21 98.5 25" fill="rgba(255,50,130,0.2)" stroke="rgba(255,50,130,0.7)" strokeWidth={0.2} />
             {/* Door panels */}
-            <rect x={95} y={24} width={1.2} height={9} rx={0.3}
+            <rect x={102.0} y={24} width={1.2} height={9} rx={0.3}
               fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" strokeWidth={0.08} />
-            <rect x={96.8} y={24} width={1.2} height={9} rx={0.3}
+            <rect x={103.8} y={24} width={1.2} height={9} rx={0.3}
               fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" strokeWidth={0.08} />
             {/* Door handles */}
-            <circle cx={96} cy={28.5} r={0.2} fill="rgba(255,200,50,0.7)" />
-            <circle cx={97} cy={28.5} r={0.2} fill="rgba(255,200,50,0.7)" />
+            <circle cx={110.0} cy={28.5} r={0.2} fill="rgba(255,200,50,0.7)" />
+            <circle cx={111.0} cy={28.5} r={0.2} fill="rgba(255,200,50,0.7)" />
             {/* Neon sign above */}
-            <rect x={93.5} y={20.5} width={6} height={2.5} rx={0.4}
+            <rect x={100.5} y={20.5} width={6} height={2.5} rx={0.4}
               fill="rgba(0,0,0,0.5)" stroke="rgba(255,50,130,0.6)" strokeWidth={0.12} />
-            <text x={96.5} y={21.4} textAnchor="middle" dominantBaseline="central"
+            <text x={103.5} y={21.4} textAnchor="middle" dominantBaseline="central"
               fill="rgba(255,50,130,1)" fontSize={0.75} fontWeight="900" letterSpacing={0.15}
               filter="url(#neonGlow)">
               BEACH ENTRANCE
             </text>
-            <text x={96.5} y={22.4} textAnchor="middle" dominantBaseline="central"
+            <text x={103.5} y={22.4} textAnchor="middle" dominantBaseline="central"
               fill="rgba(255,255,255,0.5)" fontSize={0.45} fontWeight="600">
               🚪 Main Guest Entry
             </text>
@@ -445,9 +445,9 @@ export function HotelFloorPlan() {
 
           {/* === COMPASS ROSE === */}
           <g transform="translate(3.5, 57)" style={{ pointerEvents: "none" }}>
-            <circle cx={0} cy={0} r={1.8} fill="rgba(0,0,0,0.4)" stroke="rgba(255,255,255,0.1)" strokeWidth={0.08} />
-            <text x={0} y={-0.8} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.5)" fontSize={0.5} fontWeight="700">N</text>
-            <text x={0} y={0.9} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.3)" fontSize={0.4}>S</text>
+            <circle cx={14.0} cy={0} r={1.8} fill="rgba(0,0,0,0.4)" stroke="rgba(255,255,255,0.1)" strokeWidth={0.08} />
+            <text x={7.0} y={-0.8} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.5)" fontSize={0.5} fontWeight="700">N</text>
+            <text x={7.0} y={0.9} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.3)" fontSize={0.4}>S</text>
             <text x={-1} y={0} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.3)" fontSize={0.4}>W</text>
             <text x={1} y={0} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.3)" fontSize={0.4}>E</text>
           </g>
