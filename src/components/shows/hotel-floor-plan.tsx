@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { X, MapPin, Sparkles } from "lucide-react";
 
 interface Room {
@@ -35,20 +35,20 @@ interface Room {
 
 const ROOMS: Room[] = [
   {
-    id: "collins-ave", name: "Collins Ave", shortName: "Collins Ave — 5225 Collins Ave, Miami Beach, FL",
-    x: 0, y: 1, width: 5, height: 55, gradient: "roadGrad", labelSize: "xs", verticalLabel: true,
+    id: "collins-ave", name: "Collins Ave", shortName: "Collins Ave — Miami Beach",
+    x: 0, y: 1, width: 5, height: 55, gradient: "roadGrad", labelSize: "sm", verticalLabel: true,
     description: "The iconic Collins Avenue — Miami Beach's most famous boulevard. Guests arrive by luxury vehicles, rideshare, and limousine directly to the hotel's front entrance.",
     sponsorNote: "Sponsor opportunity: Branded rideshare codes, vehicle wraps, or arrival lounge signage visible to all guests.",
   },
   {
     id: "valet", name: "Valet Drop-Off", shortName: "Valet 🚗",
-    x: 5.5, y: 1, width: 5, height: 55, gradient: "valetGrad", labelSize: "xs", verticalLabel: true,
+    x: 5.5, y: 1, width: 5, height: 55, gradient: "valetGrad", labelSize: "md", verticalLabel: true,
     description: "White-glove valet service where every guest gets the VIP treatment from the moment they step out of their vehicle. First impressions start here.",
     sponsorNote: "Sponsor opportunity: Branded valet tickets, welcome gift bags, or a featured luxury vehicle display.",
   },
   {
     id: "grand-entrance", name: "Grand Entrance — Outdoor Arrival Area", shortName: "Grand\nEntrance",
-    x: 11, y: 1, width: 10, height: 55, gradient: "entranceGrad", labelSize: "lg", icon: "🎪",
+    x: 11, y: 1, width: 10, height: 24, gradient: "entranceGrad", labelSize: "lg", icon: "🎪",
     description: "A show-stopping outdoor arrival experience. Guests walk the 20ft red carpet past a photo wall lined with paparazzi and media photographers. This is where the magic begins — every arrival is a moment.",
     sponsorNote: "Sponsor opportunity: Step-and-repeat branding, red carpet naming rights, branded photo moments shared across social media by 150+ models and influencers.",
   },
@@ -81,7 +81,7 @@ const ROOMS: Room[] = [
     sponsorNote: "Sponsor opportunity: Branded showroom displays, live shopping integrations, product placement, or a pop-up retail activation alongside top designers.",
   },
   {
-    id: "backstage-digis", name: "EXA Models HQ — Check-In + Shows Backstage + Digis Media", shortName: "EXA Models HQ Check-In\n+ Shows Backstage\n+ Digis Media 🎬",
+    id: "backstage-digis", name: "EXA Models HQ — Check-In + Shows Backstage + Digis Media", shortName: "EXA Models HQ\nCheck-In\n+ Shows Backstage\n+ Digis Media 🎬",
     dimensions: "58' × 84'", sqft: 4872, ceilingHeight: "12' / 11.5'",
     capacity: { reception: 400, rounds: 300, theatre: 420, school: 250 },
     x: 22, y: 28, width: 16, height: 24, gradient: "ballroomGrad", labelSize: "lg",
@@ -128,11 +128,20 @@ const ROOMS: Room[] = [
   },
 ];
 
-export function HotelFloorPlan() {
-  const router = useRouter();
+interface HotelFloorPlanProps {
+  onTicketsClick?: () => void;
+}
+
+export function HotelFloorPlan({ onTicketsClick }: HotelFloorPlanProps) {
   const [selected, setSelected] = useState<Room | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
-  const goToTickets = () => router.push("/shows/miami-swim-week-2026");
+  const goToTickets = () => {
+    if (onTicketsClick) {
+      onTicketsClick();
+    } else {
+      window.dispatchEvent(new CustomEvent("open-tickets"));
+    }
+  };
 
   const renderShape = (room: Room, isHovered: boolean, isSelected: boolean) => {
     const stroke = isSelected ? "url(#pinkNeon)" : isHovered ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.12)";
@@ -198,7 +207,7 @@ export function HotelFloorPlan() {
           style={{ background: "linear-gradient(135deg, rgba(255,50,130,0.3), rgba(168,85,247,0.2), rgba(0,210,255,0.3), rgba(0,230,118,0.2), rgba(255,50,130,0.3))", backgroundSize: "300% 300%", animation: "gradientBorder 8s ease infinite" }}
         />
 
-        <svg viewBox="0 0 127 58" className="w-full h-auto relative">
+        <svg viewBox="-12 0 139 58" className="w-full h-auto relative">
           <defs>
             {/* === GRADIENTS === */}
             {/* MIAMI BEACH COLORS — bright, sexy, pop */}
@@ -253,13 +262,18 @@ export function HotelFloorPlan() {
               <stop offset="100%" stopColor="rgba(255,50,130,0.15)" />
             </linearGradient>
             <linearGradient id="boardwalkGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="rgba(220,200,170,0.7)" />
-              <stop offset="100%" stopColor="rgba(200,180,150,0.6)" />
+              <stop offset="0%" stopColor="rgba(210,160,130,0.7)" />
+              <stop offset="50%" stopColor="rgba(190,140,110,0.6)" />
+              <stop offset="100%" stopColor="rgba(220,170,140,0.65)" />
             </linearGradient>
-            <linearGradient id="palmsGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="rgba(0,220,80,0.65)" />
-              <stop offset="100%" stopColor="rgba(0,180,60,0.55)" />
-            </linearGradient>
+            {/* Coral stone pattern for boardwalk */}
+            <pattern id="coralStones" x="0" y="0" width="3" height="3" patternUnits="userSpaceOnUse">
+              <rect width="3" height="3" fill="none" />
+              <rect x="0.1" y="0.1" width="1.3" height="1.3" rx="0.3" fill="rgba(230,180,150,0.3)" stroke="rgba(200,150,120,0.4)" strokeWidth="0.08" />
+              <rect x="1.6" y="0.1" width="1.2" height="1.2" rx="0.25" fill="rgba(220,170,140,0.25)" stroke="rgba(190,140,110,0.35)" strokeWidth="0.08" />
+              <rect x="0.3" y="1.6" width="1.1" height="1.2" rx="0.3" fill="rgba(240,190,160,0.28)" stroke="rgba(210,160,130,0.4)" strokeWidth="0.08" />
+              <rect x="1.7" y="1.5" width="1.2" height="1.3" rx="0.25" fill="rgba(225,175,145,0.3)" stroke="rgba(195,145,115,0.35)" strokeWidth="0.08" />
+            </pattern>
             <linearGradient id="sandGrad" x1="0" y1="0" x2="1" y2="0">
               <stop offset="0%" stopColor="rgba(255,220,120,0.65)" />
               <stop offset="100%" stopColor="rgba(245,200,100,0.55)" />
@@ -271,6 +285,11 @@ export function HotelFloorPlan() {
             <linearGradient id="oceanGrad" x1="0" y1="0" x2="1" y2="0">
               <stop offset="0%" stopColor="rgba(0,180,255,0.35)" />
               <stop offset="100%" stopColor="rgba(0,120,200,0.55)" />
+            </linearGradient>
+            <linearGradient id="intracoastalGrad" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="rgba(0,100,180,0.5)" />
+              <stop offset="50%" stopColor="rgba(0,140,200,0.4)" />
+              <stop offset="100%" stopColor="rgba(0,160,220,0.35)" />
             </linearGradient>
 
             {/* === FILTERS === */}
@@ -297,10 +316,15 @@ export function HotelFloorPlan() {
             <pattern id="roadMarks" x="0" y="0" width="1.5" height="4" patternUnits="userSpaceOnUse">
               <rect x="0.65" y="0" width="0.2" height="2" rx="0.1" fill="rgba(255,255,255,0.15)" />
             </pattern>
+
+            {/* Arrow marker for guest flow */}
+            <marker id="arrowHead" markerWidth="4" markerHeight="3" refX="4" refY="1.5" orient="auto">
+              <polygon points="0 0, 4 1.5, 0 3" fill="rgba(255,200,50,0.5)" />
+            </marker>
           </defs>
 
           {/* Background */}
-          <rect width="127" height="58" fill="rgba(15,15,20,1)" />
+          <rect x="-12" width="139" height="58" fill="rgba(15,15,20,1)" />
 
           {/* Subtle grid */}
           <g opacity="0.4">
@@ -325,8 +349,32 @@ export function HotelFloorPlan() {
             <text x="121" y="29" textAnchor="middle" fill="rgba(0,210,255,0.7)" fontSize="1.8" fontWeight="900" letterSpacing="0.5" transform="rotate(90, 121, 29)">ATLANTIC OCEAN</text>
           </g>
 
-          {/* === EXA SWIM SHOWS — static background (not clickable, clicks pass to chairs/VIP) === */}
-          <rect x={87} y={1} width={16} height={55} rx={0.8} fill="url(#showsGrad)" stroke="rgba(255,255,255,0.12)" strokeWidth={0.12} style={{ pointerEvents: "none" }} />
+          {/* === EXA SWIM SHOWS — clickable → opens tickets popup === */}
+          <rect x={87} y={1} width={16} height={55} rx={0.8} fill="url(#showsGrad)" stroke="rgba(255,255,255,0.12)" strokeWidth={0.12} className="cursor-pointer hover:fill-[rgba(255,50,130,0.2)] transition-all" onClick={goToTickets} />
+          {/* Shows area label */}
+          <g style={{ pointerEvents: "none" }}>
+            <text x={95} y={56} textAnchor="middle" dominantBaseline="central" fill="rgba(255,50,130,0.7)" fontSize={1.1} fontWeight="900" letterSpacing={0.15}>
+              EXA SWIM SHOWS
+            </text>
+          </g>
+
+          {/* === INTRACOASTAL WATERWAY === */}
+          <g>
+            <rect x={-12} y={0} width={12} height={58} fill="url(#intracoastalGrad)" />
+            <rect x={-12} y={0} width={12} height={58} fill="url(#waves)" opacity="0.5" />
+            {/* Yachts */}
+            <g style={{ pointerEvents: "none" }}>
+              {/* Yacht 1 */}
+              <text x={-8} y={12} textAnchor="middle" dominantBaseline="central" fontSize={2.5}>🛥️</text>
+              {/* Yacht 2 */}
+              <text x={-5} y={28} textAnchor="middle" dominantBaseline="central" fontSize={2.2}>⛵</text>
+              {/* Yacht 3 */}
+              <text x={-8.5} y={42} textAnchor="middle" dominantBaseline="central" fontSize={2.5}>🛥️</text>
+            </g>
+            <text x={-6} y={29} textAnchor="middle" fill="rgba(0,180,255,0.6)" fontSize={1.4} fontWeight="900" letterSpacing={0.3} transform="rotate(90, -6, 29)">INTRACOASTAL</text>
+            <text x={-6} y={52} textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize={0.5} fontWeight="600">Yacht Rentals</text>
+            <text x={-6} y={53.5} textAnchor="middle" fill="rgba(255,255,255,0.3)" fontSize={0.4}>Brand Photoshoots</text>
+          </g>
 
           {/* === ROAD LANE MARKINGS on Collins Ave === */}
           <rect x="0" y="1" width="3" height="55" fill="url(#roadMarks)" />
@@ -382,6 +430,9 @@ export function HotelFloorPlan() {
             );
           })}
 
+          {/* === CORAL STONE OVERLAY on boardwalk === */}
+          <rect x={103.5} y={1} width={3} height={55} fill="url(#coralStones)" style={{ pointerEvents: "none" }} />
+
           {/* === RED CARPET (combined with photo wall) === */}
           <g style={{ pointerEvents: "none" }}>
             {/* Glow behind */}
@@ -407,16 +458,32 @@ export function HotelFloorPlan() {
             <circle cx={18} cy={13} r={0.35} fill="rgba(255,255,255,0.15)">
               <animate attributeName="opacity" values="0;0.4;0" dur="2.2s" begin="0.3s" repeatCount="indefinite" />
             </circle>
-            {/* Star sparkles */}
-            <text x={12.5} y={9} textAnchor="middle" fill="rgba(255,255,255,0.3)" fontSize={0.8}>✦</text>
-            <text x={19.5} y={11} textAnchor="middle" fill="rgba(255,255,255,0.25)" fontSize={0.7}>✦</text>
-            <text x={13} y={16.5} textAnchor="middle" fill="rgba(255,255,255,0.2)" fontSize={0.6}>✦</text>
+            {/* Animated sparkles */}
+            <text x={12.5} y={9} textAnchor="middle" fill="rgba(255,255,255,0.5)" fontSize={0.8}>✦
+              <animate attributeName="opacity" values="0.2;0.8;0.2" dur="1.5s" repeatCount="indefinite" />
+            </text>
+            <text x={19.5} y={11} textAnchor="middle" fill="rgba(255,255,255,0.5)" fontSize={0.7}>✦
+              <animate attributeName="opacity" values="0.1;0.7;0.1" dur="2s" begin="0.5s" repeatCount="indefinite" />
+            </text>
+            <text x={13} y={16.5} textAnchor="middle" fill="rgba(255,255,255,0.5)" fontSize={0.6}>✦
+              <animate attributeName="opacity" values="0.15;0.6;0.15" dur="1.8s" begin="1s" repeatCount="indefinite" />
+            </text>
+            <text x={18.5} y={6} textAnchor="middle" fill="rgba(255,200,50,0.5)" fontSize={0.7}>✨
+              <animate attributeName="opacity" values="0.1;0.9;0.1" dur="2.5s" begin="0.3s" repeatCount="indefinite" />
+            </text>
+            <text x={14} y={14} textAnchor="middle" fill="rgba(255,200,50,0.5)" fontSize={0.6}>✨
+              <animate attributeName="opacity" values="0.2;0.8;0.2" dur="2s" begin="1.2s" repeatCount="indefinite" />
+            </text>
+            {/* Shimmer overlay */}
+            <rect x={11} y={4} width={10} height={14} rx={0.5} fill="rgba(255,255,255,0.05)">
+              <animate attributeName="opacity" values="0;0.12;0" dur="3s" repeatCount="indefinite" />
+            </rect>
             {/* Main label */}
             <text x={16} y={9.5} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.95)" fontSize={1.1} fontWeight="900" letterSpacing={0.2}>
               RED CARPET
             </text>
             <text x={16} y={11.5} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.6)" fontSize={0.6} fontWeight="600">
-              📸 Photo Wall • Paparazzi • Glamour
+              📸 Photo Wall • Glamour
             </text>
             {/* Arrow W→E */}
             <path d="M 19 14 L 20.5 14 M 20 13.3 L 20.5 14 L 20 14.7" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth={0.12} strokeLinecap="round" />
@@ -467,8 +534,7 @@ export function HotelFloorPlan() {
             {[0, 1, 2].map((row) => [0, 1, 2, 3].map((col) => (
               <rect key={`m-${row}-${col}`} x={92.2 + col * 1.4} y={49.8 + row * 1.6} width={0.8} height={0.8} rx={0.2} fill="rgba(255,255,255,0.2)" stroke="rgba(255,255,255,0.35)" strokeWidth={0.05} />
             )))}
-            <text x={95.0} y={50.5} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.95)" fontSize={0.9} fontWeight="900">📸 MEDIA PIT</text>
-            <text x={95.0} y={53.5} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.6)" fontSize={0.55} fontWeight="600">15ft × 15ft</text>
+            <text x={95.0} y={51.5} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.95)" fontSize={0.9} fontWeight="900">📸</text>
           </g>
 
           {/* === SEATING — East Row 2 (clickable → tickets) === */}
@@ -478,7 +544,6 @@ export function HotelFloorPlan() {
               {Array.from({ length: 30 }).map((_, i) => (
                 <rect key={`e2-${i}`} x={98.5} y={16 + i * 1.07} width={1.0} height={0.7} rx={0.15} fill="rgba(255,255,255,0.45)" stroke="rgba(255,255,255,0.6)" strokeWidth={0.05} />
               ))}
-              <text x={99} y={49.5} textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize={0.45} fontWeight="700">2nd Row 🎟️</text>
             </g>
           </g>
 
@@ -489,7 +554,6 @@ export function HotelFloorPlan() {
               {Array.from({ length: 30 }).map((_, i) => (
                 <rect key={`e1-${i}`} x={96.7} y={16 + i * 1.07} width={1.0} height={0.7} rx={0.15} fill="rgba(255,255,255,0.45)" stroke="rgba(255,255,255,0.6)" strokeWidth={0.05} />
               ))}
-              <text x={97.2} y={49.5} textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize={0.45} fontWeight="700">Front Row 🎟️</text>
             </g>
           </g>
 
@@ -500,7 +564,6 @@ export function HotelFloorPlan() {
               {Array.from({ length: 30 }).map((_, i) => (
                 <rect key={`w-${i}`} x={92.5} y={16 + i * 1.07} width={1.0} height={0.7} rx={0.15} fill="rgba(255,255,255,0.45)" stroke="rgba(255,255,255,0.6)" strokeWidth={0.05} />
               ))}
-              <text x={93} y={49.5} textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize={0.45} fontWeight="700">Front Row 🎟️</text>
             </g>
           </g>
 
@@ -523,21 +586,21 @@ export function HotelFloorPlan() {
 
           {/* === BEACH ENTRANCE === */}
           <g style={{ pointerEvents: "none" }}>
-            {/* Palm tree left */}
-            <text x={101.5} y={29} textAnchor="middle" dominantBaseline="central" fontSize={2}>🌴</text>
-            {/* Door */}
-            <rect x={102.8} y={27} width={2.4} height={5} rx={0.3}
+            {/* Palm tree top */}
+            <text x={101} y={24.5} textAnchor="middle" dominantBaseline="central" fontSize={2}>🌴</text>
+            {/* Door — shifted left */}
+            <rect x={100} y={27} width={2.4} height={5} rx={0.3}
               fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.5)" strokeWidth={0.12} />
-            <rect x={103.0} y={27.3} width={0.9} height={4.4} rx={0.15} fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" strokeWidth={0.06} />
-            <rect x={104.1} y={27.3} width={0.9} height={4.4} rx={0.15} fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" strokeWidth={0.06} />
+            <rect x={100.2} y={27.3} width={0.9} height={4.4} rx={0.15} fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" strokeWidth={0.06} />
+            <rect x={101.3} y={27.3} width={0.9} height={4.4} rx={0.15} fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" strokeWidth={0.06} />
             {/* Door handles */}
-            <circle cx={103.8} cy={29.5} r={0.15} fill="rgba(255,200,50,0.9)" />
-            <circle cx={104.2} cy={29.5} r={0.15} fill="rgba(255,200,50,0.9)" />
-            {/* Palm tree right */}
-            <text x={106.5} y={29} textAnchor="middle" dominantBaseline="central" fontSize={2}>🌴</text>
+            <circle cx={101} cy={29.5} r={0.15} fill="rgba(255,200,50,0.9)" />
+            <circle cx={101.4} cy={29.5} r={0.15} fill="rgba(255,200,50,0.9)" />
+            {/* Palm tree bottom */}
+            <text x={101} y={34.5} textAnchor="middle" dominantBaseline="central" fontSize={2}>🌴</text>
             {/* Vertical label: BEACH ENTRANCE (top to bottom) */}
             {["B","E","A","C","H","","E","N","T","R","A","N","C","E"].map((char, i) => (
-              char ? <text key={i} x={108} y={21 + i * 1.1} textAnchor="middle" dominantBaseline="central"
+              char ? <text key={i} x={105} y={21 + i * 1.1} textAnchor="middle" dominantBaseline="central"
                 fill="rgba(255,255,255,0.95)" fontSize={0.75} fontWeight="900">
                 {char}
               </text> : null
@@ -546,19 +609,25 @@ export function HotelFloorPlan() {
 
           {/* === COMPASS ROSE === */}
           <g transform="translate(3.5, 57)" style={{ pointerEvents: "none" }}>
-            <circle cx={14.0} cy={0} r={1.8} fill="rgba(0,0,0,0.4)" stroke="rgba(255,255,255,0.1)" strokeWidth={0.08} />
-            <text x={7.0} y={-0.8} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.5)" fontSize={0.5} fontWeight="700">N</text>
-            <text x={7.0} y={0.9} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.3)" fontSize={0.4}>S</text>
-            <text x={-1} y={0} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.3)" fontSize={0.4}>W</text>
-            <text x={1} y={0} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.3)" fontSize={0.4}>E</text>
+            <circle cx={0} cy={0} r={1.8} fill="rgba(0,0,0,0.4)" stroke="rgba(255,255,255,0.1)" strokeWidth={0.08} />
+            <text x={0} y={-1.0} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.5)" fontSize={0.5} fontWeight="700">N</text>
+            <text x={0} y={1.0} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.3)" fontSize={0.4}>S</text>
+            <text x={-1.2} y={0} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.3)" fontSize={0.4}>W</text>
+            <text x={1.2} y={0} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.3)" fontSize={0.4}>E</text>
           </g>
 
           {/* === GUEST FLOW ARROWS === */}
           <g style={{ pointerEvents: "none" }}>
             {/* Valet → Entrance */}
-            <path d="M 8 28.5 L 11 28.5" fill="none" stroke="rgba(255,200,50,0.3)" strokeWidth={0.15} markerEnd="url(#arrowHead)" />
+            <path d="M 8 13 L 11 13" fill="none" stroke="rgba(255,200,50,0.3)" strokeWidth={0.15} markerEnd="url(#arrowHead)" />
             {/* Entrance → Building */}
-            <path d="M 16 15 L 18 15" fill="none" stroke="rgba(168,85,247,0.3)" strokeWidth={0.15} />
+            <path d="M 16 22 L 22 22" fill="none" stroke="rgba(168,85,247,0.3)" strokeWidth={0.15} strokeDasharray="0.8 0.5" markerEnd="url(#arrowHead)" />
+            {/* HQ → Shows area (routed along bottom to avoid crossing pools) */}
+            <path d="M 38 50 L 87 50" fill="none" stroke="rgba(255,50,130,0.2)" strokeWidth={0.12} strokeDasharray="1 0.8" markerEnd="url(#arrowHead)" />
+            {/* Wellness → Pools */}
+            <path d="M 69 34 L 70 34" fill="none" stroke="rgba(0,220,100,0.25)" strokeWidth={0.12} strokeDasharray="0.8 0.5" markerEnd="url(#arrowHead)" />
+            {/* Pools → Bar */}
+            <path d="M 76 25 L 76 26" fill="none" stroke="rgba(255,100,0,0.3)" strokeWidth={0.12} markerEnd="url(#arrowHead)" />
           </g>
         </svg>
 
@@ -596,6 +665,9 @@ export function HotelFloorPlan() {
                   <div className="mt-3 px-3 py-2 rounded-lg bg-gradient-to-r from-pink-500/10 to-violet-500/10 border border-pink-500/20">
                     <p className="text-xs text-pink-300 font-semibold mb-0.5">💡 Brand & Sponsor Opportunity</p>
                     <p className="text-xs text-zinc-400 leading-relaxed">{selected.sponsorNote}</p>
+                    <Link href="/sponsors/miami-swim-week" className="inline-block mt-2 text-xs font-semibold text-pink-400 hover:text-pink-300 transition-colors">
+                      Become a Sponsor →
+                    </Link>
                   </div>
                 )}
               </div>
@@ -604,6 +676,25 @@ export function HotelFloorPlan() {
         )}
       </div>
 
+
+      {/* Legend + Mobile Hint */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mt-3 px-1">
+        <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-500">
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-sm bg-pink-500/30 border border-pink-500/50" />
+            Tap area for details
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-sm bg-white/30 border border-white/50" />
+            Seating — tap for tickets
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-sm bg-amber-500/30 border border-amber-500/50" />
+            VIP — tap for tickets
+          </span>
+        </div>
+        <p className="text-xs text-zinc-600 md:hidden">Pinch to zoom</p>
+      </div>
 
       {/* CSS animation for gradient border */}
       <style jsx>{`
