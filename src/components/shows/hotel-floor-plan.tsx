@@ -370,12 +370,6 @@ export function HotelFloorPlan({ onTicketsClick }: HotelFloorPlanProps) {
 
           {/* === EXA SWIM SHOWS — clickable → opens tickets popup === */}
           <rect x={87} y={1} width={16} height={55} rx={0.8} fill="url(#showsGrad)" stroke="rgba(255,255,255,0.12)" strokeWidth={0.12} className="cursor-pointer hover:fill-[rgba(255,50,130,0.2)] transition-all" onClick={goToTickets} />
-          {/* Shows area label */}
-          <g style={{ pointerEvents: "none" }}>
-            <text x={95} y={56} textAnchor="middle" dominantBaseline="central" fill="rgba(255,50,130,0.7)" fontSize={1.1} fontWeight="900" letterSpacing={0.15}>
-              EXA SWIM SHOWS
-            </text>
-          </g>
 
           {/* === INTRACOASTAL WATERWAY === */}
           <g>
@@ -556,7 +550,7 @@ export function HotelFloorPlan({ onTicketsClick }: HotelFloorPlanProps) {
             ))}
             {/* Center line */}
             <line x1={95.0} y1={16.5} x2={95.0} y2={48} stroke="rgba(200,200,200,0.3)" strokeWidth={0.1} strokeDasharray="1 0.8" />
-            <text x={95.0} y={33} textAnchor="middle" fill="rgba(100,100,100,0.7)" fontSize={0.6} fontWeight="700" letterSpacing={0.2} transform="rotate(90, 95.0, 33)">EXA Swim Shows Runway</text>
+            <text x={95.0} y={33} textAnchor="middle" fill="rgba(255,50,130,0.85)" fontSize={0.85} fontWeight="900" letterSpacing={0.3} transform="rotate(90, 95.0, 33)" filter="url(#neonGlow)">EXA Swim Shows Runway</text>
           </g>
 
           {/* === MEDIA PIT === */}
@@ -565,7 +559,7 @@ export function HotelFloorPlan({ onTicketsClick }: HotelFloorPlanProps) {
             {[0, 1, 2].map((row) => [0, 1, 2, 3].map((col) => (
               <rect key={`m-${row}-${col}`} x={92.2 + col * 1.4} y={49.8 + row * 1.6} width={0.8} height={0.8} rx={0.2} fill="rgba(255,255,255,0.2)" stroke="rgba(255,255,255,0.35)" strokeWidth={0.05} />
             )))}
-            <text x={95.0} y={51.5} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.95)" fontSize={0.9} fontWeight="900">📸</text>
+            <text x={95.0} y={52} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.95)" fontSize={2.5}>📸</text>
           </g>
 
           {/* === SEATING — East Row 2 (clickable → tickets) === */}
@@ -613,7 +607,6 @@ export function HotelFloorPlan({ onTicketsClick }: HotelFloorPlanProps) {
               </g>
             );
           })}
-          <text x={89.6} y={55} textAnchor="middle" fill="rgba(255,200,50,0.7)" fontSize={0.45} fontWeight="700" style={{ pointerEvents: "none" }}>VIP Booths</text>
 
           {/* === BEACH ENTRANCE === */}
           <g style={{ pointerEvents: "none" }}>
