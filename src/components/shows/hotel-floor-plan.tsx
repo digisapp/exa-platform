@@ -643,7 +643,7 @@ export function HotelFloorPlan() {
 
           {/* === SEATING — East side of runway (3 rows × 30 chairs) === */}
           <g style={{ pointerEvents: "none" }}>
-            {[0, 1, 2].map((row) => (
+            {[0, 1].map((row) => (
               <g key={`east-row-${row}`}>
                 {/* Row background */}
                 <rect
@@ -679,7 +679,7 @@ export function HotelFloorPlan() {
               fontSize={0.55}
               fontWeight="600"
             >
-              3 rows × 30 seats (East)
+              2 rows × 30 seats (East)
             </text>
           </g>
 
