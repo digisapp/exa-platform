@@ -201,30 +201,57 @@ const ROOMS: Room[] = [
     shape: "pool",
   },
 
+  // === MIAMI BEACH BOARDWALK (between pools and beach) ===
+  {
+    id: "boardwalk",
+    name: "Miami Beach Boardwalk",
+    x: 80,
+    y: 1,
+    width: 3,
+    height: 55,
+    color: "rgba(180,160,140,0.3)",
+    labelSize: "xs",
+    verticalLabel: true,
+  },
+
+  // === PALM TREES / VEGETATION ===
+  {
+    id: "palms",
+    name: "Palm Trees & Vegetation",
+    shortName: "🌴",
+    x: 83.5,
+    y: 1,
+    width: 3,
+    height: 55,
+    color: "rgba(0,180,80,0.25)",
+    labelSize: "xs",
+    verticalLabel: true,
+  },
+
   // === EXA SWIM SHOWS ===
   {
     id: "exa-swim-shows",
     name: "EXA Swim Shows",
     shortName: "EXA\nSwim Shows",
-    x: 80,
+    x: 87,
     y: 1,
     width: 16,
     height: 55,
     color: "rgba(255,50,130,0.25)",
+    labelSize: "lg",
   },
 
-  // === BEACH SIDEWALK ===
+  // === SAND BEACH ===
   {
-    id: "beach-sidewalk",
-    name: "Beach Sidewalk",
-    x: 96,
+    id: "sand-beach",
+    name: "Sand Beach",
+    x: 103.5,
     y: 1,
-    width: 3,
+    width: 4,
     height: 55,
-    color: "rgba(251,191,36,0.2)",
+    color: "rgba(251,210,120,0.2)",
     labelSize: "xs",
     verticalLabel: true,
-    labelSize: "lg",
   },
 ];
 
@@ -298,7 +325,7 @@ export function HotelFloorPlan() {
 
       {/* SVG Map */}
       <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-zinc-950/80 backdrop-blur-sm">
-        <svg viewBox="0 0 111 58" className="w-full h-auto">
+        <svg viewBox="0 0 120 58" className="w-full h-auto">
           <defs>
             <pattern id="grid" width="5" height="5" patternUnits="userSpaceOnUse">
               <path d="M 5 0 L 0 0 0 5" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="0.08" />
@@ -330,35 +357,35 @@ export function HotelFloorPlan() {
               <stop offset="100%" stopColor="rgba(0,180,255,0.12)" />
             </linearGradient>
           </defs>
-          <rect width="111" height="58" fill="url(#grid)" />
+          <rect width="120" height="58" fill="url(#grid)" />
 
           {/* === ATLANTIC OCEAN (right side) === */}
           <g>
-            <rect x="99" y="0" width="12" height="58" fill="url(#oceanGrad)" />
-            <rect x="99" y="0" width="12" height="58" fill="url(#waves)" opacity="0.9" />
+            <rect x="108" y="0" width="12" height="58" fill="url(#oceanGrad)" />
+            <rect x="108" y="0" width="12" height="58" fill="url(#waves)" opacity="0.9" />
             {/* Animated wave lines */}
-            <path d="M 102 0 Q 101.4 5, 102 10 Q 102.6 15, 102 20 Q 101.4 25, 102 30 Q 102.6 35, 102 40 Q 101.4 45, 102 50 Q 102.6 55, 102 58" fill="none" stroke="rgba(0,210,255,0.3)" strokeWidth="0.2">
+            <path d="M 111 0 Q 110.4 5, 111 10 Q 111.6 15, 111 20 Q 110.4 25, 111 30 Q 111.6 35, 111 40 Q 110.4 45, 111 50 Q 111.6 55, 111 58" fill="none" stroke="rgba(0,210,255,0.3)" strokeWidth="0.2">
               <animate attributeName="d" dur="3.5s" repeatCount="indefinite" values="
-                M 102 0 Q 101.4 5, 102 10 Q 102.6 15, 102 20 Q 101.4 25, 102 30 Q 102.6 35, 102 40 Q 101.4 45, 102 50 Q 102.6 55, 102 58;
-                M 102 0 Q 102.6 5, 102 10 Q 101.4 15, 102 20 Q 102.6 25, 102 30 Q 101.4 35, 102 40 Q 102.6 45, 102 50 Q 101.4 55, 102 58;
-                M 102 0 Q 101.4 5, 102 10 Q 102.6 15, 102 20 Q 101.4 25, 102 30 Q 102.6 35, 102 40 Q 101.4 45, 102 50 Q 102.6 55, 102 58
+                M 111 0 Q 110.4 5, 111 10 Q 111.6 15, 111 20 Q 110.4 25, 111 30 Q 111.6 35, 111 40 Q 110.4 45, 111 50 Q 111.6 55, 111 58;
+                M 111 0 Q 111.6 5, 111 10 Q 110.4 15, 111 20 Q 111.6 25, 111 30 Q 110.4 35, 111 40 Q 111.6 45, 111 50 Q 110.4 55, 111 58;
+                M 111 0 Q 110.4 5, 111 10 Q 111.6 15, 111 20 Q 110.4 25, 111 30 Q 111.6 35, 111 40 Q 110.4 45, 111 50 Q 111.6 55, 111 58
               " />
             </path>
-            <path d="M 106 0 Q 105.4 4, 106 8 Q 106.6 12, 106 16 Q 105.4 20, 106 24 Q 106.6 28, 106 32 Q 105.4 36, 106 40 Q 106.6 44, 106 48 Q 105.4 52, 106 58" fill="none" stroke="rgba(0,210,255,0.22)" strokeWidth="0.18">
+            <path d="M 115 0 Q 114.4 4, 115 8 Q 115.6 12, 115 16 Q 114.4 20, 115 24 Q 115.6 28, 115 32 Q 114.4 36, 115 40 Q 115.6 44, 115 48 Q 114.4 52, 115 58" fill="none" stroke="rgba(0,210,255,0.22)" strokeWidth="0.18">
               <animate attributeName="d" dur="4.5s" repeatCount="indefinite" values="
-                M 106 0 Q 105.4 4, 106 8 Q 106.6 12, 106 16 Q 105.4 20, 106 24 Q 106.6 28, 106 32 Q 105.4 36, 106 40 Q 106.6 44, 106 48 Q 105.4 52, 106 58;
-                M 106 0 Q 106.6 4, 106 8 Q 105.4 12, 106 16 Q 106.6 20, 106 24 Q 105.4 28, 106 32 Q 106.6 36, 106 40 Q 105.4 44, 106 48 Q 106.6 52, 106 58;
-                M 106 0 Q 105.4 4, 106 8 Q 106.6 12, 106 16 Q 105.4 20, 106 24 Q 106.6 28, 106 32 Q 105.4 36, 106 40 Q 106.6 44, 106 48 Q 105.4 52, 106 58
+                M 115 0 Q 114.4 4, 115 8 Q 115.6 12, 115 16 Q 114.4 20, 115 24 Q 115.6 28, 115 32 Q 114.4 36, 115 40 Q 115.6 44, 115 48 Q 114.4 52, 115 58;
+                M 115 0 Q 115.6 4, 115 8 Q 114.4 12, 115 16 Q 115.6 20, 115 24 Q 114.4 28, 115 32 Q 115.6 36, 115 40 Q 114.4 44, 115 48 Q 115.6 52, 115 58;
+                M 115 0 Q 114.4 4, 115 8 Q 115.6 12, 115 16 Q 114.4 20, 115 24 Q 115.6 28, 115 32 Q 114.4 36, 115 40 Q 115.6 44, 115 48 Q 114.4 52, 115 58
               " />
             </path>
-            <path d="M 109 2 Q 108.5 6, 109 10 Q 109.5 14, 109 18 Q 108.5 22, 109 26 Q 109.5 30, 109 34 Q 108.5 38, 109 42 Q 109.5 46, 109 50 Q 108.5 54, 109 58" fill="none" stroke="rgba(0,210,255,0.12)" strokeWidth="0.15">
+            <path d="M 118 2 Q 117.5 6, 118 10 Q 118.5 14, 118 18 Q 117.5 22, 118 26 Q 118.5 30, 118 34 Q 117.5 38, 118 42 Q 118.5 46, 118 50 Q 117.5 54, 118 58" fill="none" stroke="rgba(0,210,255,0.12)" strokeWidth="0.15">
               <animate attributeName="d" dur="5.5s" repeatCount="indefinite" values="
-                M 109 2 Q 108.5 6, 109 10 Q 109.5 14, 109 18 Q 108.5 22, 109 26 Q 109.5 30, 109 34 Q 108.5 38, 109 42 Q 109.5 46, 109 50 Q 108.5 54, 109 58;
-                M 109 2 Q 109.5 6, 109 10 Q 108.5 14, 109 18 Q 109.5 22, 109 26 Q 108.5 30, 109 34 Q 109.5 38, 109 42 Q 108.5 46, 109 50 Q 109.5 54, 109 58;
-                M 109 2 Q 108.5 6, 109 10 Q 109.5 14, 109 18 Q 108.5 22, 109 26 Q 109.5 30, 109 34 Q 108.5 38, 109 42 Q 109.5 46, 109 50 Q 108.5 54, 109 58
+                M 118 2 Q 117.5 6, 118 10 Q 118.5 14, 118 18 Q 117.5 22, 118 26 Q 118.5 30, 118 34 Q 117.5 38, 118 42 Q 118.5 46, 118 50 Q 117.5 54, 118 58;
+                M 118 2 Q 118.5 6, 118 10 Q 117.5 14, 118 18 Q 118.5 22, 118 26 Q 117.5 30, 118 34 Q 118.5 38, 118 42 Q 117.5 46, 118 50 Q 118.5 54, 118 58;
+                M 118 2 Q 117.5 6, 118 10 Q 118.5 14, 118 18 Q 117.5 22, 118 26 Q 118.5 30, 118 34 Q 117.5 38, 118 42 Q 118.5 46, 118 50 Q 117.5 54, 118 58
               " />
             </path>
-            <text x="105" y="29" textAnchor="middle" fill="rgba(0,210,255,0.35)" fontSize="1.4" fontWeight="700" letterSpacing="0.5" transform="rotate(90, 105, 29)">
+            <text x="114" y="29" textAnchor="middle" fill="rgba(0,210,255,0.35)" fontSize="1.4" fontWeight="700" letterSpacing="0.5" transform="rotate(90, 114, 29)">
               ATLANTIC OCEAN
             </text>
           </g>
@@ -535,7 +562,7 @@ export function HotelFloorPlan() {
           <g style={{ pointerEvents: "none" }}>
             {/* Runway shadow/glow */}
             <rect
-              x={86.5}
+              x={93.5}
               y={6}
               width={3}
               height={44}
@@ -544,7 +571,7 @@ export function HotelFloorPlan() {
             />
             {/* Runway surface */}
             <rect
-              x={87}
+              x={94}
               y={7}
               width={2}
               height={42}
@@ -555,9 +582,9 @@ export function HotelFloorPlan() {
             />
             {/* Center line */}
             <line
-              x1={88}
+              x1={95}
               y1={8}
-              x2={88}
+              x2={95}
               y2={48}
               stroke="rgba(255,255,255,0.15)"
               strokeWidth={0.1}
@@ -565,7 +592,7 @@ export function HotelFloorPlan() {
             />
             {/* Stage end (wider platform at top) */}
             <rect
-              x={85.5}
+              x={92.5}
               y={5}
               width={5}
               height={3}
@@ -576,20 +603,20 @@ export function HotelFloorPlan() {
             />
             {/* Label */}
             <text
-              x={88}
+              x={95}
               y={29}
               textAnchor="middle"
               fill="rgba(255,255,255,0.45)"
               fontSize={0.7}
               fontWeight="700"
               letterSpacing={0.3}
-              transform="rotate(90, 88, 29)"
+              transform="rotate(90, 95, 29)"
             >
               50ft RUNWAY
             </text>
             {/* Stage label */}
             <text
-              x={88}
+              x={95}
               y={6.5}
               textAnchor="middle"
               dominantBaseline="central"
@@ -604,7 +631,7 @@ export function HotelFloorPlan() {
           {/* === MEDIA PIT — 15ft × 15ft at end of runway === */}
           <g style={{ pointerEvents: "none" }}>
             <rect
-              x={84.5}
+              x={91.5}
               y={49.5}
               width={7}
               height={6}
@@ -619,7 +646,7 @@ export function HotelFloorPlan() {
               [0, 1, 2, 3].map((col) => (
                 <rect
                   key={`media-${row}-${col}`}
-                  x={85.2 + col * 1.4}
+                  x={92.2 + col * 1.4}
                   y={50.3 + row * 1.6}
                   width={0.8}
                   height={0.8}
@@ -631,7 +658,7 @@ export function HotelFloorPlan() {
               ))
             )}
             <text
-              x={88}
+              x={95}
               y={50}
               textAnchor="middle"
               dominantBaseline="central"
@@ -642,7 +669,7 @@ export function HotelFloorPlan() {
               📸 MEDIA PIT
             </text>
             <text
-              x={88}
+              x={95}
               y={54.5}
               textAnchor="middle"
               dominantBaseline="central"
@@ -654,13 +681,13 @@ export function HotelFloorPlan() {
             </text>
           </g>
 
-          {/* === SEATING — East side of runway (3 rows × 30 chairs) === */}
+          {/* === SEATING — East side of runway (2 rows × 30 chairs) === */}
           <g style={{ pointerEvents: "none" }}>
             {[0, 1].map((row) => (
               <g key={`east-row-${row}`}>
                 {/* Row background */}
                 <rect
-                  x={89.5 + row * 1.8}
+                  x={96.5 + row * 1.8}
                   y={8}
                   width={1.4}
                   height={40}
@@ -671,7 +698,7 @@ export function HotelFloorPlan() {
                 {Array.from({ length: 30 }).map((_, i) => (
                   <rect
                     key={`east-${row}-${i}`}
-                    x={89.7 + row * 1.8}
+                    x={96.7 + row * 1.8}
                     y={8.4 + i * 1.32}
                     width={1.0}
                     height={0.9}
@@ -685,7 +712,7 @@ export function HotelFloorPlan() {
             ))}
             {/* East label */}
             <text
-              x={92}
+              x={99}
               y={50}
               textAnchor="middle"
               fill="rgba(255,255,255,0.35)"
@@ -700,7 +727,7 @@ export function HotelFloorPlan() {
           <g style={{ pointerEvents: "none" }}>
             {/* Row background */}
             <rect
-              x={85.3}
+              x={92.3}
               y={8}
               width={1.4}
               height={40}
@@ -711,7 +738,7 @@ export function HotelFloorPlan() {
             {Array.from({ length: 30 }).map((_, i) => (
               <rect
                 key={`west-${i}`}
-                x={85.5}
+                x={92.5}
                 y={8.4 + i * 1.32}
                 width={1.0}
                 height={0.9}
@@ -723,7 +750,7 @@ export function HotelFloorPlan() {
             ))}
             {/* West chairs label */}
             <text
-              x={86}
+              x={93}
               y={50}
               textAnchor="middle"
               fill="rgba(255,255,255,0.35)"
@@ -742,7 +769,7 @@ export function HotelFloorPlan() {
                 <g key={`vip-${i}`}>
                   {/* Booth background */}
                   <rect
-                    x={80.5}
+                    x={87.5}
                     y={boothY}
                     width={4.2}
                     height={7.5}
@@ -753,7 +780,7 @@ export function HotelFloorPlan() {
                   />
                   {/* Table */}
                   <rect
-                    x={81.8}
+                    x={88.8}
                     y={boothY + 1.8}
                     width={2}
                     height={3.5}
@@ -764,7 +791,7 @@ export function HotelFloorPlan() {
                   />
                   {/* Left bench */}
                   <rect
-                    x={80.8}
+                    x={87.8}
                     y={boothY + 1.5}
                     width={0.7}
                     height={4}
@@ -775,7 +802,7 @@ export function HotelFloorPlan() {
                   />
                   {/* Right bench (against the chairs) */}
                   <rect
-                    x={84.1}
+                    x={91.1}
                     y={boothY + 1.5}
                     width={0.4}
                     height={4}
@@ -786,7 +813,7 @@ export function HotelFloorPlan() {
                   />
                   {/* VIP label */}
                   <text
-                    x={82.6}
+                    x={89.6}
                     y={boothY + 0.7}
                     textAnchor="middle"
                     dominantBaseline="central"
@@ -801,7 +828,7 @@ export function HotelFloorPlan() {
             })}
             {/* VIP section label */}
             <text
-              x={82.6}
+              x={89.6}
               y={50}
               textAnchor="middle"
               fill="rgba(255,200,50,0.4)"
