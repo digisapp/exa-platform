@@ -129,7 +129,7 @@ function CoinTipButton({
       if (tapCount.current <= 3) {
         setShowHint(true);
         if (hintTimer.current) clearTimeout(hintTimer.current);
-        hintTimer.current = setTimeout(() => setShowHint(false), 3000);
+        hintTimer.current = setTimeout(() => setShowHint(false), 5000);
       }
     }
   }, [onTip, disabled]);
@@ -201,6 +201,8 @@ interface Props {
   onSuperTip?: (messageId: string) => void;
   isTipping?: boolean;
   isPinnedDisplay?: boolean;
+  /** Rendered inline next to the tip button so it anchors right above it */
+  tipPickerSlot?: React.ReactNode;
 }
 
 export function LiveWallMessage({
@@ -214,6 +216,7 @@ export function LiveWallMessage({
   onSuperTip,
   isTipping,
   isPinnedDisplay,
+  tipPickerSlot,
 }: Props) {
   // System messages
   if (message.message_type === "system") {
@@ -386,13 +389,16 @@ export function LiveWallMessage({
           })}
           {/* Coin tip button — tap = 1 coin, long-press = super tip picker */}
           {canTip && (
-            <CoinTipButton
-              tipTotal={message.tip_total || 0}
-              onTip={() => onTip?.(message.id)}
-              onSuperTip={() => onSuperTip?.(message.id)}
-              displayName={message.display_name}
-              disabled={isTipping}
-            />
+            <div className="relative">
+              <CoinTipButton
+                tipTotal={message.tip_total || 0}
+                onTip={() => onTip?.(message.id)}
+                onSuperTip={() => onSuperTip?.(message.id)}
+                displayName={message.display_name}
+                disabled={isTipping}
+              />
+              {tipPickerSlot}
+            </div>
           )}
         </div>
       </div>

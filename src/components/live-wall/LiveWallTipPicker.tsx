@@ -34,7 +34,7 @@ export function LiveWallTipPicker({
 
   return (
     <div
-      className="absolute bottom-full right-0 mb-2 rounded-xl border border-amber-500/20 bg-black/95 backdrop-blur-xl shadow-2xl z-50 overflow-hidden"
+      className="absolute bottom-full left-0 mb-2 rounded-xl border border-amber-500/20 bg-black/95 backdrop-blur-xl shadow-2xl z-50 overflow-hidden"
       onClick={(e) => e.stopPropagation()}
     >
       {/* Header */}

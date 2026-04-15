@@ -579,28 +579,28 @@ export function LiveWall({ initialMessages, currentUser }: Props) {
           <>
             {/* Pinned message (above scroll) */}
             {pinnedMessage && (
-              <div className="relative">
-                <LiveWallMessage
-                  message={pinnedMessage}
-                  currentActorId={currentUser?.actorId}
-                  isAdmin={isAdmin}
-                  onReact={handleReact}
-                  onDelete={handleDelete}
-                  onPin={handlePin}
-                  onTip={handleMicroTip}
-                  onSuperTip={handleSuperTipClick}
-                  isTipping={isMicroTipping}
-                  isPinnedDisplay
-                />
-                {tippingMessageId === pinnedMessage.id && (
-                  <LiveWallTipPicker
-                    recipientName={pinnedMessage.display_name}
-                    coinBalance={coinBalance}
-                    onTip={handleSuperTipSend}
-                    onClose={() => setTippingMessageId(null)}
-                  />
-                )}
-              </div>
+              <LiveWallMessage
+                message={pinnedMessage}
+                currentActorId={currentUser?.actorId}
+                isAdmin={isAdmin}
+                onReact={handleReact}
+                onDelete={handleDelete}
+                onPin={handlePin}
+                onTip={handleMicroTip}
+                onSuperTip={handleSuperTipClick}
+                isTipping={isMicroTipping}
+                isPinnedDisplay
+                tipPickerSlot={
+                  tippingMessageId === pinnedMessage.id ? (
+                    <LiveWallTipPicker
+                      recipientName={pinnedMessage.display_name}
+                      coinBalance={coinBalance}
+                      onTip={handleSuperTipSend}
+                      onClose={() => setTippingMessageId(null)}
+                    />
+                  ) : undefined
+                }
+              />
             )}
 
             {/* Scrollable message area */}
@@ -620,28 +620,28 @@ export function LiveWall({ initialMessages, currentUser }: Props) {
                   messages
                     .filter((m) => !m.is_pinned) // Don't show pinned in scroll area
                     .map((msg) => (
-                      <div key={msg.id} className="relative">
-                        <LiveWallMessage
-                          message={msg}
-                          currentActorId={currentUser?.actorId}
-                          isAdmin={isAdmin}
-                          onReact={handleReact}
-                          onDelete={handleDelete}
-                          onPin={handlePin}
-                          onTip={handleMicroTip}
-                          onSuperTip={handleSuperTipClick}
-                          isTipping={isMicroTipping}
-                        />
-                        {/* Super Tip picker (anchored to message, opens on long-press) */}
-                        {tippingMessageId === msg.id && tippingMessage && (
-                          <LiveWallTipPicker
-                            recipientName={tippingMessage.display_name}
-                            coinBalance={coinBalance}
-                            onTip={handleSuperTipSend}
-                            onClose={() => setTippingMessageId(null)}
-                          />
-                        )}
-                      </div>
+                      <LiveWallMessage
+                        key={msg.id}
+                        message={msg}
+                        currentActorId={currentUser?.actorId}
+                        isAdmin={isAdmin}
+                        onReact={handleReact}
+                        onDelete={handleDelete}
+                        onPin={handlePin}
+                        onTip={handleMicroTip}
+                        onSuperTip={handleSuperTipClick}
+                        isTipping={isMicroTipping}
+                        tipPickerSlot={
+                          tippingMessageId === msg.id ? (
+                            <LiveWallTipPicker
+                              recipientName={msg.display_name}
+                              coinBalance={coinBalance}
+                              onTip={handleSuperTipSend}
+                              onClose={() => setTippingMessageId(null)}
+                            />
+                          ) : undefined
+                        }
+                      />
                     ))
                 )}
               </div>
