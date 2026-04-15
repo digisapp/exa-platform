@@ -66,10 +66,10 @@ const ROOMS: Room[] = [
     shortName: "Grand\nEntrance",
     x: 7,
     y: 1,
-    width: 14,
+    width: 7,
     height: 55,
     color: "rgba(168,85,247,0.2)",
-    labelSize: "lg",
+    labelSize: "md",
   },
 
   // === TOP ROW ===
@@ -78,7 +78,7 @@ const ROOMS: Room[] = [
     name: "Cabanas",
     x: 60,
     y: 1,
-    width: 14,
+    width: 20,
     height: 9,
     color: "rgba(255,165,0,0.35)",
     labelSize: "sm",
@@ -161,7 +161,7 @@ const ROOMS: Room[] = [
     capacity: { reception: 200, rounds: 130, theatre: 150, school: 100 },
     x: 51,
     y: 30,
-    width: 14,
+    width: 11,
     height: 16,
     color: "rgba(0,210,255,0.3)",
   },
@@ -285,7 +285,7 @@ export function HotelFloorPlan() {
 
       {/* SVG Map */}
       <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-zinc-950/80 backdrop-blur-sm">
-        <svg viewBox="0 0 100 58" className="w-full h-auto">
+        <svg viewBox="0 0 108 58" className="w-full h-auto">
           <defs>
             <pattern id="grid" width="5" height="5" patternUnits="userSpaceOnUse">
               <path d="M 5 0 L 0 0 0 5" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="0.08" />
@@ -317,28 +317,35 @@ export function HotelFloorPlan() {
               <stop offset="100%" stopColor="rgba(0,180,255,0.12)" />
             </linearGradient>
           </defs>
-          <rect width="100" height="58" fill="url(#grid)" />
+          <rect width="108" height="58" fill="url(#grid)" />
 
-          {/* === ATLANTIC OCEAN (right edge) === */}
+          {/* === ATLANTIC OCEAN (right side, doubled width) === */}
           <g>
-            <rect x="97" y="0" width="3" height="58" fill="url(#oceanGrad)" />
-            <rect x="96" y="0" width="4" height="58" fill="url(#waves)" opacity="0.9" />
+            <rect x="96" y="0" width="12" height="58" fill="url(#oceanGrad)" />
+            <rect x="96" y="0" width="12" height="58" fill="url(#waves)" opacity="0.9" />
             {/* Animated wave lines */}
-            <path d="M 99.3 0 Q 98.7 5, 99.3 10 Q 99.8 15, 99.3 20 Q 98.7 25, 99.3 30 Q 99.8 35, 99.3 40 Q 98.7 45, 99.3 50 Q 99.8 55, 99.3 58" fill="none" stroke="rgba(0,210,255,0.3)" strokeWidth="0.2">
+            <path d="M 99 0 Q 98.4 5, 99 10 Q 99.6 15, 99 20 Q 98.4 25, 99 30 Q 99.6 35, 99 40 Q 98.4 45, 99 50 Q 99.6 55, 99 58" fill="none" stroke="rgba(0,210,255,0.3)" strokeWidth="0.2">
               <animate attributeName="d" dur="3.5s" repeatCount="indefinite" values="
-                M 99.3 0 Q 98.7 5, 99.3 10 Q 99.8 15, 99.3 20 Q 98.7 25, 99.3 30 Q 99.8 35, 99.3 40 Q 98.7 45, 99.3 50 Q 99.8 55, 99.3 58;
-                M 99.3 0 Q 99.8 5, 99.3 10 Q 98.7 15, 99.3 20 Q 99.8 25, 99.3 30 Q 98.7 35, 99.3 40 Q 99.8 45, 99.3 50 Q 98.7 55, 99.3 58;
-                M 99.3 0 Q 98.7 5, 99.3 10 Q 99.8 15, 99.3 20 Q 98.7 25, 99.3 30 Q 99.8 35, 99.3 40 Q 98.7 45, 99.3 50 Q 99.8 55, 99.3 58
+                M 99 0 Q 98.4 5, 99 10 Q 99.6 15, 99 20 Q 98.4 25, 99 30 Q 99.6 35, 99 40 Q 98.4 45, 99 50 Q 99.6 55, 99 58;
+                M 99 0 Q 99.6 5, 99 10 Q 98.4 15, 99 20 Q 99.6 25, 99 30 Q 98.4 35, 99 40 Q 99.6 45, 99 50 Q 98.4 55, 99 58;
+                M 99 0 Q 98.4 5, 99 10 Q 99.6 15, 99 20 Q 98.4 25, 99 30 Q 99.6 35, 99 40 Q 98.4 45, 99 50 Q 99.6 55, 99 58
               " />
             </path>
-            <path d="M 98 0 Q 97.5 4, 98 8 Q 98.5 12, 98 16 Q 97.5 20, 98 24 Q 98.5 28, 98 32 Q 97.5 36, 98 40 Q 98.5 44, 98 48 Q 97.5 52, 98 58" fill="none" stroke="rgba(0,210,255,0.18)" strokeWidth="0.15">
+            <path d="M 103 0 Q 102.4 4, 103 8 Q 103.6 12, 103 16 Q 102.4 20, 103 24 Q 103.6 28, 103 32 Q 102.4 36, 103 40 Q 103.6 44, 103 48 Q 102.4 52, 103 58" fill="none" stroke="rgba(0,210,255,0.22)" strokeWidth="0.18">
               <animate attributeName="d" dur="4.5s" repeatCount="indefinite" values="
-                M 98 0 Q 97.5 4, 98 8 Q 98.5 12, 98 16 Q 97.5 20, 98 24 Q 98.5 28, 98 32 Q 97.5 36, 98 40 Q 98.5 44, 98 48 Q 97.5 52, 98 58;
-                M 98 0 Q 98.5 4, 98 8 Q 97.5 12, 98 16 Q 98.5 20, 98 24 Q 97.5 28, 98 32 Q 98.5 36, 98 40 Q 97.5 44, 98 48 Q 98.5 52, 98 58;
-                M 98 0 Q 97.5 4, 98 8 Q 98.5 12, 98 16 Q 97.5 20, 98 24 Q 98.5 28, 98 32 Q 97.5 36, 98 40 Q 98.5 44, 98 48 Q 97.5 52, 98 58
+                M 103 0 Q 102.4 4, 103 8 Q 103.6 12, 103 16 Q 102.4 20, 103 24 Q 103.6 28, 103 32 Q 102.4 36, 103 40 Q 103.6 44, 103 48 Q 102.4 52, 103 58;
+                M 103 0 Q 103.6 4, 103 8 Q 102.4 12, 103 16 Q 103.6 20, 103 24 Q 102.4 28, 103 32 Q 103.6 36, 103 40 Q 102.4 44, 103 48 Q 103.6 52, 103 58;
+                M 103 0 Q 102.4 4, 103 8 Q 103.6 12, 103 16 Q 102.4 20, 103 24 Q 103.6 28, 103 32 Q 102.4 36, 103 40 Q 103.6 44, 103 48 Q 102.4 52, 103 58
               " />
             </path>
-            <text x="99" y="29" textAnchor="middle" fill="rgba(0,210,255,0.3)" fontSize="0.9" fontWeight="700" letterSpacing="0.5" transform="rotate(90, 99, 29)">
+            <path d="M 106 2 Q 105.5 6, 106 10 Q 106.5 14, 106 18 Q 105.5 22, 106 26 Q 106.5 30, 106 34 Q 105.5 38, 106 42 Q 106.5 46, 106 50 Q 105.5 54, 106 58" fill="none" stroke="rgba(0,210,255,0.12)" strokeWidth="0.15">
+              <animate attributeName="d" dur="5.5s" repeatCount="indefinite" values="
+                M 106 2 Q 105.5 6, 106 10 Q 106.5 14, 106 18 Q 105.5 22, 106 26 Q 106.5 30, 106 34 Q 105.5 38, 106 42 Q 106.5 46, 106 50 Q 105.5 54, 106 58;
+                M 106 2 Q 106.5 6, 106 10 Q 105.5 14, 106 18 Q 106.5 22, 106 26 Q 105.5 30, 106 34 Q 106.5 38, 106 42 Q 105.5 46, 106 50 Q 106.5 54, 106 58;
+                M 106 2 Q 105.5 6, 106 10 Q 106.5 14, 106 18 Q 105.5 22, 106 26 Q 106.5 30, 106 34 Q 105.5 38, 106 42 Q 106.5 46, 106 50 Q 105.5 54, 106 58
+              " />
+            </path>
+            <text x="102" y="29" textAnchor="middle" fill="rgba(0,210,255,0.35)" fontSize="1.4" fontWeight="700" letterSpacing="0.5" transform="rotate(90, 102, 29)">
               ATLANTIC OCEAN
             </text>
           </g>
@@ -428,7 +435,7 @@ export function HotelFloorPlan() {
             <rect
               x={3.5}
               y={22}
-              width={18}
+              width={11}
               height={6}
               rx={0.3}
               fill="rgba(220,20,20,0.12)"
@@ -437,7 +444,7 @@ export function HotelFloorPlan() {
             <rect
               x={4}
               y={23}
-              width={17}
+              width={10}
               height={4}
               rx={0.3}
               fill="rgba(220,20,20,0.45)"
@@ -445,25 +452,25 @@ export function HotelFloorPlan() {
               strokeWidth={0.15}
             />
             {/* Gold trim edges */}
-            <line x1={4} y1={23} x2={21} y2={23} stroke="rgba(255,200,50,0.5)" strokeWidth={0.15} />
-            <line x1={4} y1={27} x2={21} y2={27} stroke="rgba(255,200,50,0.5)" strokeWidth={0.15} />
+            <line x1={4} y1={23} x2={14} y2={23} stroke="rgba(255,200,50,0.5)" strokeWidth={0.15} />
+            <line x1={4} y1={27} x2={14} y2={27} stroke="rgba(255,200,50,0.5)" strokeWidth={0.15} />
             {/* Direction arrow (west → east) */}
-            <path d="M 18.5 25 L 20 25 L 19.3 24.3 M 20 25 L 19.3 25.7" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth={0.12} />
+            <path d="M 12.5 25 L 13.5 25 L 13 24.3 M 13.5 25 L 13 25.7" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth={0.12} />
             {/* Red carpet label */}
             <text
-              x={12}
+              x={9}
               y={24.6}
               textAnchor="middle"
               dominantBaseline="central"
               fill="rgba(255,255,255,0.7)"
-              fontSize={0.75}
+              fontSize={0.7}
               fontWeight="700"
               letterSpacing={0.2}
             >
               RED CARPET — 20ft
             </text>
             <text
-              x={12}
+              x={9}
               y={25.7}
               textAnchor="middle"
               dominantBaseline="central"
@@ -480,7 +487,7 @@ export function HotelFloorPlan() {
             <rect
               x={7.5}
               y={16}
-              width={13}
+              width={6}
               height={4}
               rx={0.4}
               fill="rgba(255,50,130,0.25)"
@@ -488,7 +495,7 @@ export function HotelFloorPlan() {
               strokeWidth={0.12}
             />
             <text
-              x={14}
+              x={10.5}
               y={18}
               textAnchor="middle"
               dominantBaseline="central"
