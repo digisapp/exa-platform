@@ -59,30 +59,17 @@ const ROOMS: Room[] = [
     verticalLabel: true,
   },
 
-  // === OUTDOOR RED CARPET & PHOTO WALL ===
+  // === GRAND ENTRANCE (large outdoor area) ===
   {
-    id: "red-carpet",
-    name: "Red Carpet & Photo Wall — Outdoor Waiting Area",
-    shortName: "Red Carpet &\nPhoto Wall 📸",
+    id: "grand-entrance",
+    name: "Grand Entrance — Outdoor Arrival Area",
+    shortName: "Grand\nEntrance",
     x: 7,
     y: 1,
-    width: 7,
-    height: 25,
-    color: "rgba(220,20,20,0.35)",
-    labelSize: "sm",
-  },
-
-  // === HOTEL ENTRANCE (doorway into building) ===
-  {
-    id: "hotel-entrance",
-    name: "Hotel Entrance → Upstairs to Mezzanine",
-    shortName: "Hotel\nEntrance 🚪",
-    x: 7,
-    y: 27,
-    width: 7,
-    height: 10,
-    color: "rgba(168,85,247,0.3)",
-    labelSize: "sm",
+    width: 14,
+    height: 55,
+    color: "rgba(168,85,247,0.2)",
+    labelSize: "lg",
   },
 
   // === TOP ROW ===
@@ -137,42 +124,6 @@ const ROOMS: Room[] = [
     width: 14,
     height: 14,
     color: "rgba(0,210,255,0.35)",
-  },
-
-  // === ORCHID BALCONY (vertical strip) ===
-  {
-    id: "orchid-balcony",
-    name: "Orchid Balcony",
-    shortName: "Orchid Balcony",
-    x: 58,
-    y: 3,
-    width: 3,
-    height: 36,
-    color: "rgba(200,130,255,0.3)",
-    labelSize: "xs",
-    verticalLabel: true,
-  },
-
-  // === OUTDOOR PATIOS ===
-  {
-    id: "orchid-patio",
-    name: "Orchid Patio",
-    x: 25,
-    y: 19,
-    width: 14,
-    height: 9,
-    color: "rgba(0,230,118,0.3)",
-    labelSize: "sm",
-  },
-  {
-    id: "sky-patio",
-    name: "Sky Patio",
-    x: 41,
-    y: 19,
-    width: 14,
-    height: 9,
-    color: "rgba(0,230,118,0.3)",
-    labelSize: "sm",
   },
 
   // === LOWER SECTION ===
@@ -470,6 +421,84 @@ export function HotelFloorPlan() {
               </g>
             );
           })}
+
+          {/* === RED CARPET — 20ft wide, runs west→east through Grand Entrance === */}
+          <g style={{ pointerEvents: "none" }}>
+            {/* Red carpet glow */}
+            <rect
+              x={3.5}
+              y={22}
+              width={18}
+              height={6}
+              rx={0.3}
+              fill="rgba(220,20,20,0.12)"
+            />
+            {/* Red carpet surface */}
+            <rect
+              x={4}
+              y={23}
+              width={17}
+              height={4}
+              rx={0.3}
+              fill="rgba(220,20,20,0.45)"
+              stroke="rgba(255,80,80,0.5)"
+              strokeWidth={0.15}
+            />
+            {/* Gold trim edges */}
+            <line x1={4} y1={23} x2={21} y2={23} stroke="rgba(255,200,50,0.5)" strokeWidth={0.15} />
+            <line x1={4} y1={27} x2={21} y2={27} stroke="rgba(255,200,50,0.5)" strokeWidth={0.15} />
+            {/* Direction arrow (west → east) */}
+            <path d="M 18.5 25 L 20 25 L 19.3 24.3 M 20 25 L 19.3 25.7" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth={0.12} />
+            {/* Red carpet label */}
+            <text
+              x={12}
+              y={24.6}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fill="rgba(255,255,255,0.7)"
+              fontSize={0.75}
+              fontWeight="700"
+              letterSpacing={0.2}
+            >
+              RED CARPET — 20ft
+            </text>
+            <text
+              x={12}
+              y={25.7}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fill="rgba(255,255,255,0.45)"
+              fontSize={0.55}
+              fontWeight="500"
+            >
+              W → E
+            </text>
+          </g>
+
+          {/* === PHOTO WALL — at the entrance === */}
+          <g style={{ pointerEvents: "none" }}>
+            <rect
+              x={7.5}
+              y={16}
+              width={13}
+              height={4}
+              rx={0.4}
+              fill="rgba(255,50,130,0.25)"
+              stroke="rgba(255,50,130,0.4)"
+              strokeWidth={0.12}
+            />
+            <text
+              x={14}
+              y={18}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fill="rgba(255,255,255,0.6)"
+              fontSize={0.7}
+              fontWeight="600"
+            >
+              📸 Photo Wall & Photographers
+            </text>
+          </g>
 
           {/* === 50ft RUNWAY — white stage down center of EXA Swim Shows === */}
           <g style={{ pointerEvents: "none" }}>
