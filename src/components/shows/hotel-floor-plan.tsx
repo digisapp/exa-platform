@@ -211,6 +211,19 @@ const ROOMS: Room[] = [
     width: 16,
     height: 55,
     color: "rgba(255,50,130,0.25)",
+  },
+
+  // === BEACH SIDEWALK ===
+  {
+    id: "beach-sidewalk",
+    name: "Beach Sidewalk",
+    x: 96,
+    y: 1,
+    width: 3,
+    height: 55,
+    color: "rgba(251,191,36,0.2)",
+    labelSize: "xs",
+    verticalLabel: true,
     labelSize: "lg",
   },
 ];
@@ -285,7 +298,7 @@ export function HotelFloorPlan() {
 
       {/* SVG Map */}
       <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-zinc-950/80 backdrop-blur-sm">
-        <svg viewBox="0 0 108 58" className="w-full h-auto">
+        <svg viewBox="0 0 111 58" className="w-full h-auto">
           <defs>
             <pattern id="grid" width="5" height="5" patternUnits="userSpaceOnUse">
               <path d="M 5 0 L 0 0 0 5" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="0.08" />
@@ -317,35 +330,35 @@ export function HotelFloorPlan() {
               <stop offset="100%" stopColor="rgba(0,180,255,0.12)" />
             </linearGradient>
           </defs>
-          <rect width="108" height="58" fill="url(#grid)" />
+          <rect width="111" height="58" fill="url(#grid)" />
 
-          {/* === ATLANTIC OCEAN (right side, doubled width) === */}
+          {/* === ATLANTIC OCEAN (right side) === */}
           <g>
-            <rect x="96" y="0" width="12" height="58" fill="url(#oceanGrad)" />
-            <rect x="96" y="0" width="12" height="58" fill="url(#waves)" opacity="0.9" />
+            <rect x="99" y="0" width="12" height="58" fill="url(#oceanGrad)" />
+            <rect x="99" y="0" width="12" height="58" fill="url(#waves)" opacity="0.9" />
             {/* Animated wave lines */}
-            <path d="M 99 0 Q 98.4 5, 99 10 Q 99.6 15, 99 20 Q 98.4 25, 99 30 Q 99.6 35, 99 40 Q 98.4 45, 99 50 Q 99.6 55, 99 58" fill="none" stroke="rgba(0,210,255,0.3)" strokeWidth="0.2">
+            <path d="M 102 0 Q 101.4 5, 102 10 Q 102.6 15, 102 20 Q 101.4 25, 102 30 Q 102.6 35, 102 40 Q 101.4 45, 102 50 Q 102.6 55, 102 58" fill="none" stroke="rgba(0,210,255,0.3)" strokeWidth="0.2">
               <animate attributeName="d" dur="3.5s" repeatCount="indefinite" values="
-                M 99 0 Q 98.4 5, 99 10 Q 99.6 15, 99 20 Q 98.4 25, 99 30 Q 99.6 35, 99 40 Q 98.4 45, 99 50 Q 99.6 55, 99 58;
-                M 99 0 Q 99.6 5, 99 10 Q 98.4 15, 99 20 Q 99.6 25, 99 30 Q 98.4 35, 99 40 Q 99.6 45, 99 50 Q 98.4 55, 99 58;
-                M 99 0 Q 98.4 5, 99 10 Q 99.6 15, 99 20 Q 98.4 25, 99 30 Q 99.6 35, 99 40 Q 98.4 45, 99 50 Q 99.6 55, 99 58
+                M 102 0 Q 101.4 5, 102 10 Q 102.6 15, 102 20 Q 101.4 25, 102 30 Q 102.6 35, 102 40 Q 101.4 45, 102 50 Q 102.6 55, 102 58;
+                M 102 0 Q 102.6 5, 102 10 Q 101.4 15, 102 20 Q 102.6 25, 102 30 Q 101.4 35, 102 40 Q 102.6 45, 102 50 Q 101.4 55, 102 58;
+                M 102 0 Q 101.4 5, 102 10 Q 102.6 15, 102 20 Q 101.4 25, 102 30 Q 102.6 35, 102 40 Q 101.4 45, 102 50 Q 102.6 55, 102 58
               " />
             </path>
-            <path d="M 103 0 Q 102.4 4, 103 8 Q 103.6 12, 103 16 Q 102.4 20, 103 24 Q 103.6 28, 103 32 Q 102.4 36, 103 40 Q 103.6 44, 103 48 Q 102.4 52, 103 58" fill="none" stroke="rgba(0,210,255,0.22)" strokeWidth="0.18">
+            <path d="M 106 0 Q 105.4 4, 106 8 Q 106.6 12, 106 16 Q 105.4 20, 106 24 Q 106.6 28, 106 32 Q 105.4 36, 106 40 Q 106.6 44, 106 48 Q 105.4 52, 106 58" fill="none" stroke="rgba(0,210,255,0.22)" strokeWidth="0.18">
               <animate attributeName="d" dur="4.5s" repeatCount="indefinite" values="
-                M 103 0 Q 102.4 4, 103 8 Q 103.6 12, 103 16 Q 102.4 20, 103 24 Q 103.6 28, 103 32 Q 102.4 36, 103 40 Q 103.6 44, 103 48 Q 102.4 52, 103 58;
-                M 103 0 Q 103.6 4, 103 8 Q 102.4 12, 103 16 Q 103.6 20, 103 24 Q 102.4 28, 103 32 Q 103.6 36, 103 40 Q 102.4 44, 103 48 Q 103.6 52, 103 58;
-                M 103 0 Q 102.4 4, 103 8 Q 103.6 12, 103 16 Q 102.4 20, 103 24 Q 103.6 28, 103 32 Q 102.4 36, 103 40 Q 103.6 44, 103 48 Q 102.4 52, 103 58
+                M 106 0 Q 105.4 4, 106 8 Q 106.6 12, 106 16 Q 105.4 20, 106 24 Q 106.6 28, 106 32 Q 105.4 36, 106 40 Q 106.6 44, 106 48 Q 105.4 52, 106 58;
+                M 106 0 Q 106.6 4, 106 8 Q 105.4 12, 106 16 Q 106.6 20, 106 24 Q 105.4 28, 106 32 Q 106.6 36, 106 40 Q 105.4 44, 106 48 Q 106.6 52, 106 58;
+                M 106 0 Q 105.4 4, 106 8 Q 106.6 12, 106 16 Q 105.4 20, 106 24 Q 106.6 28, 106 32 Q 105.4 36, 106 40 Q 106.6 44, 106 48 Q 105.4 52, 106 58
               " />
             </path>
-            <path d="M 106 2 Q 105.5 6, 106 10 Q 106.5 14, 106 18 Q 105.5 22, 106 26 Q 106.5 30, 106 34 Q 105.5 38, 106 42 Q 106.5 46, 106 50 Q 105.5 54, 106 58" fill="none" stroke="rgba(0,210,255,0.12)" strokeWidth="0.15">
+            <path d="M 109 2 Q 108.5 6, 109 10 Q 109.5 14, 109 18 Q 108.5 22, 109 26 Q 109.5 30, 109 34 Q 108.5 38, 109 42 Q 109.5 46, 109 50 Q 108.5 54, 109 58" fill="none" stroke="rgba(0,210,255,0.12)" strokeWidth="0.15">
               <animate attributeName="d" dur="5.5s" repeatCount="indefinite" values="
-                M 106 2 Q 105.5 6, 106 10 Q 106.5 14, 106 18 Q 105.5 22, 106 26 Q 106.5 30, 106 34 Q 105.5 38, 106 42 Q 106.5 46, 106 50 Q 105.5 54, 106 58;
-                M 106 2 Q 106.5 6, 106 10 Q 105.5 14, 106 18 Q 106.5 22, 106 26 Q 105.5 30, 106 34 Q 106.5 38, 106 42 Q 105.5 46, 106 50 Q 106.5 54, 106 58;
-                M 106 2 Q 105.5 6, 106 10 Q 106.5 14, 106 18 Q 105.5 22, 106 26 Q 106.5 30, 106 34 Q 105.5 38, 106 42 Q 106.5 46, 106 50 Q 105.5 54, 106 58
+                M 109 2 Q 108.5 6, 109 10 Q 109.5 14, 109 18 Q 108.5 22, 109 26 Q 109.5 30, 109 34 Q 108.5 38, 109 42 Q 109.5 46, 109 50 Q 108.5 54, 109 58;
+                M 109 2 Q 109.5 6, 109 10 Q 108.5 14, 109 18 Q 109.5 22, 109 26 Q 108.5 30, 109 34 Q 109.5 38, 109 42 Q 108.5 46, 109 50 Q 109.5 54, 109 58;
+                M 109 2 Q 108.5 6, 109 10 Q 109.5 14, 109 18 Q 108.5 22, 109 26 Q 109.5 30, 109 34 Q 108.5 38, 109 42 Q 109.5 46, 109 50 Q 108.5 54, 109 58
               " />
             </path>
-            <text x="102" y="29" textAnchor="middle" fill="rgba(0,210,255,0.35)" fontSize="1.4" fontWeight="700" letterSpacing="0.5" transform="rotate(90, 102, 29)">
+            <text x="105" y="29" textAnchor="middle" fill="rgba(0,210,255,0.35)" fontSize="1.4" fontWeight="700" letterSpacing="0.5" transform="rotate(90, 105, 29)">
               ATLANTIC OCEAN
             </text>
           </g>
