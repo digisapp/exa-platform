@@ -518,19 +518,35 @@ export function HotelFloorPlan() {
           })}
           <text x={89.6} y={55} textAnchor="middle" fill="rgba(255,200,50,0.7)" fontSize={0.45} fontWeight="700" style={{ pointerEvents: "none" }}>VIP Booths</text>
 
-          {/* === BEACH ENTRANCE — small marker at boundary === */}
+          {/* === BEACH ENTRANCE === */}
           <g style={{ pointerEvents: "none" }}>
-            {/* Door icon */}
-            <rect x={102} y={25} width={3} height={7} rx={0.4}
-              fill="rgba(255,50,130,0.2)" stroke="rgba(255,50,130,0.5)" strokeWidth={0.12} />
-            <rect x={102.3} y={25.5} width={1} height={6} rx={0.2} fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)" strokeWidth={0.05} />
-            <rect x={103.7} y={25.5} width={1} height={6} rx={0.2} fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)" strokeWidth={0.05} />
-            <circle cx={103.2} cy={28.5} r={0.15} fill="rgba(255,200,50,0.6)" />
-            <circle cx={103.8} cy={28.5} r={0.15} fill="rgba(255,200,50,0.6)" />
-            {/* Label */}
-            <text x={103.5} y={24} textAnchor="middle" dominantBaseline="central"
-              fill="rgba(255,50,130,0.8)" fontSize={0.6} fontWeight="800">
-              🚪 Beach Entrance
+            {/* Background banner */}
+            <rect x={101} y={21} width={5} height={16} rx={0.6}
+              fill="rgba(255,50,130,0.3)" stroke="rgba(255,50,130,0.7)" strokeWidth={0.15} />
+            {/* Door frame */}
+            <rect x={102} y={25} width={3} height={9} rx={0.4}
+              fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.5)" strokeWidth={0.12} />
+            {/* Door arch */}
+            <path d="M 102 26 Q 103.5 23.5 105 26" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.4)" strokeWidth={0.1} />
+            {/* Door panels */}
+            <rect x={102.3} y={26} width={1.1} height={7.5} rx={0.2} fill="rgba(255,255,255,0.2)" stroke="rgba(255,255,255,0.35)" strokeWidth={0.06} />
+            <rect x={103.6} y={26} width={1.1} height={7.5} rx={0.2} fill="rgba(255,255,255,0.2)" stroke="rgba(255,255,255,0.35)" strokeWidth={0.06} />
+            {/* Gold door handles */}
+            <circle cx={103.2} cy={29.5} r={0.2} fill="rgba(255,200,50,0.9)" stroke="rgba(255,180,0,1)" strokeWidth={0.06} />
+            <circle cx={103.8} cy={29.5} r={0.2} fill="rgba(255,200,50,0.9)" stroke="rgba(255,180,0,1)" strokeWidth={0.06} />
+            {/* Label above */}
+            <text x={103.5} y={22.5} textAnchor="middle" dominantBaseline="central"
+              fill="rgba(255,255,255,0.95)" fontSize={0.7} fontWeight="900">
+              BEACH
+            </text>
+            <text x={103.5} y={23.8} textAnchor="middle" dominantBaseline="central"
+              fill="rgba(255,255,255,0.95)" fontSize={0.7} fontWeight="900">
+              ENTRANCE
+            </text>
+            {/* Arrow indicators */}
+            <text x={103.5} y={35.5} textAnchor="middle" dominantBaseline="central"
+              fill="rgba(255,200,50,0.7)" fontSize={0.5} fontWeight="700">
+              🚪 Main Entry
             </text>
           </g>
 
