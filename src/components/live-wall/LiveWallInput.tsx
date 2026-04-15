@@ -1,9 +1,22 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { Send, ImageIcon, X } from "lucide-react";
+import { Send, ImageIcon, X, Smile } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LiveWallMentionPopover } from "./LiveWallMentionPopover";
+
+const EMOJI_GRID = [
+  // Row 1: Smileys
+  "😂", "🤣", "😍", "🥰", "😘", "😎", "🤩", "😏",
+  // Row 2: Expressions
+  "🥺", "😭", "😤", "🤔", "😈", "🤭", "😮", "🙄",
+  // Row 3: Gestures & hearts
+  "❤️", "🔥", "💯", "✨", "👑", "💕", "💪", "🙌",
+  // Row 4: Reactions
+  "👏", "👀", "🎉", "🙏", "💀", "👍", "👎", "🤷",
+  // Row 5: Fun
+  "💋", "🌹", "⭐", "🎶", "📸", "💎", "🦋", "🌊",
+];
 
 interface Props {
   isLoggedIn: boolean;
@@ -19,6 +32,7 @@ export function LiveWallInput({ isLoggedIn, onSend, onAuthPrompt }: Props) {
   const [mentionQuery, setMentionQuery] = useState("");
   const [showMentions, setShowMentions] = useState(false);
   const [mentionStart, setMentionStart] = useState(-1);
+  const [showEmojis, setShowEmojis] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -178,6 +192,45 @@ export function LiveWallInput({ isLoggedIn, onSend, onAuthPrompt }: Props) {
               className="hidden"
             />
           </>
+        )}
+
+        {/* Emoji picker button */}
+        {isLoggedIn && (
+          <div className="relative">
+            <button
+              onClick={() => setShowEmojis((prev) => !prev)}
+              className={cn(
+                "shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors",
+                showEmojis
+                  ? "bg-pink-500/20 text-pink-400"
+                  : "bg-white/5 text-white/40 hover:text-white/70 hover:bg-white/10"
+              )}
+              title="Add emoji"
+            >
+              <Smile className="h-3.5 w-3.5" />
+            </button>
+
+            {showEmojis && (
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-[272px] rounded-xl border border-white/10 bg-black/95 backdrop-blur-xl shadow-2xl z-50 p-2">
+                <div className="grid grid-cols-8 gap-0.5">
+                  {EMOJI_GRID.map((emoji) => (
+                    <button
+                      key={emoji}
+                      onClick={() => {
+                        const newVal = (value + emoji).slice(0, 280);
+                        setValue(newVal);
+                        setShowEmojis(false);
+                        inputRef.current?.focus();
+                      }}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors text-base"
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         )}
 
         <input
