@@ -48,12 +48,13 @@ const ROOMS: Room[] = [
   // === FRONT ENTRANCE ===
   {
     id: "front-entrance",
-    name: "Front Entrance",
+    name: "Front Entrance — Red Carpet & Photo Wall",
+    shortName: "Red Carpet & Photo Wall 📸",
     x: 4.5,
     y: 1,
     width: 4.5,
     height: 55,
-    color: "rgba(255,105,180,0.12)",
+    color: "rgba(220,20,20,0.3)",
     labelSize: "xs",
     verticalLabel: true,
   },
