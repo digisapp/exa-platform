@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { X, MapPin, Navigation, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { X, MapPin, Sparkles } from "lucide-react";
 
 interface Room {
   id: string;
@@ -128,8 +129,10 @@ const ROOMS: Room[] = [
 ];
 
 export function HotelFloorPlan() {
+  const router = useRouter();
   const [selected, setSelected] = useState<Room | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
+  const goToTickets = () => router.push("/shows/miami-swim-week-2026");
 
   const renderShape = (room: Room, isHovered: boolean, isSelected: boolean) => {
     const stroke = isSelected ? "url(#pinkNeon)" : isHovered ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.12)";
@@ -469,7 +472,7 @@ export function HotelFloorPlan() {
           </g>
 
           {/* === SEATING — East Row 2 (clickable → tickets) === */}
-          <a href="/shows/miami-swim-week-2026" className="cursor-pointer">
+          <g className="cursor-pointer" onClick={goToTickets}>
             <g>
               <rect x={98.3} y={14.5} width={1.6} height={33} rx={0.3} fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.0)" strokeWidth={0} className="hover:fill-[rgba(255,255,255,0.15)] transition-all" />
               {Array.from({ length: 30 }).map((_, i) => (
@@ -477,10 +480,10 @@ export function HotelFloorPlan() {
               ))}
               <text x={99} y={49.5} textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize={0.45} fontWeight="700">2nd Row 🎟️</text>
             </g>
-          </a>
+          </g>
 
           {/* === SEATING — East Row 1 / Front Row (clickable → tickets) === */}
-          <a href="/shows/miami-swim-week-2026" className="cursor-pointer">
+          <g className="cursor-pointer" onClick={goToTickets}>
             <g>
               <rect x={96.3} y={14.5} width={1.6} height={33} rx={0.3} fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.0)" strokeWidth={0} className="hover:fill-[rgba(255,255,255,0.15)] transition-all" />
               {Array.from({ length: 30 }).map((_, i) => (
@@ -488,10 +491,10 @@ export function HotelFloorPlan() {
               ))}
               <text x={97.2} y={49.5} textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize={0.45} fontWeight="700">Front Row 🎟️</text>
             </g>
-          </a>
+          </g>
 
           {/* === SEATING — West / Front Row (clickable → tickets) === */}
-          <a href="/shows/miami-swim-week-2026" className="cursor-pointer">
+          <g className="cursor-pointer" onClick={goToTickets}>
             <g>
               <rect x={92} y={14.5} width={1.6} height={33} rx={0.3} fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.0)" strokeWidth={0} className="hover:fill-[rgba(255,255,255,0.15)] transition-all" />
               {Array.from({ length: 30 }).map((_, i) => (
@@ -499,13 +502,13 @@ export function HotelFloorPlan() {
               ))}
               <text x={93} y={49.5} textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize={0.45} fontWeight="700">Front Row 🎟️</text>
             </g>
-          </a>
+          </g>
 
           {/* === VIP BOOTHS (clickable → tickets) === */}
           {[0, 1, 2, 3].map((i) => {
             const by = 18 + i * 7;
             return (
-              <a key={`vip-link-${i}`} href="/shows/miami-swim-week-2026" className="cursor-pointer">
+              <g key={`vip-link-${i}`} className="cursor-pointer" onClick={goToTickets}>
                 <g>
                   <rect x={88} y={by} width={3.5} height={5.5} rx={0.4} fill="rgba(255,200,50,0.15)" stroke="rgba(255,200,50,0.5)" strokeWidth={0.1} className="hover:fill-[rgba(255,200,50,0.3)] transition-all" />
                   <rect x={89} y={by + 1.2} width={1.6} height={2.5} rx={0.25} fill="rgba(255,255,255,0.35)" stroke="rgba(255,200,50,0.6)" strokeWidth={0.08} />
@@ -513,7 +516,7 @@ export function HotelFloorPlan() {
                   <rect x={91} y={by + 1} width={0.3} height={3} rx={0.1} fill="rgba(255,255,255,0.25)" stroke="rgba(168,85,247,0.4)" strokeWidth={0.05} />
                   <text x={89.8} y={by + 0.5} textAnchor="middle" dominantBaseline="central" fill="rgba(255,200,50,0.9)" fontSize={0.4} fontWeight="800">VIP {i + 1} 🎟️</text>
                 </g>
-              </a>
+              </g>
             );
           })}
           <text x={89.6} y={55} textAnchor="middle" fill="rgba(255,200,50,0.7)" fontSize={0.45} fontWeight="700" style={{ pointerEvents: "none" }}>VIP Booths</text>
