@@ -112,12 +112,7 @@ const ROOMS: Room[] = [
     description: "A heated saltwater pool perfect for evening soirées and sunset gatherings. The warm, luxurious water and ambient lighting create an unforgettable atmosphere after dark.",
     sponsorNote: "Sponsor opportunity: Evening pool party sponsor, underwater lighting branding, branded robes, or a sunset cocktail hour activation.",
   },
-  {
-    id: "exa-swim-shows", name: "EXA Swim Shows", shortName: "",
-    x: 87, y: 1, width: 16, height: 55, gradient: "showsGrad", labelSize: "lg", icon: "👙",
-    description: "The main event. A 50ft oceanfront runway with a full stage, professional lighting, and seating for 120+ guests. 30+ global designers showcase their collections worn by 150+ of the world's top models — steps from the Atlantic Ocean. VIP booths, front-row seating, and a dedicated media pit for press coverage.",
-    sponsorNote: "Sponsor opportunity: Runway title sponsor, seat branding, VIP booth naming, stage backdrop, branded show programs, or a designer show co-presentation.",
-  },
+  // EXA Swim Shows is rendered as a static background — chairs/VIP are the clickable elements
   {
     id: "boardwalk", name: "Miami Beach Boardwalk",
     x: 103.5, y: 1, width: 3, height: 55, gradient: "boardwalkGrad", labelSize: "xs", verticalLabel: true,
@@ -327,6 +322,9 @@ export function HotelFloorPlan() {
             <text x="121" y="29" textAnchor="middle" fill="rgba(0,210,255,0.3)" fontSize="1.4" fontWeight="700" letterSpacing="0.5" transform="rotate(90, 121, 29)">ATLANTIC OCEAN</text>
           </g>
 
+          {/* === EXA SWIM SHOWS — static background (not clickable, clicks pass to chairs/VIP) === */}
+          <rect x={87} y={1} width={16} height={55} rx={0.8} fill="url(#showsGrad)" stroke="rgba(255,255,255,0.12)" strokeWidth={0.12} style={{ pointerEvents: "none" }} />
+
           {/* === ROAD LANE MARKINGS on Collins Ave === */}
           <rect x="0" y="1" width="3" height="55" fill="url(#roadMarks)" />
 
@@ -470,44 +468,55 @@ export function HotelFloorPlan() {
             <text x={95.0} y={54} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.5)" fontSize={0.45}>15ft × 15ft</text>
           </g>
 
-          {/* === SEATING — East (2 rows × 30) — WHITE CHAIRS === */}
-          <g style={{ pointerEvents: "none" }}>
-            {[0, 1].map((row) => (
-              <g key={`er-${row}`}>
-                <rect x={96.5 + row * 1.8} y={15} width={1.4} height={32} rx={0.2} fill="rgba(255,255,255,0.08)" />
-                {Array.from({ length: 30 }).map((_, i) => (
-                  <rect key={`e-${row}-${i}`} x={96.7 + row * 1.8} y={15.4 + i * 1.05} width={1.0} height={0.7} rx={0.15} fill="rgba(255,255,255,0.45)" stroke="rgba(255,255,255,0.6)" strokeWidth={0.05} />
-                ))}
-              </g>
-            ))}
-            <text x={99.0} y={49} textAnchor="middle" fill="rgba(255,255,255,0.6)" fontSize={0.5} fontWeight="600">2nd Row → Front Row</text>
-          </g>
+          {/* === SEATING — East Row 2 (clickable → tickets) === */}
+          <a href="/shows/miami-swim-week-2026" className="cursor-pointer">
+            <g>
+              <rect x={98.3} y={14.5} width={1.6} height={33} rx={0.3} fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.0)" strokeWidth={0} className="hover:fill-[rgba(255,255,255,0.15)] transition-all" />
+              {Array.from({ length: 30 }).map((_, i) => (
+                <rect key={`e2-${i}`} x={98.5} y={15.4 + i * 1.05} width={1.0} height={0.7} rx={0.15} fill="rgba(255,255,255,0.45)" stroke="rgba(255,255,255,0.6)" strokeWidth={0.05} />
+              ))}
+              <text x={99} y={49.5} textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize={0.45} fontWeight="700">2nd Row 🎟️</text>
+            </g>
+          </a>
 
-          {/* === SEATING — West (1 row × 30) — WHITE CHAIRS === */}
-          <g style={{ pointerEvents: "none" }}>
-            <rect x={92.3} y={15} width={1.4} height={32} rx={0.2} fill="rgba(255,255,255,0.08)" />
-            {Array.from({ length: 30 }).map((_, i) => (
-              <rect key={`w-${i}`} x={92.5} y={15.4 + i * 1.05} width={1.0} height={0.7} rx={0.15} fill="rgba(255,255,255,0.45)" stroke="rgba(255,255,255,0.6)" strokeWidth={0.05} />
-            ))}
-            <text x={93.0} y={49} textAnchor="middle" fill="rgba(255,255,255,0.6)" fontSize={0.45} fontWeight="600">Front Row</text>
-          </g>
+          {/* === SEATING — East Row 1 / Front Row (clickable → tickets) === */}
+          <a href="/shows/miami-swim-week-2026" className="cursor-pointer">
+            <g>
+              <rect x={96.3} y={14.5} width={1.6} height={33} rx={0.3} fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.0)" strokeWidth={0} className="hover:fill-[rgba(255,255,255,0.15)] transition-all" />
+              {Array.from({ length: 30 }).map((_, i) => (
+                <rect key={`e1-${i}`} x={96.7} y={15.4 + i * 1.05} width={1.0} height={0.7} rx={0.15} fill="rgba(255,255,255,0.45)" stroke="rgba(255,255,255,0.6)" strokeWidth={0.05} />
+              ))}
+              <text x={97.2} y={49.5} textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize={0.45} fontWeight="700">Front Row 🎟️</text>
+            </g>
+          </a>
 
-          {/* === VIP BOOTHS — BRIGHT === */}
-          <g style={{ pointerEvents: "none" }}>
-            {[0, 1, 2, 3].map((i) => {
-              const by = 18 + i * 7;
-              return (
-                <g key={`v-${i}`}>
-                  <rect x={88} y={by} width={3.5} height={5.5} rx={0.4} fill="rgba(255,200,50,0.15)" stroke="rgba(255,200,50,0.5)" strokeWidth={0.1} />
+          {/* === SEATING — West / Front Row (clickable → tickets) === */}
+          <a href="/shows/miami-swim-week-2026" className="cursor-pointer">
+            <g>
+              <rect x={92} y={14.5} width={1.6} height={33} rx={0.3} fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.0)" strokeWidth={0} className="hover:fill-[rgba(255,255,255,0.15)] transition-all" />
+              {Array.from({ length: 30 }).map((_, i) => (
+                <rect key={`w-${i}`} x={92.5} y={15.4 + i * 1.05} width={1.0} height={0.7} rx={0.15} fill="rgba(255,255,255,0.45)" stroke="rgba(255,255,255,0.6)" strokeWidth={0.05} />
+              ))}
+              <text x={93} y={49.5} textAnchor="middle" fill="rgba(255,255,255,0.7)" fontSize={0.45} fontWeight="700">Front Row 🎟️</text>
+            </g>
+          </a>
+
+          {/* === VIP BOOTHS (clickable → tickets) === */}
+          {[0, 1, 2, 3].map((i) => {
+            const by = 18 + i * 7;
+            return (
+              <a key={`vip-link-${i}`} href="/shows/miami-swim-week-2026" className="cursor-pointer">
+                <g>
+                  <rect x={88} y={by} width={3.5} height={5.5} rx={0.4} fill="rgba(255,200,50,0.15)" stroke="rgba(255,200,50,0.5)" strokeWidth={0.1} className="hover:fill-[rgba(255,200,50,0.3)] transition-all" />
                   <rect x={89} y={by + 1.2} width={1.6} height={2.5} rx={0.25} fill="rgba(255,255,255,0.35)" stroke="rgba(255,200,50,0.6)" strokeWidth={0.08} />
                   <rect x={88.2} y={by + 1} width={0.5} height={3} rx={0.15} fill="rgba(255,255,255,0.3)" stroke="rgba(168,85,247,0.5)" strokeWidth={0.06} />
                   <rect x={91} y={by + 1} width={0.3} height={3} rx={0.1} fill="rgba(255,255,255,0.25)" stroke="rgba(168,85,247,0.4)" strokeWidth={0.05} />
-                  <text x={89.8} y={by + 0.5} textAnchor="middle" dominantBaseline="central" fill="rgba(255,200,50,0.9)" fontSize={0.4} fontWeight="800">VIP {i + 1}</text>
+                  <text x={89.8} y={by + 0.5} textAnchor="middle" dominantBaseline="central" fill="rgba(255,200,50,0.9)" fontSize={0.4} fontWeight="800">VIP {i + 1} 🎟️</text>
                 </g>
-              );
-            })}
-            <text x={89.6} y={55} textAnchor="middle" fill="rgba(255,200,50,0.7)" fontSize={0.45} fontWeight="700">VIP Booths</text>
-          </g>
+              </a>
+            );
+          })}
+          <text x={89.6} y={55} textAnchor="middle" fill="rgba(255,200,50,0.7)" fontSize={0.45} fontWeight="700" style={{ pointerEvents: "none" }}>VIP Booths</text>
 
           {/* === BEACH ENTRANCE — small marker at boundary === */}
           <g style={{ pointerEvents: "none" }}>
