@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ModelCard } from "@/components/models/model-card";
+import { LiveWallServer } from "@/components/live-wall/LiveWallServer";
 import { BRAND_SUBSCRIPTION_TIERS } from "@/lib/stripe-config";
 import {
   ArrowRight,
@@ -242,6 +243,9 @@ export async function BrandDashboard({ actorId }: { actorId: string }) {
           </CardContent>
         </Card>
       </div>
+
+      {/* EXA Live */}
+      <LiveWallServer actorId={actorId} actorType="brand" />
 
       {/* Pending Approval Notice */}
       {isPending && (

@@ -35,6 +35,7 @@ import {
 import { formatCoins, coinsToUsd, formatUsd } from "@/lib/coin-config";
 import { FanDashboard } from "./FanDashboard";
 import { BrandDashboard } from "./BrandDashboard";
+import { LiveWallServer } from "@/components/live-wall/LiveWallServer";
 
 // Helper function to format relative time
 function getTimeAgo(dateString: string): string {
@@ -440,6 +441,9 @@ export default async function DashboardPage() {
           </Card>
         </Link>
       </div>
+
+      {/* EXA Live */}
+      <LiveWallServer actorId={actor.id} actorType={actor.type} />
 
       {/* Offers */}
       {pendingOffers.length > 0 && (

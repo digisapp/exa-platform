@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { ModelCard } from "@/components/models/model-card";
 import { ForYouFeed, type FeedItem } from "./ForYouFeed";
+import { LiveWallServer } from "@/components/live-wall/LiveWallServer";
 
 // Re-sign a storage path or expired signed URL to get a fresh 1-hour signed URL
 function extractStoragePath(url: string): string | null {
@@ -288,6 +289,9 @@ export async function FanDashboard({ actorId }: { actorId: string }) {
           </CardContent>
         </Card>
       )}
+
+      {/* EXA Live */}
+      <LiveWallServer actorId={actorId} actorType="fan" />
 
       {/* Favorites */}
       {favoriteModels.length > 0 && (
