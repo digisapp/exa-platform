@@ -86,9 +86,8 @@ const ROOMS: Room[] = [
     labelSize: "sm",
   },
   {
-    id: "silan-restaurant",
-    name: "Silan Kosher Restaurant",
-    shortName: "Silan Kosher\nRestaurant",
+    id: "exa-restaurant",
+    name: "EXA Restaurant",
     dimensions: "39' × 63'8\"",
     sqft: 1233,
     ceilingHeight: "8'",
