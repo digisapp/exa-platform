@@ -54,8 +54,7 @@ const ROOMS: Room[] = [
   { id: "exa-swim-shows", name: "EXA Swim Shows", shortName: "EXA\nSwim Shows", x: 80, y: 1, width: 16, height: 55, gradient: "showsGrad", labelSize: "lg", icon: "👙" },
   // === BOARDWALK / PALMS / SAND ===
   { id: "boardwalk", name: "Miami Beach Boardwalk", x: 96.5, y: 1, width: 3, height: 55, gradient: "boardwalkGrad", labelSize: "xs", verticalLabel: true },
-  { id: "palms", name: "Palm Trees & Vegetation", shortName: "🌴🌴🌴", x: 100, y: 1, width: 3, height: 55, gradient: "palmsGrad", labelSize: "xs", verticalLabel: true },
-  { id: "sand-beach", name: "Sand Beach", shortName: "🏖️ Sand", x: 103.5, y: 1, width: 4, height: 55, gradient: "sandGrad", labelSize: "xs", verticalLabel: true },
+  { id: "sand-beach", name: "Sand Beach", shortName: "🌴 Sand & Palms 🏖️", x: 100, y: 1, width: 7.5, height: 55, gradient: "sandGrad", labelSize: "xs", verticalLabel: true },
 ];
 
 export function HotelFloorPlan() {
@@ -402,6 +401,46 @@ export function HotelFloorPlan() {
               );
             })}
             <text x={82.6} y={50} textAnchor="middle" fill="rgba(255,200,50,0.4)" fontSize={0.45} fontWeight="700">VIP Booths</text>
+          </g>
+
+          {/* === BEACH ENTRANCE — between EXA Swim Shows and Boardwalk === */}
+          <g style={{ pointerEvents: "none" }}>
+            {/* Pulsing glow behind */}
+            <ellipse cx={96.5} cy={28.5} rx={3.5} ry={5} fill="rgba(255,50,130,0.06)" filter="url(#spotGlow)">
+              <animate attributeName="opacity" values="0.4;1;0.4" dur="2s" repeatCount="indefinite" />
+            </ellipse>
+            {/* Door frame */}
+            <rect x={94.5} y={23} width={4} height={11} rx={0.6}
+              fill="rgba(255,50,130,0.25)" stroke="rgba(255,50,130,0.7)" strokeWidth={0.2} />
+            {/* Door arch top */}
+            <path d="M 94.5 25 Q 96.5 21 98.5 25" fill="rgba(255,50,130,0.2)" stroke="rgba(255,50,130,0.7)" strokeWidth={0.2} />
+            {/* Door panels */}
+            <rect x={95} y={24} width={1.2} height={9} rx={0.3}
+              fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" strokeWidth={0.08} />
+            <rect x={96.8} y={24} width={1.2} height={9} rx={0.3}
+              fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" strokeWidth={0.08} />
+            {/* Door handles */}
+            <circle cx={96} cy={28.5} r={0.2} fill="rgba(255,200,50,0.7)" />
+            <circle cx={97} cy={28.5} r={0.2} fill="rgba(255,200,50,0.7)" />
+            {/* Neon sign above */}
+            <rect x={93.5} y={20.5} width={6} height={2.5} rx={0.4}
+              fill="rgba(0,0,0,0.5)" stroke="rgba(255,50,130,0.6)" strokeWidth={0.12} />
+            <text x={96.5} y={21.4} textAnchor="middle" dominantBaseline="central"
+              fill="rgba(255,50,130,1)" fontSize={0.75} fontWeight="900" letterSpacing={0.15}
+              filter="url(#neonGlow)">
+              BEACH ENTRANCE
+            </text>
+            <text x={96.5} y={22.4} textAnchor="middle" dominantBaseline="central"
+              fill="rgba(255,255,255,0.5)" fontSize={0.45} fontWeight="600">
+              🚪 Main Guest Entry
+            </text>
+            {/* Animated arrows pointing in */}
+            <path d="M 93 28.5 L 94.2 28.5" fill="none" stroke="rgba(255,50,130,0.5)" strokeWidth={0.15} strokeLinecap="round">
+              <animate attributeName="opacity" values="0.3;1;0.3" dur="1.5s" repeatCount="indefinite" />
+            </path>
+            <path d="M 98.8 28.5 L 100 28.5" fill="none" stroke="rgba(255,50,130,0.5)" strokeWidth={0.15} strokeLinecap="round">
+              <animate attributeName="opacity" values="0.3;1;0.3" dur="1.5s" begin="0.75s" repeatCount="indefinite" />
+            </path>
           </g>
 
           {/* === COMPASS ROSE === */}
