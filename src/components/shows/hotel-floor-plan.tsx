@@ -99,8 +99,9 @@ const ROOMS: Room[] = [
     color: "rgba(255,200,50,0.35)",
   },
   {
-    id: "sky-lounge",
-    name: "Sky Lounge",
+    id: "exa-hq",
+    name: "EXA Models HQ — Check-In",
+    shortName: "EXA Models HQ\nCheck-In",
     dimensions: "35' × 39'",
     sqft: 1365,
     x: 40,
