@@ -385,6 +385,10 @@ export default async function EventPage({ params, searchParams }: Props) {
           {/* Description - always first */}
           <div className="lg:col-span-2 order-1">
             <div className="glass-card rounded-2xl p-6 md:p-8">
+              <p className="text-lg md:text-xl font-medium text-white/90 mb-6">
+                The Premier Shows during Swim Week featuring Global Designers and the World&apos;s Top Models!
+              </p>
+
               {/* Ticket Button with Popup */}
               <div className="mb-6">
                 {hasInternalTickets ? (
