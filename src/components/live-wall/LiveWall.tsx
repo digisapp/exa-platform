@@ -381,12 +381,8 @@ export function LiveWall({ initialMessages, currentUser }: Props) {
 
         if (amount >= 10) {
           toast.success(`Tipped ${amount} coins!`);
-        } else {
-          toast(`Tipped ${amount} coin`, {
-            description: "Hold 💰 for Super Tip",
-            duration: 2000,
-          });
         }
+        // Micro-tips (< 10) show inline "+1" flyup on the button — no toast needed
 
         // Play coin sound (short chirp for micro, ascending for big)
         if (audioCtxRef.current) {

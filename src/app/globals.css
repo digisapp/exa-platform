@@ -583,6 +583,38 @@ input:focus, textarea:focus, select:focus {
   animation: gradient 3s ease infinite;
 }
 
+/* Tip flyup "+1" animation */
+@keyframes tip-flyup {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -24px) scale(1.3);
+  }
+}
+
+.animate-tip-flyup {
+  animation: tip-flyup 0.8s ease-out forwards;
+}
+
+/* Fade in */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 4px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out forwards;
+}
+
 /* Gold Glow Animation for Event Badges */
 @keyframes gold-glow {
   0%, 100% {

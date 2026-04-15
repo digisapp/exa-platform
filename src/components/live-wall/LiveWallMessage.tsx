@@ -88,6 +88,10 @@ function CoinTipButton({
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const didLongPress = useRef(false);
   const [isPressed, setIsPressed] = useState(false);
+  const [flyups, setFlyups] = useState<number[]>([]);
+  const [showHint, setShowHint] = useState(false);
+  const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const tapCount = useRef(0);
 
   const cancelLongPress = useCallback(() => {
     setIsPressed(false);
@@ -116,43 +120,73 @@ function CoinTipButton({
     }
     if (!didLongPress.current && !disabled) {
       onTip();
+      // Inline flyup "+1" animation
+      const id = Date.now();
+      setFlyups((prev) => [...prev, id]);
+      setTimeout(() => setFlyups((prev) => prev.filter((f) => f !== id)), 900);
+      // Show "Hold for Super Tip" hint on first 3 taps
+      tapCount.current += 1;
+      if (tapCount.current <= 3) {
+        setShowHint(true);
+        if (hintTimer.current) clearTimeout(hintTimer.current);
+        hintTimer.current = setTimeout(() => setShowHint(false), 3000);
+      }
     }
   }, [onTip, disabled]);
 
   return (
-    <button
-      onTouchStart={startLongPress}
-      onTouchEnd={(e) => { e.preventDefault(); endPress(); }}
-      onTouchCancel={cancelLongPress}
-      onMouseDown={startLongPress}
-      onMouseUp={endPress}
-      onMouseLeave={cancelLongPress}
-      onContextMenu={(e) => e.preventDefault()}
-      disabled={disabled}
-      style={{ touchAction: "manipulation", WebkitTouchCallout: "none" }}
-      className={cn(
-        "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs select-none",
-        "transition-all duration-200",
-        disabled && "opacity-40 cursor-not-allowed",
-        !disabled && tipTotal > 0
-          ? "bg-amber-500/20 border border-amber-500/30 hover:bg-amber-500/30"
-          : !disabled
-            ? "bg-white/5 border border-white/10 opacity-60 hover:opacity-100"
-            : "",
-        isPressed && "scale-125 bg-amber-500/40 border-amber-500/50 shadow-lg shadow-amber-500/20 opacity-100"
-      )}
-      title="Tap to tip 1 coin · Hold for super tip"
-      aria-label={`Tip ${displayName}`}
-    >
-      <span className={cn("text-sm transition-transform duration-200", isPressed && "scale-110")}>
-        💰
-      </span>
-      {tipTotal > 0 && (
-        <span className="text-[10px] text-amber-400 font-semibold">
-          {tipTotal.toLocaleString()}
+    <div className="relative inline-flex">
+      <button
+        onTouchStart={startLongPress}
+        onTouchEnd={(e) => { e.preventDefault(); endPress(); }}
+        onTouchCancel={cancelLongPress}
+        onMouseDown={startLongPress}
+        onMouseUp={endPress}
+        onMouseLeave={cancelLongPress}
+        onContextMenu={(e) => e.preventDefault()}
+        disabled={disabled}
+        style={{ touchAction: "manipulation", WebkitTouchCallout: "none" }}
+        className={cn(
+          "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs select-none",
+          "transition-all duration-200",
+          disabled && "opacity-40 cursor-not-allowed",
+          !disabled && tipTotal > 0
+            ? "bg-amber-500/20 border border-amber-500/30 hover:bg-amber-500/30"
+            : !disabled
+              ? "bg-white/5 border border-white/10 opacity-60 hover:opacity-100"
+              : "",
+          isPressed && "scale-125 bg-amber-500/40 border-amber-500/50 shadow-lg shadow-amber-500/20 opacity-100"
+        )}
+        title="Tap to tip 1 coin · Hold for super tip"
+        aria-label={`Tip ${displayName}`}
+      >
+        <span className={cn("text-sm transition-transform duration-200", isPressed && "scale-110")}>
+          💰
+        </span>
+        {tipTotal > 0 && (
+          <span className="text-[10px] text-amber-400 font-semibold">
+            {tipTotal.toLocaleString()}
+          </span>
+        )}
+      </button>
+
+      {/* Inline "+1" flyup animations */}
+      {flyups.map((id) => (
+        <span
+          key={id}
+          className="absolute -top-1 left-1/2 -translate-x-1/2 text-amber-400 text-xs font-bold pointer-events-none animate-tip-flyup"
+        >
+          +1
+        </span>
+      ))}
+
+      {/* "Hold for Super Tip" hint tooltip */}
+      {showHint && (
+        <span className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-1 rounded-md bg-black/90 border border-amber-500/40 text-amber-300 text-[10px] font-medium pointer-events-none animate-fade-in shadow-lg shadow-amber-500/10 z-20">
+          Hold for Super Tip 💎
         </span>
       )}
-    </button>
+    </div>
   );
 }
 
