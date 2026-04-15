@@ -188,7 +188,7 @@ export function LiveWallMessage({
           <span className="text-[10px] text-white/30">{timeAgo}</span>
 
           {/* Actions: tip + admin */}
-          <div className="opacity-0 group-hover:opacity-100 ml-auto flex items-center gap-1 transition-all">
+          <div className="opacity-100 md:opacity-0 md:group-hover:opacity-100 ml-auto flex items-center gap-1 transition-all">
             {/* Tip button */}
             {canTip && (
               <button
@@ -262,7 +262,7 @@ export function LiveWallMessage({
                     ? hasReacted
                       ? "bg-pink-500/20 border border-pink-500/30"
                       : "bg-white/5 border border-white/10"
-                    : "bg-transparent border border-transparent opacity-0 group-hover:opacity-60 hover:!opacity-100"
+                    : "bg-transparent border border-transparent opacity-60 md:opacity-0 md:group-hover:opacity-60 hover:!opacity-100"
                 )}
               >
                 <span className="text-sm">{emoji}</span>
