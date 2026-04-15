@@ -265,8 +265,7 @@ export function LiveWallMessage({
   );
 
   const isOwnMessage = currentActorId && message.actor_id === currentActorId;
-  const canTip =
-    currentActorId && message.actor_id && !isOwnMessage;
+  const canTip = message.actor_id && !isOwnMessage;
 
   const messageInner = (
     <div
