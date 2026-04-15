@@ -48,7 +48,7 @@ const ROOMS: Room[] = [
   { id: "wellness-activation", name: "Wellness Activation Space", shortName: "Wellness\nActivation 🧘", sqft: 3690, capacity: { reception: 400, rounds: 260, theatre: 300, school: 200 }, x: 40, y: 30, width: 29, height: 16, gradient: "wellnessGrad" },
   // === POOLS ===
   { id: "lower-pool", name: "Lower Pool", shortName: "Lower\nPool 💦", x: 70, y: 12, width: 12, height: 12, gradient: "poolGrad", labelSize: "sm", shape: "pool" },
-  { id: "exa-bar", name: "EXA Tiki Bar", shortName: "🌺 EXA Bar 🍹", x: 70, y: 26, width: 14, height: 6, gradient: "barGrad", labelSize: "sm" },
+  { id: "exa-bar", name: "EXA Tiki Bar", shortName: "🍹 EXA Tiki Bar 🌴", x: 70, y: 26, width: 14, height: 6, gradient: "barGrad", labelSize: "sm" },
   { id: "heated-pool", name: "Heated Adult Saltwater Pool", shortName: "Heated\nSaltwater Pool 🌊", x: 69, y: 36, width: 18, height: 18, gradient: "poolGrad", shape: "pool" },
   // === EXA SWIM SHOWS ===
   { id: "exa-swim-shows", name: "EXA Swim Shows", shortName: "EXA\nSwim Shows", x: 87, y: 1, width: 16, height: 55, gradient: "showsGrad", labelSize: "lg", icon: "👙" },
