@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { getModelId, getActorInfo } from "@/lib/ids";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const createDeliverySchema = z.object({
   bookingId: z.string().uuid().optional().nullable(),
@@ -117,7 +118,7 @@ export async function POST(request: NextRequest) {
       .single() as { data: any; error: any };
 
     if (insertError || !delivery) {
-      console.error("Failed to create delivery:", insertError);
+      logger.error("Failed to create delivery", insertError);
       return NextResponse.json({ error: "Failed to create delivery" }, { status: 500 });
     }
 
@@ -143,12 +144,12 @@ export async function POST(request: NextRequest) {
         },
       });
     } catch (notifError) {
-      console.error("Failed to send delivery notification:", notifError);
+      logger.error("Failed to send delivery notification", notifError);
     }
 
     return NextResponse.json({ delivery }, { status: 201 });
   } catch (error) {
-    console.error("Create delivery error:", error);
+    logger.error("Create delivery error", error);
     return NextResponse.json({ error: "Failed to create delivery" }, { status: 500 });
   }
 }
@@ -201,7 +202,7 @@ export async function GET(request: NextRequest) {
     const { data: deliveries, error } = await query.limit(50) as { data: any[]; error: any };
 
     if (error) {
-      console.error("Failed to fetch deliveries:", error);
+      logger.error("Failed to fetch deliveries", error);
       return NextResponse.json({ error: "Failed to fetch deliveries" }, { status: 500 });
     }
 
@@ -269,7 +270,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ deliveries: enriched });
   } catch (error) {
-    console.error("Fetch deliveries error:", error);
+    logger.error("Fetch deliveries error", error);
     return NextResponse.json({ error: "Failed to fetch deliveries" }, { status: 500 });
   }
 }

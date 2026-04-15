@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { getModelId } from "@/lib/ids";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const updateItemSchema = z.object({
   title: z.string().max(200).optional().nullable(),
@@ -70,13 +71,13 @@ export async function PATCH(
       .single();
 
     if (error) {
-      console.error("Content item update error:", error);
+      logger.error("Content item update error", error);
       return NextResponse.json({ error: "Failed to update item" }, { status: 500 });
     }
 
     return NextResponse.json({ item });
   } catch (error) {
-    console.error("Content item PATCH error:", error);
+    logger.error("Content item PATCH error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -124,13 +125,13 @@ export async function DELETE(
       .eq("id", id);
 
     if (error) {
-      console.error("Content item delete error:", error);
+      logger.error("Content item delete error", error);
       return NextResponse.json({ error: "Failed to delete item" }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Content item DELETE error:", error);
+    logger.error("Content item DELETE error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

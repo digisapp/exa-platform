@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 // GET /api/brands/tags - Get all unique tags used by this brand
 export async function GET(request: NextRequest) {
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
     .eq("brand_id", actor.id);
 
   if (error) {
-    console.error("Tags error:", error.message); return NextResponse.json({ error: "Failed to fetch tags" }, { status: 500 });
+    logger.error("Tags error", error); return NextResponse.json({ error: "Failed to fetch tags" }, { status: 500 });
   }
 
   // Extract unique tags and count usage

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 const supabase = createServiceRoleClient();
 
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
       .order("stock_quantity", { ascending: true });
 
     if (error) {
-      console.error("Error fetching low stock:", error);
+      logger.error("Error fetching low stock", error);
       return NextResponse.json({ error: "Failed to fetch inventory" }, { status: 500 });
     }
 
@@ -56,7 +57,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ items: lowStockItems });
   } catch (error) {
-    console.error("Low stock error:", error);
+    logger.error("Low stock error", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

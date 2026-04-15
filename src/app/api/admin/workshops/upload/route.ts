@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,7 +17,7 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError) {
-      console.error("Workshop upload: Auth error:", authError);
+      logger.error("Workshop upload: Auth error", authError);
       return NextResponse.json({ error: "Auth error" }, { status: 401 });
     }
 
@@ -32,7 +33,7 @@ export async function POST(request: NextRequest) {
       .single() as { data: { id: string; type: string } | null; error: any };
 
     if (actorError) {
-      console.error("Workshop upload: Actor query error:", actorError);
+      logger.error("Workshop upload: Actor query error", actorError);
       return NextResponse.json({ error: "Failed to verify user" }, { status: 500 });
     }
 
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
     try {
       body = await request.json();
     } catch (parseError) {
-      console.error("Workshop upload: JSON parse error:", parseError);
+      logger.error("Workshop upload: JSON parse error", parseError);
       return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
     }
 
@@ -75,7 +76,7 @@ export async function POST(request: NextRequest) {
       .createSignedUploadUrl(path);
 
     if (error) {
-      console.error("Signed URL error:", error);
+      logger.error("Signed URL error", error);
       return NextResponse.json({ error: "Failed to create upload URL" }, { status: 500 });
     }
 
@@ -91,7 +92,7 @@ export async function POST(request: NextRequest) {
       publicUrl,
     });
   } catch (error) {
-    console.error("Workshop upload error:", error);
+    logger.error("Workshop upload error", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

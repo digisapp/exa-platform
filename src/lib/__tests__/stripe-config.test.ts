@@ -28,7 +28,7 @@ describe("COIN_PACKAGES", () => {
 
   it("priceDisplay matches price in cents", () => {
     for (const pkg of COIN_PACKAGES) {
-      const displayNum = parseFloat(pkg.priceDisplay.replace("$", ""));
+      const displayNum = parseFloat(pkg.priceDisplay.replace(/[$,]/g, ""));
       expect(pkg.price).toBe(Math.round(displayNum * 100));
     }
   });

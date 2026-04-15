@@ -1,6 +1,7 @@
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendOfferReceivedEmail } from "@/lib/email";
+import { logger } from "@/lib/logger";
 
 const adminClient: any = createServiceRoleClient();
 
@@ -194,7 +195,7 @@ export async function GET(request: NextRequest) {
                   location: locationStr,
                   compensation: compensationStr,
                   offerId: newOffer.id,
-                }).catch((err) => console.error("Failed to send recurring offer email:", err));
+                }).catch((err) => logger.error("Failed to send recurring offer email", err));
               }
             }
           }
@@ -202,7 +203,7 @@ export async function GET(request: NextRequest) {
 
         createdCount++;
       } catch (err) {
-        console.error(`Failed to create recurring offer for ${offer.id}:`, err);
+        logger.error("Failed to create recurring offer", err, { offerId: offer.id });
         errors.push(`Failed for offer ${offer.id}`);
       }
     }
@@ -214,7 +215,7 @@ export async function GET(request: NextRequest) {
       errors: errors.length > 0 ? errors : undefined,
     });
   } catch (error) {
-    console.error("Cron recurring-offers error:", error);
+    logger.error("Cron recurring-offers error", error);
     return NextResponse.json({ error: "Failed to process recurring offers" }, { status: 500 });
   }
 }

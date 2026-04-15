@@ -4,6 +4,7 @@ import { getModelId } from "@/lib/ids";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const uploadCompleteSchema = z.object({
   storagePath: z.string().min(1),
@@ -82,7 +83,7 @@ export async function POST(request: NextRequest) {
     const fileExists = files?.some((f) => f.name === fileName);
 
     if (listError) {
-      console.error("Storage list error:", listError);
+      logger.error("Storage list error", listError);
       // Don't block upload on list errors - the ownership check is the critical security gate
     } else if (!fileExists) {
       return NextResponse.json(
@@ -127,8 +128,7 @@ export async function POST(request: NextRequest) {
 
     if (mediaError) {
       // Log detailed error info for debugging
-      console.error("Media asset INSERT failed:", {
-        error: mediaError,
+      logger.error("Media asset INSERT failed", mediaError, {
         user_id: user.id,
         model_id: modelId,
         actor_id: actorId,
@@ -162,7 +162,7 @@ export async function POST(request: NextRequest) {
       assetType,
     });
   } catch (error) {
-    console.error("Upload complete route error:", error);
+    logger.error("Upload complete route error", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 export async function GET(request: NextRequest) {
   try {
@@ -32,7 +33,7 @@ export async function GET(request: NextRequest) {
       .eq("is_archived", false);
 
     if (error) {
-      console.error("Unread count error:", error);
+      logger.error("Unread count error", error);
       return NextResponse.json({ error: "Failed to get unread count" }, { status: 500 });
     }
 
@@ -45,7 +46,7 @@ export async function GET(request: NextRequest) {
       headers: { "Cache-Control": "private, no-cache, max-age=0" },
     });
   } catch (error) {
-    console.error("Unread count error:", error);
+    logger.error("Unread count error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

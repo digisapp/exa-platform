@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { sendWorkshopRegistrationConfirmationEmail } from "@/lib/email";
+import { logger } from "@/lib/logger";
 
 export async function handleWorkshopRegistration(session: Stripe.Checkout.Session, supabaseAdmin: SupabaseClient) {
   const workshopId = session.metadata?.workshop_id;
@@ -11,7 +12,7 @@ export async function handleWorkshopRegistration(session: Stripe.Checkout.Sessio
   const isInstallment = paymentType === "installment";
 
   if (!workshopId || !buyerEmail) {
-    console.error("Missing workshop registration metadata:", session.id);
+    logger.error("Missing workshop registration metadata", undefined, { sessionId: session.id });
     return;
   }
 
@@ -50,7 +51,7 @@ export async function handleWorkshopRegistration(session: Stripe.Checkout.Sessio
     .single();
 
   if (updateError) {
-    console.error("Error updating workshop registration:", updateError);
+    logger.error("Error updating workshop registration", updateError);
     // Try to create the registration if it doesn't exist
     const installmentAmountCents = 12500;
     const { data: inserted, error: insertError } = await supabaseAdmin
@@ -78,7 +79,7 @@ export async function handleWorkshopRegistration(session: Stripe.Checkout.Sessio
       .single();
 
     if (insertError) {
-      console.error("Error creating workshop registration:", insertError);
+      logger.error("Error creating workshop registration", insertError);
       return;
     }
 
@@ -134,7 +135,7 @@ export async function handleWorkshopRegistration(session: Stripe.Checkout.Sessio
         paymentType: isInstallment ? "installment" : "full",
         totalPriceCents: totalCents,
         whatToBring: workshop.what_to_bring || undefined,
-      }).catch((err) => console.error("Failed to send workshop confirmation email:", err));
+      }).catch((err) => logger.error("Failed to send workshop confirmation email", err));
     }
   }
 }
@@ -184,7 +185,7 @@ export async function createInstallmentRecords(
     .insert(installments);
 
   if (error) {
-    console.error("Error creating installment records:", error);
+    logger.error("Error creating installment records", error);
   }
 }
 
@@ -196,7 +197,7 @@ export async function handleWorkshopInstallmentSuccess(
   const registrationId = paymentIntent.metadata?.registration_id;
 
   if (!installmentId || !registrationId) {
-    console.error("Missing workshop installment metadata:", paymentIntent.id);
+    logger.error("Missing workshop installment metadata", undefined, { paymentIntentId: paymentIntent.id });
     return;
   }
 
@@ -212,7 +213,7 @@ export async function handleWorkshopInstallmentSuccess(
     .eq("id", installmentId);
 
   if (installmentError) {
-    console.error("Error updating installment:", installmentError);
+    logger.error("Error updating installment", installmentError);
     return;
   }
 
@@ -241,7 +242,7 @@ export async function handleWorkshopInstallmentFailure(
   const installmentId = paymentIntent.metadata?.installment_id;
 
   if (!installmentId) {
-    console.error("Missing workshop installment metadata for failure:", paymentIntent.id);
+    logger.error("Missing workshop installment metadata for failure", undefined, { paymentIntentId: paymentIntent.id });
     return;
   }
 

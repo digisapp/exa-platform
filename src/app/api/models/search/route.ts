@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 // GET /api/models/search - Search approved models with pagination
 export async function GET(request: NextRequest) {
@@ -53,7 +54,7 @@ export async function GET(request: NextRequest) {
   };
 
   if (error) {
-    console.error("Model search error:", error.message); return NextResponse.json({ error: "Search failed" }, { status: 500 });
+    logger.error("Model search error", error); return NextResponse.json({ error: "Search failed" }, { status: 500 });
   }
 
   const results = models || [];

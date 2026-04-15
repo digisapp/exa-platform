@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 // GET - Fetch approved, paid contestants for current competition (public)
 export async function GET(request: NextRequest) {
@@ -76,7 +77,7 @@ export async function GET(request: NextRequest) {
     const { data: contestants, error: contestantsError } = await query;
 
     if (contestantsError) {
-      console.error("Contestants fetch error:", contestantsError);
+      logger.error("Contestants fetch error", contestantsError);
       return NextResponse.json(
         { error: "Failed to fetch contestants" },
         { status: 500 }
@@ -127,7 +128,7 @@ export async function GET(request: NextRequest) {
       }
     );
   } catch (error) {
-    console.error("SwimCrown contestants error:", error);
+    logger.error("SwimCrown contestants error", error);
     return NextResponse.json(
       { error: "Failed to fetch contestants" },
       { status: 500 }

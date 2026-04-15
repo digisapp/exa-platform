@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,7 +33,7 @@ export async function POST(request: NextRequest) {
     revalidatePath(path);
     return NextResponse.json({ success: true, revalidated: path });
   } catch (error: unknown) {
-    console.error("Revalidation failed:", error);
+    logger.error("Revalidation failed", error);
     return NextResponse.json({ error: "Revalidation failed" }, { status: 500 });
   }
 }

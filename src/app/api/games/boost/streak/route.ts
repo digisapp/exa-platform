@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 // POST - Update streak when session completes
 export async function POST(request: NextRequest) {
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
     const data = rpcData as Record<string, any> | null;
 
     if (error) {
-      console.error("Streak update error:", error);
+      logger.error("Streak update error", error);
       return NextResponse.json(
         { error: "Failed to update streak" },
         { status: 500 }
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
       longestStreak: data?.longest_streak || 1,
     });
   } catch (error) {
-    console.error("Streak error:", error);
+    logger.error("Streak error", error);
     return NextResponse.json(
       { error: "Failed to update streak" },
       { status: 500 }

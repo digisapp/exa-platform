@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const adminClient = createServiceRoleClient();
 
@@ -57,13 +58,13 @@ export async function POST(request: NextRequest) {
       .eq("id", messageId);
 
     if (error) {
-      console.error("Pin error:", error);
+      logger.error("Pin error", error);
       return NextResponse.json({ error: "Failed to update pin" }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Pin route error:", error);
+    logger.error("Pin route error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

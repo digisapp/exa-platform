@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const pinSchema = z.object({
   conversationId: z.string().uuid(),
@@ -59,13 +60,13 @@ export async function POST(request: NextRequest) {
       .eq("actor_id", actor.id);
 
     if (error) {
-      console.error("Pin update error:", error);
+      logger.error("Pin update error", error);
       return NextResponse.json({ error: "Failed to update pin status" }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, pinned });
   } catch (error) {
-    console.error("Pin error:", error);
+    logger.error("Pin error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

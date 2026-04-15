@@ -4,6 +4,7 @@ import { getModelId } from "@/lib/ids";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const adminClient = createServiceRoleClient();
 
@@ -88,13 +89,13 @@ export async function POST(
       .single() as { data: any; error: any };
 
     if (insertError || !fileRecord) {
-      console.error("Failed to create delivery file record:", insertError);
+      logger.error("Failed to create delivery file record", insertError);
       return NextResponse.json({ error: "Failed to record file" }, { status: 500 });
     }
 
     return NextResponse.json({ file: fileRecord });
   } catch (error) {
-    console.error("Complete delivery upload error:", error);
+    logger.error("Complete delivery upload error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

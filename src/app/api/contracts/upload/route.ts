@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -57,7 +58,7 @@ export async function POST(request: NextRequest) {
       });
 
     if (uploadError) {
-      console.error("Upload error:", uploadError);
+      logger.error("Upload error", uploadError);
       return NextResponse.json({ error: "Failed to upload file" }, { status: 500 });
     }
 
@@ -71,7 +72,7 @@ export async function POST(request: NextRequest) {
       storagePath,
     });
   } catch (error) {
-    console.error("Error in POST /api/contracts/upload:", error);
+    logger.error("Error in POST /api/contracts/upload", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

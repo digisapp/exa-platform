@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 // POST - Block a user
 export async function POST(request: NextRequest) {
@@ -48,7 +49,7 @@ export async function POST(request: NextRequest) {
     const result = rpcData as Record<string, any> | null;
 
     if (error) {
-      console.error("Block user error:", error);
+      logger.error("Block user error", error);
       return NextResponse.json(
         { error: "Failed to block user" },
         { status: 500 }
@@ -64,7 +65,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, blockId: result.block_id });
   } catch (error) {
-    console.error("Block user error:", error);
+    logger.error("Block user error", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -114,7 +115,7 @@ export async function DELETE(request: NextRequest) {
     const result = rpcData as Record<string, any> | null;
 
     if (error) {
-      console.error("Unblock user error:", error);
+      logger.error("Unblock user error", error);
       return NextResponse.json(
         { error: "Failed to unblock user" },
         { status: 500 }
@@ -130,7 +131,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Unblock user error:", error);
+    logger.error("Unblock user error", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -169,7 +170,7 @@ export async function GET() {
     );
 
     if (error) {
-      console.error("Get blocked users error:", error);
+      logger.error("Get blocked users error", error);
       return NextResponse.json(
         { error: "Failed to get blocked users" },
         { status: 500 }
@@ -225,7 +226,7 @@ export async function GET() {
 
     return NextResponse.json({ blockedUsers: [] });
   } catch (error) {
-    console.error("Get blocked users error:", error);
+    logger.error("Get blocked users error", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

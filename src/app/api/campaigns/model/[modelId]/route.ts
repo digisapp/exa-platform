@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 // GET /api/campaigns/model/[modelId] - Get all campaigns and whether this model is in each
 export async function GET(
@@ -46,7 +47,7 @@ export async function GET(
     .order("name", { ascending: true });
 
   if (error) {
-    console.error("Campaign model error:", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    logger.error("Campaign model error", error); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   // Format campaigns with inCampaign boolean
@@ -121,7 +122,7 @@ export async function POST(
       }, { onConflict: "campaign_id,model_id" });
 
     if (error) {
-      console.error("Campaign model error:", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+      logger.error("Campaign model error", error); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
   } else {
     // Remove model from campaign
@@ -132,7 +133,7 @@ export async function POST(
       .eq("model_id", modelId);
 
     if (error) {
-      console.error("Campaign model error:", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+      logger.error("Campaign model error", error); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
   }
 

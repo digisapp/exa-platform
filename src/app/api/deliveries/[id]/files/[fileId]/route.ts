@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { getModelId } from "@/lib/ids";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 const adminClient = createServiceRoleClient();
 
@@ -57,7 +58,7 @@ export async function DELETE(
       .remove([file.storage_path]);
 
     if (storageError) {
-      console.error("Storage delete error:", storageError);
+      logger.error("Storage delete error", storageError);
       // Continue to delete DB record even if storage fails
     }
 
@@ -68,13 +69,13 @@ export async function DELETE(
       .eq("id", fileId) as { error: any };
 
     if (deleteError) {
-      console.error("Failed to delete file record:", deleteError);
+      logger.error("Failed to delete file record", deleteError);
       return NextResponse.json({ error: "Failed to delete file" }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Delete delivery file error:", error);
+    logger.error("Delete delivery file error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

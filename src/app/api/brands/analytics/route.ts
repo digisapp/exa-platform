@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 
 export async function GET() {
   try {
@@ -169,7 +170,7 @@ export async function GET() {
       upcomingBookings: upcomingWithModels,
     });
   } catch (error) {
-    console.error("Analytics error:", error);
+    logger.error("Analytics error", error);
     return NextResponse.json({ error: "Failed to fetch analytics" }, { status: 500 });
   }
 }

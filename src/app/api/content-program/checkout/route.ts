@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { stripe } from "@/lib/stripe";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 // Admin client for bypassing RLS
 const adminClient = createServiceRoleClient();
@@ -114,7 +115,7 @@ export async function POST(request: NextRequest) {
       });
 
     if (enrollmentError) {
-      console.error("Error creating enrollment record:", enrollmentError);
+      logger.error("Error creating enrollment record", enrollmentError);
       // Don't fail the checkout - the webhook will handle it
     }
 
@@ -123,7 +124,7 @@ export async function POST(request: NextRequest) {
       sessionId: session.id,
     });
   } catch (error) {
-    console.error("Content program checkout error:", error);
+    logger.error("Content program checkout error", error);
     const message = error instanceof Error ? error.message : "Failed to create checkout session";
     return NextResponse.json(
       { error: message },

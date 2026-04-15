@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 
 const adminClient = createServiceRoleClient();
 
@@ -48,13 +49,13 @@ export async function GET(request: NextRequest) {
     const { data: bookings, error } = await query;
 
     if (error) {
-      console.error("Admin studio bookings error:", error);
+      logger.error("Admin studio bookings error", error);
       return NextResponse.json({ error: "Failed to fetch bookings" }, { status: 500 });
     }
 
     return NextResponse.json({ bookings: bookings || [] });
   } catch (error) {
-    console.error("Admin studio bookings error:", error);
+    logger.error("Admin studio bookings error", error);
     return NextResponse.json({ error: "Failed to fetch bookings" }, { status: 500 });
   }
 }

@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { stripe } from "@/lib/stripe";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const tripCheckoutSchema = z.object({
   gigId: z.string().uuid(),
@@ -152,7 +153,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ checkoutUrl: session.url });
   } catch (error) {
-    console.error("Trip checkout error:", error);
+    logger.error("Trip checkout error", error);
     return NextResponse.json(
       { error: "Failed to create checkout session" },
       { status: 500 }

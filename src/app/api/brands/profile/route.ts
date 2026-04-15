@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const brandProfileSchema = z.object({
   company_name: z.string().min(1, "Company name is required"),
@@ -95,7 +96,7 @@ export async function PUT(request: NextRequest) {
     .single();
 
   if (error) {
-    console.error("Error updating brand profile:", error);
+    logger.error("Error updating brand profile", error);
     return NextResponse.json({ error: "Failed to update profile" }, { status: 500 });
   }
 

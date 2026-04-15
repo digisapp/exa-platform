@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const SWIMWEAR_QUERIES = [
   "swimwear collection 2026",
@@ -51,7 +52,7 @@ async function searchXForQuery(query: string): Promise<{ results: XResult[]; raw
   const rawText = await response.text();
 
   if (!response.ok) {
-    console.error(`xAI API error for query "${query}" [${response.status}]:`, rawText);
+    logger.error("xAI API error for query", rawText, { query, status: response.status });
     return { results: [], rawContent: `HTTP ${response.status}: ${rawText.slice(0, 300)}` };
   }
 
@@ -59,7 +60,7 @@ async function searchXForQuery(query: string): Promise<{ results: XResult[]; raw
   try {
     data = JSON.parse(rawText);
   } catch {
-    console.error(`xAI non-JSON response for "${query}":`, rawText.slice(0, 300));
+    logger.error("xAI non-JSON response for query", undefined, { query, preview: rawText.slice(0, 300) });
     return { results: [], rawContent: `Non-JSON: ${rawText.slice(0, 300)}` };
   }
 
@@ -75,7 +76,7 @@ async function searchXForQuery(query: string): Promise<{ results: XResult[]; raw
   }
 
   const rawContent = content.slice(0, 600);
-  console.log(`xAI response for "${query}":`, rawContent);
+  logger.info("xAI response for query", { query, rawContent });
 
   // Extract JSON array from the response content
   try {
@@ -84,7 +85,7 @@ async function searchXForQuery(query: string): Promise<{ results: XResult[]; raw
     const parsed = JSON.parse(jsonMatch[0]);
     return { results: Array.isArray(parsed) ? parsed : [], rawContent };
   } catch {
-    console.error(`Failed to parse xAI response for query "${query}":`, content);
+    logger.error("Failed to parse xAI response for query", undefined, { query, content });
     return { results: [], rawContent };
   }
 }

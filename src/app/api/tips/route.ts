@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { sendTipReceivedEmail } from "@/lib/email";
 import { z } from "zod";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 // Zod schema for tip validation
 const tipSchema = z.object({
@@ -94,7 +95,7 @@ export async function POST(request: NextRequest) {
     const result = rpcData as Record<string, any>;
 
     if (transferError) {
-      console.error("Transfer error:", transferError);
+      logger.error("Transfer error", transferError);
       return NextResponse.json(
         { error: "Failed to process tip" },
         { status: 500 }
@@ -197,7 +198,7 @@ export async function POST(request: NextRequest) {
         });
 
       if (msgError) {
-        console.error("Failed to create tip message:", msgError);
+        logger.error("Failed to create tip message", msgError);
       }
 
       // Update conversation timestamp
@@ -224,7 +225,7 @@ export async function POST(request: NextRequest) {
           modelName: model.first_name || model.username || "Model",
           tipperName: senderName,
           amount: result.amount,
-        }).catch((err) => console.error("Failed to send tip email:", err));
+        }).catch((err) => logger.error("Failed to send tip email", err));
       }
     }
 
@@ -236,7 +237,7 @@ export async function POST(request: NextRequest) {
       conversationId: finalConversationId || null,
     });
   } catch (error) {
-    console.error("Tip error:", error);
+    logger.error("Tip error", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

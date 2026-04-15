@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { requirePosAuth, isPosAuthError } from "@/lib/pos-auth";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 // as any needed: POS orders use different field names than typed shop_orders schema
 const supabase: any = createServiceRoleClient();
@@ -161,7 +162,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (orderError) {
-      console.error("Order creation error:", orderError);
+      logger.error("Order creation error", orderError);
       return NextResponse.json({ error: "Failed to create order" }, { status: 500 });
     }
 
@@ -186,7 +187,7 @@ export async function POST(request: NextRequest) {
         });
 
       if (itemError) {
-        console.error("Order item error:", itemError);
+        logger.error("Order item error", itemError);
       }
 
       // Decrement inventory
@@ -232,7 +233,7 @@ export async function POST(request: NextRequest) {
       orderId: order.id,
     });
   } catch (error) {
-    console.error("POS checkout error:", error);
+    logger.error("POS checkout error", error);
     return NextResponse.json({ error: "Checkout failed" }, { status: 500 });
   }
 }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { notifyAdminNewCallRequest, sendCallRequestConfirmation } from "@/lib/sms";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 // POST - Create a new call request (public or authenticated)
 export async function POST(request: Request) {
@@ -93,7 +94,7 @@ export async function POST(request: Request) {
       .single();
 
     if (error) {
-      console.error("Call request error:", error);
+      logger.error("Call request error", error);
       return NextResponse.json(
         { error: "Failed to create call request" },
         { status: 500 }
@@ -112,7 +113,7 @@ export async function POST(request: Request) {
         .eq("is_available", true); // Extra check to prevent race conditions
 
       if (updateError) {
-        console.error("Failed to mark slot as booked:", updateError);
+        logger.error("Failed to mark slot as booked", updateError);
         // The call request is still created, just without the slot being marked
       }
     }
@@ -143,7 +144,7 @@ export async function POST(request: Request) {
       // Send confirmation to the person who requested the call
       sendCallRequestConfirmation(phone, name, scheduledAt),
     ]).catch((err) => {
-      console.error("SMS notification error:", err);
+      logger.error("SMS notification error", err);
     });
 
     return NextResponse.json({
@@ -155,7 +156,7 @@ export async function POST(request: Request) {
         : "Call request submitted successfully! We'll be in touch soon.",
     });
   } catch (error) {
-    console.error("Call request error:", error);
+    logger.error("Call request error", error);
     return NextResponse.json(
       { error: "Failed to submit call request" },
       { status: 500 }
@@ -193,7 +194,7 @@ export async function GET() {
       .limit(10);
 
     if (error) {
-      console.error("Fetch call requests error:", error);
+      logger.error("Fetch call requests error", error);
       return NextResponse.json(
         { error: "Failed to fetch call requests" },
         { status: 500 }
@@ -204,7 +205,7 @@ export async function GET() {
       callRequests: callRequests || [],
     });
   } catch (error) {
-    console.error("Fetch call requests error:", error);
+    logger.error("Fetch call requests error", error);
     return NextResponse.json(
       { error: "Failed to fetch call requests" },
       { status: 500 }

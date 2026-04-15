@@ -1,5 +1,6 @@
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 
 const adminClient = createServiceRoleClient();
 
@@ -25,14 +26,14 @@ export async function GET(request: NextRequest) {
       .lt("created_at", cutoffDate.toISOString());
 
     if (error) {
-      console.error("Cleanup error:", error);
+      logger.error("Cleanup error", error);
       return NextResponse.json(
         { error: "Failed to cleanup old page views" },
         { status: 500 }
       );
     }
 
-    console.log(`Cleaned up ${count || 0} old page views`);
+    logger.info("Cleaned up old page views", { deleted: count || 0 });
 
     return NextResponse.json({
       success: true,
@@ -40,7 +41,7 @@ export async function GET(request: NextRequest) {
       cutoffDate: cutoffDate.toISOString(),
     });
   } catch (error) {
-    console.error("Cron cleanup-analytics error:", error);
+    logger.error("Cron cleanup-analytics error", error);
     return NextResponse.json(
       { error: "Failed to run cleanup" },
       { status: 500 }

@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { encryptBankAccount } from "@/lib/encryption";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const bankAccountSchema = z.object({
   accountHolderName: z.string().trim().min(1, "Account holder name is required"),
@@ -86,7 +87,7 @@ export async function POST(request: Request) {
       .single() as { data: BankAccountRow | null; error: unknown };
 
     if (error) {
-      console.error("Error saving bank account:", error);
+      logger.error("Error saving bank account", error);
       return NextResponse.json({ error: "Failed to save bank account" }, { status: 500 });
     }
 
@@ -105,7 +106,7 @@ export async function POST(request: Request) {
       is_primary: bankAccount.is_primary,
     });
   } catch (error) {
-    console.error("Bank account error:", error);
+    logger.error("Bank account error", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -149,13 +150,13 @@ export async function DELETE(request: Request) {
       .eq("model_id", model.id);
 
     if (error) {
-      console.error("Error deleting bank account:", error);
+      logger.error("Error deleting bank account", error);
       return NextResponse.json({ error: "Failed to delete bank account" }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Bank account delete error:", error);
+    logger.error("Bank account delete error", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

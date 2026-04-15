@@ -1,5 +1,6 @@
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 
 // GET /api/cron/cleanup-print-orders - Cancel stale pending_payment print orders
 // Runs daily at 4am via Vercel cron
@@ -24,7 +25,7 @@ export async function GET(request: NextRequest) {
       .lt("created_at", cutoff);
 
     if (fetchError) {
-      console.error("Failed to fetch stale print orders:", fetchError);
+      logger.error("Failed to fetch stale print orders", fetchError);
       return NextResponse.json({ error: "Failed to fetch orders" }, { status: 500 });
     }
 
@@ -46,7 +47,7 @@ export async function GET(request: NextRequest) {
         .eq("id", order.id);
 
       if (updateError) {
-        console.error(`Failed to cancel stale order ${order.id}:`, updateError);
+        logger.error("Failed to cancel stale order", updateError, { orderId: order.id });
         continue;
       }
 
@@ -57,21 +58,21 @@ export async function GET(request: NextRequest) {
           .remove([order.storage_path]);
 
         if (deleteError) {
-          console.error(`Failed to delete PDF for order ${order.id}:`, deleteError);
+          logger.error("Failed to delete PDF for order", deleteError, { orderId: order.id });
         }
       }
 
       cancelled++;
     }
 
-    console.log(`Cleanup print orders: ${cancelled} stale orders cancelled`);
+    logger.info("Cleanup print orders complete", { cancelled });
 
     return NextResponse.json({
       message: `Cancelled ${cancelled} stale print orders`,
       cancelled,
     });
   } catch (error) {
-    console.error("Cleanup print orders cron error:", error);
+    logger.error("Cleanup print orders cron error", error);
     return NextResponse.json({ error: "Cron job failed" }, { status: 500 });
   }
 }

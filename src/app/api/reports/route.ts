@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const REPORT_REASONS = [
   "harassment",
@@ -98,13 +99,13 @@ export async function POST(request: NextRequest) {
       });
 
     if (insertError) {
-      console.error("Report insert error:", insertError);
+      logger.error("Report insert error", insertError);
       throw insertError;
     }
 
     return NextResponse.json({ success: true, message: "Report submitted" });
   } catch (error) {
-    console.error("Report error:", error);
+    logger.error("Report error", error);
     return NextResponse.json(
       { error: "Failed to submit report" },
       { status: 500 }
@@ -157,7 +158,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ reports });
   } catch (error) {
-    console.error("Get reports error:", error);
+    logger.error("Get reports error", error);
     return NextResponse.json(
       { error: "Failed to get reports" },
       { status: 500 }

@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const VALID_CATEGORIES = [
   "fashion", "lifestyle", "entertainment", "sports",
@@ -74,7 +75,7 @@ export async function GET(request: NextRequest) {
   const { data, error } = await query.limit(500);
 
   if (error) {
-    console.error("Media contacts fetch error:", error);
+    logger.error("Media contacts fetch error", error);
     return NextResponse.json({ error: "Failed to fetch contacts" }, { status: 500 });
   }
 
@@ -111,7 +112,7 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (error) {
-    console.error("Media contact create error:", error);
+    logger.error("Media contact create error", error);
     return NextResponse.json({ error: "Failed to create contact" }, { status: 500 });
   }
 
@@ -148,7 +149,7 @@ export async function PATCH(request: NextRequest) {
     .single();
 
   if (error) {
-    console.error("Media contact update error:", error);
+    logger.error("Media contact update error", error);
     return NextResponse.json({ error: "Failed to update contact" }, { status: 500 });
   }
 
@@ -174,7 +175,7 @@ export async function DELETE(request: NextRequest) {
     .eq("id", id);
 
   if (error) {
-    console.error("Media contact delete error:", error);
+    logger.error("Media contact delete error", error);
     return NextResponse.json({ error: "Failed to delete contact" }, { status: 500 });
   }
 

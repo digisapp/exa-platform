@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 async function isAdmin(supabase: any, userId: string) {
   const { data: actor } = await supabase
@@ -46,7 +47,7 @@ export async function GET(request: NextRequest) {
     const { data: slots, error } = await query;
 
     if (error) {
-      console.error("Fetch availability error:", error);
+      logger.error("Fetch availability error", error);
       return NextResponse.json(
         { error: "Failed to fetch availability" },
         { status: 500 }
@@ -55,7 +56,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ slots: slots || [] });
   } catch (error) {
-    console.error("Availability fetch error:", error);
+    logger.error("Availability fetch error", error);
     return NextResponse.json(
       { error: "Failed to fetch availability" },
       { status: 500 }
@@ -116,7 +117,7 @@ export async function POST(request: NextRequest) {
       .select();
 
     if (error) {
-      console.error("Create slots error:", error);
+      logger.error("Create slots error", error);
       return NextResponse.json(
         { error: "Failed to create slots" },
         { status: 500 }
@@ -129,7 +130,7 @@ export async function POST(request: NextRequest) {
       message: `Created ${data.length} slot(s)`,
     });
   } catch (error) {
-    console.error("Create slots error:", error);
+    logger.error("Create slots error", error);
     return NextResponse.json(
       { error: "Failed to create slots" },
       { status: 500 }
@@ -177,7 +178,7 @@ export async function DELETE(request: NextRequest) {
     const { error } = await query;
 
     if (error) {
-      console.error("Delete slots error:", error);
+      logger.error("Delete slots error", error);
       return NextResponse.json(
         { error: "Failed to delete slots" },
         { status: 500 }
@@ -189,7 +190,7 @@ export async function DELETE(request: NextRequest) {
       message: slotId ? "Slot deleted" : `Slots for ${date} deleted`,
     });
   } catch (error) {
-    console.error("Delete slots error:", error);
+    logger.error("Delete slots error", error);
     return NextResponse.json(
       { error: "Failed to delete slots" },
       { status: 500 }

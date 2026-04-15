@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const gigApplySchema = z.object({
   gigId: z.string().uuid(),
@@ -105,7 +106,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error("Error creating application:", error);
+      logger.error("Error creating application", error);
       throw error;
     }
 
@@ -117,7 +118,7 @@ export async function POST(request: NextRequest) {
       }
     });
   } catch (error) {
-    console.error("Apply to gig error:", error);
+    logger.error("Apply to gig error", error);
     return NextResponse.json(
       { error: "Failed to apply to gig" },
       { status: 500 }
@@ -184,7 +185,7 @@ export async function DELETE(request: NextRequest) {
       .eq("id", applicationId);
 
     if (error) {
-      console.error("Delete error:", error);
+      logger.error("Delete error", error);
       throw error;
     }
 
@@ -193,7 +194,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Withdraw application error:", error);
+    logger.error("Withdraw application error", error);
     return NextResponse.json(
       { error: "Failed to withdraw application" },
       { status: 500 }

@@ -1,6 +1,7 @@
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendAuctionSoldEmail, sendAuctionWonEmail } from "@/lib/email";
+import { logger } from "@/lib/logger";
 
 // as any needed: nullable field mismatches with models.user_id and RPC Json results
 const supabase: any = createServiceRoleClient();
@@ -14,7 +15,7 @@ export async function GET(request: NextRequest) {
     const cronSecret = process.env.CRON_SECRET;
 
     if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
-      console.error("Cron authentication failed");
+      logger.error("Cron authentication failed");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -26,7 +27,7 @@ export async function GET(request: NextRequest) {
       .lt("ends_at", new Date().toISOString());
 
     if (fetchError) {
-      console.error("Failed to fetch expired auctions:", fetchError);
+      logger.error("Failed to fetch expired auctions", fetchError);
       return NextResponse.json({ error: "Failed to fetch auctions" }, { status: 500 });
     }
 
@@ -67,10 +68,10 @@ export async function GET(request: NextRequest) {
         .eq("id", auction.id);
 
       if (extendError) {
-        console.error(`Failed to auto-extend 0-bid auction ${auction.id}:`, extendError);
+        logger.error("Failed to auto-extend 0-bid auction", extendError, { auctionId: auction.id });
       } else {
         autoExtended++;
-        console.log(`Auto-extended 0-bid auction ${auction.id} (${auction.title}) — new end: ${newEndsAt}`);
+        logger.info("Auto-extended 0-bid auction", { auctionId: auction.id, title: auction.title, newEndsAt });
       }
     }
 
@@ -97,7 +98,7 @@ export async function GET(request: NextRequest) {
           });
 
           if (error) {
-            console.error(`Failed to end auction ${auction.id} (${auction.title}):`, error);
+            logger.error("Failed to end auction", error, { auctionId: auction.id, title: auction.title });
             return { id: auction.id, title: auction.title, success: false, error: "Failed to end auction" };
           }
 
@@ -172,13 +173,13 @@ export async function GET(request: NextRequest) {
               }
             } catch (emailError) {
               // Don't fail the cron job if email sending fails
-              console.error(`Failed to send auction emails for ${auction.id}:`, emailError);
+              logger.error("Failed to send auction emails", emailError, { auctionId: auction.id });
             }
           }
 
           return { id: auction.id, title: auction.title, success: true, result: data };
         } catch (err: any) {
-          console.error(`Exception ending auction ${auction.id}:`, err);
+          logger.error("Exception ending auction", err, { auctionId: auction.id });
           return { id: auction.id, title: auction.title, success: false, error: err.message };
         }
       })
@@ -187,7 +188,7 @@ export async function GET(request: NextRequest) {
     const succeeded = results.filter((r) => r.success).length;
     const failed = results.filter((r) => !r.success).length;
 
-    console.log(`End auctions cron: ${succeeded} ended, ${failed} failed out of ${results.length}`);
+    logger.info("End auctions cron complete", { succeeded, failed, total: results.length });
 
     // Auto-restart auctions that ended without a sale (no bids or reserve not met)
     const { data: noSaleAuctions, error: noSaleError } = await supabase
@@ -223,13 +224,13 @@ export async function GET(request: NextRequest) {
             .eq("id", auction.id);
 
           if (restartError) {
-            console.error(`Failed to restart auction ${auction.id}:`, restartError);
+            logger.error("Failed to restart auction", restartError, { auctionId: auction.id });
           } else {
             restarted++;
-            console.log(`Auto-restarted auction ${auction.id} (${auction.title}) - new end: ${newEndsAt}`);
+            logger.info("Auto-restarted auction", { auctionId: auction.id, title: auction.title, newEndsAt });
           }
         } catch (err) {
-          console.error(`Exception restarting auction ${auction.id}:`, err);
+          logger.error("Exception restarting auction", err, { auctionId: auction.id });
         }
       }
     }
@@ -241,7 +242,7 @@ export async function GET(request: NextRequest) {
       restarted: restarted + autoExtended,
     });
   } catch (error) {
-    console.error("End auctions cron error:", error);
+    logger.error("End auctions cron error", error);
     return NextResponse.json({ error: "Cron job failed" }, { status: 500 });
   }
 }

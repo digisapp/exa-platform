@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const deleteMessageSchema = z.object({
   messageId: z.string().uuid(),
@@ -104,7 +105,7 @@ export async function POST(request: NextRequest) {
       messageId,
     });
   } catch (error) {
-    console.error("Delete message error:", error);
+    logger.error("Delete message error", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 export async function POST(
   request: NextRequest,
@@ -49,13 +50,13 @@ export async function POST(
       .eq("id", modelId);
 
     if (error) {
-      console.error("Failed to increment views:", error);
+      logger.error("Failed to increment views", error);
       return NextResponse.json({ error: "Failed to track view" }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, counted: true });
   } catch (error) {
-    console.error("View tracking error:", error);
+    logger.error("View tracking error", error);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }

@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const adminClient = createServiceRoleClient();
 
@@ -41,7 +42,7 @@ export async function GET(request: NextRequest) {
       .order("start_time", { ascending: true });
 
     if (error) {
-      console.error("Admin studio slots error:", error);
+      logger.error("Admin studio slots error", error);
       return NextResponse.json({ error: "Failed to fetch slots" }, { status: 500 });
     }
 
@@ -53,7 +54,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ slots: transformedSlots });
   } catch (error) {
-    console.error("Admin studio slots error:", error);
+    logger.error("Admin studio slots error", error);
     return NextResponse.json({ error: "Failed to fetch slots" }, { status: 500 });
   }
 }
@@ -96,13 +97,13 @@ export async function POST(request: NextRequest) {
       .select();
 
     if (error) {
-      console.error("Admin create slots error:", error);
+      logger.error("Admin create slots error", error);
       return NextResponse.json({ error: "Failed to create slots" }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, slots: data });
   } catch (error) {
-    console.error("Admin create slots error:", error);
+    logger.error("Admin create slots error", error);
     return NextResponse.json({ error: "Failed to create slots" }, { status: 500 });
   }
 }
@@ -137,7 +138,7 @@ export async function DELETE(request: NextRequest) {
         .eq("date", date);
 
       if (error) {
-        console.error("Admin delete slots error:", error);
+        logger.error("Admin delete slots error", error);
         return NextResponse.json({ error: "Failed to delete slots. Some may have bookings." }, { status: 500 });
       }
     } else {
@@ -163,14 +164,14 @@ export async function DELETE(request: NextRequest) {
       const { error } = await query;
 
       if (error) {
-        console.error("Admin delete day slots error:", error);
+        logger.error("Admin delete day slots error", error);
         return NextResponse.json({ error: "Failed to clear day" }, { status: 500 });
       }
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Admin delete slots error:", error);
+    logger.error("Admin delete slots error", error);
     return NextResponse.json({ error: "Failed to delete slots" }, { status: 500 });
   }
 }

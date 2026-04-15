@@ -1,10 +1,11 @@
 import { Resend } from "resend";
 import { createServiceRoleClient } from "@/lib/supabase/service";
+import { logger } from "@/lib/logger";
 
 const FROM_EMAIL = "EXA Models <noreply@examodels.com>";
 const REPLY_TO_EMAIL = "hello@inbound.examodels.com";
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || (() => {
-  console.warn("NEXT_PUBLIC_APP_URL not set, falling back to production URL");
+  logger.warn("NEXT_PUBLIC_APP_URL not set, falling back to production URL");
   return "https://www.examodels.com";
 })();
 
@@ -35,12 +36,12 @@ async function getUnsubscribeToken(email: string): Promise<string | null> {
       p_email: email,
     });
     if (error || !data?.[0]?.unsubscribe_token) {
-      console.error("Failed to get unsubscribe token:", error);
+      logger.error("Failed to get unsubscribe token", error);
       return null;
     }
     return data[0].unsubscribe_token;
   } catch (error) {
-    console.error("Error getting unsubscribe token:", error);
+    logger.error("Error getting unsubscribe token", error);
     return null;
   }
 }
@@ -56,12 +57,12 @@ async function isEmailUnsubscribed(email: string, emailType: "all" | "marketing"
       p_email_type: emailType,
     });
     if (error) {
-      console.error("Failed to check unsubscribe status:", error);
+      logger.error("Failed to check unsubscribe status", error);
       return false;
     }
     return data === true;
   } catch (error) {
-    console.error("Error checking unsubscribe status:", error);
+    logger.error("Error checking unsubscribe status", error);
     return false;
   }
 }
@@ -247,13 +248,13 @@ export async function sendModelApprovalEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
 
     return { success: true, data };
   } catch (error) {
-    console.error("Email send error:", error);
+    logger.error("Email send error", error);
     return { success: false, error };
   }
 }
@@ -396,13 +397,13 @@ export async function sendBrandApprovalEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
 
     return { success: true, data };
   } catch (error) {
-    console.error("Email send error:", error);
+    logger.error("Email send error", error);
     return { success: false, error };
   }
 }
@@ -418,7 +419,7 @@ export async function sendModelInviteEmail({
 }) {
   try {
     if (await isEmailUnsubscribed(to, "marketing")) {
-      console.log(`Skipping model invite email - ${to} is unsubscribed`);
+      logger.info("Skipping model invite email - recipient is unsubscribed", { to });
       return;
     }
     const resend = getResendClient();
@@ -544,13 +545,13 @@ export async function sendModelInviteEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
 
     return { success: true, data };
   } catch (error) {
-    console.error("Email send error:", error);
+    logger.error("Email send error", error);
     return { success: false, error };
   }
 }
@@ -628,13 +629,13 @@ export async function sendModelRejectionEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
 
     return { success: true, data };
   } catch (error) {
-    console.error("Email send error:", error);
+    logger.error("Email send error", error);
     return { success: false, error };
   }
 }
@@ -658,7 +659,7 @@ export async function sendContentPurchaseEmail({
 }) {
   try {
     if (await isEmailUnsubscribed(to, "notification")) {
-      console.log(`Skipping content purchase email - ${to} is unsubscribed`);
+      logger.info("Skipping content purchase email - recipient is unsubscribed", { to });
       return;
     }
     const resend = getResendClient();
@@ -746,13 +747,13 @@ export async function sendContentPurchaseEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
 
     return { success: true, data };
   } catch (error) {
-    console.error("Email send error:", error);
+    logger.error("Email send error", error);
     return { success: false, error };
   }
 }
@@ -772,7 +773,7 @@ export async function sendTipReceivedEmail({
 }) {
   try {
     if (await isEmailUnsubscribed(to, "notification")) {
-      console.log(`Skipping tip received email - ${to} is unsubscribed`);
+      logger.info("Skipping tip received email - recipient is unsubscribed", { to });
       return;
     }
     const resend = getResendClient();
@@ -873,13 +874,13 @@ export async function sendTipReceivedEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
 
     return { success: true, data };
   } catch (error) {
-    console.error("Email send error:", error);
+    logger.error("Email send error", error);
     return { success: false, error };
   }
 }
@@ -901,7 +902,7 @@ export async function sendPPVUnlockedEmail({
 }) {
   try {
     if (await isEmailUnsubscribed(to, "notification")) {
-      console.log(`Skipping PPV unlocked email - ${to} is unsubscribed`);
+      logger.info("Skipping PPV unlocked email - recipient is unsubscribed", { to });
       return;
     }
     const resend = getResendClient();
@@ -988,13 +989,13 @@ export async function sendPPVUnlockedEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
 
     return { success: true, data };
   } catch (error) {
-    console.error("Email send error:", error);
+    logger.error("Email send error", error);
     return { success: false, error };
   }
 }
@@ -1024,7 +1025,7 @@ export async function sendBookingRequestEmail({
 }) {
   try {
     if (await isEmailUnsubscribed(to, "notification")) {
-      console.log(`Skipping booking request email - ${to} is unsubscribed`);
+      logger.info("Skipping booking request email - recipient is unsubscribed", { to });
       return;
     }
     const resend = getResendClient();
@@ -1151,13 +1152,13 @@ export async function sendBookingRequestEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
 
     return { success: true, data };
   } catch (error) {
-    console.error("Email send error:", error);
+    logger.error("Email send error", error);
     return { success: false, error };
   }
 }
@@ -1183,7 +1184,7 @@ export async function sendBookingAcceptedEmail({
 }) {
   try {
     if (await isEmailUnsubscribed(to, "notification")) {
-      console.log(`Skipping booking accepted email - ${to} is unsubscribed`);
+      logger.info("Skipping booking accepted email - recipient is unsubscribed", { to });
       return;
     }
     const resend = getResendClient();
@@ -1325,13 +1326,13 @@ export async function sendBookingAcceptedEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
 
     return { success: true, data };
   } catch (error) {
-    console.error("Email send error:", error);
+    logger.error("Email send error", error);
     return { success: false, error };
   }
 }
@@ -1355,7 +1356,7 @@ export async function sendBookingDeclinedEmail({
 }) {
   try {
     if (await isEmailUnsubscribed(to, "notification")) {
-      console.log(`Skipping booking declined email - ${to} is unsubscribed`);
+      logger.info("Skipping booking declined email - recipient is unsubscribed", { to });
       return;
     }
     const resend = getResendClient();
@@ -1495,13 +1496,13 @@ export async function sendBookingDeclinedEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
 
     return { success: true, data };
   } catch (error) {
-    console.error("Email send error:", error);
+    logger.error("Email send error", error);
     return { success: false, error };
   }
 }
@@ -1521,7 +1522,7 @@ export async function sendVideoCallRequestEmail({
 }) {
   try {
     if (await isEmailUnsubscribed(to, "notification")) {
-      console.log(`Skipping call request email - ${to} is unsubscribed`);
+      logger.info("Skipping call request email - recipient is unsubscribed", { to });
       return;
     }
     const resend = getResendClient();
@@ -1620,13 +1621,13 @@ export async function sendVideoCallRequestEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
 
     return { success: true, data };
   } catch (error) {
-    console.error("Email send error:", error);
+    logger.error("Email send error", error);
     return { success: false, error };
   }
 }
@@ -1655,7 +1656,7 @@ export async function sendOfferReceivedEmail({
 }) {
   try {
     if (await isEmailUnsubscribed(to, "notification")) {
-      console.log(`Skipping offer received email - ${to} is unsubscribed`);
+      logger.info("Skipping offer received email - recipient is unsubscribed", { to });
       return;
     }
     const resend = getResendClient();
@@ -1778,13 +1779,13 @@ export async function sendOfferReceivedEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
 
     return { success: true, data };
   } catch (error) {
-    console.error("Email send error:", error);
+    logger.error("Email send error", error);
     return { success: false, error };
   }
 }
@@ -1933,13 +1934,13 @@ export async function sendGigApplicationAcceptedEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
 
     return { success: true, data };
   } catch (error) {
-    console.error("Email send error:", error);
+    logger.error("Email send error", error);
     return { success: false, error };
   }
 }
@@ -2139,13 +2140,13 @@ export async function sendCreatorHouseAcceptedEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
 
     return { success: true, data };
   } catch (error) {
-    console.error("Email send error:", error);
+    logger.error("Email send error", error);
     return { success: false, error };
   }
 }
@@ -2246,13 +2247,13 @@ export async function sendGigApplicationRejectedEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
 
     return { success: true, data };
   } catch (error) {
-    console.error("Email send error:", error);
+    logger.error("Email send error", error);
     return { success: false, error };
   }
 }
@@ -2397,13 +2398,13 @@ export async function sendOfferReminderEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
 
     return { success: true, data };
   } catch (error) {
-    console.error("Email send error:", error);
+    logger.error("Email send error", error);
     return { success: false, error };
   }
 }
@@ -2535,13 +2536,13 @@ export async function sendEmailConfirmationEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
 
     return { success: true, data };
   } catch (error) {
-    console.error("Email send error:", error);
+    logger.error("Email send error", error);
     return { success: false, error };
   }
 }
@@ -2655,13 +2656,13 @@ export async function sendPasswordResetEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
 
     return { success: true, data };
   } catch (error) {
-    console.error("Email send error:", error);
+    logger.error("Email send error", error);
     return { success: false, error };
   }
 }
@@ -2793,13 +2794,13 @@ export async function sendCoinBalanceReminderEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
 
     return { success: true, data };
   } catch (error) {
-    console.error("Email send error:", error);
+    logger.error("Email send error", error);
     return { success: false, error };
   }
 }
@@ -3003,13 +3004,13 @@ export async function sendProfileCompletionReminderEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
 
     return { success: true, data };
   } catch (error) {
-    console.error("Email send error:", error);
+    logger.error("Email send error", error);
     return { success: false, error };
   }
 }
@@ -3215,13 +3216,13 @@ export async function sendMiamiSwimWeekInviteEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
 
     return { success: true, data };
   } catch (error) {
-    console.error("Email send error:", error);
+    logger.error("Email send error", error);
     return { success: false, error };
   }
 }
@@ -3327,13 +3328,13 @@ export async function sendMiamiSwimWeekProfileReminderEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
 
     return { success: true, data };
   } catch (error) {
-    console.error("Email send error:", error);
+    logger.error("Email send error", error);
     return { success: false, error };
   }
 }
@@ -3481,13 +3482,13 @@ export async function sendNewGigAnnouncementEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
 
     return { success: true, data };
   } catch (error) {
-    console.error("Email send error:", error);
+    logger.error("Email send error", error);
     return { success: false, error };
   }
 }
@@ -3613,12 +3614,12 @@ export async function sendContentProgramOutreachEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
     return { success: true, data };
   } catch (error) {
-    console.error("Email send error:", error);
+    logger.error("Email send error", error);
     return { success: false, error };
   }
 }
@@ -3707,12 +3708,12 @@ export async function sendContentProgramApplicationEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
     return { success: true, data };
   } catch (error) {
-    console.error("Email send error:", error);
+    logger.error("Email send error", error);
     return { success: false, error };
   }
 }
@@ -3817,12 +3818,12 @@ export async function sendContentProgramApprovedEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
     return { success: true, data };
   } catch (error) {
-    console.error("Email send error:", error);
+    logger.error("Email send error", error);
     return { success: false, error };
   }
 }
@@ -3953,12 +3954,12 @@ export async function sendContentProgramPaymentReminderEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
     return { success: true, data };
   } catch (error) {
-    console.error("Email send error:", error);
+    logger.error("Email send error", error);
     return { success: false, error };
   }
 }
@@ -4371,12 +4372,12 @@ export async function sendBrandOutreachEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error, messageId: null };
     }
     return { success: true, data, messageId: data?.id || null };
   } catch (error) {
-    console.error("Email send error:", error);
+    logger.error("Email send error", error);
     return { success: false, error, messageId: null };
   }
 }
@@ -4496,12 +4497,12 @@ export async function sendAuctionSoldEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
     return { success: true, data };
   } catch (error) {
-    console.error("Email send error:", error);
+    logger.error("Email send error", error);
     return { success: false, error };
   }
 }
@@ -4599,12 +4600,12 @@ export async function sendAuctionWonEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
     return { success: true, data };
   } catch (error) {
-    console.error("Email send error:", error);
+    logger.error("Email send error", error);
     return { success: false, error };
   }
 }
@@ -4700,12 +4701,12 @@ export async function sendScheduleCallEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
     return { success: true, data };
   } catch (error) {
-    console.error("Email send error:", error);
+    logger.error("Email send error", error);
     return { success: false, error };
   }
 }
@@ -4792,12 +4793,12 @@ export async function sendContractSentEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
     return { success: true, data };
   } catch (error) {
-    console.error("Email send error:", error);
+    logger.error("Email send error", error);
     return { success: false, error };
   }
 }
@@ -4884,12 +4885,12 @@ export async function sendContractSignedEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
     return { success: true, data };
   } catch (error) {
-    console.error("Email send error:", error);
+    logger.error("Email send error", error);
     return { success: false, error };
   }
 }
@@ -4922,12 +4923,12 @@ export async function sendPayoutProcessedEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
     return { success: true, data };
   } catch (err) {
-    console.error("Email send error:", err);
+    logger.error("Email send error", err);
     return { success: false, error: err };
   }
 }
@@ -4964,12 +4965,12 @@ export async function sendAuctionOutbidEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
     return { success: true, data };
   } catch (err) {
-    console.error("Email send error:", err);
+    logger.error("Email send error", err);
     return { success: false, error: err };
   }
 }
@@ -5028,7 +5029,7 @@ export async function sendTravelPartnershipEmail({
     if (error) return { success: false, error };
     return { success: true, messageId: (data as any)?.id };
   } catch (err) {
-    console.error("Travel partnership email error:", err);
+    logger.error("Travel partnership email error", err);
     return { success: false, error: err };
   }
 }
@@ -5232,12 +5233,12 @@ export async function sendEXABidsAnnouncementEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
     return { success: true, skipped: false, messageId: (data as any)?.id };
   } catch (err) {
-    console.error("EXA Bids announcement email error:", err);
+    logger.error("EXA Bids announcement email error", err);
     return { success: false, error: err };
   }
 }
@@ -5337,12 +5338,12 @@ export async function sendTicketPurchaseConfirmationEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
     return { success: true, data };
   } catch (error) {
-    console.error("Ticket confirmation email error:", error);
+    logger.error("Ticket confirmation email error", error);
     return { success: false, error };
   }
 }
@@ -5468,12 +5469,12 @@ export async function sendWorkshopRegistrationConfirmationEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
     return { success: true, data };
   } catch (error) {
-    console.error("Workshop confirmation email error:", error);
+    logger.error("Workshop confirmation email error", error);
     return { success: false, error };
   }
 }
@@ -5601,12 +5602,12 @@ export async function sendAcademyEnrollmentConfirmationEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
     return { success: true, data };
   } catch (error) {
-    console.error("Academy confirmation email error:", error);
+    logger.error("Academy confirmation email error", error);
     return { success: false, error };
   }
 }
@@ -5696,12 +5697,12 @@ export async function sendPrintOrderConfirmationEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
     return { success: true, data };
   } catch (error) {
-    console.error("Print order confirmation email error:", error);
+    logger.error("Print order confirmation email error", error);
     return { success: false, error };
   }
 }
@@ -5783,12 +5784,12 @@ export async function sendPrintReadyForPickupEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
     return { success: true, data };
   } catch (error) {
-    console.error("Print ready for pickup email error:", error);
+    logger.error("Print ready for pickup email error", error);
     return { success: false, error };
   }
 }
@@ -5882,12 +5883,12 @@ export async function sendWorkshopPaymentFailedEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
     return { success: true, data };
   } catch (error) {
-    console.error("Workshop payment failed email error:", error);
+    logger.error("Workshop payment failed email error", error);
     return { success: false, error };
   }
 }
@@ -5913,7 +5914,7 @@ export async function sendNewMessageNotificationEmail({
 }) {
   try {
     if (await isEmailUnsubscribed(to, "notification")) {
-      console.log(`Skipping new message email - ${to} is unsubscribed`);
+      logger.info("Skipping new message email - recipient is unsubscribed", { to });
       return;
     }
     const resend = getResendClient();
@@ -5996,12 +5997,12 @@ export async function sendNewMessageNotificationEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
     return { success: true, data };
   } catch (error) {
-    console.error("New message notification email error:", error);
+    logger.error("New message notification email error", error);
     return { success: false, error };
   }
 }
@@ -6027,7 +6028,7 @@ export async function sendUnreadMessageNudgeEmail({
 }) {
   try {
     if (await isEmailUnsubscribed(to, "notification")) {
-      console.log(`Skipping nudge email - ${to} is unsubscribed`);
+      logger.info("Skipping nudge email - recipient is unsubscribed", { to });
       return;
     }
     const resend = getResendClient();
@@ -6111,12 +6112,12 @@ export async function sendUnreadMessageNudgeEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
     return { success: true, data };
   } catch (error) {
-    console.error("Unread message nudge email error:", error);
+    logger.error("Unread message nudge email error", error);
     return { success: false, error };
   }
 }
@@ -6248,13 +6249,13 @@ export async function sendModelOnboardingInviteEmail({
     });
 
     if (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error);
       return { success: false, error };
     }
 
     return { success: true, data };
   } catch (error) {
-    console.error("Model onboarding invite email error:", error);
+    logger.error("Model onboarding invite email error", error);
     return { success: false, error };
   }
 }

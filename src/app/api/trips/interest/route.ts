@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const tripInterestSchema = z.object({
   gigId: z.string().uuid(),
@@ -92,7 +93,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Trip interest error:", error);
+    logger.error("Trip interest error", error);
     return NextResponse.json(
       { error: "Failed to submit interest" },
       { status: 500 }

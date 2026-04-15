@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { BRAND_SUBSCRIPTION_TIERS, BrandTier } from "@/lib/stripe-config";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 // Zod schema for campaign creation validation
 const createCampaignSchema = z.object({
@@ -54,7 +55,7 @@ export async function GET(request: NextRequest) {
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("Campaign error:", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    logger.error("Campaign error", error); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   // Add model count to each campaign
@@ -150,7 +151,7 @@ export async function POST(request: NextRequest) {
     if (error.code === "23505") {
       return NextResponse.json({ error: "A campaign with this name already exists" }, { status: 400 });
     }
-    console.error("Campaign error:", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    logger.error("Campaign error", error); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   return NextResponse.json({ campaign, model_count: 0 });

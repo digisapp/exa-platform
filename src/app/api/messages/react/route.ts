@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 // Allowed emojis for reactions
 const ALLOWED_EMOJIS = ["❤️", "😂", "😮", "😢", "😡", "👍"] as const;
@@ -114,7 +115,7 @@ export async function POST(request: NextRequest) {
         });
 
       if (insertError) {
-        console.error("Insert reaction error:", insertError);
+        logger.error("Insert reaction error", insertError);
         return NextResponse.json(
           { error: "Failed to add reaction" },
           { status: 500 }
@@ -128,7 +129,7 @@ export async function POST(request: NextRequest) {
       });
     }
   } catch (error) {
-    console.error("React error:", error);
+    logger.error("React error", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -236,7 +237,7 @@ export async function GET(request: NextRequest) {
       reactions: grouped,
     });
   } catch (error) {
-    console.error("Get reactions error:", error);
+    logger.error("Get reactions error", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

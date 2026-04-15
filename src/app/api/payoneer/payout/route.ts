@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { getPayoneerClient, isPayoneerConfigured } from "@/lib/payoneer";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 // Admin client for bypassing RLS
 const adminClient = createServiceRoleClient();
@@ -211,7 +212,7 @@ export async function POST(request: NextRequest) {
       throw payoutError;
     }
   } catch (error) {
-    console.error("Payoneer payout error:", error);
+    logger.error("Payoneer payout error", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Payout failed" },
       { status: 500 }
@@ -266,7 +267,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(status);
   } catch (error) {
-    console.error("Payoneer payout status error:", error);
+    logger.error("Payoneer payout status error", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Status check failed" },
       { status: 500 }

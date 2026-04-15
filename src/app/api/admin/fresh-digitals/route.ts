@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 
 const adminClient = createServiceRoleClient();
 
@@ -52,7 +53,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error("Admin miami digitals error:", error);
+    logger.error("Admin miami digitals error", error);
     return NextResponse.json(
       { error: "Failed to fetch bookings" },
       { status: 500 }

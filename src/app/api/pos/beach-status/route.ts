@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
+import { logger } from "@/lib/logger";
 
 export async function GET(request: NextRequest) {
   const sessionId = request.nextUrl.searchParams.get("sessionId");
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest) {
       paymentStatus: session.payment_status, // "paid" | "unpaid" | "no_payment_required"
     });
   } catch (error: any) {
-    console.error("Beach status error:", error);
+    logger.error("Beach status error", error);
     return NextResponse.json(
       { error: "Failed to retrieve session" },
       { status: 500 }

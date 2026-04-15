@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const searchSchema = z.object({
   q: z.string().min(1).max(200),
@@ -95,7 +96,7 @@ export async function GET(request: NextRequest) {
     const { data: messages, count, error } = await query;
 
     if (error) {
-      console.error("Search error:", error);
+      logger.error("Search error", error);
       return NextResponse.json({ error: "Search failed" }, { status: 500 });
     }
 
@@ -107,7 +108,7 @@ export async function GET(request: NextRequest) {
       headers: { "Cache-Control": "private, no-cache" },
     });
   } catch (error) {
-    console.error("Search error:", error);
+    logger.error("Search error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

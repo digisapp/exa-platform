@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { cleanMessage } from "@/lib/profanity";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const adminClient = createServiceRoleClient();
 
@@ -127,7 +128,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error("Live wall insert error:", error);
+      logger.error("Live wall insert error", error);
       return NextResponse.json(
         { error: "Failed to post message" },
         { status: 500 }
@@ -136,7 +137,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, message });
   } catch (error) {
-    console.error("Live wall POST error:", error);
+    logger.error("Live wall POST error", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -194,7 +195,7 @@ export async function DELETE(request: NextRequest) {
       .eq("id", messageId);
 
     if (error) {
-      console.error("Live wall delete error:", error);
+      logger.error("Live wall delete error", error);
       return NextResponse.json(
         { error: "Failed to delete message" },
         { status: 500 }
@@ -203,7 +204,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Live wall DELETE error:", error);
+    logger.error("Live wall DELETE error", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

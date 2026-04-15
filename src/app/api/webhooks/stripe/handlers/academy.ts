@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { sendAcademyEnrollmentConfirmationEmail } from "@/lib/email";
+import { logger } from "@/lib/logger";
 
 export async function handleAcademyEnrollment(session: Stripe.Checkout.Session, supabaseAdmin: SupabaseClient) {
   const applicationId = session.metadata?.application_id;
@@ -10,7 +11,7 @@ export async function handleAcademyEnrollment(session: Stripe.Checkout.Session, 
   const paymentType = session.metadata?.payment_type as "full" | "installment" | undefined;
 
   if (!applicationId || !cohort || !buyerEmail) {
-    console.error("Missing academy enrollment metadata:", session.id);
+    logger.error("Missing academy enrollment metadata", undefined, { sessionId: session.id });
     return;
   }
 
@@ -41,7 +42,7 @@ export async function handleAcademyEnrollment(session: Stripe.Checkout.Session, 
     .eq("id", applicationId);
 
   if (updateError) {
-    console.error("Error updating academy application:", updateError);
+    logger.error("Error updating academy application", updateError);
   }
 
   // Send confirmation email
@@ -67,8 +68,8 @@ export async function handleAcademyEnrollment(session: Stripe.Checkout.Session, 
       totalPriceCents: isInstallment ? 199600 : 199500,
     });
   } catch (emailError) {
-    console.error("Error sending academy confirmation email:", emailError);
+    logger.error("Error sending academy confirmation email", emailError);
   }
 
-  console.log("Academy enrollment completed:", applicationId, buyerEmail, cohort);
+  logger.info("Academy enrollment completed", { applicationId, buyerEmail, cohort });
 }

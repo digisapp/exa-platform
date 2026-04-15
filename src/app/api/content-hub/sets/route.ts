@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { getModelId } from "@/lib/ids";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const createSetSchema = z.object({
   title: z.string().min(1).max(200),
@@ -37,7 +38,7 @@ export async function GET(_request: NextRequest) {
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Content sets query error:", error);
+      logger.error("Content sets query error", error);
       return NextResponse.json({ error: "Failed to fetch sets" }, { status: 500 });
     }
 
@@ -65,7 +66,7 @@ export async function GET(_request: NextRequest) {
 
     return NextResponse.json({ sets: setsWithCounts });
   } catch (error) {
-    console.error("Content sets GET error:", error);
+    logger.error("Content sets GET error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -105,13 +106,13 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error("Content set insert error:", error);
+      logger.error("Content set insert error", error);
       return NextResponse.json({ error: "Failed to create set" }, { status: 500 });
     }
 
     return NextResponse.json({ set }, { status: 201 });
   } catch (error) {
-    console.error("Content sets POST error:", error);
+    logger.error("Content sets POST error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

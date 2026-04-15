@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 
 export async function GET() {
   try {
@@ -29,7 +30,7 @@ export async function GET() {
 
     return NextResponse.json({ leads: leads || [] });
   } catch (error) {
-    console.error("Comp card leads fetch error:", error);
+    logger.error("Comp card leads fetch error", error);
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 }

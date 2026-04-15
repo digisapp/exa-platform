@@ -4,6 +4,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { getModelId } from "@/lib/ids";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const createItemSchema = z.object({
   media_url: z.string().min(1, "media_url is required"),
@@ -63,13 +64,13 @@ export async function GET(request: NextRequest) {
     const { data: items, error } = await query;
 
     if (error) {
-      console.error("Content items query error:", error);
+      logger.error("Content items query error", error);
       return NextResponse.json({ error: "Failed to fetch items" }, { status: 500 });
     }
 
     return NextResponse.json({ items: items || [] });
   } catch (error) {
-    console.error("Content items GET error:", error);
+    logger.error("Content items GET error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -112,13 +113,13 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error("Content item insert error:", error.message, error.details, error.code);
+      logger.error("Content item insert error", undefined, { message: error.message, details: error.details, code: error.code });
       return NextResponse.json({ error: "Failed to create item", details: error.message }, { status: 500 });
     }
 
     return NextResponse.json({ item }, { status: 201 });
   } catch (error) {
-    console.error("Content items POST error:", error);
+    logger.error("Content items POST error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

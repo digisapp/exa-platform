@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { requirePosAuth, isPosAuthError } from "@/lib/pos-auth";
+import { logger } from "@/lib/logger";
 
 const supabase = createServiceRoleClient();
 
@@ -82,7 +83,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (updateError) {
-      console.error("Error closing drawer:", updateError);
+      logger.error("Error closing drawer", updateError);
       return NextResponse.json({ error: "Failed to close drawer" }, { status: 500 });
     }
 
@@ -100,7 +101,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Drawer close error:", error);
+    logger.error("Drawer close error", error);
     return NextResponse.json({ error: "Failed to close drawer" }, { status: 500 });
   }
 }

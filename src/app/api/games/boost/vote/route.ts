@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 const BOOST_COST = 5;
 const REVEAL_COST = 10;
@@ -183,7 +184,7 @@ export async function POST(request: NextRequest) {
     const voteResult = voteRpcData as Record<string, any> | null;
 
     if (voteError) {
-      console.error("Vote error:", voteError);
+      logger.error("Vote error", voteError);
       return NextResponse.json(
         { error: "Failed to record vote" },
         { status: 500 }
@@ -272,7 +273,7 @@ export async function POST(request: NextRequest) {
       new_balance: coinBalance - coinsToSpend,
     });
   } catch (error) {
-    console.error("Vote error:", error);
+    logger.error("Vote error", error);
     return NextResponse.json(
       { error: "Failed to record vote" },
       { status: 500 }

@@ -4,6 +4,7 @@ import { getModelId } from "@/lib/ids";
 import { NextRequest, NextResponse } from "next/server";
 import { processImage, isProcessableImage } from "@/lib/image-processing";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 // Configure route to accept larger body sizes
 export const runtime = "nodejs";
@@ -92,7 +93,7 @@ export async function POST(request: NextRequest) {
         });
 
       if (uploadError) {
-        console.error("[Upload API] Storage upload error:", uploadError);
+        logger.error("[Upload API] Storage upload error", uploadError);
         return NextResponse.json(
           { error: `Upload failed: ${uploadError.message}` },
           { status: 500 }
@@ -124,7 +125,7 @@ export async function POST(request: NextRequest) {
         processedBuffer = processed.buffer;
         finalContentType = processed.contentType;
       } catch (processError) {
-        console.error("Image processing error, uploading original:", processError);
+        logger.error("Image processing error, uploading original", processError);
         // Fall back to original if processing fails
       }
     }
@@ -145,7 +146,7 @@ export async function POST(request: NextRequest) {
       });
 
     if (uploadError) {
-      console.error("Upload error:", uploadError);
+      logger.error("Upload error", uploadError);
       return NextResponse.json(
         { error: `Upload failed: ${uploadError.message}` },
         { status: 500 }
@@ -182,7 +183,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (mediaError) {
-      console.error("Media asset error:", mediaError);
+      logger.error("Media asset error", mediaError);
       return NextResponse.json(
         { error: `Failed to save media record: ${mediaError.message}` },
         { status: 500 }
@@ -215,7 +216,7 @@ export async function POST(request: NextRequest) {
       mediaAsset,
     });
   } catch (error) {
-    console.error("Upload route error:", error);
+    logger.error("Upload route error", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -285,7 +286,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Delete route error:", error);
+    logger.error("Delete route error", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

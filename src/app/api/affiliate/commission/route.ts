@@ -2,6 +2,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const postSchema = z.object({
   orderId: z.string().min(1),
@@ -125,7 +126,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error("Error recording commission:", error);
+      logger.error("Error recording commission", error);
       throw error;
     }
 
@@ -140,7 +141,7 @@ export async function POST(request: NextRequest) {
       }
     });
   } catch (error) {
-    console.error("Record commission error:", error);
+    logger.error("Record commission error", error);
     return NextResponse.json(
       { error: "Failed to record commission" },
       { status: 500 }
@@ -193,7 +194,7 @@ export async function PATCH(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error("Error updating commission:", error);
+      logger.error("Error updating commission", error);
       throw error;
     }
 
@@ -206,7 +207,7 @@ export async function PATCH(request: NextRequest) {
       }
     });
   } catch (error) {
-    console.error("Update commission error:", error);
+    logger.error("Update commission error", error);
     return NextResponse.json(
       { error: "Failed to update commission" },
       { status: 500 }

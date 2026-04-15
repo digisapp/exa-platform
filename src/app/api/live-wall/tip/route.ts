@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const tipSchema = z.object({
   messageId: z.string().uuid("Invalid message ID"),
@@ -63,7 +64,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (rpcError) {
-      console.error("Tip RPC error:", rpcError);
+      logger.error("Tip RPC error", rpcError);
       return NextResponse.json(
         { error: "Failed to send tip" },
         { status: 500 }
@@ -96,7 +97,7 @@ export async function POST(request: NextRequest) {
       tipTotal: result.tip_total,
     });
   } catch (error) {
-    console.error("Live wall tip error:", error);
+    logger.error("Live wall tip error", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

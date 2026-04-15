@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { sendBookingRequestEmail } from "@/lib/email";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 // Zod schema for booking creation validation
 const createBookingSchema = z.object({
@@ -70,7 +71,7 @@ export async function GET(request: NextRequest) {
     // Auth check
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError) {
-      console.error("Auth error:", authError);
+      logger.error("Auth error", authError);
       return NextResponse.json({ error: "Authentication failed" }, { status: 401 });
     }
 
@@ -92,7 +93,7 @@ export async function GET(request: NextRequest) {
       .maybeSingle();
 
     if (actorError) {
-      console.error("Actor fetch error:", actorError);
+      logger.error("Actor fetch error", actorError);
       return NextResponse.json({ error: "An unexpected error occurred" }, { status: 500 });
     }
 
@@ -124,7 +125,7 @@ export async function GET(request: NextRequest) {
         .order("created_at", { ascending: false });
 
       if (error) {
-        console.error("Bookings query error (model):", error);
+        logger.error("Bookings query error (model)", error);
         return NextResponse.json({ error: "Failed to fetch bookings" }, { status: 500 });
       }
       bookings = data || [];
@@ -135,7 +136,7 @@ export async function GET(request: NextRequest) {
         .order("created_at", { ascending: false });
 
       if (error) {
-        console.error("Bookings query error (client):", error);
+        logger.error("Bookings query error (client)", error);
         return NextResponse.json({ error: "Failed to fetch bookings" }, { status: 500 });
       }
       bookings = data || [];
@@ -219,7 +220,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ bookings, serviceLabels: SERVICE_LABELS });
   } catch (error) {
-    console.error("Bookings fetch error:", error);
+    logger.error("Bookings fetch error", error);
     return NextResponse.json({ error: "Failed to fetch bookings" }, { status: 500 });
   }
 }
@@ -258,7 +259,7 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (actorError || !newActor) {
-        console.error("Failed to create actor:", actorError);
+        logger.error("Failed to create actor", actorError);
         return NextResponse.json({ error: "Failed to set up your account. Please try signing up first." }, { status: 400 });
       }
       actor = newActor;
@@ -404,7 +405,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error("Failed to create booking:", error);
+      logger.error("Failed to create booking", error);
       return NextResponse.json({ error: "Failed to create booking" }, { status: 500 });
     }
 
@@ -433,7 +434,7 @@ export async function POST(request: NextRequest) {
         }
       }
     } catch (notifError) {
-      console.error("Failed to create notification:", notifError);
+      logger.error("Failed to create notification", notifError);
       // Don't fail the booking request if notification fails
     }
 
@@ -472,7 +473,7 @@ export async function POST(request: NextRequest) {
         });
       }
     } catch (emailError) {
-      console.error("Failed to send booking request email:", emailError);
+      logger.error("Failed to send booking request email", emailError);
       // Don't fail the booking request if email fails
     }
 
@@ -482,7 +483,7 @@ export async function POST(request: NextRequest) {
       message: "Booking request sent successfully",
     });
   } catch (error) {
-    console.error("Booking create error:", error);
+    logger.error("Booking create error", error);
     return NextResponse.json({ error: "Failed to create booking" }, { status: 500 });
   }
 }

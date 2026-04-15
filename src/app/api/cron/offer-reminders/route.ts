@@ -1,6 +1,7 @@
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendOfferReminderEmail } from "@/lib/email";
+import { logger } from "@/lib/logger";
 
 const adminClient = createServiceRoleClient();
 
@@ -13,7 +14,7 @@ export async function GET(request: NextRequest) {
     const cronSecret = process.env.CRON_SECRET;
 
     if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
-      console.error("Cron authentication failed - CRON_SECRET missing or invalid");
+      logger.error("Cron authentication failed - CRON_SECRET missing or invalid");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -130,7 +131,7 @@ export async function GET(request: NextRequest) {
 
         sentCount++;
       } catch (err) {
-        console.error(`Failed to send reminder to ${email}:`, err);
+        logger.error("Failed to send reminder", err, { email });
         errors.push(`Failed for model ${model.id}`);
       }
     }
@@ -142,7 +143,7 @@ export async function GET(request: NextRequest) {
       errors: errors.length > 0 ? errors : undefined,
     });
   } catch (error) {
-    console.error("Cron offer-reminders error:", error);
+    logger.error("Cron offer-reminders error", error);
     return NextResponse.json({ error: "Failed to process reminders" }, { status: 500 });
   }
 }

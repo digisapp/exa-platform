@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.examodels.com";
 
@@ -270,7 +271,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ url: session.url });
     }
   } catch (error) {
-    console.error("MSW brand checkout error:", error);
+    logger.error("MSW brand checkout error", error);
     return NextResponse.json(
       { error: "Failed to create checkout session" },
       { status: 500 }

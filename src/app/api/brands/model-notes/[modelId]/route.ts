@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 const adminClient = createServiceRoleClient();
 
@@ -42,7 +43,7 @@ export async function GET(
     .single();
 
   if (error && error.code !== "PGRST116") { // PGRST116 = no rows returned
-    console.error("Brand model notes error:", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    logger.error("Brand model notes error", error); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   return NextResponse.json({
@@ -109,7 +110,7 @@ export async function POST(
     .single();
 
   if (error) {
-    console.error("Brand model notes error:", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    logger.error("Brand model notes error", error); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   return NextResponse.json({
@@ -153,7 +154,7 @@ export async function DELETE(
     .eq("model_id", modelId);
 
   if (error) {
-    console.error("Brand model notes error:", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    logger.error("Brand model notes error", error); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   return NextResponse.json({ success: true });

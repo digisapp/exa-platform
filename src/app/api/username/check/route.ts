@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const reserveUsernameSchema = z.object({
   username: z.string().min(1),
@@ -110,7 +111,7 @@ export async function GET(request: NextRequest) {
       reason: null,
     });
   } catch (error) {
-    console.error("Username check error:", error);
+    logger.error("Username check error", error);
     return NextResponse.json(
       { error: "Failed to check username" },
       { status: 500 }
@@ -176,7 +177,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Reserve username error:", error);
+    logger.error("Reserve username error", error);
     return NextResponse.json(
       { error: "Failed to reserve username" },
       { status: 500 }
@@ -229,7 +230,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Unreserve username error:", error);
+    logger.error("Unreserve username error", error);
     return NextResponse.json(
       { error: "Failed to unreserve username" },
       { status: 500 }

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
@@ -85,7 +86,7 @@ export async function POST(request: NextRequest) {
       });
 
     if (uploadError) {
-      console.error("Premium upload error:", uploadError);
+      logger.error("Premium upload error", uploadError);
       return NextResponse.json(
         { error: `Upload failed: ${uploadError.message}` },
         { status: 500 }
@@ -108,7 +109,7 @@ export async function POST(request: NextRequest) {
       mediaType: isImage ? "image" : "video",
     });
   } catch (error) {
-    console.error("Premium upload route error:", error);
+    logger.error("Premium upload route error", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

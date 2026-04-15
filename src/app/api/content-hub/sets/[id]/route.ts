@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { getModelId } from "@/lib/ids";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const updateSetSchema = z.object({
   title: z.string().max(200).optional(),
@@ -68,13 +69,13 @@ export async function PATCH(
       .single();
 
     if (error) {
-      console.error("Content set update error:", error);
+      logger.error("Content set update error", error);
       return NextResponse.json({ error: "Failed to update set" }, { status: 500 });
     }
 
     return NextResponse.json({ set });
   } catch (error) {
-    console.error("Content set PATCH error:", error);
+    logger.error("Content set PATCH error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -129,13 +130,13 @@ export async function DELETE(
       .eq("id", id);
 
     if (error) {
-      console.error("Content set delete error:", error);
+      logger.error("Content set delete error", error);
       return NextResponse.json({ error: "Failed to delete set" }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Content set DELETE error:", error);
+    logger.error("Content set DELETE error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

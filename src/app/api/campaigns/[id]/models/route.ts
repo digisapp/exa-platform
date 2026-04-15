@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { BRAND_SUBSCRIPTION_TIERS, BrandTier } from "@/lib/stripe-config";
+import { logger } from "@/lib/logger";
 
 // POST /api/campaigns/[id]/models - Add model to campaign
 export async function POST(
@@ -94,7 +95,7 @@ export async function POST(
     if (error.code === "23505") {
       return NextResponse.json({ error: "Model is already in this campaign" }, { status: 400 });
     }
-    console.error("Campaign models error:", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    logger.error("Campaign models error", error); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   return NextResponse.json({ item });
@@ -159,7 +160,7 @@ export async function DELETE(
     .eq("model_id", modelId);
 
   if (error) {
-    console.error("Campaign models error:", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    logger.error("Campaign models error", error); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   return NextResponse.json({ success: true });

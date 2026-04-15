@@ -2,6 +2,7 @@ import Stripe from "stripe";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { stripe } from "@/lib/stripe";
 import { BRAND_SUBSCRIPTION_TIERS, BrandTier } from "@/lib/stripe-config";
+import { logger } from "@/lib/logger";
 
 export async function handleSubscriptionUpdate(
   subscription: Stripe.Subscription & Record<string, any>,
@@ -64,7 +65,7 @@ export async function grantMonthlyCoins(invoice: Stripe.Invoice, supabaseAdmin: 
   const tier = subscription.metadata?.tier as BrandTier;
 
   if (!brandId || !actorId || !tier) {
-    console.error("Missing metadata for coin grant:", { brandId, actorId, tier });
+    logger.error("Missing metadata for coin grant", undefined, { brandId, actorId, tier });
     return;
   }
 
@@ -81,7 +82,7 @@ export async function grantMonthlyCoins(invoice: Stripe.Invoice, supabaseAdmin: 
     .maybeSingle();
 
   if (existingRenewal) {
-    console.log("Duplicate webhook ignored - renewal coins already granted for invoice:", invoice.id);
+    logger.info("Duplicate webhook ignored - renewal coins already granted for invoice", { invoiceId: invoice.id });
     return;
   }
 
@@ -98,7 +99,7 @@ export async function grantMonthlyCoins(invoice: Stripe.Invoice, supabaseAdmin: 
   });
 
   if (error) {
-    console.error("Error granting renewal coins:", error);
+    logger.error("Error granting renewal coins", error);
   } else {
     // Set idempotency_key for DB-level duplicate prevention
     await supabaseAdmin
@@ -117,7 +118,7 @@ export async function grantMonthlyCoins(invoice: Stripe.Invoice, supabaseAdmin: 
 }
 
 export async function handleInvoicePaymentFailed(invoice: Stripe.Invoice, supabaseAdmin: SupabaseClient) {
-  console.error("Invoice payment failed:", invoice.id);
+  logger.error("Invoice payment failed", undefined, { invoiceId: invoice.id });
   // Update subscription status to past_due
   const failedSubId = (invoice as any).subscription;
   if (failedSubId) {

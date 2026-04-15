@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { stripe } from "@/lib/stripe";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 const CREATOR_HOUSE_PRICE_CENTS = 140000; // $1,400
 
@@ -137,7 +138,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ checkoutUrl: session.url });
   } catch (error: unknown) {
-    console.error("Creator House checkout error:", error);
+    logger.error("Creator House checkout error", error);
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
       { error: `Failed to create checkout session: ${message}` },

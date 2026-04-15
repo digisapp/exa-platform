@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { stripe } from "@/lib/stripe";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const PRICE_CENTS = 12500; // $125
 const BASE_URL =
@@ -118,7 +119,7 @@ export async function POST(request: NextRequest) {
       sessionId: session.id,
     });
   } catch (error) {
-    console.error("Miami digitals checkout error:", error);
+    logger.error("Miami digitals checkout error", error);
     const message =
       error instanceof Error
         ? error.message

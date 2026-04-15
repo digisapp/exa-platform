@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 export async function GET(request: NextRequest) {
   try {
@@ -64,7 +65,7 @@ export async function GET(request: NextRequest) {
     const { data: purchases, error } = await query as { data: any[] | null; error: any };
 
     if (error) {
-      console.error("Error fetching content:", error);
+      logger.error("Error fetching content", error);
       return NextResponse.json(
         { error: "Failed to fetch content" },
         { status: 500 }
@@ -108,7 +109,7 @@ export async function GET(request: NextRequest) {
       total: content.length,
     });
   } catch (error) {
-    console.error("Content fetch error:", error);
+    logger.error("Content fetch error", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

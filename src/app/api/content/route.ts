@@ -4,6 +4,7 @@ import { getActorId, getActorInfo, getModelId } from "@/lib/ids";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 // Extract storage path from either a raw path or an expired signed URL
 // Handles: "premium/modelId/timestamp.jpg" and "https://.../sign/portfolio/premium/...?token=..."
@@ -72,7 +73,7 @@ export async function GET(request: NextRequest) {
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Error fetching content:", error);
+      logger.error("Error fetching content", error);
       return NextResponse.json(
         { error: "Failed to fetch content" },
         { status: 500 }
@@ -148,7 +149,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ content: contentWithStatus });
   } catch (error) {
-    console.error("Content fetch error:", error);
+    logger.error("Content fetch error", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -227,7 +228,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error("Error creating content:", error);
+      logger.error("Error creating content", error);
       return NextResponse.json(
         { error: "Failed to create content" },
         { status: 500 }
@@ -236,7 +237,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ content });
   } catch (err) {
-    console.error("Content creation error:", err);
+    logger.error("Content creation error", err);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -289,7 +290,7 @@ export async function DELETE(request: NextRequest) {
       .eq("model_id", modelId);
 
     if (error) {
-      console.error("Error deleting content:", error);
+      logger.error("Error deleting content", error);
       return NextResponse.json(
         { error: "Failed to delete content" },
         { status: 500 }
@@ -298,7 +299,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Content deletion error:", error);
+    logger.error("Content deletion error", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

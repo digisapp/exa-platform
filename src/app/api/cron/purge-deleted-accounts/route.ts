@@ -1,5 +1,6 @@
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 
 const adminClient = createServiceRoleClient();
 
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest) {
       .limit(50); // Process in batches to avoid timeouts
 
     if (fetchError) {
-      console.error("Purge fetch error:", fetchError);
+      logger.error("Purge fetch error", fetchError);
       return NextResponse.json({ error: "Failed to fetch accounts to purge" }, { status: 500 });
     }
 
@@ -84,14 +85,14 @@ export async function GET(request: NextRequest) {
         }
 
         purgedCount++;
-        console.log(`Purged account: ${model.id} (was: ${model.username})`);
+        logger.info("Purged account", { modelId: model.id, username: model.username });
       } catch (err) {
-        console.error(`Failed to purge model ${model.id}:`, err);
+        logger.error("Failed to purge model", err, { modelId: model.id });
         // Continue with next model
       }
     }
 
-    console.log(`Purged ${purgedCount} of ${modelsToPurge.length} accounts`);
+    logger.info("Purge complete", { purgedCount, total: modelsToPurge.length });
 
     return NextResponse.json({
       success: true,
@@ -99,7 +100,7 @@ export async function GET(request: NextRequest) {
       total: modelsToPurge.length,
     });
   } catch (error) {
-    console.error("Cron purge-deleted-accounts error:", error);
+    logger.error("Cron purge-deleted-accounts error", error);
     return NextResponse.json({ error: "Failed to run purge" }, { status: 500 });
   }
 }

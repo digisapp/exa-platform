@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { notifyAdminNewCallRequest } from "@/lib/sms";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 // POST - Create a call request from the public scheduling form
 export async function POST(request: NextRequest) {
@@ -74,7 +75,7 @@ export async function POST(request: NextRequest) {
       });
 
     if (insertError) {
-      console.error("Call request insert error:", insertError);
+      logger.error("Call request insert error", insertError);
       return NextResponse.json(
         { error: "Failed to create call request" },
         { status: 500 }
@@ -87,7 +88,7 @@ export async function POST(request: NextRequest) {
       phone: phone.trim(),
       source: "gig-email",
     }).catch((err) => {
-      console.error("SMS notification error:", err);
+      logger.error("SMS notification error", err);
     });
 
     return NextResponse.json({
@@ -95,7 +96,7 @@ export async function POST(request: NextRequest) {
       message: "Call request submitted! We'll be in touch soon.",
     });
   } catch (error) {
-    console.error("Schedule call error:", error);
+    logger.error("Schedule call error", error);
     return NextResponse.json(
       { error: "Failed to submit call request" },
       { status: 500 }

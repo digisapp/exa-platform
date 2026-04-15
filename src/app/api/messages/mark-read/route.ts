@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const markReadSchema = z.object({
   conversationId: z.string().uuid(),
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     if (error) {
-      console.error("Mark read error:", error);
+      logger.error("Mark read error", error);
       return NextResponse.json({ error: "Failed to mark as read" }, { status: 500 });
     }
 
@@ -60,7 +61,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Mark read error:", error);
+    logger.error("Mark read error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

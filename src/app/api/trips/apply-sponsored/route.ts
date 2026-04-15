@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 const MIN_FOLLOWERS = 20000;
 
@@ -125,7 +126,7 @@ export async function POST(request: NextRequest) {
         .eq("id", existingApp.id);
 
       if (updateError) {
-        console.error("Update error:", updateError);
+        logger.error("Update error", updateError);
         return NextResponse.json(
           { error: "Failed to update application" },
           { status: 500 }
@@ -148,7 +149,7 @@ export async function POST(request: NextRequest) {
         });
 
       if (insertError) {
-        console.error("Insert error:", insertError);
+        logger.error("Insert error", insertError);
         return NextResponse.json(
           { error: "Failed to submit application" },
           { status: 500 }
@@ -161,7 +162,7 @@ export async function POST(request: NextRequest) {
       message: "Sponsorship application submitted successfully",
     });
   } catch (error) {
-    console.error("Sponsorship application error:", error);
+    logger.error("Sponsorship application error", error);
     return NextResponse.json(
       { error: "Failed to submit application" },
       { status: 500 }

@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { escapeIlike } from "@/lib/utils";
 import { requirePosAuth, isPosAuthError } from "@/lib/pos-auth";
+import { logger } from "@/lib/logger";
 
 const supabase = createServiceRoleClient();
 
@@ -142,7 +143,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("SKU lookup error:", error);
+    logger.error("SKU lookup error", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const voteSchema = z.object({
   contestant_id: z.string().uuid("Invalid contestant ID"),
@@ -120,7 +121,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (voteError) {
-      console.error("SwimCrown vote error:", voteError);
+      logger.error("SwimCrown vote error", voteError);
       return NextResponse.json(
         { error: "Failed to cast vote" },
         { status: 500 }
@@ -149,7 +150,7 @@ export async function POST(request: NextRequest) {
       coinsSpent: coins,
     });
   } catch (error) {
-    console.error("SwimCrown vote error:", error);
+    logger.error("SwimCrown vote error", error);
     return NextResponse.json(
       { error: "Failed to cast vote" },
       { status: 500 }

@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { stripe } from "@/lib/stripe";
 import { TICKET_CONFIG } from "@/lib/ticket-config";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 // Admin client for bypassing RLS
 const adminClient = createServiceRoleClient();
@@ -187,7 +188,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (purchaseError) {
-      console.error("Error creating purchase record:", purchaseError);
+      logger.error("Error creating purchase record", purchaseError);
       // Don't fail the checkout - the webhook will handle it
     }
 
@@ -196,7 +197,7 @@ export async function POST(request: NextRequest) {
       sessionId: session.id,
     });
   } catch (error) {
-    console.error("Ticket checkout error:", error);
+    logger.error("Ticket checkout error", error);
     return NextResponse.json(
       { error: "Failed to create checkout session" },
       { status: 500 }

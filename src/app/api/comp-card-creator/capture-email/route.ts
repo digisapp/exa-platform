@@ -2,6 +2,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const schema = z.object({
   email: z.string().email().max(254),
@@ -87,7 +88,7 @@ export async function POST(request: NextRequest) {
         });
 
       if (error) {
-        console.error("Lead capture error:", error);
+        logger.error("Lead capture error", error);
         return NextResponse.json(
           { error: "Something went wrong" },
           { status: 500 }
@@ -97,7 +98,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Lead capture error:", error);
+    logger.error("Lead capture error", error);
     return NextResponse.json(
       { error: "Something went wrong" },
       { status: 500 }

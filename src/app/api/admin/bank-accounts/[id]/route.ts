@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { decryptBankAccount } from "@/lib/encryption";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 export async function GET(
   request: NextRequest,
@@ -57,7 +58,7 @@ export async function GET(
     try {
       accountNumber = decryptBankAccount(bankAccount.account_number_encrypted);
     } catch (decryptError) {
-      console.error("Failed to decrypt account number:", decryptError);
+      logger.error("Failed to decrypt account number", decryptError);
       return NextResponse.json({ error: "Failed to decrypt account number" }, { status: 500 });
     }
 
@@ -70,7 +71,7 @@ export async function GET(
       account_type: bankAccount.account_type,
     });
   } catch (error) {
-    console.error("Admin bank account error:", error);
+    logger.error("Admin bank account error", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

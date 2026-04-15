@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { rateLimitAsync } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const blastSchema = z.object({
   message: z.string().min(1, "Message content required").max(5000, "Message is too long"),
@@ -164,7 +165,7 @@ export async function POST(request: NextRequest) {
       errors: errors.length > 0 ? errors : undefined,
     });
   } catch (error) {
-    console.error("Blast message error:", error);
+    logger.error("Blast message error", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

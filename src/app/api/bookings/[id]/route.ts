@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendBookingAcceptedEmail, sendBookingDeclinedEmail } from "@/lib/email";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 // Service type labels
 const SERVICE_LABELS: Record<string, string> = {
@@ -55,7 +56,7 @@ export async function GET(
       .maybeSingle();
 
     if (error) {
-      console.error("Failed to fetch booking:", error);
+      logger.error("Failed to fetch booking", error);
       return NextResponse.json({ error: "Failed to fetch booking" }, { status: 500 });
     }
 
@@ -124,7 +125,7 @@ export async function GET(
 
     return NextResponse.json({ booking: bookingData, serviceLabels: SERVICE_LABELS });
   } catch (error) {
-    console.error("Booking fetch error:", error);
+    logger.error("Booking fetch error", error);
     return NextResponse.json({ error: "Failed to fetch booking" }, { status: 500 });
   }
 }
@@ -147,7 +148,7 @@ export async function PATCH(
     // Auth check
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError) {
-      console.error("Auth error:", authError);
+      logger.error("Auth error", authError);
       return NextResponse.json({ error: "Auth error", details: authError.message }, { status: 401 });
     }
     if (!user) {
@@ -169,12 +170,12 @@ export async function PATCH(
       .maybeSingle();
 
     if (actorError) {
-      console.error("Actor fetch error:", actorError);
+      logger.error("Actor fetch error", actorError);
       return NextResponse.json({ error: "Failed to fetch actor", details: actorError.message }, { status: 500 });
     }
 
     if (!actor) {
-      console.error("Actor not found for user:", user.id);
+      logger.error("Actor not found for user", undefined, { userId: user.id });
       return NextResponse.json({ error: "Actor not found" }, { status: 404 });
     }
     debugInfo.actor = actor;
@@ -187,7 +188,7 @@ export async function PATCH(
       .maybeSingle();
 
     if (bookingError) {
-      console.error("Failed to fetch booking:", bookingError);
+      logger.error("Failed to fetch booking", bookingError);
       return NextResponse.json({ error: "Failed to fetch booking", details: bookingError.message }, { status: 500 });
     }
 
@@ -296,7 +297,7 @@ export async function PATCH(
               .eq("id", clientActor.id);
 
             if (escrowDebitError) {
-              console.error("Escrow debit failed:", escrowDebitError);
+              logger.error("Escrow debit failed", escrowDebitError);
               return NextResponse.json({ error: "Failed to escrow coins" }, { status: 500 });
             }
 
@@ -314,7 +315,7 @@ export async function PATCH(
 
             if (escrowLogError) {
               // ROLLBACK: Refund the escrow debit since transaction log failed
-              console.error("Escrow transaction log failed, rolling back debit:", escrowLogError);
+              logger.error("Escrow transaction log failed, rolling back debit", escrowLogError);
               await adminClient
                 .from(escrowTable)
                 .update({ coin_balance: clientBalance })
@@ -430,7 +431,7 @@ export async function PATCH(
             .eq("id", actor.id);
 
           if (counterEscrowDebitError) {
-            console.error("Counter escrow debit failed:", counterEscrowDebitError);
+            logger.error("Counter escrow debit failed", counterEscrowDebitError);
             return NextResponse.json({ error: "Failed to escrow coins for counter offer" }, { status: 500 });
           }
 
@@ -449,7 +450,7 @@ export async function PATCH(
 
           if (counterEscrowLogError) {
             // ROLLBACK: Refund the escrow debit since transaction log failed
-            console.error("Counter escrow transaction log failed, rolling back debit:", counterEscrowLogError);
+            logger.error("Counter escrow transaction log failed, rolling back debit", counterEscrowLogError);
             await adminClient
               .from(counterEscrowTable)
               .update({ coin_balance: counterClientBalance })
@@ -571,7 +572,7 @@ export async function PATCH(
       .single();
 
     if (error || !updatedBooking) {
-      console.error("Failed to update booking:", error, "updateData:", updateData);
+      logger.error("Failed to update booking", error, { updateData });
 
       // ROLLBACK: If escrow was taken during accept/accept_counter, refund the client
       if (action === "accept") {
@@ -592,7 +593,7 @@ export async function PATCH(
               .maybeSingle();
 
             if (rollbackRecord) {
-              console.error("Rolling back escrow debit for accept action, refunding", rollbackAmount, "coins to", rollbackClientActor.id);
+              logger.error("Rolling back escrow debit for accept action", undefined, { rollbackAmount, actorId: rollbackClientActor.id });
               await adminClient
                 .from(rollbackTable)
                 .update({ coin_balance: (rollbackRecord.coin_balance || 0) + rollbackAmount })
@@ -611,7 +612,7 @@ export async function PATCH(
             .maybeSingle();
 
           if (rollbackCounterRecord) {
-            console.error("Rolling back escrow debit for accept_counter action, refunding", rollbackCounterAmount, "coins to", actor.id);
+            logger.error("Rolling back escrow debit for accept_counter action", undefined, { rollbackCounterAmount, actorId: actor.id });
             await adminClient
               .from(rollbackCounterTable)
               .update({ coin_balance: (rollbackCounterRecord.coin_balance || 0) + rollbackCounterAmount })
@@ -651,7 +652,7 @@ export async function PATCH(
         if (modelCreditError) {
           // Model credit failed - booking is already marked complete but coins not released
           // Log for manual resolution since the escrow coins are still held
-          console.error("CRITICAL: Model credit failed after booking completion. Booking:", id, "Model:", booking.model_id, "Amount:", escrowAmount, "Error:", modelCreditError);
+          logger.error("CRITICAL: Model credit failed after booking completion", modelCreditError, { bookingId: id, modelId: booking.model_id, escrowAmount });
         }
 
         // Get model's actor ID for transaction log
@@ -675,7 +676,7 @@ export async function PATCH(
 
           if (paymentLogError) {
             // Credit succeeded but log failed - coins are correct but transaction log is incomplete
-            console.error("WARNING: Booking payment transaction log failed. Booking:", id, "Model actor:", modelActor.id, "Amount:", escrowAmount, "Error:", paymentLogError);
+            logger.error("WARNING: Booking payment transaction log failed", paymentLogError, { bookingId: id, modelActorId: modelActor.id, escrowAmount });
           }
         }
       } else if (action === "cancel" && wasEscrowed) {
@@ -702,7 +703,7 @@ export async function PATCH(
                 .eq("id", clientActor.id);
 
               if (refundCreditError) {
-                console.error("CRITICAL: Refund credit failed after booking cancellation. Booking:", id, "Client:", clientActor.id, "Amount:", escrowAmount, "Error:", refundCreditError);
+                logger.error("CRITICAL: Refund credit failed after booking cancellation", refundCreditError, { bookingId: id, clientActorId: clientActor.id, escrowAmount });
               }
 
               if (!refundCreditError) {
@@ -718,13 +719,13 @@ export async function PATCH(
                 });
 
                 if (refundLogError) {
-                  console.error("WARNING: Refund transaction log failed. Booking:", id, "Client:", clientActor.id, "Amount:", escrowAmount, "Error:", refundLogError);
+                  logger.error("WARNING: Refund transaction log failed", refundLogError, { bookingId: id, clientActorId: clientActor.id, escrowAmount });
                 }
               }
             }
           }
         } catch (refundError) {
-          console.error("Failed to process refund:", refundError);
+          logger.error("Failed to process refund", refundError);
           // Continue with cancellation even if refund fails - can be handled manually
         }
       }
@@ -736,7 +737,7 @@ export async function PATCH(
       try {
         await adminClient.from("notifications").insert(notificationData);
       } catch (notifError) {
-        console.error("Failed to send notification:", notifError);
+        logger.error("Failed to send notification", notifError);
       }
     }
 
@@ -799,7 +800,7 @@ export async function PATCH(
           }
         }
       } catch (emailError) {
-        console.error("Failed to send booking email:", emailError);
+        logger.error("Failed to send booking email", emailError);
         // Don't fail the booking update if email fails
       }
     }
@@ -810,7 +811,7 @@ export async function PATCH(
       message: `Booking ${action}ed successfully`,
     });
   } catch (error: any) {
-    console.error("Booking update error:", error, "Debug:", debugInfo);
+    logger.error("Booking update error", error, { debugInfo });
     return NextResponse.json({
       error: "Failed to update booking",
       message: error?.message || "Unknown error",
@@ -886,13 +887,13 @@ export async function DELETE(
       .eq("id", id);
 
     if (deleteError) {
-      console.error("Delete booking error:", deleteError);
+      logger.error("Delete booking error", deleteError);
       return NextResponse.json({ error: "Failed to delete booking" }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, message: "Booking deleted" });
   } catch (error) {
-    console.error("Delete booking error:", error);
+    logger.error("Delete booking error", error);
     return NextResponse.json({ error: "Failed to delete booking" }, { status: 500 });
   }
 }

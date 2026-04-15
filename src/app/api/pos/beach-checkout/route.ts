@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.examodels.com";
 
@@ -69,7 +70,7 @@ export async function POST(request: NextRequest) {
       checkoutUrl: session.url,
     });
   } catch (error: any) {
-    console.error("Beach checkout error:", error);
+    logger.error("Beach checkout error", error);
     return NextResponse.json(
       { error: "Failed to create checkout session" },
       { status: 500 }

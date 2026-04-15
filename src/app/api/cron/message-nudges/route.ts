@@ -1,6 +1,7 @@
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { sendUnreadMessageNudgeEmail } from "@/lib/email";
+import { logger } from "@/lib/logger";
 
 const adminClient: any = createServiceRoleClient();
 
@@ -13,7 +14,7 @@ export async function GET(request: NextRequest) {
     const cronSecret = process.env.CRON_SECRET;
 
     if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
-      console.error("Cron authentication failed");
+      logger.error("Cron authentication failed");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -237,7 +238,7 @@ export async function GET(request: NextRequest) {
 
         sentCount++;
       } catch (err) {
-        console.error(`Failed to send nudge to ${email}:`, err);
+        logger.error("Failed to send nudge", err, { email });
         errors.push(`Failed for actor ${candidate.actorId}`);
       }
     }
@@ -249,7 +250,7 @@ export async function GET(request: NextRequest) {
       errors: errors.length > 0 ? errors : undefined,
     });
   } catch (error) {
-    console.error("Cron message-nudges error:", error);
+    logger.error("Cron message-nudges error", error);
     return NextResponse.json({ error: "Failed to process nudges" }, { status: 500 });
   }
 }

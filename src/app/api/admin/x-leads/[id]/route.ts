@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 // PATCH /api/admin/x-leads/[id]
 // Body: { status?, notes?, contacted_at? }
@@ -49,7 +50,7 @@ export async function PATCH(
     .single();
 
   if (error) {
-    console.error("Failed to update x-lead:", error.message);
+    logger.error("Failed to update x-lead", error);
     return NextResponse.json({ error: "Failed to update lead" }, { status: 500 });
   }
 

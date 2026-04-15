@@ -1,6 +1,7 @@
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { verifyPayoneerWebhook, PayoneerWebhookPayload } from "@/lib/payoneer";
+import { logger } from "@/lib/logger";
 
 // Use service role for webhook processing
 const supabase = createServiceRoleClient();
@@ -61,7 +62,7 @@ export async function POST(request: NextRequest) {
     // SECURITY: Verify webhook signature
     // In production, signature verification is REQUIRED
     if (isProduction && !webhookSecret) {
-      console.error("PAYONEER_WEBHOOK_SECRET not configured in production");
+      logger.error("PAYONEER_WEBHOOK_SECRET not configured in production");
       return NextResponse.json(
         { error: "Webhook secret not configured" },
         { status: 500 }
@@ -71,7 +72,7 @@ export async function POST(request: NextRequest) {
     if (webhookSecret) {
       // When the secret is configured, always require a valid signature
       if (!signature) {
-        console.error("Missing Payoneer webhook signature");
+        logger.error("Missing Payoneer webhook signature");
         return NextResponse.json(
           { error: "Missing signature" },
           { status: 401 }
@@ -80,7 +81,7 @@ export async function POST(request: NextRequest) {
 
       const isValid = verifyPayoneerWebhook(payload, signature, webhookSecret);
       if (!isValid) {
-        console.error("Invalid Payoneer webhook signature");
+        logger.error("Invalid Payoneer webhook signature");
         return NextResponse.json(
           { error: "Invalid signature" },
           { status: 401 }
@@ -88,9 +89,7 @@ export async function POST(request: NextRequest) {
       }
     } else {
       // Only reachable in development (production returns 500 above)
-      console.warn(
-        "PAYONEER_WEBHOOK_SECRET not set - skipping signature verification (development only)"
-      );
+      logger.warn("PAYONEER_WEBHOOK_SECRET not set - skipping signature verification (development only)");
     }
 
     const event: PayoneerWebhookPayload = JSON.parse(payload);
@@ -99,12 +98,12 @@ export async function POST(request: NextRequest) {
     if (event.event_id) {
       const alreadyProcessed = await isEventAlreadyProcessed(event.event_id);
       if (alreadyProcessed) {
-        console.log("Duplicate Payoneer webhook event ignored:", event.event_id);
+        logger.info("Duplicate Payoneer webhook event ignored", { eventId: event.event_id });
         return NextResponse.json({ received: true, duplicate: true });
       }
     }
 
-    console.log("Payoneer webhook received:", event.event_type, event.event_id);
+    logger.info("Payoneer webhook received", { eventType: event.event_type, eventId: event.event_id });
 
     // Mark event as processed in the in-memory cache (DB records are
     // created by the individual handlers for payout events)
@@ -134,12 +133,12 @@ export async function POST(request: NextRequest) {
         break;
 
       default:
-        console.log("Unhandled Payoneer webhook event:", event.event_type);
+        logger.info("Unhandled Payoneer webhook event", { eventType: event.event_type });
     }
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error("Payoneer webhook error:", error);
+    logger.error("Payoneer webhook error", error);
     return NextResponse.json(
       { error: "Webhook processing failed" },
       { status: 500 }
@@ -179,7 +178,7 @@ async function handlePayeeStatusChanged(event: PayoneerWebhookPayload) {
     .eq("payee_id", payee_id);
 
   if (error) {
-    console.error("Error updating payee status:", error);
+    logger.error("Error updating payee status", error);
   }
 }
 
@@ -204,7 +203,7 @@ async function handlePayoutCompleted(event: PayoneerWebhookPayload) {
     .single();
 
   if (updateError) {
-    console.error("Error updating payout status:", updateError);
+    logger.error("Error updating payout status", updateError);
     return;
   }
 
@@ -215,7 +214,7 @@ async function handlePayoutCompleted(event: PayoneerWebhookPayload) {
     });
 
     if (withdrawalError) {
-      console.error("Error completing withdrawal:", withdrawalError);
+      logger.error("Error completing withdrawal", withdrawalError);
     }
   }
 }
@@ -243,7 +242,7 @@ async function handlePayoutFailed(event: PayoneerWebhookPayload) {
     .single();
 
   if (updateError) {
-    console.error("Error updating payout status:", updateError);
+    logger.error("Error updating payout status", updateError);
     return;
   }
 
@@ -254,7 +253,7 @@ async function handlePayoutFailed(event: PayoneerWebhookPayload) {
     });
 
     if (cancelError) {
-      console.error("Error cancelling withdrawal:", cancelError);
+      logger.error("Error cancelling withdrawal", cancelError);
     }
 
     // Update withdrawal with failure reason
@@ -290,7 +289,7 @@ async function handlePayoutCancelled(event: PayoneerWebhookPayload) {
     .single();
 
   if (updateError) {
-    console.error("Error updating payout status:", updateError);
+    logger.error("Error updating payout status", updateError);
     return;
   }
 
@@ -301,7 +300,7 @@ async function handlePayoutCancelled(event: PayoneerWebhookPayload) {
     });
 
     if (cancelError) {
-      console.error("Error cancelling withdrawal:", cancelError);
+      logger.error("Error cancelling withdrawal", cancelError);
     }
 
   }

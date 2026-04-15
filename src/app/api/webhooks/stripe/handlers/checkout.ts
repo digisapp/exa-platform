@@ -4,6 +4,7 @@ import { stripe } from "@/lib/stripe";
 import { BrandTier } from "@/lib/stripe-config";
 import { TICKET_CONFIG } from "@/lib/ticket-config";
 import { sendTicketPurchaseConfirmationEmail } from "@/lib/email";
+import { logger } from "@/lib/logger";
 
 export async function handleCheckoutSessionCompleted(
   session: Stripe.Checkout.Session,
@@ -95,13 +96,13 @@ export async function handleCheckoutSessionCompleted(
   const coinsStr = session.metadata?.coins;
 
   if (!actorId || !coinsStr) {
-    console.error("Missing metadata in checkout session:", session.id, { actorId, coinsStr });
+    logger.error("Missing metadata in checkout session", undefined, { sessionId: session.id, actorId, coinsStr });
     return { error: "Missing required metadata", status: 400 };
   }
 
   const coins = parseInt(coinsStr, 10);
   if (isNaN(coins) || coins <= 0) {
-    console.error("Invalid coins value in checkout session:", session.id, { coinsStr, coins });
+    logger.error("Invalid coins value in checkout session", undefined, { sessionId: session.id, coinsStr, coins });
     return { error: "Invalid coins value", status: 400 };
   }
 
@@ -115,7 +116,7 @@ export async function handleCheckoutSessionCompleted(
     .maybeSingle();
 
   if (existingTransaction) {
-    console.log("Duplicate webhook ignored - coins already credited for session:", session.id);
+    logger.info("Duplicate webhook ignored - coins already credited for session", { sessionId: session.id });
     return { duplicate: true };
   }
 
@@ -142,7 +143,7 @@ export async function handleCheckoutSessionCompleted(
   }
 
   if (creditError) {
-    console.error("Error crediting coins:", creditError);
+    logger.error("Error crediting coins", creditError);
     return { error: "Failed to credit coins", status: 500 };
   }
 }
@@ -155,7 +156,7 @@ async function handleSubscriptionCheckout(session: Stripe.Checkout.Session, supa
   const monthlyCoins = parseInt(session.metadata?.monthly_coins || "0", 10);
 
   if (!brandId || !tier) {
-    console.error("Missing brand subscription metadata:", session.id);
+    logger.error("Missing brand subscription metadata", undefined, { sessionId: session.id });
     return;
   }
 
@@ -177,7 +178,7 @@ async function handleSubscriptionCheckout(session: Stripe.Checkout.Session, supa
     .eq("id", brandId);
 
   if (updateError) {
-    console.error("Error updating brand subscription:", updateError);
+    logger.error("Error updating brand subscription", updateError);
     return;
   }
 
@@ -193,7 +194,7 @@ async function handleSubscriptionCheckout(session: Stripe.Checkout.Session, supa
       .maybeSingle();
 
     if (existingGrant) {
-      console.log("Duplicate webhook ignored - subscription coins already granted for:", subscriptionId);
+      logger.info("Duplicate webhook ignored - subscription coins already granted for", { subscriptionId });
       return;
     }
 
@@ -209,7 +210,7 @@ async function handleSubscriptionCheckout(session: Stripe.Checkout.Session, supa
     });
 
     if (coinError) {
-      console.error("Error granting subscription coins:", coinError);
+      logger.error("Error granting subscription coins", coinError);
     } else {
       // Set idempotency_key for DB-level duplicate prevention
       await supabaseAdmin
@@ -228,7 +229,7 @@ async function handleTripPayment(session: Stripe.Checkout.Session, supabaseAdmin
   const tripNumber = session.metadata?.trip_number;
 
   if (!gigId || !modelId || !tripNumber) {
-    console.error("Missing trip payment metadata:", session.id);
+    logger.error("Missing trip payment metadata", undefined, { sessionId: session.id });
     return;
   }
 
@@ -247,14 +248,14 @@ async function handleTripPayment(session: Stripe.Checkout.Session, supabaseAdmin
     .eq("model_id", modelId);
 
   if (error) {
-    console.error("Error updating trip payment:", error);
+    logger.error("Error updating trip payment", error);
     return;
   }
 
   // Atomically increment spots_filled using RPC (prevents race conditions)
   const { error: rpcError } = await supabaseAdmin.rpc("increment_gig_spots_filled", { gig_id: gigId });
   if (rpcError) {
-    console.error("Error incrementing gig spots_filled:", rpcError);
+    logger.error("Error incrementing gig spots_filled", rpcError);
   }
 }
 
@@ -264,7 +265,7 @@ async function handleCreatorHousePayment(session: Stripe.Checkout.Session, supab
   const modelId = session.metadata?.model_id;
 
   if (!applicationId || !gigId || !modelId) {
-    console.error("Missing Creator House payment metadata:", session.id);
+    logger.error("Missing Creator House payment metadata", undefined, { sessionId: session.id });
     return;
   }
 
@@ -283,7 +284,7 @@ async function handleCreatorHousePayment(session: Stripe.Checkout.Session, supab
     .eq("id", applicationId);
 
   if (error) {
-    console.error("Error updating Creator House payment:", error);
+    logger.error("Error updating Creator House payment", error);
     return;
   }
 
@@ -298,7 +299,7 @@ async function handleTicketPurchase(session: Stripe.Checkout.Session, supabaseAd
   const affiliateClickId = session.metadata?.affiliate_click_id || null;
 
   if (!eventId || !tierId || !buyerEmail) {
-    console.error("Missing ticket purchase metadata:", session.id);
+    logger.error("Missing ticket purchase metadata", undefined, { sessionId: session.id });
     return;
   }
 
@@ -320,7 +321,7 @@ async function handleTicketPurchase(session: Stripe.Checkout.Session, supabaseAd
     .single();
 
   if (updateError) {
-    console.error("Error updating ticket purchase:", updateError);
+    logger.error("Error updating ticket purchase", updateError);
     // Try to create the purchase if it doesn't exist
     const { error: insertError } = await supabaseAdmin
       .from("ticket_purchases")
@@ -342,7 +343,7 @@ async function handleTicketPurchase(session: Stripe.Checkout.Session, supabaseAd
       });
 
     if (insertError) {
-      console.error("Error creating ticket purchase:", insertError);
+      logger.error("Error creating ticket purchase", insertError);
       return;
     }
   }
@@ -379,7 +380,7 @@ async function handleTicketPurchase(session: Stripe.Checkout.Session, supabaseAd
       tierName: tierInfo?.name || "General Admission",
       quantity,
       totalPriceCents,
-    }).catch((err) => console.error("Failed to send ticket confirmation email:", err));
+    }).catch((err) => logger.error("Failed to send ticket confirmation email", err));
   }
 
 }
@@ -406,7 +407,7 @@ export async function processAffiliateCommission(
     .single();
 
   if (!model?.id) {
-    console.error("Model not found for commission:", modelId);
+    logger.error("Model not found for commission", modelId);
     return;
   }
 
@@ -432,7 +433,7 @@ export async function processAffiliateCommission(
     .single();
 
   if (commissionError) {
-    console.error("Error creating commission record:", commissionError);
+    logger.error("Error creating commission record", commissionError);
     return;
   }
 
@@ -454,7 +455,7 @@ export async function processAffiliateCommission(
   });
 
   if (coinError) {
-    console.error("Error crediting affiliate coins:", coinError);
+    logger.error("Error crediting affiliate coins", coinError);
     return;
   }
 
@@ -472,7 +473,7 @@ async function handleContentProgramPayment(session: Stripe.Checkout.Session, sup
   const email = session.metadata?.email;
 
   if (!brandName || !email) {
-    console.error("Missing content program payment metadata:", session.id);
+    logger.error("Missing content program payment metadata", undefined, { sessionId: session.id });
     return;
   }
 
@@ -492,7 +493,7 @@ async function handleContentProgramPayment(session: Stripe.Checkout.Session, sup
     .eq("stripe_checkout_session_id", session.id);
 
   if (updateError) {
-    console.error("Error updating content program enrollment:", updateError);
+    logger.error("Error updating content program enrollment", updateError);
     // Try to create the enrollment if it doesn't exist
     const { error: insertError } = await supabaseAdmin
       .from("content_program_enrollments")
@@ -515,7 +516,7 @@ async function handleContentProgramPayment(session: Stripe.Checkout.Session, sup
       });
 
     if (insertError) {
-      console.error("Error creating content program enrollment:", insertError);
+      logger.error("Error creating content program enrollment", insertError);
       return;
     }
   }
@@ -528,7 +529,7 @@ async function handleContentProgramSubscription(session: Stripe.Checkout.Session
   const email = session.metadata?.email;
 
   if (!brandName || !email) {
-    console.error("Missing content program subscription metadata:", session.id);
+    logger.error("Missing content program subscription metadata", undefined, { sessionId: session.id });
     return;
   }
 
@@ -553,7 +554,7 @@ async function handleContentProgramSubscription(session: Stripe.Checkout.Session
     .eq("stripe_checkout_session_id", session.id);
 
   if (updateError) {
-    console.error("Error updating content program enrollment:", updateError);
+    logger.error("Error updating content program enrollment", updateError);
     // Try to create the enrollment if it doesn't exist
     const { error: insertError } = await supabaseAdmin
       .from("content_program_enrollments")
@@ -576,7 +577,7 @@ async function handleContentProgramSubscription(session: Stripe.Checkout.Session
       });
 
     if (insertError) {
-      console.error("Error creating content program enrollment:", insertError);
+      logger.error("Error creating content program enrollment", insertError);
       return;
     }
   }
@@ -602,7 +603,7 @@ async function handleMiamiDigitalsPayment(session: Stripe.Checkout.Session, supa
     .eq("status", "pending");
 
   if (updateError) {
-    console.error("Error updating Miami Digitals booking:", updateError);
+    logger.error("Error updating Miami Digitals booking", updateError);
   }
 }
 
@@ -624,7 +625,7 @@ async function handleModelOnboardingPayment(session: Stripe.Checkout.Session, su
     .eq("status", "pending");
 
   if (updateError) {
-    console.error("Error updating model onboarding booking:", updateError);
+    logger.error("Error updating model onboarding booking", updateError);
   }
 }
 
@@ -632,7 +633,7 @@ async function handleCompCardPrintPayment(session: Stripe.Checkout.Session, supa
   const orderId = session.metadata?.order_id;
 
   if (!orderId) {
-    console.error("Missing comp card print order metadata:", session.id);
+    logger.error("Missing comp card print order metadata", undefined, { sessionId: session.id });
     return;
   }
 
@@ -653,7 +654,7 @@ async function handleCompCardPrintPayment(session: Stripe.Checkout.Session, supa
     .eq("status", "pending_payment");
 
   if (updateError) {
-    console.error("Error updating comp card print order:", updateError);
+    logger.error("Error updating comp card print order", updateError);
     return;
   }
 
@@ -675,7 +676,7 @@ async function handleCompCardPrintPayment(session: Stripe.Checkout.Session, supa
       });
     }
   } catch (emailError) {
-    console.error("Failed to send print order confirmation email:", emailError);
+    logger.error("Failed to send print order confirmation email", emailError);
   }
 }
 
@@ -684,7 +685,7 @@ async function handleSwimCrownEntry(session: Stripe.Checkout.Session, supabaseAd
   const email = session.metadata?.email;
 
   if (!competitionId || !email) {
-    console.error("Missing SwimCrown entry metadata:", session.id);
+    logger.error("Missing SwimCrown entry metadata", undefined, { sessionId: session.id });
     return;
   }
 
@@ -700,7 +701,7 @@ async function handleSwimCrownEntry(session: Stripe.Checkout.Session, supabaseAd
     .eq("email", email);
 
   if (updateError) {
-    console.error("Error updating SwimCrown contestant:", updateError);
+    logger.error("Error updating SwimCrown contestant", updateError);
   }
 }
 
@@ -710,7 +711,7 @@ async function handleShopOrderPayment(session: Stripe.Checkout.Session, supabase
   const affiliateCode = session.metadata?.affiliate_code;
 
   if (!orderId) {
-    console.error("Missing shop order metadata:", session.id);
+    logger.error("Missing shop order metadata", undefined, { sessionId: session.id });
     return;
   }
 
@@ -742,7 +743,7 @@ async function handleShopOrderPayment(session: Stripe.Checkout.Session, supabase
     .single();
 
   if (updateError) {
-    console.error("Error updating shop order:", updateError);
+    logger.error("Error updating shop order", updateError);
     return;
   }
 
@@ -770,7 +771,7 @@ async function handleShopOrderPayment(session: Stripe.Checkout.Session, supabase
           .single();
 
         if (variantError) {
-          console.error("Error fetching variant for total_sold update:", variantError, { variant_id: item.variant_id });
+          logger.error("Error fetching variant for total_sold update", variantError, { variant_id: item.variant_id });
           continue;
         }
 
@@ -782,11 +783,11 @@ async function handleShopOrderPayment(session: Stripe.Checkout.Session, supabase
           });
 
           if (rpcError) {
-            console.error("Error updating total_sold via RPC:", rpcError, { product_id: variantData.product_id });
+            logger.error("Error updating total_sold via RPC", rpcError, { product_id: variantData.product_id });
           }
         }
       } catch (err) {
-        console.error("Unexpected error updating total_sold for variant:", item.variant_id, err);
+        logger.error("Unexpected error updating total_sold for variant", err, { variant_id: item.variant_id });
       }
     }
   }
@@ -808,7 +809,7 @@ async function handleShopOrderPayment(session: Stripe.Checkout.Session, supabase
       });
 
     if (earningError) {
-      console.error("Error creating affiliate earning:", earningError);
+      logger.error("Error creating affiliate earning", earningError);
     }
 
     // Update affiliate code stats

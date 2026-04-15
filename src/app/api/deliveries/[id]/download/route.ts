@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 const adminClient = createServiceRoleClient();
 
@@ -93,7 +94,7 @@ export async function POST(
 
     return NextResponse.json({ downloads });
   } catch (error) {
-    console.error("Download delivery files error:", error);
+    logger.error("Download delivery files error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

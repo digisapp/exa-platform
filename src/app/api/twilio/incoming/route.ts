@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import twilio from "twilio";
+import { logger } from "@/lib/logger";
 
 // Use service role for webhook (no user auth)
 const supabase = createServiceRoleClient();
@@ -10,7 +11,7 @@ export async function POST(request: NextRequest) {
     // Verify Twilio signature
     const authToken = process.env.TWILIO_AUTH_TOKEN;
     if (!authToken) {
-      console.error("TWILIO_AUTH_TOKEN not configured");
+      logger.error("TWILIO_AUTH_TOKEN not configured");
       return new NextResponse("Webhook not configured", { status: 500 });
     }
 
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (!isValid) {
-      console.error("Invalid Twilio signature");
+      logger.error("Invalid Twilio signature");
       return new NextResponse("Invalid signature", { status: 403 });
     }
 
@@ -110,7 +111,7 @@ export async function POST(request: NextRequest) {
       headers: { "Content-Type": "text/xml" },
     });
   } catch (error) {
-    console.error("Twilio incoming webhook error:", error);
+    logger.error("Twilio incoming webhook error", error);
 
     // Return empty TwiML on error to prevent Twilio retries
     return new NextResponse(

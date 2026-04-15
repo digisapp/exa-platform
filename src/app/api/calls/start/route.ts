@@ -4,6 +4,7 @@ import { generateRoomName, generateToken } from "@/lib/livekit";
 import { sendVideoCallRequestEmail } from "@/lib/email";
 import { z } from "zod";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 export type CallType = "video" | "voice";
 
@@ -239,7 +240,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (sessionError || !session) {
-      console.error("Session error:", sessionError);
+      logger.error("Session error", sessionError);
       throw new Error("Failed to create call session");
     }
 
@@ -274,7 +275,7 @@ export async function POST(request: NextRequest) {
         callerName,
         callRate,
         callType,
-      }).catch((err) => console.error(`Failed to send ${callType} call email:`, err));
+      }).catch((err) => logger.error(`Failed to send ${callType} call email`, err));
     }
 
     return NextResponse.json({
@@ -287,7 +288,7 @@ export async function POST(request: NextRequest) {
       requiresCoins,
     });
   } catch (error) {
-    console.error("Start call error:", error);
+    logger.error("Start call error", error);
     return NextResponse.json(
       { error: "Failed to start call" },
       { status: 500 }

@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const adminClient = createServiceRoleClient();
 
@@ -120,7 +121,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("Fetch delivery error:", error);
+    logger.error("Fetch delivery error", error);
     return NextResponse.json({ error: "Failed to fetch delivery" }, { status: 500 });
   }
 }
@@ -287,7 +288,7 @@ export async function PATCH(
       .single() as { data: any; error: any };
 
     if (updateError || !updated) {
-      console.error("Failed to update delivery:", updateError);
+      logger.error("Failed to update delivery", updateError);
       return NextResponse.json({ error: "Failed to update delivery" }, { status: 500 });
     }
 
@@ -296,13 +297,13 @@ export async function PATCH(
       try {
         await (adminClient.from("notifications") as any).insert(notificationData);
       } catch (notifError) {
-        console.error("Failed to send notification:", notifError);
+        logger.error("Failed to send notification", notifError);
       }
     }
 
     return NextResponse.json({ delivery: updated });
   } catch (error) {
-    console.error("Update delivery error:", error);
+    logger.error("Update delivery error", error);
     return NextResponse.json({ error: "Failed to update delivery" }, { status: 500 });
   }
 }

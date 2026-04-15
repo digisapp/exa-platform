@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { escapeIlike } from "@/lib/utils";
 import { requirePosAuth, isPosAuthError } from "@/lib/pos-auth";
+import { logger } from "@/lib/logger";
 
 // as any needed: import uses field names and values not matching typed shop_brands/shop_products schema
 const supabase: any = createServiceRoleClient();
@@ -258,7 +259,7 @@ export async function POST(request: NextRequest) {
       errors: errors.slice(0, 20), // Limit errors returned
     });
   } catch (error) {
-    console.error("CSV import error:", error);
+    logger.error("CSV import error", error);
     return NextResponse.json({ error: "Import failed" }, { status: 500 });
   }
 }

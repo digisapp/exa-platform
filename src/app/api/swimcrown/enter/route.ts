@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { stripe } from "@/lib/stripe";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const enterSchema = z.object({
   tier: z.enum(["standard", "full_package"]),
@@ -134,7 +135,7 @@ export async function POST(request: NextRequest) {
       });
 
     if (insertError) {
-      console.error("SwimCrown entry insert error:", insertError);
+      logger.error("SwimCrown entry insert error", insertError);
       if (insertError.code === "23505") {
         return NextResponse.json(
           { error: "This email has already been used to enter the competition" },
@@ -149,7 +150,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ url: session.url });
   } catch (error) {
-    console.error("SwimCrown enter error:", error);
+    logger.error("SwimCrown enter error", error);
     return NextResponse.json(
       { error: "Failed to create entry" },
       { status: 500 }

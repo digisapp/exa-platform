@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 export async function GET(request: NextRequest) {
   try {
@@ -55,7 +56,7 @@ export async function GET(request: NextRequest) {
       .order("sort_order", { ascending: true }) as { data: TicketTier[] | null; error: any };
 
     if (error) {
-      console.error("Error fetching tiers:", error);
+      logger.error("Error fetching tiers", error);
       return NextResponse.json(
         { error: "Failed to fetch ticket tiers" },
         { status: 500 }
@@ -85,7 +86,7 @@ export async function GET(request: NextRequest) {
       headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120" },
     });
   } catch (error) {
-    console.error("Tiers fetch error:", error);
+    logger.error("Tiers fetch error", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

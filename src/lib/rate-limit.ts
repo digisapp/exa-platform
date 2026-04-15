@@ -5,6 +5,7 @@
 
 import { Redis } from "@upstash/redis";
 import { Ratelimit } from "@upstash/ratelimit";
+import { logger } from "@/lib/logger";
 
 // Initialize Redis client if credentials are available
 let redis: Redis | null = null;
@@ -159,12 +160,12 @@ export async function rateLimitAsync(
     const isSensitive = sensitiveKeywords.some((kw) => identifier.toLowerCase().includes(kw));
 
     if (isSensitive) {
-      console.error("Upstash rate limit error on sensitive endpoint, denying request:", error);
+      logger.error("Upstash rate limit error on sensitive endpoint, denying request", error);
       return { success: false, remaining: 0, resetAt: Date.now() + 60000 };
     }
 
     // For general endpoints, fall back to in-memory rate limiting
-    console.warn("Upstash rate limit error, falling back to in-memory rate limiter:", error);
+    logger.warn("Upstash rate limit error, falling back to in-memory rate limiter", { error: String(error) });
     return inMemoryRateLimit(identifier, options.limit, options.windowSeconds);
   }
 }

@@ -4,6 +4,7 @@ import { getModelId } from "@/lib/ids";
 import { NextRequest, NextResponse } from "next/server";
 import { processImage, isProcessableImage } from "@/lib/image-processing";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 // Admin client for database inserts - bypasses RLS
 const adminClient = createServiceRoleClient();
@@ -86,7 +87,7 @@ export async function POST(request: NextRequest) {
         processedBuffer = processed.buffer;
         finalContentType = processed.contentType;
       } catch (processError) {
-        console.error("Image processing error, uploading original:", processError);
+        logger.error("Image processing error, uploading original", processError);
         // Fall back to original if processing fails
       }
     }
@@ -115,7 +116,7 @@ export async function POST(request: NextRequest) {
       });
 
     if (uploadError) {
-      console.error("Upload error:", uploadError);
+      logger.error("Upload error", uploadError);
       return NextResponse.json(
         { error: `Upload failed: ${uploadError.message}` },
         { status: 500 }
@@ -164,8 +165,7 @@ export async function POST(request: NextRequest) {
 
     if (mediaError) {
       // Log detailed error info for debugging
-      console.error("Media asset INSERT failed:", {
-        error: mediaError,
+      logger.error("Media asset INSERT failed", mediaError, {
         user_id: user.id,
         model_id: modelId,
         actor_id: actor.id,
@@ -197,7 +197,7 @@ export async function POST(request: NextRequest) {
       assetType,
     });
   } catch (error) {
-    console.error("Upload media route error:", error);
+    logger.error("Upload media route error", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

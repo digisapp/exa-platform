@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { Resend } from "resend";
+import { logger } from "@/lib/logger";
 
 const xai = new OpenAI({
   apiKey: process.env.XAI_API_KEY,
@@ -108,7 +109,7 @@ ${emailContent.slice(0, 3000)}`;
       autoSendable: result.autoSendable === true && result.confidence >= 0.9,
     };
   } catch (error) {
-    console.error("AI email classification failed:", error);
+    logger.error("AI email classification failed", error);
     return {
       category: "other",
       confidence: 0,
@@ -217,7 +218,7 @@ export async function sendAutoReply({
     });
 
     if (error) {
-      console.error("Auto-reply send failed:", error);
+      logger.error("Auto-reply send failed", error);
       return false;
     }
 
@@ -242,10 +243,10 @@ export async function sendAutoReply({
       .eq("id", emailId)
       .eq("direction", "inbound");
 
-    console.log(`Auto-replied to ${toEmail} (category: ${category}, confidence: ${confidence})`);
+    logger.info("Auto-replied to email", { toEmail, category, confidence });
     return true;
   } catch (err) {
-    console.error("Auto-reply error:", err);
+    logger.error("Auto-reply error", err);
     return false;
   }
 }

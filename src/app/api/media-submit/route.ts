@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 const submitSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),
@@ -56,7 +57,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
-      console.error("Media submit error:", error);
+      logger.error("Media submit error", error);
       return NextResponse.json(
         { error: "Failed to submit. Please try again." },
         { status: 500 }

@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { headers } from "next/headers";
 import crypto from "crypto";
+import { logger } from "@/lib/logger";
 
 // Hash IP address for privacy
 function hashIP(ip: string): string {
@@ -65,7 +66,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error("Error tracking affiliate click:", error);
+      logger.error("Error tracking affiliate click", error);
       throw error;
     }
 
@@ -101,7 +102,7 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error("Affiliate tracking error:", error);
+    logger.error("Affiliate tracking error", error);
     return NextResponse.json(
       { error: "Failed to track affiliate click" },
       { status: 500 }
@@ -168,7 +169,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(stats);
   } catch (error) {
-    console.error("Get affiliate stats error:", error);
+    logger.error("Get affiliate stats error", error);
     return NextResponse.json(
       { error: "Failed to get affiliate stats" },
       { status: 500 }

@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const adminClient = createServiceRoleClient();
 
@@ -73,7 +74,7 @@ export async function POST(
       .select() as { data: any; error: any };
 
     if (error) {
-      console.error("Failed to assign content:", error);
+      logger.error("Failed to assign content", error);
       return NextResponse.json({ error: "Failed to assign content" }, { status: 500 });
     }
 
@@ -90,13 +91,13 @@ export async function POST(
           },
         });
       } catch (notifError) {
-        console.error("Failed to send notification:", notifError);
+        logger.error("Failed to send notification", notifError);
       }
     }
 
     return NextResponse.json({ assignments: assignments || [], count: recipientIds.length });
   } catch (error) {
-    console.error("Assign content error:", error);
+    logger.error("Assign content error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

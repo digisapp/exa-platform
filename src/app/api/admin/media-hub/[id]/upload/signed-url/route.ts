@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
@@ -91,7 +92,7 @@ export async function POST(
       .createSignedUploadUrl(storagePath);
 
     if (signedError) {
-      console.error("Signed URL error:", signedError);
+      logger.error("Signed URL error", signedError);
       return NextResponse.json({ error: `Failed to create upload URL: ${signedError.message}` }, { status: 500 });
     }
 
@@ -110,7 +111,7 @@ export async function POST(
       },
     });
   } catch (error) {
-    console.error("Library signed URL error:", error);
+    logger.error("Library signed URL error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

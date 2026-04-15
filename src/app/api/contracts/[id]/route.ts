@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { sendContractSignedEmail } from "@/lib/email";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const updateContractSchema = z.object({
   action: z.enum(["sign", "void"]),
@@ -86,7 +87,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("Error in GET /api/contracts/[id]:", error);
+    logger.error("Error in GET /api/contracts/[id]", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -174,7 +175,7 @@ export async function PATCH(
         .eq("status", "sent"); // Idempotency guard
 
       if (updateError) {
-        console.error("Error signing contract:", updateError);
+        logger.error("Error signing contract", updateError);
         return NextResponse.json({ error: "Failed to sign contract" }, { status: 500 });
       }
 
@@ -211,7 +212,7 @@ export async function PATCH(
               contractTitle: contract.title,
             });
           } catch (emailError) {
-            console.error("Failed to send signed email:", emailError);
+            logger.error("Failed to send signed email", emailError);
           }
         }
       }
@@ -236,7 +237,7 @@ export async function PATCH(
         .eq("status", "sent");
 
       if (updateError) {
-        console.error("Error voiding contract:", updateError);
+        logger.error("Error voiding contract", updateError);
         return NextResponse.json({ error: "Failed to void contract" }, { status: 500 });
       }
 
@@ -270,7 +271,7 @@ export async function PATCH(
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   } catch (error) {
-    console.error("Error in PATCH /api/contracts/[id]:", error);
+    logger.error("Error in PATCH /api/contracts/[id]", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

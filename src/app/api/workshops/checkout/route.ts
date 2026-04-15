@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { stripe } from "@/lib/stripe";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const workshopCheckoutSchema = z.object({
   workshopId: z.string().uuid(),
@@ -161,7 +162,7 @@ export async function POST(request: NextRequest) {
       });
 
     if (registrationError) {
-      console.error("Error creating registration record:", registrationError);
+      logger.error("Error creating registration record", registrationError);
       // Don't fail the checkout - the webhook will handle it
     }
 
@@ -170,7 +171,7 @@ export async function POST(request: NextRequest) {
       sessionId: session.id,
     });
   } catch (error) {
-    console.error("Workshop checkout error:", error);
+    logger.error("Workshop checkout error", error);
     return NextResponse.json(
       { error: "Failed to create checkout session" },
       { status: 500 }

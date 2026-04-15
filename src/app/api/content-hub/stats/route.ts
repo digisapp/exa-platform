@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { getModelId } from "@/lib/ids";
+import { logger } from "@/lib/logger";
 
 export async function GET(_request: NextRequest) {
   try {
@@ -28,7 +29,7 @@ export async function GET(_request: NextRequest) {
       .eq("model_id", modelId);
 
     if (itemsError) {
-      console.error("Stats items query error:", itemsError);
+      logger.error("Stats items query error", itemsError);
       return NextResponse.json({ error: "Failed to fetch stats" }, { status: 500 });
     }
 
@@ -101,7 +102,7 @@ export async function GET(_request: NextRequest) {
       scheduled_count: scheduledCount,
     });
   } catch (error) {
-    console.error("Content stats error:", error);
+    logger.error("Content stats error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { sendContentPurchaseEmail } from "@/lib/email";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const unlockSchema = z.object({
   contentId: z.string().uuid(),
@@ -57,7 +58,7 @@ export async function POST(request: NextRequest) {
     const result = rpcData as Record<string, any>;
 
     if (unlockError) {
-      console.error("Unlock error:", unlockError.message, unlockError.details, unlockError.hint, unlockError.code);
+      logger.error("Unlock error", unlockError, { details: unlockError.details, hint: unlockError.hint, code: unlockError.code });
       return NextResponse.json(
         { error: unlockError.message || "Failed to unlock content" },
         { status: 500 }
@@ -118,10 +119,10 @@ export async function POST(request: NextRequest) {
               buyerName,
               contentTitle: content.title || "Exclusive Content",
               coinsEarned: result.amount_paid,
-            }).catch((err) => console.error("Failed to send content purchase email:", err));
+            }).catch((err) => logger.error("Failed to send content purchase email", err));
           }
         } catch (emailErr) {
-          console.error("Error preparing content purchase email:", emailErr);
+          logger.error("Error preparing content purchase email", emailErr);
           // Non-critical, don't fail the unlock
         }
       }
@@ -148,7 +149,7 @@ export async function POST(request: NextRequest) {
       alreadyUnlocked: result.already_unlocked || false,
     });
   } catch (error) {
-    console.error("Content unlock error:", error);
+    logger.error("Content unlock error", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

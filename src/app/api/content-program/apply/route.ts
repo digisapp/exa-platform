@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { sendContentProgramApplicationEmail } from "@/lib/email";
+import { logger } from "@/lib/logger";
 
 export async function POST(request: NextRequest) {
   try {
@@ -87,7 +88,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error("Content program application insert error:", error);
+      logger.error("Content program application insert error", error);
       throw error;
     }
 
@@ -99,7 +100,7 @@ export async function POST(request: NextRequest) {
         contactName: contact_name.trim(),
       });
     } catch (emailError) {
-      console.error("Failed to send content program application email:", emailError);
+      logger.error("Failed to send content program application email", emailError);
     }
 
     return NextResponse.json({
@@ -107,7 +108,7 @@ export async function POST(request: NextRequest) {
       application_id: application?.id,
     });
   } catch (error) {
-    console.error("Content program apply error:", error);
+    logger.error("Content program apply error", error);
     return NextResponse.json(
       { error: "Failed to submit application" },
       { status: 500 }

@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 import { sendPPVUnlockedEmail } from "@/lib/email";
+import { logger } from "@/lib/logger";
 
 const unlockSchema = z.object({
   messageId: z.string().uuid("Invalid message ID"),
@@ -87,7 +88,7 @@ export async function POST(request: NextRequest) {
     const result = rpcData as Record<string, any>;
 
     if (rpcError) {
-      console.error("Unlock RPC error:", rpcError);
+      logger.error("Unlock RPC error", rpcError);
       return NextResponse.json(
         { error: "Failed to unlock message" },
         { status: 500 }
@@ -165,7 +166,7 @@ export async function POST(request: NextRequest) {
               modelName,
               buyerName,
               amount: result.amount_paid,
-            }).catch((err) => console.error("PPV email error:", err));
+            }).catch((err) => logger.error("PPV email error", err));
           }
         }
       }
@@ -179,7 +180,7 @@ export async function POST(request: NextRequest) {
       alreadyUnlocked: result.already_unlocked || false,
     });
   } catch (error) {
-    console.error("Unlock message error:", error);
+    logger.error("Unlock message error", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

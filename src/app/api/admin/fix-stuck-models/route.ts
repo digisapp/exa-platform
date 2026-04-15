@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 
 /**
  * POST /api/admin/fix-stuck-models
@@ -39,7 +40,7 @@ export async function POST() {
       .or("is_approved.is.null,is_approved.eq.false");
 
     if (fetchError) {
-      console.error("Error fetching stuck models:", fetchError);
+      logger.error("Error fetching stuck models", fetchError);
       return NextResponse.json({ error: "Failed to fetch models" }, { status: 500 });
     }
 
@@ -59,7 +60,7 @@ export async function POST() {
       .or("is_approved.is.null,is_approved.eq.false");
 
     if (updateError) {
-      console.error("Error updating models:", updateError);
+      logger.error("Error updating models", updateError);
       return NextResponse.json({ error: "Failed to update models" }, { status: 500 });
     }
 
@@ -74,7 +75,7 @@ export async function POST() {
       })),
     });
   } catch (error) {
-    console.error("Fix stuck models error:", error);
+    logger.error("Fix stuck models error", error);
     return NextResponse.json(
       { error: "Failed to fix stuck models" },
       { status: 500 }
@@ -118,7 +119,7 @@ export async function GET() {
       .or("is_approved.is.null,is_approved.eq.false");
 
     if (fetchError) {
-      console.error("Error fetching stuck models:", fetchError);
+      logger.error("Error fetching stuck models", fetchError);
       return NextResponse.json({ error: "Failed to fetch models" }, { status: 500 });
     }
 
@@ -132,7 +133,7 @@ export async function GET() {
       })) || [],
     });
   } catch (error) {
-    console.error("Check stuck models error:", error);
+    logger.error("Check stuck models error", error);
     return NextResponse.json(
       { error: "Failed to check stuck models" },
       { status: 500 }

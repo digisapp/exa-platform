@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 const adminClient = createServiceRoleClient();
 
@@ -69,7 +70,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("Fetch assigned item error:", error);
+    logger.error("Fetch assigned item error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

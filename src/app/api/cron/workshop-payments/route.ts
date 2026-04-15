@@ -2,6 +2,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { stripe } from "@/lib/stripe";
 import { NextRequest, NextResponse } from "next/server";
 import { sendWorkshopPaymentFailedEmail } from "@/lib/email";
+import { logger } from "@/lib/logger";
 
 // as any needed: nested join type instantiation is too deep for typed client
 const supabaseAdmin: any = createServiceRoleClient();
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest) {
     const cronSecret = process.env.CRON_SECRET;
 
     if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
-      console.error("Cron authentication failed");
+      logger.error("Cron authentication failed");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -45,7 +46,7 @@ export async function GET(request: NextRequest) {
       .lte("due_date", today);
 
     if (fetchError) {
-      console.error("Failed to fetch due installments:", fetchError);
+      logger.error("Failed to fetch due installments", fetchError);
       return NextResponse.json({ error: "Failed to fetch installments" }, { status: 500 });
     }
 
@@ -63,7 +64,7 @@ export async function GET(request: NextRequest) {
       const customerId = registration?.stripe_customer_id;
 
       if (!customerId) {
-        console.error("No Stripe customer ID for registration:", installment.registration_id);
+        logger.error("No Stripe customer ID for registration", undefined, { registrationId: installment.registration_id });
         failed++;
         continue;
       }
@@ -77,7 +78,7 @@ export async function GET(request: NextRequest) {
         });
 
         if (paymentMethods.data.length === 0) {
-          console.error("No payment method found for customer:", customerId);
+          logger.error("No payment method found for customer", undefined, { customerId });
           await handleInstallmentRetryFailed(installment.id, installment.registration_id, installment.retry_count);
           failed++;
           continue;
@@ -139,7 +140,7 @@ export async function GET(request: NextRequest) {
           failed++;
         }
       } catch (err: any) {
-        console.error("Error charging installment:", installment.id, err.message);
+        logger.error("Error charging installment", err, { installmentId: installment.id });
         await handleInstallmentRetryFailed(installment.id, installment.registration_id, installment.retry_count);
         failed++;
       }
@@ -152,7 +153,7 @@ export async function GET(request: NextRequest) {
       failed,
     });
   } catch (error) {
-    console.error("Workshop payments cron error:", error);
+    logger.error("Workshop payments cron error", error);
     return NextResponse.json({ error: "Cron job failed" }, { status: 500 });
   }
 }
@@ -231,10 +232,10 @@ async function handleInstallmentRetryFailed(
         to: cancelledReg.buyer_email,
         buyerName: cancelledReg.buyer_name || "there",
         workshopTitle,
-      }).catch((err: any) => console.error("Failed to send workshop cancellation email:", err));
+      }).catch((err: any) => logger.error("Failed to send workshop cancellation email", err));
     }
 
-    console.log("Workshop registration cancelled due to payment failure:", registrationId);
+    logger.info("Workshop registration cancelled due to payment failure", { registrationId });
   } else {
     // Increment retry count
     await supabaseAdmin

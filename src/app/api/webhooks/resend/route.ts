@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Webhook } from "svix";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { classifyAndDraftReply, sendAutoReply } from "@/lib/ai-email";
+import { logger } from "@/lib/logger";
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY!;
 const RESEND_WEBHOOK_SECRET = process.env.RESEND_WEBHOOK_SECRET!;
@@ -77,7 +78,7 @@ export async function POST(request: NextRequest) {
         "svix-signature": svixSignature,
       }) as any;
     } catch {
-      console.error("Resend webhook signature verification failed");
+      logger.error("Resend webhook signature verification failed");
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
 
@@ -89,7 +90,7 @@ export async function POST(request: NextRequest) {
       const emailId = data.email_id;
 
       if (!emailId) {
-        console.error("Resend webhook: missing email_id");
+        logger.error("Resend webhook: missing email_id");
         return NextResponse.json({ error: "Missing email_id" }, { status: 400 });
       }
 
@@ -99,7 +100,7 @@ export async function POST(request: NextRequest) {
       });
 
       if (!resendRes.ok) {
-        console.error("Failed to fetch email from Resend:", resendRes.status);
+        logger.error("Failed to fetch email from Resend", undefined, { status: resendRes.status });
         return NextResponse.json({ error: "Failed to fetch email content" }, { status: 500 });
       }
 
@@ -120,7 +121,7 @@ export async function POST(request: NextRequest) {
 
       // Spam check — store in DB with spam status instead of dropping silently
       if (isLikelySpam(subject, bodyText || "")) {
-        console.log(`Spam detected from ${fromEmail}: ${subject}`);
+        logger.info("Spam detected", { fromEmail, subject });
         await supabaseAdmin.from("emails").insert({
           direction: "inbound",
           resend_message_id: emailId,
@@ -276,7 +277,7 @@ export async function POST(request: NextRequest) {
             }
           }
         }).catch((err) => {
-          console.error("AI email processing failed:", err);
+          logger.error("AI email processing failed", err);
         });
       }
 
@@ -310,7 +311,7 @@ export async function POST(request: NextRequest) {
     // Acknowledge other event types
     return NextResponse.json({ success: true, ignored: true });
   } catch (error) {
-    console.error("Resend webhook error:", error);
+    logger.error("Resend webhook error", error);
     return NextResponse.json(
       { error: "Webhook processing failed" },
       { status: 500 }

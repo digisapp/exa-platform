@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 const supabase = createServiceRoleClient();
 
@@ -43,7 +44,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Staff login error:", error);
+    logger.error("Staff login error", error);
     return NextResponse.json({ error: "Login failed" }, { status: 500 });
   }
 }

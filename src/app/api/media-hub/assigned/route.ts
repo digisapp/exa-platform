@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 const adminClient = createServiceRoleClient();
 
@@ -36,7 +37,7 @@ export async function GET(request: NextRequest) {
       .order("assigned_at", { ascending: false }) as { data: any[]; error: any };
 
     if (error) {
-      console.error("Failed to fetch assignments:", error);
+      logger.error("Failed to fetch assignments", error);
       return NextResponse.json({ error: "Failed to fetch content" }, { status: 500 });
     }
 
@@ -82,7 +83,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ items });
   } catch (error) {
-    console.error("Fetch assigned content error:", error);
+    logger.error("Fetch assigned content error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

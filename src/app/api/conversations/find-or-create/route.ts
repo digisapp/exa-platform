@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { escapeIlike } from "@/lib/utils";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 // Service role client for privileged operations (server-side only)
 const adminClient = createServiceRoleClient();
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      console.error("[API find-or-create] No user found - cookie forwarding may have failed");
+      logger.error("[API find-or-create] No user found - cookie forwarding may have failed");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -45,7 +46,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (!actor) {
-      console.error("[API find-or-create] Actor not found for user:", user.id);
+      logger.error("[API find-or-create] Actor not found for user", undefined, { userId: user.id });
       return NextResponse.json(
         { error: "Actor not found" },
         { status: 400 }
@@ -60,7 +61,7 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     if (modelError) {
-      console.error("[API find-or-create] Model lookup error:", modelError);
+      logger.error("[API find-or-create] Model lookup error", modelError);
       return NextResponse.json(
         { error: "Failed to lookup model" },
         { status: 500 }
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!targetModel) {
-      console.error("[API find-or-create] Model not found:", modelUsername);
+      logger.error("[API find-or-create] Model not found", modelUsername);
       return NextResponse.json(
         { error: "Model not found" },
         { status: 404 }
@@ -76,7 +77,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!targetModel.user_id) {
-      console.error("[API find-or-create] Model has no user_id:", targetModel.username);
+      logger.error("[API find-or-create] Model has no user_id", undefined, { username: targetModel.username });
       return NextResponse.json(
         { error: "Model has no associated user" },
         { status: 400 }
@@ -91,7 +92,7 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     if (actorError) {
-      console.error("[API] Actor lookup error:", actorError);
+      logger.error("[API] Actor lookup error", actorError);
       return NextResponse.json(
         { error: "Failed to lookup model actor" },
         { status: 500 }
@@ -155,7 +156,7 @@ export async function POST(request: NextRequest) {
       targetActorId: targetActor.id,
     });
   } catch (error) {
-    console.error("[API] Find or create conversation error:", error);
+    logger.error("[API] Find or create conversation error", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

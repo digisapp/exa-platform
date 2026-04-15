@@ -1,5 +1,6 @@
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 
 const SWIMWEAR_QUERIES = [
   "swimwear collection 2026",
@@ -47,7 +48,7 @@ async function searchXForQuery(query: string): Promise<XResult[]> {
   });
 
   if (!response.ok) {
-    console.error(`xAI API error for query "${query}":`, await response.text());
+    logger.error("xAI API error for query", undefined, { query, responseBody: await response.text() });
     return [];
   }
 
@@ -70,7 +71,7 @@ async function searchXForQuery(query: string): Promise<XResult[]> {
     const parsed = JSON.parse(jsonMatch[0]);
     return Array.isArray(parsed) ? parsed : [];
   } catch {
-    console.error(`Failed to parse xAI response for query "${query}":`, content);
+    logger.error("Failed to parse xAI response for query", undefined, { query, content });
     return [];
   }
 }
@@ -131,9 +132,7 @@ export async function GET(request: NextRequest) {
       runCategory(db, "hotel_resort", HOTEL_QUERIES),
     ]);
 
-    console.log(
-      `x-leads-collect cron: swimwear=${swimwear.inserted} hotels=${hotels.inserted}`
-    );
+    logger.info("x-leads-collect cron complete", { swimwearInserted: swimwear.inserted, hotelsInserted: hotels.inserted });
 
     return NextResponse.json({
       message: "X lead collection complete",
@@ -142,7 +141,7 @@ export async function GET(request: NextRequest) {
       errors: [...swimwear.errors, ...hotels.errors],
     });
   } catch (error: any) {
-    console.error("x-leads-collect cron error:", error);
+    logger.error("x-leads-collect cron error", error);
     return NextResponse.json({ error: "Lead collection failed" }, { status: 500 });
   }
 }

@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const adminClient = createServiceRoleClient();
 
@@ -127,7 +128,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("Fetch library item error:", error);
+    logger.error("Fetch library item error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -170,13 +171,13 @@ export async function PATCH(
       .single() as { data: any; error: any };
 
     if (error || !updated) {
-      console.error("Failed to update library item:", error);
+      logger.error("Failed to update library item", error);
       return NextResponse.json({ error: "Failed to update" }, { status: 500 });
     }
 
     return NextResponse.json({ item: updated });
   } catch (error) {
-    console.error("Update library item error:", error);
+    logger.error("Update library item error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -215,7 +216,7 @@ export async function DELETE(
         .remove(paths);
 
       if (storageError) {
-        console.error("Storage delete error:", storageError);
+        logger.error("Storage delete error", storageError);
       }
     }
 
@@ -225,13 +226,13 @@ export async function DELETE(
       .eq("id", id) as { error: any };
 
     if (error) {
-      console.error("Failed to delete library item:", error);
+      logger.error("Failed to delete library item", error);
       return NextResponse.json({ error: "Failed to delete" }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Delete library item error:", error);
+    logger.error("Delete library item error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

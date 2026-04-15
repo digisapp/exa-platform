@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import crypto from "crypto";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 /**
  * Fisher-Yates shuffle using crypto.randomInt for unbiased randomness.
@@ -40,7 +41,7 @@ export async function GET(request: NextRequest) {
     );
 
     if (sessionError) {
-      console.error("Session error:", sessionError);
+      logger.error("Session error", sessionError);
     }
 
     const session = (sessionData as {
@@ -145,7 +146,7 @@ export async function GET(request: NextRequest) {
     }));
 
     if (error) {
-      console.error("Fetch models error:", error);
+      logger.error("Fetch models error", error);
       return NextResponse.json(
         { error: "Failed to fetch models" },
         { status: 500 }
@@ -170,7 +171,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Top models error:", error);
+    logger.error("Top models error", error);
     return NextResponse.json(
       { error: "Failed to load game" },
       { status: 500 }

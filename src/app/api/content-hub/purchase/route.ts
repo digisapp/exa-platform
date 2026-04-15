@@ -4,6 +4,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { getActorId } from "@/lib/ids";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const purchaseSchema = z
   .object({
@@ -61,7 +62,7 @@ export async function POST(request: NextRequest) {
       });
 
       if (rpcError) {
-        console.error("Unlock item RPC error:", rpcError);
+        logger.error("Unlock item RPC error", rpcError);
         const msg = rpcError.message || "Failed to unlock item";
         if (msg.includes("nsufficient")) {
           return NextResponse.json({ error: msg }, { status: 402 });
@@ -97,7 +98,7 @@ export async function POST(request: NextRequest) {
       });
 
       if (rpcError) {
-        console.error("Unlock set RPC error:", rpcError);
+        logger.error("Unlock set RPC error", rpcError);
         const msg = rpcError.message || "Failed to unlock set";
         if (msg.includes("nsufficient")) {
           return NextResponse.json({ error: msg }, { status: 402 });
@@ -110,7 +111,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ error: "Either item_id or set_id is required" }, { status: 400 });
   } catch (error) {
-    console.error("Content purchase error:", error);
+    logger.error("Content purchase error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

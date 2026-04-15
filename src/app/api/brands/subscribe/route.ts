@@ -3,6 +3,7 @@ import { stripe } from "@/lib/stripe";
 import { BRAND_SUBSCRIPTION_TIERS, BrandTier } from "@/lib/stripe-config";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 export async function POST(request: NextRequest) {
   try {
@@ -124,7 +125,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ url: session.url });
   } catch (error) {
-    console.error("Subscription checkout error:", error);
+    logger.error("Subscription checkout error", error);
     return NextResponse.json(
       { error: "Failed to create subscription checkout" },
       { status: 500 }

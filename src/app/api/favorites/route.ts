@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 // GET - Get user's favorites
 export async function GET() {
@@ -46,7 +47,7 @@ export async function GET() {
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Get favorites error:", error);
+      logger.error("Get favorites error", error);
       throw error;
     }
 
@@ -62,7 +63,7 @@ export async function GET() {
       headers: { "Cache-Control": "private, s-maxage=60, stale-while-revalidate=120" },
     });
   } catch (error) {
-    console.error("Get favorites error:", error);
+    logger.error("Get favorites error", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -153,7 +154,7 @@ export async function POST(request: NextRequest) {
       );
 
     if (insertError) {
-      console.error("Favorite insert error:", insertError);
+      logger.error("Favorite insert error", insertError);
       throw insertError;
     }
 
@@ -201,7 +202,7 @@ export async function POST(request: NextRequest) {
       favoriteCount: favoriteCount || 0,
     });
   } catch (error) {
-    console.error("Add favorite error:", error);
+    logger.error("Add favorite error", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -269,7 +270,7 @@ export async function DELETE(request: NextRequest) {
       .eq("following_id", modelActor.id);
 
     if (deleteError) {
-      console.error("Remove favorite error:", deleteError);
+      logger.error("Remove favorite error", deleteError);
       throw deleteError;
     }
 
@@ -284,7 +285,7 @@ export async function DELETE(request: NextRequest) {
       favoriteCount: favoriteCount || 0,
     });
   } catch (error) {
-    console.error("Remove favorite error:", error);
+    logger.error("Remove favorite error", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

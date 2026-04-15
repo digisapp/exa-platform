@@ -1,6 +1,7 @@
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 
 // POST /api/admin/restart-auctions - Restart all ended auctions that received no bids
 export async function POST() {
@@ -38,7 +39,7 @@ export async function POST() {
           p_auction_id: auction.id,
         });
         if (!error) ended++;
-        else console.error(`Failed to end auction ${auction.id}:`, error);
+        else logger.error("Failed to end auction", error, { id: auction.id });
       }
     }
 
@@ -88,7 +89,7 @@ export async function POST() {
       restartedAuctions,
     });
   } catch (error) {
-    console.error("Restart auctions error:", error);
+    logger.error("Restart auctions error", error);
     return NextResponse.json({ error: "Failed to restart auctions" }, { status: 500 });
   }
 }

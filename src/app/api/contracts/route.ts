@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { sendContractSentEmail } from "@/lib/email";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const createContractSchema = z.object({
   templateId: z.string().uuid().optional().nullable(),
@@ -155,7 +156,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (insertError) {
-      console.error("Error creating contract:", insertError);
+      logger.error("Error creating contract", insertError);
       return NextResponse.json({ error: "Failed to create contract" }, { status: 500 });
     }
 
@@ -189,14 +190,14 @@ export async function POST(request: NextRequest) {
             contractTitle: input.title,
           });
         } catch (emailError) {
-          console.error("Failed to send contract email:", emailError);
+          logger.error("Failed to send contract email", emailError);
         }
       }
     }
 
     return NextResponse.json({ success: true, contract });
   } catch (error) {
-    console.error("Error in POST /api/contracts:", error);
+    logger.error("Error in POST /api/contracts", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -262,7 +263,7 @@ export async function GET(request: NextRequest) {
     const { data: contracts, error } = await query;
 
     if (error) {
-      console.error("Error fetching contracts:", error);
+      logger.error("Error fetching contracts", error);
       return NextResponse.json({ error: "Failed to fetch contracts" }, { status: 500 });
     }
 
@@ -296,7 +297,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ contracts: enriched });
   } catch (error) {
-    console.error("Error in GET /api/contracts:", error);
+    logger.error("Error in GET /api/contracts", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 export async function GET(request: NextRequest) {
   try {
@@ -52,7 +53,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ balance });
   } catch (error) {
-    console.error("Balance fetch error:", error);
+    logger.error("Balance fetch error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

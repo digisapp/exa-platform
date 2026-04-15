@@ -9,6 +9,7 @@ import {
   detectSkinTone,
   type ExaDollModelInput,
 } from "@/lib/exa-dolls";
+import { logger } from "@/lib/logger";
 
 async function isAdmin(supabase: ReturnType<typeof createServiceRoleClient>, userId: string) {
   const { data: actor } = await supabase
@@ -119,7 +120,7 @@ export async function POST(
       modelId,
     });
   } catch (error) {
-    console.error("[ExaDolls] POST error:", error);
+    logger.error("[ExaDolls] POST error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -176,7 +177,7 @@ export async function GET(
 
     return NextResponse.json({ status: "processing" });
   } catch (error) {
-    console.error("[ExaDolls] GET error:", error);
+    logger.error("[ExaDolls] GET error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -220,7 +221,7 @@ export async function PATCH(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("[ExaDolls] PATCH error:", error);
+    logger.error("[ExaDolls] PATCH error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -250,7 +251,7 @@ async function saveToStorage(
       });
 
     if (error) {
-      console.error("[ExaDolls] Storage upload error:", error);
+      logger.error("[ExaDolls] Storage upload error", error);
       return imageUrl; // Fall back to external URL
     }
 
@@ -260,7 +261,7 @@ async function saveToStorage(
 
     return publicUrl;
   } catch (error) {
-    console.error("[ExaDolls] Save to storage error:", error);
+    logger.error("[ExaDolls] Save to storage error", error);
     return imageUrl; // Fall back to external URL
   }
 }

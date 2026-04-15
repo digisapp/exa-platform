@@ -1,6 +1,8 @@
 // Exa Dolls - AI-generated doll-style digital twin images
 // Pipeline: Generate stylized doll base with Flux Pro → Face swap with model's real photo
 
+import { logger } from "@/lib/logger";
+
 const FAL_KEY = process.env.FAL_KEY;
 const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN;
 
@@ -192,7 +194,7 @@ export async function generateExaDollBase(
   }
 
   try {
-    console.log("[ExaDolls] Starting Flux generation");
+    logger.info("[ExaDolls] Starting Flux generation");
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 55000);
@@ -217,7 +219,7 @@ export async function generateExaDollBase(
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("[ExaDolls] Flux error:", response.status, errorText);
+      logger.error("[ExaDolls] Flux error", undefined, { status: response.status, errorText });
       return { error: `Flux generation failed: ${response.status}` };
     }
 
@@ -227,10 +229,10 @@ export async function generateExaDollBase(
       return { error: "No image generated" };
     }
 
-    console.log("[ExaDolls] Base image generated successfully");
+    logger.info("[ExaDolls] Base image generated successfully");
     return { baseImageUrl: result.images[0].url };
   } catch (error) {
-    console.error("[ExaDolls] Generation error:", error);
+    logger.error("[ExaDolls] Generation error", error);
     if (error instanceof Error && error.name === "AbortError") {
       return { error: "Generation timed out (55s). Try again." };
     }
@@ -250,7 +252,7 @@ export async function startFaceSwap(
   }
 
   try {
-    console.log("[ExaDolls] Starting face swap");
+    logger.info("[ExaDolls] Starting face swap");
 
     const response = await fetch(
       `https://api.replicate.com/v1/models/${REPLICATE_FACE_SWAP_MODEL}/predictions`,
@@ -271,15 +273,15 @@ export async function startFaceSwap(
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("[ExaDolls] Face swap start error:", response.status, errorText);
+      logger.error("[ExaDolls] Face swap start error", undefined, { status: response.status, errorText });
       return { error: `Face swap failed to start: ${response.status}` };
     }
 
     const prediction = await response.json();
-    console.log("[ExaDolls] Face swap started:", prediction.id);
+    logger.info("[ExaDolls] Face swap started", { predictionId: prediction.id });
     return { predictionId: prediction.id };
   } catch (error) {
-    console.error("[ExaDolls] Face swap error:", error);
+    logger.error("[ExaDolls] Face swap error", error);
     return { error: "Face swap failed to start" };
   }
 }
@@ -312,7 +314,7 @@ export async function checkFaceSwapStatus(
 
     if (result.status === "succeeded") {
       const outputUrl = Array.isArray(result.output) ? result.output[0] : result.output;
-      console.log("[ExaDolls] Face swap completed");
+      logger.info("[ExaDolls] Face swap completed");
       return { status: "completed", imageUrl: outputUrl };
     }
 
@@ -322,7 +324,7 @@ export async function checkFaceSwapStatus(
 
     return { status: "processing" };
   } catch (error) {
-    console.error("[ExaDolls] Face swap status error:", error);
+    logger.error("[ExaDolls] Face swap status error", error);
     return { status: "processing" };
   }
 }
@@ -334,14 +336,14 @@ export async function detectSkinTone(
   photoUrl: string
 ): Promise<string | null> {
   if (!REPLICATE_API_TOKEN) {
-    console.error("[ExaDolls] REPLICATE_API_TOKEN not configured");
+    logger.error("[ExaDolls] REPLICATE_API_TOKEN not configured");
     return null;
   }
 
   const validTones = Object.keys(SKIN_TONE_DESCRIPTIONS);
 
   try {
-    console.log("[ExaDolls] Auto-detecting skin tone");
+    logger.info("[ExaDolls] Auto-detecting skin tone");
 
     // Start prediction
     const response = await fetch(
@@ -363,7 +365,7 @@ export async function detectSkinTone(
     );
 
     if (!response.ok) {
-      console.error("[ExaDolls] Skin tone detection start error:", response.status);
+      logger.error("[ExaDolls] Skin tone detection start error", undefined, { status: response.status });
       return null;
     }
 
@@ -392,23 +394,23 @@ export async function detectSkinTone(
         // Match to valid skin tone
         const matched = validTones.find((tone) => output.includes(tone));
         if (matched) {
-          console.log("[ExaDolls] Detected skin tone:", matched);
+          logger.info("[ExaDolls] Detected skin tone", { skinTone: matched });
           return matched;
         }
-        console.warn("[ExaDolls] Could not match skin tone from output:", output);
+        logger.warn("[ExaDolls] Could not match skin tone from output", { output });
         return null;
       }
 
       if (result.status === "failed" || result.status === "canceled") {
-        console.error("[ExaDolls] Skin tone detection failed:", result.error);
+        logger.error("[ExaDolls] Skin tone detection failed", undefined, { error: result.error });
         return null;
       }
     }
 
-    console.warn("[ExaDolls] Skin tone detection timed out");
+    logger.warn("[ExaDolls] Skin tone detection timed out");
     return null;
   } catch (error) {
-    console.error("[ExaDolls] Skin tone detection error:", error);
+    logger.error("[ExaDolls] Skin tone detection error", error);
     return null;
   }
 }

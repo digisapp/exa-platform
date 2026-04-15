@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import twilio from "twilio";
+import { logger } from "@/lib/logger";
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -156,7 +157,7 @@ export async function POST(request: NextRequest) {
       errors: results.errors.slice(0, 10), // Limit errors returned
     });
   } catch (error) {
-    console.error("SMS send error:", error);
+    logger.error("SMS send error", error);
     return NextResponse.json(
       { error: "Failed to send messages" },
       { status: 500 }

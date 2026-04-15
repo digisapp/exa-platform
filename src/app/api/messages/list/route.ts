@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const PAGE_SIZE = 50;
 
@@ -172,7 +173,7 @@ export async function GET(request: NextRequest) {
       headers: { "Cache-Control": "private, no-cache" },
     });
   } catch (error) {
-    console.error("List messages error:", error);
+    logger.error("List messages error", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

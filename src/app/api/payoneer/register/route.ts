@@ -6,6 +6,7 @@ import {
   PayoneerPayeeRegistration,
 } from "@/lib/payoneer";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 /**
  * POST /api/payoneer/register
@@ -136,7 +137,7 @@ export async function POST(request: NextRequest) {
       message: "Please complete your Payoneer registration to receive payouts",
     });
   } catch (error) {
-    console.error("Payoneer registration error:", error);
+    logger.error("Payoneer registration error", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Registration failed" },
       { status: 500 }
@@ -227,7 +228,7 @@ export async function GET() {
       country: account.country,
     });
   } catch (error) {
-    console.error("Payoneer status check error:", error);
+    logger.error("Payoneer status check error", error);
     return NextResponse.json(
       { error: "Failed to check status" },
       { status: 500 }

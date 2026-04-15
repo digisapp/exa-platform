@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 // Bot/crawler patterns to filter out
 const BOT_PATTERNS = /bot|crawler|spider|googlebot|bingbot|slurp|duckduckbot|baiduspider|yandexbot|facebookexternalhit|twitterbot|linkedinbot|embedly|quora|pinterest|redditbot|applebot|semrushbot|ahrefsbot|mj12bot|dotbot|petalbot|bytespider|gptbot|claudebot|anthropic|openai|ccbot|scrapy|wget|curl|python-requests|go-http-client|java|libwww|lwp|httpclient/i;
@@ -148,13 +149,13 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
-      console.error("Failed to track page view:", error.message, error.details, error.code);
+      logger.error("Failed to track page view", undefined, { message: error.message, details: error.details, code: error.code });
       return NextResponse.json({ error: "Failed to track", details: error.message, code: error.code }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Analytics track error:", error);
+    logger.error("Analytics track error", error);
     return NextResponse.json({ error: "Internal error", details: error instanceof Error ? error.message : String(error) }, { status: 500 });
   }
 }

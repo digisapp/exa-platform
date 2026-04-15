@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const adminClient = createServiceRoleClient();
 
@@ -54,13 +55,13 @@ export async function POST(request: NextRequest) {
       .single() as { data: any; error: any };
 
     if (error || !item) {
-      console.error("Failed to create library item:", error);
+      logger.error("Failed to create library item", error);
       return NextResponse.json({ error: "Failed to create library item" }, { status: 500 });
     }
 
     return NextResponse.json({ item }, { status: 201 });
   } catch (error) {
-    console.error("Create library item error:", error);
+    logger.error("Create library item error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -95,7 +96,7 @@ export async function GET(request: NextRequest) {
     const { data: items, error } = await query.limit(100) as { data: any[]; error: any };
 
     if (error) {
-      console.error("Failed to fetch library items:", error);
+      logger.error("Failed to fetch library items", error);
       return NextResponse.json({ error: "Failed to fetch library items" }, { status: 500 });
     }
 
@@ -138,7 +139,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ items: enriched });
   } catch (error) {
-    console.error("Fetch library items error:", error);
+    logger.error("Fetch library items error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { sendContentProgramApprovedEmail } from "@/lib/email";
+import { logger } from "@/lib/logger";
 
 export async function PATCH(
   request: NextRequest,
@@ -72,7 +73,7 @@ export async function PATCH(
       .single();
 
     if (error) {
-      console.error("Update application error:", error);
+      logger.error("Update application error", error);
       throw error;
     }
 
@@ -105,7 +106,7 @@ export async function PATCH(
           .single();
 
         if (enrollError) {
-          console.error("Create enrollment error:", enrollError);
+          logger.error("Create enrollment error", enrollError);
         } else if (enrollment) {
           // Create 3 payment records
           const payments = [];
@@ -127,7 +128,7 @@ export async function PATCH(
             .insert(payments);
 
           if (paymentsError) {
-            console.error("Create payments error:", paymentsError);
+            logger.error("Create payments error", paymentsError);
           }
 
           // Update application status to enrolled
@@ -146,13 +147,13 @@ export async function PATCH(
           contactName: application.contact_name,
         });
       } catch (emailError) {
-        console.error("Failed to send content program approval email:", emailError);
+        logger.error("Failed to send content program approval email", emailError);
       }
     }
 
     return NextResponse.json({ success: true, application });
   } catch (error) {
-    console.error("Update content program application error:", error);
+    logger.error("Update content program application error", error);
     return NextResponse.json(
       { error: "Failed to update application" },
       { status: 500 }
@@ -200,13 +201,13 @@ export async function DELETE(
       .eq("id", id);
 
     if (error) {
-      console.error("Delete application error:", error);
+      logger.error("Delete application error", error);
       throw error;
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Delete content program application error:", error);
+    logger.error("Delete content program application error", error);
     return NextResponse.json(
       { error: "Failed to delete application" },
       { status: 500 }

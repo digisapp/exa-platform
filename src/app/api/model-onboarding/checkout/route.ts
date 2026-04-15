@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { stripe } from "@/lib/stripe";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const RUNWAY_WORKSHOP_CENTS = 35000; // $350
 const SWIMWEAR_DIGITALS_CENTS = 20000; // $200
@@ -107,7 +108,7 @@ export async function POST(request: NextRequest) {
       sessionId: session.id,
     });
   } catch (error) {
-    console.error("Model onboarding checkout error:", error);
+    logger.error("Model onboarding checkout error", error);
     const message =
       error instanceof Error
         ? error.message

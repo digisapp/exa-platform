@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const adminClient = createServiceRoleClient();
 
@@ -55,13 +56,13 @@ export async function PATCH(
       .single();
 
     if (error) {
-      console.error("Admin update booking error:", error);
+      logger.error("Admin update booking error", error);
       return NextResponse.json({ error: "Failed to update booking" }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, booking });
   } catch (error) {
-    console.error("Admin update booking error:", error);
+    logger.error("Admin update booking error", error);
     return NextResponse.json({ error: "Failed to update booking" }, { status: 500 });
   }
 }

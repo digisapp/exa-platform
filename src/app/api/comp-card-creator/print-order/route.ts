@@ -4,6 +4,7 @@ import { PRINT_PRICE_PER_CARD, PRINT_MIN_QUANTITY } from "@/lib/stripe-config";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const schema = z.object({
   quantity: z.number().int().min(PRINT_MIN_QUANTITY).max(500),
@@ -46,7 +47,7 @@ export async function POST(request: NextRequest) {
       });
 
     if (uploadError) {
-      console.error("PDF upload error:", uploadError);
+      logger.error("PDF upload error", uploadError);
       return NextResponse.json(
         { error: "Failed to upload PDF" },
         { status: 500 }
@@ -75,7 +76,7 @@ export async function POST(request: NextRequest) {
       });
 
     if (insertError) {
-      console.error("Order insert error:", insertError);
+      logger.error("Order insert error", insertError);
       return NextResponse.json(
         { error: "Failed to create order" },
         { status: 500 }
@@ -124,7 +125,7 @@ export async function POST(request: NextRequest) {
       sessionId: session.id,
     });
   } catch (error) {
-    console.error("Print order error:", error);
+    logger.error("Print order error", error);
     return NextResponse.json(
       { error: "Something went wrong" },
       { status: 500 }

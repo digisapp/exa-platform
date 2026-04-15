@@ -1,5 +1,6 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { headers } from "next/headers";
+import { logger } from "@/lib/logger";
 
 interface AuditLogParams {
   supabase: SupabaseClient;
@@ -44,7 +45,7 @@ export async function logAdminAction({
     });
   } catch (error) {
     // Log to console but don't throw - audit logging should not fail main operations
-    console.error("Failed to log admin action:", error);
+    logger.error("Failed to log admin action", error);
   }
 }
 

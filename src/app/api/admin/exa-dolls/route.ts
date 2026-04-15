@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { escapeIlike } from "@/lib/utils";
+import { logger } from "@/lib/logger";
 
 async function isAdmin(supabase: ReturnType<typeof createServiceRoleClient>, userId: string) {
   const { data: actor } = await supabase
@@ -64,7 +65,7 @@ export async function GET(request: NextRequest) {
     const { data: models, error, count } = await query;
 
     if (error) {
-      console.error("[ExaDolls] Query error:", error);
+      logger.error("[ExaDolls] Query error", error);
       return NextResponse.json({ error: "Failed to fetch models" }, { status: 500 });
     }
 
@@ -83,7 +84,7 @@ export async function GET(request: NextRequest) {
       pageSize,
     });
   } catch (error) {
-    console.error("[ExaDolls] GET error:", error);
+    logger.error("[ExaDolls] GET error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

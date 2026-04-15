@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 import { sendNewMessageNotificationEmail } from "@/lib/email";
+import { logger } from "@/lib/logger";
 
 const adminClient = createServiceRoleClient();
 
@@ -291,11 +292,11 @@ export async function POST(request: NextRequest) {
             senderType: sender.type as "model" | "fan" | "brand",
             messagePreview: initialMessage,
             conversationUrl,
-          }).catch((err) => console.error("New conversation notification email error:", err));
+          }).catch((err) => logger.error("New conversation notification email error", err));
         }
       }
     } catch (emailErr) {
-      console.error("New conversation notification check error:", emailErr);
+      logger.error("New conversation notification check error", emailErr);
     }
 
     return NextResponse.json({
@@ -304,7 +305,7 @@ export async function POST(request: NextRequest) {
       isNew: true,
     });
   } catch (error) {
-    console.error("New conversation error:", error);
+    logger.error("New conversation error", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

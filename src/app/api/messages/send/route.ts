@@ -5,6 +5,7 @@ import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 import { escapeIlike } from "@/lib/utils";
 import { sendNewMessageNotificationEmail } from "@/lib/email";
+import { logger } from "@/lib/logger";
 
 const DEFAULT_MESSAGE_COST = 5; // Default coins if model hasn't set a rate
 
@@ -164,7 +165,7 @@ export async function POST(request: NextRequest) {
           .single();
 
         if (convError || !newConv) {
-          console.error("Failed to create conversation:", convError);
+          logger.error("Failed to create conversation", convError);
           return NextResponse.json({ error: "Failed to create conversation" }, { status: 500 });
         }
 
@@ -176,7 +177,7 @@ export async function POST(request: NextRequest) {
           ]);
 
         if (partInsertError) {
-          console.error("Failed to add participants:", partInsertError);
+          logger.error("Failed to add participants", partInsertError);
           await adminClient.from("conversations").delete().eq("id", newConv.id);
           return NextResponse.json({ error: "Failed to create conversation" }, { status: 500 });
         }
@@ -198,7 +199,7 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     if (partError) {
-      console.error("Participation check error:", partError);
+      logger.error("Participation check error", partError);
       return NextResponse.json(
         { error: "Failed to verify conversation access" },
         { status: 500 }
@@ -279,7 +280,7 @@ export async function POST(request: NextRequest) {
       }
     );
     if (rpcError) {
-      console.error("RPC error:", rpcError);
+      logger.error("RPC error", rpcError);
       return NextResponse.json(
         { error: rpcError.message || "Failed to send message" },
         { status: 500 }
@@ -289,7 +290,7 @@ export async function POST(request: NextRequest) {
     const result = (rpcData ?? {}) as Record<string, any>;
 
     if (!result.success) {
-      console.error("RPC returned failure:", result);
+      logger.error("RPC returned failure", result);
       // Handle specific errors
       if (result.error === "Insufficient coins") {
         return NextResponse.json(
@@ -366,13 +367,13 @@ export async function POST(request: NextRequest) {
                 senderType: sender.type as "model" | "fan" | "brand",
                 messagePreview: content || "(Media message)",
                 conversationUrl,
-              }).catch((err) => console.error("First message notification email error:", err));
+              }).catch((err) => logger.error("First message notification email error", err));
             }
           }
         }
       } catch (emailErr) {
         // Don't fail the message send if email notification fails
-        console.error("First message notification check error:", emailErr);
+        logger.error("First message notification check error", emailErr);
       }
     }
 
@@ -383,7 +384,7 @@ export async function POST(request: NextRequest) {
       conversationId: conversationId,
     });
   } catch (error) {
-    console.error("Send message error:", error);
+    logger.error("Send message error", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

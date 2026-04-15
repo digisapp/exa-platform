@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 const adminClient = createServiceRoleClient();
 
@@ -51,13 +52,13 @@ export async function DELETE(
       .eq("id", assignmentId) as { error: any };
 
     if (error) {
-      console.error("Failed to revoke assignment:", error);
+      logger.error("Failed to revoke assignment", error);
       return NextResponse.json({ error: "Failed to revoke" }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Revoke assignment error:", error);
+    logger.error("Revoke assignment error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

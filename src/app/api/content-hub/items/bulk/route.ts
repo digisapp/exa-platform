@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service";
 import { getModelId } from "@/lib/ids";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const bulkSchema = z.object({
   ids: z.array(z.string().uuid()).min(1).max(50),
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest) {
       .in("id", ids);
 
     if (fetchError) {
-      console.error("Bulk fetch error:", fetchError);
+      logger.error("Bulk fetch error", fetchError);
       return NextResponse.json({ error: "Failed to verify items" }, { status: 500 });
     }
 
@@ -133,13 +134,13 @@ export async function POST(request: NextRequest) {
     }
 
     if (error) {
-      console.error("Bulk action error:", error);
+      logger.error("Bulk action error", error);
       return NextResponse.json({ error: "Failed to perform bulk action" }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, affected: ids.length });
   } catch (error) {
-    console.error("Bulk action error:", error);
+    logger.error("Bulk action error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

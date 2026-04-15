@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { escapeIlike } from "@/lib/utils";
 import { requirePosAuth, isPosAuthError } from "@/lib/pos-auth";
+import { logger } from "@/lib/logger";
 
 const supabase = createServiceRoleClient();
 
@@ -49,7 +50,7 @@ export async function GET(request: NextRequest) {
       .limit(20);
 
     if (error) {
-      console.error("Search error:", error);
+      logger.error("Search error", error);
       return NextResponse.json({ error: "Search failed" }, { status: 500 });
     }
 
@@ -73,7 +74,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ products: formattedProducts });
   } catch (error) {
-    console.error("POS search error:", error);
+    logger.error("POS search error", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

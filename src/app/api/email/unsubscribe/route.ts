@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
     const data = rpcData as Record<string, any> | null;
 
     if (error) {
-      console.error("Unsubscribe error:", error);
+      logger.error("Unsubscribe error", error);
       return NextResponse.json(
         { error: "Failed to unsubscribe" },
         { status: 500 }
@@ -46,7 +47,7 @@ export async function POST(request: NextRequest) {
       email: data.email,
     });
   } catch (error) {
-    console.error("Unsubscribe error:", error);
+    logger.error("Unsubscribe error", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

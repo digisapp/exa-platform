@@ -5,6 +5,8 @@
 // TWILIO_PHONE_NUMBER
 // ADMIN_PHONE_NUMBER (for notifications)
 
+import { logger } from "@/lib/logger";
+
 function sanitizeSmsInput(input: string, maxLength: number = 100): string {
   return input.replace(/[\x00-\x1f]/g, "").trim().slice(0, maxLength);
 }
@@ -26,7 +28,7 @@ export async function sendSMS({ to, message }: SendSMSParams): Promise<SMSResult
   const fromNumber = process.env.TWILIO_PHONE_NUMBER;
 
   if (!accountSid || !authToken || !fromNumber) {
-    console.warn("Twilio credentials not configured - SMS not sent");
+    logger.warn("Twilio credentials not configured - SMS not sent");
     return { success: false, error: "Twilio not configured" };
   }
 
@@ -58,11 +60,11 @@ export async function sendSMS({ to, message }: SendSMSParams): Promise<SMSResult
     if (response.ok) {
       return { success: true, messageId: data.sid };
     } else {
-      console.error("Twilio error:", data);
+      logger.error("Twilio error", undefined, { data });
       return { success: false, error: data.message || "Failed to send SMS" };
     }
   } catch (error) {
-    console.error("SMS send error:", error);
+    logger.error("SMS send error", error);
     return { success: false, error: "Failed to send SMS" };
   }
 }
@@ -115,7 +117,7 @@ export async function notifyAdminNewCallRequest(request: {
 }): Promise<void> {
   const adminPhone = process.env.ADMIN_PHONE_NUMBER;
   if (!adminPhone) {
-    console.warn("Admin phone not configured - notification not sent");
+    logger.warn("Admin phone not configured - notification not sent");
     return;
   }
 

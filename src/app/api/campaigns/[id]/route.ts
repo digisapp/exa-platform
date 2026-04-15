@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const campaignUpdateSchema = z.object({
   name: z.string().min(1).optional(),
@@ -87,7 +88,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("Campaign GET error:", error);
+    logger.error("Campaign GET error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -153,7 +154,7 @@ export async function PUT(
       if (error.code === "23505") {
         return NextResponse.json({ error: "A campaign with this name already exists" }, { status: 400 });
       }
-      console.error("Campaign error:", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+      logger.error("Campaign error", error); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 
     if (!campaign) {
@@ -162,7 +163,7 @@ export async function PUT(
 
     return NextResponse.json({ campaign });
   } catch (error) {
-    console.error("Campaign PUT error:", error);
+    logger.error("Campaign PUT error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -208,12 +209,12 @@ export async function DELETE(
       .eq("brand_id", actor.id);
 
     if (error) {
-      console.error("Campaign error:", error.message); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+      logger.error("Campaign error", error); return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Campaign DELETE error:", error);
+    logger.error("Campaign DELETE error", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createLiveKitToken } from '@/lib/livekit';
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 export async function POST(request: NextRequest) {
   try {
@@ -84,7 +85,7 @@ export async function POST(request: NextRequest) {
       .eq('id', sessionId);
 
     if (updateError) {
-      console.error('Error updating call session:', updateError);
+      logger.error("Error updating call session", updateError);
       return NextResponse.json({ error: 'Failed to join call' }, { status: 500 });
     }
 
@@ -103,7 +104,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Error joining call:', error);
+    logger.error("Error joining call", error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -167,7 +168,7 @@ export async function DELETE(request: NextRequest) {
       .eq('id', sessionId);
 
     if (updateError) {
-      console.error(`Error ${status} call:`, updateError);
+      logger.error(`Error ${status} call`, updateError);
       return NextResponse.json({ error: `Failed to ${status} call` }, { status: 500 });
     }
 
@@ -185,7 +186,7 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ success: true, status });
 
   } catch (error) {
-    console.error('Error handling call response:', error);
+    logger.error("Error handling call response", error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

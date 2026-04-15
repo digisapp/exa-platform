@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { checkEndpointRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const adminClient = createServiceRoleClient();
 
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (error) {
-      console.error("Reaction toggle error:", error);
+      logger.error("Reaction toggle error", error);
       return NextResponse.json(
         { error: "Failed to toggle reaction" },
         { status: 500 }
@@ -84,7 +85,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, reactions });
   } catch (error) {
-    console.error("Live wall react error:", error);
+    logger.error("Live wall react error", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

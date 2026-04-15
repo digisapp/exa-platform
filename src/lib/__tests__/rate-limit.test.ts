@@ -32,9 +32,11 @@ describe("getClientIP", () => {
     expect(getClientIP(req)).toBe("172.16.0.1");
   });
 
-  it("returns 'unknown' when no headers present", () => {
+  it("returns a fallback identifier when no headers present", () => {
     const req = makeRequest({});
-    expect(getClientIP(req)).toBe("unknown");
+    const ip = getClientIP(req);
+    // Falls back to a hashed no-ip identifier when no IP headers are present
+    expect(ip).toMatch(/^(unknown|no-ip-)/);
   });
 
   it("prefers x-forwarded-for over cf-connecting-ip", () => {
