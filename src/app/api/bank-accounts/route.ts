@@ -62,29 +62,56 @@ export async function POST(request: Request) {
     const encryptedAccountNumber = encryptBankAccount(accountNumber);
     const encryptedRoutingNumber = encryptBankAccount(routingNumber);
 
-    // Check if model already has a bank account
+    // Check if model already has a bank account — update it instead of creating a duplicate
     const { data: existingAccounts } = await supabase
       .from("bank_accounts")
       .select("id")
       .eq("model_id", model.id);
 
-    const isPrimary = !existingAccounts || existingAccounts.length === 0;
+    const hasExisting = existingAccounts && existingAccounts.length > 0;
 
-    // Insert bank account
-    const { data: bankAccount, error } = await supabase
-      .from("bank_accounts")
-      .insert({
-        model_id: model.id,
-        account_holder_name: accountHolderName,
-        bank_name: bankName,
-        routing_number: encryptedRoutingNumber,
-        account_number_encrypted: encryptedAccountNumber,
-        account_number_last4: accountNumber.slice(-4),
-        account_type: accountType,
-        is_primary: isPrimary,
-      })
-      .select()
-      .single() as { data: BankAccountRow | null; error: unknown };
+    let bankAccount: BankAccountRow | null = null;
+    let error: unknown = null;
+
+    if (hasExisting) {
+      // Update the existing primary (or first) bank account
+      const existingId = existingAccounts[0].id;
+      const result = await supabase
+        .from("bank_accounts")
+        .update({
+          account_holder_name: accountHolderName,
+          bank_name: bankName,
+          routing_number: encryptedRoutingNumber,
+          account_number_encrypted: encryptedAccountNumber,
+          account_number_last4: accountNumber.slice(-4),
+          account_type: accountType,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", existingId)
+        .eq("model_id", model.id)
+        .select()
+        .single() as { data: BankAccountRow | null; error: unknown };
+      bankAccount = result.data;
+      error = result.error;
+    } else {
+      // Insert new bank account
+      const result = await supabase
+        .from("bank_accounts")
+        .insert({
+          model_id: model.id,
+          account_holder_name: accountHolderName,
+          bank_name: bankName,
+          routing_number: encryptedRoutingNumber,
+          account_number_encrypted: encryptedAccountNumber,
+          account_number_last4: accountNumber.slice(-4),
+          account_type: accountType,
+          is_primary: true,
+        })
+        .select()
+        .single() as { data: BankAccountRow | null; error: unknown };
+      bankAccount = result.data;
+      error = result.error;
+    }
 
     if (error) {
       logger.error("Error saving bank account", error);

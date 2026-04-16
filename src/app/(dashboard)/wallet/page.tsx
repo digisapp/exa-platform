@@ -60,6 +60,7 @@ export interface WithdrawalRequest {
   requested_at: string;
   failure_reason: string | null;
   payout_method: string | null;
+  bank_account_id: string | null;
 }
 
 export interface PayoneerAccount {
@@ -113,10 +114,18 @@ export default function WalletPage() {
   // Payout state
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
   const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
+  const [hasMoreWithdrawals, setHasMoreWithdrawals] = useState(false);
+  const [loadingMoreWithdrawals, setLoadingMoreWithdrawals] = useState(false);
   const [showBankDialog, setShowBankDialog] = useState(false);
   const [showWithdrawDialog, setShowWithdrawDialog] = useState(false);
   const [savingBank, setSavingBank] = useState(false);
   const [requestingWithdraw, setRequestingWithdraw] = useState(false);
+
+  // Zelle state
+  const [zelleInfo, setZelleInfo] = useState("");
+  const [zelleInput, setZelleInput] = useState("");
+  const [savingZelle, setSavingZelle] = useState(false);
+  const [showZelleDialog, setShowZelleDialog] = useState(false);
 
   // Payoneer state
   const [payoneerAccount, setPayoneerAccount] = useState<PayoneerAccount | null>(null);
@@ -162,12 +171,16 @@ export default function WalletPage() {
         // Models are linked via user_id, not actor.id
         const { data: model } = await supabase
           .from("models")
-          .select("id, coin_balance, withheld_balance, country_code")
+          .select("id, coin_balance, withheld_balance, country_code, zelle_info")
           .eq("user_id", user.id)
-          .single() as { data: { id: string; coin_balance: number; withheld_balance: number; country_code: string | null } | null };
+          .single() as { data: { id: string; coin_balance: number; withheld_balance: number; country_code: string | null; zelle_info: string | null } | null };
         setCoinBalance(model?.coin_balance || 0);
         setWithheldBalance(model?.withheld_balance || 0);
         setModelCountryCode(model?.country_code || null);
+        if (model?.zelle_info) {
+          setZelleInfo(model.zelle_info);
+          setZelleInput(model.zelle_info);
+        }
         if (model) {
           setModelId(model.id);
 
@@ -192,6 +205,7 @@ export default function WalletPage() {
           setBankAccounts(banks || []);
           setPayoneerAccount(payoneer);
           setWithdrawals(withdrawalData || []);
+          setHasMoreWithdrawals((withdrawalData || []).length >= 10);
         }
       } else if (actor.type === "fan") {
         // Fans use actor.id as their id
@@ -319,6 +333,53 @@ export default function WalletPage() {
     }
   };
 
+  async function loadMoreWithdrawals() {
+    if (loadingMoreWithdrawals || !hasMoreWithdrawals || withdrawals.length === 0 || !modelId) return;
+    setLoadingMoreWithdrawals(true);
+    const lastW = withdrawals[withdrawals.length - 1];
+    const { data: moreWithdrawals } = await supabase
+      .from("withdrawal_requests")
+      .select("*")
+      .eq("model_id", modelId)
+      .lt("requested_at", lastW.requested_at)
+      .order("requested_at", { ascending: false })
+      .limit(10) as { data: WithdrawalRequest[] | null };
+    if (moreWithdrawals && moreWithdrawals.length > 0) {
+      setWithdrawals(prev => [...prev, ...moreWithdrawals]);
+      setHasMoreWithdrawals(moreWithdrawals.length >= 10);
+    } else {
+      setHasMoreWithdrawals(false);
+    }
+    setLoadingMoreWithdrawals(false);
+  }
+
+  async function handleSaveZelle() {
+    if (!zelleInput.trim()) {
+      toast.error("Please enter your Zelle email or phone number");
+      return;
+    }
+    setSavingZelle(true);
+    try {
+      const response = await fetch("/api/models/zelle", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ zelle_info: zelleInput.trim() }),
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to save Zelle info");
+      }
+      setZelleInfo(zelleInput.trim());
+      setShowZelleDialog(false);
+      toast.success(zelleInfo ? "Zelle info updated!" : "Zelle info saved!");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to save Zelle info";
+      toast.error(message);
+    } finally {
+      setSavingZelle(false);
+    }
+  }
+
   async function handleSaveBank() {
     if (!modelId) return;
 
@@ -353,7 +414,7 @@ export default function WalletPage() {
 
       const newBankAccount = await response.json();
 
-      toast.success("Bank account added!");
+      toast.success(bankAccounts.length > 0 ? "Bank account updated!" : "Bank account added!");
       setShowBankDialog(false);
       setBankForm({
         accountHolderName: "",
@@ -363,8 +424,12 @@ export default function WalletPage() {
         accountType: "checking",
       });
 
-      // Add new bank account to state
-      setBankAccounts([...bankAccounts, newBankAccount]);
+      // Replace existing bank account or add new one
+      if (bankAccounts.length > 0) {
+        setBankAccounts([newBankAccount]);
+      } else {
+        setBankAccounts([newBankAccount]);
+      }
     } catch (error) {
       console.error("Error saving bank:", error);
       const message = error instanceof Error ? error.message : "Failed to save bank account";
@@ -452,8 +517,8 @@ export default function WalletPage() {
     }
 
     // Validate payout method
-    if (selectedPayoutMethod === 'bank' && bankAccounts.length === 0) {
-      toast.error("Please add a bank account first");
+    if (selectedPayoutMethod === 'bank' && !zelleInfo && bankAccounts.length === 0) {
+      toast.error("Please add your Zelle info or a bank account first");
       return;
     }
 
@@ -473,9 +538,12 @@ export default function WalletPage() {
         });
         if (error) throw error;
       } else {
+        // Pass bank account ID if available, null for Zelle-only withdrawals
+        const primaryBank = bankAccounts.find(b => b.is_primary) || bankAccounts[0];
         const { error } = await (supabase.rpc as any)("create_withdrawal_request", {
           p_model_id: modelId,
           p_coins: coins,
+          p_bank_account_id: primaryBank?.id || null,
         });
         if (error) throw error;
       }
@@ -502,6 +570,7 @@ export default function WalletPage() {
         .order("requested_at", { ascending: false })
         .limit(10) as { data: WithdrawalRequest[] | null };
       setWithdrawals(withdrawalData || []);
+      setHasMoreWithdrawals((withdrawalData || []).length >= 10);
     } catch (error: unknown) {
       console.error("Error requesting withdrawal:", error);
       const message = error instanceof Error ? error.message : "Failed to request withdrawal";
@@ -675,6 +744,13 @@ export default function WalletPage() {
           <TabsContent value="payouts">
             <PayoutsTab
               coinBalance={coinBalance}
+              zelleInfo={zelleInfo}
+              zelleInput={zelleInput}
+              setZelleInput={setZelleInput}
+              showZelleDialog={showZelleDialog}
+              setShowZelleDialog={setShowZelleDialog}
+              savingZelle={savingZelle}
+              onSaveZelle={handleSaveZelle}
               bankAccounts={bankAccounts}
               withdrawals={withdrawals}
               payoneerAccount={payoneerAccount}
@@ -699,6 +775,9 @@ export default function WalletPage() {
               onRequestWithdraw={handleRequestWithdraw}
               onRegisterPayoneer={handleRegisterPayoneer}
               onRefreshPayoneerStatus={refreshPayoneerStatus}
+              hasMoreWithdrawals={hasMoreWithdrawals}
+              loadingMoreWithdrawals={loadingMoreWithdrawals}
+              onLoadMoreWithdrawals={loadMoreWithdrawals}
             />
           </TabsContent>
         </Tabs>

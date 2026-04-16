@@ -81,12 +81,12 @@ export async function PATCH(
 
     // Use database functions for proper accounting
     if (status === "completed") {
-      // Fetch withdrawal details before completing (for email)
+      // Fetch withdrawal details + model info before completing (for email)
       const { data: withdrawal } = await adminClient
         .from("withdrawal_requests")
-        .select("amount, payment_method, user_id")
+        .select("coins, payout_method, model_id, bank_account_id, models(user_id, first_name, last_name, zelle_info)")
         .eq("id", id)
-        .single() as { data: { amount: number; payment_method: string; user_id: string } | null };
+        .single() as { data: { coins: number; payout_method: string | null; model_id: string; bank_account_id: string | null; models: { user_id: string; first_name: string | null; last_name: string | null; zelle_info: string | null } } | null };
 
       // Complete withdrawal - removes from withheld balance
       const { error: completeError } = await supabase.rpc("complete_withdrawal", {
@@ -100,7 +100,7 @@ export async function PATCH(
 
       // Add admin notes if provided
       if (notes) {
-        await supabase
+        await adminClient
           .from("withdrawal_requests")
           .update({
             admin_notes: notes,
@@ -110,27 +110,23 @@ export async function PATCH(
       }
 
       // Send payout processed email to the model
-      if (withdrawal) {
+      if (withdrawal?.models) {
         try {
-          const { data: modelData } = await adminClient
-            .from("models")
-            .select("first_name, last_name")
-            .eq("user_id", withdrawal.user_id)
-            .single() as { data: { first_name: string; last_name: string } | null };
-
-          const { data: authUser } = await adminClient.auth.admin.getUserById(withdrawal.user_id);
+          const { data: authUser } = await adminClient.auth.admin.getUserById(withdrawal.models.user_id);
           const email = authUser?.user?.email;
 
           if (email) {
-            const modelName = modelData
-              ? [modelData.first_name, modelData.last_name].filter(Boolean).join(" ")
-              : "Model";
-            const amountUsd = withdrawal.amount / 10; // coins → dollars
+            const modelName = [withdrawal.models.first_name, withdrawal.models.last_name]
+              .filter(Boolean).join(" ") || "Model";
+            const amountUsd = withdrawal.coins * 0.10;
+            const methodLabel = withdrawal.payout_method === "payoneer"
+              ? "Payoneer"
+              : (withdrawal.models.zelle_info && !withdrawal.bank_account_id ? "Zelle" : "Bank Transfer");
             await sendPayoutProcessedEmail({
               to: email,
               modelName,
               amount: amountUsd,
-              method: withdrawal.payment_method || "Bank Transfer",
+              method: methodLabel,
             });
           }
         } catch (emailErr) {
@@ -139,7 +135,8 @@ export async function PATCH(
       }
     } else if (status === "failed") {
       // Cancel/reject withdrawal - refunds to available balance
-      const { error: cancelError } = await supabase.rpc("cancel_withdrawal", {
+      // Use adminClient to bypass RLS since cancel_withdrawal sets status to 'cancelled'
+      const { error: cancelError } = await adminClient.rpc("cancel_withdrawal", {
         p_withdrawal_id: id,
       });
 
@@ -148,8 +145,8 @@ export async function PATCH(
         return NextResponse.json({ error: "Failed to cancel withdrawal" }, { status: 500 });
       }
 
-      // Update with failure reason
-      await supabase
+      // Overwrite status to 'failed' (cancel_withdrawal sets 'cancelled') and add failure reason
+      await adminClient
         .from("withdrawal_requests")
         .update({
           status: "failed",

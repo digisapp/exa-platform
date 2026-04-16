@@ -33,6 +33,8 @@ import {
   AlertCircle,
   ExternalLink,
   Globe,
+  Zap,
+  Pencil,
 } from "lucide-react";
 import { COIN_USD_RATE, MIN_WITHDRAWAL_COINS, coinsToUsd, formatUsd } from "@/lib/coin-config";
 import { PAYONEER_PREFERRED_COUNTRIES, DUAL_PAYOUT_COUNTRIES } from "@/lib/payoneer";
@@ -50,6 +52,13 @@ interface BankForm {
 
 interface PayoutsTabProps {
   coinBalance: number;
+  zelleInfo: string;
+  zelleInput: string;
+  setZelleInput: (value: string) => void;
+  showZelleDialog: boolean;
+  setShowZelleDialog: (open: boolean) => void;
+  savingZelle: boolean;
+  onSaveZelle: () => void;
   bankAccounts: BankAccount[];
   withdrawals: WithdrawalRequest[];
   payoneerAccount: PayoneerAccount | null;
@@ -74,10 +83,20 @@ interface PayoutsTabProps {
   onRequestWithdraw: () => void;
   onRegisterPayoneer: () => void;
   onRefreshPayoneerStatus: () => void;
+  hasMoreWithdrawals?: boolean;
+  loadingMoreWithdrawals?: boolean;
+  onLoadMoreWithdrawals?: () => void;
 }
 
 export default function PayoutsTab({
   coinBalance,
+  zelleInfo,
+  zelleInput,
+  setZelleInput,
+  showZelleDialog,
+  setShowZelleDialog,
+  savingZelle,
+  onSaveZelle,
   bankAccounts,
   withdrawals,
   payoneerAccount,
@@ -102,6 +121,9 @@ export default function PayoutsTab({
   onRequestWithdraw,
   onRegisterPayoneer,
   onRefreshPayoneerStatus,
+  hasMoreWithdrawals = false,
+  loadingMoreWithdrawals = false,
+  onLoadMoreWithdrawals,
 }: PayoutsTabProps) {
   return (
     <div className="space-y-6">
@@ -115,6 +137,95 @@ export default function PayoutsTab({
           <p className="text-sm text-muted-foreground">Manage your payout methods and request withdrawals</p>
         </div>
       </div>
+
+      {/* Zelle - Primary Payout Method */}
+      <Card className="border-purple-500/30">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="h-5 w-5 text-purple-500" />
+                Zelle
+              </CardTitle>
+              <CardDescription>Primary payout method — instant transfers</CardDescription>
+            </div>
+            <Dialog open={showZelleDialog} onOpenChange={setShowZelleDialog}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  {zelleInfo ? (
+                    <>
+                      <Pencil className="h-4 w-4 mr-1" />
+                      Update
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add Zelle
+                    </>
+                  )}
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>{zelleInfo ? "Update" : "Add"} Zelle Info</DialogTitle>
+                  <DialogDescription>
+                    Enter the email or phone number linked to your Zelle account
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="zelleInfo">Zelle Email or Phone</Label>
+                    <Input
+                      id="zelleInfo"
+                      placeholder="you@email.com or (555) 123-4567"
+                      value={zelleInput}
+                      onChange={(e) => setZelleInput(e.target.value)}
+                    />
+                  </div>
+                  <div className="flex items-start gap-2 p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                    <Zap className="h-5 w-5 text-purple-500 shrink-0 mt-0.5" />
+                    <p className="text-sm text-purple-400">
+                      Make sure this matches the email or phone registered with your bank&apos;s Zelle service
+                    </p>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setShowZelleDialog(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={onSaveZelle}
+                    disabled={savingZelle || !zelleInput.trim()}
+                    className="bg-gradient-to-r from-purple-500 to-pink-500"
+                  >
+                    {savingZelle ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Zelle Info"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {!zelleInfo ? (
+            <div className="text-center py-6 text-muted-foreground">
+              <Zap className="h-10 w-10 mx-auto mb-3 opacity-50" />
+              <p className="text-sm">No Zelle info added yet</p>
+              <p className="text-xs mt-1">Add your Zelle email or phone to receive payouts</p>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+              <div className="flex items-center gap-3">
+                <Zap className="h-5 w-5 text-purple-500" />
+                <div>
+                  <p className="font-medium text-purple-400">{zelleInfo}</p>
+                  <p className="text-xs text-muted-foreground">Zelle email/phone</p>
+                </div>
+              </div>
+              <Badge variant="outline" className="text-green-500 border-green-500">Active</Badge>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Bank Account */}
       <Card>
@@ -408,7 +519,7 @@ export default function PayoutsTab({
             <Dialog open={showWithdrawDialog} onOpenChange={setShowWithdrawDialog}>
               <DialogTrigger asChild>
                 <Button
-                  disabled={coinBalance < MIN_WITHDRAWAL_COINS || (bankAccounts.length === 0 && (!payoneerAccount || !payoneerAccount.can_receive_payments))}
+                  disabled={coinBalance < MIN_WITHDRAWAL_COINS || (!zelleInfo && bankAccounts.length === 0 && (!payoneerAccount || !payoneerAccount.can_receive_payments))}
                   className="bg-gradient-to-r from-green-500 to-emerald-500"
                 >
                   <Banknote className="h-4 w-4 mr-1" />
@@ -435,7 +546,7 @@ export default function PayoutsTab({
                   </div>
 
                   {/* Payout Method Selection */}
-                  {(bankAccounts.length > 0 || (payoneerAccount && payoneerAccount.can_receive_payments)) && (
+                  {(zelleInfo || bankAccounts.length > 0 || (payoneerAccount && payoneerAccount.can_receive_payments)) && (
                     <div className="space-y-2">
                       <Label>Payout Method</Label>
                       <Select
@@ -446,7 +557,15 @@ export default function PayoutsTab({
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {bankAccounts.length > 0 && (
+                          {zelleInfo && (
+                            <SelectItem value="bank">
+                              <div className="flex items-center gap-2">
+                                <Zap className="h-4 w-4" />
+                                <span>Zelle ({zelleInfo})</span>
+                              </div>
+                            </SelectItem>
+                          )}
+                          {!zelleInfo && bankAccounts.length > 0 && (
                             <SelectItem value="bank">
                               <div className="flex items-center gap-2">
                                 <Building className="h-4 w-4" />
@@ -514,10 +633,10 @@ export default function PayoutsTab({
               <p className="text-sm">You need at least {MIN_WITHDRAWAL_COINS} coins ({formatUsd(coinsToUsd(MIN_WITHDRAWAL_COINS))}) to request a payout</p>
               <p className="text-xs mt-1">Current balance: {coinBalance} coins ({formatUsd(coinsToUsd(coinBalance))})</p>
             </div>
-          ) : bankAccounts.length === 0 && (!payoneerAccount || !payoneerAccount.can_receive_payments) ? (
+          ) : !zelleInfo && bankAccounts.length === 0 && (!payoneerAccount || !payoneerAccount.can_receive_payments) ? (
             <div className="text-center py-6 text-muted-foreground">
-              <Building className="h-10 w-10 mx-auto mb-3 opacity-50" />
-              <p className="text-sm">Add a bank account or set up Payoneer to request payouts</p>
+              <Zap className="h-10 w-10 mx-auto mb-3 opacity-50" />
+              <p className="text-sm">Add your Zelle info, bank account, or set up Payoneer to request payouts</p>
             </div>
           ) : (
             <div className="text-center py-6">
@@ -553,6 +672,11 @@ export default function PayoutsTab({
                       <p className="font-medium">${parseFloat(w.usd_amount).toFixed(2)}</p>
                       <p className="text-xs text-muted-foreground">
                         {new Date(w.requested_at).toLocaleDateString()}
+                        {w.payout_method && (
+                          <span className="ml-2 text-muted-foreground">
+                            · {w.payout_method === "payoneer" ? "Payoneer" : (zelleInfo && !w.bank_account_id ? "Zelle" : "Bank")}
+                          </span>
+                        )}
                       </p>
                     </div>
                   </div>
@@ -575,6 +699,19 @@ export default function PayoutsTab({
                   </div>
                 </div>
               ))}
+              {hasMoreWithdrawals && onLoadMoreWithdrawals && (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={onLoadMoreWithdrawals}
+                  disabled={loadingMoreWithdrawals}
+                >
+                  {loadingMoreWithdrawals ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : null}
+                  Load More
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>

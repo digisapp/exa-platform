@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PayoutActions } from "@/components/admin/PayoutActions";
-import { RevealAccountNumber } from "@/components/admin/RevealAccountNumber";
+import { RevealAccountNumber, RevealRoutingNumber } from "@/components/admin/RevealAccountNumber";
 import {
   ArrowLeft,
   Wallet,
@@ -16,12 +16,18 @@ import {
   DollarSign,
   Coins,
   Building2,
+  Globe,
+  ChevronLeft,
+  ChevronRight,
+  Zap,
 } from "lucide-react";
 
 interface WithdrawalRequest {
   id: string;
   model_id: string;
   bank_account_id: string | null;
+  payoneer_account_id: string | null;
+  payout_method: string | null;
   coins: number;
   usd_amount: string;
   status: string;
@@ -37,6 +43,7 @@ interface WithdrawalRequest {
     email: string | null;
     profile_photo_url: string | null;
     coin_balance: number;
+    zelle_info: string | null;
   };
   bank_accounts: {
     id: string;
@@ -44,12 +51,26 @@ interface WithdrawalRequest {
     bank_name: string;
     account_number_last4: string;
     account_type: string;
-    routing_number: string;
+  } | null;
+  payoneer_accounts: {
+    id: string;
+    payee_id: string;
+    email: string | null;
+    country: string | null;
+    status: string;
   } | null;
 }
 
-export default async function PayoutsPage() {
+const PAGE_SIZE = 50;
+
+export default async function PayoutsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
   const supabase = await createClient();
+  const { page: pageParam } = await searchParams;
+  const currentPage = Math.max(1, parseInt(pageParam || "1", 10));
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/signin");
@@ -65,8 +86,11 @@ export default async function PayoutsPage() {
     redirect("/dashboard");
   }
 
-  // Get all withdrawal requests with model and bank info
-  const { data: withdrawals } = await supabase
+  // Get withdrawal requests with model, bank, and payoneer info (paginated)
+  const from = (currentPage - 1) * PAGE_SIZE;
+  const to = from + PAGE_SIZE - 1;
+
+  const { data: withdrawals, count } = await supabase
     .from("withdrawal_requests")
     .select(`
       *,
@@ -77,26 +101,35 @@ export default async function PayoutsPage() {
         last_name,
         email,
         profile_photo_url,
-        coin_balance
+        coin_balance,
+        zelle_info
       ),
       bank_accounts (
         id,
         account_holder_name,
         bank_name,
         account_number_last4,
-        account_type,
-        routing_number
+        account_type
+      ),
+      payoneer_accounts (
+        id,
+        payee_id,
+        email,
+        country,
+        status
       )
-    `)
-    .order("requested_at", { ascending: false }) as { data: WithdrawalRequest[] | null };
+    `, { count: "exact" })
+    .order("requested_at", { ascending: false })
+    .range(from, to) as { data: WithdrawalRequest[] | null; count: number | null };
 
   const allWithdrawals = withdrawals || [];
+  const totalCount = count || 0;
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
-  // Calculate stats
+  // Calculate stats from current page (pending/processing counts are most relevant)
   const pending = allWithdrawals.filter(w => w.status === "pending");
   const processing = allWithdrawals.filter(w => w.status === "processing");
   const completed = allWithdrawals.filter(w => w.status === "completed");
-
   const pendingAmount = pending.reduce((sum, w) => sum + parseFloat(w.usd_amount), 0);
   const processingAmount = processing.reduce((sum, w) => sum + parseFloat(w.usd_amount), 0);
   const completedAmount = completed.reduce((sum, w) => sum + parseFloat(w.usd_amount), 0);
@@ -128,9 +161,21 @@ export default async function PayoutsPage() {
     }
   };
 
+  const getPayoutMethodBadge = (withdrawal: WithdrawalRequest) => {
+    if (withdrawal.payout_method === "payoneer") {
+      return <Badge variant="outline" className="bg-orange-500/10 text-orange-500 border-orange-500/50">Payoneer</Badge>;
+    }
+    // Show Zelle badge when model has Zelle info and no bank account linked
+    if (withdrawal.models?.zelle_info && !withdrawal.bank_account_id) {
+      return <Badge variant="outline" className="bg-purple-500/10 text-purple-400 border-purple-500/50">Zelle</Badge>;
+    }
+    return <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/50">Bank</Badge>;
+  };
+
   const renderWithdrawalCard = (withdrawal: WithdrawalRequest) => {
     const model = withdrawal.models;
     const bank = withdrawal.bank_accounts;
+    const payoneer = withdrawal.payoneer_accounts;
     const displayName = model?.first_name
       ? `${model.first_name} ${model.last_name || ""}`.trim()
       : model?.username || "Unknown";
@@ -164,8 +209,27 @@ export default async function PayoutsPage() {
               <Coins className="h-3 w-3" />
               {withdrawal.coins.toLocaleString()} coins
             </p>
+            <div className="mt-1">
+              {getPayoutMethodBadge(withdrawal)}
+            </div>
           </div>
         </div>
+
+        {/* Zelle Info */}
+        {model?.zelle_info && (
+          <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Zap className="h-5 w-5 text-purple-500" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Zelle</p>
+                  <p className="text-sm font-medium text-purple-400">{model.zelle_info}</p>
+                </div>
+              </div>
+              <Badge variant="outline" className="bg-purple-500/10 text-purple-400 border-purple-500/50">Zelle</Badge>
+            </div>
+          </div>
+        )}
 
         {/* Bank Account Info */}
         {bank && (
@@ -189,11 +253,43 @@ export default async function PayoutsPage() {
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-muted-foreground">Routing:</span>
-                <span className="font-mono text-sm bg-muted px-2 py-1 rounded">
-                  {bank.routing_number}
-                </span>
+                <RevealRoutingNumber bankAccountId={bank.id} />
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Payoneer Account Info */}
+        {payoneer && (
+          <div className="p-3 rounded-lg bg-background/50 space-y-2">
+            <div className="flex items-center gap-3">
+              <Globe className="h-5 w-5 text-orange-500" />
+              <div className="flex-1">
+                <p className="text-sm font-medium">Payoneer</p>
+                <p className="text-xs text-muted-foreground">
+                  Payee: {payoneer.payee_id}
+                  {payoneer.email && ` · ${payoneer.email}`}
+                  {payoneer.country && ` · ${payoneer.country}`}
+                </p>
+              </div>
+              <Badge
+                variant="outline"
+                className={
+                  payoneer.status === "active"
+                    ? "bg-green-500/10 text-green-500 border-green-500/50"
+                    : "bg-yellow-500/10 text-yellow-500 border-yellow-500/50"
+                }
+              >
+                {payoneer.status}
+              </Badge>
+            </div>
+          </div>
+        )}
+
+        {/* No payout destination */}
+        {!bank && !payoneer && !model?.zelle_info && (
+          <div className="p-3 rounded-lg bg-red-500/5 border border-red-500/20">
+            <p className="text-sm text-red-400">No payout destination found</p>
           </div>
         )}
 
@@ -232,6 +328,29 @@ export default async function PayoutsPage() {
             </p>
           </div>
         )}
+      </div>
+    );
+  };
+
+  const renderPagination = () => {
+    if (totalPages <= 1) return null;
+    return (
+      <div className="flex items-center justify-center gap-4 pt-4">
+        <Button variant="outline" size="sm" asChild disabled={currentPage <= 1}>
+          <Link href={`/admin/payouts?page=${currentPage - 1}`}>
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            Previous
+          </Link>
+        </Button>
+        <span className="text-sm text-muted-foreground">
+          Page {currentPage} of {totalPages} ({totalCount} total)
+        </span>
+        <Button variant="outline" size="sm" asChild disabled={currentPage >= totalPages}>
+          <Link href={`/admin/payouts?page=${currentPage + 1}`}>
+            Next
+            <ChevronRight className="h-4 w-4 ml-1" />
+          </Link>
+        </Button>
       </div>
     );
   };
@@ -298,7 +417,7 @@ export default async function PayoutsPage() {
               <div>
                 <p className="text-2xl font-bold">${completedAmount.toFixed(2)}</p>
                 <p className="text-xs text-muted-foreground">Total Paid</p>
-                <p className="text-sm text-muted-foreground">All time</p>
+                <p className="text-sm text-muted-foreground">This page</p>
               </div>
             </div>
           </CardContent>
@@ -409,6 +528,9 @@ export default async function PayoutsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Pagination */}
+      {renderPagination()}
     </div>
   );
 }

@@ -53,13 +53,20 @@ export async function GET(
       return NextResponse.json({ error: "Bank account not found" }, { status: 404 });
     }
 
-    // Decrypt account number
+    // Decrypt account number and routing number
     let accountNumber: string;
+    let routingNumber: string;
     try {
       accountNumber = decryptBankAccount(bankAccount.account_number_encrypted);
     } catch (decryptError) {
       logger.error("Failed to decrypt account number", decryptError);
       return NextResponse.json({ error: "Failed to decrypt account number" }, { status: 500 });
+    }
+    try {
+      routingNumber = decryptBankAccount(bankAccount.routing_number);
+    } catch {
+      // Fallback: routing number may not be encrypted in older records
+      routingNumber = bankAccount.routing_number;
     }
 
     return NextResponse.json({
@@ -67,7 +74,7 @@ export async function GET(
       account_holder_name: bankAccount.account_holder_name,
       bank_name: bankAccount.bank_name,
       account_number: accountNumber,
-      routing_number: bankAccount.routing_number,
+      routing_number: routingNumber,
       account_type: bankAccount.account_type,
     });
   } catch (error) {
