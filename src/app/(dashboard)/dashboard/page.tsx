@@ -13,24 +13,29 @@ const adminClient = createSupabaseClient(
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 import Image from "next/image";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { GigsFeed } from "@/components/gigs/GigsFeed";
 import { Badge } from "@/components/ui/badge";
 import {
   ArrowRight,
-  Building2,
+  ArrowUpRight,
   Calendar,
-  Mail,
   DollarSign,
   Coins,
   UserPlus,
-  Activity,
   MessageCircle,
   Gavel,
   Plus,
   Eye,
   TrendingUp,
+  Flame,
+  Sparkles,
+  Zap,
+  Users,
+  Video,
+  Heart,
+  Clock,
+  CircleDollarSign,
 } from "lucide-react";
 import { formatCoins, coinsToUsd, formatUsd } from "@/lib/coin-config";
 import { FanDashboard } from "./FanDashboard";
@@ -102,16 +107,28 @@ export default async function DashboardPage() {
 
   if (!model) redirect("/fan/signup");
 
-  // Stats queries: follower count + this month's earnings (parallel with bookings)
+  // Stats queries: this month + previous month earnings + bookings (parallel)
   const oneMonthAgo = new Date();
   oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+  const twoMonthsAgo = new Date();
+  twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
 
-  const [{ data: monthlyTransactions }, { data: allBookings }] = await Promise.all([
+  const [
+    { data: monthlyTransactions },
+    { data: previousMonthTransactions },
+    { data: allBookings },
+  ] = await Promise.all([
+    (adminClient.from("coin_transactions") as any)
+      .select("amount, created_at")
+      .eq("actor_id", actor.id)
+      .gt("amount", 0)
+      .gte("created_at", oneMonthAgo.toISOString()),
     (adminClient.from("coin_transactions") as any)
       .select("amount")
       .eq("actor_id", actor.id)
       .gt("amount", 0)
-      .gte("created_at", oneMonthAgo.toISOString()),
+      .gte("created_at", twoMonthsAgo.toISOString())
+      .lt("created_at", oneMonthAgo.toISOString()),
     // Get pending bookings for this model - use adminClient to bypass RLS
     (adminClient.from("bookings") as any)
       .select("*")
@@ -121,6 +138,20 @@ export default async function DashboardPage() {
   ]);
 
   const thisMonthEarnings = (monthlyTransactions || []).reduce((sum: number, t: any) => sum + t.amount, 0);
+  const prevMonthEarnings = (previousMonthTransactions || []).reduce((sum: number, t: any) => sum + t.amount, 0);
+  const monthDeltaPct = prevMonthEarnings > 0
+    ? Math.round(((thisMonthEarnings - prevMonthEarnings) / prevMonthEarnings) * 100)
+    : (thisMonthEarnings > 0 ? 100 : 0);
+
+  // Bin daily earnings for the 30-day chart
+  const dailyEarnings: number[] = Array(30).fill(0);
+  const today = new Date();
+  for (const t of monthlyTransactions || []) {
+    const txDate = new Date(t.created_at);
+    const dayDiff = Math.floor((today.getTime() - txDate.getTime()) / 86_400_000);
+    const idx = 29 - dayDiff;
+    if (idx >= 0 && idx < 30) dailyEarnings[idx] += t.amount;
+  }
 
   // Filter for pending/counter bookings in JS
   const pendingBookings = (allBookings || []).filter(
@@ -400,410 +431,643 @@ export default async function DashboardPage() {
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 10);
 
+  // ============================================
+  // 7-DAY AGGREGATES + TOP TIPPERS
+  // ============================================
+  const tips7dTotal = (recentTips || []).reduce((sum: number, t: any) => sum + (t.amount || 0), 0);
+  const newFollowers7d = (recentFollowers || []).length;
+
+  const tipperTotals = new Map<string, number>();
+  for (const tip of recentTips || []) {
+    const sid = tip.metadata?.sender_id;
+    if (!sid) continue;
+    tipperTotals.set(sid, (tipperTotals.get(sid) || 0) + (tip.amount || 0));
+  }
+  const topTippers = Array.from(tipperTotals.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([id, amount]) => ({ actor: activityActorsMap.get(id) || null, amount }));
+
+  // ============================================
+  // PRIORITY INBOX (offers + bookings + auctions, urgency-ranked)
+  // ============================================
+  type InboxItem = {
+    id: string;
+    kind: "offer" | "booking" | "auction";
+    urgency: "hot" | "warm" | "normal";
+    title: string;
+    sub: string;
+    amount?: string;
+    avatarUrl?: string | null;
+    fallbackInitial?: string;
+    href: string;
+    sortKey: number; // higher = more urgent
+  };
+
+  const nowMs = Date.now();
+  const inboxItems: InboxItem[] = [];
+
+  for (const r of pendingOffers) {
+    const o = r.offers;
+    if (!o) continue;
+    const eventTs = o.event_date ? new Date(o.event_date).getTime() : Number.MAX_SAFE_INTEGER;
+    const daysAway = Math.max(0, (eventTs - nowMs) / 86_400_000);
+    const urgency: InboxItem["urgency"] = daysAway < 3 ? "hot" : daysAway < 14 ? "warm" : "normal";
+    const amount =
+      o.compensation_type === "paid" && o.compensation_amount
+        ? `$${o.compensation_amount}`
+        : o.compensation_description || undefined;
+    const sub = [
+      r.brand?.company_name || "Brand",
+      o.event_date ? new Date(o.event_date).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : null,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+    inboxItems.push({
+      id: `offer-${r.id}`,
+      kind: "offer",
+      urgency,
+      title: o.title,
+      sub,
+      amount,
+      avatarUrl: r.brand?.logo_url || null,
+      fallbackInitial: (r.brand?.company_name || "B").charAt(0).toUpperCase(),
+      href: `/offers/${o.id}`,
+      sortKey: 1_000_000 - daysAway * 100, // offers always near top
+    });
+  }
+
+  for (const b of pendingBookings || []) {
+    const eventTs = b.event_date ? new Date(b.event_date).getTime() : Number.MAX_SAFE_INTEGER;
+    const daysAway = Math.max(0, (eventTs - nowMs) / 86_400_000);
+    const urgency: InboxItem["urgency"] = b.status === "counter" || daysAway < 2 ? "hot" : daysAway < 7 ? "warm" : "normal";
+    const clientName = b.client?.company_name || b.client?.display_name || "Client";
+    inboxItems.push({
+      id: `booking-${b.id}`,
+      kind: "booking",
+      urgency,
+      title: b.status === "counter" ? `Counter-offer · ${clientName}` : `Booking request · ${clientName}`,
+      sub: [
+        b.event_date ? new Date(b.event_date).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "No date",
+        b.total_amount ? `${b.total_amount.toLocaleString()} coins` : null,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+      amount: b.total_amount ? `${b.total_amount.toLocaleString()}c` : undefined,
+      avatarUrl: b.client?.avatar_url || b.client?.logo_url || null,
+      fallbackInitial: clientName.charAt(0).toUpperCase(),
+      href: "/bookings",
+      sortKey: 800_000 - daysAway * 100,
+    });
+  }
+
+  for (const a of (modelAuctions || [])) {
+    if (a.status !== "active") continue; // drafts not "inbox-worthy"
+    const endsTs = a.ends_at ? new Date(a.ends_at).getTime() : Number.MAX_SAFE_INTEGER;
+    const hoursLeft = Math.max(0, (endsTs - nowMs) / 3_600_000);
+    const urgency: InboxItem["urgency"] = hoursLeft < 6 ? "hot" : hoursLeft < 24 ? "warm" : "normal";
+    inboxItems.push({
+      id: `auction-${a.id}`,
+      kind: "auction",
+      urgency,
+      title: a.title,
+      sub: `${a.bid_count || 0} bids · ends ${hoursLeft < 24 ? `in ${Math.round(hoursLeft)}h` : new Date(a.ends_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`,
+      amount: `${(a.current_bid || a.starting_price || 0).toLocaleString()}c`,
+      href: `/bids/${a.id}`,
+      sortKey: 600_000 - hoursLeft * 1000,
+    });
+  }
+
+  inboxItems.sort((a, b) => b.sortKey - a.sortKey);
+
+  const displayName = model.first_name || model.username || "there";
+
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* Quick Stats */}
-      <div className="grid grid-cols-3 gap-3">
-        <Link href="/wallet" className="group">
-          <Card className="border-amber-500/20 hover:border-amber-500/40 transition-colors">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                <Coins className="h-4 w-4 text-amber-500" />
-                <span className="text-xs font-medium">Balance</span>
-              </div>
-              <p className="text-2xl font-bold tracking-tight">{formatCoins(model.coin_balance || 0)}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{formatUsd(coinsToUsd(model.coin_balance || 0))}</p>
-            </CardContent>
-          </Card>
-        </Link>
-        <Link href="/wallet" className="group">
-          <Card className="border-green-500/20 hover:border-green-500/40 transition-colors">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                <TrendingUp className="h-4 w-4 text-green-500" />
-                <span className="text-xs font-medium">This Month</span>
-              </div>
-              <p className="text-2xl font-bold tracking-tight">{formatCoins(thisMonthEarnings)}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{formatUsd(coinsToUsd(thisMonthEarnings))} earned</p>
-            </CardContent>
-          </Card>
-        </Link>
-        <Link href="/analytics" className="group">
-          <Card className="border-blue-500/20 hover:border-blue-500/40 transition-colors">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                <Eye className="h-4 w-4 text-blue-500" />
-                <span className="text-xs font-medium">Profile Views</span>
-              </div>
-              <p className="text-2xl font-bold tracking-tight">{(model.profile_views || 0).toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">All time</p>
-            </CardContent>
-          </Card>
-        </Link>
-      </div>
+      {/* ──────────────────────────────────────────────────────
+          HERO — identity + today's focus + quick actions
+         ────────────────────────────────────────────────────── */}
+      <section
+        className="relative overflow-hidden rounded-3xl border border-white/10 p-5 md:p-7"
+        style={{
+          background:
+            "linear-gradient(135deg, rgba(255,105,180,0.15) 0%, rgba(139,92,246,0.10) 50%, rgba(0,191,255,0.15) 100%)",
+        }}
+      >
+        <div className="pointer-events-none absolute -top-24 -left-24 w-64 h-64 rounded-full bg-pink-500/30 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 -right-24 w-64 h-64 rounded-full bg-cyan-500/30 blur-3xl" />
 
-      {/* EXA Live Chat */}
-      <LiveWallServer actorId={actor.id} actorType={actor.type} />
+        <div className="relative flex flex-col md:flex-row md:items-center gap-5">
+          <div className="flex items-center gap-4">
+            <div className="relative shrink-0">
+              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-pink-500 via-violet-500 to-cyan-500 blur-md opacity-70" />
+              {model.profile_photo_url ? (
+                <Image
+                  src={model.profile_photo_url}
+                  alt={displayName}
+                  width={80}
+                  height={80}
+                  className="relative w-16 h-16 md:w-20 md:h-20 rounded-full object-cover ring-2 ring-white/30"
+                />
+              ) : (
+                <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br from-pink-500/40 to-cyan-500/40 ring-2 ring-white/30 flex items-center justify-center text-2xl font-bold">
+                  {(displayName || "M").charAt(0).toUpperCase()}
+                </div>
+              )}
+              <span className="absolute bottom-0 right-0 w-4 h-4 md:w-5 md:h-5 rounded-full bg-emerald-400 ring-2 ring-background shadow-[0_0_12px_rgba(52,211,153,0.8)]" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] uppercase tracking-[0.25em] text-white/60">Welcome back</p>
+              <h1 className="text-2xl md:text-4xl font-bold tracking-tight">
+                <span className="exa-gradient-text">{displayName}</span>
+              </h1>
+              <p className="text-xs md:text-sm text-white/70 mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                {pendingOffers.length > 0 && (
+                  <span className="text-rose-300 font-medium">
+                    {pendingOffers.length} {pendingOffers.length === 1 ? "offer" : "offers"}
+                  </span>
+                )}
+                {pendingOffers.length > 0 && ((pendingBookings?.length || 0) > 0 || (model.coin_balance || 0) > 0) && <span className="text-white/30">·</span>}
+                {(pendingBookings?.length || 0) > 0 && (
+                  <span className="text-amber-300 font-medium">
+                    {pendingBookings?.length} {pendingBookings?.length === 1 ? "booking" : "bookings"}
+                  </span>
+                )}
+                {(pendingBookings?.length || 0) > 0 && (model.coin_balance || 0) > 0 && <span className="text-white/30">·</span>}
+                {(model.coin_balance || 0) > 0 && (
+                  <span className="text-emerald-300 font-medium">
+                    {formatUsd(coinsToUsd(model.coin_balance || 0))} ready to withdraw
+                  </span>
+                )}
+                {pendingOffers.length === 0 && (pendingBookings?.length || 0) === 0 && (model.coin_balance || 0) === 0 && (
+                  <span className="text-white/50">Ready to earn — let&apos;s get started</span>
+                )}
+              </p>
+            </div>
+          </div>
 
-      {/* Offers */}
-      {pendingOffers.length > 0 && (
-        <Card className="border-blue-500/30 bg-gradient-to-br from-blue-500/5 to-cyan-500/5">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Mail className="h-5 w-5 text-blue-500" />
-              New Offers
-              <Badge className="bg-blue-500 text-white ml-2">{pendingOffers.length}</Badge>
-            </CardTitle>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/offers" className="text-blue-500">
-                View All
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {pendingOffers.map((response: any) => {
-                const offer = response.offers;
-                if (!offer) return null;
+          {/* Quick actions */}
+          <div className="md:ml-auto grid grid-cols-3 gap-2 md:gap-3 md:flex md:items-center">
+            <Link
+              href="/wallet"
+              className="flex items-center justify-center gap-2 px-3 md:px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-xs md:text-sm font-semibold text-white transition-all"
+            >
+              <CircleDollarSign className="h-4 w-4" />
+              <span className="hidden sm:inline">Withdraw</span>
+            </Link>
+            <Link
+              href="/live"
+              className="flex items-center justify-center gap-2 px-3 md:px-5 py-2.5 rounded-full bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-400 hover:to-pink-400 text-xs md:text-sm font-semibold text-white shadow-[0_0_20px_rgba(244,63,94,0.4)] transition-all"
+            >
+              <Video className="h-4 w-4" />
+              <span className="hidden sm:inline">Go Live</span>
+            </Link>
+            <Link
+              href="/bids/new"
+              className="flex items-center justify-center gap-2 px-3 md:px-5 py-2.5 rounded-full bg-gradient-to-r from-violet-500 to-cyan-500 hover:from-violet-400 hover:to-cyan-400 text-xs md:text-sm font-semibold text-white shadow-[0_0_20px_rgba(139,92,246,0.4)] transition-all"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">New Bid</span>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ──────────────────────────────────────────────────────
+          KPI RAIL
+         ────────────────────────────────────────────────────── */}
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <Link href="/wallet" className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 transition-all hover:border-amber-500/40 hover:bg-white/[0.08]">
+          <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-amber-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="relative">
+            <div className="flex items-center gap-2 text-xs text-white/60">
+              <Coins className="h-3.5 w-3.5 text-amber-400" />
+              <span className="font-medium uppercase tracking-wider">Balance</span>
+            </div>
+            <p className="mt-2 text-2xl md:text-3xl font-bold tracking-tight">{formatCoins(model.coin_balance || 0)}</p>
+            <p className="text-xs text-white/50 mt-0.5">{formatUsd(coinsToUsd(model.coin_balance || 0))} · withdrawable</p>
+          </div>
+        </Link>
+
+        <Link href="/analytics" className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 transition-all hover:border-emerald-500/40 hover:bg-white/[0.08]">
+          <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-emerald-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="relative">
+            <div className="flex items-center gap-2 text-xs text-white/60">
+              <TrendingUp className="h-3.5 w-3.5 text-emerald-400" />
+              <span className="font-medium uppercase tracking-wider">This Month</span>
+            </div>
+            <p className="mt-2 text-2xl md:text-3xl font-bold tracking-tight">{formatCoins(thisMonthEarnings)}</p>
+            <p className="text-xs text-white/50 mt-0.5">
+              {monthDeltaPct >= 0 ? (
+                <span className="text-emerald-400 font-semibold">+{monthDeltaPct}%</span>
+              ) : (
+                <span className="text-rose-400 font-semibold">{monthDeltaPct}%</span>
+              )}
+              <span> vs last month</span>
+            </p>
+          </div>
+        </Link>
+
+        <Link href="/wallet" className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 transition-all hover:border-pink-500/40 hover:bg-white/[0.08]">
+          <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-pink-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="relative">
+            <div className="flex items-center gap-2 text-xs text-white/60">
+              <Zap className="h-3.5 w-3.5 text-pink-400" />
+              <span className="font-medium uppercase tracking-wider">Tips · 7d</span>
+            </div>
+            <p className="mt-2 text-2xl md:text-3xl font-bold tracking-tight">{formatCoins(tips7dTotal)}</p>
+            <p className="text-xs text-white/50 mt-0.5">
+              from {tipperTotals.size} {tipperTotals.size === 1 ? "fan" : "fans"}
+            </p>
+          </div>
+        </Link>
+
+        <Link href="/followers" className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 transition-all hover:border-cyan-500/40 hover:bg-white/[0.08]">
+          <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-cyan-500/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="relative">
+            <div className="flex items-center gap-2 text-xs text-white/60">
+              <Users className="h-3.5 w-3.5 text-cyan-400" />
+              <span className="font-medium uppercase tracking-wider">New followers · 7d</span>
+            </div>
+            <p className="mt-2 text-2xl md:text-3xl font-bold tracking-tight">+{newFollowers7d}</p>
+            <p className="text-xs text-white/50 mt-0.5">
+              <Eye className="inline h-3 w-3 mr-1" />
+              {(model.profile_views || 0).toLocaleString()} profile views
+            </p>
+          </div>
+        </Link>
+      </section>
+
+      {/* ──────────────────────────────────────────────────────
+          MAIN GRID — Priority Inbox (2/3) + Right rail (1/3)
+         ────────────────────────────────────────────────────── */}
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Priority Inbox */}
+        <div className="lg:col-span-2 rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm overflow-hidden">
+          <header className="flex items-center justify-between p-5 border-b border-white/5">
+            <div className="flex items-center gap-2">
+              <Flame className="h-5 w-5 text-rose-400" />
+              <h2 className="text-base font-semibold">Priority inbox</h2>
+              {inboxItems.length > 0 && (
+                <span className="ml-1 text-xs font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                  {inboxItems.length}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-1 text-xs text-white/50">
+              <Clock className="h-3.5 w-3.5" /> sorted by urgency
+            </div>
+          </header>
+          <div className="p-3 space-y-2">
+            {inboxItems.length === 0 ? (
+              <div className="text-center py-10">
+                <div className="p-4 rounded-full bg-white/5 inline-block mb-3">
+                  <Sparkles className="h-7 w-7 text-white/30" />
+                </div>
+                <p className="text-sm text-white/60">All caught up — no urgent items.</p>
+                <p className="text-xs text-white/40 mt-1">New offers, bookings, and ending auctions will appear here.</p>
+              </div>
+            ) : (
+              inboxItems.map((item) => {
+                const tagMap = { offer: "Offer", booking: "Booking", auction: "Auction" } as const;
+                const iconMap = {
+                  offer: <DollarSign className="h-5 w-5 text-emerald-400" />,
+                  booking: <Calendar className="h-5 w-5 text-cyan-400" />,
+                  auction: <Gavel className="h-5 w-5 text-violet-400" />,
+                } as const;
+                const dotMap = {
+                  hot: "bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.8)]",
+                  warm: "bg-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.6)]",
+                  normal: "bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.5)]",
+                } as const;
                 return (
                   <Link
-                    key={response.id}
-                    href={`/offers/${offer.id}`}
-                    className="flex items-center gap-3 p-4 rounded-xl bg-white/50 dark:bg-muted/50 hover:bg-white dark:hover:bg-muted transition-colors border border-transparent hover:border-blue-500/30"
+                    key={item.id}
+                    href={item.href}
+                    className="flex items-center gap-3 p-3 rounded-xl border border-white/5 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/20 transition-all group"
                   >
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center overflow-hidden flex-shrink-0">
-                      {response.brand?.logo_url ? (
-                        <Image
-                          src={response.brand.logo_url}
-                          alt={response.brand.company_name || "Brand"}
-                          width={48}
-                          height={48}
-                          className="object-cover"
-                        />
-                      ) : (
-                        <Building2 className="h-6 w-6 text-blue-500" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{offer.title}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {response.brand?.company_name || "Brand"}
-                      </p>
-                      <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                        {offer.event_date && (
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {new Date(offer.event_date).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                            })}
-                          </span>
-                        )}
-                        {(offer.compensation_type === "paid" && offer.compensation_amount) ? (
-                          <span className="flex items-center gap-1 text-green-600">
-                            <DollarSign className="h-3 w-3" />
-                            ${offer.compensation_amount}
-                          </span>
-                        ) : offer.compensation_description ? (
-                          <span className="flex items-center gap-1 text-green-600">
-                            <DollarSign className="h-3 w-3" />
-                            {offer.compensation_description}
-                          </span>
-                        ) : null}
+                    <span className={`inline-block w-2 h-2 rounded-full shrink-0 ${dotMap[item.urgency]}`} />
+                    {item.avatarUrl ? (
+                      <Image
+                        src={item.avatarUrl}
+                        alt=""
+                        width={40}
+                        height={40}
+                        className="w-10 h-10 rounded-full object-cover ring-1 ring-white/10 shrink-0"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-white/5 ring-1 ring-white/10 flex items-center justify-center shrink-0">
+                        {iconMap[item.kind]}
                       </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] uppercase tracking-wider font-semibold text-white/50">
+                        {tagMap[item.kind]}
+                      </p>
+                      <p className="text-sm font-medium text-white truncate">{item.title}</p>
+                      <p className="text-xs text-white/50 truncate">{item.sub}</p>
                     </div>
-                    <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/30 text-xs">
-                      New
-                    </Badge>
+                    {item.amount && (
+                      <span className="hidden sm:inline text-sm font-bold text-emerald-400 shrink-0">
+                        {item.amount}
+                      </span>
+                    )}
+                    <ArrowRight className="h-4 w-4 text-white/30 group-hover:text-white/80 group-hover:translate-x-0.5 transition-all shrink-0" />
                   </Link>
                 );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+              })
+            )}
+          </div>
+        </div>
 
-      {/* Bookings & Gigs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="order-2 md:order-1">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-green-500" />
-              Bookings
-              {(pendingBookings?.length || 0) > 0 && (
-                <Badge className="bg-green-500 text-white ml-2">{pendingBookings?.length}</Badge>
-              )}
-            </CardTitle>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/bookings" className="text-green-500">
-                View All
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {(pendingBookings?.length || 0) > 0 ? (
-              <div className="space-y-3">
-                {pendingBookings?.map((booking: any) => (
-                  <Link
-                    key={booking.id}
-                    href="/bookings"
-                    className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors border border-transparent hover:border-green-500/30"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center overflow-hidden">
-                      {booking.client?.avatar_url || booking.client?.logo_url ? (
+        {/* Right rail: Recent Activity + Top Tippers */}
+        <aside className="space-y-4">
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm">
+            <header className="flex items-center justify-between p-4 border-b border-white/5">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-pink-400" />
+                <h3 className="text-sm font-semibold">Live pulse</h3>
+              </div>
+              <Link href="/chats" className="text-xs text-pink-400 hover:text-pink-300">View all</Link>
+            </header>
+            <div className="p-2 space-y-1">
+              {activityFeed.length === 0 ? (
+                <p className="text-xs text-white/40 text-center py-4">No activity this week.</p>
+              ) : (
+                activityFeed.slice(0, 6).map((item) => {
+                  const timeAgo = getTimeAgo(item.createdAt);
+                  const href =
+                    item.type === "message" && item.conversationId
+                      ? `/chats/${item.conversationId}`
+                      : item.type === "follower" && item.actor?.username
+                        ? `/${item.actor.username}`
+                        : item.type === "tip"
+                          ? "/wallet"
+                          : "/followers";
+                  return (
+                    <Link
+                      key={item.id}
+                      href={href}
+                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors"
+                    >
+                      {item.actor?.avatar ? (
                         <Image
-                          src={booking.client.avatar_url || booking.client.logo_url}
-                          alt="Client"
-                          width={40}
-                          height={40}
-                          className="object-cover"
+                          src={item.actor.avatar}
+                          alt=""
+                          width={32}
+                          height={32}
+                          className="w-8 h-8 rounded-full object-cover shrink-0"
                         />
                       ) : (
-                        <Building2 className="h-5 w-5 text-green-500" />
+                        <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center shrink-0">
+                          {item.type === "tip" ? (
+                            <Coins className="h-4 w-4 text-amber-400" />
+                          ) : item.type === "follower" ? (
+                            <UserPlus className="h-4 w-4 text-pink-400" />
+                          ) : (
+                            <MessageCircle className="h-4 w-4 text-blue-400" />
+                          )}
+                        </div>
                       )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-white truncate">
+                          <span className="font-semibold">{item.actor?.name || "Someone"}</span>{" "}
+                          {item.type === "tip" && (
+                            <span className="text-white/60">
+                              tipped <span className="text-amber-400 font-semibold">{item.amount}c</span>
+                            </span>
+                          )}
+                          {item.type === "follower" && <span className="text-white/60">followed you</span>}
+                          {item.type === "message" && <span className="text-white/60">sent a message</span>}
+                        </p>
+                        {item.type === "message" && item.messagePreview && (
+                          <p className="text-[11px] text-white/40 truncate">&ldquo;{item.messagePreview}&rdquo;</p>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-white/40 shrink-0">{timeAgo}</span>
+                    </Link>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          {topTippers.length > 0 && (
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm">
+              <header className="flex items-center justify-between p-4 border-b border-white/5">
+                <div className="flex items-center gap-2">
+                  <Heart className="h-4 w-4 text-rose-400 fill-rose-400" />
+                  <h3 className="text-sm font-semibold">Top tippers · 7d</h3>
+                </div>
+              </header>
+              <div className="p-3 space-y-2">
+                {topTippers.map((t, i) => (
+                  <div key={`${t.actor?.name || "anon"}-${i}`} className="flex items-center gap-3">
+                    <span className={`w-5 text-center text-xs font-bold ${
+                      i === 0 ? "text-amber-400" : i === 1 ? "text-white/70" : "text-amber-700"
+                    }`}>
+                      {i + 1}
+                    </span>
+                    {t.actor?.avatar ? (
+                      <Image
+                        src={t.actor.avatar}
+                        alt=""
+                        width={32}
+                        height={32}
+                        className="w-8 h-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center">
+                        <UserPlus className="h-4 w-4 text-white/40" />
+                      </div>
+                    )}
+                    <span className="flex-1 text-xs font-medium truncate">{t.actor?.name || "Someone"}</span>
+                    <span className="text-xs font-bold text-amber-400">{t.amount}c</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </aside>
+      </section>
+
+      {/* ──────────────────────────────────────────────────────
+          EARNINGS CHART — 30 day trend
+         ────────────────────────────────────────────────────── */}
+      <section className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm overflow-hidden">
+        <header className="flex items-center justify-between p-5 border-b border-white/5">
+          <div>
+            <h2 className="text-base font-semibold flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-emerald-400" />
+              Earnings · last 30 days
+            </h2>
+            <p className="text-xs text-white/50 mt-0.5">
+              {monthDeltaPct >= 0 ? (
+                <span className="text-emerald-400 font-semibold">+{monthDeltaPct}%</span>
+              ) : (
+                <span className="text-rose-400 font-semibold">{monthDeltaPct}%</span>
+              )}
+              <span> vs previous period · {formatCoins(thisMonthEarnings)} total</span>
+            </p>
+          </div>
+          <Link href="/analytics" className="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
+            Full analytics <ArrowUpRight className="h-3 w-3" />
+          </Link>
+        </header>
+        <div className="p-4">
+          <EarningsChart data={dailyEarnings} />
+        </div>
+      </section>
+
+      {/* ──────────────────────────────────────────────────────
+          EXA Live Wall (kept as standalone section)
+         ────────────────────────────────────────────────────── */}
+      <LiveWallServer actorId={actor.id} actorType={actor.type} />
+
+      {/* ──────────────────────────────────────────────────────
+          BIDS + GIGS — side by side
+         ────────────────────────────────────────────────────── */}
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Bids */}
+        <div className="rounded-2xl border border-violet-500/30 bg-gradient-to-br from-violet-500/10 via-pink-500/5 to-transparent overflow-hidden">
+          <header className="flex items-center justify-between p-5 border-b border-white/5">
+            <div className="flex items-center gap-2">
+              <Gavel className="h-5 w-5 text-violet-400" />
+              <h2 className="text-base font-semibold">Your EXA Bids</h2>
+              {(modelAuctions?.length || 0) > 0 && (
+                <span className="ml-1 text-xs font-bold px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30">
+                  {modelAuctions?.length}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <Link href="/bids/manage" className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1">
+                Manage <ArrowUpRight className="h-3 w-3" />
+              </Link>
+            </div>
+          </header>
+          <div className="p-3">
+            {(modelAuctions?.length || 0) > 0 ? (
+              <div className="space-y-2">
+                {modelAuctions?.map((auction: any) => (
+                  <Link
+                    key={auction.id}
+                    href={auction.status === "draft" ? `/bids/${auction.id}/edit` : `/bids/${auction.id}`}
+                    className="flex items-center gap-3 p-3 rounded-xl border border-white/5 bg-white/[0.03] hover:bg-white/[0.08] hover:border-violet-500/40 transition-all"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-500/30 to-pink-500/30 flex items-center justify-center shrink-0">
+                      <Gavel className="h-5 w-5 text-violet-300" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">
-                        {booking.client?.company_name || booking.client?.display_name || "Client"}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {booking.event_date
-                          ? new Date(booking.event_date).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                            })
-                          : "No date set"}
-                        {" • "}
-                        {booking.total_amount?.toLocaleString()} coins
+                      <p className="text-sm font-medium truncate">{auction.title}</p>
+                      <p className="text-xs text-white/50">
+                        {auction.bid_count || 0} bids
+                        {auction.status === "active" && auction.ends_at && (
+                          <> · ends {new Date(auction.ends_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</>
+                        )}
                       </p>
                     </div>
-                    <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/30 text-xs">
-                      {booking.status === "counter" ? "Counter" : "Pending"}
-                    </Badge>
+                    <div className="text-right shrink-0">
+                      <p className="text-sm font-bold text-amber-400">
+                        {(auction.current_bid || auction.starting_price || 0).toLocaleString()}c
+                      </p>
+                      <Badge
+                        variant="outline"
+                        className={
+                          auction.status === "active"
+                            ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30 text-[10px] px-1.5 py-0"
+                            : "bg-amber-500/10 text-amber-300 border-amber-500/30 text-[10px] px-1.5 py-0"
+                        }
+                      >
+                        {auction.status === "active" ? "Live" : "Draft"}
+                      </Badge>
+                    </div>
                   </Link>
                 ))}
               </div>
             ) : (
               <div className="text-center py-8">
-                <div className="p-4 rounded-full bg-green-500/10 inline-block mb-4">
-                  <Calendar className="h-8 w-8 text-green-500" />
+                <div className="p-4 rounded-full bg-violet-500/10 inline-block mb-3">
+                  <Gavel className="h-7 w-7 text-violet-400" />
                 </div>
-                <p className="text-muted-foreground">No pending bookings</p>
-                <p className="text-sm text-muted-foreground mt-1">Booking requests will appear here</p>
+                <p className="text-sm text-white/70">No EXA Bids yet</p>
+                <p className="text-xs text-white/40 mt-1 max-w-xs mx-auto">
+                  Let fans and brands compete in real-time bids for your exclusive content & experiences.
+                </p>
+                <Button asChild size="sm" className="mt-4 bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white">
+                  <Link href="/bids/new">
+                    <Plus className="h-4 w-4 mr-1" />
+                    Create EXA Bid
+                  </Link>
+                </Button>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <div className="order-1 md:order-2">
+        {/* Gigs (use existing GigsFeed component, themed wrapper) */}
+        <div className="rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-transparent overflow-hidden">
           <GigsFeed
             gigs={gigs || []}
             modelApplications={modelApplications || []}
             isApproved={model.is_approved}
           />
         </div>
-      </div>
+      </section>
 
-      {/* EXA Bids */}
-      <Card className="border-violet-500/30 bg-gradient-to-br from-pink-500/5 to-violet-500/5">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Gavel className="h-5 w-5 text-violet-500" />
-            EXA Bids
-            {(modelAuctions?.length || 0) > 0 && (
-              <Badge className="bg-violet-500 text-white ml-2">{modelAuctions?.length}</Badge>
-            )}
-          </CardTitle>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/bids/manage" className="text-violet-500">
-                Manage
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
-            </Button>
-            <Button size="sm" asChild className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white">
-              <Link href="/bids/new">
-                <Plus className="h-4 w-4 mr-1" />
-                Create Listing
-              </Link>
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {(modelAuctions?.length || 0) > 0 ? (
-            <div className="space-y-3">
-              {modelAuctions?.map((auction: any) => (
-                <Link
-                  key={auction.id}
-                  href={auction.status === "draft" ? `/bids/${auction.id}/edit` : `/bids/${auction.id}`}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors border border-transparent hover:border-violet-500/30"
-                >
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500/20 to-violet-500/20 flex items-center justify-center">
-                    <Gavel className="h-5 w-5 text-violet-500" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">{auction.title}</p>
-                    <div className="flex items-center gap-3 mt-0.5 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Coins className="h-3 w-3 text-amber-500" />
-                        {auction.current_bid || auction.starting_price} coins
-                      </span>
-                      <span>{auction.bid_count || 0} bids</span>
-                      {auction.status === "active" && (
-                        <span>Ends {new Date(auction.ends_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
-                      )}
-                    </div>
-                  </div>
-                  <Badge
-                    variant="outline"
-                    className={auction.status === "active"
-                      ? "bg-green-500/10 text-green-600 border-green-500/30 text-xs"
-                      : "bg-yellow-500/10 text-yellow-600 border-yellow-500/30 text-xs"
-                    }
-                  >
-                    {auction.status === "active" ? "Live" : "Draft"}
-                  </Badge>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <div className="p-4 rounded-full bg-violet-500/10 inline-block mb-4">
-                <Gavel className="h-8 w-8 text-violet-500" />
-              </div>
-              <p className="text-muted-foreground">You have no EXA Bids yet</p>
-              <p className="text-sm text-muted-foreground mt-1">Let fans and brands compete in real-time bids for your exclusive content, experiences, and services</p>
-              <Button size="sm" asChild className="mt-4 bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white">
-                <Link href="/bids/new">
-                  <Plus className="h-4 w-4 mr-1" />
-                  Create EXA Bid
-                </Link>
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Recent Activity Feed */}
-      <Card className="border-pink-500/30 bg-gradient-to-br from-pink-500/5 to-violet-500/5">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5 text-pink-500" />
-            Recent Activity
-          </CardTitle>
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/chats" className="text-pink-500">
-              View Chats
-              <ArrowRight className="ml-1 h-4 w-4" />
-            </Link>
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {activityFeed.length > 0 ? (
-            <div className="space-y-3">
-              {activityFeed.map((item) => {
-                const timeAgo = getTimeAgo(item.createdAt);
-                const href =
-                  item.type === "message" && item.conversationId
-                    ? `/chats/${item.conversationId}`
-                    : item.type === "follower" && item.actor?.username
-                      ? `/${item.actor.username}`
-                      : item.type === "tip"
-                        ? "/wallet"
-                        : item.type === "follower"
-                          ? "/followers"
-                          : null;
-
-                const content = (
-                  <>
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      item.type === "tip"
-                        ? "bg-gradient-to-br from-amber-500/20 to-yellow-500/20"
-                        : item.type === "follower"
-                          ? "bg-gradient-to-br from-pink-500/20 to-rose-500/20"
-                          : "bg-gradient-to-br from-blue-500/20 to-cyan-500/20"
-                    }`}>
-                      {item.actor?.avatar ? (
-                        <Image
-                          src={item.actor.avatar}
-                          alt={item.actor.name}
-                          width={40}
-                          height={40}
-                          className="rounded-full object-cover w-10 h-10"
-                        />
-                      ) : item.type === "tip" ? (
-                        <Coins className="h-5 w-5 text-amber-500" />
-                      ) : item.type === "follower" ? (
-                        <UserPlus className="h-5 w-5 text-pink-500" />
-                      ) : (
-                        <MessageCircle className="h-5 w-5 text-blue-500" />
-                      )}
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm">
-                        <span className="font-medium">{item.actor?.name || "Someone"}</span>
-                        {item.type === "tip" && (
-                          <> sent you a <span className="text-amber-500 font-semibold">{item.amount} coin</span> tip!</>
-                        )}
-                        {item.type === "follower" && " started following you"}
-                        {item.type === "message" && " sent you a message"}
-                      </p>
-                      {item.type === "message" && item.messagePreview && (
-                        <p className="text-xs text-muted-foreground truncate mt-0.5">
-                          {item.messagePreview}
-                        </p>
-                      )}
-                      <p className="text-xs text-muted-foreground mt-0.5">{timeAgo}</p>
-                    </div>
-
-                    {item.type === "message" && (
-                      <span className="flex-shrink-0 text-xs font-medium text-blue-500">Reply</span>
-                    )}
-                    {item.type === "tip" && (
-                      <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/30 flex-shrink-0">
-                        +{item.amount}
-                      </Badge>
-                    )}
-                    {item.type === "follower" && (
-                      <Badge variant="outline" className="bg-pink-500/10 text-pink-600 border-pink-500/30 flex-shrink-0">
-                        New
-                      </Badge>
-                    )}
-                  </>
-                );
-
-                return href ? (
-                  <Link
-                    key={item.id}
-                    href={href}
-                    className="flex items-center gap-3 p-3 rounded-xl bg-white/50 dark:bg-muted/50 hover:bg-white dark:hover:bg-muted transition-colors border border-transparent hover:border-pink-500/20"
-                  >
-                    {content}
-                  </Link>
-                ) : (
-                  <div
-                    key={item.id}
-                    className="flex items-center gap-3 p-3 rounded-xl bg-white/50 dark:bg-muted/50 border border-transparent"
-                  >
-                    {content}
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <div className="p-4 rounded-full bg-pink-500/10 inline-block mb-4">
-                <Activity className="h-8 w-8 text-pink-500" />
-              </div>
-              <p className="text-muted-foreground">No activity this week</p>
-              <p className="text-sm text-muted-foreground mt-1">Tips, new followers, and messages will show up here</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Tiny footer pad to clear bottom nav */}
+      <div className="h-2" />
     </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────
+// EarningsChart — inline SVG, no deps
+// ──────────────────────────────────────────────────────────────
+function EarningsChart({ data }: { data: number[] }) {
+  const w = 800;
+  const h = 180;
+  const pad = 8;
+  const max = Math.max(...data, 1) * 1.1;
+  const range = max || 1;
+  const step = data.length > 1 ? (w - pad * 2) / (data.length - 1) : 0;
+  const points = data
+    .map((v, i) => `${pad + i * step},${h - pad - (v / range) * (h - pad * 2)}`)
+    .join(" ");
+  const areaPoints = `${pad},${h - pad} ${points} ${w - pad},${h - pad}`;
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} width="100%" height="180" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="earningsFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#FF69B4" stopOpacity="0.5" />
+          <stop offset="100%" stopColor="#FF69B4" stopOpacity="0" />
+        </linearGradient>
+        <linearGradient id="earningsStroke" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#00BFFF" />
+          <stop offset="100%" stopColor="#FF00FF" />
+        </linearGradient>
+      </defs>
+      {[0.25, 0.5, 0.75].map((p) => (
+        <line
+          key={p}
+          x1={pad}
+          x2={w - pad}
+          y1={h - pad - p * (h - pad * 2)}
+          y2={h - pad - p * (h - pad * 2)}
+          stroke="rgba(255,255,255,0.05)"
+          strokeDasharray="2 4"
+        />
+      ))}
+      <polygon points={areaPoints} fill="url(#earningsFill)" />
+      <polyline
+        points={points}
+        fill="none"
+        stroke="url(#earningsStroke)"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        style={{ filter: "drop-shadow(0 0 6px rgba(255,105,180,0.5))" }}
+      />
+    </svg>
   );
 }
