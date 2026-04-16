@@ -122,27 +122,16 @@ const ROOMS: Room[] = [
   },
   {
     id: "sand-beach", name: "Sand Beach", shortName: "Beach",
-    x: 107, y: 1, width: 7.5, height: 55, gradient: "sandGrad", labelSize: "xs", verticalLabel: true,
+    x: 107, y: 1, width: 7.5, height: 55, gradient: "sandGrad", labelSize: "lg", verticalLabel: true,
     description: "White sand beach and swaying palm trees with the Atlantic Ocean as the backdrop. The ultimate setting for content creation, lifestyle photography, and brand storytelling that screams Miami.",
     sponsorNote: "Sponsor opportunity: Beach activation zone, branded beach chairs/umbrellas, sand sculptures, or a sunrise yoga session presented by your brand.",
   },
 ];
 
-interface HotelFloorPlanProps {
-  onTicketsClick?: () => void;
-}
-
-export function HotelFloorPlan({ onTicketsClick }: HotelFloorPlanProps) {
+export function HotelFloorPlan() {
   const [selected, setSelected] = useState<Room | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const goToTickets = () => {
-    if (onTicketsClick) {
-      onTicketsClick();
-    } else {
-      window.dispatchEvent(new CustomEvent("open-tickets"));
-    }
-  };
 
   const renderShape = (room: Room, isHovered: boolean, isSelected: boolean) => {
     const stroke = isSelected ? "url(#pinkNeon)" : isHovered ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.12)";
@@ -369,7 +358,7 @@ export function HotelFloorPlan({ onTicketsClick }: HotelFloorPlanProps) {
           </g>
 
           {/* === EXA SWIM SHOWS — clickable → opens tickets popup === */}
-          <rect x={87} y={1} width={16} height={55} rx={0.8} fill="url(#showsGrad)" stroke="rgba(255,255,255,0.12)" strokeWidth={0.12} className="cursor-pointer hover:fill-[rgba(255,50,130,0.2)] transition-all" onClick={goToTickets} />
+          <rect x={87} y={1} width={16} height={55} rx={0.8} fill="url(#showsGrad)" stroke="rgba(255,255,255,0.12)" strokeWidth={0.12} style={{ pointerEvents: "none" }} />
 
           {/* === INTRACOASTAL WATERWAY === */}
           <g>
@@ -562,43 +551,37 @@ export function HotelFloorPlan({ onTicketsClick }: HotelFloorPlanProps) {
             <text x={95.0} y={52} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.95)" fontSize={2.5}>📸</text>
           </g>
 
-          {/* === SEATING — East Row 2 (clickable → tickets) === */}
-          <g className="cursor-pointer" onClick={goToTickets}>
-            <g>
-              <rect x={98.3} y={15.5} width={1.6} height={33} rx={0.3} fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.0)" strokeWidth={0} className="hover:fill-[rgba(255,255,255,0.15)] transition-all" />
-              {Array.from({ length: 30 }).map((_, i) => (
-                <rect key={`e2-${i}`} x={98.5} y={16 + i * 1.07} width={1.0} height={0.7} rx={0.15} fill="rgba(255,255,255,0.45)" stroke="rgba(255,255,255,0.6)" strokeWidth={0.05} />
-              ))}
-            </g>
+          {/* === SEATING — East Row 2 === */}
+          <g style={{ pointerEvents: "none" }}>
+            <rect x={98.3} y={15.5} width={1.6} height={33} rx={0.3} fill="rgba(255,255,255,0.05)" />
+            {Array.from({ length: 30 }).map((_, i) => (
+              <rect key={`e2-${i}`} x={98.5} y={16 + i * 1.07} width={1.0} height={0.7} rx={0.15} fill="rgba(255,255,255,0.45)" stroke="rgba(255,255,255,0.6)" strokeWidth={0.05} />
+            ))}
           </g>
 
-          {/* === SEATING — East Row 1 / Front Row (clickable → tickets) === */}
-          <g className="cursor-pointer" onClick={goToTickets}>
-            <g>
-              <rect x={96.3} y={15.5} width={1.6} height={33} rx={0.3} fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.0)" strokeWidth={0} className="hover:fill-[rgba(255,255,255,0.15)] transition-all" />
-              {Array.from({ length: 30 }).map((_, i) => (
-                <rect key={`e1-${i}`} x={96.7} y={16 + i * 1.07} width={1.0} height={0.7} rx={0.15} fill="rgba(255,255,255,0.45)" stroke="rgba(255,255,255,0.6)" strokeWidth={0.05} />
-              ))}
-            </g>
+          {/* === SEATING — East Row 1 / Front Row === */}
+          <g style={{ pointerEvents: "none" }}>
+            <rect x={96.3} y={15.5} width={1.6} height={33} rx={0.3} fill="rgba(255,255,255,0.05)" />
+            {Array.from({ length: 30 }).map((_, i) => (
+              <rect key={`e1-${i}`} x={96.7} y={16 + i * 1.07} width={1.0} height={0.7} rx={0.15} fill="rgba(255,255,255,0.45)" stroke="rgba(255,255,255,0.6)" strokeWidth={0.05} />
+            ))}
           </g>
 
-          {/* === SEATING — West / Front Row (clickable → tickets) === */}
-          <g className="cursor-pointer" onClick={goToTickets}>
-            <g>
-              <rect x={92} y={15.5} width={1.6} height={33} rx={0.3} fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.0)" strokeWidth={0} className="hover:fill-[rgba(255,255,255,0.15)] transition-all" />
-              {Array.from({ length: 30 }).map((_, i) => (
-                <rect key={`w-${i}`} x={92.5} y={16 + i * 1.07} width={1.0} height={0.7} rx={0.15} fill="rgba(255,255,255,0.45)" stroke="rgba(255,255,255,0.6)" strokeWidth={0.05} />
-              ))}
-            </g>
+          {/* === SEATING — West / Front Row === */}
+          <g style={{ pointerEvents: "none" }}>
+            <rect x={92} y={15.5} width={1.6} height={33} rx={0.3} fill="rgba(255,255,255,0.05)" />
+            {Array.from({ length: 30 }).map((_, i) => (
+              <rect key={`w-${i}`} x={92.5} y={16 + i * 1.07} width={1.0} height={0.7} rx={0.15} fill="rgba(255,255,255,0.45)" stroke="rgba(255,255,255,0.6)" strokeWidth={0.05} />
+            ))}
           </g>
 
-          {/* === VIP BOOTHS (clickable → tickets) === */}
+          {/* === VIP BOOTHS === */}
           {[0, 1, 2, 3].map((i) => {
             const by = 18 + i * 7;
             return (
-              <g key={`vip-link-${i}`} className="cursor-pointer" onClick={goToTickets}>
+              <g key={`vip-link-${i}`} style={{ pointerEvents: "none" }}>
                 <g>
-                  <rect x={88} y={by} width={3.5} height={5.5} rx={0.4} fill="rgba(255,200,50,0.15)" stroke="rgba(255,200,50,0.5)" strokeWidth={0.1} className="hover:fill-[rgba(255,200,50,0.3)] transition-all" />
+                  <rect x={88} y={by} width={3.5} height={5.5} rx={0.4} fill="rgba(255,200,50,0.15)" stroke="rgba(255,200,50,0.5)" strokeWidth={0.1} />
                   <rect x={89} y={by + 1.2} width={1.6} height={2.5} rx={0.25} fill="rgba(255,255,255,0.35)" stroke="rgba(255,200,50,0.6)" strokeWidth={0.08} />
                   <rect x={88.2} y={by + 1} width={0.5} height={3} rx={0.15} fill="rgba(255,255,255,0.3)" stroke="rgba(168,85,247,0.5)" strokeWidth={0.06} />
                   <rect x={91} y={by + 1} width={0.3} height={3} rx={0.1} fill="rgba(255,255,255,0.25)" stroke="rgba(168,85,247,0.4)" strokeWidth={0.05} />
@@ -608,27 +591,25 @@ export function HotelFloorPlan({ onTicketsClick }: HotelFloorPlanProps) {
             );
           })}
 
-          {/* === BEACH ENTRANCE === */}
+          {/* === BEACH ENTRANCE — centered on boardwalk line (x=103.5) === */}
           <g style={{ pointerEvents: "none" }}>
-            {/* Palm tree top */}
-            <text x={101} y={24.5} textAnchor="middle" dominantBaseline="central" fontSize={2}>🌴</text>
-            {/* Door — shifted left */}
-            <rect x={100} y={27} width={2.4} height={5} rx={0.3}
+            {/* Palm tree left of door */}
+            <text x={101.5} y={29} textAnchor="middle" dominantBaseline="central" fontSize={2}>🌴</text>
+            {/* Door frame — centered on x=103.5 */}
+            <rect x={102.3} y={26.5} width={2.4} height={5} rx={0.3}
               fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.5)" strokeWidth={0.12} />
-            <rect x={100.2} y={27.3} width={0.9} height={4.4} rx={0.15} fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" strokeWidth={0.06} />
-            <rect x={101.3} y={27.3} width={0.9} height={4.4} rx={0.15} fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" strokeWidth={0.06} />
+            {/* Left door panel */}
+            <rect x={102.5} y={26.8} width={0.9} height={4.4} rx={0.15} fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" strokeWidth={0.06} />
+            {/* Right door panel */}
+            <rect x={103.6} y={26.8} width={0.9} height={4.4} rx={0.15} fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.3)" strokeWidth={0.06} />
             {/* Door handles */}
-            <circle cx={101} cy={29.5} r={0.15} fill="rgba(255,200,50,0.9)" />
-            <circle cx={101.4} cy={29.5} r={0.15} fill="rgba(255,200,50,0.9)" />
-            {/* Palm tree bottom */}
-            <text x={101} y={34.5} textAnchor="middle" dominantBaseline="central" fontSize={2}>🌴</text>
-            {/* Vertical label: BEACH ENTRANCE (top to bottom) */}
-            {["B","E","A","C","H","","E","N","T","R","A","N","C","E"].map((char, i) => (
-              char ? <text key={i} x={105} y={21 + i * 1.1} textAnchor="middle" dominantBaseline="central"
-                fill="rgba(255,255,255,0.95)" fontSize={0.75} fontWeight="900">
-                {char}
-              </text> : null
-            ))}
+            <circle cx={103.3} cy={29} r={0.15} fill="rgba(255,200,50,0.9)" />
+            <circle cx={103.7} cy={29} r={0.15} fill="rgba(255,200,50,0.9)" />
+            {/* Palm tree right of door */}
+            <text x={105.5} y={29} textAnchor="middle" dominantBaseline="central" fontSize={2}>🌴</text>
+            {/* Vertical label: BEACH ENTRANCE — centered on the boardwalk line */}
+            <text x={103.5} y={29} textAnchor="middle" fill="rgba(255,255,255,0.95)" fontSize={0.75} fontWeight="900" letterSpacing={0.15}
+              transform="rotate(90, 103.5, 29)">BEACH ENTRANCE</text>
           </g>
 
           {/* === COMPASS ROSE === */}
@@ -700,25 +681,6 @@ export function HotelFloorPlan({ onTicketsClick }: HotelFloorPlanProps) {
         )}
       </div>
 
-
-      {/* Legend + Mobile Hint */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mt-3 px-1">
-        <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-500">
-          <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-sm bg-pink-500/30 border border-pink-500/50" />
-            Tap area for details
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-sm bg-white/30 border border-white/50" />
-            Seating — tap for tickets
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-sm bg-amber-500/30 border border-amber-500/50" />
-            VIP — tap for tickets
-          </span>
-        </div>
-        <p className="text-xs text-zinc-600 md:hidden">Pinch to zoom</p>
-      </div>
 
       {/* CSS animation for gradient border */}
       <style jsx>{`

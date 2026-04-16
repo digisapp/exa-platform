@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -52,14 +52,6 @@ export function TicketCheckout({
   referringModelName,
 }: TicketCheckoutProps) {
   const [isOpen, setIsOpen] = useState(false);
-
-  // Listen for venue map "open-tickets" event
-  useEffect(() => {
-    const handler = () => setIsOpen(true);
-    window.addEventListener("open-tickets", handler);
-    return () => window.removeEventListener("open-tickets", handler);
-  }, []);
-
   const [selectedTier, setSelectedTier] = useState<TicketTier | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [buyerEmail, setBuyerEmail] = useState("");
