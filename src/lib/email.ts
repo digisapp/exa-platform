@@ -4036,7 +4036,7 @@ export async function sendBrandOutreachEmail({
 
               <!-- Event title -->
               <h1 style="margin: 0 0 6px; color: #ffffff; font-size: 30px; font-weight: 800; line-height: 1.15;">Miami Swim Week 2026</h1>
-              <p style="margin: 0 0 32px; color: #71717a; font-size: 15px;">May 26–31 &nbsp;·&nbsp; Miami Beach, Florida</p>
+              <p style="margin: 0 0 32px; color: #71717a; font-size: 15px;">May 25–31 &nbsp;·&nbsp; The Alexander Hotel, Miami Beach</p>
 
               <!-- Divider -->
               <div style="height: 1px; background: linear-gradient(90deg, #ec4899, #8b5cf6, transparent); margin-bottom: 28px;"></div>
@@ -4045,23 +4045,23 @@ export async function sendBrandOutreachEmail({
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
                 <tr>
                   <td style="text-align: center; padding: 14px 6px; background-color: #1a1a1a; border-radius: 8px;">
-                    <p style="margin: 0 0 3px; color: #ec4899; font-size: 22px; font-weight: 800;">80+</p>
-                    <p style="margin: 0; color: #71717a; font-size: 11px;">Models</p>
-                  </td>
-                  <td style="width: 6px;"></td>
-                  <td style="text-align: center; padding: 14px 6px; background-color: #1a1a1a; border-radius: 8px;">
-                    <p style="margin: 0 0 3px; color: #ec4899; font-size: 22px; font-weight: 800;">25+</p>
-                    <p style="margin: 0; color: #71717a; font-size: 11px;">Designers</p>
-                  </td>
-                  <td style="width: 6px;"></td>
-                  <td style="text-align: center; padding: 14px 6px; background-color: #1a1a1a; border-radius: 8px;">
-                    <p style="margin: 0 0 3px; color: #ec4899; font-size: 22px; font-weight: 800;">100+</p>
-                    <p style="margin: 0; color: #71717a; font-size: 11px;">Media &amp; Influencers</p>
-                  </td>
-                  <td style="width: 6px;"></td>
-                  <td style="text-align: center; padding: 14px 6px; background-color: #1a1a1a; border-radius: 8px;">
                     <p style="margin: 0 0 3px; color: #ec4899; font-size: 22px; font-weight: 800;">300+</p>
-                    <p style="margin: 0; color: #71717a; font-size: 11px;">Guests</p>
+                    <p style="margin: 0; color: #71717a; font-size: 11px;">Curated Models</p>
+                  </td>
+                  <td style="width: 6px;"></td>
+                  <td style="text-align: center; padding: 14px 6px; background-color: #1a1a1a; border-radius: 8px;">
+                    <p style="margin: 0 0 3px; color: #ec4899; font-size: 22px; font-weight: 800;">6</p>
+                    <p style="margin: 0; color: #71717a; font-size: 11px;">Runway Shows</p>
+                  </td>
+                  <td style="width: 6px;"></td>
+                  <td style="text-align: center; padding: 14px 6px; background-color: #1a1a1a; border-radius: 8px;">
+                    <p style="margin: 0 0 3px; color: #ec4899; font-size: 22px; font-weight: 800;">7 Days</p>
+                    <p style="margin: 0; color: #71717a; font-size: 11px;">Hotel Takeover</p>
+                  </td>
+                  <td style="width: 6px;"></td>
+                  <td style="text-align: center; padding: 14px 6px; background-color: #1a1a1a; border-radius: 8px;">
+                    <p style="margin: 0 0 3px; color: #ec4899; font-size: 22px; font-weight: 800;">50M+</p>
+                    <p style="margin: 0; color: #71717a; font-size: 11px;">Combined Reach</p>
                   </td>
                 </tr>
               </table>
@@ -4148,22 +4148,22 @@ export async function sendBrandOutreachEmail({
                     <table width="100%" cellpadding="0" cellspacing="0">
                       <tr>
                         <td style="padding: 10px 8px; background-color: #1a1a1a; border-radius: 8px; text-align: center; width: 25%;">
-                          <p style="margin: 0 0 2px; color: #ec4899; font-size: 17px; font-weight: 800;">$500</p>
-                          <p style="margin: 0; color: #71717a; font-size: 11px;">Community</p>
+                          <p style="margin: 0 0 2px; color: #ec4899; font-size: 17px; font-weight: 800;">$2K</p>
+                          <p style="margin: 0; color: #71717a; font-size: 11px;">Gift Bag</p>
                         </td>
                         <td style="width: 6px;"></td>
                         <td style="padding: 10px 8px; background-color: #1a1a1a; border-radius: 8px; text-align: center; width: 25%;">
-                          <p style="margin: 0 0 2px; color: #ec4899; font-size: 17px; font-weight: 800;">$1,500</p>
-                          <p style="margin: 0; color: #71717a; font-size: 11px;">Gold</p>
+                          <p style="margin: 0 0 2px; color: #ec4899; font-size: 17px; font-weight: 800;">$8K</p>
+                          <p style="margin: 0; color: #71717a; font-size: 11px;">Pool Deck</p>
                         </td>
                         <td style="width: 6px;"></td>
                         <td style="padding: 10px 8px; background-color: #1f0f2e; border-radius: 8px; text-align: center; border: 1px solid #8b5cf6; width: 25%;">
-                          <p style="margin: 0 0 2px; color: #a78bfa; font-size: 17px; font-weight: 800;">$5,000</p>
-                          <p style="margin: 0; color: #71717a; font-size: 11px;">Title Runway</p>
+                          <p style="margin: 0 0 2px; color: #a78bfa; font-size: 17px; font-weight: 800;">$22.5K</p>
+                          <p style="margin: 0; color: #71717a; font-size: 11px;">Category Partner</p>
                         </td>
                         <td style="width: 6px;"></td>
                         <td style="padding: 10px 8px; background-color: #1a1a1a; border-radius: 8px; text-align: center; width: 25%;">
-                          <p style="margin: 0 0 2px; color: #ec4899; font-size: 17px; font-weight: 800;">$20K</p>
+                          <p style="margin: 0 0 2px; color: #ec4899; font-size: 17px; font-weight: 800;">$45K</p>
                           <p style="margin: 0; color: #71717a; font-size: 11px;">Presenting</p>
                         </td>
                       </tr>
