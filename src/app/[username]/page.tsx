@@ -211,10 +211,7 @@ export default async function ModelProfilePage({ params }: Props) {
   ] = await Promise.all([
     (supabase as any)
       .from("content_items")
-      // NOTE: once migration 20260416000001 is applied, add `width, height`
-      // to this select so the hero-portrait helper can pick the highest-res
-      // portrait (currently it falls back to most-recent portfolio).
-      .select("id, media_url, media_type, title, created_at")
+      .select("id, media_url, media_type, title, created_at, width, height")
       .eq("model_id", model.id)
       .eq("status", "portfolio")
       .eq("media_type", "image")
