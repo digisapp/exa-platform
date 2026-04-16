@@ -26,25 +26,33 @@ const BUCKET = "portfolio";
 async function main() {
   const targetModelId = process.argv[2] || null;
 
-  let query = (supabase as any)
-    .from("content_items")
-    .select("id, media_url, media_type, model_id, width, height")
-    .eq("media_type", "image")
-    .is("width", null);
+  // Paginate explicitly — Supabase JS caps single selects at 1000 rows by default
+  const PAGE_SIZE = 1000;
+  const rows: any[] = [];
+  let from = 0;
+  while (true) {
+    let q = (supabase as any)
+      .from("content_items")
+      .select("id, media_url, media_type, model_id, width, height")
+      .eq("media_type", "image")
+      .is("width", null)
+      .range(from, from + PAGE_SIZE - 1);
 
-  if (targetModelId) {
-    query = query.eq("model_id", targetModelId);
+    if (targetModelId) q = q.eq("model_id", targetModelId);
+
+    const { data, error } = await q;
+    if (error) {
+      console.error("Query error:", error);
+      process.exit(1);
+    }
+    if (!data || data.length === 0) break;
+    rows.push(...data);
+    if (data.length < PAGE_SIZE) break;
+    from += PAGE_SIZE;
   }
 
-  const { data: rows, error } = await query;
-
-  if (error) {
-    console.error("Query error:", error);
-    process.exit(1);
-  }
-
-  console.log(`Found ${rows?.length || 0} content_items needing dimension backfill`);
-  if (!rows || rows.length === 0) return;
+  console.log(`Found ${rows.length} content_items needing dimension backfill`);
+  if (rows.length === 0) return;
 
   let success = 0;
   let failed = 0;
