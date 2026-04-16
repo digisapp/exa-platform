@@ -1,8 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { Navbar } from "@/components/layout/navbar";
 import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
 import {
   Sparkles,
   CheckCircle2,
@@ -127,47 +125,50 @@ export default async function AcademyPage() {
         <div className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-pink-500/20 via-violet-500/10 to-background" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-pink-500/10 via-transparent to-transparent" />
+          <div className="pointer-events-none absolute -top-24 -left-24 w-64 h-64 rounded-full bg-pink-500/30 blur-3xl" />
+          <div className="pointer-events-none absolute -top-24 -right-24 w-64 h-64 rounded-full bg-violet-500/30 blur-3xl" />
 
           <div className="relative container px-4 md:px-8 pt-20 pb-16 md:pt-28 md:pb-24">
             <div className="max-w-4xl mx-auto text-center">
-              <div className="flex items-center justify-center gap-2 mb-6">
-                <Sparkles className="h-5 w-5 text-pink-500" />
-                <Badge className="bg-gradient-to-r from-pink-500 to-violet-500 text-white border-0 px-4 py-1.5 text-sm">
-                  Now Accepting Applications
-                </Badge>
-                <Sparkles className="h-5 w-5 text-violet-500" />
+              <div className="flex items-center justify-center gap-2 mb-5">
+                <Sparkles className="h-5 w-5 text-pink-400" />
+                <span className="inline-flex items-center px-4 py-1.5 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 text-white text-xs font-bold shadow-[0_0_20px_rgba(236,72,153,0.5)]">
+                  NOW ACCEPTING APPLICATIONS
+                </span>
+                <Sparkles className="h-5 w-5 text-violet-400" />
               </div>
 
-              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
-                Become a{" "}
-                <span className="bg-gradient-to-r from-pink-500 to-violet-500 bg-clip-text text-transparent">
-                  Runway Makeup Artist
-                </span>
+              <p className="text-[10px] uppercase tracking-[0.3em] text-white/60 font-semibold mb-3">
+                EXA Beauty Academy
+              </p>
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
+                <span className="text-white">Become a </span>
+                <span className="exa-gradient-text">Runway Makeup Artist</span>
               </h1>
 
-              <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 leading-relaxed">
+              <p className="text-lg md:text-xl text-white/70 max-w-2xl mx-auto mb-8 leading-relaxed">
                 Train with EXA Beauty Academy and graduate working backstage at major
                 fashion shows including Miami Swim Week, New York Fashion Week, and Art Basel.
               </p>
 
-              <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground mb-10">
-                <div className="flex items-center gap-1.5">
-                  <Clock className="h-4 w-4 text-pink-500" />
+              <div className="flex flex-wrap items-center justify-center gap-2 mb-10">
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-semibold text-white">
+                  <Clock className="h-3.5 w-3.5 text-pink-400" />
                   <span>8-Week Program</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <Users className="h-4 w-4 text-violet-500" />
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-semibold text-white">
+                  <Users className="h-3.5 w-3.5 text-violet-400" />
                   <span>Limited to 40 Students</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <Award className="h-4 w-4 text-cyan-500" />
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-semibold text-white">
+                  <Award className="h-3.5 w-3.5 text-cyan-400" />
                   <span>Certification Included</span>
                 </div>
               </div>
 
               <a
                 href="#apply"
-                className="inline-flex items-center gap-2 bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white px-8 py-4 rounded-xl text-lg font-semibold transition-all shadow-lg shadow-pink-500/25 hover:shadow-pink-500/40"
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-pink-500 via-violet-500 to-cyan-500 hover:from-pink-400 hover:via-violet-400 hover:to-cyan-400 text-white px-8 py-4 rounded-full text-lg font-bold transition-all shadow-[0_0_24px_rgba(236,72,153,0.5)] hover:shadow-[0_0_32px_rgba(236,72,153,0.7)] active:scale-[0.98]"
               >
                 Apply for the Program
                 <ArrowRight className="h-5 w-5" />
@@ -181,53 +182,58 @@ export default async function AcademyPage() {
           {/* Social Proof / Fashion Credibility */}
           <section className="py-16 md:py-20">
             <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                Real Fashion Shows. Real Experience.
+              <p className="text-[10px] uppercase tracking-[0.3em] text-white/50 font-semibold mb-2">
+                Credibility
+              </p>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">
+                <span className="exa-gradient-text">Real Fashion Shows. Real Experience.</span>
               </h2>
-              <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              <p className="text-white/60 text-lg max-w-2xl mx-auto">
                 EXA produces major fashion shows and works with hundreds of professional
                 models each year. Our academy gives you direct access to the industry.
               </p>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-6">
-              <Card className="p-6 text-center border-pink-500/20 bg-pink-500/5">
-                <div className="text-4xl mb-4">👗</div>
-                <h3 className="font-semibold text-lg mb-2">Miami Swim Week</h3>
-                <p className="text-sm text-muted-foreground">
-                  Work backstage at one of the biggest swimwear fashion events in the world.
-                </p>
-              </Card>
-              <Card className="p-6 text-center border-violet-500/20 bg-violet-500/5">
-                <div className="text-4xl mb-4">✨</div>
-                <h3 className="font-semibold text-lg mb-2">New York Fashion Week</h3>
-                <p className="text-sm text-muted-foreground">
-                  Graduate by doing makeup backstage at NYFW runway shows.
-                </p>
-              </Card>
-              <Card className="p-6 text-center border-cyan-500/20 bg-cyan-500/5">
-                <div className="text-4xl mb-4">🎨</div>
-                <h3 className="font-semibold text-lg mb-2">Art Basel</h3>
-                <p className="text-sm text-muted-foreground">
-                  Experience the intersection of art and fashion at Art Basel shows.
-                </p>
-              </Card>
+            <div className="grid md:grid-cols-3 gap-4">
+              {[
+                { emoji: "👗", title: "Miami Swim Week", desc: "Work backstage at one of the biggest swimwear fashion events in the world.", rgb: "236,72,153" },
+                { emoji: "✨", title: "New York Fashion Week", desc: "Graduate by doing makeup backstage at NYFW runway shows.", rgb: "167,139,250" },
+                { emoji: "🎨", title: "Art Basel", desc: "Experience the intersection of art and fashion at Art Basel shows.", rgb: "34,211,238" },
+              ].map((item) => (
+                <div
+                  key={item.title}
+                  className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-6 text-center hover:border-white/25 transition-all"
+                >
+                  <div
+                    className="pointer-events-none absolute -top-12 -right-12 w-24 h-24 rounded-full blur-2xl opacity-0 group-hover:opacity-50 transition-opacity"
+                    style={{ background: `rgba(${item.rgb}, 0.5)` }}
+                  />
+                  <div className="relative">
+                    <div className="text-4xl mb-4">{item.emoji}</div>
+                    <h3 className="font-bold text-white text-lg mb-2">{item.title}</h3>
+                    <p className="text-sm text-white/60">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </section>
 
           {/* What You'll Learn */}
-          <section className="py-16 md:py-20 border-t border-border">
+          <section className="py-16 md:py-20 border-t border-white/10">
             <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                What You&apos;ll Learn
+              <p className="text-[10px] uppercase tracking-[0.3em] text-white/50 font-semibold mb-2">
+                Curriculum highlights
+              </p>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">
+                <span className="exa-gradient-text">What You&apos;ll Learn</span>
               </h2>
-              <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              <p className="text-white/60 text-lg max-w-2xl mx-auto">
                 Our 8-week program covers everything you need to work as a professional
                 runway makeup artist.
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-4 max-w-4xl mx-auto">
+            <div className="grid md:grid-cols-2 gap-3 max-w-4xl mx-auto">
               {[
                 "Runway makeup techniques for diverse skin tones",
                 "Skin prep and skincare for photography",
@@ -238,43 +244,46 @@ export default async function AcademyPage() {
                 "Contouring and sculpting for stage lighting",
                 "Building your professional makeup portfolio",
               ].map((item, i) => (
-                <div key={i} className="flex items-start gap-3 p-4 rounded-xl bg-muted/30">
-                  <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span className="text-sm">{item}</span>
+                <div key={i} className="flex items-start gap-3 p-4 rounded-xl bg-white/[0.05] border border-white/10 hover:border-emerald-500/30 transition-colors">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-400 mt-0.5 flex-shrink-0" />
+                  <span className="text-sm text-white/80">{item}</span>
                 </div>
               ))}
             </div>
           </section>
 
           {/* Graduate Backstage */}
-          <section className="py-16 md:py-20 border-t border-border">
+          <section className="py-16 md:py-20 border-t border-white/10">
             <div className="max-w-4xl mx-auto">
               <div className="text-center mb-12">
-                <Badge className="mb-4 bg-gradient-to-r from-pink-500 to-violet-500 text-white border-0">
-                  The EXA Difference
-                </Badge>
-                <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                  Graduate Backstage
+                <span className="inline-flex items-center mb-4 px-4 py-1.5 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 text-white text-xs font-bold shadow-[0_0_16px_rgba(236,72,153,0.4)]">
+                  THE EXA DIFFERENCE
+                </span>
+                <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">
+                  <span className="exa-gradient-text">Graduate Backstage</span>
                 </h2>
-                <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+                <p className="text-white/60 text-lg max-w-2xl mx-auto">
                   Most beauty programs teach theory. Our students graduate by working
                   backstage at real fashion shows — an experience most makeup artists
                   never get.
                 </p>
               </div>
 
-              <div className="grid md:grid-cols-3 gap-6">
+              <div className="grid md:grid-cols-3 gap-4">
                 {COHORTS.map((cohort) => (
                   <div
                     key={cohort.id}
-                    className="relative p-6 rounded-2xl border border-border bg-gradient-to-br from-muted/50 to-muted/20 text-center"
+                    className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-6 text-center hover:border-white/25 transition-all group"
                   >
-                    <div className="text-4xl mb-3">{cohort.icon}</div>
-                    <h3 className="font-semibold text-lg mb-1">{cohort.name}</h3>
-                    <p className="text-sm text-muted-foreground mb-3">{cohort.dates}</p>
-                    <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r ${cohort.color} text-white text-xs font-medium`}>
-                      <Star className="h-3 w-3" />
-                      Graduate at {cohort.event}
+                    <div className="absolute -top-12 -right-12 w-24 h-24 rounded-full bg-pink-500/20 blur-2xl opacity-0 group-hover:opacity-50 transition-opacity" />
+                    <div className="relative">
+                      <div className="text-4xl mb-3">{cohort.icon}</div>
+                      <h3 className="font-bold text-white text-lg mb-1">{cohort.name}</h3>
+                      <p className="text-sm text-white/50 mb-3">{cohort.dates}</p>
+                      <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r ${cohort.color} text-white text-xs font-semibold shadow-[0_0_12px_rgba(236,72,153,0.3)]`}>
+                        <Star className="h-3 w-3" />
+                        Graduate at {cohort.event}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -283,29 +292,32 @@ export default async function AcademyPage() {
           </section>
 
           {/* Weekly Curriculum */}
-          <section className="py-16 md:py-20 border-t border-border">
+          <section className="py-16 md:py-20 border-t border-white/10">
             <div className="max-w-3xl mx-auto">
               <div className="text-center mb-12">
-                <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                  8-Week Curriculum
+                <p className="text-[10px] uppercase tracking-[0.3em] text-white/50 font-semibold mb-2">
+                  Week by week
+                </p>
+                <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">
+                  <span className="exa-gradient-text">8-Week Curriculum</span>
                 </h2>
-                <p className="text-muted-foreground text-lg">
+                <p className="text-white/60 text-lg">
                   One live virtual class per week, plus recorded modules and assignments.
                 </p>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {CURRICULUM.map((week) => (
                   <div
                     key={week.week}
-                    className="flex gap-4 p-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors"
+                    className="flex gap-4 p-4 rounded-xl bg-white/[0.03] border border-white/10 hover:border-pink-500/25 hover:bg-white/[0.06] transition-all"
                   >
-                    <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-r from-pink-500 to-violet-500 flex items-center justify-center text-white font-bold text-sm">
+                    <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center text-white font-bold text-sm shadow-[0_0_12px_rgba(236,72,153,0.35)]">
                       W{week.week}
                     </div>
                     <div>
-                      <h3 className="font-semibold mb-0.5">{week.title}</h3>
-                      <p className="text-sm text-muted-foreground">{week.description}</p>
+                      <h3 className="font-semibold text-white mb-0.5">{week.title}</h3>
+                      <p className="text-sm text-white/60">{week.description}</p>
                     </div>
                   </div>
                 ))}
@@ -314,89 +326,113 @@ export default async function AcademyPage() {
           </section>
 
           {/* Certification */}
-          <section className="py-16 md:py-20 border-t border-border">
+          <section className="py-16 md:py-20 border-t border-white/10">
             <div className="max-w-3xl mx-auto text-center">
-              <Award className="h-16 w-16 text-pink-500 mx-auto mb-6" />
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                EXA Certified Runway Makeup Artist
+              <div className="relative inline-flex items-center justify-center mb-6">
+                <div className="absolute inset-0 rounded-full bg-amber-500/40 blur-2xl opacity-60" />
+                <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-amber-500/20 to-orange-500/20 ring-1 ring-amber-500/40 flex items-center justify-center shadow-[0_0_24px_rgba(245,158,11,0.3)]">
+                  <Award className="h-10 w-10 text-amber-300" />
+                </div>
+              </div>
+              <p className="text-[10px] uppercase tracking-[0.3em] text-amber-300/80 font-semibold mb-2">
+                Certification
+              </p>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">
+                <span className="exa-gradient-text">EXA Certified Runway Makeup Artist</span>
               </h2>
-              <p className="text-muted-foreground text-lg mb-8 max-w-xl mx-auto">
+              <p className="text-white/60 text-lg mb-8 max-w-xl mx-auto">
                 Graduates receive an official certification recognized across the fashion industry.
               </p>
 
-              <div className="grid sm:grid-cols-3 gap-4">
-                <Card className="p-5 text-center">
-                  <div className="text-2xl mb-2">📜</div>
-                  <h3 className="font-semibold text-sm mb-1">Digital Certificate</h3>
-                  <p className="text-xs text-muted-foreground">Official EXA certification</p>
-                </Card>
-                <Card className="p-5 text-center">
-                  <div className="text-2xl mb-2">📸</div>
-                  <h3 className="font-semibold text-sm mb-1">Backstage Photos</h3>
-                  <p className="text-xs text-muted-foreground">Professional portfolio content</p>
-                </Card>
-                <Card className="p-5 text-center">
-                  <div className="text-2xl mb-2">🏷️</div>
-                  <h3 className="font-semibold text-sm mb-1">Production Credit</h3>
-                  <p className="text-xs text-muted-foreground">Credited on show production</p>
-                </Card>
+              <div className="grid sm:grid-cols-3 gap-3">
+                {[
+                  { emoji: "📜", title: "Digital Certificate", desc: "Official EXA certification" },
+                  { emoji: "📸", title: "Backstage Photos", desc: "Professional portfolio content" },
+                  { emoji: "🏷️", title: "Production Credit", desc: "Credited on show production" },
+                ].map((item) => (
+                  <div key={item.title} className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-5 text-center hover:border-amber-500/30 transition-all">
+                    <div className="text-2xl mb-2">{item.emoji}</div>
+                    <h3 className="font-bold text-white text-sm mb-1">{item.title}</h3>
+                    <p className="text-xs text-white/50">{item.desc}</p>
+                  </div>
+                ))}
               </div>
             </div>
           </section>
 
           {/* Pricing */}
-          <section className="py-16 md:py-20 border-t border-border">
+          <section className="py-16 md:py-20 border-t border-white/10">
             <div className="max-w-lg mx-auto text-center">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Tuition</h2>
-              <p className="text-muted-foreground mb-8">
+              <p className="text-[10px] uppercase tracking-[0.3em] text-white/50 font-semibold mb-2">
+                Investment
+              </p>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">
+                <span className="exa-gradient-text">Tuition</span>
+              </h2>
+              <p className="text-white/60 mb-8">
                 Investment in your runway makeup career
               </p>
 
-              <Card className="p-8 border-pink-500/30 bg-gradient-to-br from-pink-500/5 to-violet-500/5">
-                <div className="mb-6">
-                  <div className="text-5xl font-bold text-white mb-2">$1,995</div>
-                  <p className="text-muted-foreground">or 4 payments of $499</p>
-                </div>
-
-                <div className="space-y-3 text-left mb-8">
-                  {[
-                    "8 weeks of live virtual training",
-                    "Recorded lesson modules",
-                    "Backstage experience at a major fashion show",
-                    "EXA Certified Runway Makeup Artist credential",
-                    "Professional backstage photos for your portfolio",
-                    "Production credit on EXA fashion shows",
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-2 text-sm">
-                      <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
-                      <span>{item}</span>
+              <div
+                className="relative overflow-hidden rounded-2xl border border-pink-500/40 p-8 shadow-[0_0_32px_rgba(236,72,153,0.15)]"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(255,105,180,0.12) 0%, rgba(139,92,246,0.08) 100%)",
+                }}
+              >
+                <div className="pointer-events-none absolute -top-24 -left-24 w-64 h-64 rounded-full bg-pink-500/20 blur-3xl" />
+                <div className="pointer-events-none absolute -bottom-24 -right-24 w-64 h-64 rounded-full bg-violet-500/20 blur-3xl" />
+                <div className="relative">
+                  <div className="mb-6">
+                    <div className="text-5xl md:text-6xl font-bold mb-2">
+                      <span className="exa-gradient-text">$1,995</span>
                     </div>
-                  ))}
+                    <p className="text-white/60 text-sm">or 4 payments of $499</p>
+                  </div>
+
+                  <div className="space-y-3 text-left mb-8">
+                    {[
+                      "8 weeks of live virtual training",
+                      "Recorded lesson modules",
+                      "Backstage experience at a major fashion show",
+                      "EXA Certified Runway Makeup Artist credential",
+                      "Professional backstage photos for your portfolio",
+                      "Production credit on EXA fashion shows",
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-center gap-2 text-sm">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                        <span className="text-white/80">{item}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <a
+                    href="#apply"
+                    className="inline-flex items-center justify-center gap-2 w-full bg-gradient-to-r from-pink-500 via-violet-500 to-cyan-500 hover:from-pink-400 hover:via-violet-400 hover:to-cyan-400 text-white px-6 py-3.5 rounded-full font-bold shadow-[0_0_20px_rgba(236,72,153,0.4)] hover:shadow-[0_0_28px_rgba(236,72,153,0.6)] transition-all active:scale-[0.98]"
+                  >
+                    Apply for the Program
+                    <ArrowRight className="h-5 w-5" />
+                  </a>
+
+                  <p className="text-xs text-white/50 mt-4">
+                    Seats are limited per cohort. Apply early to secure your spot.
+                  </p>
                 </div>
-
-                <a
-                  href="#apply"
-                  className="inline-flex items-center justify-center gap-2 w-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white px-6 py-3.5 rounded-xl font-semibold transition-all"
-                >
-                  Apply for the Program
-                  <ArrowRight className="h-5 w-5" />
-                </a>
-
-                <p className="text-xs text-muted-foreground mt-4">
-                  Seats are limited per cohort. Apply early to secure your spot.
-                </p>
-              </Card>
+              </div>
             </div>
           </section>
 
           {/* Application Form */}
-          <section id="apply" className="py-16 md:py-20 border-t border-border scroll-mt-20">
+          <section id="apply" className="py-16 md:py-20 border-t border-white/10 scroll-mt-20">
             <div className="max-w-2xl mx-auto">
               <div className="text-center mb-10">
-                <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                  Apply for EXA Beauty Academy
+                <p className="text-[10px] uppercase tracking-[0.3em] text-white/50 font-semibold mb-2">
+                  Application
+                </p>
+                <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">
+                  <span className="exa-gradient-text">Apply for EXA Beauty Academy</span>
                 </h2>
-                <p className="text-muted-foreground text-lg">
+                <p className="text-white/60 text-lg">
                   Submit your application below. Limited seats available per cohort.
                 </p>
               </div>
@@ -406,13 +442,16 @@ export default async function AcademyPage() {
           </section>
 
           {/* FAQ */}
-          <section className="py-16 md:py-20 border-t border-border">
+          <section className="py-16 md:py-20 border-t border-white/10">
             <div className="max-w-3xl mx-auto">
-              <h2 className="text-3xl font-bold text-center mb-10">
-                Frequently Asked Questions
+              <p className="text-center text-[10px] uppercase tracking-[0.3em] text-white/50 font-semibold mb-2">
+                Questions
+              </p>
+              <h2 className="text-3xl md:text-4xl font-bold text-center mb-10 text-white">
+                <span className="exa-gradient-text">Frequently Asked Questions</span>
               </h2>
 
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {[
                   {
                     q: "Do I need makeup experience?",
@@ -439,10 +478,10 @@ export default async function AcademyPage() {
                     a: "Each cohort is limited to 40 students to ensure quality training and meaningful backstage placement.",
                   },
                 ].map((faq, i) => (
-                  <Card key={i} className="p-5">
-                    <h3 className="font-semibold mb-2">{faq.q}</h3>
-                    <p className="text-sm text-muted-foreground">{faq.a}</p>
-                  </Card>
+                  <div key={i} className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-5 hover:border-pink-500/25 transition-all">
+                    <h3 className="font-semibold text-white mb-2">{faq.q}</h3>
+                    <p className="text-sm text-white/60">{faq.a}</p>
+                  </div>
                 ))}
               </div>
             </div>
@@ -450,6 +489,14 @@ export default async function AcademyPage() {
 
 
         </main>
+
+        {/* Footer */}
+        <footer className="relative mt-8 border-t border-violet-500/15 bg-gradient-to-b from-transparent to-[#0a0014]/60 backdrop-blur-sm py-8 text-center">
+          <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-pink-500/50 to-transparent" />
+          <p className="text-xs text-white/40">
+            &copy; {new Date().getFullYear()} EXA Models. All rights reserved.
+          </p>
+        </footer>
       </div>
     </CoinBalanceProvider>
   );
