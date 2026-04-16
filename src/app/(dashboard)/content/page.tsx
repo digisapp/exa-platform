@@ -162,28 +162,46 @@ export default function ContentPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">My Content</h1>
-          <div className="flex items-center gap-3">
-            {modelUsername && (
-              <Link
-                href={`/${modelUsername}`}
-                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        {/* ───── Hero header ───── */}
+        <section
+          className="relative overflow-hidden rounded-3xl border border-white/10 p-5 md:p-6 mb-6"
+          style={{
+            background:
+              "linear-gradient(135deg, rgba(255,105,180,0.12) 0%, rgba(139,92,246,0.08) 50%, rgba(0,191,255,0.12) 100%)",
+          }}
+        >
+          <div className="pointer-events-none absolute -top-24 -left-24 w-64 h-64 rounded-full bg-pink-500/25 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 -right-24 w-64 h-64 rounded-full bg-cyan-500/25 blur-3xl" />
+          <div className="relative flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] uppercase tracking-[0.25em] text-white/60">Creator</p>
+              <h1 className="text-2xl md:text-4xl font-bold tracking-tight">
+                <span className="exa-gradient-text">Studio</span>
+              </h1>
+              <p className="text-xs md:text-sm text-white/60 mt-1">
+                Upload, manage, and monetize your content.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              {modelUsername && (
+                <Link
+                  href={`/${modelUsername}`}
+                  className="flex items-center gap-1.5 text-xs md:text-sm text-white/70 hover:text-white transition-colors px-3 md:px-4 py-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  <span className="hidden sm:inline">View profile</span>
+                </Link>
+              )}
+              <Button
+                onClick={() => setUploadOpen(true)}
+                className="bg-gradient-to-r from-pink-500 to-violet-500 text-white hover:from-pink-400 hover:to-violet-400 shadow-[0_0_16px_rgba(236,72,153,0.4)] border-0 rounded-full"
               >
-                <ExternalLink className="h-4 w-4" />
-                View Profile
-              </Link>
-            )}
-            <Button
-              onClick={() => setUploadOpen(true)}
-              className="bg-gradient-to-r from-pink-500 to-violet-500 text-white hover:from-pink-600 hover:to-violet-600"
-            >
-              <Upload className="mr-2 h-4 w-4" />
-              Upload
-            </Button>
+                <Upload className="mr-2 h-4 w-4" />
+                Upload
+              </Button>
+            </div>
           </div>
-        </div>
+        </section>
 
         {/* Loading state */}
         {loading ? (
@@ -796,64 +814,72 @@ function StatsTab({
 
   return (
     <div className="space-y-6">
-      {/* Summary cards */}
+      {/* ───── Summary cards ───── */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-xs text-muted-foreground">Total Revenue</p>
-            <p className="text-2xl font-bold">{stats.total_revenue}</p>
-            <p className="text-xs text-muted-foreground">
-              ${(stats.total_revenue * 0.1).toFixed(2)}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-xs text-muted-foreground">Total Unlocks</p>
-            <p className="text-2xl font-bold">{stats.total_unlocks}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-xs text-muted-foreground">Total Items</p>
-            <p className="text-2xl font-bold">{stats.total_items}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-xs text-muted-foreground">PPV Items</p>
-            <p className="text-2xl font-bold">{stats.exclusive_count}</p>
-          </CardContent>
-        </Card>
+        <div className="relative overflow-hidden rounded-2xl border border-emerald-500/25 bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 p-4 hover:border-emerald-500/50 transition-all">
+          <p className="text-[10px] uppercase tracking-wider text-white/60 font-medium">Total revenue</p>
+          <p className="mt-1 text-2xl md:text-3xl font-bold text-white">{stats.total_revenue.toLocaleString()}</p>
+          <p className="text-[11px] text-emerald-300/80">${(stats.total_revenue * 0.1).toFixed(2)}</p>
+        </div>
+        <div className="relative overflow-hidden rounded-2xl border border-pink-500/25 bg-gradient-to-br from-pink-500/10 to-pink-500/5 p-4 hover:border-pink-500/50 transition-all">
+          <p className="text-[10px] uppercase tracking-wider text-white/60 font-medium">Total unlocks</p>
+          <p className="mt-1 text-2xl md:text-3xl font-bold text-white">{stats.total_unlocks.toLocaleString()}</p>
+          <p className="text-[11px] text-pink-300/80">across all items</p>
+        </div>
+        <div className="relative overflow-hidden rounded-2xl border border-cyan-500/25 bg-gradient-to-br from-cyan-500/10 to-cyan-500/5 p-4 hover:border-cyan-500/50 transition-all">
+          <p className="text-[10px] uppercase tracking-wider text-white/60 font-medium">Total items</p>
+          <p className="mt-1 text-2xl md:text-3xl font-bold text-white">{stats.total_items.toLocaleString()}</p>
+          <p className="text-[11px] text-cyan-300/80">in your studio</p>
+        </div>
+        <div className="relative overflow-hidden rounded-2xl border border-violet-500/25 bg-gradient-to-br from-violet-500/10 to-violet-500/5 p-4 hover:border-violet-500/50 transition-all">
+          <p className="text-[10px] uppercase tracking-wider text-white/60 font-medium">PPV items</p>
+          <p className="mt-1 text-2xl md:text-3xl font-bold text-white">{stats.exclusive_count.toLocaleString()}</p>
+          <p className="text-[11px] text-violet-300/80">premium</p>
+        </div>
       </div>
 
-      {/* Top performing items */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <TrendingUp className="h-4 w-4" />
-            Top Performing Items
-          </CardTitle>
-          <CardDescription>Your top 5 items by unlocks</CardDescription>
-        </CardHeader>
-        <CardContent>
+      {/* ───── Top performing items ───── */}
+      <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm overflow-hidden">
+        <header className="flex items-center justify-between p-5 border-b border-white/5">
+          <div>
+            <h3 className="text-base font-semibold text-white flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-pink-400" />
+              Top performing items
+            </h3>
+            <p className="text-xs text-white/50 mt-0.5">Your top 5 items by unlocks</p>
+          </div>
+        </header>
+        <div className="p-4">
           {stats.top_items.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-white/50 text-center py-6">
               No unlock data yet. PPV items will appear here.
             </p>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {stats.top_items.map((topItem, idx) => {
                 const fullItem = items.find((i) => i.id === topItem.id);
                 const mediaUrl = fullItem ? getMediaUrl(fullItem.media_url) : null;
                 const revenue = (topItem.coin_price || 0) * (topItem.unlock_count || 0);
 
                 return (
-                  <div key={topItem.id} className="flex items-center gap-3">
-                    <span className="w-5 text-sm font-bold text-muted-foreground">
+                  <div
+                    key={topItem.id}
+                    className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/5 transition-colors"
+                  >
+                    <span
+                      className={`w-5 text-sm font-bold text-center shrink-0 ${
+                        idx === 0
+                          ? "text-amber-400"
+                          : idx === 1
+                            ? "text-white/70"
+                            : idx === 2
+                              ? "text-amber-700"
+                              : "text-white/40"
+                      }`}
+                    >
                       {idx + 1}
                     </span>
-                    <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md bg-muted">
+                    <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-white/5 ring-1 ring-white/10">
                       {mediaUrl && (
                         <Image
                           src={mediaUrl}
@@ -865,16 +891,18 @@ function StatsTab({
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">
+                      <p className="text-sm font-medium text-white truncate">
                         {topItem.title || 'Untitled'}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-[11px] text-white/50">
                         {topItem.unlock_count} unlocks
                       </p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-semibold">{revenue} coins</p>
-                      <p className="text-xs text-muted-foreground">
+                    <div className="text-right shrink-0">
+                      <p className="text-sm font-semibold bg-gradient-to-r from-pink-400 to-violet-400 bg-clip-text text-transparent">
+                        {revenue.toLocaleString()}c
+                      </p>
+                      <p className="text-[11px] text-white/40">
                         ${(revenue * 0.1).toFixed(2)}
                       </p>
                     </div>
@@ -883,54 +911,70 @@ function StatsTab({
               })}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* Content breakdown */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <BarChart3 className="h-4 w-4" />
-            Content Breakdown
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between text-sm">
-              <span className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-green-500" />
+      {/* ───── Content breakdown ───── */}
+      <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm overflow-hidden">
+        <header className="flex items-center justify-between p-5 border-b border-white/5">
+          <h3 className="text-base font-semibold text-white flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-cyan-400" />
+            Content breakdown
+          </h3>
+        </header>
+        <div className="p-5 space-y-4">
+          <div>
+            <div className="flex items-center justify-between text-sm mb-1.5">
+              <span className="flex items-center gap-2 text-white/80">
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.7)]" />
                 Public
               </span>
-              <span>
-                {stats.portfolio_count} ({portfolioPct}%)
+              <span className="text-white/60">
+                {stats.portfolio_count} <span className="text-white/40">({portfolioPct}%)</span>
               </span>
             </div>
-            <Progress value={portfolioPct} className="h-2 [&>div]:bg-green-500" />
+            <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 shadow-[0_0_12px_rgba(52,211,153,0.5)]"
+                style={{ width: `${portfolioPct}%` }}
+              />
+            </div>
+          </div>
 
-            <div className="flex items-center justify-between text-sm">
-              <span className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-pink-500" />
+          <div>
+            <div className="flex items-center justify-between text-sm mb-1.5">
+              <span className="flex items-center gap-2 text-white/80">
+                <span className="h-2.5 w-2.5 rounded-full bg-pink-400 shadow-[0_0_8px_rgba(236,72,153,0.7)]" />
                 PPV
               </span>
-              <span>
-                {stats.exclusive_count} ({exclusivePct}%)
+              <span className="text-white/60">
+                {stats.exclusive_count} <span className="text-white/40">({exclusivePct}%)</span>
               </span>
             </div>
-            <Progress value={exclusivePct} className="h-2 [&>div]:bg-pink-500" />
+            <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-pink-500 to-violet-500 shadow-[0_0_12px_rgba(236,72,153,0.5)]"
+                style={{ width: `${exclusivePct}%` }}
+              />
+            </div>
+          </div>
 
-            <div className="flex items-center justify-between text-sm">
-              <span className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-gray-400" />
+          <div>
+            <div className="flex items-center justify-between text-sm mb-1.5">
+              <span className="flex items-center gap-2 text-white/80">
+                <span className="h-2.5 w-2.5 rounded-full bg-white/40" />
                 Private
               </span>
-              <span>
-                {stats.private_count} ({privatePct}%)
+              <span className="text-white/60">
+                {stats.private_count} <span className="text-white/40">({privatePct}%)</span>
               </span>
             </div>
-            <Progress value={privatePct} className="h-2 [&>div]:bg-gray-400" />
+            <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+              <div className="h-full rounded-full bg-white/30" style={{ width: `${privatePct}%` }} />
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

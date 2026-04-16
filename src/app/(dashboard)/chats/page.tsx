@@ -95,9 +95,11 @@ export default async function MessagesPage({ searchParams }: PageProps) {
   return (
     <>
       {/* Mobile: show full list with header */}
-      <div className="lg:hidden max-w-4xl mx-auto space-y-6">
+      <div className="lg:hidden max-w-4xl mx-auto space-y-5">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Chats</h1>
+          <h1 className="text-3xl font-bold">
+            <span className="exa-gradient-text">Chats</span>
+          </h1>
           <div className="flex items-center gap-2">
             {actor.type === "model" && (
               <BlastDialog fanCount={fanCount} brandCount={brandCount} />
@@ -115,12 +117,17 @@ export default async function MessagesPage({ searchParams }: PageProps) {
 
       {/* Desktop: empty state (sidebar is in layout) */}
       <div className="hidden lg:flex flex-col items-center justify-center h-full text-center">
-        <div className="p-6 rounded-full bg-gradient-to-br from-pink-500/20 to-violet-500/20 mb-4">
-          <MessageCircle className="h-12 w-12 text-pink-500" />
+        <div className="relative mb-5">
+          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-pink-500/40 to-violet-500/40 blur-2xl" />
+          <div className="relative p-6 rounded-full bg-gradient-to-br from-pink-500/25 to-violet-500/25 ring-1 ring-pink-500/30 shadow-[0_0_40px_rgba(236,72,153,0.3)]">
+            <MessageCircle className="h-12 w-12 text-pink-300" />
+          </div>
         </div>
-        <h2 className="text-xl font-semibold mb-2">Select a conversation</h2>
-        <p className="text-sm text-muted-foreground max-w-xs">
-          Choose from your conversations on the left to start chatting
+        <h2 className="text-xl font-semibold mb-1 text-white">
+          <span className="exa-gradient-text">Select a conversation</span>
+        </h2>
+        <p className="text-sm text-white/50 max-w-xs">
+          Choose from your conversations on the left to start chatting.
         </p>
       </div>
     </>

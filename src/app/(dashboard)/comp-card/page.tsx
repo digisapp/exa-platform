@@ -723,15 +723,27 @@ export default function CompCardPage() {
   }
 
   return (
-    <div className="container max-w-6xl mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold">Comp Card</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Select {MAX_PHOTOS} photos — first is the front cover, next 4 go on
-          the back
-        </p>
-      </div>
+    <div className="container max-w-6xl mx-auto px-4 py-8 space-y-6">
+      {/* ───── Hero header ───── */}
+      <section
+        className="relative overflow-hidden rounded-3xl border border-white/10 p-5 md:p-6"
+        style={{
+          background:
+            "linear-gradient(135deg, rgba(255,105,180,0.12) 0%, rgba(139,92,246,0.08) 50%, rgba(0,191,255,0.12) 100%)",
+        }}
+      >
+        <div className="pointer-events-none absolute -top-24 -left-24 w-64 h-64 rounded-full bg-pink-500/25 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 -right-24 w-64 h-64 rounded-full bg-cyan-500/25 blur-3xl" />
+        <div className="relative">
+          <p className="text-[10px] uppercase tracking-[0.25em] text-white/60">Model kit</p>
+          <h1 className="text-2xl md:text-4xl font-bold tracking-tight">
+            <span className="exa-gradient-text">Comp Card</span>
+          </h1>
+          <p className="text-xs md:text-sm text-white/60 mt-1">
+            Select {MAX_PHOTOS} photos — first is the front cover, next 4 go on the back.
+          </p>
+        </div>
+      </section>
 
       <div className="grid lg:grid-cols-2 gap-8">
         {/* Left: Photo Selector */}
@@ -761,8 +773,8 @@ export default function CompCardPage() {
                       className={cn(
                         "relative aspect-[3/4] rounded-lg overflow-hidden border-2 transition-all group",
                         isSelected
-                          ? "border-pink-500 ring-2 ring-pink-500/30"
-                          : "border-transparent hover:border-white/20"
+                          ? "border-pink-500 ring-2 ring-pink-500/40 shadow-[0_0_20px_rgba(236,72,153,0.5)]"
+                          : "border-transparent hover:border-pink-500/40 hover:shadow-[0_0_12px_rgba(236,72,153,0.25)]"
                       )}
                     >
                       <Image

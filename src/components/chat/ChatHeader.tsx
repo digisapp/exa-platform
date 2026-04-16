@@ -213,7 +213,7 @@ export function ChatHeader({
             size="icon"
             onClick={() => setShowTipDialog(true)}
             title="Send a tip"
-            className="h-11 w-11 rounded-xl text-pink-500 hover:text-pink-600 bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/20"
+            className="h-11 w-11 rounded-xl text-pink-300 hover:text-pink-200 bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/30 shadow-[0_0_12px_rgba(236,72,153,0.25)] hover:shadow-[0_0_18px_rgba(236,72,153,0.45)] transition-all"
           >
             <Gift className="h-6 w-6" />
           </Button>
@@ -222,19 +222,22 @@ export function ChatHeader({
         {/* More options menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-11 w-11 rounded-xl" aria-label="More options">
+            <Button variant="ghost" size="icon" className="h-11 w-11 rounded-xl text-white/60 hover:text-white hover:bg-white/10" aria-label="More options">
               <MoreVertical className="h-5 w-5" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setShowSearch(!showSearch)}>
-              <Search className="h-4 w-4 mr-2" />
+          <DropdownMenuContent align="end" className="bg-[#120a24]/95 backdrop-blur-xl border-violet-500/30 shadow-2xl shadow-violet-500/10">
+            <DropdownMenuItem
+              onClick={() => setShowSearch(!showSearch)}
+              className="cursor-pointer text-white/80 focus:bg-white/10 focus:text-white"
+            >
+              <Search className="h-4 w-4 mr-2 text-cyan-400" />
               Search messages
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
+            <DropdownMenuSeparator className="bg-white/10" />
             <DropdownMenuItem
               onClick={() => setShowBlockDialog(true)}
-              className="text-destructive focus:text-destructive"
+              className="cursor-pointer text-rose-300 focus:bg-rose-500/10 focus:text-rose-200"
             >
               <Ban className="h-4 w-4 mr-2" />
               Block {otherName}

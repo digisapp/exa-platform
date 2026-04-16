@@ -1127,23 +1127,38 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">{t.settings.title}</h1>
-          <p className="text-muted-foreground mt-1">{locale === "es" ? "Administra tu perfil y configuración de cuenta" : "Manage your profile and account settings"}</p>
-        </div>
-        {/* Account type and stats */}
-        <div className="flex items-center gap-3">
-          <div className="px-3 py-1.5 rounded-full bg-pink-500/10 border border-pink-500/30">
-            <span className="text-sm font-medium text-pink-500">Model Account</span>
+      {/* ───── Hero header ───── */}
+      <section
+        className="relative overflow-hidden rounded-3xl border border-white/10 p-5 md:p-6"
+        style={{
+          background:
+            "linear-gradient(135deg, rgba(255,105,180,0.12) 0%, rgba(139,92,246,0.08) 50%, rgba(0,191,255,0.12) 100%)",
+        }}
+      >
+        <div className="pointer-events-none absolute -top-24 -left-24 w-64 h-64 rounded-full bg-pink-500/25 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 -right-24 w-64 h-64 rounded-full bg-cyan-500/25 blur-3xl" />
+        <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-[0.25em] text-white/60">Account</p>
+            <h1 className="text-2xl md:text-4xl font-bold tracking-tight">
+              <span className="exa-gradient-text">{t.settings.title}</span>
+            </h1>
+            <p className="text-xs md:text-sm text-white/60 mt-1">
+              {locale === "es" ? "Administra tu perfil y configuración de cuenta" : "Manage your profile and account settings"}
+            </p>
           </div>
-          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20">
-            <BarChart3 className="h-4 w-4 text-blue-500" />
-            <span className="text-sm font-medium">{pageViews}</span>
-            <span className="text-xs text-muted-foreground">views</span>
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="px-3 py-1.5 rounded-full bg-pink-500/15 border border-pink-500/40 shadow-[0_0_12px_rgba(236,72,153,0.2)]">
+              <span className="text-xs font-semibold text-pink-300">Model Account</span>
+            </div>
+            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-500/15 border border-cyan-500/30">
+              <BarChart3 className="h-3.5 w-3.5 text-cyan-300" />
+              <span className="text-xs font-semibold text-white">{pageViews}</span>
+              <span className="text-[10px] text-white/50">views</span>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Language Toggle */}
       <Card>
@@ -1183,25 +1198,41 @@ export default function ProfilePage() {
       </Card>
 
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="profile">
-            <User className="h-4 w-4 mr-2" />
+        <TabsList className="bg-white/[0.03] border border-white/10 rounded-2xl p-1 h-auto flex-wrap gap-1">
+          <TabsTrigger
+            value="profile"
+            className="rounded-xl text-xs md:text-sm text-white/60 data-[state=active]:bg-gradient-to-br data-[state=active]:from-pink-500/20 data-[state=active]:to-violet-500/20 data-[state=active]:text-white data-[state=active]:shadow-[0_0_14px_rgba(236,72,153,0.2)] transition-all"
+          >
+            <User className="h-4 w-4 mr-1.5" />
             {t.settings.profile}
           </TabsTrigger>
-          <TabsTrigger value="rates">
-            <DollarSign className="h-4 w-4 mr-2" />
+          <TabsTrigger
+            value="rates"
+            className="rounded-xl text-xs md:text-sm text-white/60 data-[state=active]:bg-gradient-to-br data-[state=active]:from-emerald-500/20 data-[state=active]:to-teal-500/20 data-[state=active]:text-white data-[state=active]:shadow-[0_0_14px_rgba(52,211,153,0.2)] transition-all"
+          >
+            <DollarSign className="h-4 w-4 mr-1.5" />
             {t.settings.rates}
           </TabsTrigger>
-          <TabsTrigger value="collabs">
-            <Handshake className="h-4 w-4 mr-2" />
+          <TabsTrigger
+            value="collabs"
+            className="rounded-xl text-xs md:text-sm text-white/60 data-[state=active]:bg-gradient-to-br data-[state=active]:from-violet-500/20 data-[state=active]:to-purple-500/20 data-[state=active]:text-white data-[state=active]:shadow-[0_0_14px_rgba(167,139,250,0.2)] transition-all"
+          >
+            <Handshake className="h-4 w-4 mr-1.5" />
             {t.settings.collabs}
           </TabsTrigger>
-          <TabsTrigger value="followers" onClick={loadFollowers}>
-            <Users className="h-4 w-4 mr-2" />
+          <TabsTrigger
+            value="followers"
+            onClick={loadFollowers}
+            className="rounded-xl text-xs md:text-sm text-white/60 data-[state=active]:bg-gradient-to-br data-[state=active]:from-cyan-500/20 data-[state=active]:to-blue-500/20 data-[state=active]:text-white data-[state=active]:shadow-[0_0_14px_rgba(34,211,238,0.2)] transition-all"
+          >
+            <Users className="h-4 w-4 mr-1.5" />
             {t.followers.title}
           </TabsTrigger>
-          <TabsTrigger value="privacy">
-            <Lock className="h-4 w-4 mr-2" />
+          <TabsTrigger
+            value="privacy"
+            className="rounded-xl text-xs md:text-sm text-white/60 data-[state=active]:bg-gradient-to-br data-[state=active]:from-white/20 data-[state=active]:to-white/5 data-[state=active]:text-white transition-all"
+          >
+            <Lock className="h-4 w-4 mr-1.5" />
             {t.settings.privacy}
           </TabsTrigger>
         </TabsList>

@@ -4,7 +4,6 @@ import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -485,7 +484,7 @@ export function ConversationList({ conversations: initialConversations, actorTyp
                       </AvatarFallback>
                     </Avatar>
                     {isUnread && !isSelected && (
-                      <div className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-pink-500 border-2 border-background" />
+                      <div className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-pink-500 border-2 border-background shadow-[0_0_8px_rgba(236,72,153,0.8)]" />
                     )}
                   </div>
 
@@ -510,7 +509,7 @@ export function ConversationList({ conversations: initialConversations, actorTyp
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         {convUnread > 0 && !isSelected && (
-                          <Badge variant="secondary" className="bg-pink-500 text-white text-[10px] h-5 min-w-5 px-1.5 justify-center">
+                          <Badge variant="secondary" className="bg-pink-500 text-white text-[10px] h-5 min-w-5 px-1.5 justify-center border-0 shadow-[0_0_8px_rgba(236,72,153,0.7)]">
                             {convUnread > 99 ? "99+" : convUnread}
                           </Badge>
                         )}
@@ -578,33 +577,39 @@ export function ConversationList({ conversations: initialConversations, actorTyp
           })}
         </div>
       ) : (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            {searchQuery ? (
-              <>
-                <div className="p-4 rounded-full bg-muted mb-4">
-                  <Search className="h-8 w-8 text-muted-foreground" />
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm flex flex-col items-center justify-center py-16 px-6 text-center">
+          {searchQuery ? (
+            <>
+              <div className="relative mb-4">
+                <div className="absolute inset-0 rounded-full bg-white/5 blur-xl" />
+                <div className="relative p-4 rounded-full bg-white/5 ring-1 ring-white/10">
+                  <Search className="h-8 w-8 text-white/40" />
                 </div>
-                <h3 className="text-lg font-semibold mb-2">No results found</h3>
-                <p className="text-sm text-muted-foreground max-w-sm">
-                  No conversations match &quot;{searchQuery}&quot;
-                </p>
-              </>
-            ) : (
-              <>
-                <div className="p-4 rounded-full bg-gradient-to-br from-pink-500/20 to-violet-500/20 mb-4">
-                  <MessageCircle className="h-8 w-8 text-pink-500" />
+              </div>
+              <h3 className="text-lg font-semibold mb-1 text-white">No results found</h3>
+              <p className="text-sm text-white/50 max-w-sm">
+                No conversations match &quot;{searchQuery}&quot;
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="relative mb-4">
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-pink-500/40 to-violet-500/40 blur-2xl" />
+                <div className="relative p-4 rounded-full bg-gradient-to-br from-pink-500/25 to-violet-500/25 ring-1 ring-pink-500/30 shadow-[0_0_32px_rgba(236,72,153,0.3)]">
+                  <MessageCircle className="h-8 w-8 text-pink-300" />
                 </div>
-                <h3 className="text-lg font-semibold mb-2">No messages yet</h3>
-                <p className="text-sm text-muted-foreground max-w-sm">
-                  {actorType === "model"
-                    ? "When fans message you, conversations will appear here"
-                    : "Start a conversation by visiting a model's profile"}
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
+              </div>
+              <h3 className="text-lg font-semibold mb-1 text-white">
+                <span className="exa-gradient-text">No messages yet</span>
+              </h3>
+              <p className="text-sm text-white/50 max-w-sm">
+                {actorType === "model"
+                  ? "When fans message you, conversations will appear here"
+                  : "Start a conversation by visiting a model's profile"}
+              </p>
+            </>
+          )}
+        </div>
       )}
     </div>
   );

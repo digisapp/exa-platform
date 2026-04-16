@@ -206,89 +206,99 @@ export default function ManageBidsPage() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">My Bids</h1>
-          <p className="text-muted-foreground">Create and manage your auctions</p>
+      {/* ───── Hero header ───── */}
+      <section
+        className="relative overflow-hidden rounded-3xl border border-white/10 p-5 md:p-6"
+        style={{
+          background:
+            "linear-gradient(135deg, rgba(139,92,246,0.15) 0%, rgba(255,105,180,0.08) 50%, rgba(0,191,255,0.12) 100%)",
+        }}
+      >
+        <div className="pointer-events-none absolute -top-24 -left-24 w-64 h-64 rounded-full bg-violet-500/25 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 -right-24 w-64 h-64 rounded-full bg-pink-500/25 blur-3xl" />
+        <div className="relative flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-[0.25em] text-white/60">Auctions</p>
+            <h1 className="text-2xl md:text-4xl font-bold tracking-tight">
+              <span className="exa-gradient-text">My Bids</span>
+            </h1>
+            <p className="text-xs md:text-sm text-white/60 mt-1">Create and manage your auctions.</p>
+          </div>
+          <Button
+            asChild
+            className="shrink-0 bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-400 hover:to-violet-400 text-white shadow-[0_0_16px_rgba(236,72,153,0.4)] border-0 rounded-full"
+          >
+            <Link href="/bids/new">
+              <Plus className="h-4 w-4 mr-2" />
+              New Bid
+            </Link>
+          </Button>
         </div>
-        <Button asChild className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600">
-          <Link href="/bids/new">
-            <Plus className="h-4 w-4 mr-2" />
-            New Bid
-          </Link>
-        </Button>
-      </div>
+      </section>
 
-      {/* Analytics */}
+      {/* ───── Analytics ───── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-500/10 rounded-xl">
-                <Gavel className="h-5 w-5 text-green-500" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Live Now</p>
-                <p className="text-xl font-bold">{activeAuctions.length}</p>
-              </div>
+        <div className="rounded-2xl border border-emerald-500/25 bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 p-4 hover:border-emerald-500/50 transition-all">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-emerald-500/20 ring-1 ring-emerald-500/30">
+              <Gavel className="h-5 w-5 text-emerald-300" />
             </div>
-          </CardContent>
-        </Card>
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-white/60 font-medium">Live now</p>
+              <p className="text-xl font-bold text-white">{activeAuctions.length}</p>
+            </div>
+          </div>
+        </div>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-violet-500/10 rounded-xl">
-                <TrendingUp className="h-5 w-5 text-violet-500" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Total Bids</p>
-                <p className="text-xl font-bold">{totalBids}</p>
-              </div>
+        <div className="rounded-2xl border border-violet-500/25 bg-gradient-to-br from-violet-500/10 to-violet-500/5 p-4 hover:border-violet-500/50 transition-all">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-violet-500/20 ring-1 ring-violet-500/30">
+              <TrendingUp className="h-5 w-5 text-violet-300" />
             </div>
-          </CardContent>
-        </Card>
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-white/60 font-medium">Total bids</p>
+              <p className="text-xl font-bold text-white">{totalBids}</p>
+            </div>
+          </div>
+        </div>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-amber-500/10 rounded-xl">
-                <Coins className="h-5 w-5 text-amber-500" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Total Earned</p>
-                <p className="text-xl font-bold">{formatUsd(coinsToUsd(totalEarned))}</p>
-              </div>
+        <div className="rounded-2xl border border-amber-500/25 bg-gradient-to-br from-amber-500/10 to-amber-500/5 p-4 hover:border-amber-500/50 transition-all">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-amber-500/20 ring-1 ring-amber-500/30">
+              <Coins className="h-5 w-5 text-amber-300" />
             </div>
-          </CardContent>
-        </Card>
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-white/60 font-medium">Total earned</p>
+              <p className="text-xl font-bold text-white">{formatUsd(coinsToUsd(totalEarned))}</p>
+            </div>
+          </div>
+        </div>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-pink-500/10 rounded-xl">
-                <Target className="h-5 w-5 text-pink-500" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Win Rate</p>
-                <p className="text-xl font-bold">
-                  {winRate !== null ? `${winRate}%` : "—"}
-                </p>
-              </div>
+        <div className="rounded-2xl border border-pink-500/25 bg-gradient-to-br from-pink-500/10 to-pink-500/5 p-4 hover:border-pink-500/50 transition-all">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-pink-500/20 ring-1 ring-pink-500/30">
+              <Target className="h-5 w-5 text-pink-300" />
             </div>
-          </CardContent>
-        </Card>
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-white/60 font-medium">Win rate</p>
+              <p className="text-xl font-bold text-white">
+                {winRate !== null ? `${winRate}%` : "—"}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Best sale callout */}
+      {/* ───── Best sale callout ───── */}
       {bestSale !== null && (
-        <div className="flex items-center gap-3 px-5 py-4 rounded-2xl bg-gradient-to-r from-amber-500/10 to-orange-500/5 border border-amber-500/20">
-          <Trophy className="h-5 w-5 text-amber-400 shrink-0" />
+        <div className="flex items-center gap-3 px-5 py-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-transparent border border-amber-500/40 shadow-[0_0_20px_rgba(245,158,11,0.2)]">
+          <div className="p-2 rounded-xl bg-amber-500/20 ring-1 ring-amber-500/40">
+            <Trophy className="h-5 w-5 text-amber-300" />
+          </div>
           <div>
-            <span className="text-sm font-medium text-amber-400">Best sale: </span>
-            <span className="text-sm text-amber-300">
-              {formatCoins(bestSale)} coins ({formatUsd(coinsToUsd(bestSale))})
+            <span className="text-sm font-semibold text-amber-300">Best sale </span>
+            <span className="text-sm text-amber-100/80">
+              — {formatCoins(bestSale)} coins ({formatUsd(coinsToUsd(bestSale))})
             </span>
           </div>
         </div>
