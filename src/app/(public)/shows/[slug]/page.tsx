@@ -10,7 +10,6 @@ import { ModelsGrid } from "@/components/models/models-grid";
 import { EventCountdown } from "./event-countdown";
 import { ShareButton } from "@/components/ui/share-button";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   MapPin,
   Calendar,
@@ -316,28 +315,31 @@ export default async function EventPage({ params, searchParams }: Props) {
 
           {/* Event Info Overlay — desktop only */}
           <div className="hidden md:block absolute bottom-0 left-0 right-0 p-6 md:p-10 pointer-events-none">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-pink-300/90 font-bold mb-2 drop-shadow-lg">
+              Live Runway Show
+            </p>
             <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 drop-shadow-lg">
               {event.name}
             </h1>
-            <div className="flex flex-wrap gap-4 md:gap-6 text-white/90">
+            <div className="flex flex-wrap gap-3 text-white/90">
               {(event.location_city || event.location_state) && (
-                <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
-                  <MapPin className="h-5 w-5 text-pink-400" />
-                  <span className="font-medium">
+                <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/10 px-4 py-2 rounded-full">
+                  <MapPin className="h-4 w-4 text-pink-400" />
+                  <span className="font-semibold text-sm">
                     {event.location_city && event.location_state
                       ? `${event.location_city}, ${event.location_state}`
                       : event.location_city || event.location_state}
                   </span>
                 </div>
               )}
-              <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
-                <Calendar className="h-5 w-5 text-cyan-400" />
-                <span className="font-medium">{dateDisplay}</span>
+              <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/10 px-4 py-2 rounded-full">
+                <Calendar className="h-4 w-4 text-cyan-400" />
+                <span className="font-semibold text-sm">{dateDisplay}</span>
               </div>
               {eventModels.length > 0 && (
-                <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
-                  <Users className="h-5 w-5 text-violet-400" />
-                  <span className="font-medium">{eventModels.length} Confirmed Models</span>
+                <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md border border-violet-500/30 px-4 py-2 rounded-full shadow-[0_0_12px_rgba(167,139,250,0.2)]">
+                  <Users className="h-4 w-4 text-violet-300" />
+                  <span className="font-semibold text-sm">{eventModels.length} Confirmed</span>
                 </div>
               )}
             </div>
@@ -346,16 +348,19 @@ export default async function EventPage({ params, searchParams }: Props) {
 
         {/* Mobile event info — shown only on mobile since overlay is desktop-only */}
         <div className="md:hidden mb-6">
-          <h1 className="text-2xl font-bold text-white mb-2">{event.name}</h1>
-          <div className="flex flex-wrap gap-2 text-sm">
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Calendar className="h-4 w-4 text-cyan-400" />
-              <span>{dateDisplay}</span>
+          <p className="text-[10px] uppercase tracking-[0.3em] text-pink-300/90 font-bold mb-1.5">
+            Live Runway Show
+          </p>
+          <h1 className="text-2xl font-bold text-white mb-3">{event.name}</h1>
+          <div className="flex flex-wrap gap-2 text-xs">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10">
+              <Calendar className="h-3.5 w-3.5 text-cyan-400" />
+              <span className="font-semibold text-white">{dateDisplay}</span>
             </div>
             {(event.location_city || event.location_state) && (
-              <div className="flex items-center gap-1.5 text-muted-foreground">
-                <MapPin className="h-4 w-4 text-pink-400" />
-                <span>
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10">
+                <MapPin className="h-3.5 w-3.5 text-pink-400" />
+                <span className="font-semibold text-white">
                   {event.location_city && event.location_state
                     ? `${event.location_city}, ${event.location_state}`
                     : event.location_city || event.location_state}
@@ -367,18 +372,16 @@ export default async function EventPage({ params, searchParams }: Props) {
 
         {/* Referral Banner */}
         {referringModel && (
-          <Card className="mb-8 bg-gradient-to-r from-pink-500/10 to-violet-500/10 border-pink-500/20">
-            <CardContent className="py-4">
-              <p className="text-center text-sm">
-                You were referred by{" "}
-                <Link href={`/${referringModel.username}`} className="font-semibold text-pink-500 hover:underline">
-                  {referringModel.first_name
-                    ? `${referringModel.first_name} ${referringModel.last_name || ""}`.trim()
-                    : referringModel.username}
-                </Link>
-              </p>
-            </CardContent>
-          </Card>
+          <div className="mb-8 rounded-2xl border border-pink-500/30 bg-gradient-to-r from-pink-500/10 via-violet-500/10 to-transparent p-4 shadow-[0_0_18px_rgba(236,72,153,0.15)]">
+            <p className="text-center text-sm text-white/80">
+              <span className="text-[10px] uppercase tracking-wider text-pink-300 font-bold mr-2">Referred by</span>
+              <Link href={`/${referringModel.username}`} className="font-semibold text-pink-300 hover:text-pink-200 transition-colors">
+                {referringModel.first_name
+                  ? `${referringModel.first_name} ${referringModel.last_name || ""}`.trim()
+                  : referringModel.username}
+              </Link>
+            </p>
+          </div>
         )}
 
         <div className="grid lg:grid-cols-3 gap-8">
@@ -448,65 +451,67 @@ export default async function EventPage({ params, searchParams }: Props) {
                 <EventCountdown startsAt={event.start_date} />
               )}
               {event.start_date && new Date(event.start_date) <= new Date() && event.end_date && new Date(event.end_date) >= new Date() && (
-                <div className="text-center py-3 px-4 rounded-xl bg-green-500/10 border border-green-500/30">
-                  <p className="text-green-400 font-bold text-sm">🎉 Happening Now</p>
+                <div className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-emerald-500/15 border border-emerald-500/40 shadow-[0_0_16px_rgba(52,211,153,0.3)]">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+                  </span>
+                  <p className="text-emerald-300 font-bold text-sm">Happening Now 🎉</p>
                 </div>
               )}
 
               {/* Sign Up Buttons */}
               <div className="space-y-2">
-                <p className="text-xs uppercase tracking-widest text-zinc-500 font-semibold px-1">Join the Show</p>
-                <Link href="/signup" className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-semibold transition-all shadow-lg shadow-pink-500/25">
+                <p className="text-[10px] uppercase tracking-[0.25em] text-white/50 font-semibold px-1">Join the Show</p>
+                <Link href="/signup" className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-white font-semibold transition-all shadow-[0_0_18px_rgba(236,72,153,0.4)] hover:shadow-[0_0_24px_rgba(236,72,153,0.6)]">
                   <span className="flex items-center gap-2">
                     <Users className="h-4 w-4" />
                     Models — Apply Now
                   </span>
-                  <ArrowRight className="h-4 w-4 opacity-70" />
+                  <ArrowRight className="h-4 w-4 opacity-80" />
                 </Link>
-                <Link href="/designers/miami-swim-week" className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-violet-600/20 hover:bg-violet-600/30 border border-violet-500/40 hover:border-violet-500/70 text-violet-300 font-semibold transition-all">
+                <Link href="/designers/miami-swim-week" className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/40 hover:border-violet-500/70 text-violet-200 font-semibold transition-all hover:shadow-[0_0_16px_rgba(167,139,250,0.3)]">
                   <span className="flex items-center gap-2">
                     <Sparkles className="h-4 w-4" />
-                    Designers — Show Your Collection
+                    Designers — Show Collection
                   </span>
-                  <ArrowRight className="h-4 w-4 opacity-70" />
+                  <ArrowRight className="h-4 w-4 opacity-80" />
                 </Link>
-                <Link href="/sponsors/miami-swim-week" className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/40 hover:border-cyan-500/70 text-cyan-300 font-semibold transition-all">
+                <Link href="/sponsors/miami-swim-week" className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/40 hover:border-cyan-500/70 text-cyan-200 font-semibold transition-all hover:shadow-[0_0_16px_rgba(34,211,238,0.3)]">
                   <span className="flex items-center gap-2">
                     <Sparkles className="h-4 w-4" />
                     Sponsors — Partner With Us
                   </span>
-                  <ArrowRight className="h-4 w-4 opacity-70" />
+                  <ArrowRight className="h-4 w-4 opacity-80" />
                 </Link>
-                <a href="mailto:nathan@examodels.com?subject=Media%20Inquiry%20%E2%80%94%20Miami%20Swim%20Week%202026" className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 hover:border-amber-500/70 text-amber-300 font-semibold transition-all">
+                <a href="mailto:nathan@examodels.com?subject=Media%20Inquiry%20%E2%80%94%20Miami%20Swim%20Week%202026" className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 hover:border-amber-500/70 text-amber-200 font-semibold transition-all hover:shadow-[0_0_16px_rgba(245,158,11,0.3)]">
                   <span className="flex items-center gap-2">
                     <Instagram className="h-4 w-4" />
                     Media — Request Credentials
                   </span>
-                  <ArrowRight className="h-4 w-4 opacity-70" />
+                  <ArrowRight className="h-4 w-4 opacity-80" />
                 </a>
               </div>
 
               {/* Sponsor Card */}
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="font-semibold mb-3 text-xs uppercase tracking-wider text-muted-foreground">Sponsored By</h3>
-                  <a
-                    href="https://digis.cc"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-pink-500/10 to-violet-500/10 border border-white/10 hover:border-pink-500/30 transition-all hover:scale-[1.02]"
-                  >
-                    <div className="w-10 h-10 rounded-lg bg-black flex items-center justify-center flex-shrink-0 p-1.5">
-                      <Image src="/digis-logo-white.png" alt="Digis" width={40} height={40} className="w-full h-full object-contain" />
-                    </div>
-                    <div>
-                      <p className="font-semibold">Digis</p>
-                      <p className="text-xs text-muted-foreground">digis.cc</p>
-                    </div>
-                    <ExternalLink className="h-3.5 w-3.5 text-muted-foreground ml-auto" />
-                  </a>
-                </CardContent>
-              </Card>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-5">
+                <h3 className="text-[10px] uppercase tracking-[0.25em] text-white/50 font-semibold mb-3">Sponsored By</h3>
+                <a
+                  href="https://digis.cc"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-pink-500/10 to-violet-500/10 border border-white/10 hover:border-pink-500/40 transition-all hover:shadow-[0_0_16px_rgba(236,72,153,0.25)]"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-black flex items-center justify-center flex-shrink-0 p-1.5 ring-1 ring-white/10">
+                    <Image src="/digis-logo-white.png" alt="Digis" width={40} height={40} className="w-full h-full object-contain" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-white">Digis</p>
+                    <p className="text-xs text-white/50">digis.cc</p>
+                  </div>
+                  <ExternalLink className="h-3.5 w-3.5 text-white/40 group-hover:text-pink-300 ml-auto transition-colors" />
+                </a>
+              </div>
             </div>
           </div>
 
@@ -521,12 +526,18 @@ export default async function EventPage({ params, searchParams }: Props) {
           {eventModels.length > 0 && (
             <div className="lg:col-span-2 order-4">
               <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 rounded-xl bg-gradient-to-br from-pink-500/20 to-violet-500/20">
-                  <Sparkles className="h-6 w-6 text-pink-500" />
+                <div className="relative">
+                  <div className="absolute inset-0 rounded-xl bg-pink-500/40 blur-lg opacity-50" />
+                  <div className="relative p-2 rounded-xl bg-gradient-to-br from-pink-500/25 to-violet-500/25 ring-1 ring-pink-500/40">
+                    <Sparkles className="h-6 w-6 text-pink-300" />
+                  </div>
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold">Confirmed Models</h2>
-                  <p className="text-sm text-muted-foreground">{eventModels.length} models walking the runway</p>
+                  <p className="text-[10px] uppercase tracking-[0.25em] text-white/50 font-semibold">The Lineup</p>
+                  <h2 className="text-2xl font-bold text-white">
+                    <span className="exa-gradient-text">Confirmed Models</span>
+                  </h2>
+                  <p className="text-sm text-white/60">{eventModels.length} models walking the runway</p>
                 </div>
               </div>
               <ModelsGrid
@@ -540,23 +551,29 @@ export default async function EventPage({ params, searchParams }: Props) {
         </div>
       </main>
 
-      <footer className="py-12 border-t border-[#FF69B4]/20">
-        <div className="container px-8 md:px-16">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-3">
-              <Image src="/exa-logo-white.png" alt="EXA" width={80} height={32} className="h-8 w-auto" />
-              <span className="text-muted-foreground">One Platform. Models Worldwide.</span>
-            </div>
-            <div className="flex items-center gap-6">
-              <a href="https://instagram.com/examodels" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-[#FF69B4] transition-colors">
-                <Instagram className="h-5 w-5" />
-              </a>
-            </div>
+      {/* Footer */}
+      <footer className="relative mt-16 border-t border-violet-500/15 bg-gradient-to-b from-transparent to-[#0a0014]/60 backdrop-blur-sm py-8 text-center">
+        <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-pink-500/50 to-transparent" />
+        <div className="container px-8 md:px-16 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Image src="/exa-logo-white.png" alt="EXA" width={80} height={32} className="h-8 w-auto" />
+            <span className="text-sm text-white/50">One Platform. Models Worldwide.</span>
           </div>
-          <div className="text-center mt-8 text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} EXA Models. All rights reserved.
+          <div className="flex items-center gap-3">
+            <a
+              href="https://instagram.com/examodels"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Instagram"
+              className="flex items-center justify-center h-9 w-9 rounded-full bg-white/5 hover:bg-pink-500/15 border border-white/10 hover:border-pink-500/40 text-white/60 hover:text-pink-300 hover:shadow-[0_0_16px_rgba(236,72,153,0.4)] transition-all"
+            >
+              <Instagram className="h-4 w-4" />
+            </a>
           </div>
         </div>
+        <p className="text-xs text-white/40 mt-6">
+          &copy; {new Date().getFullYear()} EXA Models. All rights reserved.
+        </p>
       </footer>
 
       {/* Affiliate Tracking Script - ref is sanitized at top of component to alphanumeric/underscore/hyphen only */}
