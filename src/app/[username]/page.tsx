@@ -525,10 +525,13 @@ export default async function ModelProfilePage({ params }: Props) {
                   </div>
                 )}
 
-                {/* TOP FLOATING ROW: online (left) | wordmark (center) | actions (right) */}
-                <div className="absolute top-0 inset-x-0 z-20 p-3 flex items-start justify-between gap-2 bg-gradient-to-b from-black/45 via-black/15 to-transparent">
+                {/* TOP FLOATING ROW: online (left) | wordmark (center) | actions (right)
+                    Uses grid-cols-[1fr_auto_1fr] so left + right columns always take equal
+                    width — this guarantees the wordmark stays truly centered on the hero
+                    regardless of how many chips/buttons/badges are in the side columns. */}
+                <div className="absolute top-0 inset-x-0 z-20 p-3 grid grid-cols-[1fr_auto_1fr] items-start gap-2 bg-gradient-to-b from-black/45 via-black/15 to-transparent">
                   {/* Left column: online chip */}
-                  <div className="flex flex-col items-start gap-1.5 min-w-0">
+                  <div className="flex flex-col items-start gap-1.5 min-w-0 justify-self-start">
                     {isOnline && (
                       <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/45 backdrop-blur-md border border-emerald-400/50 shadow-[0_0_18px_rgba(52,211,153,0.45)]">
                         <span className="relative flex h-2 w-2">
@@ -544,13 +547,13 @@ export default async function ModelProfilePage({ params }: Props) {
                   <Link
                     href={user ? "/dashboard" : "/"}
                     aria-label="exa models home"
-                    className={`${glacialIndifference.className} wordmark-glimmer text-4xl md:text-6xl leading-none tracking-[0.01em] lowercase hover:opacity-90 transition-opacity drop-shadow-[0_2px_14px_rgba(0,0,0,0.85)] shrink-0`}
+                    className={`${glacialIndifference.className} wordmark-glimmer text-4xl md:text-6xl leading-none tracking-[0.01em] lowercase hover:opacity-90 transition-opacity drop-shadow-[0_2px_14px_rgba(0,0,0,0.85)] shrink-0 justify-self-center`}
                   >
                     exa models
                   </Link>
 
                   {/* Right column: brand actions (if brand) + share + event badges stacked */}
-                  <div className="flex flex-col items-end gap-1.5 min-w-0">
+                  <div className="flex flex-col items-end gap-1.5 min-w-0 justify-self-end">
                     <div className="flex items-center gap-1.5">
                       {isBrand && !isOwner && (
                         <>
@@ -574,7 +577,7 @@ export default async function ModelProfilePage({ params }: Props) {
                         className="bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-600 text-amber-950 text-sm font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-[0_4px_14px_rgba(0,0,0,0.45)] border border-amber-200/70 hover:scale-105 transition-transform"
                       >
                         <span>💧</span>
-                        <span>{eb.badges.events.short_name}</span>
+                        <span>{eb.badges.events.name}</span>
                       </Link>
                     ))}
                   </div>
@@ -697,14 +700,14 @@ export default async function ModelProfilePage({ params }: Props) {
                         {eventBadges.map((eb: any, idx: number) => (
                           <div key={idx} className="bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-600 text-amber-950 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-lg border border-amber-500/50">
                             <span>{eb.badges.events.badge_image_url ? '' : '💧'}</span>
-                            <span>{eb.badges.events.short_name}</span>
+                            <span>{eb.badges.events.name}</span>
                           </div>
                         ))}
                       </div>
                       {/* Hover tooltip - above the badge */}
                       <div className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
                         <div className="bg-black/90 text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg">
-                          {eventBadges.map((eb: any) => eb.badges.events.short_name).join(', ')} {eventBadges[0].badges.events.year} Model
+                          {eventBadges.map((eb: any) => eb.badges.events.name).join(', ')} {eventBadges[0].badges.events.year} Model
                         </div>
                       </div>
                     </Link>
