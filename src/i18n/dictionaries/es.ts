@@ -25,6 +25,23 @@ export const es: Dictionary = {
     signOut: "Cerrar Sesión",
     availableBalance: "Saldo Disponible",
     buyCoins: "Comprar Monedas",
+    // Profile dropdown + featured rows
+    withdraw: "Retirar",
+    ready: "disponibles",
+    boostVisibility: "Impulsa tu visibilidad",
+    priorityInFeeds: "Prioridad en feeds",
+    viewAsFan: "Ver como fan",
+    shareProfile: "Compartir perfil",
+    topUpCoins: "Recargar {amount} monedas",
+    // Hero quick actions
+    goLive: "En vivo",
+    newBid: "Nueva Subasta",
+    browse: "Explorar",
+    offer: "Oferta",
+    campaign: "Campaña",
+    liveBids: "Subastas",
+    getCoins: "Obtener Monedas",
+    notifications: "Notificaciones",
   },
 
   // Dashboard

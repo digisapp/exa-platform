@@ -23,6 +23,23 @@ export const en = {
     signOut: "Sign Out",
     availableBalance: "Available Balance",
     buyCoins: "Buy Coins",
+    // Profile dropdown + featured rows
+    withdraw: "Withdraw",
+    ready: "ready",
+    boostVisibility: "Boost visibility",
+    priorityInFeeds: "Priority in feeds",
+    viewAsFan: "View as fan",
+    shareProfile: "Share profile",
+    topUpCoins: "Top up {amount} coins",
+    // Hero quick actions
+    goLive: "Go Live",
+    newBid: "New Bid",
+    browse: "Browse",
+    offer: "Offer",
+    campaign: "Campaign",
+    liveBids: "Live Bids",
+    getCoins: "Get Coins",
+    notifications: "Notifications",
   },
 
   // Dashboard

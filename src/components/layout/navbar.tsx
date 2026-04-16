@@ -233,13 +233,13 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
                     <DropdownMenuItem asChild className={DROPDOWN_ITEM_CLASS}>
                       <Link href="/wallet?amount=100" className="w-full">
                         <Plus className="mr-2 h-4 w-4 text-amber-400" />
-                        Top up 100 coins
+                        {t.nav.topUpCoins.replace("{amount}", "100")}
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild className={DROPDOWN_ITEM_CLASS}>
                       <Link href="/wallet?amount=500" className="w-full">
                         <Plus className="mr-2 h-4 w-4 text-amber-400" />
-                        Top up 500 coins
+                        {t.nav.topUpCoins.replace("{amount}", "500")}
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild className={DROPDOWN_ITEM_CLASS}>
@@ -270,7 +270,7 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
               {actorType !== "admin" && (
                 <Link
                   href={notificationHref}
-                  aria-label={`Notifications${notificationCount > 0 ? ` (${notificationCount})` : ""}`}
+                  aria-label={`${t.nav.notifications}${notificationCount > 0 ? ` (${notificationCount})` : ""}`}
                   className="relative flex items-center justify-center h-10 w-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-pink-500/40 text-white/60 hover:text-pink-300 transition-all"
                 >
                   <Bell className={cn(
@@ -352,9 +352,9 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
                             <CircleDollarSign className="h-4 w-4 text-emerald-300" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-white">Withdraw</p>
+                            <p className="text-sm font-semibold text-white">{t.nav.withdraw}</p>
                             <p className="text-[11px] text-emerald-300">
-                              {formatUsd(usdValue)} ready
+                              {formatUsd(usdValue)} {t.nav.ready}
                             </p>
                           </div>
                           <ArrowUpRight className="h-4 w-4 text-emerald-400 shrink-0" />
@@ -374,7 +374,7 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
                               {t.nav.exaBoost}
                             </p>
                             <p className="text-[11px] text-orange-300">
-                              Boost visibility
+                              {t.nav.boostVisibility}
                             </p>
                           </div>
                           <ArrowUpRight className="h-4 w-4 text-orange-400 shrink-0" />
@@ -401,7 +401,7 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
                           <DropdownMenuItem asChild className={DROPDOWN_ITEM_CLASS}>
                             <Link href={`/${user.username}`} className="w-full">
                               <Eye className="mr-2 h-4 w-4 text-violet-400" />
-                              View as fan
+                              {t.nav.viewAsFan}
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild className={DROPDOWN_ITEM_CLASS}>
@@ -410,7 +410,7 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
                               className="w-full"
                             >
                               <Share2 className="mr-2 h-4 w-4 text-cyan-400" />
-                              Share profile
+                              {t.nav.shareProfile}
                             </Link>
                           </DropdownMenuItem>
                         </>
@@ -449,7 +449,7 @@ export function Navbar({ user, actorType, unreadCount = 0, notificationCount = 0
                               {t.nav.exaBoost}
                             </p>
                             <p className="text-[11px] text-orange-300">
-                              Priority in feeds
+                              {t.nav.priorityInFeeds}
                             </p>
                           </div>
                           <ArrowUpRight className="h-4 w-4 text-orange-400 shrink-0" />

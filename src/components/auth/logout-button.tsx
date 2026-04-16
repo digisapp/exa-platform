@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/client";
 import { LogOut } from "lucide-react";
+import { useTranslation } from "@/i18n";
 
 interface LogoutButtonProps {
   className?: string;
@@ -9,6 +10,7 @@ interface LogoutButtonProps {
 
 export function LogoutButton({ className }: LogoutButtonProps) {
   const supabase = createClient();
+  const { t } = useTranslation();
 
   const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -26,7 +28,7 @@ export function LogoutButton({ className }: LogoutButtonProps) {
       className={className}
     >
       <LogOut className="mr-2 h-4 w-4" />
-      Sign Out
+      {t.nav.signOut}
     </button>
   );
 }
