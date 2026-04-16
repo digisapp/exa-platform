@@ -31,6 +31,7 @@ import { ModelNotesDialog } from "@/components/brands/ModelNotesDialog";
 import { ProfileActionButtons } from "@/components/profile/ProfileActionButtons";
 import { ProfileContentTabs } from "@/components/profile/ProfileContentTabs";
 import { ViewTracker } from "@/components/profile/ViewTracker";
+import { getHeroPortrait } from "@/lib/hero-portrait";
 
 // Use ISR - revalidate every 60 seconds for fresh content without regenerating on every request
 // This dramatically improves performance while keeping data reasonably fresh
@@ -210,6 +211,9 @@ export default async function ModelProfilePage({ params }: Props) {
   ] = await Promise.all([
     (supabase as any)
       .from("content_items")
+      // NOTE: once migration 20260416000001 is applied, add `width, height`
+      // to this select so the hero-portrait helper can pick the highest-res
+      // portrait (currently it falls back to most-recent portfolio).
       .select("id, media_url, media_type, title, created_at")
       .eq("model_id", model.id)
       .eq("status", "portfolio")
@@ -318,6 +322,25 @@ export default async function ModelProfilePage({ params }: Props) {
   const PORTRAIT_HERO_USERNAMES = ["miriam"];
   const useHeroLayout = PORTRAIT_HERO_USERNAMES.includes(model.username.toLowerCase());
   const isOnline = !!model.last_active_at && (Date.now() - new Date(model.last_active_at).getTime()) < 5 * 60 * 1000;
+
+  // Pick the best image source for the hero ONLY. The square `profile_photo_url`
+  // continues to power every circle on the platform (chats, DMs, leaderboards,
+  // dashboard, etc.) — those circles never see this value.
+  // The helper prefers high-res sources and falls back gracefully.
+  const heroSource = useHeroLayout
+    ? getHeroPortrait({
+        profilePhotoUrl: profilePhotoUrl,
+        profilePhotoWidth: null, // not yet stored on models table
+        profilePhotoHeight: null,
+        portfolioPhotos: (rawPhotos || []).map((p: any) => ({
+          url: resolveMediaUrl(p.media_url),
+          width: p.width ?? null,
+          height: p.height ?? null,
+          createdAt: p.created_at,
+        })),
+      })
+    : null;
+  const heroPhotoUrl = heroSource?.url ?? profilePhotoUrl;
 
   // Social media links (with follower counts for brand discovery)
   const socialLinks = [
@@ -465,14 +488,14 @@ export default async function ModelProfilePage({ params }: Props) {
                - Below the hero: bio + affiliate + content tabs + rates CTA (own padding)
                ============================================ */
             <div className="relative aspect-[4/5] w-full bg-gradient-to-br from-[#1a0033] to-[#2d1b69]">
-                {profilePhotoUrl ? (
+                {heroPhotoUrl ? (
                   <Image
-                    src={profilePhotoUrl}
+                    src={heroPhotoUrl}
                     alt={displayName}
                     fill
                     sizes="(max-width: 768px) 100vw, 768px"
                     priority
-                    className="object-cover"
+                    className="object-cover object-top"
                   />
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center">

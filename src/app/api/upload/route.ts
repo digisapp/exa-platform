@@ -113,6 +113,8 @@ export async function POST(request: NextRequest) {
     // Process image to strip EXIF data (contains GPS, camera info, etc.)
     let processedBuffer: Buffer | Uint8Array = inputBuffer;
     let finalContentType = file.type;
+    let finalWidth: number | null = null;
+    let finalHeight: number | null = null;
 
     if (isProcessableImage(file.type) && file.type !== "image/gif") {
       // Don't process GIFs as they may lose animation
@@ -124,6 +126,8 @@ export async function POST(request: NextRequest) {
         });
         processedBuffer = processed.buffer;
         finalContentType = processed.contentType;
+        finalWidth = processed.width;
+        finalHeight = processed.height;
       } catch (processError) {
         logger.error("Image processing error, uploading original", processError);
         // Fall back to original if processing fails
@@ -207,6 +211,8 @@ export async function POST(request: NextRequest) {
           media_url: publicUrl,
           media_type: "photo",
           status: "portfolio",
+          width: finalWidth,
+          height: finalHeight,
         });
     }
 

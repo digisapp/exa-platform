@@ -12,7 +12,7 @@ export async function processImage(
     quality?: number;
     format?: "jpeg" | "png" | "webp";
   }
-): Promise<{ buffer: Buffer; contentType: string }> {
+): Promise<{ buffer: Buffer; contentType: string; width: number | null; height: number | null }> {
   const {
     maxWidth = 2048,
     maxHeight = 2048,
@@ -72,11 +72,13 @@ export async function processImage(
       contentType = "image/jpeg";
   }
 
-  const outputBuffer = await image.toBuffer();
+  const { data: outputBuffer, info } = await image.toBuffer({ resolveWithObject: true });
 
   return {
     buffer: outputBuffer,
     contentType,
+    width: info.width ?? null,
+    height: info.height ?? null,
   };
 }
 
