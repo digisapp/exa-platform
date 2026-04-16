@@ -56,16 +56,16 @@ const SCHEDULE = [
   {
     day: "Monday",
     date: "May 25",
-    title: "Casting Call",
-    description: "600+ models attend the open casting call — the biggest gathering of talent all week",
+    title: "Casting Call Day Party",
+    description: "11am–4pm · Pool, sun, and music as 600+ models cast for the week. Open to the public — ticketed entry + VIP bottle tables. Sponsor's dream crowd: models, guests, press, and creators all in one place.",
     highlight: true,
-    badge: "600+ Models",
+    badge: "Ticketed · 600+ Models",
   },
   {
     day: "Tuesday",
     date: "May 26",
     title: "Opening Show",
-    description: "The grand opening runway show kicks off Miami Swim Week 2026",
+    description: "Doors 6pm · Show 7pm · The grand opening runway show of Miami Swim Week 2026",
     highlight: true,
     badge: "Opening Night",
   },
@@ -73,7 +73,7 @@ const SCHEDULE = [
     day: "Wednesday",
     date: "May 27",
     title: "Day 2 Show",
-    description: "Runway show featuring emerging and established swimwear designers",
+    description: "Doors 6pm · Show 7pm · Runway show featuring emerging and established swimwear designers",
     highlight: false,
     badge: null,
   },
@@ -81,7 +81,7 @@ const SCHEDULE = [
     day: "Thursday",
     date: "May 28",
     title: "Sunset Beach Show",
-    description: "Daytime Emerging Designers showcase, plus our iconic sand runway at sunset — the most shareable moment of the week",
+    description: "Doors 6pm · Show 7pm · Daytime Emerging Designers showcase, plus our iconic sand runway at sunset — the most shareable moment of the week",
     highlight: true,
     badge: "Beach Runway",
   },
@@ -89,7 +89,7 @@ const SCHEDULE = [
     day: "Friday",
     date: "May 29",
     title: "Signature Runway",
-    description: "Runway show plus VIP cocktail hour and brand activations",
+    description: "Doors 6pm · Show 7pm · Runway show plus VIP cocktail hour and brand activations",
     highlight: false,
     badge: null,
   },
@@ -97,7 +97,7 @@ const SCHEDULE = [
     day: "Saturday",
     date: "May 30",
     title: "Signature Runway",
-    description: "Runway show featuring designer collections and brand activations",
+    description: "Doors 6pm · Show 7pm · Runway show featuring designer collections and brand activations",
     highlight: false,
     badge: null,
   },
@@ -105,7 +105,7 @@ const SCHEDULE = [
     day: "Sunday",
     date: "May 31",
     title: "Pool Vibes Closing Show",
-    description: "Poolside closing runway show, DJ set, and after party — the ultimate send-off to Swim Week",
+    description: "Doors 6pm · Show 7pm · Poolside closing runway show, DJ set, and after party — the ultimate send-off to Swim Week",
     highlight: true,
     badge: "Closing Party",
   },
@@ -115,7 +115,7 @@ const CASTING_CALL_PACKAGES = [
   {
     id: "casting-presenting",
     name: "Casting Call Presenting Sponsor",
-    tagline: "\"EXA Casting Call Presented by [Your Brand]\" — 600+ models see your brand all day",
+    tagline: "\"EXA Casting Call Presented by [Your Brand]\" — own the day: 600+ models + public day-party crowd",
     price: 14000,
     badge: "Only 1 Available",
     badgeGradient: "from-orange-500 to-red-500",
@@ -125,15 +125,16 @@ const CASTING_CALL_PACKAGES = [
     icon: <Trophy className="h-5 w-5 text-orange-400" />,
     features: [
       "Title naming rights — \"EXA Casting Call Presented by [Brand]\"",
-      "Your brand in front of 600+ models for the entire casting day",
+      "Your brand in front of 600+ models AND a ticketed day-party crowd (11am–4pm)",
       "Branded step-and-repeat photo wall — every model poses in front of your logo",
+      "Branded bottle-table service signage throughout the pool deck",
       "All casting photos delivered to you for marketing use",
       "Full brand activation booth at the casting venue",
       "Product sampling + branded gift bag for every model at check-in",
       "Dedicated EXA social media coverage of your brand at casting",
       "Email blast to all registered models featuring your brand",
-      "Logo on all casting call promotional materials",
-      "6 VIP passes to all runway shows",
+      "Logo on all casting call promotional materials + ticket page",
+      "6 VIP passes to all runway shows + 1 bottle table at the day party",
     ],
   },
   {
@@ -679,7 +680,7 @@ export default async function SponsorMswPage() {
               <span className="exa-gradient-text">Position Your Brand at the Center of Miami Swim Week</span>
             </h2>
             <p className="text-white/70 text-lg leading-relaxed mb-8">
-              A full 7-day takeover of The Alexander Hotel with creators whose audiences range from 5K to 5M. From a sunset beach runway to a 120ft yacht and on-site content production all week, your brand is seamlessly integrated into every moment — captured, shared, and distributed across millions of viewers worldwide. <span className="text-white font-semibold">This level of access doesn&apos;t exist anywhere else.</span>
+              A full 7-day takeover of The Alexander Hotel with creators whose audiences range from 5K to 5M. <span className="text-white font-semibold">Six evening runway shows, each featuring global designers and 100+ models on the runway.</span> From a Monday ticketed day party and sunset beach runway to a 120ft yacht and on-site content production all week, your brand is seamlessly integrated into every moment — captured, shared, and distributed across millions of viewers worldwide.
             </p>
 
             {/* Model ladder — honest breakdown by role */}
@@ -720,12 +721,18 @@ export default async function SponsorMswPage() {
 
           {/* Right — Compact Schedule */}
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-6">
-            <h3 className="font-bold text-lg mb-4 flex items-center gap-2 text-white">
+            <h3 className="font-bold text-lg mb-2 flex items-center gap-2 text-white">
               <div className="p-1.5 rounded-lg bg-amber-500/15 ring-1 ring-amber-500/30">
                 <Calendar className="h-4 w-4 text-amber-300" />
               </div>
               Full Week Schedule
             </h3>
+            <p className="text-xs text-white/60 mb-2 leading-relaxed">
+              Every evening show features <span className="text-amber-300 font-semibold">global designers</span> and <span className="text-amber-300 font-semibold">100+ models</span> on the runway.
+            </p>
+            <p className="text-[11px] text-white/50 mb-4 leading-relaxed">
+              Ticketing: VIP Bottle Tables (seats 5, upsize to 10 · 1st row included) · 1st / 2nd / 3rd Row Seating · GA Standing
+            </p>
             <div className="space-y-2">
               {SCHEDULE.map((event) => (
                 <div
