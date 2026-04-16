@@ -2,8 +2,6 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { Navbar } from "@/components/layout/navbar";
 import { CoinBalanceProvider } from "@/contexts/CoinBalanceContext";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import {
   Instagram,
   CheckCircle,
@@ -99,16 +97,16 @@ export default async function ForModelsPage() {
         <div className="flex justify-end mb-4">
           <Link
             href="/modelo"
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-pink-500 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-pink-500/10 border border-white/10 hover:border-pink-500/30 text-xs font-semibold text-white/70 hover:text-pink-300 transition-all"
           >
-            <Globe className="h-4 w-4" />
+            <Globe className="h-3.5 w-3.5" />
             Español
           </Link>
         </div>
 
         {/* Swipe Carousel */}
         <div className="mb-12 -mx-4 md:mx-0">
-          <p className="text-center text-sm text-muted-foreground mb-4 px-4">
+          <p className="text-center text-[11px] uppercase tracking-wider text-white/40 font-semibold mb-4 px-4">
             👆 Swipe through the slides
           </p>
           <div className="overflow-x-auto scrollbar-hide snap-x snap-mandatory flex gap-4 px-4 pb-4">
@@ -241,26 +239,26 @@ export default async function ForModelsPage() {
               </Link>
             </CarouselSlide>
           </div>
-          <div className="flex justify-center gap-1 mt-4">
+          <div className="flex justify-center gap-1.5 mt-4">
             {Array.from({ length: 17 }).map((_, i) => (
-              <div key={i} className="w-1.5 h-1.5 rounded-full bg-pink-500/30" />
+              <div key={i} className="w-1.5 h-1.5 rounded-full bg-pink-500/30 shadow-[0_0_4px_rgba(236,72,153,0.4)]" />
             ))}
           </div>
         </div>
 
         {/* Hero */}
         <div className="text-center mb-12">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-white/50 font-semibold mb-3">
+            For Real Life
+          </p>
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            <span className="bg-gradient-to-r from-pink-500 via-violet-500 to-cyan-500 bg-clip-text text-transparent">
-              How to Use EXA
-            </span>
+            <span className="exa-gradient-text">How to Use EXA</span>
             <span className="ml-2">✨</span>
           </h1>
-          <p className="text-lg text-muted-foreground mb-2">For Real Life</p>
-          <p className="text-xl">
+          <p className="text-xl text-white font-medium">
             Turn your influence into income.
           </p>
-          <p className="text-muted-foreground mt-2">
+          <p className="text-white/60 mt-2 max-w-xl mx-auto">
             EXA is where your content, your time, and your personality actually pay you — not just &quot;likes.&quot;
           </p>
         </div>
@@ -274,27 +272,41 @@ export default async function ForModelsPage() {
         </div>
 
         {/* Think of EXA as */}
-        <Card className="p-6 mb-12 bg-gradient-to-br from-pink-500/10 to-violet-500/10 border-pink-500/20">
-          <p className="text-center text-lg">
-            <span className="font-bold">Think of EXA as:</span>
-          </p>
-          <div className="flex flex-col md:flex-row items-center justify-center gap-4 mt-4">
-            <div className="text-center">
-              <Instagram className="h-8 w-8 mx-auto mb-2 text-pink-500" />
-              <p className="font-medium">Instagram</p>
-              <p className="text-sm text-muted-foreground">free highlight reel</p>
-            </div>
-            <ArrowRight className="h-6 w-6 text-muted-foreground hidden md:block" />
-            <div className="text-center">
-              <Crown className="h-8 w-8 mx-auto mb-2 text-amber-500" />
-              <p className="font-medium">EXA</p>
-              <p className="text-sm text-muted-foreground">your VIP inner world that actually pays you</p>
+        <div
+          className="relative overflow-hidden rounded-2xl border border-pink-500/30 p-6 mb-12"
+          style={{
+            background:
+              "linear-gradient(135deg, rgba(255,105,180,0.15) 0%, rgba(139,92,246,0.10) 50%, rgba(245,158,11,0.12) 100%)",
+          }}
+        >
+          <div className="pointer-events-none absolute -top-16 -left-16 w-40 h-40 rounded-full bg-pink-500/25 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-16 -right-16 w-40 h-40 rounded-full bg-amber-500/25 blur-3xl" />
+          <div className="relative">
+            <p className="text-center text-[10px] uppercase tracking-[0.3em] text-white/60 font-semibold mb-4">
+              Mental Model
+            </p>
+            <div className="flex flex-col md:flex-row items-center justify-center gap-6">
+              <div className="text-center">
+                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-pink-500/15 ring-1 ring-pink-500/30 mb-2">
+                  <Instagram className="h-7 w-7 text-pink-300" />
+                </div>
+                <p className="font-bold text-white">Instagram</p>
+                <p className="text-xs text-white/50">free highlight reel</p>
+              </div>
+              <ArrowRight className="h-6 w-6 text-white/40 hidden md:block" />
+              <div className="text-center">
+                <div className="relative inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 ring-1 ring-amber-500/40 mb-2 shadow-[0_0_20px_rgba(245,158,11,0.3)]">
+                  <Crown className="h-7 w-7 text-amber-300" />
+                </div>
+                <p className="font-bold text-white">EXA</p>
+                <p className="text-xs text-amber-300/80">your VIP world that actually pays you</p>
+              </div>
             </div>
           </div>
-        </Card>
+        </div>
 
         {/* FITNESS SECTION */}
-        <SectionHeader emoji="🏋️‍♀️" title="Fitness & Workout Models" />
+        <SectionHeader kicker="Use case" emoji="🏋️‍♀️" title="Fitness & Workout Models" />
 
         <ScenarioCard
           number={1}
@@ -348,7 +360,7 @@ export default async function ForModelsPage() {
         </ScenarioCard>
 
         {/* YOGA SECTION */}
-        <SectionHeader emoji="🧘‍♀️" title="Yoga & Wellness Girls" />
+        <SectionHeader kicker="Use case" emoji="🧘‍♀️" title="Yoga & Wellness Girls" />
 
         <ScenarioCard
           number={4}
@@ -398,7 +410,7 @@ export default async function ForModelsPage() {
         </ScenarioCard>
 
         {/* LIFESTYLE SECTION */}
-        <SectionHeader emoji="🌴" title="Lifestyle Creators" />
+        <SectionHeader kicker="Use case" emoji="🌴" title="Lifestyle Creators" />
 
         <ScenarioCard
           number={7}
@@ -441,7 +453,7 @@ export default async function ForModelsPage() {
         </ScenarioCard>
 
         {/* FASHION SECTION */}
-        <SectionHeader emoji="👗" title="Fashion Models" />
+        <SectionHeader kicker="Use case" emoji="👗" title="Fashion Models" />
 
         <ScenarioCard
           number={10}
@@ -480,7 +492,7 @@ export default async function ForModelsPage() {
         </ScenarioCard>
 
         {/* FANS SECTION */}
-        <SectionHeader emoji="💌" title="Fans & Community" />
+        <SectionHeader kicker="Community" emoji="💌" title="Fans & Community" />
 
         <ScenarioCard
           number={13}
@@ -529,7 +541,7 @@ export default async function ForModelsPage() {
         </ScenarioCard>
 
         {/* HEALTH SECTION */}
-        <SectionHeader emoji="🥗" title="Health & Nutrition" />
+        <SectionHeader kicker="Use case" emoji="🥗" title="Health & Nutrition" />
 
         <ScenarioCard
           number={17}
@@ -555,7 +567,7 @@ export default async function ForModelsPage() {
         </ScenarioCard>
 
         {/* PROFESSIONAL SECTION */}
-        <SectionHeader emoji="📸" title="Professional Work" />
+        <SectionHeader kicker="Bookings" emoji="📸" title="Professional Work" />
 
         <ScenarioCard
           number={20}
@@ -592,49 +604,72 @@ export default async function ForModelsPage() {
 
         {/* INCOME STACK */}
         <div className="my-12">
-          <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-            💅 The EXA Income Stack
+          <p className="text-[10px] uppercase tracking-[0.3em] text-white/40 font-semibold mb-2">
+            Revenue
+          </p>
+          <h2 className="text-2xl md:text-3xl font-bold mb-6 flex items-center gap-2 text-white">
+            💅 <span className="exa-gradient-text">The EXA Income Stack</span>
           </h2>
-          <Card className="p-6 bg-gradient-to-br from-pink-500/10 via-violet-500/10 to-cyan-500/10 border-pink-500/20">
-            <p className="text-muted-foreground mb-4">In ONE month you can earn from:</p>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
-              <IncomeItem label="Tips" />
-              <IncomeItem label="PPV unlocks" />
-              <IncomeItem label="Paid messages" />
-              <IncomeItem label="Photoshoots" />
-              <IncomeItem label="Brand gigs" />
-              <IncomeItem label="Events" />
+          <div
+            className="relative overflow-hidden rounded-2xl border border-pink-500/30 p-6"
+            style={{
+              background:
+                "linear-gradient(135deg, rgba(255,105,180,0.12) 0%, rgba(139,92,246,0.10) 50%, rgba(0,191,255,0.12) 100%)",
+            }}
+          >
+            <div className="pointer-events-none absolute -top-24 -left-24 w-64 h-64 rounded-full bg-pink-500/20 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-24 -right-24 w-64 h-64 rounded-full bg-cyan-500/20 blur-3xl" />
+            <div className="relative">
+              <p className="text-white/70 mb-4 font-medium">In ONE month you can earn from:</p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+                <IncomeItem label="Tips" />
+                <IncomeItem label="PPV unlocks" />
+                <IncomeItem label="Paid messages" />
+                <IncomeItem label="Photoshoots" />
+                <IncomeItem label="Brand gigs" />
+                <IncomeItem label="Events" />
+              </div>
+              <div className="space-y-2 text-center">
+                <p className="text-white/60">
+                  👉 Instagram = millions of views, <span className="text-rose-300 font-semibold">$0</span>
+                </p>
+                <p className="font-bold text-lg text-white">
+                  👉 EXA = smaller audience, <span className="text-emerald-300">REAL money</span>
+                </p>
+              </div>
             </div>
-            <div className="space-y-2 text-center">
-              <p className="text-muted-foreground">👉 Instagram = millions of views, <span className="text-red-400">$0</span></p>
-              <p className="font-bold text-lg">👉 EXA = smaller audience, <span className="text-green-500">REAL money</span></p>
-            </div>
-          </Card>
+          </div>
         </div>
 
         {/* FUNNEL */}
         <div className="my-12">
-          <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-            📲 How to Move Fans Over
+          <p className="text-[10px] uppercase tracking-[0.3em] text-white/40 font-semibold mb-2">
+            Strategy
+          </p>
+          <h2 className="text-2xl md:text-3xl font-bold mb-6 flex items-center gap-2 text-white">
+            📲 <span className="exa-gradient-text">How to Move Fans Over</span>
           </h2>
-          <Card className="p-6">
-            <p className="font-bold mb-4">The Funnel</p>
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-6">
+            <p className="text-[10px] uppercase tracking-wider font-bold text-white/60 mb-4">The Funnel</p>
             <div className="space-y-3 mb-6">
               <FunnelStep platform="TikTok/Reels" purpose="hooks" />
               <FunnelStep platform="Instagram" purpose="vibe" />
               <FunnelStep platform="EXA" purpose="VIP world 💎" highlight />
             </div>
-            <div className="p-4 bg-pink-500/10 rounded-lg text-center">
-              <p className="font-medium">&quot;Exclusive on EXA – link in bio&quot;</p>
-              <p className="text-sm text-muted-foreground mt-2">Even 1% of your followers = big income.</p>
+            <div className="p-4 rounded-xl bg-pink-500/10 border border-pink-500/30 text-center shadow-[0_0_16px_rgba(236,72,153,0.15)]">
+              <p className="font-semibold text-white">&quot;Exclusive on EXA – link in bio&quot;</p>
+              <p className="text-sm text-white/60 mt-2">Even 1% of your followers = big income.</p>
             </div>
-          </Card>
+          </div>
         </div>
 
         {/* BY NICHE */}
         <div className="my-12">
-          <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-            💖 By Niche
+          <p className="text-[10px] uppercase tracking-[0.3em] text-white/40 font-semibold mb-2">
+            Audience
+          </p>
+          <h2 className="text-2xl md:text-3xl font-bold mb-6 flex items-center gap-2 text-white">
+            💖 <span className="exa-gradient-text">By Niche</span>
           </h2>
           <div className="grid md:grid-cols-2 gap-4">
             <NicheCard
@@ -658,9 +693,21 @@ export default async function ForModelsPage() {
 
         {/* QUICK START */}
         <div className="my-12">
-          <h2 className="text-2xl font-bold mb-6">QUICK START (5 mins)</h2>
-          <Card className="p-6 bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20">
-            <div className="space-y-3">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-white/40 font-semibold mb-2">
+            5-minute setup
+          </p>
+          <h2 className="text-2xl md:text-3xl font-bold mb-6 text-white">
+            <span className="exa-gradient-text">QUICK START</span>
+          </h2>
+          <div
+            className="relative overflow-hidden rounded-2xl border border-emerald-500/30 p-6"
+            style={{
+              background:
+                "linear-gradient(135deg, rgba(52,211,153,0.12) 0%, rgba(20,184,166,0.08) 100%)",
+            }}
+          >
+            <div className="pointer-events-none absolute -top-24 -right-24 w-64 h-64 rounded-full bg-emerald-500/20 blur-3xl" />
+            <div className="relative space-y-3">
               <QuickStartItem emoji="📸" text="Upload profile pic" />
               <QuickStartItem emoji="🖼️" text="Add 5 portfolio photos" />
               <QuickStartItem emoji="💰" text="Set your rates" />
@@ -668,46 +715,68 @@ export default async function ForModelsPage() {
               <QuickStartItem emoji="🏦" text="Add bank" />
               <QuickStartItem emoji="🔗" text="Put EXA in bio" />
             </div>
-          </Card>
+          </div>
         </div>
 
         {/* THE TRUTH */}
-        <Card className="p-8 text-center bg-gradient-to-br from-pink-500/20 via-violet-500/20 to-cyan-500/20 border-pink-500/30 mb-12">
-          <h2 className="text-2xl font-bold mb-4">The Truth</h2>
-          <p className="text-muted-foreground mb-4">
-            Your followers already:
-          </p>
-          <ul className="space-y-1 mb-6">
-            <li>• ask for routines</li>
-            <li>• want advice</li>
-            <li>• want more of you</li>
-          </ul>
-          <p className="font-medium mb-4">EXA just makes it FAIR.</p>
-          <div className="space-y-2">
-            <p className="text-muted-foreground">Likes don&apos;t pay rent.</p>
-            <p className="text-xl font-bold bg-gradient-to-r from-pink-500 to-violet-500 bg-clip-text text-transparent">
-              Your personality does.
+        <div
+          className="relative overflow-hidden rounded-2xl border border-pink-500/40 p-8 text-center mb-12 shadow-[0_0_32px_rgba(236,72,153,0.2)]"
+          style={{
+            background:
+              "linear-gradient(135deg, rgba(255,105,180,0.18) 0%, rgba(139,92,246,0.15) 50%, rgba(0,191,255,0.18) 100%)",
+          }}
+        >
+          <div className="pointer-events-none absolute -top-24 -left-24 w-64 h-64 rounded-full bg-pink-500/30 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 -right-24 w-64 h-64 rounded-full bg-cyan-500/30 blur-3xl" />
+          <div className="relative">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-white/60 font-semibold mb-2">
+              Real talk
             </p>
+            <h2 className="text-2xl md:text-3xl font-bold mb-4 text-white">
+              The Truth
+            </h2>
+            <p className="text-white/70 mb-4">
+              Your followers already:
+            </p>
+            <ul className="space-y-1 mb-6 text-white/80">
+              <li>• ask for routines</li>
+              <li>• want advice</li>
+              <li>• want more of you</li>
+            </ul>
+            <p className="font-semibold text-white mb-4">EXA just makes it FAIR.</p>
+            <div className="space-y-2">
+              <p className="text-white/60">Likes don&apos;t pay rent.</p>
+              <p className="text-2xl md:text-3xl font-bold exa-gradient-text">
+                Your personality does.
+              </p>
+            </div>
           </div>
-        </Card>
+        </div>
 
         {/* CTA */}
         <div className="text-center">
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild size="lg" className="bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-lg px-8">
-              <Link href="/signin">
-                Apply Now ✨
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="text-lg px-8">
-              <Link href="/models">Browse Models</Link>
-            </Button>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link
+              href="/signin"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-gradient-to-r from-pink-500 via-violet-500 to-cyan-500 hover:from-pink-400 hover:via-violet-400 hover:to-cyan-400 text-white text-lg font-bold shadow-[0_0_24px_rgba(236,72,153,0.5)] hover:shadow-[0_0_32px_rgba(236,72,153,0.7)] active:scale-[0.98] transition-all"
+            >
+              Apply Now <span>✨</span>
+            </Link>
+            <Link
+              href="/models"
+              className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-white/5 hover:bg-white/10 border border-white/15 hover:border-pink-500/40 text-white text-lg font-semibold transition-all"
+            >
+              Browse Models
+            </Link>
           </div>
         </div>
       </main>
 
-      <footer className="border-t mt-16 py-8 text-center text-sm text-muted-foreground">
-        <p>&copy; {new Date().getFullYear()} EXA Models. All rights reserved.</p>
+      <footer className="relative mt-16 border-t border-violet-500/15 bg-gradient-to-b from-transparent to-[#0a0014]/60 backdrop-blur-sm py-8 text-center">
+        <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-pink-500/50 to-transparent" />
+        <p className="text-xs text-white/40">
+          &copy; {new Date().getFullYear()} EXA Models. All rights reserved.
+        </p>
       </footer>
     </div>
     </CoinBalanceProvider>
@@ -716,76 +785,95 @@ export default async function ForModelsPage() {
 
 function StatCard({ emoji, label }: { emoji: string; label: string }) {
   return (
-    <Card className="p-4 text-center">
+    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-4 text-center hover:border-pink-500/30 hover:bg-white/[0.06] transition-all">
       <div className="text-2xl mb-1">{emoji}</div>
-      <div className="text-sm font-medium">{label}</div>
-    </Card>
+      <div className="text-sm font-semibold text-white">{label}</div>
+    </div>
   );
 }
 
-function SectionHeader({ emoji, title }: { emoji: string; title: string }) {
+function SectionHeader({ emoji, title, kicker }: { emoji: string; title: string; kicker?: string }) {
   return (
-    <h2 className="text-2xl font-bold mt-12 mb-6 flex items-center gap-2">
-      <span>{emoji}</span> {title}
-    </h2>
+    <div className="mt-12 mb-6">
+      {kicker && (
+        <p className="text-[10px] uppercase tracking-[0.3em] text-white/40 font-semibold mb-2">
+          {kicker}
+        </p>
+      )}
+      <h2 className="text-2xl md:text-3xl font-bold flex items-center gap-2 text-white">
+        <span>{emoji}</span>
+        <span className="exa-gradient-text">{title}</span>
+      </h2>
+    </div>
   );
 }
 
 function ScenarioCard({ number, title, children }: { number: number; title: string; children: React.ReactNode }) {
   return (
-    <Card className="p-6 mb-4">
-      <h3 className="font-bold text-lg mb-4">
-        <span className="text-pink-500">{number}.</span> {title}
+    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-6 mb-4 hover:border-pink-500/25 transition-all group">
+      <h3 className="font-bold text-lg mb-4 text-white">
+        <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-pink-500/15 border border-pink-500/30 text-pink-300 text-xs font-bold mr-2 shadow-[0_0_10px_rgba(236,72,153,0.15)]">
+          {number}
+        </span>
+        {title}
       </h3>
-      {children}
-    </Card>
+      <div className="text-white/80 [&_.text-muted-foreground]:text-white/60 [&_.text-pink-500]:text-pink-300">
+        {children}
+      </div>
+    </div>
   );
 }
 
 function IncomeItem({ label }: { label: string }) {
   return (
-    <div className="flex items-center gap-2 p-3 bg-background/50 rounded-lg">
-      <CheckCircle className="h-4 w-4 text-green-500" />
-      <span className="text-sm font-medium">{label}</span>
+    <div className="flex items-center gap-2 p-3 rounded-xl bg-white/[0.05] border border-white/10 hover:border-emerald-500/30 transition-colors">
+      <CheckCircle className="h-4 w-4 text-emerald-400 shrink-0" />
+      <span className="text-sm font-semibold text-white">{label}</span>
     </div>
   );
 }
 
 function FunnelStep({ platform, purpose, highlight = false }: { platform: string; purpose: string; highlight?: boolean }) {
   return (
-    <div className={`flex items-center gap-3 p-3 rounded-lg ${highlight ? 'bg-pink-500/10 border border-pink-500/30' : 'bg-muted/50'}`}>
-      <ArrowRight className={`h-4 w-4 ${highlight ? 'text-pink-500' : 'text-muted-foreground'}`} />
-      <span className={`font-medium ${highlight ? 'text-pink-500' : ''}`}>{platform}</span>
-      <span className="text-muted-foreground">→ {purpose}</span>
+    <div
+      className={`flex items-center gap-3 p-3 rounded-xl transition-all ${
+        highlight
+          ? 'bg-pink-500/10 border border-pink-500/40 shadow-[0_0_16px_rgba(236,72,153,0.2)]'
+          : 'bg-white/[0.04] border border-white/10'
+      }`}
+    >
+      <ArrowRight className={`h-4 w-4 shrink-0 ${highlight ? 'text-pink-300' : 'text-white/40'}`} />
+      <span className={`font-semibold ${highlight ? 'text-pink-200' : 'text-white'}`}>{platform}</span>
+      <span className="text-white/60">→ {purpose}</span>
     </div>
   );
 }
 
 function NicheCard({ title, items }: { title: string; items: string[] }) {
   return (
-    <Card className="p-4">
-      <h3 className="font-bold mb-3">{title}</h3>
-      <ul className="space-y-1 text-sm text-muted-foreground">
+    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-4 hover:border-violet-500/30 transition-all">
+      <h3 className="font-bold text-white mb-3">{title}</h3>
+      <ul className="space-y-1 text-sm text-white/60">
         {items.map((item, i) => (
           <li key={i}>• {item}</li>
         ))}
       </ul>
-    </Card>
+    </div>
   );
 }
 
 function QuickStartItem({ emoji, text }: { emoji: string; text: string }) {
   return (
-    <div className="flex items-center gap-3 p-3 bg-background/50 rounded-lg">
+    <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.05] border border-white/10 hover:border-emerald-500/30 hover:bg-white/[0.08] transition-all">
       <span className="text-xl">{emoji}</span>
-      <span className="font-medium">{text}</span>
+      <span className="font-semibold text-white">{text}</span>
     </div>
   );
 }
 
 function CarouselSlide({ gradient, children }: { gradient: string; children: React.ReactNode }) {
   return (
-    <div className={`flex-shrink-0 w-[280px] h-[360px] rounded-2xl bg-gradient-to-br ${gradient} p-6 snap-center flex flex-col justify-center items-center text-center text-white shadow-xl`}>
+    <div className={`flex-shrink-0 w-[280px] h-[360px] rounded-2xl bg-gradient-to-br ${gradient} p-6 snap-center flex flex-col justify-center items-center text-center text-white shadow-[0_8px_32px_rgba(0,0,0,0.4)] ring-1 ring-white/20`}>
       {children}
     </div>
   );
