@@ -377,7 +377,7 @@ export default async function ModelProfilePage({ params }: Props) {
 
       <div className="relative z-10 container max-w-lg md:max-w-3xl mx-auto py-6 px-4">
         {/* Main Profile Card */}
-        <div className="profile-card rounded-3xl p-6 text-center relative">
+        <div className={`profile-card rounded-3xl relative ${useHeroLayout ? "overflow-hidden" : "p-6 text-center"}`}>
           {/* Header Row — only for circle layout. Hero variant moves wordmark/share into the hero overlay. */}
           {!useHeroLayout && (
           <div className="relative flex items-center justify-center mb-6 min-h-8">
@@ -408,7 +408,7 @@ export default async function ModelProfilePage({ params }: Props) {
 
           {/* Live Bids Strip — compact rows matching homepage EXA Bids style */}
           {liveAuctions && liveAuctions.length > 0 && (
-            <div className="mb-5">
+            <div className={useHeroLayout ? "p-6 pb-3" : "mb-5"}>
               {/* Label */}
               <div className="flex items-center justify-center gap-2 mb-2">
                 <span className="relative flex h-2 w-2">
@@ -457,13 +457,14 @@ export default async function ModelProfilePage({ params }: Props) {
           {useHeroLayout ? (
             /* ============================================
                MEGA-HERO (experimental, gated by username)
-               4:5 portrait with EVERYTHING overlaid as glass chips:
-               - Top row: online (left) | exa models wordmark (center) | share + brand actions (right)
-               - Bottom dock: name + location + compact socials + ProfileActionButtons (chat input + video/voice/tip)
-               - Below the hero card: only bio + affiliate links + content tabs + rates CTA
+               4:5 portrait that BLEEDS to the parent card edges — one continuous
+               frame, no card-in-card. Top corners are clipped by parent's
+               rounded-3xl + overflow-hidden.
+               - Top row overlay: online | wordmark (huge, no bubble) | share + brand actions
+               - Bottom glass dock: name + location + compact socials + ProfileActionButtons
+               - Below the hero: bio + affiliate + content tabs + rates CTA (own padding)
                ============================================ */
-            <div className="relative mb-5 rounded-2xl overflow-hidden ring-1 ring-pink-500/30 shadow-[0_0_50px_rgba(236,72,153,0.3),0_0_100px_rgba(139,92,246,0.18)]">
-              <div className="relative aspect-[4/5] w-full bg-gradient-to-br from-[#1a0033] to-[#2d1b69]">
+            <div className="relative aspect-[4/5] w-full bg-gradient-to-br from-[#1a0033] to-[#2d1b69]">
                 {profilePhotoUrl ? (
                   <Image
                     src={profilePhotoUrl}
@@ -496,11 +497,11 @@ export default async function ModelProfilePage({ params }: Props) {
                     )}
                   </div>
 
-                  {/* Center: exa models wordmark — glass pill */}
+                  {/* Center: exa models wordmark — large text overlay (no bubble) */}
                   <Link
                     href={user ? "/dashboard" : "/"}
                     aria-label="exa models home"
-                    className={`${glacialIndifference.className} px-3 py-1.5 rounded-full bg-black/45 backdrop-blur-md border border-white/15 text-white text-base lowercase tracking-[0.02em] leading-none flex items-center hover:bg-black/65 transition-colors shadow-[0_4px_14px_rgba(0,0,0,0.35)] shrink-0`}
+                    className={`${glacialIndifference.className} wordmark-glimmer text-4xl md:text-6xl leading-none tracking-[0.01em] lowercase hover:opacity-90 transition-opacity drop-shadow-[0_2px_14px_rgba(0,0,0,0.85)] shrink-0`}
                   >
                     exa models
                   </Link>
@@ -616,7 +617,6 @@ export default async function ModelProfilePage({ params }: Props) {
                   />
                 </div>
               </div>
-            </div>
           ) : (
             <>
               {/* Profile Image (default circle layout) */}
@@ -703,6 +703,11 @@ export default async function ModelProfilePage({ params }: Props) {
               )}
             </>
           )}
+
+          {/* After-hero content section. Hero variant gets its own padding here
+              because the parent profile-card was rendered padless to let the
+              photo bleed edge-to-edge. */}
+          <div className={useHeroLayout ? "p-6 pt-5 text-center" : "contents"}>
 
           {/* Bio - under name (or under hero) */}
           {model.bio && <BioExpand bio={model.bio} />}
@@ -860,6 +865,7 @@ export default async function ModelProfilePage({ params }: Props) {
               );
             })()
           )}
+          </div>
         </div>
       </div>
       </div>
